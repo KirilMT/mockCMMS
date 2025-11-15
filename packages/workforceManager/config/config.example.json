@@ -1,0 +1,32 @@
+{
+  "internal_system": {
+    "name": "Internal System",
+    "base_url": "https://internal-system.company.com",
+    "endpoints": {
+      "ticket_view": "/app/issues/view/{ticket_id}",
+      "maintenance_grid": "/app/schedules/planner-maintenance-grid"
+    }
+  },
+  "task_name_mapping": {
+    "Equipment_PM_Unit_A_Weekly": "Equipment_PM_Unit_A_Weekly_Localized",
+    "Equipment_PM_System_B_Monthly": "Equipment_PM_System_B_Monthly_Localized",
+    "Equipment_PM_Robot_C_Yearly": "Equipment_PM_Robot_C_Yearly_Localized",
+    "Equipment_PM_System_D_Inspection": "Equipment_PM_System_D_Inspection_Localized",
+    "Equipment_PM_Tool_E_Quarterly": "Equipment_PM_Tool_E_Quarterly_Localized",
+    "System_Visual_Checks": "System_Visual_Checks_Calibration",
+    "Equipment_PM_Tool_F_Monthly": "Equipment_PM_Tool_F_Monthly_Localized",
+    "Equipment_PM_Cable_Package": "Equipment_PM_Cable_Package",
+    "System_PdM_Factor_Check": "System_PdM_Factor_Check"
+  },
+  "localizations": {
+    "term1": "translation1",
+    "term2": "translation2",
+    "term3": "translation3",
+    "term4": "translation4",
+    "term5": "translation5",
+    "term6": "translation6",
+    "term7": "",
+    "term8": "translation8",
+    "term9": "translation9"
+  }
+}
