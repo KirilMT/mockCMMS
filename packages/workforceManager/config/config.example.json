@@ -1,4 +1,5 @@
 {
+  "DATA_SOURCE": "excel",
   "internal_system": {
     "name": "Internal System",
     "base_url": "https://internal-system.company.com",

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mock CMMS{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"> {# Font Awesome for burger icon #}
+    <style>
+        body {
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+        #wrapper {
+            display: flex;
+        }
+        #sidebar-wrapper {
+            min-height: 100vh;
+            width: 0; /* Hidden by default */
+            position: fixed;
+            top: 56px; /* Height of the top navbar */
+            left: 0;
+            z-index: 1030; /* Above content, below navbar */
+            background-color: #343a40;
+            overflow-x: hidden;
+            transition: 0.25s; /* Smooth transition for opening/closing */
+            padding-top: 10px;
+            color: #fff;
+        }
+        #sidebar-wrapper.toggled {
+            width: 250px; /* Width when open */
+        }
+        #page-content-wrapper {
+            width: 100%;
+            padding: 20px;
+            margin-top: 56px; /* Space for the top navbar */
+            transition: margin-left 0.25s ease-out;
+        }
+        /* Overlay for grey-out effect */
+        #overlay {
+            position: fixed;
+            display: none; /* Hidden by default */
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+            z-index: 1020; /* Below sidebar, above content */
+            cursor: pointer;
+        }
+        /* Styling for sidebar links */
+        .sidebar-heading {
+            padding: 0.875rem 1.25rem;
+            font-size: 1.2rem;
+            background-color: #212529;
+            border-bottom: 1px solid #495057;
+            color: #fff;
+        }
+        .list-group-item {
+            background-color: #343a40;
+            color: #adb5bd;
+            border: none;
+            padding: 0.75rem 1.25rem;
+        }
+        .list-group-item:hover {
+            background-color: #495057;
+            color: #fff;
+        }
+        .list-group-item.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .footer {
+            padding: 15px;
+            background-color: #f8f9fa;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+            z-index: 1030; /* Ensure footer is above sidebar if needed */
+        }
+        .navbar-brand {
+            color: #fff;
+        }
+        .navbar-brand:hover {
+            color: #fff;
+        }
+        .navbar-toggler {
+            border: none;
+        }
+        .navbar-toggler:focus {
+            outline: none;
+        }
+        .navbar-text {
+            color: rgba(255,255,255,.75);
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="main-navbar">
+            <button class="btn btn-dark" id="sidebarToggle">
+                <i class="fas fa-bars"></i> {# Burger icon #}
+            </button>
+            <a class="navbar-brand ml-3" href="/">Mock CMMS</a>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+                    {% if session.user_id %}
+                    <li class="nav-item">
+                        <span class="navbar-text mr-3">Logged in as: {{ session.username }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <form action="/logout" method="post" class="form-inline">
+                            <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+                        </form>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Sidebar -->
+        <div class="bg-dark border-right" id="sidebar-wrapper">
+            <div class="list-group list-group-flush">
+                <a href="/assets" class="list-group-item list-group-item-action bg-dark text-light">Assets</a>
+                <a href="/maintenance_orders" class="list-group-item list-group-item-action bg-dark text-light">Maintenance Orders</a>
+                <a href="/spare_parts" class="list-group-item list-group-item-action bg-dark text-light">Spare Parts</a>
+                <a href="/users" class="list-group-item list-group-item-action bg-dark text-light">Users</a>
+                <a href="/workforce-manager" class="list-group-item list-group-item-action bg-dark text-light">Workforce Manager</a>
+            </div>
+        </div>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
+    </div>
+
+    <div id="overlay"></div> {# Overlay element #}
+
+    <footer class="footer">
+        <div class="container">
+            <span class="text-muted">Mock CMMS &copy; 2025</span>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $("#sidebarToggle").click(function(e) {
+            e.preventDefault();
+            $("#sidebar-wrapper").toggleClass("toggled");
+            $("#overlay").toggle(); // Toggle overlay visibility
+        });
+
+        $("#overlay").click(function() {
+            $("#sidebar-wrapper").toggleClass("toggled");
+            $("#overlay").toggle(); // Hide overlay
+        });
+    </script>
+</body>
+</html>

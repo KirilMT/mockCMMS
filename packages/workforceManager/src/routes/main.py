@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, send_from_directory, current_app, request, jsonify, url_for, g
+from flask import Blueprint, render_template, send_from_directory, current_app, request, jsonify, url_for, g, redirect
 from flask_wtf.csrf import CSRFProtect
 from io import BytesIO
 import json
@@ -12,6 +12,7 @@ from ..services.dashboard import generate_html_files
 from ..services.config_manager import TECHNICIANS, TECHNICIAN_GROUPS, TECHNICIAN_LINES
 from ..services.db_utils import get_db_connection, TaskManager, get_all_technician_skills_by_name
 from ..services.security import InputValidator
+from ..config import Config # Import Config
 
 main_bp = Blueprint('main', __name__)
 
@@ -69,6 +70,9 @@ def update_session_timestamp(session_id):
 
 @main_bp.route('/')
 def index_route():
+    if Config.DATA_SOURCE == 'api':
+        # If in API mode, bypass the upload page and go directly to the dashboard
+        return redirect(url_for('main.manage_mappings_route')) # Or supervisor_dashboard_route if that's the entry
     return render_template('index.html')
 
 @main_bp.route('/manage_mappings_ui')

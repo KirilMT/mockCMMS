@@ -5,7 +5,7 @@ from functools import wraps
 from flask import request, jsonify, current_app
 import re
 from typing import Any, Dict, List
-
+from src.config import Config # Import Config
 
 class InputValidator:
     """Centralized input validation and sanitization utilities."""
@@ -121,7 +121,12 @@ class SecurityMiddleware:
     def add_security_headers(response):
         """Add security headers to response."""
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['X-Frame-Options'] = 'DENY'
+        # Conditionally remove X-Frame-Options if DATA_SOURCE is 'api'
+        if Config.DATA_SOURCE == 'api':
+            if 'X-Frame-Options' in response.headers:
+                del response.headers['X-Frame-Options']
+        else:
+            response.headers['X-Frame-Options'] = 'DENY'
         response.headers['X-XSS-Protection'] = '1; mode=block'
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
         return response

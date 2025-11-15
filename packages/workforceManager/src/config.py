@@ -16,6 +16,9 @@ class Config:
     # --- Core Secrets / Flags ---
     SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 
+    # Data source for task data: 'excel' (default) or 'api'
+    DATA_SOURCE = os.environ.get('DATA_SOURCE', 'excel').lower()
+
     # Global debug mode toggle (string env values '1', 'true', 'True')
     FLASK_DEBUG = os.environ.get('FLASK_DEBUG', '0').lower() in ('1', 'true', 'yes')
 
