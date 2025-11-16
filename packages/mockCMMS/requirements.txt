@@ -1,5 +1,0 @@
-# Dependencies for mockCMMS
-# To be populated as the project is developed.
-flask
-Flask-SQLAlchemy
-SQLAlchemy
