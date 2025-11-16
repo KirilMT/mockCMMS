@@ -1,0 +1,165 @@
+{
+  "roles": [
+    {
+      "name": "Admin",
+      "description": "Administrator with full access"
+    },
+    {
+      "name": "User",
+      "description": "Standard user with limited access"
+    },
+    {
+      "name": "Technician",
+      "description": "Can view and update assigned tasks"
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@example.com",
+      "password": "adminpass",
+      "roles": ["Admin", "User"]
+    },
+    {
+      "username": "john.doe",
+      "email": "john.doe@example.com",
+      "password": "johnpass",
+      "roles": ["User", "Technician"]
+    }
+  ],
+  "skills": [
+    "Python",
+    "Flask",
+    "Database",
+    "Frontend",
+    "Network",
+    "Hardware",
+    "Electrical",
+    "Mechanical"
+  ],
+  "technicians": [
+    "Alice",
+    "Bob",
+    "Charlie"
+  ],
+  "assets": [
+    {
+      "name": "Server Rack 01",
+      "description": "Main production server rack",
+      "location": "Server Room A",
+      "status": "Operational"
+    },
+    {
+      "name": "HVAC Unit 03",
+      "description": "Third floor HVAC system",
+      "location": "Roof",
+      "status": "Operational"
+    },
+    {
+      "name": "CNC Machine 05",
+      "description": "Precision manufacturing machine",
+      "location": "Workshop",
+      "status": "Under Maintenance"
+    }
+  ],
+  "maintenance_orders": [
+    {
+      "asset": "Server Rack 01",
+      "description": "Quarterly server rack inspection",
+      "order_type": "PM",
+      "status": "Open",
+      "due_days_from_now": 7
+    },
+    {
+      "asset": "HVAC Unit 03",
+      "description": "HVAC filter replacement",
+      "order_type": "PM",
+      "status": "In Progress",
+      "due_days_from_now": 14
+    },
+    {
+      "asset": "CNC Machine 05",
+      "description": "CNC spindle repair",
+      "order_type": "Corrective",
+      "status": "Open",
+      "due_days_from_now": 3
+    }
+  ],
+  "spare_parts": [
+    {
+      "name": "Server Fan",
+      "description": "Cooling fan for server racks",
+      "quantity": 10,
+      "location": "Warehouse A1",
+      "min_quantity": 5
+    },
+    {
+      "name": "HVAC Filter",
+      "description": "Standard HVAC filter",
+      "quantity": 50,
+      "location": "Warehouse B2",
+      "min_quantity": 20
+    },
+    {
+      "name": "CNC Spindle",
+      "description": "Replacement spindle for CNC machine",
+      "quantity": 2,
+      "location": "Workshop Storage",
+      "min_quantity": 1
+    }
+  ],
+  "tasks": [
+    {
+      "scheduler_group_task": "Server Maintenance",
+      "planning_notes": "Check logs, update OS, verify backups",
+      "lines": "Datacenter",
+      "mitarbeiter_pro_aufgabe": 2,
+      "planned_worktime_min": 120,
+      "priority": "A",
+      "quantity": 1,
+      "task_type": "PM",
+      "ticket_mo": "CMMS-101",
+      "ticket_url": "http://mockcmms/tickets/CMMS-101",
+      "required_skills": ["Network", "Hardware"]
+    },
+    {
+      "scheduler_group_task": "API Endpoint Debug",
+      "planning_notes": "Investigate /api/v1/tasks performance",
+      "lines": "Backend",
+      "mitarbeiter_pro_aufgabe": 1,
+      "planned_worktime_min": 60,
+      "priority": "B",
+      "quantity": 2,
+      "task_type": "Rep",
+      "ticket_mo": "CMMS-102",
+      "ticket_url": "http://mockcmms/tickets/CMMS-102",
+      "required_skills": ["Python", "Flask"]
+    },
+    {
+      "scheduler_group_task": "Frontend UI Fix",
+      "planning_notes": "Adjust dashboard layout for mobile",
+      "lines": "Frontend",
+      "mitarbeiter_pro_aufgabe": 1,
+      "planned_worktime_min": 90,
+      "priority": "C",
+      "quantity": 1,
+      "task_type": "Rep",
+      "ticket_mo": "CMMS-103",
+      "ticket_url": "http://mockcmms/tickets/CMMS-103",
+      "required_skills": ["Frontend"]
+    },
+    {
+      "scheduler_group_task": "Database Optimization",
+      "planning_notes": "Review slow queries, add indexes",
+      "lines": "Database",
+      "mitarbeiter_pro_aufgabe": 1,
+      "planned_worktime_min": 180,
+      "priority": "A",
+      "quantity": 1,
+      "task_type": "PM",
+      "ticket_mo": "CMMS-104",
+      "ticket_url": "http://mockcmms/tickets/CMMS-104",
+      "required_skills": ["Database"]
+    }
+  ]
+}

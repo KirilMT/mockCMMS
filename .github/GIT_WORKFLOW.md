@@ -91,17 +91,35 @@ git push -u origin new-feature-name
 
 ---
 
-### 4. Versioning
+### 4. Versioning and Documentation
 
-This project follows Semantic Versioning (SemVer). When you create a pull request, you should update the version number in the `README.md` file according to the changes you've made.
+This project follows Semantic Versioning (SemVer) and maintains changelogs for all components. **Before creating a pull request**, you must update version information:
 
-**Format:** `MAJOR.MINOR.PATCH` (e.g., `1.1.0`)
+**Version Format:** `MAJOR.MINOR.PATCH` (e.g., `1.1.0`)
 
 -   **MAJOR (`1.x.x`):** Increment for incompatible API changes.
 -   **MINOR (`x.1.x`):** Increment for new, backward-compatible features.
 -   **PATCH (`x.x.1`):** Increment for backward-compatible bug fixes.
 
-This version number reflects the state of the application and will be used for creating Git tags and releases.
+**Required Updates:**
+
+1. **Update CHANGELOG.md** (follow [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format):
+   - Main app: `/CHANGELOG.md`
+   - WorkforceManager: `/apps/workforceManager/CHANGELOG.md`
+   - Add new version entry with date and categorized changes (Added/Changed/Removed/Fixed)
+
+2. **Update README.md version footer**:
+   - Main app: `/README.md`
+   - WorkforceManager: `/apps/workforceManager/README.md`
+   - Ensure version numbers match between CHANGELOG.md and README.md
+   - Update "Last Updated" date
+
+**Example:**
+```markdown
+**Version:** 1.2.1 | **Last Updated:** January 27, 2025
+```
+
+This version information will be used for creating Git tags and releases.
 
 ---
 

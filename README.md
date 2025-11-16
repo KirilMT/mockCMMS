@@ -1,94 +1,200 @@
-# CMMS Workspace
+# mockCMMS (Mock Computerized Maintenance Management System)
 
-This repository is a monorepo for the CMMS (Computerized Maintenance Management System) project and its related services. It contains the core applications and supporting tools for the CMMS ecosystem.
+A modular Flask-based maintenance management system with a monorepo architecture that supports dynamic loading of specialized applications.
 
-## Workspace Structure
+## 🚀 Features
 
-All projects and services are located within the `packages/` directory.
+- **Modular Architecture:** Main application with dynamically loadable apps
+- **Centralized Configuration:** Single `.env` file for all applications
+- **Unified Environment:** One virtual environment and dependency management
+- **Dynamic App Loading:** Enable/disable apps without code changes
+- **Scalable Design:** Easy addition of new specialized modules
 
--   **`packages/workforceManager`**: The primary application for managing the technician workforce, tasks, and scheduling.
--   **`packages/mockCMMS`**: A mock CMMS application designed for integration testing and simulating the production environment.
+## 📁 Project Structure
 
-## Getting Started
-
-To get started with a specific project, please refer to the `README.md` file located within its directory. For example, for instructions on how to set up and run the Workforce Manager, see `packages/workforceManager/README.md`.
-
-Each project is intended to have its own virtual environment and dependencies, which should be managed within its respective directory.
-
-## Running the Integrated Environment
-
-To test the integration between `workforceManager` and `mockCMMS`, you can run both applications simultaneously. `workforceManager` will fetch its data from the `mockCMMS` API instead of from an Excel file.
-
-### 1. Set up both projects
-
-Ensure you have installed the dependencies for both projects in their respective virtual environments:
-
-```sh
-# For workforceManager
-python -m venv packages/workforceManager/.venv
-# On Windows PowerShell, run from the monorepo root:
-.\packages\workforceManager\.venv\Scripts\Activate.ps1
-# On macOS/Linux, run from the monorepo root:
-source packages/workforceManager/.venv/bin/activate
-pip install -r packages/workforceManager/requirements.txt
-
-# For mockCMMS
-python -m venv packages/mockCMMS/.venv
-# On Windows PowerShell, run from the monorepo root:
-.\packages\mockCMMS\.venv\Scripts\Activate.ps1
-# On macOS/Linux, run from the monorepo root:
-source packages/mockCMMS/.venv/bin/activate
-pip install -r packages/mockCMMS/requirements.txt
+```
+mockCMMS/
+├── .github/                 # GitHub configuration and workflows
+├── src/                     # Main mockCMMS application
+│   ├── routes/              # API and web routes
+│   │   ├── api.py           # REST API endpoints
+│   │   └── main.py          # Web interface routes
+│   ├── services/            # Business logic
+│   │   └── db_utils.py      # Database utilities
+│   ├── static/              # CSS, JS, images
+│   ├── templates/           # HTML templates
+│   └── app.py               # Flask application factory
+├── apps/                    # Modular applications
+│   └── workforceManager/    # Workforce management module
+│       ├── src/             # Application source code
+│       │   ├── routes/      # Flask blueprints
+│       │   ├── services/    # Core business logic
+│       │   ├── static/      # CSS/JS assets
+│       │   ├── templates/   # HTML templates
+│       │   └── app.py       # Flask factory
+│       ├── config/          # Configuration files
+│       ├── instance/        # SQLite databases
+│       ├── tests/           # Test suite
+│       └── README.md        # Module documentation
+├── config/                  # Main app configuration
+├── docs/                    # Documentation
+├── instance/                # SQLite databases
+├── test_data/               # Test fixtures
+├── tests/                   # Main app tests
+├── .env                     # Environment configuration
+├── requirements.txt         # Dependencies
+└── run.py                   # Application entry point
 ```
 
-### 2. Seed the Mock CMMS Database
+## 🔧 Applications
 
-In a terminal, **after activating the `mockCMMS` virtual environment**, run the seed script to populate the `mockCMMS` database with test data:
+### Main Application
+- **Core mockCMMS:** Base maintenance management functionality
+- **Entry Point:** Serves as the foundation for all modular apps
+- **Configuration Hub:** Manages settings for all integrated applications
 
-```sh
-# Activate mockCMMS venv (if not already active)
-# On Windows PowerShell: .\packages\mockCMMS\.venv\Scripts\Activate.ps1
-# On macOS/Linux: source packages/mockCMMS/.venv/bin/activate
+### Modular Apps
+- **[Workforce Manager](apps/workforceManager/README.md):** Advanced skill-based technician task assignment system with workload optimization
+- **Future Apps:** Additional modules can be easily integrated following the same pattern
 
-python packages/mockCMMS/src/services/seed.py
+> **Note:** For detailed setup and usage instructions for specific apps, refer to their individual README.md files.
+
+## ⚙️ Setup and Installation
+
+### Prerequisites
+
+- Python 3.12 or higher
+- pip (Python package installer)
+- Git
+
+### Installation Steps
+
+1. **Navigate to the mockCMMS directory:**
+   ```bash
+   cd mockCMMS
+   ```
+
+2. **Create a virtual environment:**
+   ```powershell
+   py -3 -m venv .venv
+   ```
+
+3. **Activate the virtual environment:**
+   - On **Windows (PowerShell)**:
+     ```powershell
+     .\.venv\Scripts\Activate.ps1
+     ```
+   - On **Windows (Command Prompt)**:
+     ```cmd
+     .venv\Scripts\activate
+     ```
+   - On **macOS/Linux (bash/zsh):**
+     ```bash
+     source .venv/bin/activate
+     ```
+
+4. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. **Install modular apps in editable mode:**
+   ```bash
+   pip install -e apps/workforceManager
+   ```
+
+6. **Set up environment configuration:**
+   ```bash
+   cp .env.example .env
+   ```
+   Edit the `.env` file as needed for your environment.
+
+7. **Run the application:**
+   ```bash
+   python run.py
+   ```
+
+8. **Access the application:**
+   Open your browser and navigate to `http://127.0.0.1:5000`
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `SECRET_KEY` | Flask secret key for sessions | Auto-generated |
+| `FLASK_DEBUG` | Enable debug mode (1/true/yes) | 0 |
+| `WORKFORCE_MANAGER_ENABLED` | Enable Workforce Manager app | True |
+
+### App Management
+
+- **Enable apps:** Set `APP_NAME_ENABLED=True` in `.env`
+- **Disable apps:** Set `APP_NAME_ENABLED=False` in `.env`
+- **Changes take effect:** On next application restart
+
+## 🚀 Running the Application
+
+### Development Mode
+```bash
+# Activate virtual environment
+.\.venv\Scripts\Activate.ps1  # Windows PowerShell
+# source .venv/bin/activate     # macOS/Linux
+
+# Run application
+python run.py
 ```
 
-### 3. Run the Mock CMMS Server
-
-In a new terminal, **after activating the `mockCMMS` virtual environment**, start the `mockCMMS` server. It will run on port 5001.
-
-```sh
-# Activate mockCMMS venv (if not already active)
-# On Windows PowerShell: .\packages\mockCMMS\.venv\Scripts\Activate.ps1
-# On macOS/Linux: source packages/mockCMMS/.venv/bin/activate
-
-python packages/mockCMMS/run.py
+### Production Mode
+```bash
+python run.py
 ```
 
-### 4. Run the Workforce Manager in API Mode
+## 🔧 Development Guide
 
-In another new terminal, **after activating the `workforceManager` virtual environment**, set the `DATA_SOURCE` environment variable to `api` and start the `workforceManager` server. It will run on port 5000.
+### Adding a New App
 
-```sh
-# Activate workforceManager venv (if not already active)
-# On Windows PowerShell: .\packages\workforceManager\.venv\Scripts\Activate.ps1
-# On macOS/Linux: source packages/workforceManager/.venv/bin/activate
+1. **Create app directory:**
+   ```bash
+   mkdir apps/your-app
+   ```
 
-# For Windows (Command Prompt)
-set DATA_SOURCE=api
-python packages/workforceManager/run.py
+2. **Add setup.py in the app root**
 
-# For Windows (PowerShell)
-$env:DATA_SOURCE="api"
-python packages/workforceManager/run.py
+3. **Install in editable mode:**
+   ```bash
+   pip install -e apps/your-app
+   ```
 
-# For macOS/Linux
-export DATA_SOURCE=api
-python packages/workforceManager/run.py
+4. **Add configuration to `.env`:**
+   ```env
+   # --- Your App ---
+   YOUR_APP_ENABLED=True
+   YOUR_APP_SETTING=value
+   ```
+
+5. **Register blueprint in `src/app.py`**
+
+### Development Workflow
+
+1. Make changes to any app
+2. Restart with `python run.py`
+3. All apps reload automatically
+4. Use `.env` to enable/disable apps for testing
+
+## 🗄️ Database Management
+
+### Seeding the Database
+
+```bash
+# Activate virtual environment first
+python src/services/seed.py
 ```
 
-Now, when you use the `workforceManager` application, it will be using the data served by `mockCMMS`.
+## 🤝 Contributing
 
-## Contributing
+Contributions are welcome. Please read the [contributing guidelines](.github/CONTRIBUTING.md) for development process, coding standards, and submission guidelines.
 
-Contributions are welcome. Please read the [contributing guidelines](.github/CONTRIBUTING.md) for more information on our development process, how to propose bugfixes and improvements, and the coding standards.
+---
+
+**Version:** 1.0.0 | **Last Updated:** January 27, 2025

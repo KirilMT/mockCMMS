@@ -134,8 +134,8 @@ output/
 temp/
 
 # External/sensitive configuration
-packages/workforceManager/config/config.json
-packages/mockCMMS/config/config.json
+apps/workforceManager/config/config.json
+config/config.json
 
 # IDE specific files
 .vscode/
@@ -163,15 +163,19 @@ Thumbs.db
 ~$*.xls
 ~$*.xlsb
 
-# Package-specific runtime artifacts (ignore runtime data and virtual envs)
-# mockCMMS runtime artifacts
-packages/mockCMMS/instance/
-packages/mockCMMS/logs/
-packages/mockCMMS/.venv/
-packages/mockCMMS/*.db
+# Runtime artifacts (new structure)
+# Main app runtime artifacts
+instance/*.db
+logs/
 
 # workforceManager runtime artifacts
-packages/workforceManager/instance/
-packages/workforceManager/logs/
-packages/workforceManager/.venv/
-packages/workforceManager/*.db
+apps/workforceManager/instance/*.db
+apps/workforceManager/logs/
+apps/workforceManager/output/
+
+# Sensitive files
+.env
+!.env.example
+
+# Legacy packages directory (if any remains)
+packages/
