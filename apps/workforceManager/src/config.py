@@ -23,7 +23,7 @@ class Config:
     FLASK_DEBUG = os.environ.get('FLASK_DEBUG', '0').lower() in ('1', 'true', 'yes')
 
     # Optional separate flag just to force using test DB without enabling all debug behaviors
-    DEBUG_USE_TEST_DB = os.environ.get('DEBUG_USE_TEST_DB', '0').lower() in ('1', 'true', 'yes')
+    DEBUG_USE_TEST_DB = os.environ.get('WORKFORCE_MANAGER_DEBUG_USE_TEST_DB', '0').lower() in ('1', 'true', 'yes')
 
     # Optional fixed date (ISO formats e.g. '2025-04-19' or '2025-04-19T16:00:00') used by services when FLASK_DEBUG active
     DEBUG_FIXED_DATE = os.environ.get('DEBUG_FIXED_DATE')  # parsed lazily where needed

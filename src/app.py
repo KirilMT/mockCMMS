@@ -14,7 +14,7 @@ def create_app():
     load_dotenv(dotenv_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '.env'))
     
     # Set debug flag for test database
-    app.config['DEBUG_USE_TEST_DB'] = os.getenv('DEBUG_USE_TEST_DB', '0').lower() in ('1', 'true', 'yes')
+    app.config['DEBUG_USE_TEST_DB'] = os.getenv('MOCKCMMS_DEBUG_USE_TEST_DB', '0').lower() in ('1', 'true', 'yes')
 
     # Configure the database
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'instance', 'mockcmms.db')
@@ -95,7 +95,7 @@ def create_app():
         db.create_all() # Create database tables for our models
         
         # Populate with dummy data if the DB was just created and we are in debug mode
-        debug_use_test_db = os.getenv('DEBUG_USE_TEST_DB', '0').lower() in ('1', 'true', 'yes')
+        debug_use_test_db = os.getenv('MOCKCMMS_DEBUG_USE_TEST_DB', '0').lower() in ('1', 'true', 'yes')
         if not db_exists and debug_use_test_db:
             try:
                 from .services.db_utils import populate_dummy_data
