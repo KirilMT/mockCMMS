@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Mock CMMS{% endblock %}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"> {# Font Awesome for burger icon #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/advanced-table.css') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         body {
             overflow-x: hidden; /* Prevent horizontal scroll */
@@ -129,8 +132,11 @@
                 <a href="/maintenance_orders" class="list-group-item list-group-item-action bg-dark text-light">Maintenance Orders</a>
                 <a href="/spare_parts" class="list-group-item list-group-item-action bg-dark text-light">Spare Parts</a>
                 <a href="/users" class="list-group-item list-group-item-action bg-dark text-light">Users</a>
+                {% if REPORTS_ENABLED %}
+                <a href="/reports" class="list-group-item list-group-item-action bg-dark text-light">Reports</a>
+                {% endif %}
                 {% if WORKFORCE_MANAGER_ENABLED %}
-                <a href="/workforce-manager" class="list-group-item list-group-item-action bg-dark text-light">Workforce Manager</a>
+                <a href="/planning" class="list-group-item list-group-item-action bg-dark text-light">Planning</a>
                 {% endif %}
             </div>
         </div>
@@ -157,6 +163,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='js/advanced-table.js') }}"></script>
     <script>
         $("#sidebarToggle").click(function(e) {
             e.preventDefault();

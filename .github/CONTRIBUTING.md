@@ -71,9 +71,9 @@ If you open a pull request from a personal fork, you should allow repository mai
 Commit messages for this repository follow the conventions below. Here is an example:
 
 '''
-feat(workforceManager): add version subcommand
+feat(reports): add PDF export functionality
 
-A version subcommand is added to the workforceManager package, which prints the current version of the tool. The version follows the versioning conventions described at https://go.dev/ref/mod#versions.
+A PDF export feature is added to the reports package, which generates maintenance reports in PDF format. The feature supports both reactive production reports and weekend completion summaries.
 
 Resolves #12345
 '''
@@ -88,7 +88,7 @@ A structural element defined by the conventions at https://www.conventionalcommi
 
 #### scope
 
-The name of the package or component affected by the change (e.g., `workforceManager`, `mockCMMS`, `ci`, `docs`), and should be provided in parentheses before the colon.
+The name of the package or component affected by the change (e.g., `workforceManager`, `reports`, `mockCMMS`, `advanced-table`, `ci`, `docs`), and should be provided in parentheses before the colon.
 
 #### description
 

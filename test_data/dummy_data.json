@@ -5,26 +5,86 @@
       "description": "Administrator with full access"
     },
     {
-      "name": "User",
-      "description": "Standard user with limited access"
+      "name": "Manager",
+      "description": "Department manager with planning access"
+    },
+    {
+      "name": "Supervisor",
+      "description": "Team supervisor with assignment rights"
     },
     {
       "name": "Technician",
-      "description": "Can view and update assigned tasks"
+      "description": "Field technician with task execution rights"
+    },
+    {
+      "name": "Planner",
+      "description": "Maintenance planner with scheduling rights"
+    },
+    {
+      "name": "Viewer",
+      "description": "Read-only access to reports and data"
     }
   ],
   "users": [
     {
       "username": "admin",
-      "email": "admin@example.com",
-      "password": "adminpass",
-      "roles": ["Admin", "User"]
+      "email": "admin@mockcmms.com",
+      "password": "admin123",
+      "roles": ["Admin"]
     },
     {
-      "username": "john.doe",
-      "email": "john.doe@example.com",
-      "password": "johnpass",
-      "roles": ["User", "Technician"]
+      "username": "john.manager",
+      "email": "john.manager@mockcmms.com",
+      "password": "manager123",
+      "roles": ["Manager", "Planner"]
+    },
+    {
+      "username": "sarah.supervisor",
+      "email": "sarah.supervisor@mockcmms.com",
+      "password": "super123",
+      "roles": ["Supervisor", "Technician"]
+    },
+    {
+      "username": "mike.tech",
+      "email": "mike.tech@mockcmms.com",
+      "password": "tech123",
+      "roles": ["Technician"]
+    },
+    {
+      "username": "lisa.planner",
+      "email": "lisa.planner@mockcmms.com",
+      "password": "plan123",
+      "roles": ["Planner", "Viewer"]
+    },
+    {
+      "username": "david.tech",
+      "email": "david.tech@mockcmms.com",
+      "password": "tech123",
+      "roles": ["Technician"]
+    },
+    {
+      "username": "anna.viewer",
+      "email": "anna.viewer@mockcmms.com",
+      "password": "view123",
+      "roles": ["Viewer"]
+    },
+    {
+      "username": "carlos.super",
+      "email": "carlos.super@mockcmms.com",
+      "password": "super123",
+      "roles": ["Supervisor"]
+    },
+    {
+      "username": "emma.tech",
+      "email": "emma.tech@mockcmms.com",
+      "password": "tech123",
+      "roles": ["Technician"]
+    },
+    {
+      "username": "robert.manager",
+      "email": "robert.manager@mockcmms.com",
+      "password": "manager123",
+      "roles": ["Manager"]
     }
   ],
   "skills": [
@@ -44,68 +104,440 @@
   ],
   "assets": [
     {
-      "name": "Server Rack 01",
-      "description": "Main production server rack",
-      "location": "Server Room A",
+      "asset_code": "AST-0001",
+      "name": "Paint Line Robot A1",
+      "description": "Primary painting robot for automotive parts",
+      "asset_type": "robot",
+      "cost_center": "paint",
+      "location": "Paint Shop - Line 1",
       "status": "Operational"
     },
     {
-      "name": "HVAC Unit 03",
-      "description": "Third floor HVAC system",
-      "location": "Roof",
+      "asset_code": "AST-0002",
+      "name": "Assembly Station B3",
+      "description": "Manual assembly workstation for engine components",
+      "asset_type": "station",
+      "cost_center": "assembly",
+      "location": "Assembly Hall - Section B",
       "status": "Operational"
     },
     {
-      "name": "CNC Machine 05",
-      "description": "Precision manufacturing machine",
-      "location": "Workshop",
+      "asset_code": "AST-0003",
+      "name": "BIW Welding Robot C2",
+      "description": "Body-in-white welding robot for chassis",
+      "asset_type": "robot",
+      "cost_center": "biw",
+      "location": "BIW Shop - Line C",
       "status": "Under Maintenance"
+    },
+    {
+      "asset_code": "AST-0004",
+      "name": "Conveyor System D1",
+      "description": "Main production line conveyor belt",
+      "asset_type": "line",
+      "cost_center": "assembly",
+      "location": "Production Floor - Main Line",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0005",
+      "name": "Quality Control Station E1",
+      "description": "Final inspection and testing station",
+      "asset_type": "station",
+      "cost_center": "assembly",
+      "location": "Quality Control Area",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0006",
+      "name": "Paint Booth F2",
+      "description": "Automated paint application booth",
+      "asset_type": "station",
+      "cost_center": "paint",
+      "location": "Paint Shop - Booth 2",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0007",
+      "name": "Stamping Press G1",
+      "description": "Heavy-duty metal stamping press",
+      "asset_type": "tooling",
+      "cost_center": "biw",
+      "location": "Stamping Department",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0008",
+      "name": "HVAC System H3",
+      "description": "Climate control system for paint shop",
+      "asset_type": "department",
+      "cost_center": "paint",
+      "location": "Paint Shop - Roof",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0009",
+      "name": "Laser Cutting Machine I1",
+      "description": "Precision laser cutting for metal sheets",
+      "asset_type": "tooling",
+      "cost_center": "biw",
+      "location": "Fabrication Shop",
+      "status": "Down"
+    },
+    {
+      "asset_code": "AST-0010",
+      "name": "Assembly Robot J4",
+      "description": "6-axis assembly robot for engine mounting",
+      "asset_type": "robot",
+      "cost_center": "assembly",
+      "location": "Assembly Hall - Section J",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0011",
+      "name": "Paint Mixing Station K1",
+      "description": "Automated paint mixing and preparation",
+      "asset_type": "station",
+      "cost_center": "paint",
+      "location": "Paint Shop - Prep Area",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0012",
+      "name": "Spot Welding Gun L2",
+      "description": "Portable spot welding equipment",
+      "asset_type": "tooling",
+      "cost_center": "biw",
+      "location": "BIW Shop - Mobile",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0013",
+      "name": "Final Assembly Line M1",
+      "description": "Complete vehicle final assembly line",
+      "asset_type": "line",
+      "cost_center": "assembly",
+      "location": "Final Assembly Hall",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0014",
+      "name": "Paint Oven N1",
+      "description": "High-temperature curing oven for painted parts",
+      "asset_type": "station",
+      "cost_center": "paint",
+      "location": "Paint Shop - Curing Area",
+      "status": "Operational"
+    },
+    {
+      "asset_code": "AST-0015",
+      "name": "Material Handling AGV O1",
+      "description": "Automated guided vehicle for parts transport",
+      "asset_type": "robot",
+      "cost_center": "assembly",
+      "location": "Production Floor - Mobile",
+      "status": "Operational"
     }
   ],
   "maintenance_orders": [
     {
-      "asset": "Server Rack 01",
-      "description": "Quarterly server rack inspection",
+      "asset": "Paint Line Robot A1",
+      "description": "Weekly lubrication and calibration check",
       "order_type": "PM",
       "status": "Open",
+      "priority": "Medium",
+      "schedule_name": "Weekly Robot PM",
+      "frequency": "weekly",
+      "estimated_completion_time": 120,
+      "labour_count": 2,
+      "due_days_from_now": 2
+    },
+    {
+      "asset": "Assembly Station B3",
+      "description": "Torque wrench calibration and tool inspection",
+      "order_type": "PM",
+      "status": "In Progress",
+      "priority": "Low",
+      "schedule_name": "Monthly Tool Check",
+      "frequency": "monthly",
+      "estimated_completion_time": 60,
+      "labour_count": 1,
+      "due_days_from_now": 5
+    },
+    {
+      "asset": "BIW Welding Robot C2",
+      "description": "Emergency repair - welding tip replacement",
+      "order_type": "reactive",
+      "status": "In Progress",
+      "priority": "Critical",
+      "estimated_completion_time": 180,
+      "labour_count": 3,
+      "justification": "Production line stopped due to faulty welding tip",
+      "due_days_from_now": 0
+    },
+    {
+      "asset": "Conveyor System D1",
+      "description": "Belt tension adjustment and motor inspection",
+      "order_type": "PM",
+      "status": "Scheduled",
+      "priority": "Medium",
+      "schedule_name": "Conveyor Maintenance",
+      "frequency": "monthly",
+      "estimated_completion_time": 90,
+      "labour_count": 2,
+      "due_days_from_now": 10
+    },
+    {
+      "asset": "Quality Control Station E1",
+      "description": "Calibration of measurement equipment",
+      "order_type": "PM",
+      "status": "Open",
+      "priority": "High",
+      "schedule_name": "QC Calibration",
+      "frequency": "weekly",
+      "estimated_completion_time": 45,
+      "labour_count": 1,
+      "due_days_from_now": 3
+    },
+    {
+      "asset": "Paint Booth F2",
+      "description": "Filter replacement and spray gun cleaning",
+      "order_type": "PM",
+      "status": "Open",
+      "priority": "Medium",
+      "schedule_name": "Paint Booth PM",
+      "frequency": "weekly",
+      "estimated_completion_time": 75,
+      "labour_count": 1,
+      "due_days_from_now": 1
+    },
+    {
+      "asset": "Stamping Press G1",
+      "description": "Hydraulic system pressure check and oil change",
+      "order_type": "PM",
+      "status": "Completed",
+      "priority": "Medium",
+      "schedule_name": "Press Hydraulics",
+      "frequency": "monthly",
+      "estimated_completion_time": 150,
+      "labour_count": 2,
+      "due_days_from_now": -5
+    },
+    {
+      "asset": "HVAC System H3",
+      "description": "Air filter replacement and duct cleaning",
+      "order_type": "PM",
+      "status": "Open",
+      "priority": "Low",
+      "schedule_name": "HVAC Maintenance",
+      "frequency": "monthly",
+      "estimated_completion_time": 120,
+      "labour_count": 2,
+      "due_days_from_now": 15
+    },
+    {
+      "asset": "Laser Cutting Machine I1",
+      "description": "Laser head alignment and lens replacement",
+      "order_type": "corrective",
+      "status": "In Progress",
+      "priority": "Critical",
+      "estimated_completion_time": 240,
+      "labour_count": 2,
+      "justification": "Cutting precision out of tolerance",
+      "due_days_from_now": 1
+    },
+    {
+      "asset": "Assembly Robot J4",
+      "description": "End effector inspection and gripper calibration",
+      "order_type": "PM",
+      "status": "Scheduled",
+      "priority": "Medium",
+      "schedule_name": "Robot End Effector",
+      "frequency": "weekly",
+      "estimated_completion_time": 90,
+      "labour_count": 1,
       "due_days_from_now": 7
     },
     {
-      "asset": "HVAC Unit 03",
-      "description": "HVAC filter replacement",
+      "asset": "Paint Mixing Station K1",
+      "description": "Pump maintenance and color accuracy check",
       "order_type": "PM",
-      "status": "In Progress",
-      "due_days_from_now": 14
+      "status": "Open",
+      "priority": "Medium",
+      "schedule_name": "Paint Mixing PM",
+      "frequency": "weekly",
+      "estimated_completion_time": 60,
+      "labour_count": 1,
+      "due_days_from_now": 4
     },
     {
-      "asset": "CNC Machine 05",
-      "description": "CNC spindle repair",
-      "order_type": "Corrective",
+      "asset": "Spot Welding Gun L2",
+      "description": "Electrode replacement and current calibration",
+      "order_type": "PM",
+      "status": "Completed",
+      "priority": "High",
+      "schedule_name": "Welding Gun PM",
+      "frequency": "daily",
+      "estimated_completion_time": 30,
+      "labour_count": 1,
+      "due_days_from_now": -1
+    },
+    {
+      "asset": "Final Assembly Line M1",
+      "description": "Conveyor belt inspection and station alignment",
+      "order_type": "PM",
       "status": "Open",
+      "priority": "High",
+      "schedule_name": "Final Line PM",
+      "frequency": "weekly",
+      "estimated_completion_time": 180,
+      "labour_count": 3,
+      "due_days_from_now": 6
+    },
+    {
+      "asset": "Paint Oven N1",
+      "description": "Temperature sensor calibration and burner check",
+      "order_type": "PM",
+      "status": "Scheduled",
+      "priority": "High",
+      "schedule_name": "Oven Calibration",
+      "frequency": "monthly",
+      "estimated_completion_time": 120,
+      "labour_count": 2,
+      "due_days_from_now": 12
+    },
+    {
+      "asset": "Material Handling AGV O1",
+      "description": "Battery replacement and navigation system check",
+      "order_type": "reactive",
+      "status": "Open",
+      "priority": "Medium",
+      "estimated_completion_time": 90,
+      "labour_count": 1,
+      "justification": "AGV showing reduced battery life",
       "due_days_from_now": 3
     }
   ],
   "spare_parts": [
     {
-      "name": "Server Fan",
-      "description": "Cooling fan for server racks",
-      "quantity": 10,
-      "location": "Warehouse A1",
+      "description": "Robot Joint Bearing - 6mm",
+      "manufacturer": "SKF Industrial",
+      "manufacturer_part_id": "SKF-6206-2RS",
+      "quantity": 25,
+      "location": "Warehouse A-12",
+      "min_quantity": 10
+    },
+    {
+      "description": "Welding Electrode Tip - Copper",
+      "manufacturer": "Lincoln Electric",
+      "manufacturer_part_id": "LE-CT-150",
+      "quantity": 100,
+      "location": "Welding Storage B-05",
+      "min_quantity": 50
+    },
+    {
+      "description": "Conveyor Belt - 2000mm",
+      "manufacturer": "Gates Corporation",
+      "manufacturer_part_id": "GT-CB-2000",
+      "quantity": 3,
+      "location": "Warehouse C-08",
+      "min_quantity": 2
+    },
+    {
+      "description": "Paint Spray Nozzle - 1.4mm",
+      "manufacturer": "SATA Spray",
+      "manufacturer_part_id": "SATA-14-STD",
+      "quantity": 15,
+      "location": "Paint Shop Storage",
+      "min_quantity": 8
+    },
+    {
+      "description": "Hydraulic Seal Kit",
+      "manufacturer": "Parker Hannifin",
+      "manufacturer_part_id": "PH-HSK-250",
+      "quantity": 8,
+      "location": "Hydraulics Storage",
       "min_quantity": 5
     },
     {
-      "name": "HVAC Filter",
-      "description": "Standard HVAC filter",
-      "quantity": 50,
-      "location": "Warehouse B2",
-      "min_quantity": 20
+      "description": "HVAC Air Filter - HEPA",
+      "manufacturer": "Camfil",
+      "manufacturer_part_id": "CF-HEPA-24x24",
+      "quantity": 20,
+      "location": "HVAC Storage Room",
+      "min_quantity": 12
     },
     {
-      "name": "CNC Spindle",
-      "description": "Replacement spindle for CNC machine",
-      "quantity": 2,
-      "location": "Workshop Storage",
-      "min_quantity": 1
+      "description": "Laser Cutting Lens - 127mm",
+      "manufacturer": "II-VI Optical",
+      "manufacturer_part_id": "IIVI-127-ZnSe",
+      "quantity": 4,
+      "location": "Laser Shop Cabinet",
+      "min_quantity": 2
+    },
+    {
+      "description": "Motor Drive Belt - V-Type",
+      "manufacturer": "Gates Corporation",
+      "manufacturer_part_id": "GT-VB-1200",
+      "quantity": 12,
+      "location": "Warehouse A-15",
+      "min_quantity": 6
+    },
+    {
+      "description": "Pneumatic Cylinder - 50mm Bore",
+      "manufacturer": "Festo",
+      "manufacturer_part_id": "FT-CYL-50x200",
+      "quantity": 6,
+      "location": "Pneumatics Storage",
+      "min_quantity": 3
+    },
+    {
+      "description": "Temperature Sensor - Thermocouple",
+      "manufacturer": "Omega Engineering",
+      "manufacturer_part_id": "OM-TC-K-300",
+      "quantity": 18,
+      "location": "Instrumentation Room",
+      "min_quantity": 10
+    },
+    {
+      "description": "Gripper Pad - Soft Rubber",
+      "manufacturer": "Schunk",
+      "manufacturer_part_id": "SK-GP-SR-40",
+      "quantity": 30,
+      "location": "Robot Parts Storage",
+      "min_quantity": 15
+    },
+    {
+      "description": "Paint Filter - 190 Micron",
+      "manufacturer": "3M Industrial",
+      "manufacturer_part_id": "3M-PF-190",
+      "quantity": 50,
+      "location": "Paint Shop Storage",
+      "min_quantity": 25
+    },
+    {
+      "description": "Proximity Sensor - Inductive",
+      "manufacturer": "Pepperl+Fuchs",
+      "manufacturer_part_id": "PF-IND-M18",
+      "quantity": 22,
+      "location": "Electrical Storage",
+      "min_quantity": 12
+    },
+    {
+      "description": "Cutting Blade - Carbide Tip",
+      "manufacturer": "Sandvik Coromant",
+      "manufacturer_part_id": "SV-CB-CT-200",
+      "quantity": 8,
+      "location": "Cutting Tools Cabinet",
+      "min_quantity": 4
+    },
+    {
+      "description": "AGV Battery Pack - 24V",
+      "manufacturer": "Crown Battery",
+      "manufacturer_part_id": "CR-BP-24V-100AH",
+      "quantity": 3,
+      "location": "Battery Storage Room",
+      "min_quantity": 2
     }
   ],
   "tasks": [

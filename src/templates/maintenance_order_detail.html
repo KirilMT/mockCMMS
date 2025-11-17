@@ -6,29 +6,90 @@
     <h1 class="mb-4">{% if mo %}Edit Maintenance Order: {{ mo.description }}{% else %}Add New Maintenance Order{% endif %}</h1>
 
     <form method="POST" action="{% if mo %}{{ url_for('main.edit_mo', mo_id=mo.id) }}{% else %}{{ url_for('main.add_mo') }}{% endif %}">
-        <div class="form-group">
-            <label for="asset_id">Asset</label>
-            <select class="form-control" id="asset_id" name="asset_id" required>
-                {% for asset in assets %}
-                <option value="{{ asset.id }}" {% if mo and mo.asset_id == asset.id %}selected{% endif %}>{{ asset.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea class="form-control" id="description" name="description" required>{{ mo.description if mo else '' }}</textarea>
-        </div>
-        <div class="form-group">
-            <label for="order_type">Order Type</label>
-            <input type="text" class="form-control" id="order_type" name="order_type" value="{{ mo.order_type if mo else '' }}" required>
-        </div>
-        <div class="form-group">
-            <label for="status">Status</label>
-            <input type="text" class="form-control" id="status" name="status" value="{{ mo.status if mo else '' }}">
-        </div>
-        <div class="form-group">
-            <label for="due_date">Due Date</label>
-            <input type="date" class="form-control" id="due_date" name="due_date" value="{{ mo.due_date.strftime('%Y-%m-%d') if mo and mo.due_date else '' }}">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="asset_id">Asset</label>
+                    <select class="form-control" id="asset_id" name="asset_id" required>
+                        <option value="">Select Asset</option>
+                        {% for asset in assets %}
+                        <option value="{{ asset.id }}" {% if mo and mo.asset_id == asset.id %}selected{% endif %}>{{ asset.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" required>{{ mo.description if mo else '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="order_type">Order Type</label>
+                    <select class="form-control" id="order_type" name="order_type" required>
+                        <option value="">Select Type</option>
+                        <option value="PM" {{ 'selected' if mo and mo.order_type == 'PM' else '' }}>PM (Preventive Maintenance)</option>
+                        <option value="reactive" {{ 'selected' if mo and mo.order_type == 'reactive' else '' }}>Reactive</option>
+                        <option value="corrective" {{ 'selected' if mo and mo.order_type == 'corrective' else '' }}>Corrective</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select class="form-control" id="status" name="status" required>
+                        <option value="Open" {{ 'selected' if mo and mo.status == 'Open' else '' }}>Open</option>
+                        <option value="In Progress" {{ 'selected' if mo and mo.status == 'In Progress' else '' }}>In Progress</option>
+                        <option value="Scheduled" {{ 'selected' if mo and mo.status == 'Scheduled' else '' }}>Scheduled</option>
+                        <option value="Completed" {{ 'selected' if mo and mo.status == 'Completed' else '' }}>Completed</option>
+                        <option value="Cancelled" {{ 'selected' if mo and mo.status == 'Cancelled' else '' }}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select class="form-control" id="priority" name="priority" required>
+                        <option value="Undefined" {{ 'selected' if mo and mo.priority == 'Undefined' else '' }}>Undefined</option>
+                        <option value="Low" {{ 'selected' if mo and mo.priority == 'Low' else '' }}>Low</option>
+                        <option value="Medium" {{ 'selected' if mo and mo.priority == 'Medium' else '' }}>Medium</option>
+                        <option value="High" {{ 'selected' if mo and mo.priority == 'High' else '' }}>High</option>
+                        <option value="Critical" {{ 'selected' if mo and mo.priority == 'Critical' else '' }}>Critical</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="due_date">Due Date</label>
+                    <input type="date" class="form-control" id="due_date" name="due_date" value="{{ mo.due_date.strftime('%Y-%m-%d') if mo and mo.due_date else '' }}">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="schedule_name">Schedule Name</label>
+                    <input type="text" class="form-control" id="schedule_name" name="schedule_name" value="{{ mo.schedule_name if mo else '' }}" placeholder="e.g., Weekly Robot PM">
+                </div>
+                <div class="form-group">
+                    <label for="frequency">Frequency</label>
+                    <select class="form-control" id="frequency" name="frequency">
+                        <option value="">Select Frequency</option>
+                        <option value="daily" {{ 'selected' if mo and mo.frequency == 'daily' else '' }}>Daily</option>
+                        <option value="weekly" {{ 'selected' if mo and mo.frequency == 'weekly' else '' }}>Weekly</option>
+                        <option value="monthly" {{ 'selected' if mo and mo.frequency == 'monthly' else '' }}>Monthly</option>
+                        <option value="quarterly" {{ 'selected' if mo and mo.frequency == 'quarterly' else '' }}>Quarterly</option>
+                        <option value="yearly" {{ 'selected' if mo and mo.frequency == 'yearly' else '' }}>Yearly</option>
+                        <option value="one-time" {{ 'selected' if mo and mo.frequency == 'one-time' else '' }}>One-time</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="estimated_completion_time">Estimated Time (minutes)</label>
+                    <input type="number" class="form-control" id="estimated_completion_time" name="estimated_completion_time" value="{{ mo.estimated_completion_time if mo else '' }}" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="labour_count">Labour Count</label>
+                    <input type="number" class="form-control" id="labour_count" name="labour_count" value="{{ mo.labour_count if mo else '1' }}" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="assignees">Assignees</label>
+                    <textarea class="form-control" id="assignees" name="assignees" rows="2" placeholder="Enter user IDs or group names (JSON format)">{{ mo.assignees if mo else '' }}</textarea>
+                    <small class="form-text text-muted">Example: ["user1", "user2"] or ["maintenance_team"]</small>
+                </div>
+                <div class="form-group">
+                    <label for="justification">Justification</label>
+                    <textarea class="form-control" id="justification" name="justification" rows="3" placeholder="Reason for this maintenance order">{{ mo.justification if mo else '' }}</textarea>
+                </div>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">{% if mo %}Update MO{% else %}Add MO{% endif %}</button>
         <a href="{{ url_for('main.maintenance_orders') }}" class="btn btn-secondary">Cancel</a>

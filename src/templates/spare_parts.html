@@ -3,42 +3,42 @@
 {% block title %}Spare Parts{% endblock %}
 
 {% block content %}
-    <h1 class="mb-4">Spare Parts</h1>
-    <a href="{{ url_for('main.add_spare_part') }}" class="btn btn-primary mb-3">Add New Spare Part</a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Spare Parts</h1>
+        <a href="{{ url_for('main.add_spare_part') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Spare Part
+        </a>
+    </div>
 
-    {% if spare_parts %}
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Quantity</th>
-                <th>Location</th>
-                <th>Min Quantity</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for part in spare_parts %}
-            <tr>
-                <td>{{ part.id }}</td>
-                <td><a href="{{ url_for('main.spare_part_detail', part_id=part.id) }}">{{ part.name }}</a></td>
-                <td>{{ part.description }}</td>
-                <td>{{ part.quantity }}</td>
-                <td>{{ part.location }}</td>
-                <td>{{ part.min_quantity }}</td>
-                <td>
-                    <a href="{{ url_for('main.edit_spare_part', part_id=part.id) }}" class="btn btn-sm btn-info">Edit</a>
-                    <form action="{{ url_for('main.delete_spare_part', part_id=part.id) }}" method="post" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this spare part?');">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No spare parts found.</p>
-    {% endif %}
+    <div id="sparePartsTable"></div>
+    {% include 'components/advanced_table.html' %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const columns = [
+                { key: 'id', label: 'ID', type: 'number' },
+                { key: 'description', label: 'Description', type: 'text' },
+                { key: 'manufacturer', label: 'Manufacturer', type: 'text' },
+                { key: 'manufacturer_part_id', label: 'Part ID', type: 'text' },
+                { key: 'stock_quantity', label: 'Stock Qty', type: 'number' },
+                { key: 'location', label: 'Location', type: 'text' },
+                { key: 'min_quantity', label: 'Min Qty', type: 'number' }
+            ];
+
+            const sparePartsData = {{ spare_parts | tojson }};
+
+            advTable = new AdvancedTable('sparePartsTable', {
+                data: sparePartsData,
+                columns: columns,
+                pageName: 'spare_parts',
+                pageSize: 25
+            });
+            
+            setTimeout(() => {
+                if (typeof loadSavedConfigurations === 'function') {
+                    loadSavedConfigurations();
+                }
+            }, 100);
+        });
+    </script>
 {% endblock %}

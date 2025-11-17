@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request, session
-from src.services.db_utils import db, Task, Skill, Technician, Asset, MaintenanceOrder, SparePart, User, Role
+from src.services.db_utils import db, Task, Skill, Technician, Asset, MaintenanceOrder, SparePart, User, Role, TableConfiguration
+import json
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 
@@ -351,3 +352,112 @@ def auth_status():
         if user:
             return jsonify({"logged_in": True, "user": user.to_dict(include_roles=True)}), 200
     return jsonify({"logged_in": False}), 200
+
+# --- Table Configuration API ---
+@api_bp.route('/table-config/<page_name>', methods=['GET'])
+def get_table_configs(page_name):
+    if 'user_id' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+    
+    configs = TableConfiguration.query.filter_by(
+        user_id=session['user_id'], 
+        page_name=page_name
+    ).all()
+    
+    return jsonify([config.to_dict() for config in configs])
+
+@api_bp.route('/table-config/<page_name>', methods=['POST'])
+def save_table_config(page_name):
+    if 'user_id' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+    
+    data = request.get_json()
+    
+    # If setting as default, remove default from other configs
+    if data.get('is_default'):
+        TableConfiguration.query.filter_by(
+            user_id=session['user_id'],
+            page_name=page_name,
+            is_default=True
+        ).update({'is_default': False})
+    
+    config = TableConfiguration(
+        user_id=session['user_id'],
+        page_name=page_name,
+        config_name=data['config_name'],
+        column_order=data.get('column_order'),
+        hidden_columns=data.get('hidden_columns'),
+        filters=data.get('filters'),
+        sort_config=data.get('sort_config'),
+        is_default=data.get('is_default', False)
+    )
+    
+    db.session.add(config)
+    db.session.commit()
+    
+    return jsonify({"success": True, "id": config.id})
+
+@api_bp.route('/table-config/<int:config_id>', methods=['DELETE'])
+def delete_table_config(config_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+    
+    config = TableConfiguration.query.filter_by(
+        id=config_id, 
+        user_id=session['user_id']
+    ).first_or_404()
+    
+    db.session.delete(config)
+    db.session.commit()
+    
+    return jsonify({"success": True})
+
+# --- Enhanced Data Endpoints ---
+@api_bp.route('/<entity>/filtered', methods=['GET'])
+def get_filtered_data(entity):
+    models = {
+        'assets': Asset,
+        'maintenance_orders': MaintenanceOrder,
+        'spare_parts': SparePart,
+        'users': User
+    }
+    
+    if entity not in models:
+        return jsonify({"error": "Invalid entity"}), 400
+    
+    model = models[entity]
+    query = model.query
+    
+    # Apply filters
+    filters = request.args.get('filters')
+    if filters:
+        try:
+            filter_dict = json.loads(filters)
+            for column, filter_config in filter_dict.items():
+                if hasattr(model, column):
+                    column_attr = getattr(model, column)
+                    value = filter_config['value']
+                    operator = filter_config['operator']
+                    
+                    if operator == 'contains':
+                        query = query.filter(column_attr.like(f'%{value}%'))
+                    elif operator == 'equals':
+                        query = query.filter(column_attr == value)
+                    elif operator == 'not_equals':
+                        query = query.filter(column_attr != value)
+        except json.JSONDecodeError:
+            pass
+    
+    # Apply sorting
+    sort_column = request.args.get('sort_column')
+    sort_direction = request.args.get('sort_direction', 'asc')
+    
+    if sort_column and hasattr(model, sort_column):
+        column_attr = getattr(model, sort_column)
+        if sort_direction == 'desc':
+            query = query.order_by(column_attr.desc())
+        else:
+            query = query.order_by(column_attr.asc())
+    
+    results = query.all()
+    return jsonify([item.to_dict() for item in results])

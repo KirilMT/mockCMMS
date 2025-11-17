@@ -173,6 +173,10 @@ apps/workforceManager/instance/*.db
 apps/workforceManager/logs/
 apps/workforceManager/output/
 
+# reports runtime artifacts
+apps/reports/instance/reports/*
+!apps/reports/instance/reports/.gitkeep
+
 # Sensitive files
 .env
 !.env.example

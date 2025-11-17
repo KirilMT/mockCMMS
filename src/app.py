@@ -37,6 +37,23 @@ def create_app():
 
     from .routes.main import main_bp
     app.register_blueprint(main_bp)
+    
+    # Conditionally register the reports app
+    if os.getenv('REPORTS_ENABLED', 'False').lower() in ('true', '1', 't'):
+        try:
+            # Ensure database is initialized before importing reports blueprint
+            with app.app_context():
+                from apps.reports.src.routes.reports import reports_bp
+                app.register_blueprint(reports_bp)
+                csrf.exempt(reports_bp)
+                if app.logger:
+                    app.logger.info("Reports Blueprint registered at /reports")
+        except Exception as e:
+            if app.logger:
+                app.logger.error(f"Failed to register Reports blueprint: {e}")
+    else:
+        if app.logger:
+            app.logger.info("Reports Blueprint not enabled.")
 
     # Conditionally register the workforce_manager_bp from the workforceManager package
     if os.getenv('WORKFORCE_MANAGER_ENABLED', 'False').lower() in ('true', '1', 't'):
@@ -115,6 +132,9 @@ def create_app():
 
     @app.context_processor
     def inject_config():
-        return dict(WORKFORCE_MANAGER_ENABLED=os.getenv('WORKFORCE_MANAGER_ENABLED', 'False').lower() in ('true', '1', 't'))
+        return dict(
+            WORKFORCE_MANAGER_ENABLED=os.getenv('WORKFORCE_MANAGER_ENABLED', 'False').lower() in ('true', '1', 't'),
+            REPORTS_ENABLED=os.getenv('REPORTS_ENABLED', 'False').lower() in ('true', '1', 't')
+        )
 
     return app

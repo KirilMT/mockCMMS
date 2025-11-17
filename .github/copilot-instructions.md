@@ -90,6 +90,20 @@ mockCMMS/
 │   ├── logs/                      # Application logs (generated)
 │   ├── output/                    # Generated reports and dashboards
 │   └── README.md                  # Module-specific documentation
+├── apps/reports/                  # ⭐ Reports and analytics module
+│   ├── src/                       # Application source code
+│   │   ├── routes/                # Flask blueprints
+│   │   │   └── reports.py         # Main blueprint with all endpoints
+│   │   ├── services/              # Core business logic
+│   │   │   └── report_generator.py    # Report generation and export logic
+│   │   └── templates/             # HTML templates
+│   │       ├── reports.html           # Reports listing page with advanced table
+│   │       ├── report_generate.html   # Report generation interface
+│   │       └── report_detail.html     # Report detail view
+│   ├── instance/                  # Generated reports storage
+│   │   └── reports/               # Report files directory
+│   ├── setup.py                   # Package configuration
+│   └── README.md                  # Module-specific documentation
 ├── config/                        # Main app configuration
 ├── docs/                          # Project documentation
 ├── instance/                      # Main app databases
@@ -107,6 +121,28 @@ mockCMMS/
 -   **Run the application:** From the repository root, execute `python run.py`. The main app will load enabled modular apps.
 -   **Run tests:** From the repository root, execute `pytest tests/` for main app tests or `pytest apps/workforceManager/tests/` for workforceManager tests.
 
+### 2.2. `apps/reports`
+
+#### Overview
+
+The `reports` is a Flask-based web application for generating comprehensive maintenance reports and analytics. Its core purpose is to provide PDF and Markdown export capabilities for reactive production reports and weekend completion summaries.
+
+#### Key Technologies
+
+-   **Backend:** Python, Flask
+-   **Report Generation:** Custom report generator with PDF/Markdown support
+-   **Database:** Shared SQLite database with main mockCMMS app
+-   **Frontend:** HTML, CSS, JavaScript (vanilla)
+-   **Export Formats:** PDF (text), Markdown
+
+#### Core Features
+
+-   **Modular Architecture:** Completely separate Flask blueprint app
+-   **Environment Control:** Enable/disable via `REPORTS_ENABLED` environment variable
+-   **Report Types:** Reactive production reports, weekend completion summaries
+-   **Export Capabilities:** Multiple format support with file management
+-   **Database Integration:** Uses shared mockCMMS database models
+
 #### Running the Integrated Environment (with mockCMMS)
 
 1.  **Configure `.env` Files:** Before running, ensure both packages have their `.env` files properly configured:
@@ -114,6 +150,7 @@ mockCMMS/
     **Root** - `.env`:
     ```dotenv
     WORKFORCE_MANAGER_ENABLED=True
+    REPORTS_ENABLED=True
     DATA_SOURCE=api
     ```
 
@@ -169,3 +206,5 @@ mockCMMS/
     4. Update the "Last Updated" date in README.md files
     5. Main app versions are in `/CHANGELOG.md` and `/README.md`
     6. WorkforceManager versions are in `/apps/workforceManager/CHANGELOG.md` and `/apps/workforceManager/README.md`
+    7. Reports versions are in `/apps/reports/CHANGELOG.md` and `/apps/reports/README.md`
+    7. Reports versions are in `/apps/reports/CHANGELOG.md` and `/apps/reports/README.md`

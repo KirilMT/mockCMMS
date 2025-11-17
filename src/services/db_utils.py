@@ -67,18 +67,22 @@ class Skill(db.Model):
 
 class Asset(db.Model):
     id = Column(Integer, primary_key=True)
+    asset_code = Column(String(50), unique=True, nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    location = Column(String(255), nullable=True)
+    asset_type = Column(String(100), nullable=True)  # department/location/line/station/tooling/robot
+    cost_center = Column(String(100), nullable=True)  # paint/assembly/biw
     status = Column(String(50), default='Operational')
     maintenance_orders = relationship('MaintenanceOrder', back_populates='asset', lazy=True)
 
     def to_dict(self):
         return {
             "id": self.id,
+            "asset_code": self.asset_code,
             "name": self.name,
             "description": self.description,
-            "location": self.location,
+            "asset_type": self.asset_type,
+            "cost_center": self.cost_center,
             "status": self.status
         }
 
@@ -86,11 +90,32 @@ class MaintenanceOrder(db.Model):
     id = Column(Integer, primary_key=True)
     asset_id = Column(Integer, ForeignKey('asset.id'), nullable=False)
     description = Column(Text, nullable=False)
-    order_type = Column(String(50), nullable=False)
+    order_type = Column(String(50), nullable=False)  # PM/reactive/corrective
     status = Column(String(50), default='Open')
     due_date = Column(DateTime, nullable=True)
+    priority = Column(String(20), default='Undefined')  # Critical/High/Medium/Low/Undefined
+    schedule_name = Column(String(255), nullable=True)  # PM scheduler
+    schedule_date = Column(DateTime, nullable=True)
+    frequency = Column(String(50), nullable=True)  # daily/weekly/monthly
+    completion_date = Column(DateTime, nullable=True)
+    estimated_completion_time = Column(Integer, nullable=True)  # minutes
+    assignees = Column(Text, nullable=True)  # JSON array
+    created_by = Column(Integer, ForeignKey('user.id'), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    modified_by = Column(Integer, ForeignKey('user.id'), nullable=True)
+    modified_on = Column(DateTime, nullable=True)
+    labour_count = Column(Integer, default=1)
+    associated_mos = Column(Text, nullable=True)  # JSON array
+    total_time_on_job = Column(Integer, default=0)  # minutes
+    completed_by = Column(Integer, ForeignKey('user.id'), nullable=True)
+    completed_on = Column(DateTime, nullable=True)
+    justification = Column(Text, nullable=True)
+    url = Column(String(500), nullable=True)
+    
     asset = relationship('Asset', back_populates='maintenance_orders')
+    creator = relationship('User', foreign_keys=[created_by], backref='created_mos')
+    modifier = relationship('User', foreign_keys=[modified_by], backref='modified_mos')
+    completer = relationship('User', foreign_keys=[completed_by], backref='completed_mos')
 
     def to_dict(self):
         return {
@@ -100,23 +125,42 @@ class MaintenanceOrder(db.Model):
             "order_type": self.order_type,
             "status": self.status,
             "due_date": self.due_date.isoformat() if self.due_date else None,
-            "created_at": self.created_at.isoformat()
+            "priority": self.priority,
+            "schedule_name": self.schedule_name,
+            "schedule_date": self.schedule_date.isoformat() if self.schedule_date else None,
+            "frequency": self.frequency,
+            "completion_date": self.completion_date.isoformat() if self.completion_date else None,
+            "estimated_completion_time": self.estimated_completion_time,
+            "assignees": self.assignees,
+            "created_by": self.created_by,
+            "created_at": self.created_at.isoformat(),
+            "modified_by": self.modified_by,
+            "modified_on": self.modified_on.isoformat() if self.modified_on else None,
+            "labour_count": self.labour_count,
+            "associated_mos": self.associated_mos,
+            "total_time_on_job": self.total_time_on_job,
+            "completed_by": self.completed_by,
+            "completed_on": self.completed_on.isoformat() if self.completed_on else None,
+            "justification": self.justification,
+            "url": self.url
         }
 
 class SparePart(db.Model):
     id = Column(Integer, primary_key=True)
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    quantity = Column(Integer, nullable=False, default=0)
+    description = Column(Text, nullable=False)
+    manufacturer = Column(String(255), nullable=True)
+    manufacturer_part_id = Column(String(255), nullable=True)
+    stock_quantity = Column(Integer, nullable=False, default=0)
     location = Column(String(255), nullable=True)
     min_quantity = Column(Integer, default=0)
 
     def to_dict(self):
         return {
             "id": self.id,
-            "name": self.name,
             "description": self.description,
-            "quantity": self.quantity,
+            "manufacturer": self.manufacturer,
+            "manufacturer_part_id": self.manufacturer_part_id,
+            "stock_quantity": self.stock_quantity,
             "location": self.location,
             "min_quantity": self.min_quantity
         }
@@ -159,6 +203,58 @@ class Role(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description
+        }
+
+class Report(db.Model):
+    id = Column(Integer, primary_key=True)
+    title = Column(String(255), nullable=False)
+    report_type = Column(String(50), nullable=False)  # reactive_production/completed_weekend
+    generated_by = Column(Integer, ForeignKey('user.id'), nullable=False)
+    generated_on = Column(DateTime, default=datetime.utcnow)
+    parameters = Column(Text, nullable=True)  # JSON of filter parameters
+    file_path = Column(String(500), nullable=True)
+    format = Column(String(20), nullable=False)  # PDF/Markdown
+    
+    generated_by_user = relationship('User', backref='generated_reports')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "report_type": self.report_type,
+            "generated_by": self.generated_by,
+            "generated_on": self.generated_on.isoformat(),
+            "parameters": self.parameters,
+            "file_path": self.file_path,
+            "format": self.format
+        }
+
+class TableConfiguration(db.Model):
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    page_name = Column(String(50), nullable=False)  # assets/mos/spare_parts/users
+    config_name = Column(String(255), nullable=False)
+    column_order = Column(Text, nullable=True)  # JSON array
+    hidden_columns = Column(Text, nullable=True)  # JSON array
+    filters = Column(Text, nullable=True)  # JSON object
+    sort_config = Column(Text, nullable=True)  # JSON object
+    is_default = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship('User', backref='table_configurations')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "page_name": self.page_name,
+            "config_name": self.config_name,
+            "column_order": self.column_order,
+            "hidden_columns": self.hidden_columns,
+            "filters": self.filters,
+            "sort_config": self.sort_config,
+            "is_default": self.is_default,
+            "created_at": self.created_at.isoformat()
         }
 
 def populate_dummy_data(logger):
@@ -220,11 +316,13 @@ def populate_dummy_data(logger):
 
     # Create Assets
     assets = {}
-    for asset_data in data.get("assets", []):
+    for i, asset_data in enumerate(data.get("assets", [])):
         asset = Asset(
+            asset_code=asset_data.get("asset_code", f"AST-{i+1:04d}"),
             name=asset_data["name"],
             description=asset_data.get("description", ""),
-            location=asset_data.get("location", ""),
+            asset_type=asset_data.get("asset_type", "equipment"),
+            cost_center=asset_data.get("cost_center", "general"),
             status=asset_data.get("status", "Operational")
         )
         db.session.add(asset)
@@ -254,9 +352,10 @@ def populate_dummy_data(logger):
     # Create Spare Parts
     for part_data in data.get("spare_parts", []):
         part = SparePart(
-            name=part_data["name"],
-            description=part_data.get("description", ""),
-            quantity=part_data.get("quantity", 0),
+            description=part_data.get("description", part_data.get("name", "")),
+            manufacturer=part_data.get("manufacturer", ""),
+            manufacturer_part_id=part_data.get("manufacturer_part_id", ""),
+            stock_quantity=part_data.get("quantity", 0),
             location=part_data.get("location", ""),
             min_quantity=part_data.get("min_quantity", 0)
         )

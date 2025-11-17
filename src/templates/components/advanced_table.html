@@ -1,0 +1,422 @@
+<!-- Advanced Table Component -->
+<div id="{{ table_id }}" class="advanced-table-container">
+    <!-- Table will be rendered here by JavaScript -->
+</div>
+
+<!-- Column Manager Modal -->
+<div id="columnManager" class="column-manager">
+    <div class="column-manager-content">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Manage Columns</h5>
+            <button type="button" class="btn-close" onclick="closeColumnManager()"></button>
+        </div>
+        <div class="mb-3">
+            <small class="text-muted">Drag to reorder, uncheck to hide columns</small>
+        </div>
+        <ul id="columnList" class="column-list">
+            <!-- Column items will be populated by JavaScript -->
+        </ul>
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary" onclick="closeColumnManager()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="applyColumnChanges()">Apply</button>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Manager Modal -->
+<div id="filterManager" class="filter-manager">
+    <div class="filter-manager-content">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Advanced Filters</h5>
+            <button type="button" class="btn-close" onclick="closeFilterManager()"></button>
+        </div>
+        
+        <div id="filterRows">
+            <!-- Filter rows will be populated by JavaScript -->
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addFilterRow()">
+                    <i class="fas fa-plus"></i> Add Filter
+                </button>
+                <button type="button" class="btn btn-outline-warning btn-sm" onclick="clearAllFilters()">
+                    <i class="fas fa-eraser"></i> Clear All
+                </button>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-secondary" onclick="closeFilterManager()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="applyFilters()">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Save Modal -->
+<div id="saveConfigModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Save Table Configuration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="configName" class="form-label">Configuration Name</label>
+                    <input type="text" class="form-control" id="configName" placeholder="Enter a name for this view">
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="setAsDefault">
+                    <label class="form-check-label" for="setAsDefault">
+                        Set as default view
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveTableConfiguration()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Column Manager Functions
+function closeColumnManager() {
+    document.getElementById('columnManager').classList.remove('show');
+}
+
+function applyColumnChanges() {
+    const columnItems = document.querySelectorAll('#columnList .column-item');
+    const newOrder = [];
+    const newHidden = new Set();
+    
+    columnItems.forEach(item => {
+        const columnKey = item.dataset.column;
+        newOrder.push(columnKey);
+        if (!item.querySelector('input[type="checkbox"]').checked) {
+            newHidden.add(columnKey);
+        }
+    });
+    
+    advTable.columnOrder = newOrder;
+    advTable.hiddenColumns = newHidden;
+    advTable.render();
+    closeColumnManager();
+}
+
+// Initialize drag and drop for column manager
+function initializeDragAndDrop() {
+    const columnList = document.getElementById('columnList');
+    if (!columnList) return;
+    
+    let draggedElement = null;
+    
+    columnList.addEventListener('dragstart', function(e) {
+        if (e.target.classList.contains('column-item')) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+    });
+    
+    columnList.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(columnList, e.clientY);
+        if (afterElement == null) {
+            columnList.appendChild(draggedElement);
+        } else {
+            columnList.insertBefore(draggedElement, afterElement);
+        }
+    });
+    
+    columnList.addEventListener('dragend', function(e) {
+        if (e.target.classList.contains('column-item')) {
+            e.target.classList.remove('dragging');
+        }
+    });
+}
+
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.column-item:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Filter Manager Functions
+function closeFilterManager() {
+    document.getElementById('filterManager').classList.remove('show');
+}
+
+function addFilterRow() {
+    const filterRows = document.getElementById('filterRows');
+    const rowCount = filterRows.children.length;
+    
+    // Add logic selector if this is not the first row
+    if (rowCount > 0) {
+        const logicRow = document.createElement('div');
+        logicRow.className = 'filter-logic';
+        logicRow.innerHTML = `
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="logic${rowCount}" id="and${rowCount}" value="and" checked>
+                <label class="btn btn-outline-primary btn-sm" for="and${rowCount}">AND</label>
+                <input type="radio" class="btn-check" name="logic${rowCount}" id="or${rowCount}" value="or">
+                <label class="btn btn-outline-primary btn-sm" for="or${rowCount}">OR</label>
+            </div>
+        `;
+        filterRows.appendChild(logicRow);
+    }
+    
+    const filterRow = document.createElement('div');
+    filterRow.className = 'filter-row';
+    filterRow.innerHTML = `
+        <select class="form-select column-select" onchange="toggleFilterValue(this)">
+            <option value="">Select Column</option>
+            ${advTable.columns.map(col => `<option value="${col.key}">${col.label}</option>`).join('')}
+        </select>
+        <select class="form-select operator-select">
+            <option value="contains">Contains</option>
+            <option value="not_contains">Does Not Contain</option>
+            <option value="equals">Equals</option>
+            <option value="not_equals">Not Equals</option>
+            <option value="starts_with">Starts With</option>
+            <option value="ends_with">Ends With</option>
+        </select>
+        <input type="text" class="form-control filter-value" placeholder="Filter value" disabled oninput="applyFilterRealTime()">
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFilterRow(this)">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    
+    filterRows.appendChild(filterRow);
+}
+
+function toggleFilterValue(columnSelect) {
+    const filterRow = columnSelect.closest('.filter-row');
+    const filterValue = filterRow.querySelector('.filter-value');
+    
+    if (columnSelect.value) {
+        filterValue.disabled = false;
+        filterValue.focus();
+    } else {
+        filterValue.disabled = true;
+        filterValue.value = '';
+    }
+}
+
+function applyFilterRealTime() {
+    // Apply filters in real-time as user types
+    setTimeout(() => {
+        const filterRows = document.querySelectorAll('#filterRows .filter-row');
+        const newFilters = {};
+        
+        filterRows.forEach(row => {
+            const columnSelect = row.querySelector('.column-select');
+            const operatorSelect = row.querySelector('.operator-select');
+            const valueInput = row.querySelector('.filter-value');
+            
+            const column = columnSelect.value;
+            const operator = operatorSelect.value;
+            const value = valueInput.value.trim();
+            
+            if (column && operator && value) {
+                newFilters[column] = { operator, value };
+            }
+        });
+        
+        advTable.filters = newFilters;
+        advTable.currentPage = 1;
+        advTable.render();
+    }, 300); // Debounce for 300ms
+}
+
+function removeFilterRow(button) {
+    const filterRow = button.closest('.filter-row');
+    const prevElement = filterRow.previousElementSibling;
+    
+    // Remove logic selector if it exists
+    if (prevElement && prevElement.classList.contains('filter-logic')) {
+        prevElement.remove();
+    }
+    
+    filterRow.remove();
+}
+
+function clearAllFilters() {
+    document.getElementById('filterRows').innerHTML = '';
+    advTable.filters = {};
+    advTable.render();
+    // Don't close the manager, just clear and add one empty row
+    addFilterRow();
+}
+
+function applyFilters() {
+    const filterRows = document.querySelectorAll('#filterRows .filter-row');
+    const newFilters = {};
+    let hasValidFilter = false;
+    
+    filterRows.forEach(row => {
+        const columnSelect = row.querySelector('.column-select');
+        const operatorSelect = row.querySelector('.operator-select');
+        const valueInput = row.querySelector('.filter-value');
+        
+        const column = columnSelect.value;
+        const operator = operatorSelect.value;
+        const value = valueInput.value.trim();
+        
+        if (column && operator && value) {
+            newFilters[column] = { operator, value };
+            hasValidFilter = true;
+        } else if (column && !value) {
+            // Highlight incomplete filter
+            valueInput.classList.add('is-invalid');
+            setTimeout(() => valueInput.classList.remove('is-invalid'), 3000);
+        }
+    });
+    
+    if (hasValidFilter || Object.keys(newFilters).length === 0) {
+        advTable.filters = newFilters;
+        advTable.currentPage = 1;
+        advTable.render();
+        closeFilterManager();
+    } else {
+        alert('Please complete all filter criteria or remove incomplete filters.');
+    }
+}
+
+// Configuration Save Functions
+function saveTableConfiguration() {
+    const configName = document.getElementById('configName').value;
+    const setAsDefault = document.getElementById('setAsDefault').checked;
+    
+    if (!configName) {
+        alert('Please enter a configuration name');
+        return;
+    }
+    
+    const config = {
+        config_name: configName,
+        column_order: JSON.stringify(advTable.columnOrder),
+        hidden_columns: JSON.stringify(Array.from(advTable.hiddenColumns)),
+        filters: JSON.stringify(advTable.filters),
+        sort_config: JSON.stringify(advTable.currentSort),
+        is_default: setAsDefault
+    };
+    
+    fetch(`/api/table-config/${advTable.pageName}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+        },
+        body: JSON.stringify(config)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Configuration saved successfully!');
+            document.getElementById('configName').value = '';
+            document.getElementById('setAsDefault').checked = false;
+            loadSavedConfigurations();
+        } else {
+            alert('Error saving configuration: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving configuration');
+    });
+}
+
+function loadSavedConfigurations() {
+    if (!advTable || !advTable.pageName) {
+        console.log('AdvTable not ready for loading configurations');
+        return;
+    }
+    
+    fetch(`/api/table-config/${advTable.pageName}`)
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        })
+        .then(configs => {
+            const dropdown = document.getElementById('savedConfigsDropdown');
+            if (dropdown && Array.isArray(configs)) {
+                const currentValue = dropdown.value;
+                dropdown.innerHTML = '<option value="">Select saved view...</option>';
+                configs.forEach(config => {
+                    const option = document.createElement('option');
+                    option.value = config.id;
+                    option.textContent = config.config_name + (config.is_default ? ' (Default)' : '');
+                    dropdown.appendChild(option);
+                });
+                // Restore selection if it still exists
+                if (currentValue && dropdown.querySelector(`option[value="${currentValue}"]`)) {
+                    dropdown.value = currentValue;
+                }
+            }
+        })
+        .catch(error => {
+            console.log('Error loading configurations:', error.message);
+            const dropdown = document.getElementById('savedConfigsDropdown');
+            if (dropdown) {
+                dropdown.innerHTML = '<option value="">No saved views</option>';
+            }
+        });
+}
+
+function loadSelectedConfiguration() {
+    const dropdown = document.getElementById('savedConfigsDropdown');
+    const configId = dropdown.value;
+    if (!configId || !advTable) {
+        console.log('No configuration selected or advTable not ready');
+        return;
+    }
+    
+    fetch(`/api/table-config/${advTable.pageName}`)
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        })
+        .then(configs => {
+            const config = configs.find(c => c.id == configId);
+            if (config) {
+                advTable.applyConfiguration(config);
+                console.log('Configuration applied:', config.config_name);
+            } else {
+                console.error('Configuration not found:', configId);
+                dropdown.value = '';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading configuration:', error.message);
+            alert('Error loading saved view: ' + error.message);
+            dropdown.value = '';
+        });
+}
+
+// Initialize configurations when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for advTable to be initialized
+    const checkAdvTable = setInterval(() => {
+        if (window.advTable && window.advTable.pageName) {
+            loadSavedConfigurations();
+            clearInterval(checkAdvTable);
+        }
+    }, 100);
+    
+    // Clear interval after 10 seconds to prevent infinite loop
+    setTimeout(() => {
+        clearInterval(checkAdvTable);
+    }, 10000);
+});
+</script>

@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from src.services.db_utils import db, Asset, MaintenanceOrder, SparePart, User, Role
 from werkzeug.security import generate_password_hash, check_password_hash
-from functools import wraps # Import wraps
+from functools import wraps
+from datetime import datetime
 
 main_bp = Blueprint('main', __name__)
 
@@ -33,18 +34,28 @@ def maintenance_grid_page(ids):
 @login_required
 def assets():
     all_assets = Asset.query.all()
-    return render_template('assets.html', assets=all_assets)
+    assets_data = [asset.to_dict() for asset in all_assets]
+    return render_template('assets.html', assets=assets_data)
 
 @main_bp.route('/assets/add', methods=['GET', 'POST'])
 @login_required
 def add_asset():
     if request.method == 'POST':
+        asset_code = request.form['asset_code']
         name = request.form['name']
         description = request.form['description']
-        location = request.form['location']
+        asset_type = request.form['asset_type']
+        cost_center = request.form['cost_center']
         status = request.form['status']
         
-        new_asset = Asset(name=name, description=description, location=location, status=status)
+        new_asset = Asset(
+            asset_code=asset_code,
+            name=name, 
+            description=description, 
+            asset_type=asset_type,
+            cost_center=cost_center,
+            status=status
+        )
         db.session.add(new_asset)
         db.session.commit()
         flash('Asset added successfully!', 'success')
@@ -62,9 +73,11 @@ def asset_detail(asset_id):
 def edit_asset(asset_id):
     asset = Asset.query.get_or_404(asset_id)
     if request.method == 'POST':
+        asset.asset_code = request.form['asset_code']
         asset.name = request.form['name']
         asset.description = request.form['description']
-        asset.location = request.form['location']
+        asset.asset_type = request.form['asset_type']
+        asset.cost_center = request.form['cost_center']
         asset.status = request.form['status']
         db.session.commit()
         flash('Asset updated successfully!', 'success')
@@ -85,21 +98,47 @@ def delete_asset(asset_id):
 @login_required
 def maintenance_orders():
     all_mos = MaintenanceOrder.query.all()
-    return render_template('maintenance_orders.html', mos=all_mos)
+    mos_data = []
+    for mo in all_mos:
+        mo_dict = mo.to_dict()
+        mo_dict['asset_name'] = mo.asset.name if mo.asset else 'N/A'
+        mos_data.append(mo_dict)
+    return render_template('maintenance_orders.html', mos=mos_data)
 
 @main_bp.route('/maintenance_orders/add', methods=['GET', 'POST'])
 @login_required
 def add_mo():
-    assets = Asset.query.all() # Needed for asset selection in form
+    assets = Asset.query.all()
     if request.method == 'POST':
         asset_id = request.form['asset_id']
         description = request.form['description']
         order_type = request.form['order_type']
         status = request.form['status']
+        priority = request.form['priority']
+        schedule_name = request.form['schedule_name']
+        frequency = request.form['frequency']
+        estimated_completion_time = request.form['estimated_completion_time']
+        labour_count = request.form['labour_count']
+        assignees = request.form['assignees']
+        justification = request.form['justification']
         due_date_str = request.form['due_date']
         due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
         
-        new_mo = MaintenanceOrder(asset_id=asset_id, description=description, order_type=order_type, status=status, due_date=due_date)
+        new_mo = MaintenanceOrder(
+            asset_id=asset_id,
+            description=description,
+            order_type=order_type,
+            status=status,
+            priority=priority,
+            schedule_name=schedule_name if schedule_name else None,
+            frequency=frequency if frequency else None,
+            estimated_completion_time=int(estimated_completion_time) if estimated_completion_time else None,
+            labour_count=int(labour_count),
+            assignees=assignees if assignees else None,
+            justification=justification if justification else None,
+            due_date=due_date,
+            created_by=session.get('user_id')
+        )
         db.session.add(new_mo)
         db.session.commit()
         flash('Maintenance Order added successfully!', 'success')
@@ -122,8 +161,17 @@ def edit_mo(mo_id):
         mo.description = request.form['description']
         mo.order_type = request.form['order_type']
         mo.status = request.form['status']
+        mo.priority = request.form['priority']
+        mo.schedule_name = request.form['schedule_name'] if request.form['schedule_name'] else None
+        mo.frequency = request.form['frequency'] if request.form['frequency'] else None
+        mo.estimated_completion_time = int(request.form['estimated_completion_time']) if request.form['estimated_completion_time'] else None
+        mo.labour_count = int(request.form['labour_count'])
+        mo.assignees = request.form['assignees'] if request.form['assignees'] else None
+        mo.justification = request.form['justification'] if request.form['justification'] else None
         due_date_str = request.form['due_date']
         mo.due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
+        mo.modified_by = session.get('user_id')
+        mo.modified_on = datetime.utcnow()
         db.session.commit()
         flash('Maintenance Order updated successfully!', 'success')
         return redirect(url_for('main.maintenance_orders'))
@@ -143,19 +191,28 @@ def delete_mo(mo_id):
 @login_required
 def spare_parts():
     all_parts = SparePart.query.all()
-    return render_template('spare_parts.html', spare_parts=all_parts)
+    parts_data = [part.to_dict() for part in all_parts]
+    return render_template('spare_parts.html', spare_parts=parts_data)
 
 @main_bp.route('/spare_parts/add', methods=['GET', 'POST'])
 @login_required
 def add_spare_part():
     if request.method == 'POST':
-        name = request.form['name']
         description = request.form['description']
-        quantity = request.form['quantity']
+        manufacturer = request.form['manufacturer']
+        manufacturer_part_id = request.form['manufacturer_part_id']
+        stock_quantity = request.form['stock_quantity']
         location = request.form['location']
         min_quantity = request.form['min_quantity']
         
-        new_part = SparePart(name=name, description=description, quantity=quantity, location=location, min_quantity=min_quantity)
+        new_part = SparePart(
+            description=description,
+            manufacturer=manufacturer,
+            manufacturer_part_id=manufacturer_part_id,
+            stock_quantity=stock_quantity,
+            location=location,
+            min_quantity=min_quantity
+        )
         db.session.add(new_part)
         db.session.commit()
         flash('Spare Part added successfully!', 'success')
@@ -173,9 +230,10 @@ def spare_part_detail(part_id):
 def edit_spare_part(part_id):
     part = SparePart.query.get_or_404(part_id)
     if request.method == 'POST':
-        part.name = request.form['name']
         part.description = request.form['description']
-        part.quantity = request.form['quantity']
+        part.manufacturer = request.form['manufacturer']
+        part.manufacturer_part_id = request.form['manufacturer_part_id']
+        part.stock_quantity = request.form['stock_quantity']
         part.location = request.form['location']
         part.min_quantity = request.form['min_quantity']
         db.session.commit()
@@ -197,7 +255,13 @@ def delete_spare_part(part_id):
 @login_required
 def users():
     all_users = User.query.all()
-    return render_template('users.html', users=all_users)
+    users_data = []
+    for user in all_users:
+        user_dict = user.to_dict(include_roles=True)
+        user_dict['roles_display'] = ', '.join(user_dict.get('roles', []))
+        user_dict['is_active'] = 'Yes' if user_dict['is_active'] else 'No'
+        users_data.append(user_dict)
+    return render_template('users.html', users=users_data)
 
 @main_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -298,10 +362,10 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.login'))
 
-# --- Workforce Manager Integration Route ---
-@main_bp.route('/workforce-manager')
+# --- Planning Integration Route ---
+@main_bp.route('/planning')
 @login_required
-def workforce_manager_embed():
-    return render_template('workforce_manager_embed.html')
+def planning():
+    return render_template('planning.html')
 
 

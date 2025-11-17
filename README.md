@@ -5,9 +5,13 @@ A modular Flask-based maintenance management system with a monorepo architecture
 ## 🚀 Features
 
 - **Modular Architecture:** Main application with dynamically loadable apps
+- **Advanced Table System:** Excel-like functionality with sorting, filtering, column management, and export
+- **Enhanced Database Models:** Comprehensive asset tracking, maintenance order management, and spare parts inventory
 - **Centralized Configuration:** Single `.env` file for all applications
 - **Unified Environment:** One virtual environment and dependency management
 - **Dynamic App Loading:** Enable/disable apps without code changes
+- **Comprehensive Reporting:** PDF and Markdown export capabilities with advanced filtering
+- **Consistent UI/UX:** Shared base templates with responsive design
 - **Scalable Design:** Easy addition of new specialized modules
 
 ## 📁 Project Structure
@@ -25,16 +29,24 @@ mockCMMS/
 │   ├── templates/           # HTML templates
 │   └── app.py               # Flask application factory
 ├── apps/                    # Modular applications
-│   └── workforceManager/    # Workforce management module
+│   ├── workforceManager/    # Workforce management module
+│   │   ├── src/             # Application source code
+│   │   │   ├── routes/      # Flask blueprints
+│   │   │   ├── services/    # Core business logic
+│   │   │   ├── static/      # CSS/JS assets
+│   │   │   ├── templates/   # HTML templates
+│   │   │   └── app.py       # Flask factory
+│   │   ├── config/          # Configuration files
+│   │   ├── instance/        # SQLite databases
+│   │   ├── tests/           # Test suite
+│   │   └── README.md        # Module documentation
+│   └── reports/             # Reports and analytics module
 │       ├── src/             # Application source code
 │       │   ├── routes/      # Flask blueprints
-│       │   ├── services/    # Core business logic
-│       │   ├── static/      # CSS/JS assets
-│       │   ├── templates/   # HTML templates
-│       │   └── app.py       # Flask factory
-│       ├── config/          # Configuration files
-│       ├── instance/        # SQLite databases
-│       ├── tests/           # Test suite
+│       │   ├── services/    # Report generation logic
+│       │   └── templates/   # HTML templates
+│       ├── instance/        # Generated reports storage
+│       ├── setup.py         # Package configuration
 │       └── README.md        # Module documentation
 ├── config/                  # Main app configuration
 ├── docs/                    # Documentation
@@ -55,6 +67,7 @@ mockCMMS/
 
 ### Modular Apps
 - **[Workforce Manager](apps/workforceManager/README.md):** Advanced skill-based technician task assignment system with workload optimization
+- **[Reports](apps/reports/README.md):** Comprehensive reporting and analytics system with PDF/Markdown export capabilities
 - **Future Apps:** Additional modules can be easily integrated following the same pattern
 
 > **Note:** For detailed setup and usage instructions for specific apps, refer to their individual README.md files.
@@ -101,6 +114,7 @@ mockCMMS/
 5. **Install modular apps in editable mode:**
    ```bash
    pip install -e apps/workforceManager
+   pip install -e apps/reports
    ```
 
 6. **Set up environment configuration:**
@@ -125,7 +139,8 @@ mockCMMS/
 |----------|-------------|----------|
 | `SECRET_KEY` | Flask secret key for sessions | Auto-generated |
 | `FLASK_DEBUG` | Enable debug mode (1/true/yes) | 0 |
-| `WORKFORCE_MANAGER_ENABLED` | Enable Workforce Manager app | True |
+| `WORKFORCE_MANAGER_ENABLED` | Enable Workforce Manager app | False |
+| `REPORTS_ENABLED` | Enable Reports app | True |
 
 ### App Management
 
@@ -197,4 +212,4 @@ Contributions are welcome. Please read the [contributing guidelines](.github/CON
 
 ---
 
-**Version:** 1.0.0 | **Last Updated:** January 27, 2025
+**Version:** 1.1.0 | **Last Updated:** January 28, 2025

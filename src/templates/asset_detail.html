@@ -6,21 +6,53 @@
     <h1 class="mb-4">{% if asset %}Edit Asset: {{ asset.name }}{% else %}Add New Asset{% endif %}</h1>
 
     <form method="POST" action="{% if asset %}{{ url_for('main.edit_asset', asset_id=asset.id) }}{% else %}{{ url_for('main.add_asset') }}{% endif %}">
-        <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" class="form-control" id="name" name="name" value="{{ asset.name if asset else '' }}" required>
-        </div>
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea class="form-control" id="description" name="description">{{ asset.description if asset else '' }}</textarea>
-        </div>
-        <div class="form-group">
-            <label for="location">Location</label>
-            <input type="text" class="form-control" id="location" name="location" value="{{ asset.location if asset else '' }}">
-        </div>
-        <div class="form-group">
-            <label for="status">Status</label>
-            <input type="text" class="form-control" id="status" name="status" value="{{ asset.status if asset else '' }}">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="asset_code">Asset Code</label>
+                    <input type="text" class="form-control" id="asset_code" name="asset_code" value="{{ asset.asset_code if asset else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ asset.name if asset else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="asset_type">Asset Type</label>
+                    <select class="form-control" id="asset_type" name="asset_type" required>
+                        <option value="">Select Type</option>
+                        <option value="department" {{ 'selected' if asset and asset.asset_type == 'department' else '' }}>Department</option>
+                        <option value="location" {{ 'selected' if asset and asset.asset_type == 'location' else '' }}>Location</option>
+                        <option value="line" {{ 'selected' if asset and asset.asset_type == 'line' else '' }}>Line</option>
+                        <option value="station" {{ 'selected' if asset and asset.asset_type == 'station' else '' }}>Station</option>
+                        <option value="tooling" {{ 'selected' if asset and asset.asset_type == 'tooling' else '' }}>Tooling</option>
+                        <option value="robot" {{ 'selected' if asset and asset.asset_type == 'robot' else '' }}>Robot</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cost_center">Cost Center</label>
+                    <select class="form-control" id="cost_center" name="cost_center" required>
+                        <option value="">Select Cost Center</option>
+                        <option value="paint" {{ 'selected' if asset and asset.cost_center == 'paint' else '' }}>Paint</option>
+                        <option value="assembly" {{ 'selected' if asset and asset.cost_center == 'assembly' else '' }}>Assembly</option>
+                        <option value="biw" {{ 'selected' if asset and asset.cost_center == 'biw' else '' }}>BIW</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ asset.description if asset else '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select class="form-control" id="status" name="status" required>
+                        <option value="Operational" {{ 'selected' if asset and asset.status == 'Operational' else '' }}>Operational</option>
+                        <option value="Under Maintenance" {{ 'selected' if asset and asset.status == 'Under Maintenance' else '' }}>Under Maintenance</option>
+                        <option value="Down" {{ 'selected' if asset and asset.status == 'Down' else '' }}>Down</option>
+                        <option value="Retired" {{ 'selected' if asset and asset.status == 'Retired' else '' }}>Retired</option>
+                    </select>
+                </div>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">{% if asset %}Update Asset{% else %}Add Asset{% endif %}</button>
         <a href="{{ url_for('main.assets') }}" class="btn btn-secondary">Cancel</a>
