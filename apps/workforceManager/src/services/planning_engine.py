@@ -100,13 +100,17 @@ class PlanningEngine:
 
         # Get plannable tasks (with MO data)
         tasks_to_plan = self._get_plannable_tasks(schedule, check_parts, result)
+        self._log("info", f"Found {len(tasks_to_plan)} plannable tasks before mode filtering")
 
         # Apply mode-specific filtering
         if planning_mode == "weekend":
+            self._log("info", f"Applying weekend mode filtering...")
             tasks_to_plan = self._filter_weekend_tasks(tasks_to_plan, result)
+            self._log("info", f"After weekend filtering: {len(tasks_to_plan)} tasks remain")
 
         if not tasks_to_plan:
             result.add_warning("No plannable tasks found for this schedule")
+            self._log("warning", f"Zero tasks to plan after filtering (mode={planning_mode})")
             result.calculate_statistics()
             result.statistics.planning_duration_seconds = time.time() - start_time
             return result
@@ -247,46 +251,66 @@ class PlanningEngine:
         """
         weekend_tasks = []
         filtered_count = 0
+        filter_reasons = {}  # Track why tasks were filtered
+
+        self._log("info", f"Weekend filtering: Processing {len(tasks)} tasks")
 
         for task, mo in tasks:
             # Include PM tasks with appropriate frequency
             if mo.order_type == 'PM' and mo.frequency:
-                if mo.frequency.lower() in ['weekly', 'monthly', 'bi-weekly', 'quarterly']:
+                if mo.frequency.lower() in ['daily', 'weekly', 'monthly', 'bi-weekly', 'quarterly']:
                     weekend_tasks.append((task, mo))
+                    self._log("debug", f"MO-{mo.id}: Included (PM with frequency={mo.frequency})")
                     continue
                 else:
-                    # PMs with daily frequency might not be suitable for weekend
+                    # PMs with unknown/unsupported frequency
                     filtered_count += 1
+                    reason = f"PM with unsupported frequency ({mo.frequency})"
+                    filter_reasons[reason] = filter_reasons.get(reason, 0) + 1
+                    self._log("debug", f"MO-{mo.id}: Filtered out (PM with frequency={mo.frequency})")
                     continue
 
             # Include PM tasks without frequency (assume they're candidates)
             if mo.order_type == 'PM' and not mo.frequency:
                 weekend_tasks.append((task, mo))
+                self._log("debug", f"MO-{mo.id}: Included (PM without frequency)")
                 continue
 
             # Include outstanding REP/Corrective tasks
             if mo.order_type in ['REP', 'Corrective']:
                 if mo.status in ['Open', 'In Progress']:
                     weekend_tasks.append((task, mo))
+                    self._log("debug", f"MO-{mo.id}: Included (REP/Corrective, status={mo.status})")
+                    continue
+                else:
+                    filtered_count += 1
+                    reason = f"REP/Corrective with status {mo.status}"
+                    filter_reasons[reason] = filter_reasons.get(reason, 0) + 1
+                    self._log("debug", f"MO-{mo.id}: Filtered out (REP/Corrective, status={mo.status})")
                     continue
 
             # Include deferred tasks
             if mo.status == 'Deferred':
                 weekend_tasks.append((task, mo))
+                self._log("debug", f"MO-{mo.id}: Included (Deferred)")
                 continue
 
             # Include Project tasks (good time for non-urgent project work)
             if mo.order_type == 'Project':
                 weekend_tasks.append((task, mo))
+                self._log("debug", f"MO-{mo.id}: Included (Project)")
                 continue
 
             # Task didn't match any weekend criteria
             filtered_count += 1
+            reason = f"Type={mo.order_type}, Status={mo.status}, Freq={mo.frequency or 'None'}"
+            filter_reasons[reason] = filter_reasons.get(reason, 0) + 1
+            self._log("debug", f"MO-{mo.id}: Filtered out (no weekend criteria match: {reason})")
 
         if filtered_count > 0:
+            reason_summary = ", ".join([f"{count} {reason}" for reason, count in filter_reasons.items()])
             result.add_warning(
-                f"Weekend mode: Filtered out {filtered_count} task(s) not suitable for weekend planning "
-                f"(e.g., daily PMs, closed tasks)"
+                f"Weekend mode: Filtered out {filtered_count} task(s): {reason_summary}"
             )
 
         self._log("info", f"Weekend filtering: {len(weekend_tasks)} tasks selected from {len(tasks)} total")

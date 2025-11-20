@@ -122,6 +122,14 @@
         </div>
     </div>
 
+    <!-- Planning Warnings and Errors Display -->
+    <div class="row mt-3" id="planningMessagesContainer" style="display: none;">
+        <div class="col-12">
+            <div id="planningWarnings"></div>
+            <div id="planningErrors"></div>
+        </div>
+    </div>
+
     <!-- Gantt Chart View -->
     <div class="row">
         <div class="col-12">
@@ -133,15 +141,9 @@
                     <!-- Gantt Controls -->
                     <div class="gantt-controls">
                         <div>
-                            <h6 class="mb-0">Schedule: {{ schedule.name }}</h6>
-                            <small class="text-muted">
-                                {{ schedule.start_date.strftime('%b %d, %Y') }} - {{ schedule.end_date.strftime('%b %d, %Y') }}
-                            </small>
-                            <div class="mt-2">
-                                <span class="badge badge-info">
-                                    <i class="fas fa-info-circle"></i> Task IDs in bars match Maintenance Order IDs
-                                </span>
-                            </div>
+                            <span class="badge badge-info">
+                                <i class="fas fa-info-circle"></i> Task IDs in bars match Maintenance Order IDs
+                            </span>
                         </div>
                         <div class="gantt-view-modes">
                             <small class="text-muted d-block mb-2" style="font-size: 0.8em;">
@@ -251,8 +253,12 @@ function changePlanningMode(mode) {
 }
 
 function runPlanning() {
-    if (!confirm('Run planning for this schedule? This will reassign all tasks based on current constraints.')) {
-        return;
+    // Remove confirmation - just run it
+    // Show loading state
+    const runButton = document.querySelector('button[onclick="runPlanning()"]');
+    if (runButton) {
+        runButton.disabled = true;
+        runButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running Planning...';
     }
 
     const formData = new FormData();
@@ -266,16 +272,97 @@ function runPlanning() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(`Planning complete!\n${data.message}\n\nWarnings: ${data.warnings.length}`);
-            // Force reload without cache
-            window.location.href = window.location.href.split('?')[0] + '?mode={{ planning_mode }}&_t=' + new Date().getTime();
+            // Pass warnings and errors via URL params to show after reload
+            const params = new URLSearchParams();
+            params.set('mode', '{{ planning_mode }}');
+            params.set('_t', new Date().getTime());
+
+            if (data.warnings && data.warnings.length > 0) {
+                params.set('warnings', JSON.stringify(data.warnings));
+            }
+            if (data.errors && data.errors.length > 0) {
+                params.set('errors', JSON.stringify(data.errors));
+            }
+            if (data.message) {
+                params.set('success_msg', data.message);
+            }
+
+            // Reload with params
+            window.location.href = window.location.href.split('?')[0] + '?' + params.toString();
         } else {
-            alert(`Error: ${data.error}`);
+            // Show error on page (not alert)
+            displayPlanningMessages([], [data.error || 'Planning failed']);
+            // Re-enable button
+            if (runButton) {
+                runButton.disabled = false;
+                runButton.innerHTML = '<i class="fas fa-play"></i> Run Planning';
+            }
         }
     })
     .catch(error => {
-        alert(`Error running planning: ${error}`);
+        // Show error on page (not alert)
+        displayPlanningMessages([], [`Error running planning: ${error}`]);
+        // Re-enable button
+        if (runButton) {
+            runButton.disabled = false;
+            runButton.innerHTML = '<i class="fas fa-play"></i> Run Planning';
+        }
     });
+}
+
+function displayPlanningMessages(warnings, errors) {
+    const container = document.getElementById('planningMessagesContainer');
+    const warningsDiv = document.getElementById('planningWarnings');
+    const errorsDiv = document.getElementById('planningErrors');
+
+    // Clear previous messages
+    warningsDiv.innerHTML = '';
+    errorsDiv.innerHTML = '';
+
+    let hasMessages = false;
+
+    // Display warnings
+    if (warnings && warnings.length > 0) {
+        hasMessages = true;
+        let html = '<div class="alert alert-warning alert-dismissible fade show" role="alert">';
+        html += '<h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Planning Warnings</h5>';
+        html += '<ul class="mb-0">';
+        warnings.forEach(warning => {
+            html += `<li>${warning}</li>`;
+        });
+        html += '</ul>';
+        html += '<button type="button" class="close" data-dismiss="alert" aria-label="Close">';
+        html += '<span aria-hidden="true">&times;</span>';
+        html += '</button>';
+        html += '</div>';
+        warningsDiv.innerHTML = html;
+    }
+
+    // Display errors
+    if (errors && errors.length > 0) {
+        hasMessages = true;
+        let html = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
+        html += '<h5 class="alert-heading"><i class="fas fa-times-circle"></i> Planning Errors</h5>';
+        html += '<ul class="mb-0">';
+        errors.forEach(error => {
+            html += `<li>${error}</li>`;
+        });
+        html += '</ul>';
+        html += '<button type="button" class="close" data-dismiss="alert" aria-label="Close">';
+        html += '<span aria-hidden="true">&times;</span>';
+        html += '</button>';
+        html += '</div>';
+        errorsDiv.innerHTML = html;
+    }
+
+    // Show/hide container
+    if (hasMessages) {
+        container.style.display = 'block';
+        // Scroll to messages
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        container.style.display = 'none';
+    }
 }
 
 function publishSchedule() {
@@ -303,8 +390,91 @@ function publishSchedule() {
 // Always load Gantt chart (shown alongside table)
 document.addEventListener('DOMContentLoaded', function() {
     console.log('[Schedule View] DOM loaded, initializing Gantt chart...');
+
+    // Check for warnings/errors/success message in URL params
+    checkUrlMessagesAndDisplay();
+
     initializeGanttChart();
 });
+
+function checkUrlMessagesAndDisplay() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const warningsParam = urlParams.get('warnings');
+    const errorsParam = urlParams.get('errors');
+    const successMsg = urlParams.get('success_msg');
+
+    let warnings = [];
+    let errors = [];
+
+    if (warningsParam) {
+        try {
+            warnings = JSON.parse(warningsParam);
+        } catch (e) {
+            console.error('Failed to parse warnings:', e);
+        }
+    }
+
+    if (errorsParam) {
+        try {
+            errors = JSON.parse(errorsParam);
+        } catch (e) {
+            console.error('Failed to parse errors:', e);
+        }
+    }
+
+    // Display messages if any
+    if (warnings.length > 0 || errors.length > 0) {
+        displayPlanningMessages(warnings, errors);
+
+        // Clean URL (remove message params but keep mode and timestamp)
+        const cleanParams = new URLSearchParams();
+        cleanParams.set('mode', urlParams.get('mode') || '{{ planning_mode }}');
+        const newUrl = window.location.href.split('?')[0] + '?' + cleanParams.toString();
+        window.history.replaceState({}, '', newUrl);
+    }
+
+    // Show success message as a toast if present
+    if (successMsg && warnings.length === 0 && errors.length === 0) {
+        showSuccessToast(successMsg);
+    }
+}
+
+function showSuccessToast(message) {
+    // Create a simple success toast
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-success alert-dismissible fade show';
+    toast.style.position = 'fixed';
+    toast.style.left = '50%';  // Center horizontally
+    toast.style.transform = 'translateX(-50%)';  // Center adjustment
+    toast.style.zIndex = '10000';  // Above navbar
+    toast.style.minWidth = '400px';
+    toast.style.maxWidth = '600px';
+    toast.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    toast.innerHTML = `
+        <strong><i class="fas fa-check-circle"></i> Success!</strong> ${message}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Calculate vertical centering with navbar
+    const navbar = document.querySelector('.navbar') || document.querySelector('nav');
+    const navbarHeight = navbar ? navbar.offsetHeight : 56;
+    const toastHeight = toast.offsetHeight;
+
+    // Center toast vertically within navbar height
+    const topPosition = Math.max(0, (navbarHeight - toastHeight) / 2);
+    toast.style.top = `${topPosition}px`;
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
 
 function initializeGanttChart() {
     // Check if Gantt library is loaded
@@ -314,9 +484,10 @@ function initializeGanttChart() {
         return;
     }
 
-    // Initialize Gantt chart
+    // Initialize Gantt chart with planning mode
     window.ganttChart = initPlanningGantt('gantt-container', {{ schedule.id }}, {
         viewMode: 'Day',
+        planningMode: '{{ planning_mode }}',  // Pass planning mode
         onTaskClick: function(task) {
             console.log('[Schedule View] Task clicked:', task);
             // TODO: Show task details modal
@@ -367,7 +538,12 @@ function renderResourceAllocation(data) {
 
     // Calculate utilization for each technician
     const techUtilization = {};
-    const shiftDuration = 12 * 60; // 12 hours in minutes
+
+    // Mode-specific shift duration
+    // TODO: Load from config.json instead of hardcoding
+    // For now, using defaults: shift_break=30min (configurable in config.json), weekend=12 hours
+    const planningMode = '{{ planning_mode }}';
+    const shiftDuration = planningMode === 'shift_break' ? 30 : 12 * 60;  // 30 min for shift-break (from config), 12 hours for weekend (in minutes)
 
     data.technicians.forEach(tech => {
         techUtilization[tech.id] = {

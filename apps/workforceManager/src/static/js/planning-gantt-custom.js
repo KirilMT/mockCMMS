@@ -97,34 +97,82 @@ class PlanningGanttChart {
     }
 
     buildTimeGrid() {
-        // Find earliest and latest times
-        let earliestTime = new Date(this.scheduleData.start_date);
-        let latestTime = new Date(this.scheduleData.end_date);
+        // Determine time range based on planning mode
+        const planningMode = this.options.planningMode || 'weekend';
 
-        this.tasks.forEach(task => {
-            const start = new Date(task.planned_start_time);
-            const end = new Date(task.planned_end_time);
-            if (start < earliestTime) earliestTime = start;
-            if (end > latestTime) latestTime = end;
-        });
+        // Get configuration from options (can be passed from backend)
+        const shiftConfig = this.options.shiftConfig || {};
 
-        // Round to nearest hour
-        earliestTime.setMinutes(0, 0, 0);
-        latestTime.setHours(latestTime.getHours() + 1, 0, 0, 0);
+        let earliestTime, latestTime;
 
-        // Build hourly columns
-        const timeColumns = [];
-        let currentTime = new Date(earliestTime);
+        if (planningMode === 'shift_break') {
+            // Shift-break mode: Configurable duration (default 30 minutes from config)
+            const shiftDuration = shiftConfig.duration_minutes || 30; // CONFIGURABLE: Change in config.json
+            const defaultStart = shiftConfig.default_start_time || "10:00"; // CONFIGURABLE
 
-        while (currentTime < latestTime) {
-            timeColumns.push({
-                time: new Date(currentTime),
-                label: this.formatHour(currentTime)
-            });
-            currentTime.setHours(currentTime.getHours() + 1);
+            // Use task times if available, otherwise default from config
+            if (this.tasks.length > 0) {
+                earliestTime = new Date(Math.min(...this.tasks.map(t => new Date(t.planned_start_time))));
+                latestTime = new Date(earliestTime);
+                latestTime.setMinutes(latestTime.getMinutes() + shiftDuration);
+            } else {
+                // Default from config
+                earliestTime = new Date(this.scheduleData.start_date);
+                const [hours, minutes] = defaultStart.split(':');
+                earliestTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                latestTime = new Date(earliestTime);
+                latestTime.setMinutes(latestTime.getMinutes() + shiftDuration);
+            }
+
+            // Round to nearest 30 minutes
+            earliestTime.setMinutes(Math.floor(earliestTime.getMinutes() / 30) * 30, 0, 0);
+            latestTime.setMinutes(Math.ceil(latestTime.getMinutes() / 30) * 30, 0, 0);
+
+            // Build 30-minute columns for shift break
+            const timeColumns = [];
+            let currentTime = new Date(earliestTime);
+
+            while (currentTime <= latestTime) {
+                timeColumns.push({
+                    time: new Date(currentTime),
+                    label: this.formatHour(currentTime)
+                });
+                currentTime.setMinutes(currentTime.getMinutes() + 30);
+            }
+
+            return { startTime: earliestTime, endTime: latestTime, timeColumns };
+
+        } else {
+            // Weekend mode: 12-hour window (e.g., 08:00 - 20:00)
+            if (this.tasks.length > 0) {
+                earliestTime = new Date(Math.min(...this.tasks.map(t => new Date(t.planned_start_time))));
+                latestTime = new Date(Math.max(...this.tasks.map(t => new Date(t.planned_end_time))));
+            } else {
+                // Default to 08:00 - 20:00 for weekend
+                earliestTime = new Date(this.scheduleData.start_date);
+                earliestTime.setHours(8, 0, 0, 0);
+                latestTime = new Date(earliestTime);
+                latestTime.setHours(20, 0, 0, 0);
+            }
+
+            // Round to nearest hour
+            earliestTime.setMinutes(0, 0, 0);
+            latestTime.setHours(latestTime.getHours() + 1, 0, 0, 0);
+
+            // Build hourly columns for weekend
+            const timeColumns = [];
+            let currentTime = new Date(earliestTime);
+
+            while (currentTime < latestTime) {
+                timeColumns.push({
+                    time: new Date(currentTime),
+                    label: this.formatHour(currentTime)
+                });
+                currentTime.setHours(currentTime.getHours() + 1);
+            }
+
+            return { startTime: earliestTime, endTime: latestTime, timeColumns };
         }
-
-        return { startTime: earliestTime, endTime: latestTime, timeColumns };
     }
 
     groupTasksByTechnician() {
