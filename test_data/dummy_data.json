@@ -88,19 +88,60 @@
     }
   ],
   "skills": [
-    "Python",
-    "Flask",
-    "Database",
-    "Frontend",
-    "Network",
-    "Hardware",
-    "Electrical",
-    "Mechanical"
+    {"name": "Electrical", "description": "Electrical systems and wiring"},
+    {"name": "Mechanical", "description": "Mechanical systems and assemblies"},
+    {"name": "Hydraulics", "description": "Hydraulic systems"},
+    {"name": "Pneumatics", "description": "Pneumatic systems"},
+    {"name": "Robotics", "description": "Robot programming and maintenance"},
+    {"name": "Welding", "description": "Welding operations"},
+    {"name": "HVAC", "description": "Heating, ventilation, and air conditioning"},
+    {"name": "Paint Systems", "description": "Paint equipment and systems"},
+    {"name": "Controls", "description": "PLC and control systems"},
+    {"name": "Laser Systems", "description": "Laser cutting and machining"}
   ],
   "technicians": [
-    "Alice",
-    "Bob",
-    "Charlie"
+    {
+      "name": "sarah.supervisor",
+      "availability_status": "Available",
+      "shift": null,
+      "skills": [
+        {"skill": "Electrical", "level": 5},
+        {"skill": "Mechanical", "level": 4},
+        {"skill": "Robotics", "level": 5},
+        {"skill": "Controls", "level": 4}
+      ]
+    },
+    {
+      "name": "mike.tech",
+      "availability_status": "Available",
+      "shift": null,
+      "skills": [
+        {"skill": "Mechanical", "level": 5},
+        {"skill": "Hydraulics", "level": 4},
+        {"skill": "Pneumatics", "level": 3},
+        {"skill": "Welding", "level": 4}
+      ]
+    },
+    {
+      "name": "david.tech",
+      "availability_status": "Available",
+      "shift": null,
+      "skills": [
+        {"skill": "Electrical", "level": 3},
+        {"skill": "Controls", "level": 4},
+        {"skill": "Robotics", "level": 3}
+      ]
+    },
+    {
+      "name": "emma.tech",
+      "availability_status": "On Leave",
+      "shift": null,
+      "skills": [
+        {"skill": "Paint Systems", "level": 5},
+        {"skill": "HVAC", "level": 3},
+        {"skill": "Mechanical", "level": 3}
+      ]
+    }
   ],
   "assets": [
     {
@@ -247,10 +288,11 @@
       "status": "Open",
       "priority": "Medium",
       "schedule_name": "Weekly Robot PM",
-      "frequency": "weekly",
+      "frequency": "Weekly",
       "estimated_completion_time": 120,
       "labour_count": 2,
-      "due_days_from_now": 2
+      "due_days_from_now": 2,
+      "required_skills": ["Robotics", "Mechanical"]
     },
     {
       "asset": "Assembly Station B3",
@@ -259,21 +301,23 @@
       "status": "In Progress",
       "priority": "Low",
       "schedule_name": "Monthly Tool Check",
-      "frequency": "monthly",
+      "frequency": "Monthly",
       "estimated_completion_time": 60,
       "labour_count": 1,
-      "due_days_from_now": 5
+      "due_days_from_now": 5,
+      "required_skills": ["Mechanical"]
     },
     {
       "asset": "BIW Welding Robot C2",
       "description": "Emergency repair - welding tip replacement",
-      "order_type": "reactive",
+      "order_type": "REP",
       "status": "In Progress",
       "priority": "Critical",
       "estimated_completion_time": 180,
       "labour_count": 3,
       "justification": "Production line stopped due to faulty welding tip",
-      "due_days_from_now": 0
+      "due_days_from_now": 0,
+      "required_skills": ["Welding", "Robotics", "Electrical"]
     },
     {
       "asset": "Conveyor System D1",
@@ -282,10 +326,11 @@
       "status": "Scheduled",
       "priority": "Medium",
       "schedule_name": "Conveyor Maintenance",
-      "frequency": "monthly",
+      "frequency": "Monthly",
       "estimated_completion_time": 90,
       "labour_count": 2,
-      "due_days_from_now": 10
+      "due_days_from_now": 10,
+      "required_skills": ["Mechanical", "Electrical"]
     },
     {
       "asset": "Quality Control Station E1",
@@ -294,10 +339,11 @@
       "status": "Open",
       "priority": "High",
       "schedule_name": "QC Calibration",
-      "frequency": "weekly",
+      "frequency": "Weekly",
       "estimated_completion_time": 45,
       "labour_count": 1,
-      "due_days_from_now": 3
+      "due_days_from_now": 3,
+      "required_skills": ["Electrical", "Controls"]
     },
     {
       "asset": "Paint Booth F2",
@@ -306,10 +352,11 @@
       "status": "Open",
       "priority": "Medium",
       "schedule_name": "Paint Booth PM",
-      "frequency": "weekly",
+      "frequency": "Weekly",
       "estimated_completion_time": 75,
       "labour_count": 1,
-      "due_days_from_now": 1
+      "due_days_from_now": 1,
+      "required_skills": ["Paint Systems"]
     },
     {
       "asset": "Stamping Press G1",
@@ -318,10 +365,11 @@
       "status": "Completed",
       "priority": "Medium",
       "schedule_name": "Press Hydraulics",
-      "frequency": "monthly",
+      "frequency": "Monthly",
       "estimated_completion_time": 150,
       "labour_count": 2,
-      "due_days_from_now": -5
+      "due_days_from_now": -5,
+      "required_skills": ["Hydraulics", "Mechanical"]
     },
     {
       "asset": "HVAC System H3",
@@ -330,21 +378,23 @@
       "status": "Open",
       "priority": "Low",
       "schedule_name": "HVAC Maintenance",
-      "frequency": "monthly",
+      "frequency": "Monthly",
       "estimated_completion_time": 120,
       "labour_count": 2,
-      "due_days_from_now": 15
+      "due_days_from_now": 15,
+      "required_skills": ["HVAC", "Mechanical"]
     },
     {
       "asset": "Laser Cutting Machine I1",
       "description": "Laser head alignment and lens replacement",
-      "order_type": "corrective",
+      "order_type": "Corrective",
       "status": "In Progress",
       "priority": "Critical",
       "estimated_completion_time": 240,
       "labour_count": 2,
       "justification": "Cutting precision out of tolerance",
-      "due_days_from_now": 1
+      "due_days_from_now": 1,
+      "required_skills": ["Laser Systems", "Electrical"]
     },
     {
       "asset": "Assembly Robot J4",
@@ -353,10 +403,11 @@
       "status": "Scheduled",
       "priority": "Medium",
       "schedule_name": "Robot End Effector",
-      "frequency": "weekly",
+      "frequency": "Weekly",
       "estimated_completion_time": 90,
       "labour_count": 1,
-      "due_days_from_now": 7
+      "due_days_from_now": 7,
+      "required_skills": ["Robotics", "Pneumatics"]
     },
     {
       "asset": "Paint Mixing Station K1",
@@ -365,10 +416,11 @@
       "status": "Open",
       "priority": "Medium",
       "schedule_name": "Paint Mixing PM",
-      "frequency": "weekly",
+      "frequency": "Weekly",
       "estimated_completion_time": 60,
       "labour_count": 1,
-      "due_days_from_now": 4
+      "due_days_from_now": 4,
+      "required_skills": ["Paint Systems", "Mechanical"]
     },
     {
       "asset": "Spot Welding Gun L2",
@@ -377,10 +429,11 @@
       "status": "Completed",
       "priority": "High",
       "schedule_name": "Welding Gun PM",
-      "frequency": "daily",
+      "frequency": "Daily",
       "estimated_completion_time": 30,
       "labour_count": 1,
-      "due_days_from_now": -1
+      "due_days_from_now": -1,
+      "required_skills": ["Welding", "Electrical"]
     },
     {
       "asset": "Final Assembly Line M1",
@@ -389,10 +442,11 @@
       "status": "Open",
       "priority": "High",
       "schedule_name": "Final Line PM",
-      "frequency": "weekly",
+      "frequency": "Weekly",
       "estimated_completion_time": 180,
       "labour_count": 3,
-      "due_days_from_now": 6
+      "due_days_from_now": 6,
+      "required_skills": ["Mechanical", "Electrical", "Controls"]
     },
     {
       "asset": "Paint Oven N1",
@@ -401,21 +455,97 @@
       "status": "Scheduled",
       "priority": "High",
       "schedule_name": "Oven Calibration",
-      "frequency": "monthly",
+      "frequency": "Monthly",
       "estimated_completion_time": 120,
       "labour_count": 2,
-      "due_days_from_now": 12
+      "due_days_from_now": 12,
+      "required_skills": ["HVAC", "Electrical", "Controls"]
     },
     {
       "asset": "Material Handling AGV O1",
       "description": "Battery replacement and navigation system check",
-      "order_type": "reactive",
+      "order_type": "REP",
       "status": "Open",
       "priority": "Medium",
       "estimated_completion_time": 90,
       "labour_count": 1,
       "justification": "AGV showing reduced battery life",
-      "due_days_from_now": 3
+      "due_days_from_now": 3,
+      "required_skills": ["Electrical", "Robotics"]
+    },
+    {
+      "asset": "Paint Line Robot A1",
+      "description": "Robot safety sensor check - Quick inspection",
+      "order_type": "PM",
+      "status": "Open",
+      "priority": "High",
+      "schedule_name": "Daily Safety Check",
+      "frequency": "Daily",
+      "estimated_completion_time": 15,
+      "labour_count": 1,
+      "due_days_from_now": 0,
+      "required_skills": ["Robotics"]
+    },
+    {
+      "asset": "Conveyor System D1",
+      "description": "Emergency stop button test",
+      "order_type": "PM",
+      "status": "Open",
+      "priority": "Critical",
+      "schedule_name": "Daily Safety",
+      "frequency": "Daily",
+      "estimated_completion_time": 10,
+      "labour_count": 1,
+      "due_days_from_now": 0,
+      "required_skills": ["Electrical"]
+    },
+    {
+      "asset": "Paint Booth F2",
+      "description": "Paint nozzle clog - Immediate cleaning required",
+      "order_type": "REP",
+      "status": "Open",
+      "priority": "High",
+      "estimated_completion_time": 25,
+      "labour_count": 1,
+      "justification": "Paint quality issues detected",
+      "due_days_from_now": 0,
+      "required_skills": ["Paint Systems"]
+    },
+    {
+      "asset": "Assembly Robot J4",
+      "description": "Gripper alignment issue - Quick adjustment",
+      "order_type": "Corrective",
+      "status": "Open",
+      "priority": "Medium",
+      "estimated_completion_time": 20,
+      "labour_count": 1,
+      "justification": "Part placement slightly off",
+      "due_days_from_now": 1,
+      "required_skills": ["Robotics", "Pneumatics"]
+    },
+    {
+      "asset": "Laser Cutting Machine I1",
+      "description": "CRITICAL - Laser power fluctuation",
+      "order_type": "REP",
+      "status": "Open",
+      "priority": "Critical",
+      "estimated_completion_time": 45,
+      "labour_count": 2,
+      "justification": "Safety hazard - immediate attention required",
+      "due_days_from_now": 0,
+      "required_skills": ["Laser Systems", "Electrical"]
+    },
+    {
+      "asset": "HVAC System H3",
+      "description": "Temperature sensor replacement",
+      "order_type": "Corrective",
+      "status": "Open",
+      "priority": "Medium",
+      "estimated_completion_time": 30,
+      "labour_count": 1,
+      "justification": "Sensor reading erratic",
+      "due_days_from_now": 2,
+      "required_skills": ["HVAC", "Electrical"]
     }
   ],
   "spare_parts": [
@@ -593,5 +723,38 @@
       "ticket_url": "http://mockcmms/tickets/CMMS-104",
       "required_skills": ["Database"]
     }
+  ],
+  "schedules": [
+    {
+      "name": "Weekend Plan - Nov 23-24, 2025",
+      "start_date": "2025-11-23T08:00:00",
+      "end_date": "2025-11-24T18:00:00",
+      "planning_status": "Draft",
+      "maintenance_orders": [
+        "Weekly lubrication and calibration check",
+        "Filter replacement and spray gun cleaning",
+        "Calibration of measurement equipment",
+        "Pump maintenance and color accuracy check",
+        "Conveyor belt inspection and station alignment",
+        "Air filter replacement and duct cleaning",
+        "Laser head alignment and lens replacement",
+        "Temperature sensor replacement"
+      ]
+    },
+    {
+      "name": "Shift Break Plan - Nov 20, 2025 (Morning Break)",
+      "start_date": "2025-11-20T10:00:00",
+      "end_date": "2025-11-20T10:30:00",
+      "planning_status": "Draft",
+      "maintenance_orders": [
+        "Robot safety sensor check - Quick inspection",
+        "Emergency stop button test",
+        "Paint nozzle clog - Immediate cleaning required",
+        "Gripper alignment issue - Quick adjustment",
+        "Electrode replacement and current calibration",
+        "Temperature sensor replacement"
+      ]
+    }
   ]
 }
+

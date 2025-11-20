@@ -530,3 +530,341 @@ def debug_info():
     except Exception as e:
         current_app.logger.error(f"Debug endpoint error: {e}")
         return jsonify({'error': 'Debug info collection failed'}), 500
+
+
+# ============================================================================
+# PLANNING MODULE ROUTES (Phase 3)
+# ============================================================================
+
+# Import planning-specific modules
+from apps.workforceManager.src.services.planning_models import Schedule, PlanningTask
+from apps.workforceManager.src.services.planning_engine import PlanningEngine
+from src.services.db_utils import db, MaintenanceOrder, Technician, Skill
+
+
+# Debug route to list all routes
+@workforce_manager_bp.route('/debug/routes')
+def list_routes():
+    """Debug endpoint to list all registered routes for this blueprint."""
+    routes = []
+    for rule in current_app.url_map.iter_rules():
+        if 'workforce_manager' in rule.endpoint:
+            routes.append({
+                'endpoint': rule.endpoint,
+                'methods': list(rule.methods),
+                'path': str(rule)
+            })
+    return jsonify(routes)
+
+
+@workforce_manager_bp.route('/planning')
+def planning_index():
+    """Main planning page showing schedules and planning controls."""
+    try:
+        current_app.logger.info("Planning index route accessed")
+
+        # Get all schedules (most recent first)
+        schedules = Schedule.query.order_by(Schedule.created_at.desc()).all()
+        current_app.logger.info(f"Found {len(schedules)} schedules")
+
+        # Get active/recent schedule
+        active_schedule = Schedule.query.filter_by(planning_status='Published').first()
+        if not active_schedule and schedules:
+            active_schedule = schedules[0]
+
+        return render_template(
+            'planning/index.html',
+            schedules=schedules,
+            active_schedule=active_schedule
+        )
+    except Exception as e:
+        current_app.logger.error(f"Planning index error: {e}", exc_info=True)
+        return f"Error loading planning page: {str(e)}", 500
+
+
+@workforce_manager_bp.route('/planning/schedules/create', methods=['POST'])
+def create_schedule():
+    """Create a new planning schedule."""
+    try:
+        name = request.form.get('name')
+        start_date_str = request.form.get('start_date')
+        end_date_str = request.form.get('end_date')
+
+        # Validate inputs
+        if not all([name, start_date_str, end_date_str]):
+            return jsonify({'error': 'All fields are required'}), 400
+
+        # Parse dates
+        from datetime import datetime
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+
+        if end_date <= start_date:
+            return jsonify({'error': 'End date must be after start date'}), 400
+
+        # Create schedule
+        schedule = Schedule(
+            name=name,
+            start_date=start_date,
+            end_date=end_date,
+            planning_status='Draft'
+        )
+
+        db.session.add(schedule)
+        db.session.commit()
+
+        return redirect(url_for('workforce_manager.view_schedule', schedule_id=schedule.id))
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error creating schedule: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@workforce_manager_bp.route('/planning/schedules/<int:schedule_id>')
+def view_schedule(schedule_id):
+    """View a specific schedule with planning results."""
+    try:
+        schedule = Schedule.query.get_or_404(schedule_id)
+        planning_mode = request.args.get('mode', 'weekend')
+        view_type = request.args.get('view', 'table')
+
+        # Get planning tasks for this schedule
+        planning_tasks = PlanningTask.query.filter_by(schedule_id=schedule_id).all()
+
+        # Get maintenance orders for the tasks
+        task_data = []
+        task_data_json = []
+        for pt in planning_tasks:
+            mo = MaintenanceOrder.query.get(pt.maintenance_order_id)
+            if mo:
+                task_data.append({
+                    'planning_task': pt,
+                    'maintenance_order': mo
+                })
+
+                # Build JSON data for the table
+                assigned_to = 'Not assigned'
+                assigned_to_skills = ''
+                if pt.assigned_technicians:
+                    assigned_to = ', '.join([tech.name for tech in pt.assigned_technicians])
+                    # tech.skills returns TechnicianSkill objects, need to access .skill.name
+                    assigned_to_skills = '|'.join([', '.join([ts.skill.name for ts in tech.skills]) for tech in pt.assigned_technicians])
+                elif pt.assigned_technician:
+                    assigned_to = pt.assigned_technician.name
+                    # pt.assigned_technician.skills returns TechnicianSkill objects
+                    assigned_to_skills = ', '.join([ts.skill.name for ts in pt.assigned_technician.skills]) if pt.assigned_technician.skills else ''
+
+                task_data_json.append({
+                    'maintenance_order_id': mo.id,  # Add MO ID for table display
+                    'status': pt.status,
+                    'task_description': mo.description,
+                    'task_type': mo.order_type,
+                    'priority': mo.priority,
+                    'required_skills': ', '.join([skill.name for skill in mo.required_skills]) if mo.required_skills else 'None',
+                    'duration': mo.estimated_completion_time,
+                    'team_size': mo.labour_count,
+                    'assigned_to': assigned_to,
+                    'assigned_to_skills': assigned_to_skills
+                })
+
+        import json
+        planning_tasks_json = json.dumps(task_data_json)
+
+        return render_template(
+            'planning/schedule_view.html',
+            schedule=schedule,
+            planning_mode=planning_mode,
+            view_type=view_type,
+            task_data=task_data,
+            planning_tasks_json=planning_tasks_json
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error viewing schedule: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@workforce_manager_bp.route('/planning/schedules/<int:schedule_id>/run', methods=['POST'])
+def run_planning(schedule_id):
+    """Execute the planning algorithm for a schedule."""
+    try:
+        schedule = Schedule.query.get_or_404(schedule_id)
+        planning_mode = request.form.get('planning_mode', 'weekend')
+        check_parts = request.form.get('check_parts', 'true') == 'true'
+
+        # Check if schedule is locked
+        if schedule.planning_status == 'Locked':
+            return jsonify({'error': 'Cannot run planning on a locked schedule'}), 400
+
+        # Run planning engine
+        engine = PlanningEngine()
+        result = engine.generate_plan(
+            schedule=schedule,
+            planning_mode=planning_mode,
+            check_parts=check_parts
+        )
+
+        # Save planning results to database
+        # Clear existing assignments
+        planning_tasks = PlanningTask.query.filter_by(schedule_id=schedule_id).all()
+        for pt in planning_tasks:
+            pt.status = 'Unplanned'
+            pt.assigned_technician_id = None
+            pt.assigned_technicians = []
+            pt.planned_start_time = None
+            pt.planned_end_time = None
+            pt.actual_duration_minutes = None
+
+        # Apply new assignments
+        for assignment in result.assigned_tasks:
+            planning_task = PlanningTask.query.filter_by(
+                schedule_id=schedule_id,
+                maintenance_order_id=assignment.maintenance_order_id
+            ).first()
+
+            if planning_task:
+                planning_task.status = 'Planned'
+                planning_task.planned_start_time = assignment.planned_start_time
+                planning_task.planned_end_time = assignment.planned_end_time
+                planning_task.actual_duration_minutes = assignment.actual_duration_minutes
+
+                # Assign technicians
+                if len(assignment.assigned_technician_ids) == 1:
+                    # Single technician assignment
+                    planning_task.assigned_technician_id = assignment.assigned_technician_ids[0]
+                else:
+                    # Multi-technician assignment - use already imported Technician
+                    techs = Technician.query.filter(Technician.id.in_(assignment.assigned_technician_ids)).all()
+                    planning_task.assigned_technicians = techs
+
+        # Mark unassigned tasks
+        for unassigned in result.unassigned_tasks:
+            planning_task = PlanningTask.query.filter_by(
+                schedule_id=schedule_id,
+                maintenance_order_id=unassigned.maintenance_order_id
+            ).first()
+
+            if planning_task:
+                planning_task.status = 'Unplanned'
+                # Store the reason in a notes field if available, or just leave unassigned
+
+        # Update schedule status
+        if schedule.planning_status == 'Draft':
+            schedule.planning_status = 'Planned'
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'statistics': result.statistics.to_dict() if result.statistics else {},
+            'warnings': result.warnings,
+            'message': f'{result.statistics.assigned_tasks} tasks assigned, {result.statistics.unassigned_tasks} unassigned'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error running planning: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@workforce_manager_bp.route('/planning/schedules/<int:schedule_id>/gantt-data')
+def gantt_data(schedule_id):
+    """Get Gantt chart data for a schedule in JSON format."""
+    try:
+        schedule = Schedule.query.get_or_404(schedule_id)
+
+        # Get all planning tasks for this schedule
+        planning_tasks = PlanningTask.query.filter_by(schedule_id=schedule_id).all()
+
+        # Get all available technicians
+        technicians = Technician.query.all()
+
+        # Transform data for Gantt chart
+        tasks_data = []
+        for pt in planning_tasks:
+            mo = pt.maintenance_order
+            if not mo:
+                continue
+
+            # Get assigned technician names
+            assigned_tech_names = []
+            assigned_tech_ids = []
+
+            if pt.assigned_technicians:
+                # Multi-technician assignment
+                for tech in pt.assigned_technicians:
+                    assigned_tech_names.append(tech.name)
+                    assigned_tech_ids.append(tech.id)
+            elif pt.assigned_technician:
+                # Single technician (deprecated)
+                assigned_tech_names.append(pt.assigned_technician.name)
+                assigned_tech_ids.append(pt.assigned_technician.id)
+
+            # Get required skills
+            required_skills = [skill.name for skill in mo.required_skills] if hasattr(mo, 'required_skills') else []
+
+            task_data = {
+                'planning_task_id': pt.id,
+                'maintenance_order_id': mo.id,
+                'task_description': mo.description or 'Unnamed Task',
+                'status': pt.status,
+                'priority': mo.priority or 'Undefined',
+                'task_type': mo.order_type or 'N/A',
+                'assigned_technician_ids': assigned_tech_ids,
+                'assigned_technician_names': assigned_tech_names,
+                'planned_start_time': pt.planned_start_time.isoformat() if pt.planned_start_time else None,
+                'planned_end_time': pt.planned_end_time.isoformat() if pt.planned_end_time else None,
+                'estimated_duration_minutes': mo.estimated_completion_time,
+                'actual_duration_minutes': pt.actual_duration_minutes,
+                'required_skills': required_skills
+            }
+            tasks_data.append(task_data)
+
+        # Transform technicians data
+        technicians_data = []
+        for tech in technicians:
+            tech_data = {
+                'id': tech.id,
+                'name': tech.name,
+                'availability_status': tech.availability_status
+            }
+            technicians_data.append(tech_data)
+
+        return jsonify({
+            'schedule': {
+                'id': schedule.id,
+                'name': schedule.name,
+                'start_date': schedule.start_date.isoformat(),
+                'end_date': schedule.end_date.isoformat(),
+                'planning_status': schedule.planning_status
+            },
+            'tasks': tasks_data,
+            'technicians': technicians_data
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching Gantt data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@workforce_manager_bp.route('/planning/schedules/<int:schedule_id>/publish', methods=['POST'])
+def publish_schedule(schedule_id):
+    """Publish a schedule (make it the active one)."""
+    try:
+        schedule = Schedule.query.get_or_404(schedule_id)
+
+        # Unpublish other schedules
+        Schedule.query.filter_by(planning_status='Published').update({'planning_status': 'Planned'})
+
+        # Publish this one
+        schedule.planning_status = 'Published'
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': f'Schedule "{schedule.name}" published'}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error publishing schedule: {e}")
+        return jsonify({'error': str(e)}), 500
+
+

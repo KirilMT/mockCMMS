@@ -3,9 +3,14 @@
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     overflow: hidden;
-    height: 80vh;
     display: flex;
     flex-direction: column;
+    /* Let wrapper size naturally based on content */
+}
+
+/* For pages where table container should fill viewport (Assets, MOs, Users, Spare Parts) */
+.page-full-height .advanced-table-wrapper {
+    min-height: calc(100vh - 280px); /* Fill vertical space minus header/nav */
 }
 
 .table-controls {
@@ -51,11 +56,40 @@
 }
 
 .advanced-table tbody tr {
-    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
 }
 
 .advanced-table tbody tr:hover {
-    background-color: rgba(0,123,255,0.1);
+    background-color: rgba(0,123,255,0.08);
+}
+
+/* Badge styling in table cells */
+.advanced-table tbody td .badge {
+    display: inline-block;
+    margin: 2px;
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+}
+
+/* Icon styling in table cells */
+.advanced-table tbody td i {
+    margin-right: 4px;
+}
+
+/* Multiple badges in a cell */
+.advanced-table tbody td .badge + .badge {
+    margin-left: 4px;
+}
+
+/* Technician assignment cells */
+.advanced-table tbody td div + div {
+    margin-top: 4px;
+}
+
+/* Empty/None text styling */
+.advanced-table tbody td em.text-muted {
+    font-style: italic;
+    color: #6c757d;
 }
 
 .table-pagination {

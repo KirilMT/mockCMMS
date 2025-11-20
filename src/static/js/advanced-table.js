@@ -15,40 +15,42 @@ class AdvancedTable {
     }
 
     init() {
+        // Store instance reference globally BEFORE rendering
+        window.advTable = this;
         this.render();
-        this.attachEventListeners();
         this.loadConfiguration();
     }
 
     render() {
+        const tableId = this.container.id || 'advTable';
         this.container.innerHTML = `
             <div class="advanced-table-wrapper">
                 <div class="table-controls">
                     <div class="table-actions">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="advTable.showColumnManager()">
+                        <button class="btn btn-sm btn-outline-secondary" data-action="showColumnManager">
                             <i class="fas fa-columns"></i> Columns
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="advTable.showFilterManager()">
+                        <button class="btn btn-sm btn-outline-secondary" data-action="showFilterManager">
                             <i class="fas fa-filter"></i> Filters
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="advTable.exportData('csv')">
+                        <button class="btn btn-sm btn-outline-secondary" data-action="exportData">
                             <i class="fas fa-download"></i> Export CSV
                         </button>
                         <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-secondary" onclick="advTable.saveConfiguration()">
+                            <button class="btn btn-sm btn-outline-secondary" data-action="saveConfiguration">
                                 <i class="fas fa-save"></i> Save View
                             </button>
-                            <select class="form-select form-select-sm" id="savedConfigsDropdown" onchange="loadSelectedConfiguration()" style="max-width: 200px;">
+                            <select class="form-select form-select-sm" id="savedConfigsDropdown" style="max-width: 200px;">
                                 <option value="">Select saved view...</option>
                             </select>
                         </div>
                     </div>
                     <div class="table-search">
                         <input type="text" class="form-control form-control-sm" placeholder="Search all columns..." 
-                               oninput="advTable.globalSearch(this.value)" id="globalSearchInput">
+                               data-action="globalSearch" id="globalSearchInput">
                     </div>
                 </div>
-                <div class="table-responsive" style="max-height: 75vh; overflow-y: auto; overflow-x: auto;">
+                <div class="table-responsive" style="max-height: 60vh; overflow-y: auto; overflow-x: auto;">
                     <table class="table table-striped table-hover advanced-table" style="width: max-content; min-width: 100%;">
                         <thead class="table-dark sticky-top">
                             ${this.renderHeader()}
@@ -63,6 +65,9 @@ class AdvancedTable {
                 </div>
             </div>
         `;
+
+        // Re-attach event listeners after DOM update
+        this.attachEventListeners();
     }
 
     renderHeader() {
@@ -72,7 +77,7 @@ class AdvancedTable {
                 const col = this.columns.find(c => c.key === key);
                 const sortIcon = this.getSortIcon(key);
                 return `
-                    <th class="sortable" data-column="${key}" onclick="advTable.sort('${key}')">
+                    <th class="sortable" data-column="${key}">
                         ${col.label} ${sortIcon}
                     </th>
                 `;
@@ -84,10 +89,10 @@ class AdvancedTable {
         const paginatedData = this.getPaginatedData(filteredData);
         
         return paginatedData.map(row => `
-            <tr onclick="advTable.rowClick(${row.id})">
+            <tr>
                 ${this.columnOrder
                     .filter(key => !this.hiddenColumns.has(key))
-                    .map(key => `<td>${this.formatCellValue(row[key], key)}</td>`)
+                    .map(key => `<td>${this.formatCellValue(row[key], key, row)}</td>`)
                     .join('')}
             </tr>
         `).join('');
@@ -183,10 +188,17 @@ class AdvancedTable {
         }
     }
 
-    formatCellValue(value, column) {
-        if (value === null || value === undefined) return '';
-        
+    formatCellValue(value, column, row) {
+        if (value === null || value === undefined) value = '';
+
         const col = this.columns.find(c => c.key === column);
+
+        // Use custom render function if provided
+        if (col && col.render && typeof col.render === 'function') {
+            return col.render(value, row);
+        }
+
+        // Default formatting based on type
         if (col && col.type === 'date' && value) {
             return new Date(value).toLocaleDateString();
         }
@@ -199,13 +211,24 @@ class AdvancedTable {
     showColumnManager() {
         const modal = document.getElementById('columnManager');
         const columnList = document.getElementById('columnList');
-        
+
+        if (!modal) {
+            console.error('Column Manager modal not found in DOM');
+            return;
+        }
+        if (!columnList) {
+            console.error('Column List element not found in DOM');
+            return;
+        }
+
         // Populate column list
         columnList.innerHTML = '';
         this.columnOrder.forEach(key => {
             const col = this.columns.find(c => c.key === key);
+            if (!col) return;
+
             const isVisible = !this.hiddenColumns.has(key);
-            
+
             const listItem = document.createElement('li');
             listItem.className = 'column-item';
             listItem.dataset.column = key;
@@ -215,23 +238,65 @@ class AdvancedTable {
                 <span>${col.label}</span>
                 <i class="fas fa-grip-vertical drag-handle"></i>
             `;
+
+            // Add drag event listeners
+            listItem.addEventListener('dragstart', (e) => {
+                listItem.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', key);
+            });
+
+            listItem.addEventListener('dragend', () => {
+                listItem.classList.remove('dragging');
+            });
+
+            listItem.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const dragging = columnList.querySelector('.dragging');
+                const afterElement = this.getDragAfterElement(columnList, e.clientY);
+
+                if (afterElement == null) {
+                    columnList.appendChild(dragging);
+                } else {
+                    columnList.insertBefore(dragging, afterElement);
+                }
+            });
+
             columnList.appendChild(listItem);
         });
-        
+
         modal.classList.add('show');
-        
-        // Initialize drag and drop
-        setTimeout(() => {
-            if (typeof initializeDragAndDrop === 'function') {
-                initializeDragAndDrop();
+        console.log('Column Manager modal displayed');
+    }
+
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.column-item:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
             }
-        }, 100);
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     showFilterManager() {
         const modal = document.getElementById('filterManager');
         const filterRows = document.getElementById('filterRows');
         
+        if (!modal) {
+            console.error('Filter Manager modal not found in DOM');
+            return;
+        }
+        if (!filterRows) {
+            console.error('Filter Rows element not found in DOM');
+            return;
+        }
+
         // Clear existing display
         filterRows.innerHTML = '';
         
@@ -256,13 +321,13 @@ class AdvancedTable {
             const filterRow = document.createElement('div');
             filterRow.className = 'filter-row';
             filterRow.innerHTML = `
-                <select class="form-select">
+                <select class="form-select filter-column">
                     <option value="">Select Column</option>
                     ${this.columns.map(col => 
                         `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`
                     ).join('')}
                 </select>
-                <select class="form-select">
+                <select class="form-select filter-operator">
                     <option value="contains" ${filter.operator === 'contains' ? 'selected' : ''}>Contains</option>
                     <option value="not_contains" ${filter.operator === 'not_contains' ? 'selected' : ''}>Does Not Contain</option>
                     <option value="equals" ${filter.operator === 'equals' ? 'selected' : ''}>Equals</option>
@@ -270,8 +335,8 @@ class AdvancedTable {
                     <option value="starts_with" ${filter.operator === 'starts_with' ? 'selected' : ''}>Starts With</option>
                     <option value="ends_with" ${filter.operator === 'ends_with' ? 'selected' : ''}>Ends With</option>
                 </select>
-                <input type="text" class="form-control" placeholder="Filter value" value="${filter.value || ''}">
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFilterRow(this)">
+                <input type="text" class="form-control filter-value" placeholder="Filter value" value="${filter.value || ''}">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.filter-row').remove()">
                     <i class="fas fa-trash"></i>
                 </button>
             `;
@@ -280,10 +345,128 @@ class AdvancedTable {
         
         // Add one empty row if no filters exist
         if (filterEntries.length === 0) {
-            addFilterRow();
+            this.addFilterRow();
         }
         
         modal.classList.add('show');
+        console.log('Filter Manager modal displayed');
+    }
+
+    closeColumnManager() {
+        document.getElementById('columnManager').classList.remove('show');
+    }
+
+    closeFilterManager() {
+        document.getElementById('filterManager').classList.remove('show');
+    }
+
+    applyColumnChanges() {
+        const columnItems = document.querySelectorAll('#columnList .column-item');
+        const newOrder = [];
+        const newHidden = new Set();
+
+        columnItems.forEach(item => {
+            const columnKey = item.dataset.column;
+            newOrder.push(columnKey);
+            if (!item.querySelector('input[type="checkbox"]').checked) {
+                newHidden.add(columnKey);
+            }
+        });
+
+        this.columnOrder = newOrder;
+        this.hiddenColumns = newHidden;
+        this.render();
+        this.closeColumnManager();
+    }
+
+    applyFilters() {
+        const filterRows = document.querySelectorAll('#filterRows .filter-row');
+        this.filters = {};
+
+        console.log('Applying filters, found rows:', filterRows.length);
+
+        filterRows.forEach(row => {
+            const column = row.querySelector('.filter-column')?.value;
+            const operator = row.querySelector('.filter-operator')?.value;
+            const value = row.querySelector('.filter-value')?.value;
+
+            console.log('Filter row:', { column, operator, value });
+
+            if (column && value) {
+                this.filters[column] = { operator, value };
+            }
+        });
+
+        console.log('Filters applied:', this.filters);
+
+        this.currentPage = 1; // Reset to first page
+        this.render();
+        this.closeFilterManager();
+    }
+
+    addFilterRow() {
+        const filterRows = document.getElementById('filterRows');
+        const existingRows = filterRows.querySelectorAll('.filter-row');
+
+        // Add AND/OR logic if this is not the first row
+        if (existingRows.length > 0) {
+            const logicRow = document.createElement('div');
+            logicRow.className = 'filter-logic';
+            const logicId = Date.now(); // Unique ID for radio buttons
+            logicRow.innerHTML = `
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="logic${logicId}" id="and${logicId}" value="and" checked>
+                    <label class="btn btn-outline-primary btn-sm" for="and${logicId}">AND</label>
+                    <input type="radio" class="btn-check" name="logic${logicId}" id="or${logicId}" value="or">
+                    <label class="btn btn-outline-primary btn-sm" for="or${logicId}">OR</label>
+                </div>
+            `;
+            filterRows.appendChild(logicRow);
+        }
+
+        const filterRow = document.createElement('div');
+        filterRow.className = 'filter-row';
+        filterRow.innerHTML = `
+            <select class="form-select filter-column">
+                <option value="">Select Column</option>
+                ${this.columns.map(col =>
+                    `<option value="${col.key}">${col.label}</option>`
+                ).join('')}
+            </select>
+            <select class="form-select filter-operator">
+                <option value="contains">Contains</option>
+                <option value="not_contains">Does Not Contain</option>
+                <option value="equals">Equals</option>
+                <option value="not_equals">Not Equals</option>
+                <option value="starts_with">Starts With</option>
+                <option value="ends_with">Ends With</option>
+            </select>
+            <input type="text" class="form-control filter-value" placeholder="Filter value">
+            <button type="button" class="btn btn-outline-danger btn-sm remove-filter-btn">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+
+        // Add event listener for remove button
+        const removeBtn = filterRow.querySelector('.remove-filter-btn');
+        removeBtn.addEventListener('click', function() {
+            const row = this.closest('.filter-row');
+            // Also remove the previous logic element if it exists
+            const prevSibling = row.previousElementSibling;
+            if (prevSibling && prevSibling.classList.contains('filter-logic')) {
+                prevSibling.remove();
+            }
+            row.remove();
+        });
+
+        filterRows.appendChild(filterRow);
+    }
+
+    clearAllFilters() {
+        this.filters = {};
+        this.currentPage = 1;
+        this.render();
+        this.closeFilterManager();
     }
 
     addFilterRowWithData(column, operator, value) {
@@ -423,6 +606,7 @@ class AdvancedTable {
         if (config.hidden_columns) this.hiddenColumns = new Set(JSON.parse(config.hidden_columns));
         if (config.filters) this.filters = JSON.parse(config.filters);
         if (config.sort_config) this.currentSort = JSON.parse(config.sort_config);
+
         this.render();
     }
 
@@ -442,8 +626,67 @@ class AdvancedTable {
     }
 
     attachEventListeners() {
-        // Additional event listeners can be added here
+        // Bind all buttons with data-action attributes
+        const buttons = this.container.querySelectorAll('[data-action]');
+        buttons.forEach(button => {
+            const action = button.getAttribute('data-action');
+
+            if (action === 'showColumnManager') {
+                button.addEventListener('click', () => this.showColumnManager());
+            } else if (action === 'showFilterManager') {
+                button.addEventListener('click', () => this.showFilterManager());
+            } else if (action === 'exportData') {
+                button.addEventListener('click', () => this.exportData('csv'));
+            } else if (action === 'saveConfiguration') {
+                button.addEventListener('click', () => this.saveConfiguration());
+            } else if (action === 'globalSearch') {
+                button.addEventListener('input', (e) => this.globalSearch(e.target.value));
+            }
+        });
+
+        // Bind column headers for sorting
+        const headers = this.container.querySelectorAll('.advanced-table th.sortable');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const column = header.getAttribute('data-column');
+                this.sort(column);
+            });
+        });
     }
+}
+
+// Global helper function to initialize the advanced table
+// This is the function that templates will call
+function initAdvancedTable(containerId, data, columns, pageSize = 25) {
+    console.log('initAdvancedTable called with:', containerId, 'data items:', data?.length);
+
+    // Create a container if it doesn't exist
+    let container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container with ID '${containerId}' not found`);
+        return null;
+    }
+
+    // Initialize the advanced table
+    const table = new AdvancedTable(containerId, {
+        data: data,
+        columns: columns,
+        pageName: containerId,
+        pageSize: pageSize
+    });
+
+    // Store reference globally so other functions can access it
+    // This MUST be set here for the onclick handlers in the rendered HTML to work
+    window.advTable = table;
+
+    // Also set it as a global variable (without window prefix) for compatibility
+    if (typeof advTable === 'undefined') {
+        window.advTable = table;
+    }
+
+    console.log('Advanced table initialized, window.advTable is:', window.advTable);
+
+    return table;
 }
 
 // Global instance for easy access

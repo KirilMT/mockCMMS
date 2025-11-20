@@ -10,8 +10,7 @@
         </a>
     </div>
 
-    <div id="assetsTable"></div>
-    {% include 'components/advanced_table.html' %}
+    <div id="assetsTable" class="page-full-height"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -27,19 +26,8 @@
 
             const assetsData = {{ assets | tojson }};
 
-            advTable = new AdvancedTable('assetsTable', {
-                data: assetsData,
-                columns: columns,
-                pageName: 'assets',
-                pageSize: 25
-            });
-            
-            // Load saved configurations
-            setTimeout(() => {
-                if (typeof loadSavedConfigurations === 'function') {
-                    loadSavedConfigurations();
-                }
-            }, 100);
+            // Use initAdvancedTable instead of direct instantiation
+            initAdvancedTable('assetsTable', assetsData, columns, 25);
         });
     </script>
 {% endblock %}

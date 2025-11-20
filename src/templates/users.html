@@ -10,8 +10,7 @@
         </a>
     </div>
 
-    <div id="usersTable"></div>
-    {% include 'components/advanced_table.html' %}
+    <div id="usersTable" class="page-full-height"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -21,23 +20,21 @@
                 { key: 'email', label: 'Email', type: 'text' },
                 { key: 'roles_display', label: 'Roles', type: 'text' },
                 { key: 'is_active', label: 'Active', type: 'text' },
+                { key: 'technician_status', label: 'Availability', type: 'text', render: function(val, row) {
+                    // Only show if user has Technician role
+                    if (!row.is_technician) return '-';
+                    if (val === 'Available') return '<span class="badge badge-success">Available</span>';
+                    if (val === 'On Leave') return '<span class="badge badge-warning">On Leave</span>';
+                    if (val === 'Sick') return '<span class="badge badge-danger">Sick</span>';
+                    return val || '-';
+                }},
                 { key: 'created_at', label: 'Created', type: 'datetime' }
             ];
 
             const usersData = {{ users | tojson }};
 
-            advTable = new AdvancedTable('usersTable', {
-                data: usersData,
-                columns: columns,
-                pageName: 'users',
-                pageSize: 25
-            });
-            
-            setTimeout(() => {
-                if (typeof loadSavedConfigurations === 'function') {
-                    loadSavedConfigurations();
-                }
-            }, 100);
+            // Use initAdvancedTable instead of direct instantiation
+            initAdvancedTable('usersTable', usersData, columns, 25);
         });
     </script>
 {% endblock %}

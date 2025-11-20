@@ -1,13 +1,21 @@
 """
 Test configuration and fixtures for the Weekend Planning Project.
 """
-import pytest
+import sys
 import os
-import tempfile
-from unittest.mock import patch
-from src.app import create_app
-from src.services.db_utils import init_db
-from src.config import Config
+
+# Add project root to the Python path to resolve `src` imports correctly
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+import pytest
+
+# Import from main application (SQLAlchemy db instance)
+from src.services.db_utils import db
+
+# Import from workforceManager app
+from apps.workforceManager.src.config import Config
 
 
 class TestConfig(Config):
@@ -25,24 +33,23 @@ class TestConfig(Config):
 @pytest.fixture
 def app():
     """Create and configure a test app instance."""
-    # Create a temporary file for test database
-    db_fd, db_path = tempfile.mkstemp(suffix='.db')
+    from flask import Flask
 
-    # Patch the config to use test database
-    with patch.object(Config, 'DATABASE_PATH', db_path):
-        app = create_app()
-        app.config.from_object(TestConfig)
-        app.config['DATABASE_PATH'] = db_path
+    # Create a minimal Flask app for testing
+    app = Flask(__name__)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False
 
-        with app.app_context():
-            # Initialize test database
-            init_db(db_path)
+    # Initialize the db with the app
+    db.init_app(app)
 
+    with app.app_context():
+        db.create_all()
         yield app
-
-    # Cleanup
-    os.close(db_fd)
-    os.unlink(db_path)
+        db.session.remove()
+        db.drop_all()
 
 
 @pytest.fixture

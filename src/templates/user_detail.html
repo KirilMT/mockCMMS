@@ -3,35 +3,171 @@
 {% block title %}{% if user %}Edit User: {{ user.username }}{% else %}Register New User{% endif %}{% endblock %}
 
 {% block content %}
-    <h1 class="mb-4">{% if user %}Edit User: {{ user.username }}{% else %}Register New User{% endif %}</h1>
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>{% if user %}Edit User: {{ user.username }}{% else %}Register New User{% endif %}</h1>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{{ url_for('main.users') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Users
+            </a>
+        </div>
+    </div>
 
-    <form method="POST" action="{% if user %}{{ url_for('main.edit_user', user_id=user.id) }}{% else %}{{ url_for('main.register') }}{% endif %}">
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" class="form-control" id="username" name="username" value="{{ user.username if user else '' }}" required>
+    <div class="row">
+        <!-- User Form (Left Column) -->
+        <div class="col-md-{% if user and technician %}6{% else %}12{% endif %}">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> User Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% if user %}{{ url_for('main.edit_user', user_id=user.id) }}{% else %}{{ url_for('main.register') }}{% endif %}">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ user.username if user else '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email if user else '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password {% if user %}(Leave blank to keep current){% endif %}</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                        </div>
+                        <div class="form-group">
+                            <label for="roles">Roles</label>
+                            <select multiple class="form-control" id="roles" name="roles">
+                                {% for role in all_roles %}
+                                <option value="{{ role.name }}" {% if user and role.name in user.roles|map(attribute='name')|list %}selected{% endif %}>{{ role.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple roles. Select "Technician" to enable skills.</small>
+                        </div>
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if user and user.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">Is Active</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {% if user %}Update User{% else %}Register User{% endif %}
+                        </button>
+                        <a href="{{ url_for('main.users') }}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" class="form-control" id="email" name="email" value="{{ user.email if user else '' }}" required>
+
+        <!-- Technician Skills (Right Column - Only if user has Technician role) -->
+        {% if user and technician %}
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-wrench"></i> Technician Skills
+                        <a href="{{ url_for('main.technician_detail', technician_id=technician.id) }}"
+                           class="btn btn-sm btn-light float-right">
+                            <i class="fas fa-external-link-alt"></i> Full Details
+                        </a>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Status:</strong>
+                        {% if technician.availability_status == 'Available' %}
+                        <span class="badge badge-success">Available</span>
+                        {% elif technician.availability_status == 'On Leave' %}
+                        <span class="badge badge-warning">On Leave</span>
+                        {% elif technician.availability_status == 'Sick' %}
+                        <span class="badge badge-danger">Sick</span>
+                        {% else %}
+                        <span class="badge badge-secondary">{{ technician.availability_status }}</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Shift:</strong>
+                        {% if technician.shift %}
+                            {{ technician.shift.shift_name }}
+                            <small class="text-muted">({{ technician.shift.start_time }} - {{ technician.shift.end_time }})</small>
+                        {% else %}
+                            <em class="text-muted">Not assigned</em>
+                        {% endif %}
+                    </p>
+
+                    <hr>
+
+                    <h6><strong>Skills & Proficiency:</strong></h6>
+                    {% if technician.skills %}
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Skill</th>
+                                <th>Level</th>
+                                <th>Proficiency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ts in technician.skills %}
+                            <tr>
+                                <td><strong>{{ ts.skill.name }}</strong></td>
+                                <td>
+                                    <span class="badge badge-info">L{{ ts.skill_level }}/5</span>
+                                </td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar
+                                            {% if ts.skill_level >= 4 %}bg-success
+                                            {% elif ts.skill_level == 3 %}bg-info
+                                            {% elif ts.skill_level == 2 %}bg-warning
+                                            {% else %}bg-danger
+                                            {% endif %}"
+                                            role="progressbar"
+                                            style="width: {{ ts.skill_level * 20 }}%">
+                                            {{ ts.skill_level }}/5
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <p class="text-muted">
+                        <i class="fas fa-info-circle"></i> Total Skills: {{ technician.skills|length }}
+                    </p>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> No skills assigned to this technician yet.
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <h6><strong>Currently Assigned Tasks:</strong></h6>
+                    {% if technician.planning_tasks %}
+                    <ul class="list-group">
+                        {% for pt in technician.planning_tasks %}
+                        <li class="list-group-item">
+                            <strong>{{ pt.maintenance_order.description if pt.maintenance_order else 'N/A' }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                Status:
+                                {% if pt.status == 'Planned' %}
+                                <span class="badge badge-success">Planned</span>
+                                {% elif pt.status == 'In-Progress' %}
+                                <span class="badge badge-primary">In Progress</span>
+                                {% else %}
+                                <span class="badge badge-warning">{{ pt.status }}</span>
+                                {% endif %}
+                                {% if pt.planned_start_time %}
+                                | {{ pt.planned_start_time.strftime('%Y-%m-%d %H:%M') }}
+                                {% endif %}
+                            </small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted"><em>No active planning tasks.</em></p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="password">Password {% if user %}(Leave blank to keep current){% endif %}</label>
-            <input type="password" class="form-control" id="password" name="password">
-        </div>
-        <div class="form-group">
-            <label for="roles">Roles</label>
-            <select multiple class="form-control" id="roles" name="roles">
-                {% for role in all_roles %}
-                <option value="{{ role.name }}" {% if user and role.name in user.roles|map(attribute='name')|list %}selected{% endif %}>{{ role.name }}</option>
-                {% endfor %}
-            </select>
-            <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple roles.</small>
-        </div>
-        <div class="form-group form-check">
-            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if user and user.is_active %}checked{% endif %}>
-            <label class="form-check-label" for="is_active">Is Active</label>
-        </div>
-        <button type="submit" class="btn btn-primary">{% if user %}Update User{% else %}Register User{% endif %}</button>
-        <a href="{{ url_for('main.users') }}" class="btn btn-secondary">Cancel</a>
-    </form>
+        {% endif %}
+    </div>
 {% endblock %}

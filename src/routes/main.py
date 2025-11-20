@@ -254,13 +254,38 @@ def delete_spare_part(part_id):
 @main_bp.route('/users')
 @login_required
 def users():
+    from src.services.db_utils import Technician
+
+    # Get all users
     all_users = User.query.all()
     users_data = []
     for user in all_users:
         user_dict = user.to_dict(include_roles=True)
         user_dict['roles_display'] = ', '.join(user_dict.get('roles', []))
         user_dict['is_active'] = 'Yes' if user_dict['is_active'] else 'No'
+
+        # Check if this user has Technician role
+        user_dict['is_technician'] = any(role.name == 'Technician' for role in user.roles)
+
+        if user_dict['is_technician']:
+            # Try to find matching technician by username
+            technician = Technician.query.filter_by(name=user.username).first()
+            if technician:
+                user_dict['technician_id'] = technician.id
+                user_dict['technician_status'] = technician.availability_status
+                user_dict['skill_count'] = len(technician.skills)
+                user_dict['skills'] = ', '.join([f"{ts.skill.name}(L{ts.skill_level})" for ts in technician.skills])
+            else:
+                user_dict['technician_status'] = 'Not Linked'
+                user_dict['skill_count'] = 0
+                user_dict['skills'] = '-'
+        else:
+            user_dict['technician_status'] = '-'
+            user_dict['skill_count'] = 0
+            user_dict['skills'] = '-'
+
         users_data.append(user_dict)
+
     return render_template('users.html', users=users_data)
 
 @main_bp.route('/register', methods=['GET', 'POST'])
@@ -297,13 +322,24 @@ def register():
 @main_bp.route('/users/<int:user_id>')
 @login_required
 def user_detail(user_id):
+    from src.services.db_utils import Technician
+
     user = User.query.get_or_404(user_id)
     all_roles = Role.query.all()
-    return render_template('user_detail.html', user=user, all_roles=all_roles)
+
+    # Check if this user has Technician role
+    technician = None
+    if user and any(role.name == 'Technician' for role in user.roles):
+        # Try to find matching technician by username
+        technician = Technician.query.filter_by(name=user.username).first()
+
+    return render_template('user_detail.html', user=user, all_roles=all_roles, technician=technician)
 
 @main_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_user(user_id):
+    from src.services.db_utils import Technician
+
     user = User.query.get_or_404(user_id)
     all_roles = Role.query.all()
     if request.method == 'POST':
@@ -324,7 +360,14 @@ def edit_user(user_id):
         db.session.commit()
         flash('User updated successfully!', 'success')
         return redirect(url_for('main.users'))
-    return render_template('user_detail.html', user=user, all_roles=all_roles)
+
+    # Check if this user has Technician role
+    technician = None
+    if user and any(role.name == 'Technician' for role in user.roles):
+        # Try to find matching technician by username
+        technician = Technician.query.filter_by(name=user.username).first()
+
+    return render_template('user_detail.html', user=user, all_roles=all_roles, technician=technician)
 
 @main_bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required
@@ -362,7 +405,20 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.login'))
 
+# --- Technician Detail Route (for detailed skills view) ---
+@main_bp.route('/technicians/<int:technician_id>')
+@login_required
+def technician_detail(technician_id):
+    from src.services.db_utils import Technician
+    technician = Technician.query.get_or_404(technician_id)
+
+    # Try to find the associated user by matching username
+    user = User.query.filter_by(username=technician.name).first()
+
+    return render_template('technician_detail.html', technician=technician, user=user)
+
 # --- Planning Integration Route ---
+@main_bp.route('/planning')
 @main_bp.route('/planning')
 @login_required
 def planning():

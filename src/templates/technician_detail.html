@@ -1,0 +1,179 @@
+ {% extends "base.html" %}
+
+{% block title %}{{ technician.name }} - Technicians{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h2">{{ technician.name }}</h1>
+            <p class="text-muted">Technician ID: {{ technician.id }}</p>
+        </div>
+        <div class="col-md-4 text-right">
+            {% if user %}
+            <a href="{{ url_for('main.user_detail', user_id=user.id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to User Detail
+            </a>
+            {% else %}
+            <a href="{{ url_for('main.users') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Users
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Basic Info Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Basic Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Name:</strong> {{ technician.name }}</p>
+                    <p><strong>Status:</strong>
+                        {% if technician.availability_status == 'Available' %}
+                        <span class="badge badge-success">Available</span>
+                        {% elif technician.availability_status == 'On Leave' %}
+                        <span class="badge badge-warning">On Leave</span>
+                        {% elif technician.availability_status == 'Sick' %}
+                        <span class="badge badge-danger">Sick</span>
+                        {% else %}
+                        <span class="badge badge-secondary">{{ technician.availability_status }}</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Shift:</strong>
+                        {% if technician.shift %}
+                            {{ technician.shift.shift_name }}
+                            <br><small class="text-muted">{{ technician.shift.start_time }} - {{ technician.shift.end_time }}</small>
+                        {% else %}
+                            <em class="text-muted">Not assigned</em>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills Card -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-wrench"></i> Skills & Proficiency</h5>
+                </div>
+                <div class="card-body">
+                    {% if technician.skills %}
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Skill</th>
+                                <th>Proficiency Level</th>
+                                <th>Visual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ts in technician.skills %}
+                            <tr>
+                                <td><strong>{{ ts.skill.name }}</strong></td>
+                                <td>
+                                    <span class="badge badge-info">Level {{ ts.skill_level }} / 5</span>
+                                </td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar
+                                            {% if ts.skill_level >= 4 %}bg-success
+                                            {% elif ts.skill_level == 3 %}bg-info
+                                            {% elif ts.skill_level == 2 %}bg-warning
+                                            {% else %}bg-danger
+                                            {% endif %}"
+                                            role="progressbar"
+                                            style="width: {{ ts.skill_level * 20 }}%"
+                                            aria-valuenow="{{ ts.skill_level }}"
+                                            aria-valuemin="0"
+                                            aria-valuemax="5">
+                                            {{ ts.skill_level }}/5
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <p class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Total Skills:</strong> {{ technician.skills|length }}
+                    </p>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> This technician has no skills assigned yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Tasks Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> Currently Assigned Planning Tasks</h5>
+                </div>
+                <div class="card-body">
+                    {% if technician.planning_tasks %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Status</th>
+                                    <th>Planned Time</th>
+                                    <th>Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pt in technician.planning_tasks %}
+                                <tr>
+                                    <td>{{ pt.maintenance_order.description if pt.maintenance_order else 'N/A' }}</td>
+                                    <td>
+                                        {% if pt.status == 'Planned' %}
+                                        <span class="badge badge-success">Planned</span>
+                                        {% elif pt.status == 'In-Progress' %}
+                                        <span class="badge badge-primary">In Progress</span>
+                                        {% elif pt.status == 'Completed' %}
+                                        <span class="badge badge-secondary">Completed</span>
+                                        {% else %}
+                                        <span class="badge badge-warning">{{ pt.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if pt.planned_start_time %}
+                                            {{ pt.planned_start_time.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                            <em class="text-muted">Not scheduled</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if pt.planned_start_time and pt.planned_end_time %}
+                                            {{ ((pt.planned_end_time - pt.planned_start_time).total_seconds() / 60)|int }} min
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No active planning tasks assigned to this technician.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -10,8 +10,7 @@
         </a>
     </div>
 
-    <div id="mosTable"></div>
-    {% include 'components/advanced_table.html' %}
+    <div id="mosTable" class="page-full-height"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -31,18 +30,8 @@
 
             const mosData = {{ mos | tojson }};
 
-            advTable = new AdvancedTable('mosTable', {
-                data: mosData,
-                columns: columns,
-                pageName: 'maintenance_orders',
-                pageSize: 25
-            });
-            
-            setTimeout(() => {
-                if (typeof loadSavedConfigurations === 'function') {
-                    loadSavedConfigurations();
-                }
-            }, 100);
+            // Use initAdvancedTable instead of direct instantiation
+            initAdvancedTable('mosTable', mosData, columns, 25);
         });
     </script>
 {% endblock %}

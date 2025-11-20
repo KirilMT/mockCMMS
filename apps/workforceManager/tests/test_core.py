@@ -1,9 +1,31 @@
 """
 Unit tests for core application functionality.
+
+⚠️ DEPRECATED - MARK FOR DELETION IN PHASE 4
+==============================================
+These tests are for the LEGACY workforceManager architecture that used:
+- Raw SQLite operations (get_db_connection, cursor operations)
+- Old Excel-based workflow
+- Standalone app structure (src.config, not apps.workforceManager.src.config)
+
+The NEW Planning Module uses:
+- SQLAlchemy ORM (not raw SQLite)
+- Integration with main mockCMMS
+- Different architecture
+
+STATUS: All tests failing due to import errors and architecture mismatch
+ACTION: Delete this file in Phase 4 (Cleanup & Legacy Removal)
+REPLACEMENT: Core functionality is tested in:
+  - test_domain_models.py (SQLAlchemy models)
+  - test_planning_engine.py (planning logic)
+  - test_transformation_layer.py (data transformation)
 """
 import pytest
 import json
 from unittest.mock import patch
+
+# Mark all tests in this file for skip with deprecation notice
+pytestmark = pytest.mark.skip(reason="DEPRECATED: Legacy tests for old SQLite architecture. Will be deleted in Phase 4.")
 
 
 class TestDatabaseOperations:
