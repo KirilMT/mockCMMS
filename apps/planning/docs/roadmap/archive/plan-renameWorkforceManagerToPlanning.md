@@ -281,9 +281,7 @@ TESTING:
 - Zero import/syntax errors
 - Ready for production
 
-BREAKING CHANGE: Environment variable WORKFORCE_MANAGER_ENABLED renamed to PLANNING_ENABLED
-
-Co-authored-by: GitHub Copilot <noreply@github.com>"
+BREAKING CHANGE: Environment variable WORKFORCE_MANAGER_ENABLED renamed to PLANNING_ENABLED"
 ```
 
 ---
