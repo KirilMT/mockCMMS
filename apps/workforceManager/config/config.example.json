@@ -8,79 +8,50 @@
       "maintenance_grid": "/app/schedules/planner-maintenance-grid"
     }
   },
-  "shift_times": {
-    "_comment": "Configure shift times for different planning modes - Customize these values for your facility",
-    "shift_break": {
-      "duration_minutes": 30,
-      "default_start_time": "10:00",
-      "types": {
-        "morning_break": {
-          "start": "10:00",
-          "duration_minutes": 30
-        },
-        "lunch_break": {
-          "start": "12:00",
-          "duration_minutes": 60
-        },
-        "afternoon_break": {
-          "start": "14:00",
-          "duration_minutes": 30
-        }
-      }
-    },
-    "weekend": {
-      "_comment": "Weekend schedules by day - customize per day of week",
-      "friday": {
-        "type": "half_shift",
-        "start_time": "08:00",
-        "end_time": "14:00",
-        "duration_hours": 6
-      },
-      "saturday": {
-        "type": "full_shift",
-        "shifts": [
-          {
-            "name": "morning",
-            "start_time": "08:00",
-            "end_time": "16:00"
-          },
-          {
-            "name": "afternoon",
-            "start_time": "16:00",
-            "end_time": "00:00"
-          }
-        ],
-        "total_duration_hours": 12
-      },
-      "sunday": {
-        "type": "half_shift",
-        "start_time": "08:00",
-        "end_time": "14:00",
-        "duration_hours": 6
-      }
-    },
-    "weekday": {
-      "_comment": "Standard weekday shifts (Monday-Thursday)",
+  "shift_patterns": {
+    "_comment": "Define reusable shift patterns for different teams",
+    "production": {
       "shifts": [
         {
-          "name": "day_shift",
+          "name": "morning",
           "start_time": "06:00",
-          "end_time": "14:00",
-          "duration_hours": 8
+          "end_time": "14:00"
         },
         {
-          "name": "swing_shift",
+          "name": "afternoon",
           "start_time": "14:00",
-          "end_time": "22:00",
-          "duration_hours": 8
+          "end_time": "22:00"
         },
         {
-          "name": "night_shift",
+          "name": "night",
           "start_time": "22:00",
-          "end_time": "06:00",
-          "duration_hours": 8
+          "end_time": "06:00"
         }
       ]
+    },
+    "maintenance": {
+      "shifts": [
+        {
+          "name": "early",
+          "start_time": "06:00",
+          "end_time": "18:00"
+        },
+        {
+          "name": "late",
+          "start_time": "18:00",
+          "end_time": "06:00"
+        }
+      ]
+    }
+  },
+  "planning_windows": {
+    "_comment": "Define when work can be scheduled and which resource pattern applies",
+    "weekend_maintenance": {
+      "start_day": "Friday",
+      "start_time": "22:00",
+      "end_day": "Sunday",
+      "end_time": "22:00",
+      "resource_pattern": "maintenance"
     }
   },
   "task_name_mapping": {

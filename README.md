@@ -49,7 +49,8 @@ mockCMMS/
 │       ├── setup.py         # Package configuration
 │       └── README.md        # Module documentation
 ├── config/                  # Main app configuration
-├── docs/                    # Documentation
+├── docs/                    # Project-level documentation
+│   └── mockCMMS_roadmap.md  # High-level project roadmap
 ├── instance/                # SQLite databases
 ├── test_data/               # Test fixtures
 ├── tests/                   # Main app tests
@@ -66,7 +67,7 @@ mockCMMS/
 - **Configuration Hub:** Manages settings for all integrated applications
 
 ### Modular Apps
-- **[Workforce Manager](apps/workforceManager/README.md):** Advanced skill-based technician task assignment system with workload optimization
+- **[Workforce Manager](apps/workforceManager/README.md):** Intelligent maintenance planning system with custom Gantt charts, shift-based scheduling, and skill-based task assignment.
 - **[Reports](apps/reports/README.md):** Comprehensive reporting and analytics system with PDF/Markdown export capabilities
 - **Future Apps:** Additional modules can be easily integrated following the same pattern
 
@@ -212,4 +213,4 @@ Contributions are welcome. Please read the [contributing guidelines](.github/CON
 
 ---
 
-**Version:** 1.1.0 | **Last Updated:** January 28, 2025
+**Version:** 1.2.0 | **Last Updated:** November 21, 2025

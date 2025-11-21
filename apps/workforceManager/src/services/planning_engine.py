@@ -16,17 +16,32 @@ Key Features:
 """
 
 import time
-from datetime import datetime, timedelta
+import json
+import os
+from datetime import datetime, timedelta, time as dt_time
 from typing import List, Tuple, Optional, Dict, Set
 from collections import defaultdict
+from dataclasses import dataclass
 
-from src.services.db_utils import db, MaintenanceOrder, Technician, Skill
-from .planning_models import PlanningTask, Schedule, TechnicianSkill
+from src.services.db_utils import db, MaintenanceOrder, User, Skill, Team, UserSkill
+from .planning_models import PlanningTask, Schedule
 from .planning_result import (
     PlanningResult, TaskAssignment, UnassignedTask, TechnicianWorkload,
     UnassignedReason
 )
 from .inventory_service import check_spare_parts_availability
+
+
+@dataclass
+class ShiftDefinition:
+    """Defines a specific shift instance."""
+    name: str
+    day_name: str
+    start_time: datetime
+    end_time: datetime
+    duration_minutes: int
+    is_overnight: bool = False
+    base_name: str = ""  # e.g., "early", "late"
 
 
 class PlanningEngine:
@@ -54,6 +69,134 @@ class PlanningEngine:
         else:
             print(f"[{level.upper()}] {message % args if args else message}")
 
+    def _load_config(self) -> dict:
+        """Load configuration from config.json or config.example.json."""
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../config'))
+        config_path = os.path.join(base_path, 'config.json')
+        example_path = os.path.join(base_path, 'config.example.json')
+
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    return json.load(f)
+            elif os.path.exists(example_path):
+                self._log("warning", "config.json not found, using config.example.json")
+                with open(example_path, 'r') as f:
+                    return json.load(f)
+            else:
+                self._log("error", "No configuration file found!")
+                return {}
+        except Exception as e:
+            self._log("error", f"Failed to load config: {str(e)}")
+            return {}
+
+    def _parse_time_str(self, time_str: str) -> dt_time:
+        """Parse HH:MM string to time object."""
+        try:
+            return datetime.strptime(time_str, "%H:%M").time()
+        except ValueError:
+            return dt_time(0, 0)
+
+    def _get_weekend_shifts(self, start_date: datetime, end_date: datetime) -> List[ShiftDefinition]:
+        """
+        Generate specific shift instances for the given date range based on Shift Patterns.
+        
+        Args:
+            start_date: The start date of the schedule
+            end_date: The end date of the schedule
+            
+        Returns:
+            List of ShiftDefinition objects ordered by time
+        """
+        config = self._load_config()
+        
+        # 1. Get Resource Pattern (default to maintenance)
+        windows_config = config.get('planning_windows', {})
+        window_def = windows_config.get('weekend_maintenance', {})
+        pattern_name = window_def.get('resource_pattern', 'maintenance')
+        
+        patterns_config = config.get('shift_patterns', {})
+        pattern_def = patterns_config.get(pattern_name, {})
+        shifts_def = pattern_def.get('shifts', [])
+        
+        if not shifts_def:
+            self._log("warning", f"No shifts defined for pattern '{pattern_name}'")
+            return []
+
+        generated_shifts = []
+        
+        # 2. Generate Shifts for the range
+        curr_date = start_date.date()
+        end_date_limit = end_date.date()
+        
+        while curr_date <= end_date_limit + timedelta(days=1): # +1 buffer for overnight
+            for shift_data in shifts_def:
+                s_start = self._parse_time_str(shift_data['start_time'])
+                s_end = self._parse_time_str(shift_data['end_time'])
+                
+                # Construct absolute shift times for this day
+                shift_start_dt = datetime.combine(curr_date, s_start)
+                shift_end_dt = datetime.combine(curr_date, s_end)
+                
+                # Handle overnight shifts (e.g. 18:00 - 06:00)
+                if shift_end_dt <= shift_start_dt:
+                    shift_end_dt += timedelta(days=1)
+                
+                # 3. Intersect with Schedule Range
+                inter_start = max(start_date, shift_start_dt)
+                inter_end = min(end_date, shift_end_dt)
+                
+                if inter_start < inter_end:
+                    # Valid overlap
+                    duration = int((inter_end - inter_start).total_seconds() / 60)
+                    
+                    # Determine if overnight (crosses midnight)
+                    is_overnight = inter_start.date() != inter_end.date()
+                    
+                    shift_name = f"{shift_start_dt.strftime('%A')} - {shift_data['name'].capitalize()}"
+                    
+                    generated_shifts.append(ShiftDefinition(
+                        name=shift_name,
+                        day_name=shift_start_dt.strftime('%A').lower(),
+                        start_time=inter_start,
+                        end_time=inter_end,
+                        duration_minutes=duration,
+                        is_overnight=is_overnight,
+                        base_name=shift_data['name'].lower()
+                    ))
+            
+            curr_date += timedelta(days=1)
+            
+        return sorted(generated_shifts, key=lambda s: s.start_time)
+
+    def _get_working_teams(self, date: datetime) -> List:
+        """
+        Determine which shift teams are working for the given date based on 2-week rotation.
+        
+        Week 1 (Odd ISO Week Number): Team A (Early) and Team B (Late)
+        Week 2 (Even ISO Week Number): Team C (Early) and Team D (Late)
+        
+        Args:
+            date: The date to check
+            
+        Returns:
+            List of Team objects that are active for this week
+        """
+        from src.services.db_utils import Team
+        
+        week_number = date.isocalendar()[1]
+        is_odd_week = (week_number % 2) != 0
+        
+        if is_odd_week:
+            # Pattern 1: Team A (Early) and Team B (Late)
+            active_teams = Team.query.filter(Team.rotation_pattern == "Pattern 1").all()
+        else:
+            # Pattern 2: Team C (Early) and Team D (Late)
+            active_teams = Team.query.filter(Team.rotation_pattern == "Pattern 2").all()
+        
+        self._log("info", f"Week {week_number} ({'Odd' if is_odd_week else 'Even'}): Active teams: {[t.name for t in active_teams]}")
+        return active_teams
+
     def generate_plan(
         self,
         schedule: Schedule,
@@ -68,7 +211,7 @@ class PlanningEngine:
         Args:
             schedule: Schedule object containing tasks to plan
             planning_mode: "shift_break" (30-min windows) or "weekend" (multi-day)
-            shift_duration_minutes: Total available minutes per shift
+            shift_duration_minutes: Total available minutes per shift (used for utilization calc)
             check_parts: Whether to check spare parts availability
             max_task_duration: Maximum task duration in minutes (auto-set by mode if None)
 
@@ -86,7 +229,7 @@ class PlanningEngine:
             self._log("info", f"Weekend mode: no strict time limit")
 
         self._log("info", f"Starting planning for schedule: {schedule.name}")
-        self._log("info", f"Mode: {planning_mode}, Shift Duration: {shift_duration_minutes} min")
+        self._log("info", f"Mode: {planning_mode}")
 
         # Initialize result
         result = PlanningResult(
@@ -115,10 +258,11 @@ class PlanningEngine:
             result.statistics.planning_duration_seconds = time.time() - start_time
             return result
 
-        # Get available technicians
-        available_technicians = self._get_available_technicians(schedule)
+        # Get available technicians (Global pool)
+        # We now use User model where team_id is not None
+        all_technicians = self._get_available_technicians(schedule)
 
-        if not available_technicians:
+        if not all_technicians:
             result.add_error("No available technicians found")
             for task, mo in tasks_to_plan:
                 result.add_unassigned(self._create_unassigned_task(
@@ -129,28 +273,148 @@ class PlanningEngine:
             result.statistics.planning_duration_seconds = time.time() - start_time
             return result
 
-        self._log("info", f"Found {len(tasks_to_plan)} tasks and {len(available_technicians)} technicians")
+        self._log("info", f"Found {len(tasks_to_plan)} tasks and {len(all_technicians)} technicians")
 
-        # Initialize workload tracking
+        # Initialize workload tracking (Global across all shifts)
+        # We use a default shift duration for utilization calc, but actual availability is per shift
         technician_workloads = self._initialize_workloads(
-            available_technicians, shift_duration_minutes
+            all_technicians, shift_duration_minutes * 3 # Approx 3 days
         )
 
         # Sort tasks by priority
         sorted_tasks = self._prioritize_tasks(tasks_to_plan, planning_mode)
+        unassigned_tasks = list(sorted_tasks) # Copy to track remaining
 
-        # Assign tasks
-        current_time = schedule.start_date
-        for task, mo in sorted_tasks:
-            assignment_result = self._assign_single_task(
-                task, mo, available_technicians, technician_workloads,
-                current_time, result, planning_mode, max_task_duration
-            )
+        # Define Shifts
+        shifts = []
+        if planning_mode == "weekend":
+            shifts = self._get_weekend_shifts(schedule.start_date, schedule.end_date)
+            self._log("info", f"Generated {len(shifts)} weekend shifts")
+        else:
+            # Create a single dummy shift for shift_break or other modes
+            shifts = [ShiftDefinition(
+                name="Standard",
+                day_name="Day 1",
+                start_time=schedule.start_date,
+                end_time=schedule.end_date,
+                duration_minutes=int((schedule.end_date - schedule.start_date).total_seconds() / 60)
+            )]
 
-            if assignment_result:
-                result.add_assignment(assignment_result)
-                # Update current time for next task (simple sequential for now)
-                current_time = assignment_result.planned_end_time
+        # Fetch all teams once
+        all_teams = Team.query.all()
+        from src.services.shift_utils import get_shift_teams
+
+        # Iterate through shifts and assign tasks
+        for shift in shifts:
+            self._log("info", f"Planning for shift: {shift.name} ({shift.start_time} - {shift.end_time})")
+            
+            # Filter technicians by Shift Team (Rotation Logic)
+            allowed_team_names = []
+            
+            # Determine query date (handle overnight shifts)
+            query_date = shift.start_time
+            if shift.start_time.hour < 6:
+                query_date = shift.start_time - timedelta(days=1)
+            
+            # Get the teams working on this date
+            early_team, late_team = get_shift_teams(query_date, all_teams)
+            
+            if planning_mode == "weekend":
+                # For weekend mode, use the shift's base_name to determine Early/Late
+                shift_type = shift.base_name.lower() # "early" or "late"
+                
+                allowed_teams = []
+                if 'early' in shift_type and early_team:
+                    allowed_teams.append(early_team)
+                elif 'late' in shift_type and late_team:
+                    allowed_teams.append(late_team)
+                
+                allowed_team_names = [t.name for t in allowed_teams]
+            else:
+                # For shift_break mode, determine Early/Late based on time of day
+                # Early shift: 06:00-18:00, Late shift: 18:00-06:00
+                shift_hour = shift.start_time.hour
+                
+                if 6 <= shift_hour < 18:
+                    # Morning/Day shift - use Early team
+                    allowed_team_names = [early_team.name] if early_team else []
+                else:
+                    # Evening/Night shift - use Late team
+                    allowed_team_names = [late_team.name] if late_team else []
+            
+            self._log("info", f"Shift: {shift.name} -> Working Teams: {allowed_team_names}")
+
+            # 3. Filter technicians
+            shift_technicians = []
+            for tech in all_technicians:
+                # Strict enforcement: Tech MUST have a shift team assigned
+                if not tech.team:
+                    continue
+                
+                # Check if tech belongs to one of the allowed teams
+                if tech.team.name in allowed_team_names:
+                    shift_technicians.append(tech)
+            
+            self._log("info", f"Available technicians for {shift.name}: {len(shift_technicians)} ({', '.join([t.username for t in shift_technicians])})")
+
+            if not shift_technicians:
+                self._log("warning", f"No technicians found for shift {shift.name} (Required: {allowed_team_names})") 
+            
+            # Track which technicians are busy during this shift (boolean)
+            # Each technician can only work on ONE task per shift (parallel execution)
+            shift_tech_busy = {
+                t.id: False for t in shift_technicians
+            }
+
+            current_time = shift.start_time
+            
+            # Try to assign remaining tasks
+            tasks_assigned_in_shift = []
+            
+            for i, (task, mo) in enumerate(unassigned_tasks):
+                # Skip if already assigned (shouldn't happen if we manage list correctly, but safety check)
+                if task.id in [t.planning_task_id for t in result.assigned_tasks]:
+                    continue
+
+                # Attempt assignment
+                assignment_result = self._assign_single_task(
+                    task, mo, shift_technicians, technician_workloads,
+                    current_time, result, planning_mode, max_task_duration,
+                    shift_end_time=shift.end_time,
+                    shift_tech_busy=shift_tech_busy
+                )
+
+                if assignment_result:
+                    result.add_assignment(assignment_result)
+                    tasks_assigned_in_shift.append((task, mo))
+                    
+                    # Update current time? 
+                    # In a real Gantt, tasks are parallel. 
+                    # Here we are simplifying: we just check if tech has time in the shift.
+                    # The 'planned_start_time' might need to be smarter (finding first gap).
+                    # For now, we set start time to shift start + offset? 
+                    # Or just shift start if we assume parallel execution?
+                    # The original code did: current_time = assignment_result.planned_end_time
+                    # which implies sequential execution.
+                    # Let's keep sequential for simplicity of 'current_time' but per-tech availability matters.
+                    
+                    # Actually, if we have multiple techs, they can work in parallel.
+                    # But 'current_time' variable suggests a global cursor.
+                    # Let's assume tasks start as early as possible.
+                    # We need to find the earliest start time for the selected team.
+                    pass
+
+            # Remove assigned tasks from the master list
+            for item in tasks_assigned_in_shift:
+                if item in unassigned_tasks:
+                    unassigned_tasks.remove(item)
+
+        # Handle remaining unassigned tasks
+        for task, mo in unassigned_tasks:
+             result.add_unassigned(self._create_unassigned_task(
+                task, mo, UnassignedReason.INSUFFICIENT_TIME,
+                "Could not fit into any available shift"
+            ))
 
         # Finalize workloads
         result.technician_workloads = list(technician_workloads.values())
@@ -220,12 +484,13 @@ class PlanningEngine:
 
         return plannable_tasks
 
-    def _get_available_technicians(self, schedule: Schedule) -> List[Technician]:
+    def _get_available_technicians(self, schedule: Schedule) -> List[User]:
         """Get technicians available during the schedule period."""
-        # For now, get all technicians with "Available" status
-        # Future: Filter by shift, vacation, etc.
-        return Technician.query.filter(
-            Technician.availability_status == 'Available'
+        # In the new schema, technicians are Users with a team_id
+        # We also check availability_status
+        return User.query.filter(
+            User.team_id.isnot(None),
+            User.availability_status == 'Available'
         ).all()
 
     def _filter_weekend_tasks(
@@ -319,7 +584,7 @@ class PlanningEngine:
 
     def _initialize_workloads(
         self,
-        technicians: List[Technician],
+        technicians: List[User],
         shift_duration_minutes: int
     ) -> Dict[int, TechnicianWorkload]:
         """Initialize workload tracking for all technicians."""
@@ -327,13 +592,13 @@ class PlanningEngine:
         for tech in technicians:
             workloads[tech.id] = TechnicianWorkload(
                 technician_id=tech.id,
-                technician_name=tech.name,
+                technician_name=tech.username,
                 total_assigned_minutes=0,
                 total_available_minutes=shift_duration_minutes,
                 utilization_percentage=0.0,
                 assigned_task_count=0,
                 assigned_task_ids=[],
-                shift_name=tech.shift.name if tech.shift else None
+                shift_name=tech.team.name if tech.team else None
             )
         return workloads
 
@@ -393,12 +658,14 @@ class PlanningEngine:
         self,
         task: PlanningTask,
         mo: MaintenanceOrder,
-        available_technicians: List[Technician],
+        available_technicians: List[User],
         workloads: Dict[int, TechnicianWorkload],
         current_time: datetime,
         result: PlanningResult,
         planning_mode: str,
-        max_task_duration: int
+        max_task_duration: int,
+        shift_end_time: datetime = None,
+        shift_tech_busy: Dict[int, bool] = None
     ) -> Optional[TaskAssignment]:
         """
         Attempt to assign a single task to technician(s).
@@ -413,13 +680,20 @@ class PlanningEngine:
         required_tech_count = mo.labour_count
         estimated_duration = mo.estimated_completion_time
 
-        # Check time window constraint for shift-break mode
+        # Check time window constraint
         if not self._fits_time_window(estimated_duration, max_task_duration, planning_mode):
             result.add_unassigned(self._create_unassigned_task(
                 task, mo, UnassignedReason.INSUFFICIENT_TIME,
-                f"Task duration ({estimated_duration} min) exceeds {planning_mode} time window ({max_task_duration} min)"
+                f"Task duration ({estimated_duration} min) exceeds time window ({max_task_duration} min)"
             ))
             return None
+
+        # Check if task fits in shift window (parallel execution - all tasks start at shift.start_time)
+        if shift_end_time:
+            shift_duration_minutes = (shift_end_time - current_time).total_seconds() / 60
+            if estimated_duration > shift_duration_minutes:
+                # Task doesn't fit in the shift window at all
+                return None
 
         # Get required skills for this task
         required_skills = [skill.name for skill in mo.required_skills] if hasattr(mo, 'required_skills') else []
@@ -429,27 +703,20 @@ class PlanningEngine:
         if required_tech_count > 1 and len(required_skills) > 1:
             # Multi-technician, multi-skill task - use team-based skill matching
             eligible_technicians = self._find_team_with_skill_coverage(
-                available_technicians, required_skills, required_tech_count, workloads, estimated_duration
+                available_technicians, required_skills, required_tech_count, workloads, estimated_duration, shift_tech_busy
             )
         else:
             # Single technician or single skill - use individual matching
             eligible_technicians = self._find_eligible_technicians(
-                available_technicians, required_skills, workloads, estimated_duration
+                available_technicians, required_skills, workloads, estimated_duration, shift_tech_busy
             )
 
         if not eligible_technicians:
-            result.add_unassigned(self._create_unassigned_task(
-                task, mo, UnassignedReason.NO_MATCHING_SKILLS,
-                f"No technicians available with required skills: {', '.join(required_skills)}",
-                missing_skills=required_skills
-            ))
+            # Don't add unassigned error here if we are just trying a shift
+            # The caller loop handles unassigned tasks at the end
             return None
 
         if len(eligible_technicians) < required_tech_count:
-            result.add_unassigned(self._create_unassigned_task(
-                task, mo, UnassignedReason.TEAM_SIZE_CONFLICT,
-                f"Need {required_tech_count} technicians, only {len(eligible_technicians)} eligible"
-            ))
             return None
 
         # Select best technicians (now with advanced team formation logic)
@@ -459,10 +726,6 @@ class PlanningEngine:
 
         # Validate team has all required skills collectively
         if required_skills and not self._team_has_all_skills(selected_technicians, required_skills):
-            result.add_unassigned(self._create_unassigned_task(
-                task, mo, UnassignedReason.NO_MATCHING_SKILLS,
-                f"Selected team missing required skills: {', '.join(required_skills)}"
-            ))
             return None
 
         # Calculate actual duration (could be adjusted based on team size and composition)
@@ -476,7 +739,7 @@ class PlanningEngine:
             maintenance_order_id=mo.id,
             task_description=mo.description,
             assigned_technician_ids=[t.id for t in selected_technicians],
-            assigned_technician_names=[t.name for t in selected_technicians],
+            assigned_technician_names=[t.username for t in selected_technicians],
             planned_start_time=current_time,
             planned_end_time=current_time + timedelta(minutes=actual_duration),
             estimated_duration_minutes=estimated_duration,
@@ -488,6 +751,7 @@ class PlanningEngine:
 
         # Update workloads for all team members
         for tech in selected_technicians:
+            # Update global workload (for statistics and reporting)
             workload = workloads[tech.id]
             workload.total_assigned_minutes += actual_duration
             workload.assigned_task_count += 1
@@ -496,45 +760,58 @@ class PlanningEngine:
                 workload.total_assigned_minutes / workload.total_available_minutes * 100
                 if workload.total_available_minutes > 0 else 0
             )
+            
+            # Mark technician as busy for this shift (parallel execution)
+            if shift_tech_busy is not None and tech.id in shift_tech_busy:
+                shift_tech_busy[tech.id] = True
 
-        self._log("info", f"Assigned task {mo.id} to team: {', '.join([t.name for t in selected_technicians])}")
+        self._log("info", f"Assigned task {mo.id} to team: {', '.join([t.username for t in selected_technicians])}")
 
         return assignment
 
     def _find_eligible_technicians(
         self,
-        technicians: List[Technician],
+        technicians: List[User],
         required_skills: List[str],
         workloads: Dict[int, TechnicianWorkload],
-        task_duration: int
-    ) -> List[Technician]:
+        task_duration: int,
+        shift_tech_busy: Dict[int, bool] = None
+    ) -> List[User]:
         """Find technicians who have the required skills and available time."""
         if not required_skills:
             # If no specific skills required, all technicians are eligible
-            return [t for t in technicians if self._has_available_time(t, workloads, task_duration)]
+            return [t for t in technicians if self._has_available_time(t, workloads, task_duration, shift_tech_busy)]
 
         eligible = []
         for tech in technicians:
             # Check if technician has all required skills
             if self._has_required_skills(tech, required_skills):
                 # Check if technician has available time
-                if self._has_available_time(tech, workloads, task_duration):
+                if self._has_available_time(tech, workloads, task_duration, shift_tech_busy):
                     eligible.append(tech)
 
         return eligible
 
-    def _has_required_skills(self, technician: Technician, required_skills: List[str]) -> bool:
+    def _has_required_skills(self, technician: User, required_skills: List[str]) -> bool:
         """Check if technician has all required skills."""
         tech_skills = {ts.skill.name for ts in technician.skills}
         return all(skill in tech_skills for skill in required_skills)
 
     def _has_available_time(
         self,
-        technician: Technician,
+        technician: User,
         workloads: Dict[int, TechnicianWorkload],
-        task_duration: int
+        task_duration: int,
+        shift_tech_busy: Dict[int, bool] = None
     ) -> bool:
         """Check if technician has enough available time."""
+        # Check if technician is already busy in this shift (parallel execution)
+        if shift_tech_busy is not None:
+            if technician.id in shift_tech_busy and shift_tech_busy[technician.id]:
+                # Technician is already assigned to a task in this shift
+                return False
+        
+        # Also check global workload (for multi-shift scenarios)
         workload = workloads.get(technician.id)
         if not workload:
             return False
@@ -544,12 +821,13 @@ class PlanningEngine:
 
     def _find_team_with_skill_coverage(
         self,
-        technicians: List[Technician],
+        technicians: List[User],
         required_skills: List[str],
         team_size: int,
         workloads: Dict[int, TechnicianWorkload],
-        task_duration: int
-    ) -> List[Technician]:
+        task_duration: int,
+        shift_tech_busy: Dict[int, bool] = None
+    ) -> List[User]:
         """
         Find technicians who collectively have all required skills for a multi-person task.
 
@@ -569,7 +847,7 @@ class PlanningEngine:
         # Filter to only those with available time
         available_techs = [
             t for t in technicians
-            if self._has_available_time(t, workloads, task_duration)
+            if self._has_available_time(t, workloads, task_duration, shift_tech_busy)
         ]
 
         if not available_techs:
@@ -635,7 +913,7 @@ class PlanningEngine:
 
     def _team_has_all_skills(
         self,
-        team: List[Technician],
+        team: List[User],
         required_skills: List[str]
     ) -> bool:
         """
@@ -663,10 +941,10 @@ class PlanningEngine:
 
     def _select_best_team(
         self,
-        eligible_technicians: List[Technician],
+        eligible_technicians: List[User],
         team_size: int,
         workloads: Dict[int, TechnicianWorkload]
-    ) -> List[Technician]:
+    ) -> List[User]:
         """
         Select the best team from eligible technicians using advanced team formation logic.
 
@@ -729,9 +1007,9 @@ class PlanningEngine:
 
     def _balance_team_experience(
         self,
-        scored_technicians: List[Tuple[Technician, float, int, float]],
+        scored_technicians: List[Tuple[User, float, int, float]],
         team_size: int
-    ) -> List[Technician]:
+    ) -> List[User]:
         """
         Balance team composition with mix of experienced and less experienced technicians.
 

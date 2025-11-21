@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from src.services.db_utils import db, Asset, MaintenanceOrder, SparePart, User, Role
+from src.services.db_utils import db, Asset, MaintenanceOrder, SparePart, User, Role, Team
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
@@ -254,7 +254,7 @@ def delete_spare_part(part_id):
 @main_bp.route('/users')
 @login_required
 def users():
-    from src.services.db_utils import Technician
+    # Technician import removed
 
     # Get all users
     all_users = User.query.all()
@@ -268,17 +268,11 @@ def users():
         user_dict['is_technician'] = any(role.name == 'Technician' for role in user.roles)
 
         if user_dict['is_technician']:
-            # Try to find matching technician by username
-            technician = Technician.query.filter_by(name=user.username).first()
-            if technician:
-                user_dict['technician_id'] = technician.id
-                user_dict['technician_status'] = technician.availability_status
-                user_dict['skill_count'] = len(technician.skills)
-                user_dict['skills'] = ', '.join([f"{ts.skill.name}(L{ts.skill_level})" for ts in technician.skills])
-            else:
-                user_dict['technician_status'] = 'Not Linked'
-                user_dict['skill_count'] = 0
-                user_dict['skills'] = '-'
+            user_dict['technician_id'] = user.id # Use user ID
+            user_dict['technician_status'] = user.availability_status
+            user_dict['skill_count'] = len(user.skills)
+            user_dict['skills'] = ', '.join([f"{ts.skill.name}(L{ts.skill_level})" for ts in user.skills])
+            # team_id is already in user_dict from to_dict()
         else:
             user_dict['technician_status'] = '-'
             user_dict['skill_count'] = 0
@@ -322,23 +316,20 @@ def register():
 @main_bp.route('/users/<int:user_id>')
 @login_required
 def user_detail(user_id):
-    from src.services.db_utils import Technician
+    # Technician import removed
 
     user = User.query.get_or_404(user_id)
     all_roles = Role.query.all()
 
     # Check if this user has Technician role
-    technician = None
-    if user and any(role.name == 'Technician' for role in user.roles):
-        # Try to find matching technician by username
-        technician = Technician.query.filter_by(name=user.username).first()
+    is_technician = any(role.name == 'Technician' for role in user.roles)
 
-    return render_template('user_detail.html', user=user, all_roles=all_roles, technician=technician)
+    return render_template('user_detail.html', user=user, all_roles=all_roles, is_technician=is_technician)
 
 @main_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_user(user_id):
-    from src.services.db_utils import Technician
+    # Technician import removed
 
     user = User.query.get_or_404(user_id)
     all_roles = Role.query.all()
@@ -362,12 +353,9 @@ def edit_user(user_id):
         return redirect(url_for('main.users'))
 
     # Check if this user has Technician role
-    technician = None
-    if user and any(role.name == 'Technician' for role in user.roles):
-        # Try to find matching technician by username
-        technician = Technician.query.filter_by(name=user.username).first()
+    is_technician = any(role.name == 'Technician' for role in user.roles)
 
-    return render_template('user_detail.html', user=user, all_roles=all_roles, technician=technician)
+    return render_template('user_detail.html', user=user, all_roles=all_roles, is_technician=is_technician)
 
 @main_bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required
@@ -409,19 +397,74 @@ def logout():
 @main_bp.route('/technicians/<int:technician_id>')
 @login_required
 def technician_detail(technician_id):
-    from src.services.db_utils import Technician
-    technician = Technician.query.get_or_404(technician_id)
-
-    # Try to find the associated user by matching username
-    user = User.query.filter_by(username=technician.name).first()
-
-    return render_template('technician_detail.html', technician=technician, user=user)
+    # Deprecated route - redirect to users
+    flash('Technician view is deprecated. Please use User view.', 'warning')
+    return redirect(url_for('main.users'))
 
 # --- Planning Integration Route ---
 @main_bp.route('/planning')
-@main_bp.route('/planning')
 @login_required
 def planning():
-    return render_template('planning.html')
+    return redirect(url_for('workforce_manager.index_route'))
+
+@main_bp.route('/shift_calendar')
+@login_required
+def shift_calendar():
+    import calendar
+    from datetime import datetime
+    from src.services.db_utils import Team
+    
+    year = request.args.get('year', type=int, default=datetime.now().year)
+    month = request.args.get('month', type=int, default=datetime.now().month)
+    
+    # Navigation logic
+    if month == 1:
+        prev_month, prev_year = 12, year - 1
+    else:
+        prev_month, prev_year = month - 1, year
+        
+    if month == 12:
+        next_month, next_year = 1, year + 1
+    else:
+        next_month, next_year = month + 1, year
+        
+    month_name = calendar.month_name[month]
+    
+    # Generate calendar days
+    num_days = calendar.monthrange(year, month)[1]
+    calendar_days = []
+    
+    teams = Team.query.all()
+    
+    for day in range(1, num_days + 1):
+        date_obj = datetime(year, month, day)
+        week_num = date_obj.isocalendar()[1]
+        is_odd_week = (week_num % 2) != 0
+        
+        day_data = {
+            'date_str': date_obj.strftime('%Y-%m-%d'),
+            'day_name': date_obj.strftime('%A'),
+            'week_num': week_num,
+            'is_today': date_obj.date() == datetime.now().date(),
+            'early_teams': [],
+            'late_teams': []
+        }
+        
+        # Use shared utility to get correct teams for this date
+        from src.services.shift_utils import get_shift_teams
+        early_team, late_team = get_shift_teams(date_obj, teams)
+        
+        if early_team:
+            day_data['early_teams'].append({'name': early_team.name, 'users': early_team.users})
+        if late_team:
+            day_data['late_teams'].append({'name': late_team.name, 'users': late_team.users})
+                    
+        calendar_days.append(day_data)
+        
+    return render_template('shift_calendar.html', 
+                         calendar_days=calendar_days,
+                         year=year, month=month, month_name=month_name,
+                         prev_year=prev_year, prev_month=prev_month,
+                         next_year=next_year, next_month=next_month)
 
 

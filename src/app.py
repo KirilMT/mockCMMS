@@ -70,7 +70,9 @@ def create_app():
                 app.logger.info("Workforce Manager Blueprint registered at /workforce-manager and /api")
         except Exception as e:
             if app.logger:
+                import traceback
                 app.logger.error(f"Failed to register Workforce Manager blueprint: {e}")
+                app.logger.error(traceback.format_exc())
     else:
         if app.logger:
             app.logger.info("Workforce Manager Blueprint not enabled.")

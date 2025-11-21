@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Planning Engine (Phase 2 & 3):**
+  - **Shift Break & Weekend Modes:** Implemented distinct planning modes with specific constraints (30-min window vs. multi-day).
+  - **Shift Intersection Logic:** Backend logic to correctly intersect planning windows with shift patterns.
+  - **Overnight Shift Support:** Full support for shifts crossing midnight (e.g., 22:00-06:00), including correct date wrapping.
+  - **Weekend Day/Shift Subdivision:**
+    - Gantt chart now splits weekend into Friday/Saturday/Sunday.
+    - Further subdivides days into specific shifts (Morning/Afternoon/Night).
+    - Implemented 3-level header hierarchy (Day -> Shift -> Hour).
+  - **Team Formation Logic (Phase 5.7):**
+    - Implemented `_select_best_team()` with multi-factor scoring (workload, skill diversity, proficiency).
+    - Added automatic experience balancing (mixing senior/junior techs).
+    - Implemented greedy algorithm for maximizing skill coverage in teams.
+
+- **User Interface (Phase 3):**
+  - **Custom Gantt Chart:**
+    - Replaced external library with a custom, lightweight vanilla JS implementation.
+    - Features: Technician-row layout, scrollable timeline, priority color-coding, and bidirectional table highlighting.
+    - Dynamic height calculation based on technician count.
+  - **Planning Dashboard:**
+    - Integrated "Schedule View" and "Table View" into a unified `/planning` interface.
+    - Added mode selection controls (Shift Break / Weekend).
+    - Implemented "Loading" states and improved error handling (Toasts instead of alerts).
+  - **Advanced Table Integration:**
+    - Full support for sorting, filtering, and column management in the Planning Table.
+    - Fixed height calculation issues for better viewport utilization.
+
+- **Testing & Quality:**
+  - **Test Suite Restoration:** Fixed critical import errors in `test_domain_models.py`, `test_planning_engine.py`, and `test_integration.py`.
+  - **100% Pass Rate:** Achieved 38/38 passing tests for core planning logic.
+  - **Security Audit:** Completed comprehensive audit of JavaScript assets.
+
+### Changed
+- **Documentation:**
+  - **Refactoring:** Split monolithic `PLANNING_MODULE_ACTION_PLAN.md` into phase-specific files in `docs/roadmap/`.
+  - **Consolidation:** Moved all app-specific documentation to `apps/workforceManager/docs/`.
+  - **Status Reporting:** Updated all status documents to accurately reflect the "Custom Gantt" implementation (correcting previous "Frappe Gantt" claims).
+- **Architecture:**
+  - Decoupled Planning UI from the legacy "Manage Mappings" Excel workflow.
+  - Improved separation of concerns between Domain Models and Transformation Layer.
+
+### Fixed
+- **Critical:** Resolved `AttributeError: '__name__'` in `planning_engine.py` preventing server startup.
+- **Logic:** Fixed "Shift Break" planning window constraints to strictly enforce 30-minute limits.
+- **UI Bugs:**
+  - Fixed "Weekend Planning" bug where single-day schedules assigned no tasks (Daily PM filtering issue).
+  - Fixed Advanced Table event listener persistence after re-renders.
+  - Fixed modal positioning and z-index issues.
+
 ## [1.2.0] - 2025-09-22
 
 ### Added

@@ -3,6 +3,45 @@ Test configuration and fixtures for the Weekend Planning Project.
 """
 import sys
 import os
+from unittest.mock import MagicMock
+
+# Mock flask_limiter if not installed (for testing environment)
+try:
+    import flask_limiter
+except ImportError:
+    m = MagicMock()
+    m.__name__ = 'flask_limiter'
+    m.__path__ = []
+    
+    class MockLimiter:
+        def __init__(self, *args, **kwargs):
+            pass
+        def limit(self, *args, **kwargs):
+            def decorator(f):
+                return f
+            return decorator
+            
+    m.Limiter = MockLimiter
+    sys.modules['flask_limiter'] = m
+    sys.modules['flask_limiter.util'] = MagicMock()
+
+# Mock pandas if not installed
+try:
+    import pandas
+except ImportError:
+    m = MagicMock()
+    m.__name__ = 'pandas'
+    m.__path__ = []
+    sys.modules['pandas'] = m
+
+# Mock requests if not installed
+try:
+    import requests
+except ImportError:
+    m = MagicMock()
+    m.__name__ = 'requests'
+    m.__path__ = []
+    sys.modules['requests'] = m
 
 # Add project root to the Python path to resolve `src` imports correctly
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))

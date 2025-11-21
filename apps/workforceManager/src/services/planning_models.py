@@ -2,12 +2,12 @@
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table
 from sqlalchemy.orm import relationship
-from src.services.db_utils import db, TechnicianSkill
+from src.services.db_utils import db
 
-# Association table for PlanningTask to Technician (many-to-many)
-planning_task_technicians = Table('planning_task_technicians', db.Model.metadata,
+# Association table for PlanningTask to User (many-to-many)
+planning_task_users = Table('planning_task_users', db.Model.metadata,
     Column('planning_task_id', Integer, ForeignKey('planning_task.id'), primary_key=True),
-    Column('technician_id', Integer, ForeignKey('technician.id'), primary_key=True)
+    Column('user_id', Integer, ForeignKey('user.id'), primary_key=True)
 )
 
 
@@ -32,11 +32,11 @@ class PlanningTask(db.Model):
     planned_end_time = Column(DateTime, nullable=True)
     actual_duration_minutes = Column(Integer, nullable=True)  # Calculated duration after planning (may differ from MO estimate)
     status = Column(String(50), default='Unplanned') # Unplanned, Planned, In-Progress, Completed, Cancelled
-    assigned_technician_id = Column(Integer, ForeignKey('technician.id'), nullable=True)  # DEPRECATED: Keep for backward compatibility
+    assigned_user_id = Column(Integer, ForeignKey('user.id'), nullable=True)  # DEPRECATED: Keep for backward compatibility
 
     # Relationships
     maintenance_order = relationship('MaintenanceOrder')
     schedule = relationship('Schedule', back_populates='planned_tasks')
-    assigned_technician = relationship('Technician', foreign_keys=[assigned_technician_id])  # Single technician (deprecated)
-    assigned_technicians = relationship('Technician', secondary=planning_task_technicians, backref='planning_tasks')  # Multiple technicians (NEW)
+    assigned_user = relationship('User', foreign_keys=[assigned_user_id])  # Single user (deprecated)
+    assigned_users = relationship('User', secondary=planning_task_users, backref='planning_tasks')  # Multiple users (NEW)
 

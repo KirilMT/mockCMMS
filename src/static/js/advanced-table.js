@@ -10,7 +10,7 @@ class AdvancedTable {
         this.columnOrder = [...this.columns.map(col => col.key)];
         this.currentPage = 1;
         this.pageSize = options.pageSize || 25;
-        
+
         this.init();
     }
 
@@ -87,13 +87,13 @@ class AdvancedTable {
     renderBody() {
         const filteredData = this.getFilteredData();
         const paginatedData = this.getPaginatedData(filteredData);
-        
+
         return paginatedData.map(row => `
             <tr>
                 ${this.columnOrder
-                    .filter(key => !this.hiddenColumns.has(key))
-                    .map(key => `<td>${this.formatCellValue(row[key], key, row)}</td>`)
-                    .join('')}
+                .filter(key => !this.hiddenColumns.has(key))
+                .map(key => `<td>${this.formatCellValue(row[key], key, row)}</td>`)
+                .join('')}
             </tr>
         `).join('');
     }
@@ -105,8 +105,8 @@ class AdvancedTable {
 
     getSortIcon(column) {
         if (this.currentSort.column !== column) return '<i class="fas fa-sort text-muted"></i>';
-        return this.currentSort.direction === 'asc' 
-            ? '<i class="fas fa-sort-up text-primary"></i>' 
+        return this.currentSort.direction === 'asc'
+            ? '<i class="fas fa-sort-up text-primary"></i>'
             : '<i class="fas fa-sort-down text-primary"></i>';
     }
 
@@ -131,7 +131,7 @@ class AdvancedTable {
                     .join(' ');
                 if (!searchableText.includes(this.globalSearchTerm)) return false;
             }
-            
+
             // Apply column filters with AND/OR logic
             if (Object.keys(this.filters).length > 0) {
                 return this.applyFiltersWithLogic(row);
@@ -139,10 +139,10 @@ class AdvancedTable {
             return true;
         }).sort((a, b) => {
             if (!this.currentSort.column) return 0;
-            
+
             const aVal = a[this.currentSort.column] || '';
             const bVal = b[this.currentSort.column] || '';
-            
+
             const comparison = aVal.toString().localeCompare(bVal.toString(), undefined, { numeric: true });
             return this.currentSort.direction === 'asc' ? comparison : -comparison;
         });
@@ -151,9 +151,9 @@ class AdvancedTable {
     applyFiltersWithLogic(row) {
         const filterEntries = Object.entries(this.filters);
         if (filterEntries.length === 0) return true;
-        
+
         // For now, use AND logic (can be enhanced later for OR)
-        return filterEntries.every(([column, filter]) => 
+        return filterEntries.every(([column, filter]) =>
             this.applyFilter(row[column], filter)
         );
     }
@@ -166,7 +166,7 @@ class AdvancedTable {
     applyFilter(value, filter) {
         const val = (value || '').toString().toLowerCase();
         const filterVal = filter.value.toLowerCase();
-        
+
         switch (filter.operator) {
             case 'contains': return val.includes(filterVal);
             case 'not_contains': return !val.includes(filterVal);
@@ -287,7 +287,7 @@ class AdvancedTable {
     showFilterManager() {
         const modal = document.getElementById('filterManager');
         const filterRows = document.getElementById('filterRows');
-        
+
         if (!modal) {
             console.error('Filter Manager modal not found in DOM');
             return;
@@ -299,7 +299,7 @@ class AdvancedTable {
 
         // Clear existing display
         filterRows.innerHTML = '';
-        
+
         // Add existing filters
         const filterEntries = Object.entries(this.filters);
         filterEntries.forEach(([column, filter], index) => {
@@ -317,15 +317,15 @@ class AdvancedTable {
                 `;
                 filterRows.appendChild(logicRow);
             }
-            
+
             const filterRow = document.createElement('div');
             filterRow.className = 'filter-row';
             filterRow.innerHTML = `
                 <select class="form-select filter-column">
                     <option value="">Select Column</option>
-                    ${this.columns.map(col => 
-                        `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`
-                    ).join('')}
+                    ${this.columns.map(col =>
+                `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`
+            ).join('')}
                 </select>
                 <select class="form-select filter-operator">
                     <option value="contains" ${filter.operator === 'contains' ? 'selected' : ''}>Contains</option>
@@ -342,12 +342,12 @@ class AdvancedTable {
             `;
             filterRows.appendChild(filterRow);
         });
-        
+
         // Add one empty row if no filters exist
         if (filterEntries.length === 0) {
             this.addFilterRow();
         }
-        
+
         modal.classList.add('show');
         console.log('Filter Manager modal displayed');
     }
@@ -430,8 +430,8 @@ class AdvancedTable {
             <select class="form-select filter-column">
                 <option value="">Select Column</option>
                 ${this.columns.map(col =>
-                    `<option value="${col.key}">${col.label}</option>`
-                ).join('')}
+            `<option value="${col.key}">${col.label}</option>`
+        ).join('')}
             </select>
             <select class="form-select filter-operator">
                 <option value="contains">Contains</option>
@@ -449,7 +449,7 @@ class AdvancedTable {
 
         // Add event listener for remove button
         const removeBtn = filterRow.querySelector('.remove-filter-btn');
-        removeBtn.addEventListener('click', function() {
+        removeBtn.addEventListener('click', function () {
             const row = this.closest('.filter-row');
             // Also remove the previous logic element if it exists
             const prevSibling = row.previousElementSibling;
@@ -472,15 +472,15 @@ class AdvancedTable {
     addFilterRowWithData(column, operator, value) {
         const filterRows = document.getElementById('filterRows');
         const rowCount = filterRows.children.length;
-        
+
         const filterRow = document.createElement('div');
         filterRow.className = 'filter-row';
         filterRow.innerHTML = `
             <select class="form-select">
                 <option value="">Select Column</option>
-                ${this.columns.map(col => 
-                    `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`
-                ).join('')}
+                ${this.columns.map(col =>
+            `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`
+        ).join('')}
             </select>
             <select class="form-select">
                 <option value="contains" ${operator === 'contains' ? 'selected' : ''}>Contains</option>
@@ -495,7 +495,7 @@ class AdvancedTable {
                 <i class="fas fa-trash"></i>
             </button>
         `;
-        
+
         filterRows.appendChild(filterRow);
     }
 
@@ -509,7 +509,7 @@ class AdvancedTable {
     exportCSV(data) {
         const visibleColumns = this.columnOrder.filter(key => !this.hiddenColumns.has(key));
         const headers = visibleColumns.map(key => this.columns.find(c => c.key === key).label);
-        
+
         let csv = headers.join(',') + '\n';
         data.forEach(row => {
             const values = visibleColumns.map(key => {
@@ -518,7 +518,7 @@ class AdvancedTable {
             });
             csv += values.join(',') + '\n';
         });
-        
+
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -531,7 +531,7 @@ class AdvancedTable {
     saveConfiguration() {
         const name = prompt('Enter configuration name:');
         if (!name || !name.trim()) return;
-        
+
         const config = {
             config_name: name.trim(),
             column_order: JSON.stringify(this.columnOrder),
@@ -540,29 +540,29 @@ class AdvancedTable {
             sort_config: JSON.stringify(this.currentSort),
             is_default: false
         };
-        
+
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
         fetch('/api/table-config/' + this.pageName, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken
             },
             body: JSON.stringify(config)
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Configuration saved successfully!');
-                this.loadConfiguration(); // Refresh dropdown
-            } else {
-                alert('Error saving configuration: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error saving configuration: ' + error.message);
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Configuration saved successfully!');
+                    this.loadConfiguration(); // Refresh dropdown
+                } else {
+                    alert('Error saving configuration: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving configuration: ' + error.message);
+            });
     }
 
     loadConfiguration() {
@@ -576,7 +576,7 @@ class AdvancedTable {
             .then(configs => {
                 // Load saved configurations into dropdown
                 this.loadSavedConfigurationsDropdown(configs);
-                
+
                 // Apply default configuration if exists
                 const defaultConfig = configs.find(c => c.is_default);
                 if (defaultConfig) {
@@ -613,7 +613,7 @@ class AdvancedTable {
     goToPage(page) {
         const filteredData = this.getFilteredData();
         const totalPages = Math.ceil(filteredData.length / this.pageSize);
-        
+
         if (page >= 1 && page <= totalPages) {
             this.currentPage = page;
             this.render();
@@ -622,7 +622,17 @@ class AdvancedTable {
 
     rowClick(id) {
         // Navigate to detail page
-        window.location.href = `/${this.pageName}/${id}`;
+        // Convert table ID to page name (e.g., 'usersTable' -> 'users', 'mosTable' -> 'maintenance_orders')
+        let pagePath = this.pageName.replace('Table', '');
+
+        // Special cases for routes that don't match table names
+        if (pagePath === 'mos') {
+            pagePath = 'maintenance_orders';
+        } else if (pagePath === 'spareParts') {
+            pagePath = 'spare_parts';
+        }
+
+        window.location.href = `/${pagePath}/${id}`;
     }
 
     attachEventListeners() {
@@ -650,6 +660,20 @@ class AdvancedTable {
             header.addEventListener('click', () => {
                 const column = header.getAttribute('data-column');
                 this.sort(column);
+            });
+        });
+
+        // Bind table rows for click navigation
+        const rows = this.container.querySelectorAll('.advanced-table tbody tr');
+        rows.forEach((row, index) => {
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', () => {
+                const filteredData = this.getFilteredData();
+                const paginatedData = this.getPaginatedData(filteredData);
+                const rowData = paginatedData[index];
+                if (rowData && rowData.id) {
+                    this.rowClick(rowData.id);
+                }
             });
         });
     }

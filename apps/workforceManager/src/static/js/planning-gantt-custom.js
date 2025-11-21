@@ -14,6 +14,7 @@ class PlanningGanttChart {
         this.tasks = [];
         this.technicians = [];
         this.scheduleData = null;
+        this.shiftSchedule = [];
 
         if (!this.container) {
             console.error(`Gantt container #${containerId} not found`);
@@ -40,6 +41,7 @@ class PlanningGanttChart {
 
             this.scheduleData = data.schedule;
             this.technicians = data.technicians;
+            this.shiftSchedule = data.shift_schedule || [];
 
             // Filter only planned tasks with valid times
             this.tasks = data.tasks.filter(task =>
@@ -159,14 +161,63 @@ class PlanningGanttChart {
             earliestTime.setMinutes(0, 0, 0);
             latestTime.setHours(latestTime.getHours() + 1, 0, 0, 0);
 
-            // Build hourly columns for weekend
+            // Helper to get shift name for a time using backend shift schedule
+            const getShiftInfo = (date) => {
+                const h = date.getHours();
+                let queryDate = new Date(date);
+
+                // If it's 00:00 - 06:00, it belongs to the PREVIOUS day's Late shift
+                if (h < 6) {
+                    queryDate.setDate(queryDate.getDate() - 1);
+                }
+
+                const dateStr = queryDate.toISOString().split('T')[0];
+                const scheduleEntry = this.shiftSchedule.find(entry => entry.date.startsWith(dateStr));
+
+                if (!scheduleEntry) return "Shift";
+
+                // Use backend-calculated shift schedule
+                if (h >= 6 && h < 18) {
+                    // Early Shift (06:00 - 18:00)
+                    return `${scheduleEntry.early_shift.team_name} (Early)`;
+                } else {
+                    // Late Shift (18:00 - 06:00)
+                    return `${scheduleEntry.late_shift.team_name} (Late)`;
+                }
+            };
+
+            // Build hourly columns for weekend with day/shift metadata
             const timeColumns = [];
             let currentTime = new Date(earliestTime);
+            let lastDay = null;
+            let lastShift = null;
 
             while (currentTime < latestTime) {
+                const currentDay = currentTime.toDateString();
+                const currentShift = getShiftInfo(currentTime);
+
+                let dayLabel = "";
+                let isNewDay = false;
+
+                if (currentDay !== lastDay) {
+                    dayLabel = currentTime.toLocaleDateString('en-US', { weekday: 'long' });
+                    isNewDay = true;
+                    lastDay = currentDay;
+                }
+
+                let isShiftStart = false;
+                if (currentShift !== lastShift) {
+                    isShiftStart = true;
+                    lastShift = currentShift;
+                }
+
                 timeColumns.push({
                     time: new Date(currentTime),
-                    label: this.formatHour(currentTime)
+                    label: this.formatHour(currentTime),
+                    dayLabel: dayLabel,
+                    isNewDay: isNewDay,
+                    shiftLabel: currentShift,
+                    isShiftStart: isShiftStart
                 });
                 currentTime.setHours(currentTime.getHours() + 1);
             }
@@ -196,13 +247,16 @@ class PlanningGanttChart {
         const techsWithTasks = this.technicians.filter(tech => tasksByTech[tech.id]);
         const techsToShow = techsWithTasks.length > 0 ? techsWithTasks : this.technicians;
 
-        // Calculate dynamic height: header (55px) + rows (40px each) + padding (20px)
-        const ganttHeight = 55 + (techsToShow.length * 40) + 20;
+        // Calculate dynamic height: header (90px) + rows (40px each) + padding (20px)
+        // Header increased to 90px for Day/Shift/Hour rows
+        const headerHeight = 90;
+        const ganttHeight = headerHeight + (techsToShow.length * 40) + 20;
+        const totalWidth = timeColumns.length * 100; // Calculate total width of the grid
 
         const html = `
             <div class="custom-gantt-chart" style="height: ${ganttHeight}px;">
                 <div class="gantt-fixed-left-pane">
-                    <div class="gantt-header-spacer" style="height: 55px; background: #f9f9f9; border-bottom: 1px solid #ccc;">
+                    <div class="gantt-header-spacer" style="height: ${headerHeight}px; background: #f9f9f9; border-bottom: 1px solid #ccc; display: flex; align-items: flex-end; padding-bottom: 10px;">
                         <div style="padding: 10px; font-weight: 600;">Technician</div>
                     </div>
                     <div class="gantt-technician-labels">
@@ -210,8 +264,8 @@ class PlanningGanttChart {
                     </div>
                 </div>
                 <div class="gantt-scrollable-right-pane">
-                    <div class="gantt-time-header" style="height: 55px; position: sticky; top: 0; z-index: 10; background: #fff;">
-                        <div class="gantt-time-axis" style="display: grid; grid-template-columns: repeat(${timeColumns.length}, 100px); border-bottom: 1px solid #ccc;">
+                    <div class="gantt-time-header" style="height: ${headerHeight}px; position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid #ccc; min-width: ${totalWidth}px;">
+                        <div class="gantt-time-axis" style="display: flex; flex-direction: column; width: ${totalWidth}px;">
                             ${this.renderTimeAxis(timeColumns)}
                         </div>
                     </div>
@@ -260,11 +314,66 @@ class PlanningGanttChart {
     }
 
     renderTimeAxis(timeColumns) {
-        return timeColumns.map(col => `
-            <div class="gantt-time-tick" style="text-align: center; padding: 18px 0; border-right: 1px solid #eee; font-size: 0.9em; color: #666;">
+        // We need 3 rows: Day, Shift, Hour
+        let dayCells = '';
+        let shiftCells = '';
+        let hourCells = '';
+
+        // 1. Hour Row (Bottom) - Easy, 100px per column
+        hourCells = timeColumns.map(col => `
+            <div class="gantt-time-tick" style="width: 100px; text-align: center; padding: 5px 0; border-right: 1px solid #eee; font-size: 0.8em; color: #666; flex-shrink: 0;">
                 ${col.label}
             </div>
         `).join('');
+
+        // 2. Shift Row (Middle) - Group columns by shift
+        let shiftGroups = [];
+        let currentGroup = { label: '', count: 0 };
+
+        timeColumns.forEach((col, index) => {
+            if (col.isShiftStart || index === 0) {
+                if (currentGroup.count > 0) shiftGroups.push(currentGroup);
+                currentGroup = {
+                    label: col.shiftLabel || '',
+                    count: 1
+                };
+            } else {
+                currentGroup.count++;
+            }
+        });
+        if (currentGroup.count > 0) shiftGroups.push(currentGroup);
+
+        shiftCells = shiftGroups.map(group => `
+            <div class="gantt-header-cell" style="width: ${group.count * 100}px; text-align: center; padding: 4px 0; border-right: 1px solid #ddd; border-bottom: 1px solid #eee; font-size: 0.85em; font-weight: 500; background: ${group.label.includes('Late') ? '#f8f9fa' : '#fff'}; flex-shrink: 0;">
+                ${group.label}
+            </div>
+        `).join('');
+
+        // 3. Day Row (Top) - Group columns by day
+        let dayGroups = [];
+        currentGroup = { label: '', count: 0 };
+
+        timeColumns.forEach((col, index) => {
+            if (col.isNewDay || index === 0) {
+                if (currentGroup.count > 0) dayGroups.push(currentGroup);
+                currentGroup = { label: col.dayLabel || '', count: 1 };
+            } else {
+                currentGroup.count++;
+            }
+        });
+        if (currentGroup.count > 0) dayGroups.push(currentGroup);
+
+        dayCells = dayGroups.map(group => `
+            <div class="gantt-header-cell" style="width: ${group.count * 100}px; text-align: center; padding: 4px 0; border-right: 1px solid #ccc; border-bottom: 1px solid #eee; font-weight: bold; background: #e9ecef; flex-shrink: 0;">
+                ${group.label}
+            </div>
+        `).join('');
+
+        return `
+            <div style="display: flex; height: 30px; width: 100%;">${dayCells}</div>
+            <div style="display: flex; height: 30px; width: 100%;">${shiftCells}</div>
+            <div style="display: flex; height: 30px; width: 100%;">${hourCells}</div>
+        `;
     }
 
     renderGanttRows(startTime, endTime, timeColumns, tasksByTech) {
@@ -282,7 +391,7 @@ class PlanningGanttChart {
                     <div class="gantt-task-bars" style="position: absolute; top: 0; left: 0; right: 0; height: 100%;">
                         ${this.renderTaskBars(techTasks, startTime, endTime)}
                     </div>
-                </div>
+                </div >
             `;
         });
 
@@ -299,15 +408,19 @@ class PlanningGanttChart {
     }
 
     renderTaskBars(tasks, startTime, endTime) {
-        const totalDuration = endTime - startTime;
+        const COLUMN_WIDTH = 100; // pixels per hour (matches time grid)
+        const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
 
         return tasks.map(task => {
             const taskStart = new Date(task.planned_start_time);
             const taskEnd = new Date(task.planned_end_time);
 
-            // Calculate position and width as percentages
-            const left = ((taskStart - startTime) / totalDuration) * 100;
-            const width = ((taskEnd - taskStart) / totalDuration) * 100;
+            // Calculate position in pixels based on hours from startTime
+            const hoursFromStart = (taskStart - startTime) / MILLISECONDS_PER_HOUR;
+            const taskDurationHours = (taskEnd - taskStart) / MILLISECONDS_PER_HOUR;
+
+            const left = hoursFromStart * COLUMN_WIDTH;
+            const width = taskDurationHours * COLUMN_WIDTH;
 
             const priorityColor = this.getPriorityColor(task.priority);
             const taskId = task.maintenance_order_id; // Use actual MO ID
@@ -317,8 +430,8 @@ class PlanningGanttChart {
                      data-task-id="${taskId}"
                      style="
                          position: absolute;
-                         left: ${left}%;
-                         width: ${width}%;
+                         left: ${left}px;
+                         width: ${width}px;
                          top: 8px;
                          height: 24px;
                          background: ${priorityColor};
@@ -373,7 +486,7 @@ class PlanningGanttChart {
             cell.addEventListener('mouseenter', () => {
                 const colIndex = cell.getAttribute('data-col-index');
                 // Highlight all cells with the same column index
-                const allCells = this.container.querySelectorAll(`[data-col-index="${colIndex}"]`);
+                const allCells = this.container.querySelectorAll(`[data - col - index="${colIndex}"]`);
                 allCells.forEach(c => {
                     c.style.background = '#e3f2fd';
                 });
@@ -381,7 +494,7 @@ class PlanningGanttChart {
             cell.addEventListener('mouseleave', () => {
                 const colIndex = cell.getAttribute('data-col-index');
                 // Restore original background for all cells in this column
-                const allCells = this.container.querySelectorAll(`[data-col-index="${colIndex}"]`);
+                const allCells = this.container.querySelectorAll(`[data - col - index= "${colIndex}"]`);
                 allCells.forEach(c => {
                     const idx = parseInt(colIndex);
                     if (idx % 2 === 0) {
@@ -462,7 +575,7 @@ class PlanningGanttChart {
         // - "Quarter Day" = 15-min columns
         // - "Half Day" = 30-min columns
         // - "Day" = hourly columns (current)
-        alert(`View mode "${mode}" will be implemented in a future update. Currently showing hourly view.`);
+        alert(`View mode "${mode}" will be implemented in a future update.Currently showing hourly view.`);
     }
 
     refresh() {

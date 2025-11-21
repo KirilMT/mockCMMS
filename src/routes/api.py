@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, session
-from src.services.db_utils import db, Task, Skill, Technician, Asset, MaintenanceOrder, SparePart, User, Role, TableConfiguration
+from src.services.db_utils import db, Skill, Asset, MaintenanceOrder, SparePart, User, Role, TableConfiguration
 import json
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
@@ -14,89 +14,8 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- Task Endpoints (Existing) ---
-@api_bp.route('/v1/tasks', methods=['GET'])
-def get_tasks():
-    tasks = Task.query.all()
-    return jsonify([task.to_dict() for task in tasks])
-
-@api_bp.route('/v1/tasks/<int:task_id>', methods=['GET'])
-def get_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    return jsonify(task.to_dict())
-
-@api_bp.route('/v1/tasks', methods=['POST'])
-def add_task():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Invalid JSON"}), 400
-
-    required_fields = ['scheduler_group_task', 'mitarbeiter_pro_aufgabe', 'planned_worktime_min', 'priority', 'quantity', 'task_type']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({"error": f"Missing field: {field}"}), 400
-
-    new_task = Task(
-        scheduler_group_task=data['scheduler_group_task'],
-        planning_notes=data.get('planning_notes'),
-        lines=data.get('lines'),
-        mitarbeiter_pro_aufgabe=data['mitarbeiter_pro_aufgabe'],
-        planned_worktime_min=data['planned_worktime_min'],
-        priority=data['priority'],
-        quantity=data['quantity'],
-        task_type=data['task_type'],
-        ticket_mo=data.get('ticket_mo'),
-        ticket_url=data.get('ticket_url')
-    )
-
-    if 'required_skills' in data and isinstance(data['required_skills'], list):
-        for skill_name in data['required_skills']:
-            skill = Skill.query.filter_by(name=skill_name).first()
-            if not skill:
-                skill = Skill(name=skill_name)
-                db.session.add(skill)
-            new_task.required_skills.append(skill)
-
-    db.session.add(new_task)
-    db.session.commit()
-    return jsonify(new_task.to_dict()), 201
-
-@api_bp.route('/v1/tasks/<int:task_id>', methods=['PUT'])
-def update_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Invalid JSON"}), 400
-
-    task.scheduler_group_task = data.get('scheduler_group_task', task.scheduler_group_task)
-    task.planning_notes = data.get('planning_notes', task.planning_notes)
-    task.lines = data.get('lines', task.lines)
-    task.mitarbeiter_pro_aufgabe = data.get('mitarbeiter_pro_aufgabe', task.mitarbeiter_pro_aufgabe)
-    task.planned_worktime_min = data.get('planned_worktime_min', task.planned_worktime_min)
-    task.priority = data.get('priority', task.priority)
-    task.quantity = data.get('quantity', task.quantity)
-    task.task_type = data.get('task_type', task.task_type)
-    task.ticket_mo = data.get('ticket_mo', task.ticket_mo)
-    task.ticket_url = data.get('ticket_url', task.ticket_url)
-
-    if 'required_skills' in data and isinstance(data['required_skills'], list):
-        task.required_skills = [] # Clear existing skills
-        for skill_name in data['required_skills']:
-            skill = Skill.query.filter_by(name=skill_name).first()
-            if not skill:
-                skill = Skill(name=skill_name)
-                db.session.add(skill)
-            task.required_skills.append(skill)
-
-    db.session.commit()
-    return jsonify(task.to_dict())
-
-@api_bp.route('/v1/tasks/<int:task_id>', methods=['DELETE'])
-def delete_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    db.session.delete(task)
-    db.session.commit()
-    return jsonify({"message": "Task deleted"}), 200
+# Task endpoints REMOVED - use MaintenanceOrder endpoints (/v1/mos) instead
+# Legacy Task model has been deprecated
 
 # --- Asset Endpoints ---
 @api_bp.route('/v1/assets', methods=['GET'])

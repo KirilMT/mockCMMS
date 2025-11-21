@@ -281,8 +281,8 @@ Once Priority 1 & 2 are complete:
 
 ## References
 
-- Main Action Plan: `docs/PLANNING_MODULE_ACTION_PLAN.md`
-- Data Flow: `docs/planning_data_flow.md`
+- Main Action Plan: `00_OVERVIEW_AND_STATUS.md`
+- Data Flow: `planning_data_flow.md`
 - Core Engine: `apps/workforceManager/src/services/planning_engine.py`
 - Current Tests: `apps/workforceManager/tests/test_planning_engine.py`
 

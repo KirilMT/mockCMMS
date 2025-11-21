@@ -3,40 +3,57 @@
 {% block title %}{% if part %}Edit Spare Part{% else %}Add New Spare Part{% endif %}{% endblock %}
 
 {% block content %}
-    <h1 class="mb-4">{% if part %}Edit Spare Part{% else %}Add New Spare Part{% endif %}</h1>
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>{% if part %}Edit Spare Part{% else %}Add New Spare Part{% endif %}</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <a href="{{ url_for('main.spare_parts') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Spare Parts
+        </a>
+    </div>
+</div>
 
-    <form method="POST" action="{% if part %}{{ url_for('main.edit_spare_part', part_id=part.id) }}{% else %}{{ url_for('main.add_spare_part') }}{% endif %}">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="3" required>{{ part.description if part else '' }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label for="manufacturer">Manufacturer</label>
-                    <input type="text" class="form-control" id="manufacturer" name="manufacturer" value="{{ part.manufacturer if part else '' }}">
-                </div>
-                <div class="form-group">
-                    <label for="manufacturer_part_id">Manufacturer Part ID</label>
-                    <input type="text" class="form-control" id="manufacturer_part_id" name="manufacturer_part_id" value="{{ part.manufacturer_part_id if part else '' }}">
-                </div>
+<form method="POST"
+    action="{% if part %}{{ url_for('main.edit_spare_part', part_id=part.id) }}{% else %}{{ url_for('main.add_spare_part') }}{% endif %}">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3"
+                    required>{{ part.description if part else '' }}</textarea>
             </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="stock_quantity">Stock Quantity</label>
-                    <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" value="{{ part.stock_quantity if part else 0 }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="location">Location</label>
-                    <input type="text" class="form-control" id="location" name="location" value="{{ part.location if part else '' }}">
-                </div>
-                <div class="form-group">
-                    <label for="min_quantity">Minimum Quantity</label>
-                    <input type="number" class="form-control" id="min_quantity" name="min_quantity" value="{{ part.min_quantity if part else 0 }}">
-                </div>
+            <div class="form-group">
+                <label for="manufacturer">Manufacturer</label>
+                <input type="text" class="form-control" id="manufacturer" name="manufacturer"
+                    value="{{ part.manufacturer if part else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="manufacturer_part_id">Manufacturer Part ID</label>
+                <input type="text" class="form-control" id="manufacturer_part_id" name="manufacturer_part_id"
+                    value="{{ part.manufacturer_part_id if part else '' }}">
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">{% if part %}Update Spare Part{% else %}Add Spare Part{% endif %}</button>
-        <a href="{{ url_for('main.spare_parts') }}" class="btn btn-secondary">Cancel</a>
-    </form>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="stock_quantity">Stock Quantity</label>
+                <input type="number" class="form-control" id="stock_quantity" name="stock_quantity"
+                    value="{{ part.stock_quantity if part else 0 }}" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" class="form-control" id="location" name="location"
+                    value="{{ part.location if part else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="min_quantity">Minimum Quantity</label>
+                <input type="number" class="form-control" id="min_quantity" name="min_quantity"
+                    value="{{ part.min_quantity if part else 0 }}">
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">{% if part %}Update Spare Part{% else %}Add Spare Part{% endif
+        %}</button>
+    <a href="{{ url_for('main.spare_parts') }}" class="btn btn-secondary">Cancel</a>
+</form>
 {% endblock %}

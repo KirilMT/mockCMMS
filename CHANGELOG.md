@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Workforce Manager Integration (Major Feature):**
+  - **Planning Module:** Fully integrated the new Planning Module with a custom Gantt chart and Shift Planning capabilities.
+  - **Advanced Scheduling:** Added support for complex shift patterns (Production 3x8h, Maintenance 2x12h) and overnight shifts.
+  - **Team Optimization:** Implemented multi-factor team formation logic (skills, workload, experience).
+- **Infrastructure:**
+  - **Test Suite:** Restored and verified the global test suite; fixed cross-module import issues affecting `pytest` discovery.
+  - **Shared Components:** Enhanced `AdvancedTable` component with better height calculation and event handling, shared across all apps.
+
+### Changed
+- **Documentation:**
+  - **Restructuring:** Major reorganization of the `docs/` directory.
+    - Moved app-specific documentation to `apps/<app_name>/docs/`.
+    - Refactored the monolithic Planning Module action plan into phase-specific documents.
+    - Cleaned up the root `docs/` directory to focus on project-level roadmaps.
+- **Configuration:**
+  - Updated `.env` handling to support new Planning Module configuration flags.
+
+### Fixed
+- **Stability:** Resolved startup crashes related to circular imports in the Planning Engine.
+- **UI/UX:** Fixed various issues with the Advanced Table component (modals, event listeners, viewport height).
+- **Testing:** Fixed `pytest` discovery issues allowing full regression testing of the Planning module.
+
 ## [1.1.0] - 2025-01-28
 
 ### Added

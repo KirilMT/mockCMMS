@@ -8,11 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
-# Association table for Task-Skill many-to-many relationship
-task_skills = Table('task_skills', db.Model.metadata,
-    Column('task_id', Integer, ForeignKey('task.id'), primary_key=True),
-    Column('skill_id', Integer, ForeignKey('skill.id'), primary_key=True)
-)
+# Task model and task_skills table REMOVED - use MaintenanceOrder instead
 
 # Association table for MaintenanceOrder-Skill many-to-many relationship
 maintenance_order_skills = Table('maintenance_order_skills', db.Model.metadata,
@@ -33,67 +29,47 @@ maintenance_order_spare_parts = Table('maintenance_order_spare_parts', db.Model.
     Column('quantity_required', Integer, nullable=False, default=1)
 )
 
-class Task(db.Model):
-    id = Column(Integer, primary_key=True)
-    scheduler_group_task = Column(String(255), nullable=False)
-    planning_notes = Column(Text, nullable=True)
-    lines = Column(String(255), nullable=True)
-    mitarbeiter_pro_aufgabe = Column(Integer, nullable=False)
-    planned_worktime_min = Column(Integer, nullable=False)
-    priority = Column(String(10), nullable=False)
-    quantity = Column(Integer, nullable=False)
-    task_type = Column(String(10), nullable=False)
-    ticket_mo = Column(String(255), nullable=True)
-    ticket_url = Column(String(255), nullable=True)
-    required_skills = relationship('Skill', secondary=task_skills, back_populates='tasks')
+# Association table for MaintenanceOrder to User (assignees)
+maintenance_order_assignees = Table('maintenance_order_assignees', db.Model.metadata,
+    Column('maintenance_order_id', Integer, ForeignKey('maintenance_order.id'), primary_key=True),
+    Column('user_id', Integer, ForeignKey('user.id'), primary_key=True)
+)
 
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "scheduler_group_task": self.scheduler_group_task,
-            "planning_notes": self.planning_notes,
-            "lines": self.lines,
-            "mitarbeiter_pro_aufgabe": self.mitarbeiter_pro_aufgabe,
-            "planned_worktime_min": self.planned_worktime_min,
-            "priority": self.priority,
-            "quantity": self.quantity,
-            "task_type": self.task_type,
-            "ticket_mo": self.ticket_mo,
-            "ticket_url": self.ticket_url,
-            "required_skills": [skill.name for skill in self.required_skills]
-        }
+# Association table for MaintenanceOrder self-referential relationships (associated MOs)
+maintenance_order_associations = Table('maintenance_order_associations', db.Model.metadata,
+    Column('parent_mo_id', Integer, ForeignKey('maintenance_order.id'), primary_key=True),
+    Column('child_mo_id', Integer, ForeignKey('maintenance_order.id'), primary_key=True)
+)
+
+# Task model REMOVED - use MaintenanceOrder instead
+# Legacy Task data should be migrated to MaintenanceOrder
 
 # Association model for Technician to Skill (must be defined before Technician and Skill)
-class TechnicianSkill(db.Model):
-    __tablename__ = 'technician_skill'
-    technician_id = Column(Integer, ForeignKey('technician.id'), primary_key=True)
+class UserSkill(db.Model):
+    __tablename__ = 'user_skill'
+    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
     skill_id = Column(Integer, ForeignKey('skill.id'), primary_key=True)
     skill_level = Column(Integer, default=1)  # e.g., 1-5 rating
 
-    technician = relationship("Technician", back_populates="skills")
-    skill = relationship("Skill", back_populates="technicians")
-
-class Technician(db.Model):
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255), unique=True, nullable=False)
-    availability_status = Column(String(50), default='Available') # Available, On Leave, Sick
-    shift_id = Column(Integer, ForeignKey('shift.id'), nullable=True)
-    shift = relationship('Shift', backref='technicians')
-    skills = relationship('TechnicianSkill', back_populates='technician')
+    user = relationship("User", back_populates="skills")
+    skill = relationship("Skill", back_populates="users")
 
     def to_dict(self):
         return {
-            "id": self.id,
-            "name": self.name,
-            "availability_status": self.availability_status,
-            "shift_id": self.shift_id
+            "user_id": self.user_id,
+            "skill_id": self.skill_id,
+            "skill_level": self.skill_level,
+            "user_name": self.user.username if self.user else None,
+            "skill_name": self.skill.name if self.skill else None
         }
+
+# Technician model REMOVED - merged into User
+# Legacy data migrated to User table
 
 class Skill(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, nullable=False)
-    tasks = relationship('Task', secondary=task_skills, back_populates='required_skills')
-    technicians = relationship('TechnicianSkill', back_populates='skill')
+    users = relationship('UserSkill', back_populates='skill')
     maintenance_orders = relationship('MaintenanceOrder', secondary=maintenance_order_skills, back_populates='required_skills')
 
     def to_dict(self):
@@ -133,13 +109,13 @@ class MaintenanceOrder(db.Model):
     frequency = Column(String(50), nullable=True)  # daily/weekly/monthly
     completion_date = Column(DateTime, nullable=True)
     estimated_completion_time = Column(Integer, nullable=True)  # minutes
-    assignees = Column(Text, nullable=True)  # JSON array
+    assignees_json = Column('assignees', Text, nullable=True)  # DEPRECATED - use assignees_users relationship
     created_by = Column(Integer, ForeignKey('user.id'), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     modified_by = Column(Integer, ForeignKey('user.id'), nullable=True)
     modified_on = Column(DateTime, nullable=True)
     labour_count = Column(Integer, default=1)
-    associated_mos = Column(Text, nullable=True)  # JSON array
+    associated_mos_json = Column('associated_mos', Text, nullable=True)  # DEPRECATED - use associated_orders relationship
     total_time_on_job = Column(Integer, default=0)  # minutes
     completed_by = Column(Integer, ForeignKey('user.id'), nullable=True)
     completed_on = Column(DateTime, nullable=True)
@@ -152,6 +128,16 @@ class MaintenanceOrder(db.Model):
     completer = relationship('User', foreign_keys=[completed_by], backref='completed_mos')
     required_spare_parts = relationship('SparePart', secondary=maintenance_order_spare_parts, back_populates='maintenance_orders')
     required_skills = relationship('Skill', secondary=maintenance_order_skills, back_populates='maintenance_orders')
+    
+    # NEW: Proper relationships replacing JSON fields
+    assignees_users = relationship('User', secondary=maintenance_order_assignees, backref='assigned_maintenance_orders')
+    associated_orders = relationship(
+        'MaintenanceOrder',
+        secondary=maintenance_order_associations,
+        primaryjoin='MaintenanceOrder.id==maintenance_order_associations.c.parent_mo_id',
+        secondaryjoin='MaintenanceOrder.id==maintenance_order_associations.c.child_mo_id',
+        backref='parent_orders'
+    )
 
     def to_dict(self):
         return {
@@ -167,13 +153,15 @@ class MaintenanceOrder(db.Model):
             "frequency": self.frequency,
             "completion_date": self.completion_date.isoformat() if self.completion_date else None,
             "estimated_completion_time": self.estimated_completion_time,
-            "assignees": self.assignees,
+            "assignees": self.assignees_json,  # Legacy JSON field
+            "assignees_users": [user.id for user in self.assignees_users],  # NEW: Proper relationship
             "created_by": self.created_by,
             "created_at": self.created_at.isoformat(),
             "modified_by": self.modified_by,
             "modified_on": self.modified_on.isoformat() if self.modified_on else None,
             "labour_count": self.labour_count,
-            "associated_mos": self.associated_mos,
+            "associated_mos": self.associated_mos_json,  # Legacy JSON field
+            "associated_orders": [mo.id for mo in self.associated_orders],  # NEW: Proper relationship
             "total_time_on_job": self.total_time_on_job,
             "completed_by": self.completed_by,
             "completed_on": self.completed_on.isoformat() if self.completed_on else None,
@@ -210,7 +198,15 @@ class User(db.Model):
     password_hash = Column(String(128), nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    roles = relationship('Role', secondary=user_roles, back_populates='users', lazy=True)
+    
+    # Technician fields (merged)
+    availability_status = db.Column(db.String(20), default='Available') # 'Available', 'On Leave', 'Sick'
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
+    
+    # Relationships
+    roles = db.relationship('Role', secondary=user_roles, back_populates='users')
+    team = db.relationship('Team', backref='users')
+    skills = relationship('UserSkill', back_populates='user')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -224,7 +220,10 @@ class User(db.Model):
             "username": self.username,
             "email": self.email,
             "is_active": self.is_active,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat(),
+            "availability_status": self.availability_status,
+            "team_id": self.team_id,
+            "team_name": self.team.name if self.team else None
         }
         if include_roles:
             data['roles'] = [role.name for role in self.roles]
@@ -234,7 +233,7 @@ class Role(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(80), unique=True, nullable=False)
     description = Column(Text, nullable=True)
-    users = relationship('User', secondary=user_roles, back_populates='roles', lazy=True)
+    users = relationship('User', secondary=user_roles, back_populates='roles')
 
     def to_dict(self):
         return {
@@ -243,11 +242,24 @@ class Role(db.Model):
             "description": self.description
         }
 
-class Shift(db.Model):
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), unique=True, nullable=False)  # e.g., "Weekend Day Shift", "Weekday Night Shift"
-    start_time = Column(String(5), nullable=False)  # "HH:MM"
-    end_time = Column(String(5), nullable=False)  # "HH:MM"
+# Shift model REMOVED - unused/orphaned table
+# Use Team for rotation-based scheduling
+
+class Team(db.Model):
+    __tablename__ = 'team'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    shift_type = db.Column(db.String(20), nullable=False)  # 'Early', 'Late', 'Night'
+    rotation_pattern = db.Column(db.String(50), nullable=False) # 'Pattern 1', 'Pattern 2'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'shift_type': self.shift_type,
+            'rotation_pattern': self.rotation_pattern
+        }
 
 class Report(db.Model):
     id = Column(Integer, primary_key=True)
@@ -327,6 +339,28 @@ def populate_dummy_data(logger):
     db.session.commit()
     logger.info(f"Populated {len(roles)} roles.")
 
+    # Create Shift Teams
+    shift_teams = {}
+    teams_config = [
+        {"name": "Team A", "shift_type": "Early", "rotation_pattern": "Pattern 1"},
+        {"name": "Team B", "shift_type": "Late", "rotation_pattern": "Pattern 1"},
+        {"name": "Team C", "shift_type": "Early", "rotation_pattern": "Pattern 2"},
+        {"name": "Team D", "shift_type": "Late", "rotation_pattern": "Pattern 2"}
+    ]
+    
+    # Create Teams
+    teams = {}
+    for team_data in teams_config:
+        team = Team(
+            name=team_data["name"],
+            shift_type=team_data["shift_type"],
+            rotation_pattern=team_data["rotation_pattern"]
+        )
+        db.session.add(team)
+        teams[team_data["name"]] = team
+    db.session.commit()
+    logger.info(f"Populated {len(teams)} teams.")
+
     # Create Users
     users = {}
     for user_data in data.get("users", []):
@@ -354,38 +388,57 @@ def populate_dummy_data(logger):
     db.session.commit()
     logger.info(f"Populated {len(skills)} skills.")
 
-    # Create Technicians with Skills
+    # Create Users (Technicians) with Skills
     technicians = {}
+    technician_role = Role.query.filter_by(name='Technician').first()
+    if not technician_role:
+        technician_role = Role(name='Technician')
+        db.session.add(technician_role)
+        db.session.commit()
+
     for tech_data in data.get("technicians", []):
         # Handle both string format (old) and dict format (new)
         if isinstance(tech_data, str):
-            tech = Technician(name=tech_data)
-            technicians[tech_data] = tech
+            username = tech_data
+            tech_info = {}
         else:
-            tech = Technician(
-                name=tech_data["name"],
-                availability_status=tech_data.get("availability_status", "Available")
-            )
-            technicians[tech_data["name"]] = tech
-            db.session.add(tech)
-            db.session.flush()  # Get the technician ID
+            username = tech_data["name"]
+            tech_info = tech_data
 
-            # Add technician skills
+        # Check if user exists
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            user = User(username=username, email=f"{username}@example.com")
+            user.set_password("password")
+            user.roles.append(technician_role)
+            db.session.add(user)
+        
+        # Update technician fields
+        user.availability_status = tech_info.get("availability_status", "Available")
+        
+        if "shift_team" in tech_info and tech_info["shift_team"] in teams:
+            user.team = teams[tech_info["shift_team"]]
+            
+        technicians[username] = user
+        db.session.flush()
+
+        # Add skills
+        if isinstance(tech_data, dict):
             for skill_assignment in tech_data.get("skills", []):
                 skill_name = skill_assignment["skill"]
                 if skill_name in skills:
-                    tech_skill = TechnicianSkill(
-                        technician_id=tech.id,
-                        skill_id=skills[skill_name].id,
-                        skill_level=skill_assignment.get("level", 1)
-                    )
-                    db.session.add(tech_skill)
-
-        if isinstance(tech_data, str):
-            db.session.add(tech)
-
+                    # Check if skill already assigned
+                    existing_skill = UserSkill.query.filter_by(user_id=user.id, skill_id=skills[skill_name].id).first()
+                    if not existing_skill:
+                        user_skill = UserSkill(
+                            user_id=user.id,
+                            skill_id=skills[skill_name].id,
+                            skill_level=skill_assignment.get("level", 1)
+                        )
+                        db.session.add(user_skill)
+    
     db.session.commit()
-    logger.info(f"Populated {len(technicians)} technicians with skills.")
+    logger.info(f"Populated technicians as Users with skills.")
 
     # Create Assets
     assets = {}
@@ -452,29 +505,8 @@ def populate_dummy_data(logger):
     db.session.commit()
     logger.info("Populated spare parts.")
 
-    # Create Tasks
-    for task_data in data.get("tasks", []):
-        task = Task(
-            scheduler_group_task=task_data["scheduler_group_task"],
-            planning_notes=task_data.get("planning_notes", ""),
-            lines=task_data.get("lines", ""),
-            mitarbeiter_pro_aufgabe=task_data.get("mitarbeiter_pro_aufgabe", 1),
-            planned_worktime_min=task_data.get("planned_worktime_min", 60),
-            priority=task_data.get("priority", "B"),
-            quantity=task_data.get("quantity", 1),
-            task_type=task_data.get("task_type", "PM"),
-            ticket_mo=task_data.get("ticket_mo", ""),
-            ticket_url=task_data.get("ticket_url", "")
-        )
-        
-        # Add required skills
-        for skill_name in task_data.get("required_skills", []):
-            if skill_name in skills:
-                task.required_skills.append(skills[skill_name])
-        
-        db.session.add(task)
-    db.session.commit()
-    logger.info("Populated tasks.")
+    # Task model removed - legacy data not populated
+    # Use MaintenanceOrder for all work orders
 
     # Create Schedules and Planning Tasks
     from apps.workforceManager.src.services.planning_models import Schedule, PlanningTask

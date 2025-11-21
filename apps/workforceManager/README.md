@@ -1,19 +1,18 @@
 # Workforce Manager
 
-A modular Flask application for managing weekend technician task assignments using skill-based matching and workload optimization. This app integrates seamlessly into the main CMMS system as a specialized module.
+A modular Flask application for intelligent maintenance planning and workforce management. It features a sophisticated Planning Engine that automates task assignment using skill-based matching, shift constraints, and workload optimization, visualized through a custom interactive Gantt chart.
 
 ## 🚀 Features
 
-- **Advanced Skill-Based Matching:** Intelligent task assignment system matching technician skills with task requirements
-- **Multi-Skill Task Support:** Tasks can require multiple technical skills with different proficiency levels
-- **Group Assignment Logic:** Smart grouping of technicians to optimize skill coverage and team effectiveness
-- **Technician Management:** Comprehensive technician profiles with skill tracking and experience levels
-- **Task Management:** Create, update, and manage tasks with multi-skill requirements and duration calculations
-- **Interactive Dashboard:** User-friendly interface for managing assignments and viewing technician workloads
-- **Security Features:** CSRF protection, input validation, rate limiting, and secure headers
-- **Excel Integration:** Import and process technician data and skill matrices from Excel files
-- **Real-time Updates:** Dynamic skill mapping and assignment optimization
-- **Workload Balancing:** Automatic adjustment of task duration based on team size and skill levels
+- **Advanced Planning Engine:** Intelligent task assignment respecting technician skills, availability, and shift constraints
+- **Interactive Gantt Chart:** Custom-built Gantt view with day/shift/hour granularity for precise scheduling
+- **Multi-Mode Planning:** specialized modes for "Shift Break" (short windows) and "Weekend Maintenance" (long duration)
+- **Shift Management:** Support for complex shift patterns including overnight/cross-midnight shifts (e.g., 3x8h, 2x12h)
+- **Skill-Based Matching:** Automated matching of tasks to technicians based on required competencies
+- **Technician Management:** Comprehensive profiles with skill tracking and satellite point assignments
+- **Legacy Excel Integration:** Support for importing data from legacy Excel workflows (deprecated)
+- **Real-time Optimization:** Dynamic workload balancing and team size optimization
+- **Security:** Robust CSRF protection and input validation
 
 ## 🖼️ Screenshots
 
@@ -69,7 +68,8 @@ workforceManager/
 ├── logs/                    # Application logs
 ├── output/                  # Generated reports
 ├── docs/                    # Documentation
-│   └── assets/              # Documentation images
+│   ├── assets/              # Documentation images
+│   └── roadmap/             # Detailed action plans and roadmaps
 ├── tests/                   # Test suite
 ├── test_data/               # Sample test data
 ├── setup.py                 # Package configuration
@@ -174,19 +174,20 @@ The application uses a sophisticated skill-based assignment system that:
 
 ## 📝 Documentation
 
-Detailed documentation is available in the `docs/` directory.
+Detailed documentation is available in the `docs/roadmap/` directory.
 
 ## 🎯 Usage
 
 ### Web Interface
 
-1. **Dashboard Access:** Navigate to the main dashboard to view technician assignments
-2. **Manage Mappings:** Use the mappings interface to configure:
-   - Technician skills and competency levels (0-4)
-   - Task requirements and multi-skill dependencies
-   - Satellite points and line assignments
-3. **File Upload:** Import Excel files with technician and task data
-4. **Assignment Generation:** Generate optimized task assignments based on skills
+### Web Interface
+
+1. **Planning Dashboard:** Navigate to `/planning` to access the main planning interface.
+   - **Timeline View:** Visualize assignments on the Gantt chart.
+   - **Table View:** View detailed task lists and assignments.
+   - **Mode Selection:** Toggle between "Weekend" and "Shift Break" planning modes.
+2. **Manage Mappings:** Configure technician skills and task requirements (Legacy).
+3. **Assignment Generation:** The Planning Engine automatically optimizes assignments based on the selected mode and constraints.
 
 ### API Endpoints
 
@@ -241,4 +242,4 @@ Application logs are available in the `logs/` directory with different log level
 
 ---
 
-**Version:** 1.2.0 | **Last Updated:** January 27, 2025
+**Version:** 1.3.0 | **Last Updated:** November 21, 2025

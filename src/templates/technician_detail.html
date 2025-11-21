@@ -1,4 +1,4 @@
- {% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}{{ technician.name }} - Technicians{% endblock %}
 
@@ -43,11 +43,11 @@
                         {% endif %}
                     </p>
                     <p><strong>Shift:</strong>
-                        {% if technician.shift %}
-                            {{ technician.shift.shift_name }}
-                            <br><small class="text-muted">{{ technician.shift.start_time }} - {{ technician.shift.end_time }}</small>
+                        {% if technician.shift_team %}
+                        {{ technician.shift_team.name }}
+                        <br><small class="text-muted">{{ technician.shift_team.shift_type }}</small>
                         {% else %}
-                            <em class="text-muted">Not assigned</em>
+                        <em class="text-muted">Not assigned</em>
                         {% endif %}
                     </p>
                 </div>
@@ -84,12 +84,8 @@
                                             {% elif ts.skill_level == 3 %}bg-info
                                             {% elif ts.skill_level == 2 %}bg-warning
                                             {% else %}bg-danger
-                                            {% endif %}"
-                                            role="progressbar"
-                                            style="width: {{ ts.skill_level * 20 }}%"
-                                            aria-valuenow="{{ ts.skill_level }}"
-                                            aria-valuemin="0"
-                                            aria-valuemax="5">
+                                            {% endif %}" role="progressbar" style="width: {{ ts.skill_level * 20 }}%"
+                                            aria-valuenow="{{ ts.skill_level }}" aria-valuemin="0" aria-valuemax="5">
                                             {{ ts.skill_level }}/5
                                         </div>
                                     </div>
@@ -148,16 +144,17 @@
                                     </td>
                                     <td>
                                         {% if pt.planned_start_time %}
-                                            {{ pt.planned_start_time.strftime('%Y-%m-%d %H:%M') }}
+                                        {{ pt.planned_start_time.strftime('%Y-%m-%d %H:%M') }}
                                         {% else %}
-                                            <em class="text-muted">Not scheduled</em>
+                                        <em class="text-muted">Not scheduled</em>
                                         {% endif %}
                                     </td>
                                     <td>
                                         {% if pt.planned_start_time and pt.planned_end_time %}
-                                            {{ ((pt.planned_end_time - pt.planned_start_time).total_seconds() / 60)|int }} min
+                                        {{ ((pt.planned_end_time - pt.planned_start_time).total_seconds() / 60)|int }}
+                                        min
                                         {% else %}
-                                            -
+                                        -
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -176,4 +173,3 @@
     </div>
 </div>
 {% endblock %}
-

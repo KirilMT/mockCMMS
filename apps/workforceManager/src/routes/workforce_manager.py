@@ -36,6 +36,11 @@ from apps.workforceManager.src.services.health_check import HealthChecker
 from apps.workforceManager.src.services.logging_config import LoggingConfig
 from apps.workforceManager.src.config import Config
 
+# Import planning-specific modules
+from src.services.db_utils import db, MaintenanceOrder, User, Skill, Role, Team
+from apps.workforceManager.src.services.planning_models import Schedule, PlanningTask
+from apps.workforceManager.src.services.planning_engine import PlanningEngine
+
 # Define the new unified blueprint with absolute paths for templates and static files
 # This ensures the blueprint works correctly when registered in mockCMMS
 _blueprint_dir = os.path.dirname(os.path.abspath(__file__))
@@ -94,9 +99,13 @@ def update_session_timestamp(session_id):
 
 @workforce_manager_bp.route('/')
 def index_route():
-    # In the integrated setup, the main entry point for the blueprint
-    # should always be the manage_mappings_route.
-    return redirect(url_for('workforce_manager.manage_mappings_route'))
+    """Main entry point for the workforce manager - shows planning dashboard."""
+    schedules = Schedule.query.order_by(Schedule.created_at.desc()).all()
+    active_schedule = Schedule.query.filter_by(planning_status='Planned').order_by(Schedule.created_at.desc()).first()
+    if not active_schedule and schedules:
+        active_schedule = schedules[0]
+        
+    return render_template('planning/index.html', schedules=schedules, active_schedule=active_schedule)
 
 @workforce_manager_bp.route('/manage_mappings_ui')
 def manage_mappings_route():
@@ -461,13 +470,52 @@ def technician_groups_api():
 def get_technician_mappings_api():
     try:
         cursor = g.db.cursor()
-        cursor.execute("""SELECT ts.technician_id, ts.technology_id, ts.skill_level, t.name
-                         FROM technician_technology_skills ts
-                         JOIN technicians t ON ts.technician_id = t.id ORDER BY t.name""")
-        return jsonify({"technicians": [{'technician_id': row[0], 'technology_id': row[1], 'skill_level': row[2], 'technician_name': row[3]} for row in cursor.fetchall()]}), 200
-    except:
-        pass
-    return jsonify({"technicians": {}}), 200
+        
+        # 1. Get all technicians with shift team info
+        # Note: Using LEFT JOIN to include technicians without a team (Unassigned)
+        cursor.execute("""
+            SELECT t.id, t.name, t.shift_team_id, st.name as shift_team_name, t.satellite_point_id, sp.name as satellite_point_name
+            FROM technicians t
+            LEFT JOIN shift_team st ON t.shift_team_id = st.id
+            LEFT JOIN satellite_points sp ON t.satellite_point_id = sp.id
+        """)
+        techs_rows = cursor.fetchall()
+        
+        technicians_map = {}
+        for row in techs_rows:
+            tech_id, name, team_id, team_name, sp_id, sp_name = row
+            technicians_map[name] = {
+                "id": tech_id,
+                "name": name,
+                "shift_team_id": team_id,
+                "shift_team_name": team_name,
+                "satellite_point_id": sp_id,
+                "satellite_point_name": sp_name,
+                "skills": {} # To be populated
+            }
+
+        # 2. Get skills
+        cursor.execute("""
+            SELECT t.name, ts.technology_id, tech.name as skill_name, ts.skill_level
+            FROM technician_technology_skills ts
+            JOIN technicians t ON ts.technician_id = t.id
+            JOIN technologies tech ON ts.technology_id = tech.id
+        """)
+        skills_rows = cursor.fetchall()
+        
+        for row in skills_rows:
+            t_name, tech_id, skill_name, level = row
+            if t_name in technicians_map:
+                technicians_map[t_name]["skills"][skill_name] = {
+                    "technology_id": tech_id,
+                    "skill_name": skill_name,
+                    "level": level
+                }
+
+        return jsonify({"technicians": technicians_map}), 200
+    except Exception as e:
+        current_app.logger.error(f"Error in get_technician_mappings_api: {e}", exc_info=True)
+        return jsonify({"technicians": {}, "error": str(e)}), 500
 
 
 # --- Routes from health.py ---
@@ -536,10 +584,6 @@ def debug_info():
 # PLANNING MODULE ROUTES (Phase 3)
 # ============================================================================
 
-# Import planning-specific modules
-from apps.workforceManager.src.services.planning_models import Schedule, PlanningTask
-from apps.workforceManager.src.services.planning_engine import PlanningEngine
-from src.services.db_utils import db, MaintenanceOrder, Technician, Skill
 
 
 # Debug route to list all routes
@@ -646,14 +690,14 @@ def view_schedule(schedule_id):
                 # Build JSON data for the table
                 assigned_to = 'Not assigned'
                 assigned_to_skills = ''
-                if pt.assigned_technicians:
-                    assigned_to = ', '.join([tech.name for tech in pt.assigned_technicians])
-                    # tech.skills returns TechnicianSkill objects, need to access .skill.name
-                    assigned_to_skills = '|'.join([', '.join([ts.skill.name for ts in tech.skills]) for tech in pt.assigned_technicians])
-                elif pt.assigned_technician:
-                    assigned_to = pt.assigned_technician.name
-                    # pt.assigned_technician.skills returns TechnicianSkill objects
-                    assigned_to_skills = ', '.join([ts.skill.name for ts in pt.assigned_technician.skills]) if pt.assigned_technician.skills else ''
+                if pt.assigned_users:
+                    assigned_to = ', '.join([user.username for user in pt.assigned_users])
+                    # user.skills returns UserSkill objects, need to access .skill.name
+                    assigned_to_skills = '|'.join([', '.join([us.skill.name for us in user.skills]) for user in pt.assigned_users])
+                elif pt.assigned_user:
+                    assigned_to = pt.assigned_user.username
+                    # pt.assigned_user.skills returns UserSkill objects
+                    assigned_to_skills = ', '.join([us.skill.name for us in pt.assigned_user.skills]) if pt.assigned_user.skills else ''
 
                 task_data_json.append({
                     'maintenance_order_id': mo.id,  # Add MO ID for table display
@@ -709,8 +753,8 @@ def run_planning(schedule_id):
         planning_tasks = PlanningTask.query.filter_by(schedule_id=schedule_id).all()
         for pt in planning_tasks:
             pt.status = 'Unplanned'
-            pt.assigned_technician_id = None
-            pt.assigned_technicians = []
+            pt.assigned_user_id = None
+            pt.assigned_users = []
             pt.planned_start_time = None
             pt.planned_end_time = None
             pt.actual_duration_minutes = None
@@ -731,11 +775,11 @@ def run_planning(schedule_id):
                 # Assign technicians
                 if len(assignment.assigned_technician_ids) == 1:
                     # Single technician assignment
-                    planning_task.assigned_technician_id = assignment.assigned_technician_ids[0]
+                    planning_task.assigned_user_id = assignment.assigned_technician_ids[0]
                 else:
-                    # Multi-technician assignment - use already imported Technician
-                    techs = Technician.query.filter(Technician.id.in_(assignment.assigned_technician_ids)).all()
-                    planning_task.assigned_technicians = techs
+                    # Multi-technician assignment - use already imported User
+                    techs = User.query.filter(User.id.in_(assignment.assigned_technician_ids)).all()
+                    planning_task.assigned_users = techs
 
         # Mark unassigned tasks
         for unassigned in result.unassigned_tasks:
@@ -776,59 +820,101 @@ def gantt_data(schedule_id):
         # Get all planning tasks for this schedule
         planning_tasks = PlanningTask.query.filter_by(schedule_id=schedule_id).all()
 
-        # Get all available technicians
-        technicians = Technician.query.all()
+        # Get all available technicians (filter by Role)
+        technicians = User.query.join(User.roles).filter(Role.name == 'Technician').all()
 
         # Transform data for Gantt chart
         tasks_data = []
+        current_app.logger.info(f"Found {len(planning_tasks)} planning tasks")
         for pt in planning_tasks:
-            mo = pt.maintenance_order
-            if not mo:
+            try:
+                mo = pt.maintenance_order
+                if not mo:
+                    current_app.logger.warning(f"Planning task {pt.id} has no MO")
+                    continue
+                
+                current_app.logger.info(f"Processing task {pt.id} for MO {mo.id}")
+
+                # Get assigned technician names
+                assigned_tech_names = []
+                assigned_tech_ids = []
+
+                if pt.assigned_users:
+                    # Multi-technician assignment
+                    for user in pt.assigned_users:
+                        assigned_tech_names.append(user.username)
+                        assigned_tech_ids.append(user.id)
+                elif pt.assigned_user:
+                    # Single technician (deprecated)
+                    assigned_tech_names.append(pt.assigned_user.username)
+                    assigned_tech_ids.append(pt.assigned_user.id)
+
+                # Get required skills
+                required_skills = [skill.name for skill in mo.required_skills] if hasattr(mo, 'required_skills') else []
+
+                task_data = {
+                    'planning_task_id': pt.id,
+                    'maintenance_order_id': mo.id,
+                    'task_description': mo.description or 'Unnamed Task',
+                    'status': pt.status,
+                    'priority': mo.priority or 'Undefined',
+                    'task_type': mo.order_type or 'N/A',
+                    'assigned_technician_ids': assigned_tech_ids,
+                    'assigned_technician_names': assigned_tech_names,
+                    'planned_start_time': pt.planned_start_time.isoformat() if pt.planned_start_time else None,
+                    'planned_end_time': pt.planned_end_time.isoformat() if pt.planned_end_time else None,
+                    'estimated_duration_minutes': mo.estimated_completion_time,
+                    'actual_duration_minutes': pt.actual_duration_minutes,
+                    'required_skills': required_skills
+                }
+                tasks_data.append(task_data)
+            
+            except Exception as e:
+                current_app.logger.error(f"Error processing task {pt.id}: {e}")
                 continue
-
-            # Get assigned technician names
-            assigned_tech_names = []
-            assigned_tech_ids = []
-
-            if pt.assigned_technicians:
-                # Multi-technician assignment
-                for tech in pt.assigned_technicians:
-                    assigned_tech_names.append(tech.name)
-                    assigned_tech_ids.append(tech.id)
-            elif pt.assigned_technician:
-                # Single technician (deprecated)
-                assigned_tech_names.append(pt.assigned_technician.name)
-                assigned_tech_ids.append(pt.assigned_technician.id)
-
-            # Get required skills
-            required_skills = [skill.name for skill in mo.required_skills] if hasattr(mo, 'required_skills') else []
-
-            task_data = {
-                'planning_task_id': pt.id,
-                'maintenance_order_id': mo.id,
-                'task_description': mo.description or 'Unnamed Task',
-                'status': pt.status,
-                'priority': mo.priority or 'Undefined',
-                'task_type': mo.order_type or 'N/A',
-                'assigned_technician_ids': assigned_tech_ids,
-                'assigned_technician_names': assigned_tech_names,
-                'planned_start_time': pt.planned_start_time.isoformat() if pt.planned_start_time else None,
-                'planned_end_time': pt.planned_end_time.isoformat() if pt.planned_end_time else None,
-                'estimated_duration_minutes': mo.estimated_completion_time,
-                'actual_duration_minutes': pt.actual_duration_minutes,
-                'required_skills': required_skills
-            }
-            tasks_data.append(task_data)
 
         # Transform technicians data
         technicians_data = []
         for tech in technicians:
             tech_data = {
                 'id': tech.id,
-                'name': tech.name,
+                'name': tech.username,
                 'availability_status': tech.availability_status
             }
             technicians_data.append(tech_data)
+
+        # Calculate shift schedule (which team works which shift on which day)
+        from datetime import datetime, timedelta
+        from src.services.shift_utils import get_shift_teams
+        
+        shift_schedule = []
+        # Start from one day before to handle overnight shifts looking up previous day
+        current_date = schedule.start_date - timedelta(days=1)
+        teams = Team.query.all()
+        
+        while current_date <= schedule.end_date:
+            week_number = current_date.isocalendar()[1]
+            is_odd_week = (week_number % 2) != 0
+            active_pattern = "Pattern 1" if is_odd_week else "Pattern 2" # Keep for reference if needed
+            
+            # Use shared utility to get correct teams for this date
+            early_team, late_team = get_shift_teams(current_date, teams)
+            
+            shift_schedule.append({
+                'date': current_date.isoformat(),
+                'week_number': week_number,
+                'pattern': active_pattern,
+                'early_shift': {
+                    'team_name': early_team.name if early_team else 'Unknown',
+                    'team_id': early_team.id if early_team else None
+                },
+                'late_shift': {
+                    'team_name': late_team.name if late_team else 'Unknown',
+                    'team_id': late_team.id if late_team else None
+                }
+            })
+            
+            current_date += timedelta(days=1)
 
         return jsonify({
             'schedule': {
@@ -839,7 +925,8 @@ def gantt_data(schedule_id):
                 'planning_status': schedule.planning_status
             },
             'tasks': tasks_data,
-            'technicians': technicians_data
+            'technicians': technicians_data,
+            'shift_schedule': shift_schedule
         }), 200
 
     except Exception as e:

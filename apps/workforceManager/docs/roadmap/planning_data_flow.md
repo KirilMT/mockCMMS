@@ -369,7 +369,7 @@ User Login → Role Check → UI Permissions → API Access Control
 
 ## References
 
-- Main Action Plan: `docs/PLANNING_MODULE_ACTION_PLAN.md`
+- Main Action Plan: `00_OVERVIEW_AND_STATUS.md`
 - Database Schema: `src/services/db_utils.py`
 - Planning Models: `apps/workforceManager/src/services/planning_models.py`
 - Transformation Layer: `apps/workforceManager/src/services/data_transformation.py`

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,47 +13,63 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         body {
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            overflow-x: hidden;
+            /* Prevent horizontal scroll */
         }
+
         #wrapper {
             display: flex;
         }
+
         #sidebar-wrapper {
             min-height: 100vh;
-            width: 0; /* Hidden by default */
+            width: 0;
+            /* Hidden by default */
             position: fixed;
-            top: 56px; /* Height of the top navbar */
+            top: 56px;
+            /* Height of the top navbar */
             left: 0;
-            z-index: 1030; /* Above content, below navbar */
+            z-index: 1030;
+            /* Above content, below navbar */
             background-color: #343a40;
             overflow-x: hidden;
-            transition: 0.25s; /* Smooth transition for opening/closing */
+            transition: 0.25s;
+            /* Smooth transition for opening/closing */
             padding-top: 10px;
             color: #fff;
         }
+
         #sidebar-wrapper.toggled {
-            width: 250px; /* Width when open */
+            width: 250px;
+            /* Width when open */
         }
+
         #page-content-wrapper {
             width: 100%;
             padding: 20px;
-            margin-top: 56px; /* Space for the top navbar */
+            margin-top: 56px;
+            /* Space for the top navbar */
             transition: margin-left 0.25s ease-out;
         }
+
         /* Overlay for grey-out effect */
         #overlay {
             position: fixed;
-            display: none; /* Hidden by default */
+            display: none;
+            /* Hidden by default */
             width: 100%;
             height: 100%;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
-            z-index: 1020; /* Below sidebar, above content */
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Black w/ opacity */
+            z-index: 1020;
+            /* Below sidebar, above content */
             cursor: pointer;
         }
+
         /* Styling for sidebar links */
         .sidebar-heading {
             padding: 0.875rem 1.25rem;
@@ -61,26 +78,34 @@
             border-bottom: 1px solid #495057;
             color: #fff;
         }
+
         .list-group-item {
             background-color: #343a40;
             color: #adb5bd;
             border: none;
             padding: 0.75rem 1.25rem;
-            white-space: nowrap; /* Prevent text from wrapping */
-            overflow: hidden; /* Hide overflowing text */
-            text-overflow: ellipsis; /* Add ellipsis for truncated text */
+            white-space: nowrap;
+            /* Prevent text from wrapping */
+            overflow: hidden;
+            /* Hide overflowing text */
+            text-overflow: ellipsis;
+            /* Add ellipsis for truncated text */
         }
+
         .list-group-item:hover {
             background-color: #495057;
             color: #fff;
         }
+
         .list-group-item.active {
             background-color: #007bff;
             color: #fff;
         }
+
         .navbar-text {
-            color: rgba(255,255,255,.75);
+            color: rgba(255, 255, 255, .75);
         }
+
         .footer {
             position: fixed;
             bottom: 0;
@@ -91,11 +116,14 @@
             z-index: 1030;
             padding: 15px;
         }
+
         body {
-            margin-bottom: 0px; /* Height of the footer */
+            margin-bottom: 0px;
+            /* Height of the footer */
         }
     </style>
 </head>
+
 <body>
     <div class="d-flex" id="wrapper">
         <!-- Top Navbar -->
@@ -113,7 +141,7 @@
                     </li>
                     <li class="nav-item">
                         <form action="/logout" method="post" class="form-inline">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                             <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
                         </form>
                     </li>
@@ -130,14 +158,18 @@
         <div class="bg-dark border-right" id="sidebar-wrapper">
             <div class="list-group list-group-flush">
                 <a href="/assets" class="list-group-item list-group-item-action bg-dark text-light">Assets</a>
-                <a href="/maintenance_orders" class="list-group-item list-group-item-action bg-dark text-light">Maintenance Orders</a>
+                <a href="/maintenance_orders"
+                    class="list-group-item list-group-item-action bg-dark text-light">Maintenance Orders</a>
                 <a href="/spare_parts" class="list-group-item list-group-item-action bg-dark text-light">Spare Parts</a>
                 <a href="/users" class="list-group-item list-group-item-action bg-dark text-light">Users</a>
+                <a href="/shift_calendar" class="list-group-item list-group-item-action bg-dark text-light">Shift
+                    Calendar</a>
                 {% if REPORTS_ENABLED %}
                 <a href="/reports" class="list-group-item list-group-item-action bg-dark text-light">Reports</a>
                 {% endif %}
                 {% if WORKFORCE_MANAGER_ENABLED %}
-                <a href="/workforce-manager/planning" class="list-group-item list-group-item-action bg-dark text-light">Planning</a>
+                <a href="/workforce-manager/planning"
+                    class="list-group-item list-group-item-action bg-dark text-light">Planning</a>
                 {% endif %}
             </div>
         </div>
@@ -147,11 +179,11 @@
         <div id="page-content-wrapper">
             <div class="container-fluid">
                 {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
                 {% endwith %}
                 {% block content %}{% endblock %}
             </div>
@@ -167,7 +199,8 @@
         <div class="column-manager-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">Manage Columns</h5>
-                <button type="button" class="btn-close" onclick="if(window.advTable) window.advTable.closeColumnManager()"></button>
+                <button type="button" class="btn-close"
+                    onclick="if(window.advTable) window.advTable.closeColumnManager()"></button>
             </div>
             <div class="mb-3">
                 <small class="text-muted">Drag to reorder, uncheck to hide columns</small>
@@ -176,8 +209,10 @@
                 <!-- Column items will be populated by JavaScript -->
             </ul>
             <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-secondary" onclick="if(window.advTable) window.advTable.closeColumnManager()">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="if(window.advTable) window.advTable.applyColumnChanges()">Apply</button>
+                <button type="button" class="btn btn-secondary"
+                    onclick="if(window.advTable) window.advTable.closeColumnManager()">Cancel</button>
+                <button type="button" class="btn btn-primary"
+                    onclick="if(window.advTable) window.advTable.applyColumnChanges()">Apply</button>
             </div>
         </div>
     </div>
@@ -187,7 +222,8 @@
         <div class="filter-manager-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0">Advanced Filters</h5>
-                <button type="button" class="btn-close" onclick="if(window.advTable) window.advTable.closeFilterManager()"></button>
+                <button type="button" class="btn-close"
+                    onclick="if(window.advTable) window.advTable.closeFilterManager()"></button>
             </div>
 
             <div id="filterRows">
@@ -196,16 +232,20 @@
 
             <div class="d-flex justify-content-between align-items-center mt-3">
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="if(window.advTable) window.advTable.addFilterRow()">
+                    <button type="button" class="btn btn-outline-primary btn-sm"
+                        onclick="if(window.advTable) window.advTable.addFilterRow()">
                         <i class="fas fa-plus"></i> Add Filter
                     </button>
-                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="if(window.advTable) window.advTable.clearAllFilters()">
+                    <button type="button" class="btn btn-outline-warning btn-sm"
+                        onclick="if(window.advTable) window.advTable.clearAllFilters()">
                         <i class="fas fa-eraser"></i> Clear All
                     </button>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-secondary" onclick="if(window.advTable) window.advTable.closeFilterManager()">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="if(window.advTable) window.advTable.applyFilters()">Apply</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="if(window.advTable) window.advTable.closeFilterManager()">Cancel</button>
+                    <button type="button" class="btn btn-primary"
+                        onclick="if(window.advTable) window.advTable.applyFilters()">Apply</button>
                 </div>
             </div>
         </div>
@@ -217,16 +257,44 @@
     <script src="{{ url_for('static', filename='js/advanced-table.js') }}"></script>
     {% block extra_js %}{% endblock %}
     <script>
-        $("#sidebarToggle").click(function(e) {
+        $("#sidebarToggle").click(function (e) {
             e.preventDefault();
             $("#sidebar-wrapper").toggleClass("toggled");
             $("#overlay").toggle(); // Toggle overlay visibility
         });
 
-        $("#overlay").click(function() {
+        $("#overlay").click(function () {
             $("#sidebar-wrapper").toggleClass("toggled");
             $("#overlay").toggle(); // Hide overlay
         });
     </script>
+    <!-- Back to Top Button -->
+    <button onclick="topFunction()" id="myBtn" title="Go to top" class="btn btn-primary"
+        style="display: none; position: fixed; bottom: 20px; right: 30px; z-index: 99;">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // Get the button
+        var mybutton = document.getElementById("myBtn");
+
+        // When the user scrolls down 20px from the top of the document, show the button
+        window.onscroll = function () { scrollFunction() };
+
+        function scrollFunction() {
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                mybutton.style.display = "block";
+            } else {
+                mybutton.style.display = "none";
+            }
+        }
+
+        // When the user clicks on the button, scroll to the top of the document
+        function topFunction() {
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+        }
+    </script>
 </body>
+
 </html>

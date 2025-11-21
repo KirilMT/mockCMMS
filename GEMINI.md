@@ -1,10 +1,144 @@
-# AI Assistant Instructions for the CMMS Monorepo (Gemini Code Assist)
+# AI Assistant Instructions
 
-> **⚠️ SYNCHRONIZATION NOTICE:** This file (`AGENT.md`) is for **Gemini Code Assist** instructions. A parallel document, `copilot-instructions.md`, exists for **GitHub Copilot** instructions. While both documents should be nearly identical (except for model-specific references), they should be kept in sync. **If you make changes to this file, please ensure the corresponding section in `copilot-instructions.md` is also updated**, and vice versa.
+> **⚠️ SYNCHRONIZATION NOTICE:** This file (`GEMINI.md`) is for **Gemini Code Assist** instructions. A parallel document, `copilot-instructions.md`, exists for **GitHub Copilot** instructions. While both documents should be nearly identical (except for model-specific references), they should be kept in sync. **If you make changes to this file, please ensure the corresponding section in `copilot-instructions.md` is also updated**, and vice versa.
 
-This document provides a comprehensive guide for the Gemini Code Assist AI to effectively contribute to this monorepo. Adherence to these guidelines is critical for maintaining code quality, consistency, and a clean project structure.
+This document is divided into two parts:
+1.  **Global AI Coding Standards:** Universal rules for high-quality code generation, applicable to any project.
+2.  **Workspace Context & Specifics:** Detailed information about this specific monorepo, its architecture, and local workflows.
 
-## 1. Monorepo Philosophy
+---
+
+## 1. Global AI Coding Standards
+
+These instructions apply to **all** coding tasks unless explicitly overridden by workspace-specific rules.
+
+### 1.1. Code Quality & Style
+-   **Clarity & Conciseness:** Always generate code that is clear, concise, and well-commented, especially for complex logic or algorithms.
+-   **Conventions:** Adhere to the widely accepted style and formatting conventions for the target language or framework (e.g., PEP 8 for Python, Google JavaScript Style Guide, etc.).
+-   **Paradigm:** Prefer class-based object-oriented programming for languages that support it, unless a functional or procedural approach is clearly more suitable for a simple utility or script.
+-   **Maintainability:** Prioritize maintainability, scalability, and testability. Use modular design, meaningful naming, and separation of concerns.
+-   **Refactoring:** Actively refactor code to improve its structure and remove unused or "dead" code.
+-   **Hardcoding:** Avoid hardcoding values; use configuration files, environment variables, or constants where possible.
+
+### 1.2. Reliability, Security & Performance
+-   **Error Handling:** Include robust error handling appropriate for the language (e.g., try-catch, try-except, error callbacks, etc.) to ensure code reliability.
+-   **Security:** For web applications or code handling user input, always follow security best practices (e.g., input validation, output encoding, use of secure libraries, avoiding injection vulnerabilities, etc.).
+-   **Performance:** Optimize for performance and resource efficiency when relevant, but never at the expense of code clarity or correctness.
+-   **Concurrency:** Handle concurrency and parallelism safely using language features like `async/await`, goroutines, or threads to improve performance.
+
+### 1.3. Architecture & Best Practices
+-   **Libraries:** Prefer using well-established libraries and frameworks for common tasks, and ensure dependencies are properly managed (e.g., `requirements.txt`, `package.json`, etc.).
+-   **API Design:** When designing APIs, follow RESTful conventions or GraphQL best practices to ensure they are intuitive and scalable.
+-   **State Management:** For complex applications, consider state management patterns and libraries (e.g., Redux, MobX, Vuex) for predictable state transitions.
+-   **Infrastructure:** For infrastructure management, prefer Infrastructure as Code (IaC) tools like Terraform or CloudFormation.
+-   **Observability:** Incorporate logging, metrics, and tracing to provide visibility into the application's behavior in production.
+
+### 1.4. Testing & Deployment
+
+#### 🚨 CRITICAL: Comprehensive Automated Verification (MANDATORY)
+
+**ALL verification steps MUST be performed automatically. DO NOT ask the user to verify manually.**
+
+**For UI Changes:**
+-   **MANDATORY**: Use `browser_subagent` tool to perform comprehensive browser verification
+-   The video recording MUST demonstrate ALL implemented, changed, or deleted features
+-   Perform ALL necessary actions (scrolling, clicking, navigating) to show every aspect of the change
+-   Test all user flows affected by the changes
+
+**For Code Logic Changes:**
+-   **MANDATORY**: Run automated tests using `pytest` or equivalent
+-   Create new tests if none exist for the changed functionality
+-   Verify all test cases pass before considering work complete
+
+**For Database Schema Changes:**
+-   **MANDATORY**: Verify database changes automatically:
+  1. Stop the running app if active
+  2. Delete the current database instance (e.g., `instance/mockcmms.db`)
+  3. Restart the app to recreate the database with the new schema
+  4. Run SQL queries to verify schema correctness
+  5. Create automated tests in `tests/` directory to verify schema
+-   Document all migration scripts and their execution results
+
+**General Testing:**
+-   **Verification:** Where appropriate, include basic unit tests or usage examples to demonstrate correctness and facilitate future maintenance.
+-   **CI/CD:** Promote the use of CI/CD pipelines to automate testing and deployment, ensuring code quality and faster release cycles.
+
+**Verification is NOT optional** - it is a critical step that MUST be completed automatically for every change.
+
+### 1.5. Documentation Management
+
+#### 🚨 CRITICAL: Documentation Standards (MANDATORY)
+
+**Documentation quality is CRITICAL to avoid wasting time and resources.**
+
+**All documentation MUST be:**
+-   **Clean**: No duplicate information, no outdated sections
+-   **Clear**: Easy to understand, well-organized structure
+-   **Organized**: Logical flow, proper headings, consistent formatting
+-   **Up-to-date**: Reflects current state, not historical plans or outdated analysis
+
+**When creating or updating documentation:**
+1. **Remove outdated content** - Delete old analysis, completed tasks, historical notes
+2. **Single source of truth** - Each piece of information appears ONCE
+3. **Status-focused** - Show what IS, not what WAS or what WILL BE
+4. **Concise** - Use tables, bullet points, and clear sections
+5. **Scannable** - Users should find information in seconds, not minutes
+
+**Examples of BAD documentation:**
+-   ❌ Mixing "completed work" with "remaining work" in the same section
+-   ❌ Keeping old "issues identified" sections after issues are fixed
+-   ❌ Multiple sections saying the same thing in different ways
+-   ❌ Long narrative explanations when a table would suffice
+
+**Examples of GOOD documentation:**
+-   ✅ Single "Final Status" section showing current state
+-   ✅ Tables summarizing changes (Before → After)
+-   ✅ Clear verification steps with expected results
+-   ✅ Concise summaries with links to details if needed
+
+**Pay attention to documentation management** - This is a critical step that must be executed properly.
+
+**Public API Documentation:**
+-   Document public APIs, classes, and complex functions with docstrings or comments, following the conventions of the target language.
+
+### 1.6. Interaction Guidelines
+
+#### 🚨 CRITICAL: Smart Decision-Making (MANDATORY)
+
+**DO NOT ask unnecessary questions or request user review for things you can verify yourself.**
+
+**Before asking the user:**
+1. **Explore all options** - Use available tools to gather information
+2. **Make informed decisions** - Analyze the codebase, run tests, check documentation
+3. **Verify automatically** - Run tests, check database, use browser verification
+4. **Only ask when truly blocked** - Missing requirements, design decisions, user preferences
+
+**Examples of UNNECESSARY questions:**
+-   ❌ "Should I delete this unused model?" (if you verified it's unused, just delete it)
+-   ❌ "Which cleanup phase should I do?" (if user said "do all", do all)
+-   ❌ "Should I run tests?" (always run tests automatically)
+-   ❌ "Can I proceed?" (if you have all information, proceed)
+
+**Examples of NECESSARY questions:**
+-   ✅ "Should we use approach A or B?" (genuine design decision)
+-   ✅ "What should the default value be?" (user preference needed)
+-   ✅ "This will break the API - should we proceed?" (user impact decision)
+
+**Be smart enough to:**
+-   Verify things yourself before asking
+-   Use all available tools and information
+-   Make decisions when you have sufficient context
+-   Only escalate to user when truly necessary
+
+**General Guidelines:**
+-   **Clarification:** If the request is ambiguous or lacks important details, ask for clarification before generating extensive code.
+-   **Focus:** Keep responses focused on the direct query. Avoid conversational fluff or suggesting unrelated tasks unless explicitly asked.
+-   **Step-by-Step:** When provided with a numbered list of changes or a multi-step plan (e.g., "Prompt 1:", "Prompt 2:"), focus your response and any code modifications only on the current step or prompt being asked about.
+-   **Auto-Run Preference:** When executing standard, non-destructive terminal commands (specifically running Python files like `run.py` or executing tests via `pytest`), prefer setting `SafeToAutoRun` to `true` to streamline the workflow, rather than asking for explicit user permission each time.
+
+---
+
+## 2. Workspace Context: Monorepo Philosophy
 
 This repository is a monorepo that houses multiple, distinct but related projects (apps).
 
@@ -14,9 +148,9 @@ This repository is a monorepo that houses multiple, distinct but related project
 
 ---
 
-## 2. Core Packages
+## 3. Workspace Context: Core Packages
 
-### 2.1. `apps/workforceManager`
+### 3.1. `apps/workforceManager`
 
 #### Overview
 
@@ -121,7 +255,7 @@ mockCMMS/
 -   **Run the application:** From the repository root, execute `python run.py`. The main app will load enabled modular apps.
 -   **Run tests:** From the repository root, execute `pytest tests/` for main app tests or `pytest apps/workforceManager/tests/` for workforceManager tests.
 
-### 2.2. `apps/reports`
+### 3.2. `apps/reports`
 
 #### Overview
 
@@ -184,21 +318,20 @@ The `reports` is a Flask-based web application for generating comprehensive main
 
 ---
 
-## 3. General Development Guidelines
+## 4. Workspace-Specific Guidelines
 
 -   **Git Workflow:** All contributions must follow the process outlined in [**GIT_WORKFLOW.md**](./GIT_WORKFLOW.md).
 -   **Commit Messages:** Commit messages must adhere to the conventions described in [**CONTRIBUTING.md**](./CONTRIBUTING.md).
 -   **Dependencies:** Manage dependencies via the `requirements.txt` file within each package. Do not create a root-level `requirements.txt`.
--   **Code Style:** Follow PEP 8 for Python and maintain consistency with the existing code style.
 
 ---
 
-## 4. AI-Specific Instructions
+## 5. Workspace-Specific AI Instructions
 
 -   **Efficiency is Key:** Perform all necessary edits for a given task in a single, atomic step per file.
 -   **Be Proactive:** Before making changes, use your tools to understand the relevant files and the overall structure outlined in this document.
 -   **Single Edit Rule:** When editing a file, apply all planned changes in one unified edit. Do not split the edit into multiple smaller patches for the same request.
--   **Documentation First:** Before committing any code changes, you **must** update all relevant documentation, including the root `README.md`, this `AGENT.md` file, and any package-specific documentation, to reflect the changes.
+-   **Documentation First:** Before committing any code changes, you **must** update all relevant documentation to reflect the changes. This includes the root `README.md`, this `GEMINI.md` file, package-specific documentation, files in the `.github/` directory (e.g., `CONTRIBUTING.md`, `GIT_WORKFLOW.md`), and any files in `docs/` directories (root and subdirectories).
 -   **Version Management:** After completing any significant changes:
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
