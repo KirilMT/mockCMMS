@@ -405,7 +405,7 @@ def technician_detail(technician_id):
 @main_bp.route('/planning')
 @login_required
 def planning():
-    return redirect(url_for('workforce_manager.index_route'))
+    return redirect(url_for('planning.index_route'))
 
 @main_bp.route('/shift_calendar')
 @login_required

@@ -29,7 +29,7 @@ mockCMMS/
 │   ├── templates/           # HTML templates
 │   └── app.py               # Flask application factory
 ├── apps/                    # Modular applications
-│   ├── workforceManager/    # Workforce management module
+│   ├── planning/    # planning management module
 │   │   ├── src/             # Application source code
 │   │   │   ├── routes/      # Flask blueprints
 │   │   │   ├── services/    # Core business logic
@@ -67,7 +67,7 @@ mockCMMS/
 - **Configuration Hub:** Manages settings for all integrated applications
 
 ### Modular Apps
-- **[Workforce Manager](apps/workforceManager/README.md):** Intelligent maintenance planning system with custom Gantt charts, shift-based scheduling, and skill-based task assignment.
+- **[Planning](apps/planning/README.md):** Intelligent maintenance planning system with custom Gantt charts, shift-based scheduling, and skill-based task assignment.
 - **[Reports](apps/reports/README.md):** Comprehensive reporting and analytics system with PDF/Markdown export capabilities
 - **Future Apps:** Additional modules can be easily integrated following the same pattern
 
@@ -114,7 +114,7 @@ mockCMMS/
 
 5. **Install modular apps in editable mode:**
    ```bash
-   pip install -e apps/workforceManager
+   pip install -e apps/planning
    pip install -e apps/reports
    ```
 
@@ -140,7 +140,7 @@ mockCMMS/
 |----------|-------------|----------|
 | `SECRET_KEY` | Flask secret key for sessions | Auto-generated |
 | `FLASK_DEBUG` | Enable debug mode (1/true/yes) | 0 |
-| `WORKFORCE_MANAGER_ENABLED` | Enable Workforce Manager app | False |
+| `PLANNING_ENABLED` | Enable Planning app | False |
 | `REPORTS_ENABLED` | Enable Reports app | True |
 
 ### App Management

@@ -105,12 +105,12 @@ This project follows Semantic Versioning (SemVer) and maintains changelogs for a
 
 1. **Update CHANGELOG.md** (follow [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format):
    - Main app: `/CHANGELOG.md`
-   - WorkforceManager: `/apps/workforceManager/CHANGELOG.md`
+   - planning: `/apps/planning/CHANGELOG.md`
    - Add new version entry with date and categorized changes (Added/Changed/Removed/Fixed)
 
 2. **Update README.md version footer**:
    - Main app: `/README.md`
-   - WorkforceManager: `/apps/workforceManager/README.md`
+   - planning: `/apps/planning/README.md`
    - Ensure version numbers match between CHANGELOG.md and README.md
    - Update "Last Updated" date
 

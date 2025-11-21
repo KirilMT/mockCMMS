@@ -1,0 +1,180 @@
+{% extends "/base.html" %}
+
+{% block title %}Planning - Mock CMMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2">Planning Module</h1>
+            <p class="text-muted">Skill-based task assignment for shift-break and weekend planning</p>
+        </div>
+    </div>
+
+    <!-- Create New Schedule Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus-circle"></i> Create New Schedule
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="createScheduleForm" method="POST" action="{{ url_for('planning.create_schedule') }}">
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label for="scheduleName">Schedule Name</label>
+                                <input type="text" class="form-control" id="scheduleName" name="name"
+                                       placeholder="e.g., Weekend Plan - Nov 2025" required>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="startDate">Start Date</label>
+                                <input type="date" class="form-control" id="startDate" name="start_date" required>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="endDate">End Date</label>
+                                <input type="date" class="form-control" id="endDate" name="end_date" required>
+                            </div>
+                            <div class="form-group col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fas fa-calendar-plus"></i> Create
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Schedules Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt"></i> Schedules
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if schedules %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Period</th>
+                                    <th>Status</th>
+                                    <th>Tasks</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule in schedules %}
+                                <tr class="{% if schedule.id == active_schedule.id %}table-success{% endif %}">
+                                    <td>
+                                        <strong>{{ schedule.name }}</strong>
+                                        {% if schedule.id == active_schedule.id %}
+                                        <span class="badge badge-success ml-2">Active</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ schedule.start_date.strftime('%Y-%m-%d') }} to
+                                        {{ schedule.end_date.strftime('%Y-%m-%d') }}
+                                    </td>
+                                    <td>
+                                        {% if schedule.planning_status == 'Draft' %}
+                                        <span class="badge badge-secondary">Draft</span>
+                                        {% elif schedule.planning_status == 'Planned' %}
+                                        <span class="badge badge-primary">Planned</span>
+                                        {% elif schedule.planning_status == 'Published' %}
+                                        <span class="badge badge-success">Published</span>
+                                        {% elif schedule.planning_status == 'Locked' %}
+                                        <span class="badge badge-dark">Locked</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-info">
+                                            {{ schedule.planning_tasks|length }} tasks
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ schedule.created_at.strftime('%Y-%m-%d %H:%M') if schedule.created_at else 'N/A' }}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('planning.view_schedule', schedule_id=schedule.id) }}"
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle"></i> No schedules created yet. Create your first schedule above to get started.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats (if active schedule exists) -->
+    {% if active_schedule %}
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Active Schedule</h5>
+                    <p class="h3">{{ active_schedule.name }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Tasks</h5>
+                    <p class="h3">{{ active_schedule.planning_tasks|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Planned Tasks</h5>
+                    <p class="h3">{{ active_schedule.planning_tasks|selectattr('status', 'equalto', 'Planned')|list|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Unplanned Tasks</h5>
+                    <p class="h3">{{ active_schedule.planning_tasks|selectattr('status', 'equalto', 'Unplanned')|list|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Set default dates (next weekend)
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const nextSaturday = new Date(today);
+    nextSaturday.setDate(today.getDate() + (6 - today.getDay() + 7) % 7);
+    const nextSunday = new Date(nextSaturday);
+    nextSunday.setDate(nextSaturday.getDate() + 1);
+
+    document.getElementById('startDate').valueAsDate = nextSaturday;
+    document.getElementById('endDate').valueAsDate = nextSunday;
+});
+</script>
+{% endblock %}
+

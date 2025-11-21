@@ -150,11 +150,11 @@ This repository is a monorepo that houses multiple, distinct but related project
 
 ## 3. Workspace Context: Core Packages
 
-### 3.1. `apps/workforceManager`
+### 3.1. `apps/planning`
 
 #### Overview
 
-The `workforceManager` is a Flask-based web application for managing weekend technician task assignments. Its core purpose is to use skill-based matching and workload optimization to generate efficient work schedules.
+The `planning` is a Flask-based web application for managing weekend technician task assignments. Its core purpose is to use skill-based matching and workload optimization to generate efficient work schedules.
 
 #### Core Architectural Shift
 
@@ -174,7 +174,7 @@ A critical piece of context for this package is its ongoing transition from a si
 
 #### Detailed Directory Structure
 
-The repository structure below shows the complete CMMS monorepo with all packages and key files. Pay special attention to the `workforceManager` package, especially `src/services/task_assigner.py`, which contains the core skill-based task assignment logic.
+The repository structure below shows the complete CMMS monorepo with all packages and key files. Pay special attention to the `planning` package, especially `src/services/task_assigner.py`, which contains the core skill-based task assignment logic.
 
 ```
 mockCMMS/
@@ -193,10 +193,10 @@ mockCMMS/
 │   ├── static/                    # Static assets (CSS, JS, images)
 │   ├── templates/                 # Jinja2 HTML templates
 │   └── app.py                     # ⭐ Flask application factory and config
-├── apps/workforceManager/         # ⭐ Skill-based task assignment module
+├── apps/planning/         # ⭐ Skill-based task assignment module
 │   ├── src/                       # Application source code
 │   │   ├── routes/                # Flask blueprints
-│   │   │   └── workforce_manager.py   # Main blueprint with all endpoints
+│   │   │   └── planning.py   # Main blueprint with all endpoints
 │   │   ├── services/              # Core business logic
 │   │   │   ├── task_assigner.py       # ⭐ CRITICAL: Skill-based assignment algorithm
 │   │   │   ├── data_processing.py     # Data transformation and validation
@@ -217,7 +217,7 @@ mockCMMS/
 │   │   ├── config.json            # App-specific settings
 │   │   └── config.example.json    # Configuration template
 │   ├── instance/                  # Runtime data
-│   │   └── workforce_manager.db   # SQLite database
+│   │   └── planning.db   # SQLite database
 │   ├── tests/                     # Test suite
 │   │   ├── test_core.py           # Core functionality tests
 │   │   └── test_integration.py    # Integration tests
@@ -253,7 +253,7 @@ mockCMMS/
 #### Local Development & Testing
 
 -   **Run the application:** From the repository root, execute `python run.py`. The main app will load enabled modular apps.
--   **Run tests:** From the repository root, execute `pytest tests/` for main app tests or `pytest apps/workforceManager/tests/` for workforceManager tests.
+-   **Run tests:** From the repository root, execute `pytest tests/` for main app tests or `pytest apps/planning/tests/` for planning tests.
 
 ### 3.2. `apps/reports`
 
@@ -283,7 +283,7 @@ The `reports` is a Flask-based web application for generating comprehensive main
     
     **Root** - `.env`:
     ```dotenv
-    WORKFORCE_MANAGER_ENABLED=True
+    PLANNING_ENABLED=True
     REPORTS_ENABLED=True
     DATA_SOURCE=api
     ```
@@ -306,13 +306,13 @@ The `reports` is a Flask-based web application for generating comprehensive main
     python run.py
     ```
 
-4.  **Run Workforce Manager in API Mode:** In another new terminal, **after activating the `workforceManager` virtual environment**, start the `workforceManager` server. It will run on port 5000 and automatically use the `api` data source as configured in the `.env` file.
+4.  **Run Planning in API Mode:** In another new terminal, **after activating the `planning` virtual environment**, start the `planning` server. It will run on port 5000 and automatically use the `api` data source as configured in the `.env` file.
     ```sh
-    # Activate workforceManager venv (if not already active)
-    # On Windows PowerShell: .\apps\workforceManager\.venv\Scripts\Activate.ps1
-    # On macOS/Linux: source apps/workforceManager/.venv/bin/activate
+    # Activate planning venv (if not already active)
+    # On Windows PowerShell: .\apps\planning\.venv\Scripts\Activate.ps1
+    # On macOS/Linux: source apps/planning/.venv/bin/activate
 
-    # WorkforceManager now runs as part of the main application
+    # planning now runs as part of the main application
     ```
 
 
@@ -338,4 +338,4 @@ The `reports` is a Flask-based web application for generating comprehensive main
     3. Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH (e.g., 1.2.0)
     4. Update the "Last Updated" date in README.md files
     5. Main app versions are in `/CHANGELOG.md` and `/README.md`
-    6. WorkforceManager versions are in `/apps/workforceManager/CHANGELOG.md` and `/apps/workforceManager/README.md`
+    6. Planning module versions are in `/apps/planning/CHANGELOG.md` and `/apps/planning/README.md`

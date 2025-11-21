@@ -114,7 +114,7 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
-/packages/workforceManager/site
+/packages/planning/site
 /packages/mockCMMS/site
 
 # mypy
@@ -134,7 +134,7 @@ output/
 temp/
 
 # External/sensitive configuration
-apps/workforceManager/config/config.json
+apps/planning/config/config.json
 config/config.json
 
 # IDE specific files
@@ -168,10 +168,10 @@ Thumbs.db
 instance/*.db
 logs/
 
-# workforceManager runtime artifacts
-apps/workforceManager/instance/*.db
-apps/workforceManager/logs/
-apps/workforceManager/output/
+# planning runtime artifacts
+apps/planning/instance/*.db
+apps/planning/logs/
+apps/planning/output/
 
 # reports runtime artifacts
 apps/reports/instance/reports/*

@@ -88,7 +88,7 @@ A structural element defined by the conventions at https://www.conventionalcommi
 
 #### scope
 
-The name of the package or component affected by the change (e.g., `workforceManager`, `reports`, `mockCMMS`, `advanced-table`, `ci`, `docs`), and should be provided in parentheses before the colon.
+The name of the package or component affected by the change (e.g., `planning`, `reports`, `mockCMMS`, `advanced-table`, `ci`, `docs`), and should be provided in parentheses before the colon.
 
 #### description
 

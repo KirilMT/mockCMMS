@@ -1,7 +1,7 @@
 # mockCMMS Project Roadmap: Future Enhancements
 _Adapted from original mock_cmms_plan.md on November 17, 2025_
 
-> **Note for AI Assistants:** This roadmap was created by analyzing a previous, deprecated project (`WorkforceManager`). It captures the strategic vision and high-value, unimplemented features from that project, adapted for the modern, modular architecture of `mockCMMS`. Its purpose is to guide future development on the **existing** `mockCMMS` project, not to suggest overwriting or replacing its current functionality. Please use this file as a guide for *adding new features*, not for re-implementing what is already in place.
+> **Note for AI Assistants:** This roadmap was created by analyzing a previous, deprecated project (`planning`). It captures the strategic vision and high-value, unimplemented features from that project, adapted for the modern, modular architecture of `mockCMMS`. Its purpose is to guide future development on the **existing** `mockCMMS` project, not to suggest overwriting or replacing its current functionality. Please use this file as a guide for *adding new features*, not for re-implementing what is already in place.
 
 ## 1. Purpose
 This document outlines a strategic roadmap for the `mockCMMS` project, focusing on unimplemented, high-value features identified from previous planning documents. It is adapted to the project's current modular architecture and serves as a guide for future development sprints.
@@ -10,8 +10,8 @@ This document outlines a strategic roadmap for the `mockCMMS` project, focusing 
 
 ## 2. Application-Specific Feature Roadmap
 
-### `workforceManager` App Enhancements
-This application already handles skill-based task assignment. The next logical steps involve deeper integration and more advanced workforce management features.
+### `planning` App Enhancements
+This application already handles skill-based task assignment. The next logical steps involve deeper integration and more advanced planning management features.
 
 - **[ ] Advanced Technician Management:**
     - **Goal:** Track detailed technician status beyond basic skills.
@@ -20,7 +20,7 @@ This application already handles skill-based task assignment. The next logical s
         - Track and visualize individual technician workload over time.
 
 - **[ ] Advanced Planning Algorithms:**
-    - **Goal:** Evolve beyond simple task assignment to holistic workforce planning.
+    - **Goal:** Evolve beyond simple task assignment to holistic planning planning.
     - **Features:**
         - Develop logic for complex scheduling scenarios like multi-day shutdowns or holidays, factoring in technician availability.
         - Create a "planning" feature that can simulate and optimize schedules before finalizing them.

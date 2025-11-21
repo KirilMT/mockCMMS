@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Workforce Manager Integration (Major Feature):**
+- **Planning Integration (Major Feature):**
   - **Planning Module:** Fully integrated the new Planning Module with a custom Gantt chart and Shift Planning capabilities.
   - **Advanced Scheduling:** Added support for complex shift patterns (Production 3x8h, Maintenance 2x12h) and overnight shifts.
   - **Team Optimization:** Implemented multi-factor team formation logic (skills, workload, experience).
@@ -78,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Initial Release**: First stable version of the mockCMMS monorepo
 - **Modular Architecture**: Main application with dynamically loadable apps
-- **Workforce Manager Integration**: Skill-based technician task assignment system
+- **Planning Integration**: Skill-based technician task assignment system
 - **Centralized Configuration**: Single `.env` file for all applications
 - **Unified Environment**: One virtual environment and dependency management
 - **Dynamic App Loading**: Enable/disable apps without code changes
@@ -96,4 +96,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Flask-based web application with modular design
 - SQLite database with seeding capabilities
 - Environment-based configuration management
-- Integrated workforce management capabilities
+- Integrated planning management capabilities

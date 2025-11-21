@@ -1,0 +1,719 @@
+{% extends "/base.html" %}
+
+{% block title %}{{ schedule.name }} - Planning{% endblock %}
+
+{% block extra_css %}
+<!-- Custom Planning Gantt CSS -->
+<link rel="stylesheet" href="{{ url_for('planning.static', filename='css/planning-gantt-custom.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<!-- Custom Planning Gantt JS -->
+<script src="{{ url_for('planning.static', filename='js/planning-gantt-custom.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h1 class="h2">{{ schedule.name }}</h1>
+            <p class="text-muted">
+                {{ schedule.start_date.strftime('%Y-%m-%d') }} to {{ schedule.end_date.strftime('%Y-%m-%d') }}
+                <span class="ml-3">
+                    Status:
+                    {% if schedule.planning_status == 'Draft' %}
+                    <span class="badge badge-secondary">Draft</span>
+                    {% elif schedule.planning_status == 'Planned' %}
+                    <span class="badge badge-primary">Planned</span>
+                    {% elif schedule.planning_status == 'Published' %}
+                    <span class="badge badge-success">Published</span>
+                    {% elif schedule.planning_status == 'Locked' %}
+                    <span class="badge badge-dark">Locked</span>
+                    {% endif %}
+                </span>
+            </p>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{{ url_for('planning.planning_index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Schedules
+            </a>
+        </div>
+    </div>
+
+    <!-- Planning Mode Selection & Actions -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label><strong>Planning Mode:</strong></label>
+                            <div class="btn-group btn-group-toggle d-block" data-toggle="buttons">
+                                <label class="btn btn-outline-primary {% if planning_mode == 'shift_break' %}active{% endif %}">
+                                    <input type="radio" name="planning_mode" value="shift_break"
+                                           {% if planning_mode == 'shift_break' %}checked{% endif %}
+                                           onchange="changePlanningMode('shift_break')">
+                                    <i class="fas fa-clock"></i> Shift Break
+                                </label>
+                                <label class="btn btn-outline-primary {% if planning_mode == 'weekend' %}active{% endif %}">
+                                    <input type="radio" name="planning_mode" value="weekend"
+                                           {% if planning_mode == 'weekend' %}checked{% endif %}
+                                           onchange="changePlanningMode('weekend')">
+                                    <i class="fas fa-calendar-week"></i> Weekend
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            {% if schedule.planning_status != 'Locked' %}
+                            <button class="btn btn-success" onclick="runPlanning()">
+                                <i class="fas fa-play-circle"></i> Run Planning
+                            </button>
+                            {% endif %}
+                            {% if schedule.planning_status == 'Planned' %}
+                            <button class="btn btn-primary" onclick="publishSchedule()">
+                                <i class="fas fa-check-circle"></i> Publish
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5>Total Tasks</h5>
+                    <h2>{{ task_data|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5>Assigned</h5>
+                    <h2>{{ task_data|selectattr('planning_task.status', 'equalto', 'Planned')|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h5>Unassigned</h5>
+                    <h2>{{ task_data|selectattr('planning_task.status', 'equalto', 'Unplanned')|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h5>Success Rate</h5>
+                    <h2>
+                        {% set assigned = task_data|selectattr('planning_task.status', 'equalto', 'Planned')|list|length %}
+                        {% set total = task_data|length %}
+                        {% if total > 0 %}{{ (assigned / total * 100)|round(1) }}%{% else %}N/A{% endif %}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Planning Warnings and Errors Display -->
+    <div class="row mt-3" id="planningMessagesContainer" style="display: none;">
+        <div class="col-12">
+            <div id="planningWarnings"></div>
+            <div id="planningErrors"></div>
+        </div>
+    </div>
+
+    <!-- Gantt Chart View -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Gantt Chart - Timeline View</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Gantt Controls -->
+                    <div class="gantt-controls">
+                        <div>
+                            <span class="badge badge-info">
+                                <i class="fas fa-info-circle"></i> Task IDs in bars match Maintenance Order IDs
+                            </span>
+                        </div>
+                        <div class="gantt-view-modes">
+                            <small class="text-muted d-block mb-2" style="font-size: 0.8em;">
+                                <i class="fas fa-lightbulb"></i> View Mode (Coming Soon)
+                            </small>
+                            <button class="btn btn-sm btn-outline-primary" onclick="if(window.ganttChart) window.ganttChart.changeViewMode('Quarter Day')">
+                                <i class="fas fa-clock"></i> Quarter Day
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="if(window.ganttChart) window.ganttChart.changeViewMode('Half Day')">
+                                <i class="fas fa-calendar-day"></i> Half Day
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary active" onclick="if(window.ganttChart) window.ganttChart.changeViewMode('Day')">
+                                <i class="fas fa-calendar"></i> Day
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="if(window.ganttChart) window.ganttChart.refresh()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Gantt Chart Container -->
+                    <div id="gantt-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-3 text-muted">Loading Gantt chart...</p>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="gantt-legend">
+                        <h6 class="w-100 mb-2">Priority Legend:</h6>
+                        <div class="gantt-legend-item">
+                            <div class="gantt-legend-color critical"></div>
+                            <span>Critical</span>
+                        </div>
+                        <div class="gantt-legend-item">
+                            <div class="gantt-legend-color high"></div>
+                            <span>High</span>
+                        </div>
+                        <div class="gantt-legend-item">
+                            <div class="gantt-legend-color medium"></div>
+                            <span>Medium</span>
+                        </div>
+                        <div class="gantt-legend-item">
+                            <div class="gantt-legend-color low"></div>
+                            <span>Low</span>
+                        </div>
+                        <div class="gantt-legend-item">
+                            <div class="gantt-legend-color unassigned"></div>
+                            <span>Unassigned/Undefined</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Planning Tasks Table (Cross-Reference with Gantt) -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table"></i> Planning Tasks Details
+                        <small class="ml-2" style="font-size: 0.85em; opacity: 0.9;">
+                            (Task IDs match Maintenance Order IDs from /maintenance_orders)
+                        </small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if task_data %}
+                    <!-- The advanced table will be rendered here by JavaScript -->
+                    <div id="planningTasksTable"></div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No tasks in this schedule yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Allocation Summary -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Resource Allocation</h5>
+                </div>
+                <div class="card-body">
+                    <div id="resource-allocation" class="resource-allocation-summary">
+                        <p class="text-muted">Loading resource allocation data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+function changePlanningMode(mode) {
+    window.location.href = `{{ url_for('planning.view_schedule', schedule_id=schedule.id) }}?mode=${mode}`;
+}
+
+function runPlanning() {
+    // Remove confirmation - just run it
+    // Show loading state
+    const runButton = document.querySelector('button[onclick="runPlanning()"]');
+    if (runButton) {
+        runButton.disabled = true;
+        runButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running Planning...';
+    }
+
+    const formData = new FormData();
+    formData.append('planning_mode', '{{ planning_mode }}');
+    formData.append('check_parts', 'true');
+
+    fetch('{{ url_for("planning.run_planning", schedule_id=schedule.id) }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Pass warnings and errors via URL params to show after reload
+            const params = new URLSearchParams();
+            params.set('mode', '{{ planning_mode }}');
+            params.set('_t', new Date().getTime());
+
+            if (data.warnings && data.warnings.length > 0) {
+                params.set('warnings', JSON.stringify(data.warnings));
+            }
+            if (data.errors && data.errors.length > 0) {
+                params.set('errors', JSON.stringify(data.errors));
+            }
+            if (data.message) {
+                params.set('success_msg', data.message);
+            }
+
+            // Reload with params
+            window.location.href = window.location.href.split('?')[0] + '?' + params.toString();
+        } else {
+            // Show error on page (not alert)
+            displayPlanningMessages([], [data.error || 'Planning failed']);
+            // Re-enable button
+            if (runButton) {
+                runButton.disabled = false;
+                runButton.innerHTML = '<i class="fas fa-play"></i> Run Planning';
+            }
+        }
+    })
+    .catch(error => {
+        // Show error on page (not alert)
+        displayPlanningMessages([], [`Error running planning: ${error}`]);
+        // Re-enable button
+        if (runButton) {
+            runButton.disabled = false;
+            runButton.innerHTML = '<i class="fas fa-play"></i> Run Planning';
+        }
+    });
+}
+
+function displayPlanningMessages(warnings, errors) {
+    const container = document.getElementById('planningMessagesContainer');
+    const warningsDiv = document.getElementById('planningWarnings');
+    const errorsDiv = document.getElementById('planningErrors');
+
+    // Clear previous messages
+    warningsDiv.innerHTML = '';
+    errorsDiv.innerHTML = '';
+
+    let hasMessages = false;
+
+    // Display warnings
+    if (warnings && warnings.length > 0) {
+        hasMessages = true;
+        let html = '<div class="alert alert-warning alert-dismissible fade show" role="alert">';
+        html += '<h5 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Planning Warnings</h5>';
+        html += '<ul class="mb-0">';
+        warnings.forEach(warning => {
+            html += `<li>${warning}</li>`;
+        });
+        html += '</ul>';
+        html += '<button type="button" class="close" data-dismiss="alert" aria-label="Close">';
+        html += '<span aria-hidden="true">&times;</span>';
+        html += '</button>';
+        html += '</div>';
+        warningsDiv.innerHTML = html;
+    }
+
+    // Display errors
+    if (errors && errors.length > 0) {
+        hasMessages = true;
+        let html = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
+        html += '<h5 class="alert-heading"><i class="fas fa-times-circle"></i> Planning Errors</h5>';
+        html += '<ul class="mb-0">';
+        errors.forEach(error => {
+            html += `<li>${error}</li>`;
+        });
+        html += '</ul>';
+        html += '<button type="button" class="close" data-dismiss="alert" aria-label="Close">';
+        html += '<span aria-hidden="true">&times;</span>';
+        html += '</button>';
+        html += '</div>';
+        errorsDiv.innerHTML = html;
+    }
+
+    // Show/hide container
+    if (hasMessages) {
+        container.style.display = 'block';
+        // Scroll to messages
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        container.style.display = 'none';
+    }
+}
+
+function publishSchedule() {
+    if (!confirm('Publish this schedule? It will become the active schedule.')) {
+        return;
+    }
+
+    fetch('{{ url_for("planning.publish_schedule", schedule_id=schedule.id) }}', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(`Error: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        alert(`Error publishing schedule: ${error}`);
+    });
+}
+
+// Always load Gantt chart (shown alongside table)
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Schedule View] DOM loaded, initializing Gantt chart...');
+
+    // Check for warnings/errors/success message in URL params
+    checkUrlMessagesAndDisplay();
+
+    initializeGanttChart();
+});
+
+function checkUrlMessagesAndDisplay() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const warningsParam = urlParams.get('warnings');
+    const errorsParam = urlParams.get('errors');
+    const successMsg = urlParams.get('success_msg');
+
+    let warnings = [];
+    let errors = [];
+
+    if (warningsParam) {
+        try {
+            warnings = JSON.parse(warningsParam);
+        } catch (e) {
+            console.error('Failed to parse warnings:', e);
+        }
+    }
+
+    if (errorsParam) {
+        try {
+            errors = JSON.parse(errorsParam);
+        } catch (e) {
+            console.error('Failed to parse errors:', e);
+        }
+    }
+
+    // Display messages if any
+    if (warnings.length > 0 || errors.length > 0) {
+        displayPlanningMessages(warnings, errors);
+
+        // Clean URL (remove message params but keep mode and timestamp)
+        const cleanParams = new URLSearchParams();
+        cleanParams.set('mode', urlParams.get('mode') || '{{ planning_mode }}');
+        const newUrl = window.location.href.split('?')[0] + '?' + cleanParams.toString();
+        window.history.replaceState({}, '', newUrl);
+    }
+
+    // Show success message as a toast if present
+    if (successMsg && warnings.length === 0 && errors.length === 0) {
+        showSuccessToast(successMsg);
+    }
+}
+
+function showSuccessToast(message) {
+    // Create a simple success toast
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-success alert-dismissible fade show';
+    toast.style.position = 'fixed';
+    toast.style.left = '50%';  // Center horizontally
+    toast.style.transform = 'translateX(-50%)';  // Center adjustment
+    toast.style.zIndex = '10000';  // Above navbar
+    toast.style.minWidth = '400px';
+    toast.style.maxWidth = '600px';
+    toast.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    toast.innerHTML = `
+        <strong><i class="fas fa-check-circle"></i> Success!</strong> ${message}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Calculate vertical centering with navbar
+    const navbar = document.querySelector('.navbar') || document.querySelector('nav');
+    const navbarHeight = navbar ? navbar.offsetHeight : 56;
+    const toastHeight = toast.offsetHeight;
+
+    // Center toast vertically within navbar height
+    const topPosition = Math.max(0, (navbarHeight - toastHeight) / 2);
+    toast.style.top = `${topPosition}px`;
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+function initializeGanttChart() {
+    // Check if Gantt library is loaded
+    if (typeof initPlanningGantt === 'undefined') {
+        console.error('[Schedule View] Gantt library not loaded yet, retrying...');
+        setTimeout(initializeGanttChart, 500);
+        return;
+    }
+
+    // Initialize Gantt chart with planning mode
+    window.ganttChart = initPlanningGantt('gantt-container', {{ schedule.id }}, {
+        viewMode: 'Day',
+        planningMode: '{{ planning_mode }}',  // Pass planning mode
+        onTaskClick: function(task) {
+            console.log('[Schedule View] Task clicked:', task);
+            // TODO: Show task details modal
+        }
+    });
+
+    // Load resource allocation summary
+    loadResourceAllocation();
+}
+
+function loadResourceAllocation() {
+    fetch('{{ url_for("planning.gantt_data", schedule_id=schedule.id) }}')
+        .then(response => response.json())
+        .then(data => {
+            renderResourceAllocation(data);
+        })
+        .catch(error => {
+            console.error('[Schedule View] Error loading resource allocation:', error);
+            document.getElementById('resource-allocation').innerHTML =
+                '<div class="alert alert-danger">Error loading resource allocation: ' + error + '</div>';
+        });
+}
+
+function renderResourceAllocation(data) {
+    const container = document.getElementById('resource-allocation');
+
+    if (!data.technicians || data.technicians.length === 0) {
+        container.innerHTML = '<p class="text-muted">No technician data available</p>';
+        return;
+    }
+
+    // Filter only planned tasks (with start/end times)
+    const plannedTasks = data.tasks.filter(task =>
+        task.planned_start_time &&
+        task.planned_end_time &&
+        task.status === 'Planned'
+    );
+
+    if (plannedTasks.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                No planned task assignments yet. Run planning to see resource allocation.
+            </div>
+        `;
+        return;
+    }
+
+    // Calculate utilization for each technician
+    const techUtilization = {};
+
+    // Mode-specific shift duration
+    // TODO: Load from config.json instead of hardcoding
+    // For now, using defaults: shift_break=30min (configurable in config.json), weekend=12 hours
+    const planningMode = '{{ planning_mode }}';
+    const shiftDuration = planningMode === 'shift_break' ? 30 : 12 * 60;  // 30 min for shift-break (from config), 12 hours for weekend (in minutes)
+
+    data.technicians.forEach(tech => {
+        techUtilization[tech.id] = {
+            name: tech.name,
+            assigned_minutes: 0,
+            task_count: 0,
+            tasks: []
+        };
+    });
+
+    // Aggregate task assignments (only planned tasks)
+    plannedTasks.forEach(task => {
+        if (task.assigned_technician_ids) {
+            task.assigned_technician_ids.forEach(techId => {
+                if (techUtilization[techId]) {
+                    techUtilization[techId].assigned_minutes += task.actual_duration_minutes || task.estimated_duration_minutes || 0;
+                    techUtilization[techId].task_count++;
+                    techUtilization[techId].tasks.push(task.task_description);
+                }
+            });
+        }
+    });
+
+    // Render utilization cards
+    let html = '<div class="technician-utilization">';
+
+    Object.values(techUtilization).forEach(tech => {
+        const utilization = (tech.assigned_minutes / shiftDuration) * 100;
+        const utilizationClass = utilization > 90 ? 'danger' : (utilization > 70 ? 'warning' : 'success');
+
+        html += `
+            <div class="technician-card">
+                <h6>${tech.name}</h6>
+                <div class="utilization-bar">
+                    <div class="utilization-fill" style="width: ${Math.min(utilization, 100)}%; background: ${
+                        utilization > 90 ? '#dc3545' : (utilization > 70 ? '#ffc107' : '#28a745')
+                    };"></div>
+                </div>
+                <div class="utilization-stats">
+                    <span>${tech.assigned_minutes} min / ${shiftDuration} min</span>
+                    <span><strong>${utilization.toFixed(1)}%</strong></span>
+                </div>
+                <small class="text-muted">${tech.task_count} task${tech.task_count !== 1 ? 's' : ''} assigned</small>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+{% if task_data %}
+// Initialize advanced table for planning tasks
+// Wait for window load to ensure all scripts are loaded
+window.addEventListener('load', function() {
+    // Give a small delay to ensure advanced-table.js is fully executed
+    setTimeout(function() {
+        if (typeof initAdvancedTable === 'undefined') {
+            console.error('initAdvancedTable function not found. Make sure advanced-table.js is loaded.');
+            return;
+        }
+
+        // Parse the planning tasks data from backend
+        const planningTasksData = {{ planning_tasks_json|safe }};
+
+        const columns = [
+            {
+                key: 'maintenance_order_id',
+                label: 'Task ID',
+                type: 'number',
+                render: function(val) {
+                    return '<span class="badge badge-primary" style="font-size: 1em;">' + val + '</span>';
+                }
+            },
+            {
+                key: 'status',
+                label: 'Status',
+                type: 'text',
+                render: function(val) {
+                    if (val === 'Planned') {
+                        return '<span class="badge badge-success">Planned</span>';
+                    } else {
+                        return '<span class="badge badge-warning">Unplanned</span>';
+                    }
+                }
+            },
+            { key: 'task_description', label: 'Task', type: 'text' },
+            {
+                key: 'task_type',
+                label: 'Type',
+                type: 'text',
+                render: function(val) {
+                    return '<span class="badge badge-info">' + val + '</span>';
+                }
+            },
+            {
+                key: 'priority',
+                label: 'Priority',
+                type: 'text',
+                render: function(val) {
+                    if (val === 'Critical') return '<span class="badge badge-danger">Critical</span>';
+                    if (val === 'High') return '<span class="badge badge-warning">High</span>';
+                    if (val === 'Medium') return '<span class="badge badge-primary">Medium</span>';
+                    return '<span class="badge badge-secondary">' + val + '</span>';
+                }
+            },
+            {
+                key: 'required_skills',
+                label: 'Required Skills',
+                type: 'text',
+                render: function(val) {
+                    if (!val || val === 'None') return '<em class="text-muted">None</em>';
+                    const skills = val.split(', ');
+                    return skills.map(skill => '<span class="badge badge-secondary" title="' + skill + '">' + skill + '</span>').join(' ');
+                }
+            },
+            {
+                key: 'duration',
+                label: 'Duration (min)',
+                type: 'number',
+                render: function(val) {
+                    return val + ' min';
+                }
+            },
+            {
+                key: 'team_size',
+                label: 'Team Size',
+                type: 'number',
+                render: function(val) {
+                    return '<span class="badge badge-info">' + val + ' tech' + (val !== 1 ? 's' : '') + '</span>';
+                }
+            },
+            {
+                key: 'assigned_to',
+                label: 'Assigned To',
+                type: 'text',
+                render: function(val, row) {
+                    if (!val || val === 'Not assigned') {
+                        return '<i class="fas fa-user-times text-danger"></i> <em>Not assigned</em>';
+                    }
+                    const techs = val.split(', ');
+                    const skillsData = row.assigned_to_skills ? row.assigned_to_skills.split('|') : [];
+                    return techs.map((tech, idx) => {
+                        const skills = skillsData[idx] || '';
+                        return '<div><i class="fas fa-user-check text-success"></i> ' +
+                               '<span data-toggle="tooltip" title="Skills: ' + skills + '">' + tech + '</span></div>';
+                    }).join('');
+                }
+            }
+        ];
+
+        // Initialize the advanced table (data already has _taskNumber added above)
+        const tableInstance = initAdvancedTable('planningTasksTable', planningTasksData, columns, 100);
+
+        // Verify it was set globally
+        if (!window.advTable) {
+            console.error('window.advTable was not set! Table instance:', tableInstance);
+            // Manually set it if needed
+            window.advTable = tableInstance;
+        }
+
+        console.log('Table initialized. window.advTable is now:', window.advTable);
+
+        // Initialize tooltips after table is rendered
+        if (typeof $ !== 'undefined') {
+            $('[data-toggle="tooltip"]').tooltip();
+        }
+    }, 100);
+});
+{% endif %}
+</script>
+{% endblock %}
+

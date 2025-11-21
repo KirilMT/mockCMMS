@@ -1,5 +1,4 @@
-from flask import Flask, render_template
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 import os
 from dotenv import load_dotenv
@@ -55,46 +54,54 @@ def create_app():
         if app.logger:
             app.logger.info("Reports Blueprint not enabled.")
 
-    # Conditionally register the workforce_manager_bp from the workforceManager package
-    if os.getenv('WORKFORCE_MANAGER_ENABLED', 'False').lower() in ('true', '1', 't'):
+    # Conditionally register the planning_bp from the planning package
+    if os.getenv('PLANNING_ENABLED', 'False').lower() in ('true', '1', 't'):
         try:
-            # Import the blueprint from the workforceManager package (installed in editable mode)
-            from apps.workforceManager.src.routes.workforce_manager import workforce_manager_bp
-            app.register_blueprint(workforce_manager_bp)
-            csrf.exempt(workforce_manager_bp)
+            # Import the blueprint from the planning package (installed in editable mode)
+            from apps.planning.src.routes.planning import planning_bp
+            app.register_blueprint(planning_bp)
+            csrf.exempt(planning_bp)
 
             # Register the same blueprint again with /api prefix
-            app.register_blueprint(workforce_manager_bp, url_prefix='/api', name='workforce_manager_api')
+            app.register_blueprint(planning_bp, url_prefix='/api', name='planning_api')
 
             if app.logger:
-                app.logger.info("Workforce Manager Blueprint registered at /workforce-manager and /api")
+                app.logger.info("Planning Blueprint registered at /planning and /api")
         except Exception as e:
             if app.logger:
                 import traceback
-                app.logger.error(f"Failed to register Workforce Manager blueprint: {e}")
+                app.logger.error(f"Failed to register Planning blueprint: {e}")
                 app.logger.error(traceback.format_exc())
     else:
         if app.logger:
-            app.logger.info("Workforce Manager Blueprint not enabled.")
+            app.logger.info("Planning Blueprint not enabled.")
 
-    # Add a before_request handler for workforce_manager routes to initialize database
     @app.before_request
-    def before_workforce_manager_request():
-        """Initialize database connection for workforce_manager routes"""
+    def redirect_legacy_urls():
+        """Redirect legacy /planning-manager URLs to /planning."""
+        from flask import request, redirect, url_for
+        if request.path.startswith('/planning-manager'):
+            new_path = request.full_path.replace('/planning-manager', '/planning', 1)
+            return redirect(new_path)
+
+    # Add a before_request handler for planning routes to initialize database
+    @app.before_request
+    def before_planning_request():
+        """Initialize database connection for planning routes"""
         from flask import g, request
 
-        # Only initialize for workforce_manager routes
-        if request.path.startswith('/workforce-manager'):
+        # Only initialize for planning routes
+        if request.path.startswith('/planning'):
             try:
                 import sqlite3
-                db_path = os.path.join(os.path.dirname(__file__), '..', 'apps', 'workforceManager', 'instance', 'workforce_manager.db')
+                db_path = os.path.join(os.path.dirname(__file__), '..', 'apps', 'planning', 'instance', 'planning.db')
                 g.db = sqlite3.connect(db_path)
                 g.db.row_factory = sqlite3.Row  # Allow column access by name
                 if app.logger:
-                    app.logger.debug(f"Database connection established for workforce_manager: {db_path}")
+                    app.logger.debug(f"Database connection established for planning: {db_path}")
             except Exception as e:
                 if app.logger:
-                    app.logger.error(f"Failed to connect to workforce_manager database: {e}")
+                    app.logger.error(f"Failed to connect to planning database: {e}")
                 from flask import jsonify
                 return jsonify({"error": "Database connection failed"}), 500
 
@@ -135,7 +142,7 @@ def create_app():
     @app.context_processor
     def inject_config():
         return dict(
-            WORKFORCE_MANAGER_ENABLED=os.getenv('WORKFORCE_MANAGER_ENABLED', 'False').lower() in ('true', '1', 't'),
+            PLANNING_ENABLED=os.getenv('PLANNING_ENABLED', 'False').lower() in ('true', '1', 't'),
             REPORTS_ENABLED=os.getenv('REPORTS_ENABLED', 'False').lower() in ('true', '1', 't')
         )
 

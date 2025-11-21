@@ -509,7 +509,7 @@ def populate_dummy_data(logger):
     # Use MaintenanceOrder for all work orders
 
     # Create Schedules and Planning Tasks
-    from apps.workforceManager.src.services.planning_models import Schedule, PlanningTask
+    from apps.planning.src.services.planning_models import Schedule, PlanningTask
 
     for schedule_data in data.get("schedules", []):
         schedule = Schedule(
