@@ -1,14 +1,80 @@
-# mockCMMS Project Roadmap: Future Enhancements
-_Adapted from original mock_cmms_plan.md on November 17, 2025_
-
-> **Note for AI Assistants:** This roadmap was created by analyzing a previous, deprecated project (`planning`). It captures the strategic vision and high-value, unimplemented features from that project, adapted for the modern, modular architecture of `mockCMMS`. Its purpose is to guide future development on the **existing** `mockCMMS` project, not to suggest overwriting or replacing its current functionality. Please use this file as a guide for *adding new features*, not for re-implementing what is already in place.
-
-## 1. Purpose
-This document outlines a strategic roadmap for the `mockCMMS` project, focusing on unimplemented, high-value features identified from previous planning documents. It is adapted to the project's current modular architecture and serves as a guide for future development sprints.
+# mockCMMS Project Roadmap
+_Updated November 23, 2025_
 
 ---
 
-## 2. Application-Specific Feature Roadmap
+## ⚠️ INSTRUCTIONS FOR AI ASSISTANTS
+
+**When working on this project:**
+
+1. **Update "ACTIVE WORK" section** when sprint phases change or complete
+2. **Update status** as work progresses (e.g., "Phase 1" → "Phase 2" → "Completed")
+3. **Move completed sprints** to a "Recently Completed" section (don't delete immediately)
+4. **Keep synchronized** with detailed plan files (e.g., `advanced-table-fixes-plan.md`)
+5. **Add new active work** when starting new sprints/features
+6. **Update "Last Updated" date** at the top when making changes
+7. **Archive old sprints** after 30 days by moving to bottom or separate archive file
+
+**Quick Update Template:**
+```markdown
+## 🔥 ACTIVE WORK
+
+**Current Sprint:** [Sprint Name] ([X] days, [Y]% complete)
+**Status:** [Phase Name] - [Brief status]
+**Link:** [Detailed Plan](./link-to-detailed-plan.md)
+**Started:** [Date]
+**Target Completion:** [Date]
+```
+
+---
+
+## 🔥 ACTIVE WORK
+
+**Current Sprint:** Advanced Table Component Fixes & Enhancements (17 days)
+
+See detailed plan here: **[Advanced Table Fixes Plan](./advanced-table-fixes-plan.md)**
+
+**Quick Summary:**
+- Fix AND/OR filter logic (currently only AND works)
+- Fix Save/Load view configuration (dropdown breaks after filters)
+- Fix global search (breaks on typing)
+- Add filter persistence (localStorage)
+- Add Team column to Users table
+- Add filter validation
+- Add real-time table updates
+
+**Status:** In Progress - Phase 1 (Critical Fixes)  
+**Started:** November 23, 2025  
+**Target Completion:** December 10, 2025
+
+---
+
+## ✅ RECENTLY COMPLETED
+
+_No completed sprints yet. When a sprint completes, move it here from "ACTIVE WORK" section._
+
+**Template for completed sprints:**
+```markdown
+**Sprint:** [Name] ([X] days)
+**Completed:** [Date]
+**Summary:** [Brief description of what was accomplished]
+**Key Outcomes:**
+- [Outcome 1]
+- [Outcome 2]
+```
+
+---
+
+## 🚀 FUTURE FEATURES (Strategic Planning)
+
+> **Note for AI Assistants:** This roadmap was created by analyzing a previous, deprecated project (`planning`). It captures the strategic vision and high-value, unimplemented features from that project, adapted for the modern, modular architecture of `mockCMMS`. Its purpose is to guide future development on the **existing** `mockCMMS` project, not to suggest overwriting or replacing its current functionality. Please use this file as a guide for *adding new features*, not for re-implementing what is already in place.
+
+### Purpose
+This section outlines a strategic roadmap for the `mockCMMS` project, focusing on unimplemented, high-value features identified from previous planning documents. It is adapted to the project's current modular architecture and serves as a guide for future development sprints.
+
+---
+
+## Application-Specific Feature Roadmap
 
 ### `planning` App Enhancements
 This application already handles skill-based task assignment. The next logical steps involve deeper integration and more advanced planning management features.
@@ -59,7 +125,7 @@ The core application can be improved with the following features to support the 
 
 ---
 
-## 3. Summary of Key Unimplemented Features
+## Summary of Key Unimplemented Features
 
 - **Advanced Technician Tracking:** Availability, workload, and dynamic status.
 - **Automated, Specialized Reports:** Shift, weekend, and technician-submitted reports.

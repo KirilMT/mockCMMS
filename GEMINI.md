@@ -332,6 +332,13 @@ The `reports` is a Flask-based web application for generating comprehensive main
 -   **Be Proactive:** Before making changes, use your tools to understand the relevant files and the overall structure outlined in this document.
 -   **Single Edit Rule:** When editing a file, apply all planned changes in one unified edit. Do not split the edit into multiple smaller patches for the same request.
 -   **Documentation First:** Before committing any code changes, you **must** update all relevant documentation to reflect the changes. This includes the root `README.md`, this `GEMINI.md` file, package-specific documentation, files in the `.github/` directory (e.g., `CONTRIBUTING.md`, `GIT_WORKFLOW.md`), and any files in `docs/` directories (root and subdirectories).
+-   **Roadmap & Plan Updates:** When implementing features or fixes:
+    1. **Mark tasks as completed** in detailed plan files (e.g., `docs/advanced-table-fixes-plan.md`) by changing `[ ]` to `[x]`
+    2. **Update progress tracking** sections with percentages and current focus
+    3. **Update `docs/mockCMMS_roadmap.md`** when phases complete or status changes
+    4. **Add implementation notes** under completed tasks with important details or decisions
+    5. **Document blockers** if issues arise during implementation
+    6. **Update "Last Updated" dates** in roadmap files
 -   **Version Management:** After completing any significant changes:
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)

@@ -1,6 +1,6 @@
 # AI Assistant Instructions for the CMMS Monorepo (GitHub Copilot)
 
-> **⚠️ SYNCHRONIZATION NOTICE:** This file (`copilot-instructions.md`) is for **GitHub Copilot** instructions. A parallel document, `AGENT.md`, exists for **Gemini Code Assist** instructions. While both documents should be nearly identical (except for model-specific references), they should be kept in sync. **If you make changes to this file, please ensure the corresponding section in `AGENT.md` is also updated**, and vice versa.
+> **⚠️ SYNCHRONIZATION NOTICE:** This file (`copilot-instructions.md`) is for **GitHub Copilot** instructions. A parallel document, `GEMINI.md`, exists for **Gemini Code Assist** instructions. While both documents should be nearly identical (except for model-specific references), they should be kept in sync. **If you make changes to this file, please ensure the corresponding section in `GEMINI.md` is also updated**, and vice versa.
 
 This document provides a comprehensive guide for the GitHub Copilot AI to effectively contribute to this monorepo. Adherence to these guidelines is critical for maintaining code quality, consistency, and a clean project structure.
 
@@ -199,6 +199,13 @@ The `reports` is a Flask-based web application for generating comprehensive main
 -   **Be Proactive:** Before making changes, use your tools to understand the relevant files and the overall structure outlined in this document.
 -   **Single Edit Rule:** When editing a file, apply all planned changes in one unified edit. Do not split the edit into multiple smaller patches for the same request.
 -   **Documentation First:** Before committing any code changes, you **must** update all relevant documentation, including the root `README.md`, this `copilot-instructions.md` file, and any package-specific documentation, to reflect the changes.
+-   **Roadmap & Plan Updates:** When implementing features or fixes:
+    1. **Mark tasks as completed** in detailed plan files (e.g., `docs/advanced-table-fixes-plan.md`) by changing `[ ]` to `[x]`
+    2. **Update progress tracking** sections with percentages and current focus
+    3. **Update `docs/mockCMMS_roadmap.md`** when phases complete or status changes
+    4. **Add implementation notes** under completed tasks with important details or decisions
+    5. **Document blockers** if issues arise during implementation
+    6. **Update "Last Updated" dates** in roadmap files
 -   **Version Management:** After completing any significant changes:
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
