@@ -111,7 +111,7 @@ class MaintenanceOrder(db.Model):
     estimated_completion_time = Column(Integer, nullable=True)  # minutes
     assignees_json = Column('assignees', Text, nullable=True)  # DEPRECATED - use assignees_users relationship
     created_by = Column(Integer, ForeignKey('user.id'), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     modified_by = Column(Integer, ForeignKey('user.id'), nullable=True)
     modified_on = Column(DateTime, nullable=True)
     labour_count = Column(Integer, default=1)
@@ -167,7 +167,8 @@ class MaintenanceOrder(db.Model):
             "completed_on": self.completed_on.isoformat() if self.completed_on else None,
             "justification": self.justification,
             "url": self.url,
-            "required_spare_parts": [{"part_id": part.id, "description": part.description} for part in self.required_spare_parts]
+            "required_spare_parts": [{"part_id": part.id, "description": part.description} for part in self.required_spare_parts],
+            "required_skills": [{"skill_id": skill.id, "name": skill.name} for skill in self.required_skills]
         }
 
 class SparePart(db.Model):
@@ -197,8 +198,8 @@ class User(db.Model):
     email = Column(String(120), unique=True, nullable=False)
     password_hash = Column(String(128), nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
     # Technician fields (merged)
     availability_status = db.Column(db.String(20), default='Available') # 'Available', 'On Leave', 'Sick'
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=True)
@@ -215,6 +216,7 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
     def to_dict(self, include_roles=False):
+        roles_list = [role.name for role in self.roles]
         data = {
             "id": self.id,
             "username": self.username,
@@ -223,10 +225,11 @@ class User(db.Model):
             "created_at": self.created_at.isoformat(),
             "availability_status": self.availability_status,
             "team_id": self.team_id,
-            "team_name": self.team.name if self.team else None
+            "team_name": self.team.name if self.team else None,
+            "is_technician": "Technician" in roles_list
         }
         if include_roles:
-            data['roles'] = [role.name for role in self.roles]
+            data['roles_display'] = ", ".join(roles_list) if roles_list else "N/A"
         return data
 
 class Role(db.Model):
@@ -266,7 +269,7 @@ class Report(db.Model):
     title = Column(String(255), nullable=False)
     report_type = Column(String(50), nullable=False)  # reactive_production/completed_weekend
     generated_by = Column(Integer, ForeignKey('user.id'), nullable=False)
-    generated_on = Column(DateTime, default=datetime.utcnow)
+    generated_on = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     parameters = Column(Text, nullable=True)  # JSON of filter parameters
     file_path = Column(String(500), nullable=True)
     format = Column(String(20), nullable=False)  # PDF/Markdown
@@ -295,8 +298,8 @@ class TableConfiguration(db.Model):
     filters = Column(Text, nullable=True)  # JSON object
     sort_config = Column(Text, nullable=True)  # JSON object
     is_default = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
     user = relationship('User', backref='table_configurations')
 
     def to_dict(self):
@@ -508,31 +511,37 @@ def populate_dummy_data(logger):
     # Task model removed - legacy data not populated
     # Use MaintenanceOrder for all work orders
 
-    # Create Schedules and Planning Tasks
-    from apps.planning.src.services.planning_models import Schedule, PlanningTask
+    # Create Schedules and Planning Tasks, only if the planning app is enabled
+    if os.getenv('PLANNING_ENABLED', 'False').lower() in ('true', '1', 't'):
+        try:
+            from apps.planning.src.services.planning_models import Schedule, PlanningTask
 
-    for schedule_data in data.get("schedules", []):
-        schedule = Schedule(
-            name=schedule_data["name"],
-            start_date=datetime.fromisoformat(schedule_data["start_date"]),
-            end_date=datetime.fromisoformat(schedule_data["end_date"]),
-            planning_status=schedule_data.get("planning_status", "Draft")
-        )
-        db.session.add(schedule)
-        db.session.flush()  # Get the schedule ID
-
-        # Create planning tasks linked to this schedule
-        for mo_description in schedule_data.get("maintenance_orders", []):
-            mo = maintenance_orders.get(mo_description)
-            if mo:
-                planning_task = PlanningTask(
-                    schedule_id=schedule.id,
-                    maintenance_order_id=mo.id,
-                    status='Unplanned'
+            for schedule_data in data.get("schedules", []):
+                schedule = Schedule(
+                    name=schedule_data["name"],
+                    start_date=datetime.fromisoformat(schedule_data["start_date"]),
+                    end_date=datetime.fromisoformat(schedule_data["end_date"]),
+                    planning_status=schedule_data.get("planning_status", "Draft")
                 )
-                db.session.add(planning_task)
+                db.session.add(schedule)
+                db.session.flush()  # Get the schedule ID
 
-    db.session.commit()
-    logger.info(f"Populated {len(data.get('schedules', []))} schedules with planning tasks.")
+                # Create planning tasks linked to this schedule
+                for mo_description in schedule_data.get("maintenance_orders", []):
+                    mo = maintenance_orders.get(mo_description)
+                    if mo:
+                        planning_task = PlanningTask(
+                            schedule_id=schedule.id,
+                            maintenance_order_id=mo.id,
+                            status='Unplanned'
+                        )
+                        db.session.add(planning_task)
+
+            db.session.commit()
+            logger.info(f"Populated {len(data.get('schedules', []))} schedules with planning tasks.")
+        except ImportError:
+            logger.warning("Could not import planning models. Skipping schedule and planning task seeding.")
+        except Exception as e:
+            logger.error(f"An error occurred during schedule and planning task seeding: {e}")
 
     logger.info("Dummy data population complete.")

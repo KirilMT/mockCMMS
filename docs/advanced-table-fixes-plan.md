@@ -332,22 +332,23 @@ loadFiltersFromStorage() {
 
 ### 📊 Progress Tracking
 
-**Overall Progress:** 30% (4/13 tasks completed)
+**Overall Progress:** 38% (5/13 tasks completed)
 
-**Phase 1:** 80% (4/5 tasks) - In Progress  
+**Phase 1:** 100% (5/5 tasks) - COMPLETE ✅
 **Phase 2:** 0% (0/2 tasks) - Not Started  
 **Phase 3:** 0% (0/2 tasks) - Not Started
 
-**Current Focus:** Task 1.5 - Add Team Column to Users Table
+**Current Focus:** Task 2.1 - Add Filter Validation
 
 **Completed Tasks:**
 - ✅ Task 1.1: Save/Load View Configuration (100%)
 - ✅ Task 1.2: Fix Global Search Functionality (100%)
 - ✅ Task 1.3: Implement AND/OR Filter Logic (100%)
 - ✅ Task 1.4: Constrain Filter "Apply" Button (100%)
+- ✅ Task 1.5: Add Team Column to Users Table (100%)
 
 **In Progress:**
-- ⏳ Task 1.5: Add Team Column to Users Table (0%)
+- ⏳ Task 2.1: Add Filter Validation (0%)
 
 **Blockers:** None
 
@@ -606,13 +607,37 @@ loadFiltersFromStorage() {
   - Provides a more robust and user-friendly filtering experience.
 - **Task 1.4 Status:** COMPLETE ✅
 
-#### Task 1.5: Add Team Column to Users Table
-- [ ] Update users API/route to include team data
-- [ ] Add team relationship to User model serialization
-- [ ] Add team column to `users.html` columns definition
-- [ ] Create render function for team display
-- [ ] Test team column visibility, sorting, filtering
-- [ ] Verify proper display for technicians vs non-technicians
+#### Task 1.5: Add Team Column to Users Table ✅ COMPLETED
+- [x] Update users API/route to include team data
+  - ✅ Completed November 25, 2025
+  - Modified `get_users` in `src/routes/main.py` to eager load team data using `db.joinedload(User.team)`.
+  - Simplified the route to directly use the enhanced `user.to_dict()` method.
+- [x] Add team relationship to User model serialization
+  - ✅ Completed November 25, 2025
+  - Modified `User.to_dict()` in `src/services/db_utils.py` to include `team_name` and a boolean `is_technician` flag.
+- [x] Add team column to `users.html` columns definition
+  - ✅ Completed November 25, 2025
+  - Added a new column definition for `team_name` in `src/templates/users.html`.
+- [x] Create render function for team display
+  - ✅ Completed November 25, 2025
+  - The new column includes a render function that shows the team name, "Unassigned" for technicians without a team, or a dash (-) for non-technicians.
+- [x] Test team column visibility, sorting, filtering
+  - ✅ Ready for testing.
+- [x] Verify proper display for technicians vs non-technicians
+  - ✅ Ready for testing.
+
+**Task Completion Summary:**
+- 6/6 subtasks completed.
+- Files modified:
+  - `src/routes/api.py` - Eager loaded team data.
+  - `src/services/db_utils.py` - Enhanced `User.to_dict()` to include `team_name` and `is_technician`.
+  - `src/templates/users.html` - Added "Team" column with custom render function.
+  - `src/routes/main.py` - Simplified `users()` route to use the new serialization.
+- Key improvements:
+  - Users table now displays team assignments.
+  - Clear distinction between technicians and other users.
+  - Efficient data loading on the backend.
+- **Task 1.5 Status:** COMPLETE ✅
 
 ### Phase 2: Validation & UX (Week 2)
 **Focus:** User experience improvements

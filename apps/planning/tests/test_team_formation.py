@@ -11,8 +11,8 @@ Tests cover:
 import pytest
 from datetime import datetime, timedelta
 from flask import Flask
-from src.services.db_utils import db, MaintenanceOrder, Technician, Skill, Asset
-from apps.planning.src.services.planning_models import PlanningTask, Schedule, TechnicianSkill
+from src.services.db_utils import db, MaintenanceOrder, User, Skill, Asset
+from apps.planning.src.services.planning_models import PlanningTask, Schedule
 from apps.planning.src.services.planning_engine import PlanningEngine
 
 

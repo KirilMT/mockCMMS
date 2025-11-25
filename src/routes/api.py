@@ -25,7 +25,9 @@ def get_assets():
 
 @api_bp.route('/v1/assets/<int:asset_id>', methods=['GET'])
 def get_asset(asset_id):
-    asset = Asset.query.get_or_404(asset_id)
+    asset = db.session.get(Asset, asset_id)
+    if not asset:
+        return jsonify({"error": "Asset not found"}), 404
     return jsonify(asset.to_dict())
 
 @api_bp.route('/v1/assets', methods=['POST'])
@@ -45,7 +47,9 @@ def add_asset():
 
 @api_bp.route('/v1/assets/<int:asset_id>', methods=['PUT'])
 def update_asset(asset_id):
-    asset = Asset.query.get_or_404(asset_id)
+    asset = db.session.get(Asset, asset_id)
+    if not asset:
+        return jsonify({"error": "Asset not found"}), 404
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid JSON"}), 400
@@ -58,7 +62,9 @@ def update_asset(asset_id):
 
 @api_bp.route('/v1/assets/<int:asset_id>', methods=['DELETE'])
 def delete_asset(asset_id):
-    asset = Asset.query.get_or_404(asset_id)
+    asset = db.session.get(Asset, asset_id)
+    if not asset:
+        return jsonify({"error": "Asset not found"}), 404
     db.session.delete(asset)
     db.session.commit()
     return jsonify({"message": "Asset deleted"}), 200
@@ -71,7 +77,9 @@ def get_mos():
 
 @api_bp.route('/v1/mos/<int:mo_id>', methods=['GET'])
 def get_mo(mo_id):
-    mo = MaintenanceOrder.query.get_or_404(mo_id)
+    mo = db.session.get(MaintenanceOrder, mo_id)
+    if not mo:
+        return jsonify({"error": "Maintenance Order not found"}), 404
     return jsonify(mo.to_dict())
 
 @api_bp.route('/v1/mos', methods=['POST'])
@@ -84,15 +92,28 @@ def add_mo():
         description=data['description'],
         order_type=data['order_type'],
         status=data.get('status', 'Open'),
-        due_date=datetime.fromisoformat(data['due_date']) if 'due_date' in data else None
+        due_date=datetime.fromisoformat(data['due_date']) if 'due_date' in data else None,
+        priority=data.get('priority', 'Undefined')
     )
-    db.session.add(new_mo)
+    db.session.add(new_mo) # Add to session before manipulating relationships
+
+    # Handle required skills
+    if 'required_skills' in data and isinstance(data['required_skills'], list):
+        for skill_name in data['required_skills']:
+            skill = Skill.query.filter_by(name=skill_name).first()
+            if not skill:
+                skill = Skill(name=skill_name)
+                db.session.add(skill)
+            new_mo.required_skills.append(skill)
+
     db.session.commit()
     return jsonify(new_mo.to_dict()), 201
 
 @api_bp.route('/v1/mos/<int:mo_id>', methods=['PUT'])
 def update_mo(mo_id):
-    mo = MaintenanceOrder.query.get_or_404(mo_id)
+    mo = db.session.get(MaintenanceOrder, mo_id)
+    if not mo:
+        return jsonify({"error": "Maintenance Order not found"}), 404
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid JSON"}), 400
@@ -106,7 +127,9 @@ def update_mo(mo_id):
 
 @api_bp.route('/v1/mos/<int:mo_id>', methods=['DELETE'])
 def delete_mo(mo_id):
-    mo = MaintenanceOrder.query.get_or_404(mo_id)
+    mo = db.session.get(MaintenanceOrder, mo_id)
+    if not mo:
+        return jsonify({"error": "Maintenance Order not found"}), 404
     db.session.delete(mo)
     db.session.commit()
     return jsonify({"message": "Maintenance Order deleted"}), 200
@@ -119,7 +142,9 @@ def get_spare_parts():
 
 @api_bp.route('/v1/spare_parts/<int:part_id>', methods=['GET'])
 def get_spare_part(part_id):
-    part = SparePart.query.get_or_404(part_id)
+    part = db.session.get(SparePart, part_id)
+    if not part:
+        return jsonify({"error": "Spare Part not found"}), 404
     return jsonify(part.to_dict())
 
 @api_bp.route('/v1/spare_parts', methods=['POST'])
@@ -140,7 +165,9 @@ def add_spare_part():
 
 @api_bp.route('/v1/spare_parts/<int:part_id>', methods=['PUT'])
 def update_spare_part(part_id):
-    part = SparePart.query.get_or_404(part_id)
+    part = db.session.get(SparePart, part_id)
+    if not part:
+        return jsonify({"error": "Spare Part not found"}), 404
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid JSON"}), 400
@@ -154,7 +181,9 @@ def update_spare_part(part_id):
 
 @api_bp.route('/v1/spare_parts/<int:part_id>', methods=['DELETE'])
 def delete_spare_part(part_id):
-    part = SparePart.query.get_or_404(part_id)
+    part = db.session.get(SparePart, part_id)
+    if not part:
+        return jsonify({"error": "Spare Part not found"}), 404
     db.session.delete(part)
     db.session.commit()
     return jsonify({"message": "Spare Part deleted"}), 200
@@ -162,12 +191,15 @@ def delete_spare_part(part_id):
 # --- User and Role Endpoints ---
 @api_bp.route('/v1/users', methods=['GET'])
 def get_users():
-    users = User.query.all()
+    # Eager load roles and team to prevent N+1 queries
+    users = User.query.options(db.joinedload(User.roles), db.joinedload(User.team)).all()
     return jsonify([user.to_dict(include_roles=True) for user in users])
 
 @api_bp.route('/v1/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
     return jsonify(user.to_dict(include_roles=True))
 
 @api_bp.route('/v1/users', methods=['POST'])
@@ -196,7 +228,9 @@ def register_user():
 
 @api_bp.route('/v1/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid JSON"}), 400
@@ -221,7 +255,9 @@ def update_user(user_id):
 
 @api_bp.route('/v1/users/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
     db.session.delete(user)
     db.session.commit()
     return jsonify({"message": "User deleted"}), 200
@@ -267,7 +303,7 @@ def logout():
 @api_bp.route('/v1/auth/status', methods=['GET'])
 def auth_status():
     if 'user_id' in session:
-        user = User.query.get(session['user_id'])
+        user = db.session.get(User, session['user_id'])
         if user:
             return jsonify({"logged_in": True, "user": user.to_dict(include_roles=True)}), 200
     return jsonify({"logged_in": False}), 200
@@ -321,11 +357,10 @@ def delete_table_config(config_id):
     if 'user_id' not in session:
         return jsonify({"error": "Authentication required"}), 401
     
-    config = TableConfiguration.query.filter_by(
-        id=config_id, 
-        user_id=session['user_id']
-    ).first_or_404()
-    
+    config = db.session.get(TableConfiguration, config_id)
+    if not config or config.user_id != session['user_id']:
+        return jsonify({"error": "Configuration not found or not owned by user"}), 404
+
     db.session.delete(config)
     db.session.commit()
     

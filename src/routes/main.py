@@ -254,32 +254,9 @@ def delete_spare_part(part_id):
 @main_bp.route('/users')
 @login_required
 def users():
-    # Technician import removed
-
-    # Get all users
-    all_users = User.query.all()
-    users_data = []
-    for user in all_users:
-        user_dict = user.to_dict(include_roles=True)
-        user_dict['roles_display'] = ', '.join(user_dict.get('roles', []))
-        user_dict['is_active'] = 'Yes' if user_dict['is_active'] else 'No'
-
-        # Check if this user has Technician role
-        user_dict['is_technician'] = any(role.name == 'Technician' for role in user.roles)
-
-        if user_dict['is_technician']:
-            user_dict['technician_id'] = user.id # Use user ID
-            user_dict['technician_status'] = user.availability_status
-            user_dict['skill_count'] = len(user.skills)
-            user_dict['skills'] = ', '.join([f"{ts.skill.name}(L{ts.skill_level})" for ts in user.skills])
-            # team_id is already in user_dict from to_dict()
-        else:
-            user_dict['technician_status'] = '-'
-            user_dict['skill_count'] = 0
-            user_dict['skills'] = '-'
-
-        users_data.append(user_dict)
-
+    # Eager load roles and team to prevent N+1 queries
+    all_users = User.query.options(db.joinedload(User.roles), db.joinedload(User.team)).all()
+    users_data = [user.to_dict(include_roles=True) for user in all_users]
     return render_template('users.html', users=users_data)
 
 @main_bp.route('/register', methods=['GET', 'POST'])

@@ -1,91 +1,124 @@
 import pytest
 import json
-from packages.mockCMMS.src.app import create_app
-from packages.mockCMMS.src.services.db import db, Task, Skill
-from packages.mockCMMS.src.services.seed import seed_data
-
-@pytest.fixture(scope='module')
+from src.app import create_app
+from src.services.db_utils import db, MaintenanceOrder, Skill, Asset
+@pytest.fixture(scope='function')
 def test_client():
-    """Fixture to create a test client for the mockCMMS app."""
     app = create_app()
     
     # Use an in-memory SQLite database for testing
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False # Disable CSRF for testing API endpoints
 
     with app.test_client() as testing_client:
         with app.app_context():
             db.create_all()
-            seed_data() # Seed the in-memory database
         yield testing_client
-    
-    # No need to clean up, in-memory database is ephemeral
 
-def test_get_tasks_endpoint(test_client):
+        # Clean up the database after each test
+        with app.app_context():
+            db.session.remove()
+            db.drop_all()
+
+def test_get_mos_endpoint(test_client):
     """
     GIVEN a Flask application configured for testing
-    WHEN the '/api/v1/tasks' endpoint is requested (GET)
-    THEN check that the response is valid and contains the seeded tasks
+    WHEN the '/api/v1/mos' endpoint is requested (GET)
+    THEN check that the response is valid and contains the seeded maintenance orders
     """
-    response = test_client.get('/api/v1/tasks')
+    # Create some data for the test
+    with test_client.application.app_context():
+        # Add an asset to satisfy the foreign key constraint
+        asset = Asset(asset_code='TEST-ASSET-1', name='Test Asset 1')
+        db.session.add(asset)
+        db.session.commit()
+
+        skill1 = Skill(name='Python')
+        mo1 = MaintenanceOrder(description='Routine server check', order_type='PM', asset_id=asset.id)
+        mo2 = MaintenanceOrder(description='Database migration', order_type='Corrective', asset_id=asset.id)
+        mo2.required_skills.append(skill1)
+        db.session.add_all([skill1, mo1, mo2])
+        db.session.commit()
+
+    response = test_client.get('/api/v1/mos')
     assert response.status_code == 200
     data = response.get_json()
     assert isinstance(data, list)
-    assert len(data) >= 4 # Based on the seed data
-    assert data[0]['scheduler_group_task'] == 'Server Maintenance'
-    assert 'Python' in data[1]['required_skills']
+    assert len(data) == 2
 
-def test_get_single_task_endpoint(test_client):
+    # Check for presence of both descriptions, regardless of order
+    descriptions = [item['description'] for item in data]
+    assert 'Routine server check' in descriptions
+    assert 'Database migration' in descriptions
+
+def test_get_single_mo_endpoint(test_client):
     """
     GIVEN a Flask application configured for testing
-    WHEN the '/api/v1/tasks/<id>' endpoint is requested (GET)
-    THEN check that the response is valid and returns the correct task
+    WHEN the '/api/v1/mos/<id>' endpoint is requested (GET)
+    THEN check that the response is valid and returns the correct maintenance order
     """
-    response = test_client.get('/api/v1/tasks/1')
+    with test_client.application.app_context():
+        asset = Asset(asset_code='TEST-ASSET-2', name='Test Asset 2')
+        db.session.add(asset)
+        db.session.commit()
+        mo = MaintenanceOrder(description='Single MO Test', order_type='PM', asset_id=asset.id)
+        db.session.add(mo)
+        db.session.commit()
+        mo_id = mo.id
+
+    response = test_client.get(f'/api/v1/mos/{mo_id}')
     assert response.status_code == 200
     data = response.get_json()
-    assert data['id'] == 1
-    assert data['scheduler_group_task'] == 'Server Maintenance'
+    assert data['id'] == mo_id
+    assert data['description'] == 'Single MO Test'
 
-    # Test for a non-existent task
-    response = test_client.get('/api/v1/tasks/999')
+    # Test for a non-existent maintenance order
+    response = test_client.get('/api/v1/mos/999')
     assert response.status_code == 404
 
-def test_post_task_endpoint(test_client):
+def test_post_mo_endpoint(test_client):
     """
     GIVEN a Flask application configured for testing
-    WHEN the '/api/v1/tasks' endpoint is posted to (POST)
-    THEN check that a new task is created and returned
+    WHEN the '/api/v1/mos' endpoint is posted to (POST)
+    THEN check that a new maintenance order is created and returned
     """
-    new_task_data = {
-        "scheduler_group_task": "New Test Task",
-        "planning_notes": "This is a test.",
-        "lines": "Test Line",
-        "mitarbeiter_pro_aufgabe": 1,
-        "planned_worktime_min": 30,
-        "priority": "D",
-        "quantity": 1,
-        "task_type": "Rep",
-        "ticket_mo": "TEST-001",
+    with test_client.application.app_context():
+        # Ensure the asset exists for the foreign key constraint
+        asset = Asset(asset_code='TEST-ASSET', name='Test Asset')
+        db.session.add(asset)
+        db.session.commit()
+        asset_id = asset.id
+
+    new_mo_data = {
+        "description": "New Test MO",
+        "notes": "This is a test.",
+        "order_type": "Corrective",
+        "asset_id": asset_id,
+        "priority": "High",
+        "status": "Pending",
         "required_skills": ["Python", "New Skill"]
     }
     
-    response = test_client.post('/api/v1/tasks',
-                                data=json.dumps(new_task_data),
+    response = test_client.post('/api/v1/mos',
+                                data=json.dumps(new_mo_data),
                                 content_type='application/json')
     
     assert response.status_code == 201
     data = response.get_json()
-    assert data['scheduler_group_task'] == "New Test Task"
+    assert data['description'] == "New Test MO"
     assert data['id'] is not None
-    assert "New Skill" in data['required_skills']
 
-    # Verify the task was actually added to the database
+    # Verify the required skills were processed
+    skill_names = [s['name'] for s in data['required_skills']]
+    assert "New Skill" in skill_names
+
+    # Verify the MO was actually added to the database
     with test_client.application.app_context():
-        task = Task.query.get(data['id'])
-        assert task is not None
-        assert task.priority == "D"
-        
+        mo = db.session.get(MaintenanceOrder, data['id'])
+        assert mo is not None
+        assert mo.priority == "High"
+
         # Verify the new skill was created
         new_skill = Skill.query.filter_by(name="New Skill").first()
         assert new_skill is not None

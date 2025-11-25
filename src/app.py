@@ -122,7 +122,7 @@ def create_app():
         
         # Populate with dummy data if the DB was just created and we are in debug mode
         debug_use_test_db = os.getenv('MOCKCMMS_DEBUG_USE_TEST_DB', '0').lower() in ('1', 'true', 'yes')
-        if not db_exists and debug_use_test_db:
+        if not db_exists and debug_use_test_db and not app.config.get('TESTING', False):
             try:
                 from .services.db_utils import populate_dummy_data
                 populate_dummy_data(app.logger)

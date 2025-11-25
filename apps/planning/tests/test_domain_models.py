@@ -2,7 +2,7 @@
 
 import pytest
 from datetime import datetime
-from src.services.db_utils import db, Technician, Skill, Shift, MaintenanceOrder, SparePart, TechnicianSkill, maintenance_order_spare_parts
+from src.services.db_utils import db, User, Skill, MaintenanceOrder, SparePart, UserSkill, maintenance_order_spare_parts
 from apps.planning.src.services.planning_models import (
     Schedule, PlanningTask
 )

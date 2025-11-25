@@ -14,7 +14,7 @@ Tests cover:
 
 import pytest
 from datetime import datetime, timedelta
-from src.services.db_utils import db, MaintenanceOrder, Technician, Skill, SparePart, TechnicianSkill, maintenance_order_spare_parts
+from src.services.db_utils import db, MaintenanceOrder, User, Skill, SparePart, UserSkill, maintenance_order_spare_parts
 from apps.planning.src.services.planning_models import (
     PlanningTask, Schedule
 )

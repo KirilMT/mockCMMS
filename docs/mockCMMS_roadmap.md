@@ -43,8 +43,8 @@ See detailed plan here: **[Advanced Table Fixes Plan](./advanced-table-fixes-pla
 - Add filter validation
 - Add real-time table updates
 
-**Status:** In Progress - Phase 1 (Critical Fixes)  
-**Started:** November 23, 2025  
+**Status:** In Progress - Phase 1 (Critical Fixes)
+**Started:** November 23, 2025
 **Target Completion:** December 10, 2025
 
 ---
@@ -123,6 +123,16 @@ The core application can be improved with the following features to support the 
         - Build a service that can generate realistic mock data (PMs, MOs, technician logs) for stress-testing and demonstration purposes.
         - Create a UI for simulating user inputs, such as manually triggering a breakdown alarm or reporting a technician as absent, to test the system's dynamic response.
 
+- **[ ] Core Application Test Suite Enhancement:**
+    - **Objective:** Build a comprehensive, isolated test suite for the main mockCMMS application, separate from the modular app tests.
+    - **Details:**
+        - Create a dedicated test runner and configuration for the main application.
+        - Develop unit and integration tests for core services (`db_utils`, `shift_utils`, etc.).
+        - Write robust tests for all main API endpoints (`/api/v1/...`).
+        - Implement tests for user authentication and authorization logic.
+        - Defer fixing the extensive test failures in the `apps/planning` test suite to focus on core application stability first. This will be addressed in a separate, dedicated effort for the Planning app.
+        - **Key Deliverable:** A reliable CI pipeline that runs core application tests on every commit, ensuring the main application remains stable and bug-free.
+
 - **[ ] UI Regression Automation:**
     - **Goal:** Ensure critical UI workflows (advanced tables, filters, dropdown persistence, toast handling) are validated automatically.
     - **Plan:** Introduce a lightweight Playwright (or Selenium/Cypress) suite that exercises the advanced-table component end-to-end, complementing existing backend pytest coverage.
@@ -135,4 +145,3 @@ The core application can be improved with the following features to support the 
 - **Automated, Specialized Reports:** Shift, weekend, and technician-submitted reports.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
 - **Data Simulation Engine:** For robust testing and development.
-

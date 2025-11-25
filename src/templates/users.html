@@ -27,9 +27,15 @@
             },
             { key: 'email', label: 'Email', type: 'text' },
             { key: 'roles_display', label: 'Roles', type: 'text' },
+            {
+                key: 'team_name', label: 'Team', type: 'text', render: function (val, row) {
+                    // Show team for any user, not just technicians
+                    return val || '<span class="text-muted">Unassigned</span>';
+                }
+            },
             { key: 'is_active', label: 'Active', type: 'text' },
             {
-                key: 'technician_status', label: 'Availability', type: 'text', render: function (val, row) {
+                key: 'availability_status', label: 'Availability', type: 'text', render: function (val, row) {
                     // Only show if user has Technician role
                     if (!row.is_technician) return '-';
                     if (val === 'Available') return '<span class="badge badge-success">Available</span>';

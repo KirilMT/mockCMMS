@@ -12,9 +12,9 @@ Tests cover:
 
 import pytest
 from datetime import datetime
-from src.services.db_utils import db, MaintenanceOrder, Technician, Skill, SparePart
+from src.services.db_utils import db, MaintenanceOrder, User, Skill, SparePart
 from apps.planning.src.services.planning_models import (
-    PlanningTask, Schedule, TechnicianSkill
+    Schedule, PlanningTask
 )
 from apps.planning.src.services.planning_engine import PlanningEngine
 from apps.planning.src.services.planning_result import UnassignedReason
