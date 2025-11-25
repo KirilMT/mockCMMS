@@ -332,20 +332,21 @@ loadFiltersFromStorage() {
 
 ### 📊 Progress Tracking
 
-**Overall Progress:** 15% (2/13 tasks completed)
+**Overall Progress:** 23% (3/13 tasks completed)
 
-**Phase 1:** 40% (2/5 tasks) - In Progress  
+**Phase 1:** 60% (3/5 tasks) - In Progress  
 **Phase 2:** 0% (0/2 tasks) - Not Started  
 **Phase 3:** 0% (0/2 tasks) - Not Started
 
-**Current Focus:** Task 1.3 - Implement AND/OR Filter Logic
+**Current Focus:** Task 1.4 - Constrain Filter "Apply" Button
 
 **Completed Tasks:**
 - ✅ Task 1.1: Save/Load View Configuration (100%)
 - ✅ Task 1.2: Fix Global Search Functionality (100%)
+- ✅ Task 1.3: Implement AND/OR Filter Logic (100%)
 
 **In Progress:**
-- ⏳ Task 1.3: AND/OR Filter Logic (0%)
+- ⏳ Task 1.4: Constrain Filter "Apply" Button (0%)
 
 **Blockers:** None
 
@@ -546,9 +547,32 @@ loadFiltersFromStorage() {
   - Better error handling
   - Special character support
 
-#### Task 1.3: Implement AND/OR Filter Logic
-- [ ] Redesign filter data structure to include logic operators
-- [ ] Update `showFilterManager()` to load saved logic states
+#### Task 1.3: Implement AND/OR Filter Logic ✅ COMPLETED
+- [x] Redesign filter data structure to include logic operators
+  - ✅ Completed November 25, 2025
+  - Changed `this.filters` from an object to a structured array: `[{ column, operator, value }, { logic, column, operator, value }]`
+  - `applyFilters()` now builds this structured array, capturing the selected logic between rows
+- [x] Update `showFilterManager()` to load saved logic states
+  - ✅ Completed November 25, 2025
+  - Rewrote `showFilterManager()` to read the structured array and correctly set the checked state of the AND/OR radio buttons
+- [x] Modify `applyFiltersWithLogic()` to evaluate the structured array
+  - ✅ Completed November 25, 2025
+  - Rewrote `applyFiltersWithLogic()` to iterate through the structured array
+  - It now correctly applies `result = result && currentResult` for AND, and `result = result || currentResult` for OR
+- [x] Refactor `addFilterRow()` and `addFilterRowWithData()` for consistency
+  - ✅ Completed November 25, 2025
+  - Consolidated row creation logic into `addFilterRowWithData()`
+  - `addFilterRow()` now correctly adds the AND/OR toggle before calling the generic row builder
+
+**Task Completion Summary:**
+- 4/4 subtasks completed
+- Files modified:
+  - `src/static/js/advanced-table.js` - Major refactor of filter handling
+- Key improvements:
+  - Full AND/OR logic support is now implemented
+  - Filter state is correctly saved and displayed
+  - Code is more robust and maintainable
+- **Task 1.3 Status:** COMPLETE ✅
 - [ ] Capture logic choice in `applyFilters()`
 - [ ] Rewrite `applyFiltersWithLogic()` to evaluate chains
 - [ ] Store logic in `this.filters` structure

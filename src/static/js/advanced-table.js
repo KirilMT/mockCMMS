@@ -5,7 +5,7 @@ class AdvancedTable {
         this.columns = options.columns || [];
         this.pageName = options.pageName || 'default';
         this.currentSort = { column: null, direction: 'asc' };
-        this.filters = {};
+        this.filters = []; // Use an array for structured filters
         this.hiddenColumns = new Set();
         this.columnOrder = [...this.columns.map(col => col.key)];
         this.currentPage = 1;
@@ -20,7 +20,7 @@ class AdvancedTable {
             columnOrder: [...this.columnOrder],
             hiddenColumns: new Set(this.hiddenColumns),
             currentSort: { ...this.currentSort },
-            filters: {}
+            filters: [] // Default filters is an empty array
         };
 
         // Debounce timer for global search
@@ -206,13 +206,26 @@ class AdvancedTable {
     }
 
     applyFiltersWithLogic(row) {
-        const filterEntries = Object.entries(this.filters);
-        if (filterEntries.length === 0) return true;
+        if (!Array.isArray(this.filters) || this.filters.length === 0) {
+            return true;
+        }
 
-        // For now, use AND logic (can be enhanced later for OR)
-        return filterEntries.every(([column, filter]) =>
-            this.applyFilter(row[column], filter)
-        );
+        // Start with the result of the first filter
+        let result = this.applyFilter(row[this.filters[0].column], this.filters[0]);
+
+        // Sequentially apply the rest of the filters based on their logic
+        for (let i = 1; i < this.filters.length; i++) {
+            const filter = this.filters[i];
+            const currentResult = this.applyFilter(row[filter.column], filter);
+
+            if (filter.logic === 'AND') {
+                result = result && currentResult;
+            } else if (filter.logic === 'OR') {
+                result = result || currentResult;
+            }
+        }
+
+        return result;
     }
 
     getPaginatedData(data) {
@@ -373,51 +386,29 @@ class AdvancedTable {
         // Clear existing display
         filterRows.innerHTML = '';
 
-        // Add existing filters
-        const filterEntries = Object.entries(this.filters);
-        filterEntries.forEach(([column, filter], index) => {
-            if (index > 0) {
-                // Add AND/OR logic for subsequent filters
-                const logicRow = document.createElement('div');
-                logicRow.className = 'filter-logic';
-                logicRow.innerHTML = `
-                    <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="logic${index}" id="and${index}" value="and" checked>
-                        <label class="btn btn-outline-primary btn-sm" for="and${index}">AND</label>
-                        <input type="radio" class="btn-check" name="logic${index}" id="or${index}" value="or">
-                        <label class="btn btn-outline-primary btn-sm" for="or${index}">OR</label>
-                    </div>
-                `;
-                filterRows.appendChild(logicRow);
-            }
+        // Add existing filters from the structured array
+        if (Array.isArray(this.filters) && this.filters.length > 0) {
+            this.filters.forEach((filter, index) => {
+                // Add AND/OR logic toggle for all filters except the first one
+                if (index > 0) {
+                    const logicRow = document.createElement('div');
+                    logicRow.className = 'filter-logic';
+                    const logicId = `logic-${Date.now()}-${index}`;
+                    logicRow.innerHTML = `
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="${logicId}" id="and-${logicId}" value="and" ${filter.logic === 'AND' ? 'checked' : ''}>
+                            <label class="btn btn-outline-primary btn-sm" for="and-${logicId}">AND</label>
+                            <input type="radio" class="btn-check" name="${logicId}" id="or-${logicId}" value="or" ${filter.logic === 'OR' ? 'checked' : ''}>
+                            <label class="btn btn-outline-primary btn-sm" for="or-${logicId}">OR</label>
+                        </div>
+                    `;
+                    filterRows.appendChild(logicRow);
+                }
 
-            const filterRow = document.createElement('div');
-            filterRow.className = 'filter-row';
-            filterRow.innerHTML = `
-                <select class="form-select filter-column">
-                    <option value="">Select Column</option>
-                    ${this.columns.map(col =>
-                `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`
-            ).join('')}
-                </select>
-                <select class="form-select filter-operator">
-                    <option value="contains" ${filter.operator === 'contains' ? 'selected' : ''}>Contains</option>
-                    <option value="not_contains" ${filter.operator === 'not_contains' ? 'selected' : ''}>Does Not Contain</option>
-                    <option value="equals" ${filter.operator === 'equals' ? 'selected' : ''}>Equals</option>
-                    <option value="not_equals" ${filter.operator === 'not_equals' ? 'selected' : ''}>Not Equals</option>
-                    <option value="starts_with" ${filter.operator === 'starts_with' ? 'selected' : ''}>Starts With</option>
-                    <option value="ends_with" ${filter.operator === 'ends_with' ? 'selected' : ''}>Ends With</option>
-                </select>
-                <input type="text" class="form-control filter-value" placeholder="Filter value" value="${filter.value || ''}">
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.filter-row').remove()">
-                    <i class="fas fa-trash"></i>
-                </button>
-            `;
-            filterRows.appendChild(filterRow);
-        });
-
-        // Add one empty row if no filters exist
-        if (filterEntries.length === 0) {
+                this.addFilterRowWithData(filter.column, filter.operator, filter.value);
+            });
+        } else {
+            // Add one empty row if no filters exist
             this.addFilterRow();
         }
 
@@ -457,24 +448,38 @@ class AdvancedTable {
     }
 
     applyFilters() {
-        const filterRows = document.querySelectorAll('#filterRows .filter-row');
-        this.filters = {};
+        const filterRowsContainer = document.getElementById('filterRows');
+        const newFilters = [];
 
-        console.log('Applying filters, found rows:', filterRows.length);
+        filterRowsContainer.childNodes.forEach(node => {
+            if (node.classList && node.classList.contains('filter-row')) {
+                const column = node.querySelector('.filter-column')?.value;
+                const operator = node.querySelector('.filter-operator')?.value;
+                const value = node.querySelector('.filter-value')?.value;
 
-        filterRows.forEach(row => {
-            const column = row.querySelector('.filter-column')?.value;
-            const operator = row.querySelector('.filter-operator')?.value;
-            const value = row.querySelector('.filter-value')?.value;
+                // Get the logic from the preceding .filter-logic element
+                let logic = 'AND'; // Default to AND for the first filter
+                const prevSibling = node.previousElementSibling;
+                if (prevSibling && prevSibling.classList.contains('filter-logic')) {
+                    const selectedLogic = prevSibling.querySelector('input[type="radio"]:checked');
+                    if (selectedLogic) {
+                        logic = selectedLogic.value.toUpperCase();
+                    }
+                }
 
-            console.log('Filter row:', { column, operator, value });
-
-            if (column && value) {
-                this.filters[column] = { operator, value };
+                if (column && value) {
+                    if (newFilters.length === 0) {
+                        // First filter doesn't have a preceding logic
+                        newFilters.push({ column, operator, value });
+                    } else {
+                        newFilters.push({ logic, column, operator, value });
+                    }
+                }
             }
         });
 
-        console.log('Filters applied:', this.filters);
+        this.filters = newFilters;
+        console.log('Structured filters applied:', JSON.stringify(this.filters, null, 2));
 
         // Reset selected config since state has changed
         this.selectedConfigId = null;
@@ -491,17 +496,43 @@ class AdvancedTable {
         if (existingRows.length > 0) {
             const logicRow = document.createElement('div');
             logicRow.className = 'filter-logic';
-            const logicId = Date.now(); // Unique ID for radio buttons
+            const logicId = `logic-${Date.now()}`; // Unique ID for radio buttons
             logicRow.innerHTML = `
                 <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="logic${logicId}" id="and${logicId}" value="and" checked>
-                    <label class="btn btn-outline-primary btn-sm" for="and${logicId}">AND</label>
-                    <input type="radio" class="btn-check" name="logic${logicId}" id="or${logicId}" value="or">
-                    <label class="btn btn-outline-primary btn-sm" for="or${logicId}">OR</label>
+                    <input type="radio" class="btn-check" name="${logicId}" id="and-${logicId}" value="and" checked>
+                    <label class="btn btn-outline-primary btn-sm" for="and-${logicId}">AND</label>
+                    <input type="radio" class="btn-check" name="${logicId}" id="or-${logicId}" value="or">
+                    <label class="btn btn-outline-primary btn-sm" for="or-${logicId}">OR</label>
                 </div>
             `;
             filterRows.appendChild(logicRow);
         }
+
+        // Add a new empty filter row
+        this.addFilterRowWithData();
+    }
+
+    clearAllFilters() {
+        // Use full table reset instead of just clearing filters
+        this.resetTableState();
+        this.closeFilterManager();
+    }
+
+    resetTableState() {
+        // Reset to default state
+        this.columnOrder = [...this.defaultState.columnOrder];
+        this.hiddenColumns = new Set(this.defaultState.hiddenColumns);
+        this.currentSort = { ...this.defaultState.currentSort };
+        this.filters = []; // Reset to empty array
+        this.selectedConfigId = null;
+        this.globalSearchTerm = null;
+        this.globalSearchDisplay = '';
+        this.currentPage = 1;
+        this.render();
+    }
+
+    addFilterRowWithData(column = '', operator = 'contains', value = '') {
+        const filterRows = document.getElementById('filterRows');
 
         const filterRow = document.createElement('div');
         filterRow.className = 'filter-row';
@@ -509,18 +540,18 @@ class AdvancedTable {
             <select class="form-select filter-column">
                 <option value="">Select Column</option>
                 ${this.columns.map(col =>
-            `<option value="${col.key}">${col.label}</option>`
-        ).join('')}
+                    `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`
+                ).join('')}
             </select>
             <select class="form-select filter-operator">
-                <option value="contains">Contains</option>
-                <option value="not_contains">Does Not Contain</option>
-                <option value="equals">Equals</option>
-                <option value="not_equals">Not Equals</option>
-                <option value="starts_with">Starts With</option>
-                <option value="ends_with">Ends With</option>
+                <option value="contains" ${operator === 'contains' ? 'selected' : ''}>Contains</option>
+                <option value="not_contains" ${operator === 'not_contains' ? 'selected' : ''}>Does Not Contain</option>
+                <option value="equals" ${operator === 'equals' ? 'selected' : ''}>Equals</option>
+                <option value="not_equals" ${operator === 'not_equals' ? 'selected' : ''}>Not Equals</option>
+                <option value="starts_with" ${operator === 'starts_with' ? 'selected' : ''}>Starts With</option>
+                <option value="ends_with" ${operator === 'ends_with' ? 'selected' : ''}>Ends With</option>
             </select>
-            <input type="text" class="form-control filter-value" placeholder="Filter value">
+            <input type="text" class="form-control filter-value" placeholder="Filter value" value="${value || ''}">
             <button type="button" class="btn btn-outline-danger btn-sm remove-filter-btn">
                 <i class="fas fa-trash"></i>
             </button>
@@ -537,55 +568,6 @@ class AdvancedTable {
             }
             row.remove();
         });
-
-        filterRows.appendChild(filterRow);
-    }
-
-    clearAllFilters() {
-        // Use full table reset instead of just clearing filters
-        this.resetTableState();
-        this.closeFilterManager();
-    }
-
-    resetTableState() {
-        // Reset to default state
-        this.columnOrder = [...this.defaultState.columnOrder];
-        this.hiddenColumns = new Set(this.defaultState.hiddenColumns);
-        this.currentSort = { ...this.defaultState.currentSort };
-        this.filters = {};
-        this.selectedConfigId = null;
-        this.globalSearchTerm = null;
-        this.globalSearchDisplay = '';
-        this.currentPage = 1;
-        this.render();
-    }
-
-    addFilterRowWithData(column, operator, value) {
-        const filterRows = document.getElementById('filterRows');
-        const rowCount = filterRows.children.length;
-
-        const filterRow = document.createElement('div');
-        filterRow.className = 'filter-row';
-        filterRow.innerHTML = `
-            <select class="form-select">
-                <option value="">Select Column</option>
-                ${this.columns.map(col =>
-            `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`
-        ).join('')}
-            </select>
-            <select class="form-select">
-                <option value="contains" ${operator === 'contains' ? 'selected' : ''}>Contains</option>
-                <option value="not_contains" ${operator === 'not_contains' ? 'selected' : ''}>Does Not Contain</option>
-                <option value="equals" ${operator === 'equals' ? 'selected' : ''}>Equals</option>
-                <option value="not_equals" ${operator === 'not_equals' ? 'selected' : ''}>Not Equals</option>
-                <option value="starts_with" ${operator === 'starts_with' ? 'selected' : ''}>Starts With</option>
-                <option value="ends_with" ${operator === 'ends_with' ? 'selected' : ''}>Ends With</option>
-            </select>
-            <input type="text" class="form-control" placeholder="Filter value" value="${value || ''}">
-            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFilterRow(this)">
-                <i class="fas fa-trash"></i>
-            </button>
-        `;
 
         filterRows.appendChild(filterRow);
     }
