@@ -51,6 +51,30 @@
 
 .table-search {
     width: 300px;
+    position: relative;
+}
+
+.table-search input {
+    padding-right: 35px; /* Make room for clear button */
+}
+
+.table-search #clearSearchBtn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    color: #6c757d;
+    z-index: 10;
+}
+
+.table-search #clearSearchBtn:hover {
+    color: #495057;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
 }
 
 .advanced-table {

@@ -23,6 +23,13 @@ class AdvancedTable {
             filters: {}
         };
 
+        // Debounce timer for global search
+        this.searchDebounceTimer = null;
+
+        // Store both original and lowercase search term
+        this.globalSearchTerm = null; // Lowercase for comparison
+        this.globalSearchDisplay = ''; // Original case for display
+
         this.init();
     }
 
@@ -35,6 +42,10 @@ class AdvancedTable {
 
     render() {
         const tableId = this.container.id || 'advTable';
+
+        // Preserve search input value before render (original case for display)
+        const currentSearchValue = this.globalSearchDisplay || '';
+
         this.container.innerHTML = `
             <div class="advanced-table-wrapper">
                 <div class="table-controls">
@@ -42,14 +53,17 @@ class AdvancedTable {
                         <button class="btn btn-sm btn-outline-secondary" data-action="showColumnManager">
                             <i class="fas fa-columns"></i> Columns
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" data-action="showFilterManager">
+                        <button class="btn btn-sm btn-outline-primary" data-action="showFilterManager">
                             <i class="fas fa-filter"></i> Filters
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" data-action="exportData">
+                        <button class="btn btn-sm btn-outline-danger" data-action="clearAllFilters">
+                            <i class="fas fa-eraser"></i> Clear Filters
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" data-action="exportData">
                             <i class="fas fa-download"></i> Export CSV
                         </button>
                         <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-secondary" data-action="saveConfiguration">
+                            <button class="btn btn-sm btn-outline-info" data-action="saveConfiguration">
                                 <i class="fas fa-save"></i> Save View
                             </button>
                             <select class="form-select form-select-sm" id="savedConfigsDropdown" style="max-width: 200px;">
@@ -58,8 +72,11 @@ class AdvancedTable {
                         </div>
                     </div>
                     <div class="table-search">
-                        <input type="text" class="form-control form-control-sm" placeholder="Search all columns..." 
-                               data-action="globalSearch" id="globalSearchInput">
+                        <input type="text" class="form-control form-control-sm" placeholder="Search all columns..."
+                               id="globalSearchInput" value="${currentSearchValue}">
+                        <button class="btn btn-sm" type="button" id="clearSearchBtn" style="display: ${currentSearchValue ? 'block' : 'none'};">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="table-responsive" style="max-height: 100%; overflow-y: auto; overflow-x: auto;">
@@ -135,14 +152,39 @@ class AdvancedTable {
     }
 
     getFilteredData() {
-        return this.data.filter(row => {
+        const filtered = this.data.filter(row => {
             // Apply global search
             if (this.globalSearchTerm) {
+                // Build searchable text using FORMATTED values (what user sees), not raw data
                 const searchableText = this.columnOrder
                     .filter(key => !this.hiddenColumns.has(key))
-                    .map(key => (row[key] || '').toString().toLowerCase())
+                    .map(key => {
+                        // Use formatCellValue to get the displayed value, not raw data
+                        const rawValue = row[key];
+                        const col = this.columns.find(c => c.key === key);
+
+                        // Format the value the same way it's displayed in the table
+                        let displayValue;
+                        if (col && col.type === 'date' && rawValue) {
+                            displayValue = new Date(rawValue).toLocaleDateString();
+                        } else if (col && col.type === 'datetime' && rawValue) {
+                            displayValue = new Date(rawValue).toLocaleString();
+                        } else {
+                            displayValue = (rawValue || '').toString();
+                        }
+
+                        return displayValue.toLowerCase();
+                    })
                     .join(' ');
-                if (!searchableText.includes(this.globalSearchTerm)) return false;
+
+                const matches = searchableText.includes(this.globalSearchTerm);
+
+                // Debug logging
+                if (this.globalSearchTerm && this.globalSearchTerm.length < 3) {
+                    console.log(`Row ${row.id}: "${searchableText.substring(0, 100)}..." ${matches ? 'MATCHES' : 'NO MATCH'} "${this.globalSearchTerm}"`);
+                }
+
+                if (!matches) return false;
             }
 
             // Apply column filters with AND/OR logic
@@ -150,7 +192,9 @@ class AdvancedTable {
                 return this.applyFiltersWithLogic(row);
             }
             return true;
-        }).sort((a, b) => {
+        });
+
+        return filtered.sort((a, b) => {
             if (!this.currentSort.column) return 0;
 
             const aVal = a[this.currentSort.column] || '';
@@ -193,11 +237,27 @@ class AdvancedTable {
 
     globalSearch(searchTerm) {
         try {
-            this.globalSearchTerm = searchTerm ? searchTerm.toLowerCase().trim() : null;
+            // Handle empty search
+            if (!searchTerm) {
+                this.globalSearchTerm = null;
+                this.globalSearchDisplay = '';
+                this.currentPage = 1;
+                this.render();
+                return;
+            }
+
+            // Store original case for display, lowercase for comparison
+            this.globalSearchDisplay = searchTerm;
+            this.globalSearchTerm = searchTerm.toLowerCase();
+
             this.currentPage = 1;
             this.render();
         } catch (error) {
             console.error('Global search error:', error);
+            // Don't break the UI if search fails
+            this.globalSearchTerm = null;
+            this.globalSearchDisplay = '';
+            this.render();
         }
     }
 
@@ -495,6 +555,7 @@ class AdvancedTable {
         this.filters = {};
         this.selectedConfigId = null;
         this.globalSearchTerm = null;
+        this.globalSearchDisplay = '';
         this.currentPage = 1;
         this.render();
     }
@@ -769,14 +830,49 @@ class AdvancedTable {
                 button.addEventListener('click', () => this.showColumnManager());
             } else if (action === 'showFilterManager') {
                 button.addEventListener('click', () => this.showFilterManager());
+            } else if (action === 'clearAllFilters') {
+                button.addEventListener('click', () => this.resetTableState());
             } else if (action === 'exportData') {
                 button.addEventListener('click', () => this.exportData('csv'));
             } else if (action === 'saveConfiguration') {
                 button.addEventListener('click', () => this.saveConfiguration());
-            } else if (action === 'globalSearch') {
-                button.addEventListener('input', (e) => this.globalSearch(e.target.value));
             }
+            // Note: globalSearch is handled separately below since it's an input, not a button
         });
+
+        // Bind global search input specifically
+        const searchInput = document.getElementById('globalSearchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const value = e.target.value; // Keep original case for display
+
+                // Show/hide clear button based on input value
+                if (clearSearchBtn) {
+                    clearSearchBtn.style.display = value ? 'block' : 'none';
+                }
+
+                // Debounce the search to avoid excessive re-renders
+                if (this.searchDebounceTimer) {
+                    clearTimeout(this.searchDebounceTimer);
+                }
+                this.searchDebounceTimer = setTimeout(() => {
+                    this.globalSearch(value); // Pass original case value
+                }, 450); // debounce [ms]
+            });
+        }
+
+        // Bind clear search button
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', () => {
+                if (searchInput) {
+                    searchInput.value = '';
+                    clearSearchBtn.style.display = 'none';
+                    this.globalSearch('');
+                }
+            });
+        }
 
         // Bind saved config dropdown for loading configurations
         const dropdown = document.getElementById('savedConfigsDropdown');
