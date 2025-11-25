@@ -5,12 +5,25 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    /* Let wrapper size naturally based on content */
+    height: 100%; /* Fill parent height */
 }
 
 /* For pages where table container should fill viewport (Assets, MOs, Users, Spare Parts) */
+.page-full-height {
+    /* Account for: navbar (56px) + page padding (20px top + 20px bottom) + page title/actions (~80px) */
+    height: calc(100vh - 176px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .page-full-height .advanced-table-wrapper {
-    min-height: calc(100vh - 280px); /* Fill vertical space minus header/nav */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
 }
 
 .table-controls {
@@ -21,6 +34,13 @@
     background-color: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
     flex-shrink: 0;
+}
+
+.table-responsive {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-height: 0; /* Important for flex children */
 }
 
 .table-actions {
@@ -315,3 +335,125 @@
 .export-progress.show {
     display: block;
 }
+
+/* Toast Notifications - Standardized across project (matches planning app) */
+.toast-container {
+    z-index: 10000 !important;
+}
+
+.toast {
+    min-width: 400px;
+    max-width: 600px;
+    background: white !important;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    margin-bottom: 0.75rem;
+    overflow: visible;
+    border: 2px solid #dee2e6;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+/* Remove animations temporarily to debug */
+.toast.show {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.toast.hiding {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+.toast-header {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background-color: rgba(0,0,0,0.03);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.toast-header.toast-success {
+    background-color: #d4edda;
+    border-bottom-color: #c3e6cb;
+    color: #155724;
+}
+
+.toast-header.toast-error {
+    background-color: #f8d7da;
+    border-bottom-color: #f5c6cb;
+    color: #721c24;
+}
+
+.toast-header.toast-warning {
+    background-color: #fff3cd;
+    border-bottom-color: #ffeaa7;
+    color: #856404;
+}
+
+.toast-header.toast-info {
+    background-color: #d1ecf1;
+    border-bottom-color: #bee5eb;
+    color: #0c5460;
+}
+
+.toast-icon {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.toast-title {
+    font-weight: 600;
+    flex-grow: 1;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.5rem;
+}
+
+.toast-close:hover {
+    opacity: 1;
+}
+
+.toast-body {
+    padding: 0.75rem;
+    color: #212529;
+}
+
+/* Dropdown styling */
+#savedConfigsDropdown {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Dropdown button shows gray when no selection, black when config is selected */
+#savedConfigsDropdown {
+    color: #212529; /* Default black */
+}
+
+/* In the dropdown list: all options are gray by default */
+#savedConfigsDropdown option.config-option {
+    color: #999; /* Gray for non-selected options */
+}
+
+/* In the dropdown list: current/selected option is black */
+#savedConfigsDropdown option.current-config {
+    color: #212529; /* Black for current selection */
+    font-weight: normal; /* No bold */
+}
+
+/* Placeholder option styling when it exists */
+#savedConfigsDropdown option[disabled] {
+    color: #999;
+}
+

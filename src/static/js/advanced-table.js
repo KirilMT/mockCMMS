@@ -11,6 +11,18 @@ class AdvancedTable {
         this.currentPage = 1;
         this.pageSize = options.pageSize || 25;
 
+        // Store saved configurations to persist through renders
+        this.savedConfigs = [];
+        this.selectedConfigId = null;
+
+        // Store default state for full reset capability
+        this.defaultState = {
+            columnOrder: [...this.columnOrder],
+            hiddenColumns: new Set(this.hiddenColumns),
+            currentSort: { ...this.currentSort },
+            filters: {}
+        };
+
         this.init();
     }
 
@@ -41,7 +53,7 @@ class AdvancedTable {
                                 <i class="fas fa-save"></i> Save View
                             </button>
                             <select class="form-select form-select-sm" id="savedConfigsDropdown" style="max-width: 200px;">
-                                <option value="">Select saved view...</option>
+                                <option value="" disabled selected>Select saved view...</option>
                             </select>
                         </div>
                     </div>
@@ -50,7 +62,7 @@ class AdvancedTable {
                                data-action="globalSearch" id="globalSearchInput">
                     </div>
                 </div>
-                <div class="table-responsive" style="max-height: 60vh; overflow-y: auto; overflow-x: auto;">
+                <div class="table-responsive" style="max-height: 100%; overflow-y: auto; overflow-x: auto;">
                     <table class="table table-striped table-hover advanced-table" style="width: max-content; min-width: 100%;">
                         <thead class="table-dark sticky-top">
                             ${this.renderHeader()}
@@ -60,14 +72,14 @@ class AdvancedTable {
                         </tbody>
                     </table>
                 </div>
-                <div class="table-pagination">
-                    ${this.renderPagination()}
-                </div>
             </div>
         `;
 
         // Re-attach event listeners after DOM update
         this.attachEventListeners();
+
+        // Repopulate config dropdown after render (it was destroyed by innerHTML)
+        this.populateConfigDropdown();
     }
 
     renderHeader() {
@@ -117,6 +129,7 @@ class AdvancedTable {
             this.currentSort.column = column;
             this.currentSort.direction = 'asc';
         }
+        this.selectedConfigId = null; // Reset selected config since state changed
         this.currentPage = 1;
         this.render();
     }
@@ -375,6 +388,10 @@ class AdvancedTable {
 
         this.columnOrder = newOrder;
         this.hiddenColumns = newHidden;
+
+        // Reset selected config since state has changed
+        this.selectedConfigId = null;
+
         this.render();
         this.closeColumnManager();
     }
@@ -399,6 +416,8 @@ class AdvancedTable {
 
         console.log('Filters applied:', this.filters);
 
+        // Reset selected config since state has changed
+        this.selectedConfigId = null;
         this.currentPage = 1; // Reset to first page
         this.render();
         this.closeFilterManager();
@@ -463,10 +482,21 @@ class AdvancedTable {
     }
 
     clearAllFilters() {
+        // Use full table reset instead of just clearing filters
+        this.resetTableState();
+        this.closeFilterManager();
+    }
+
+    resetTableState() {
+        // Reset to default state
+        this.columnOrder = [...this.defaultState.columnOrder];
+        this.hiddenColumns = new Set(this.defaultState.hiddenColumns);
+        this.currentSort = { ...this.defaultState.currentSort };
         this.filters = {};
+        this.selectedConfigId = null;
+        this.globalSearchTerm = null;
         this.currentPage = 1;
         this.render();
-        this.closeFilterManager();
     }
 
     addFilterRowWithData(column, operator, value) {
@@ -532,6 +562,13 @@ class AdvancedTable {
         const name = prompt('Enter configuration name:');
         if (!name || !name.trim()) return;
 
+        // Check for duplicate names
+        const duplicate = this.savedConfigs.find(c => c.config_name.toLowerCase() === name.trim().toLowerCase());
+        if (duplicate) {
+            ToastNotification.error(`Configuration name "${name.trim()}" already exists. Please choose a different name.`);
+            return;
+        }
+
         const config = {
             config_name: name.trim(),
             column_order: JSON.stringify(this.columnOrder),
@@ -550,55 +587,142 @@ class AdvancedTable {
             },
             body: JSON.stringify(config)
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
-                    alert('Configuration saved successfully!');
-                    this.loadConfiguration(); // Refresh dropdown
+                    // Silent success - just update dropdown (no toast)
+                    this.selectedConfigId = data.id;
+                    this.loadConfiguration();
                 } else {
-                    alert('Error saving configuration: ' + (data.error || 'Unknown error'));
+                    ToastNotification.error('Failed to save configuration: ' + (data.error || 'Unknown error'));
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Error saving configuration: ' + error.message);
+                console.error('Error saving configuration:', error);
+                ToastNotification.error('Error saving configuration: ' + error.message);
             });
     }
 
     loadConfiguration() {
         fetch('/api/table-config/' + this.pageName)
             .then(response => {
-                if (response.ok) {
-                    return response.json();
+                if (!response.ok) {
+                    // Not an error - just no configurations yet
+                    if (response.status === 404 || response.status === 401) {
+                        throw new Error('NO_CONFIGS');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                throw new Error('Failed to load configurations');
+                return response.json();
             })
             .then(configs => {
-                // Load saved configurations into dropdown
-                this.loadSavedConfigurationsDropdown(configs);
+                // Store configurations in instance variable
+                this.savedConfigs = configs || [];
 
-                // Apply default configuration if exists
+                // Populate dropdown with saved configurations
+                this.populateConfigDropdown();
+
+                // Apply default configuration if exists (no toast for default load)
                 const defaultConfig = configs.find(c => c.is_default);
                 if (defaultConfig) {
                     this.applyConfiguration(defaultConfig);
+                    // Don't show toast for default configuration auto-load
                 }
             })
             .catch(error => {
-                console.log('No saved configurations available:', error);
+                if (error.message === 'NO_CONFIGS') {
+                    console.log('No saved configurations available');
+                } else {
+                    console.error('Error loading configurations:', error);
+                    ToastNotification.warning('Could not load saved configurations');
+                }
+                this.savedConfigs = [];
             });
     }
 
-    loadSavedConfigurationsDropdown(configs) {
+    populateConfigDropdown() {
         const dropdown = document.getElementById('savedConfigsDropdown');
-        if (dropdown && Array.isArray(configs)) {
-            dropdown.innerHTML = '<option value="">Select saved view...</option>';
-            configs.forEach(config => {
-                const option = document.createElement('option');
-                option.value = config.id;
-                option.textContent = config.config_name + (config.is_default ? ' (Default)' : '');
-                dropdown.appendChild(option);
-            });
+        if (!dropdown) return;
+
+        // Clear dropdown
+        dropdown.innerHTML = '';
+
+        // Check if we have any saved configs
+        const hasConfigs = Array.isArray(this.savedConfigs) && this.savedConfigs.length > 0;
+
+        if (!hasConfigs) {
+            // Scenario 1: No saved configs - disable dropdown and show placeholder
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.selected = true;
+            placeholder.disabled = true;
+            placeholder.textContent = 'Select saved view...';
+            dropdown.appendChild(placeholder);
+            dropdown.disabled = true; // Disable the entire dropdown
+            dropdown.style.color = '#999'; // Gray text
+            return; // Exit early
         }
+
+        // Enable dropdown since we have configs
+        dropdown.disabled = false;
+
+        // If nothing is selected, add a hidden placeholder option to show text in button
+        if (this.selectedConfigId === null) {
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.selected = true;
+            placeholder.disabled = true;
+            placeholder.hidden = true; // Hidden from dropdown list
+            placeholder.textContent = 'Select saved view...';
+            placeholder.style.display = 'none'; // Extra hiding
+            dropdown.appendChild(placeholder);
+        }
+
+        // Add all saved configs (they will appear in dropdown list)
+        this.savedConfigs.forEach(config => {
+            const option = document.createElement('option');
+            option.value = config.id;
+
+            // Full label for title attribute
+            const fullLabel = config.config_name + (config.is_default ? ' (Default)' : '');
+
+            // Truncate if longer than 28 characters
+            const displayLabel = fullLabel.length > 28
+                ? fullLabel.substring(0, 27) + '…'
+                : fullLabel;
+
+            option.textContent = displayLabel;
+            option.title = fullLabel; // Tooltip shows full name
+
+            // Mark current selection
+            if (config.id === this.selectedConfigId) {
+                option.selected = true;
+                option.className = 'current-config';
+            } else {
+                option.className = 'config-option';
+            }
+
+            dropdown.appendChild(option);
+        });
+
+        // Update dropdown button color
+        if (this.selectedConfigId === null) {
+            dropdown.style.color = '#999'; // Gray for placeholder
+        } else {
+            dropdown.style.color = '#212529'; // Black for selected
+        }
+    }
+
+    loadSavedConfigurationsDropdown(configs) {
+        // This method is deprecated - use populateConfigDropdown instead
+        // Keeping for backward compatibility
+        this.savedConfigs = configs || [];
+        this.populateConfigDropdown();
     }
 
     applyConfiguration(config) {
@@ -654,6 +778,25 @@ class AdvancedTable {
             }
         });
 
+        // Bind saved config dropdown for loading configurations
+        const dropdown = document.getElementById('savedConfigsDropdown');
+        if (dropdown) {
+            dropdown.addEventListener('change', (e) => {
+                const configId = parseInt(e.target.value);
+                if (configId) {
+                    const config = this.savedConfigs.find(c => c.id === configId);
+                    if (config) {
+                        this.selectedConfigId = configId;
+                        this.applyConfiguration(config);
+                        // Silent load - no toast notification
+                    }
+                } else {
+                    // Reset to default view
+                    this.selectedConfigId = null;
+                }
+            });
+        }
+
         // Bind column headers for sorting
         const headers = this.container.querySelectorAll('.advanced-table th.sortable');
         headers.forEach(header => {
@@ -676,6 +819,94 @@ class AdvancedTable {
                 }
             });
         });
+    }
+}
+
+// Toast Notification Utility
+class ToastNotification {
+    static show(message, type = 'info', duration = 5000) {
+        const container = document.getElementById('toastContainer');
+        if (!container) {
+            console.error('Toast container not found');
+            return;
+        }
+
+        const icons = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            warning: 'fas fa-exclamation-triangle',
+            info: 'fas fa-info-circle'
+        };
+
+        const titles = {
+            success: 'Success',
+            error: 'Error',
+            warning: 'Warning',
+            info: 'Info'
+        };
+
+        const toastId = 'toast-' + Date.now();
+        const toast = document.createElement('div');
+        toast.className = 'toast show'; // Add 'show' class immediately
+        toast.id = toastId;
+        toast.style.opacity = '1'; // Force visibility
+        toast.innerHTML = `
+            <div class="toast-header toast-${type}">
+                <i class="toast-icon ${icons[type]}"></i>
+                <strong class="toast-title">${titles[type]}</strong>
+                <button type="button" class="toast-close" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="toast-body">${message}</div>
+        `;
+
+        // Add close button handler
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => {
+            ToastNotification.hide(toastId);
+        });
+
+        container.appendChild(toast);
+
+        console.log('Toast created:', toastId, 'Duration:', duration, 'ms');
+
+        // Auto-hide after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                console.log('Auto-hiding toast:', toastId);
+                ToastNotification.hide(toastId);
+            }, duration);
+        }
+    }
+
+    static hide(toastId) {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            console.log('Hiding toast:', toastId);
+            toast.classList.add('hiding');
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toast.remove();
+                console.log('Toast removed:', toastId);
+            }, 300);
+        }
+    }
+
+    static success(message, duration = 5000) {
+        ToastNotification.show(message, 'success', duration);
+    }
+
+    static error(message, duration = 7000) {
+        ToastNotification.show(message, 'error', duration);
+    }
+
+    static warning(message, duration = 6000) {
+        ToastNotification.show(message, 'warning', duration);
+    }
+
+    static info(message, duration = 5000) {
+        ToastNotification.show(message, 'info', duration);
     }
 }
 

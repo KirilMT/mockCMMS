@@ -1,5 +1,5 @@
 # mockCMMS Project Roadmap
-_Updated November 23, 2025_
+_Updated November 25, 2025 - 11:30 AM_
 
 ---
 
@@ -123,6 +123,10 @@ The core application can be improved with the following features to support the 
         - Build a service that can generate realistic mock data (PMs, MOs, technician logs) for stress-testing and demonstration purposes.
         - Create a UI for simulating user inputs, such as manually triggering a breakdown alarm or reporting a technician as absent, to test the system's dynamic response.
 
+- **[ ] UI Regression Automation:**
+    - **Goal:** Ensure critical UI workflows (advanced tables, filters, dropdown persistence, toast handling) are validated automatically.
+    - **Plan:** Introduce a lightweight Playwright (or Selenium/Cypress) suite that exercises the advanced-table component end-to-end, complementing existing backend pytest coverage.
+
 ---
 
 ## Summary of Key Unimplemented Features
@@ -131,3 +135,4 @@ The core application can be improved with the following features to support the 
 - **Automated, Specialized Reports:** Shift, weekend, and technician-submitted reports.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
 - **Data Simulation Engine:** For robust testing and development.
+

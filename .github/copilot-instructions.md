@@ -206,6 +206,17 @@ The `reports` is a Flask-based web application for generating comprehensive main
     4. **Add implementation notes** under completed tasks with important details or decisions
     5. **Document blockers** if issues arise during implementation
     6. **Update "Last Updated" dates** in roadmap files
+    7. **COMPLETE ALL SUBTASKS**: When working on a task, you MUST complete ALL subtasks within that task before moving to the next task. Do NOT leave tasks partially complete. If a task has 8 subtasks, implement all 8 before marking the task as done.
+    8. **PROVIDE TESTING GUIDE**: After implementing ANY changes (bug fixes, features, enhancements), ALWAYS create a testing guide document in `docs/` with:
+       - Comprehensive test cases covering all changes
+       - Step-by-step instructions
+       - Expected results for each test
+       - Quick test scenarios (2-5 minutes)
+       - Edge cases and error conditions
+       - Visual checks (UI/UX)
+       - Browser console checks
+       - Pass/Fail checkboxes
+       - Issues tracking section
 -   **Version Management:** After completing any significant changes:
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
