@@ -241,8 +241,12 @@
 }
 
 .filter-row select,
-.filter-row input {
+.filter-row .filter-value-container {
     flex: 1;
+}
+
+.filter-row .filter-value-container input {
+    width: 100%;
 }
 
 .filter-row .btn-remove {

@@ -383,24 +383,53 @@ class AdvancedTable {
             allRowsValid = false; // No filters to apply
         } else {
             filterRows.forEach(row => {
-                const column = row.querySelector('.filter-column').value;
-                const operatorInput = row.querySelector('.filter-operator');
+                const columnSelect = row.querySelector('.filter-column');
+                const operatorSelect = row.querySelector('.filter-operator');
                 const valueInput = row.querySelector('.filter-value');
                 const removeBtn = row.querySelector('.remove-filter-btn');
+                const errorFeedback = row.querySelector('.invalid-feedback');
+
+                const column = columnSelect.value;
+                const value = valueInput.value.trim();
 
                 // Sequential enabling
                 if (!column) {
-                    operatorInput.disabled = true;
+                    operatorSelect.disabled = true;
                     valueInput.disabled = true;
                     valueInput.placeholder = 'Select a column first';
+                    
+                    // Reset validation state when disabled
+                    valueInput.classList.remove('is-invalid');
+                    if (errorFeedback) errorFeedback.style.display = 'none';
                 } else {
-                    operatorInput.disabled = false;
+                    operatorSelect.disabled = false;
                     valueInput.disabled = false;
                     valueInput.placeholder = 'Filter value';
                 }
 
-                // A row is valid if it has a column AND a non-empty value
-                if (!column || !valueInput.value.trim()) {
+                // Validation Logic
+                let rowValid = true;
+
+                // 1. Check if column is selected
+                if (!column) {
+                    rowValid = false;
+                    // We don't show error for column selection, just disable other fields
+                } 
+                // 2. Check if value is empty (only if column is selected)
+                else if (!value) {
+                    rowValid = false;
+                    valueInput.classList.add('is-invalid');
+                    if (errorFeedback) {
+                        errorFeedback.textContent = 'Value is required';
+                        errorFeedback.style.display = 'block';
+                    }
+                } else {
+                    // Valid state
+                    valueInput.classList.remove('is-invalid');
+                    if (errorFeedback) errorFeedback.style.display = 'none';
+                }
+
+                if (!rowValid) {
                     allRowsValid = false;
                 }
 
@@ -602,7 +631,10 @@ class AdvancedTable {
                 <option value="starts_with" ${operator === 'starts_with' ? 'selected' : ''}>Starts With</option>
                 <option value="ends_with" ${operator === 'ends_with' ? 'selected' : ''}>Ends With</option>
             </select>
-            <input type="text" class="form-control filter-value" placeholder="Filter value" value="${value || ''}">
+            <div class="filter-value-container" style="flex: 1; position: relative;">
+                <input type="text" class="form-control filter-value" placeholder="Filter value" value="${value || ''}">
+                <div class="invalid-feedback" style="position: absolute; bottom: -20px; left: 0;"></div>
+            </div>
             <button type="button" class="btn btn-outline-danger btn-sm remove-filter-btn">
                 <i class="fas fa-trash"></i>
             </button>

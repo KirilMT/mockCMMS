@@ -348,7 +348,7 @@ loadFiltersFromStorage() {
 - ✅ Task 1.5: Add Team Column to Users Table (100%)
 
 **In Progress:**
-- ⏳ Task 2.1: Add Filter Validation (0%)
+- ✅ Task 2.1: Add Filter Validation (100%)
 
 **Blockers:** None
 
@@ -642,14 +642,29 @@ loadFiltersFromStorage() {
 ### Phase 2: Validation & UX (Week 2)
 **Focus:** User experience improvements
 
-#### Task 2.1: Add Filter Validation
-- [ ] Create `validateFilters()` method
-- [ ] Disable filter value input until column selected
-- [ ] Add event listeners to column dropdowns
-- [ ] Create `updateApplyButtonState()` method
-- [ ] Add CSS classes for invalid states
-- [ ] Add inline error messages
-- [ ] Test: Empty filters, partial filters, valid filters
+#### Task 2.1: Add Filter Validation ✅ COMPLETED
+- [x] Create `validateFilters()` method
+  - ✅ Completed November 25, 2025
+  - Implemented validation logic to check each row individually
+  - Added visual feedback (red borders) and error messages
+- [x] Disable filter value input until column selected
+  - ✅ Completed November 25, 2025
+  - Inputs are disabled and show "Select a column first" placeholder
+- [x] Add event listeners to column dropdowns
+  - ✅ Completed November 25, 2025
+  - Validation runs on every change
+- [x] Create `updateApplyButtonState()` method
+  - ✅ Completed November 25, 2025
+  - Integrated into `validateFilters()`
+- [x] Add CSS classes for invalid states
+  - ✅ Completed November 25, 2025
+  - Using Bootstrap's `.is-invalid` and `.invalid-feedback`
+- [x] Add inline error messages
+  - ✅ Completed November 25, 2025
+  - "Value is required" message appears below invalid inputs
+- [x] Test: Empty filters, partial filters, valid filters
+  - ✅ Completed November 25, 2025
+  - Verified with automated browser test (admin login -> assets -> filters)
 
 #### Task 2.2: Implement Real-time Filter Updates
 - [ ] Add debounced input listeners to filter values
