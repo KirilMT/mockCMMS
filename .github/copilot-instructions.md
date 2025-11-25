@@ -217,6 +217,9 @@ The `reports` is a Flask-based web application for generating comprehensive main
        - Browser console checks
        - Pass/Fail checkboxes
        - Issues tracking section
+    9. **TEMPORARY OUTPUTS**: Use temporary markdown files (displayed in preview mode) for testing guides, walkthroughs, and logs instead of creating permanent files in the repository, unless explicitly instructed otherwise.
+    10. **LOGIN CREDENTIALS**: If login is required for verification and default credentials fail, ALWAYS check `test_data/dummy_data.json` for valid user credentials (e.g., admin/admin123).
+    11. **COMMIT STANDARDS**: Before committing, ALWAYS check the recent git log (`git log -n 5`) to ensure your commit message follows the project's structure, detail, and style conventions.
 -   **Version Management:** After completing any significant changes:
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
