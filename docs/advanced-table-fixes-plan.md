@@ -332,21 +332,22 @@ loadFiltersFromStorage() {
 
 ### 📊 Progress Tracking
 
-**Overall Progress:** 23% (3/13 tasks completed)
+**Overall Progress:** 30% (4/13 tasks completed)
 
-**Phase 1:** 60% (3/5 tasks) - In Progress  
+**Phase 1:** 80% (4/5 tasks) - In Progress  
 **Phase 2:** 0% (0/2 tasks) - Not Started  
 **Phase 3:** 0% (0/2 tasks) - Not Started
 
-**Current Focus:** Task 1.4 - Constrain Filter "Apply" Button
+**Current Focus:** Task 1.5 - Add Team Column to Users Table
 
 **Completed Tasks:**
 - ✅ Task 1.1: Save/Load View Configuration (100%)
 - ✅ Task 1.2: Fix Global Search Functionality (100%)
 - ✅ Task 1.3: Implement AND/OR Filter Logic (100%)
+- ✅ Task 1.4: Constrain Filter "Apply" Button (100%)
 
 **In Progress:**
-- ⏳ Task 1.4: Constrain Filter "Apply" Button (0%)
+- ⏳ Task 1.5: Add Team Column to Users Table (0%)
 
 **Blockers:** None
 
@@ -573,21 +574,37 @@ loadFiltersFromStorage() {
   - Filter state is correctly saved and displayed
   - Code is more robust and maintainable
 - **Task 1.3 Status:** COMPLETE ✅
-- [ ] Capture logic choice in `applyFilters()`
-- [ ] Rewrite `applyFiltersWithLogic()` to evaluate chains
-- [ ] Store logic in `this.filters` structure
-- [ ] Test: A AND B, A OR B, A AND B OR C
+- [x] Capture logic choice in `applyFilters()`
+- [x] Rewrite `applyFiltersWithLogic()` to evaluate chains
+- [x] Store logic in `this.filters` structure
+- [x] Test: A AND B, A OR B, A AND B OR C
 
-#### Task 1.4: Implement Filter Persistence
-- [ ] Create `saveFiltersToStorage()` method
-- [ ] Create `loadFiltersFromStorage()` method
-- [ ] Call save after `applyFilters()`
-- [ ] Call load in `init()` method
-- [ ] Store per-page filter state in localStorage
-- [ ] Add optional expiration (24 hours)
-- [ ] Clear filters on logout
-- [ ] Test: Apply filter → Refresh → Verify restored
-- [ ] Test: Apply filter → Navigate away → Return → Verify restored
+#### Task 1.4: Implement Filter Persistence ✅ RENAMED to "Constrain Filter Apply Button"
+- [x] Disable "Apply" button until ALL filter rows are valid
+  - ✅ Completed November 25, 2025
+  - Added `validateFilters()` method to check the state of all filter rows.
+  - The "Apply" button's `disabled` property is now tied to the result of this validation.
+- [x] Grey out and disable "Filter Value" input until column is selected
+  - ✅ Completed November 25, 2025
+  - `validateFilters()` now also handles disabling the value input and setting a placeholder text ("Select a column first").
+- [x] Add live validation on input changes
+  - ✅ Completed November 25, 2025
+  - Attached `change` and `input` event listeners to the column and value fields within `addFilterRowWithData()`.
+  - `validateFilters()` is called on every change, providing a live validation experience.
+- [x] Re-validate when adding or removing rows
+  - ✅ Completed November 25, 2025
+  - `addFilterRow()` and the remove button's event listener now call `validateFilters()` to ensure the Apply button state is always correct.
+
+**Task Completion Summary:**
+- 4/4 subtasks completed.
+- **Bug Fix:** Correctly handled removal of the AND/OR separator when deleting the first filter row, preventing orphaned UI elements.
+- Files modified:
+  - `src/static/js/advanced-table.js` - Added validation logic, event listeners, and bug fix for separator removal.
+- Key improvements:
+  - Prevents users from applying incomplete or invalid filters.
+  - Guides the user through the correct workflow by disabling inputs.
+  - Provides a more robust and user-friendly filtering experience.
+- **Task 1.4 Status:** COMPLETE ✅
 
 #### Task 1.5: Add Team Column to Users Table
 - [ ] Update users API/route to include team data

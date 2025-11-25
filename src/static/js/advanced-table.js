@@ -370,6 +370,51 @@ class AdvancedTable {
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
+    validateFilters() {
+        const filterRows = document.querySelectorAll('#filterRows .filter-row');
+        const applyBtn = document.querySelector('#filterManager .btn-primary');
+        let allRowsValid = true;
+
+        if (!applyBtn) return;
+
+        const totalRows = filterRows.length;
+
+        if (totalRows === 0) {
+            allRowsValid = false; // No filters to apply
+        } else {
+            filterRows.forEach(row => {
+                const column = row.querySelector('.filter-column').value;
+                const operatorInput = row.querySelector('.filter-operator');
+                const valueInput = row.querySelector('.filter-value');
+                const removeBtn = row.querySelector('.remove-filter-btn');
+
+                // Sequential enabling
+                if (!column) {
+                    operatorInput.disabled = true;
+                    valueInput.disabled = true;
+                    valueInput.placeholder = 'Select a column first';
+                } else {
+                    operatorInput.disabled = false;
+                    valueInput.disabled = false;
+                    valueInput.placeholder = 'Filter value';
+                }
+
+                // A row is valid if it has a column AND a non-empty value
+                if (!column || !valueInput.value.trim()) {
+                    allRowsValid = false;
+                }
+
+                // Conditional trash can visibility
+                if (removeBtn) {
+                    removeBtn.style.display = totalRows > 1 ? 'inline-block' : 'none';
+                }
+            });
+        }
+
+        // Enable or disable the Apply button
+        applyBtn.disabled = !allRowsValid;
+    }
+
     showFilterManager() {
         const modal = document.getElementById('filterManager');
         const filterRows = document.getElementById('filterRows');
@@ -411,6 +456,9 @@ class AdvancedTable {
             // Add one empty row if no filters exist
             this.addFilterRow();
         }
+
+        // Initial validation check
+        this.validateFilters();
 
         modal.classList.add('show');
         console.log('Filter Manager modal displayed');
@@ -510,6 +558,9 @@ class AdvancedTable {
 
         // Add a new empty filter row
         this.addFilterRowWithData();
+
+        // Re-validate after adding a new row
+        this.validateFilters();
     }
 
     clearAllFilters() {
@@ -557,16 +608,38 @@ class AdvancedTable {
             </button>
         `;
 
+        // Add event listeners for live validation
+        const columnSelect = filterRow.querySelector('.filter-column');
+        const operatorSelect = filterRow.querySelector('.filter-operator');
+        const valueInput = filterRow.querySelector('.filter-value');
+
+        columnSelect.addEventListener('change', () => this.validateFilters());
+        operatorSelect.addEventListener('change', () => this.validateFilters());
+        valueInput.addEventListener('input', () => this.validateFilters());
+
         // Add event listener for remove button
         const removeBtn = filterRow.querySelector('.remove-filter-btn');
-        removeBtn.addEventListener('click', function () {
-            const row = this.closest('.filter-row');
-            // Also remove the previous logic element if it exists
-            const prevSibling = row.previousElementSibling;
-            if (prevSibling && prevSibling.classList.contains('filter-logic')) {
-                prevSibling.remove();
+        removeBtn.addEventListener('click', () => {
+            const row = removeBtn.closest('.filter-row');
+            const parent = row.parentElement;
+            const isFirstRow = parent.querySelector('.filter-row') === row;
+
+            if (isFirstRow) {
+                // If it's the first row, remove the NEXT logic separator
+                const nextSibling = row.nextElementSibling;
+                if (nextSibling && nextSibling.classList.contains('filter-logic')) {
+                    nextSibling.remove();
+                }
+            } else {
+                // Otherwise, remove the PREVIOUS logic separator
+                const prevSibling = row.previousElementSibling;
+                if (prevSibling && prevSibling.classList.contains('filter-logic')) {
+                    prevSibling.remove();
+                }
             }
-            row.remove();
+
+            row.remove(); // Remove the filter row itself
+            this.validateFilters(); // Re-validate to update UI
         });
 
         filterRows.appendChild(filterRow);
