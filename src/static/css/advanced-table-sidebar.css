@@ -1,0 +1,229 @@
+/* ===================================
+   SIDEBAR LAYOUT STYLES
+   Two-column layout with collapsible left sidebar
+   =================================== */
+
+/* Two-column layout: sidebar + main table */
+.table-layout {
+    display: flex;
+    height: 100%;
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+/* LEFT SIDEBAR */
+.table-sidebar {
+    width: 320px;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    transition: margin-left 0.3s ease;
+    flex-shrink: 0;
+}
+
+.table-sidebar.collapsed {
+    margin-left: -320px;
+}
+
+.sidebar-header {
+    padding: 0.5rem 1rem;
+    background: #fff;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    min-height: 50px;
+}
+
+.sidebar-header h6 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.btn-collapse {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    color: #6c757d;
+    transition: color 0.2s;
+}
+
+.btn-collapse:hover {
+    color: #212529;
+}
+
+/* SIDEBAR SECTIONS */
+.sidebar-section {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.section-header {
+    padding: 0.75rem 1rem;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.section-header:hover {
+    background: #f8f9fa;
+}
+
+.section-header i:first-child {
+    color: #6c757d;
+    width: 16px;
+}
+
+.section-header span {
+    flex: 1;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.section-header .badge {
+    margin-left: auto;
+    background: #0d6efd;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    display: none;
+    min-width: 20px;
+    text-align: center;
+}
+
+.section-header .toggle-icon {
+    margin-left: 0.25rem;
+    transition: transform 0.2s;
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.section-header.expanded .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.section-content {
+    padding: 0.5rem 1rem;
+    background: white;
+    max-height: 600px;
+    overflow-y: auto;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.section-content.collapsed {
+    max-height: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* MAIN TABLE AREA */
+.table-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* SIDEBAR CONTROLS */
+.btn-toggle-sidebar {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.04rem 0.5rem;
+    color: #495057;
+    transition: color 0.2s;
+}
+
+.btn-toggle-sidebar:hover {
+    color: #212529;
+}
+
+.table-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.row-count {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.row-count strong {
+    color: #212529;
+}
+
+/* FILTER ROWS IN SIDEBAR */
+.filter-row-sidebar {
+    position: relative;
+}
+
+.filter-row-sidebar .btn-apply-filter {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-row-sidebar .btn-apply-filter:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.filter-row-sidebar .remove-filter-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-row-sidebar .filter-value.is-invalid {
+    border-color: #dc3545;
+}
+
+.filter-row-sidebar .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.75rem;
+}
+
+.filter-actions .flex-1 {
+    flex: 1;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    .table-sidebar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 1000;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-sidebar.collapsed {
+        margin-left: -100%;
+    }
+}
+
+/* Reduce spacing above filter action buttons */
+.filter-actions {
+    margin-top: 0.15rem !important;
+}

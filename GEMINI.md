@@ -130,11 +130,33 @@ These instructions apply to **all** coding tasks unless explicitly overridden by
 -   Make decisions when you have sufficient context
 -   Only escalate to user when truly necessary
 
+#### 🚨 CRITICAL: File Corruption Handling (MANDATORY)
+
+**NEVER use `git checkout` or `git restore` to fix corrupted files during editing!**
+
+**Why**: Uncommitted changes will be PERMANENTLY LOST. This can result in losing hours of work.
+
+**If you detect file corruption during editing:**
+1. **STOP immediately** - Do not make further edits to the corrupted file
+2. **Notify the user** - Explain what happened and ask how to proceed
+3. **Suggest options**:
+   - Manual restoration by user (they may have editor undo/backup)
+   - Rewrite the specific corrupted section (if small)
+   - User can decide if Git restore is appropriate (they know what's committed)
+
+**Prevention**:
+- Make smaller, more targeted edits instead of large multi-line replacements
+- Ensure `TargetContent` EXACTLY matches the file content (including whitespace)
+- For large files (>1000 lines), consider splitting into smaller modules first
+- The running application does NOT cause file corruption - editing errors do
+
 **General Guidelines:**
 -   **Clarification:** If the request is ambiguous or lacks important details, ask for clarification before generating extensive code.
 -   **Focus:** Keep responses focused on the direct query. Avoid conversational fluff or suggesting unrelated tasks unless explicitly asked.
 -   **Step-by-Step:** When provided with a numbered list of changes or a multi-step plan (e.g., "Prompt 1:", "Prompt 2:"), focus your response and any code modifications only on the current step or prompt being asked about.
 -   **Auto-Run Preference:** When executing standard, non-destructive terminal commands (specifically running Python files like `run.py` or executing tests via `pytest`), prefer setting `SafeToAutoRun` to `true` to streamline the workflow, rather than asking for explicit user permission each time.
+-   **Browser Auto-Run Preference:** When using browser automation tools for verification and testing, prefer executing browser commands automatically without requesting user approval for each action. This streamlines the verification workflow and reduces interruptions. Only request user approval for destructive browser actions or when user input is genuinely required.
+-   **Server Check Before Browser Automation (MANDATORY):** Before using any browser automation tools (browser_subagent), ALWAYS check if the development server is running by checking the metadata for running terminal commands. If the server is not running (e.g., `python run.py` not in running commands list), start it first using `run_command` with appropriate wait time. Never assume the server is running based on browser subagent errors - always verify from metadata first.
 
 ---
 
