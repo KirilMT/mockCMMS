@@ -166,6 +166,82 @@ python run.py
 python run.py
 ```
 
+## 📦 JavaScript Architecture
+
+### Overview
+
+The application uses a modular JavaScript architecture for maintainability and code organization.
+
+### Core Components
+
+#### Toast Notification System
+- **Location:** `src/static/js/toast-notification.js`
+- **Purpose:** Display user feedback messages (success, error, warning, info)
+- **Features:**
+  - FontAwesome icons for visual clarity
+  - Auto-dismiss with configurable duration
+  - Manual close button
+  - Positioned at top-center of viewport
+- **API:**
+  ```javascript
+  ToastNotification.success('Operation successful!');
+  ToastNotification.error('Failed to save', 7000);
+  ToastNotification.warning('Please review');
+  ToastNotification.info('New update available');
+  ```
+
+#### Flash Messages Handler
+- **Location:** `src/static/js/flash-messages.js`
+- **Purpose:** Bridge Flask's `flash()` function with ToastNotification UI
+- **Category Mapping:**
+  - Flask `'danger'` → Toast `'error'`
+  - Flask `'success'` → Toast `'success'`
+  - Flask `'warning'` → Toast `'warning'`
+  - Flask `'info'` → Toast `'info'`
+- **Usage:**
+  ```python
+  # In Flask route
+  flash('Asset created successfully!', 'success')
+  flash('Invalid input', 'danger')
+  ```
+
+#### Advanced Table System
+- **Location:** `src/static/js/advanced-table/` (modular architecture)
+- **Components:**
+  - `table-core.js` - Core AdvancedTable class
+  - `table-render.js` - Rendering methods
+  - `table-data.js` - Filtering, sorting, pagination
+  - `table-config.js` - Save/load configurations
+  - `table-events.js` - Event handling
+  - `table-export.js` - CSV export functionality
+  - `table-init.js` - Initialization helper
+  - `table-sidebar.js` - Sidebar functionality
+- **Features:**
+  - Excel-like sorting and filtering
+  - Column visibility management
+  - Drag-and-drop column reordering
+  - Global search across all columns
+  - Save/load custom view configurations
+  - CSV export
+  - Responsive design
+
+### File Organization
+
+```
+src/static/js/
+├── advanced-table/              # Modular table system
+│   ├── table-core.js           # Core class and initialization
+│   ├── table-render.js         # HTML rendering
+│   ├── table-data.js           # Data operations
+│   ├── table-config.js         # Configuration persistence
+│   ├── table-events.js         # Event listeners
+│   ├── table-export.js         # Export functionality
+│   ├── table-init.js           # Helper functions
+│   └── table-sidebar.js        # Sidebar functionality
+├── toast-notification.js       # Toast UI component (general purpose)
+└── flash-messages.js           # Flask flash message integration
+```
+
 ## 🔧 Development Guide
 
 ### Adding a New App
