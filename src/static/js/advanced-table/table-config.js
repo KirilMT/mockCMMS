@@ -60,11 +60,25 @@ AdvancedTable.prototype.loadConfiguration = function() {
         })
         .then(configs => {
             this.savedConfigs = configs || [];
-            this.populateConfigDropdown();
 
+            // Populate sidebar saved views instead of dropdown
+            if (this.sidebar) {
+                this.sidebar.populateSavedViews();
+            }
+
+            // Auto-load default configuration if exists
             const defaultConfig = configs.find(c => c.is_default);
             if (defaultConfig) {
                 this.applyConfiguration(defaultConfig);
+                this.selectedConfigId = defaultConfig.id;
+                this.lastLoadedConfigId = defaultConfig.id; // Track for Update button
+
+                // Refresh sidebar sections to reflect loaded state
+                if (this.sidebar) {
+                    this.sidebar.loadExistingFilters();
+                    this.sidebar.populateColumns();
+                    this.sidebar.populateSavedViews();
+                }
             }
         })
         .catch(error => {
@@ -75,69 +89,12 @@ AdvancedTable.prototype.loadConfiguration = function() {
                 ToastNotification.warning('Could not load saved configurations');
             }
             this.savedConfigs = [];
+
+            // Still populate empty sidebar
+            if (this.sidebar) {
+                this.sidebar.populateSavedViews();
+            }
         });
-};
-
-AdvancedTable.prototype.populateConfigDropdown = function() {
-    const dropdown = document.getElementById('savedConfigsDropdown');
-    if (!dropdown) return;
-
-    dropdown.innerHTML = '';
-
-    const hasConfigs = Array.isArray(this.savedConfigs) && this.savedConfigs.length > 0;
-
-    if (!hasConfigs) {
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.selected = true;
-        placeholder.disabled = true;
-        placeholder.textContent = 'Select saved view...';
-        dropdown.appendChild(placeholder);
-        dropdown.disabled = true;
-        dropdown.style.color = '#999';
-        return;
-    }
-
-    dropdown.disabled = false;
-
-    if (this.selectedConfigId === null) {
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.selected = true;
-        placeholder.disabled = true;
-        placeholder.hidden = true;
-        placeholder.textContent = 'Select saved view...';
-        placeholder.style.display = 'none';
-        dropdown.appendChild(placeholder);
-    }
-
-    this.savedConfigs.forEach(config => {
-        const option = document.createElement('option');
-        option.value = config.id;
-
-        const fullLabel = config.config_name + (config.is_default ? ' (Default)' : '');
-        const displayLabel = fullLabel.length > 28
-            ? fullLabel.substring(0, 27) + '…'
-            : fullLabel;
-
-        option.textContent = displayLabel;
-        option.title = fullLabel;
-
-        if (config.id === this.selectedConfigId) {
-            option.selected = true;
-            option.className = 'current-config';
-        } else {
-            option.className = 'config-option';
-        }
-
-        dropdown.appendChild(option);
-    });
-
-    if (this.selectedConfigId === null) {
-        dropdown.style.color = '#999';
-    } else {
-        dropdown.style.color = '#212529';
-    }
 };
 
 AdvancedTable.prototype.applyConfiguration = function(config) {

@@ -4,9 +4,7 @@ AdvancedTable.prototype.attachEventListeners = function () {
     buttons.forEach(button => {
         const action = button.getAttribute('data-action');
 
-        if (action === 'showColumnManager') {
-            button.addEventListener('click', () => this.showColumnManager());
-        } else if (action === 'clearAllFilters') {
+        if (action === 'clearAllFilters') {
             button.addEventListener('click', () => this.resetTableState());
         } else if (action === 'exportData') {
             button.addEventListener('click', () => this.exportData('csv'));
@@ -69,21 +67,6 @@ AdvancedTable.prototype.attachEventListeners = function () {
         });
     }
 
-    const dropdown = document.getElementById('savedConfigsDropdown');
-    if (dropdown) {
-        dropdown.addEventListener('change', (e) => {
-            const configId = parseInt(e.target.value);
-            if (configId) {
-                const config = this.savedConfigs.find(c => c.id === configId);
-                if (config) {
-                    this.selectedConfigId = configId;
-                    this.applyConfiguration(config);
-                }
-            } else {
-                this.selectedConfigId = null;
-            }
-        });
-    }
 
     const headers = this.container.querySelectorAll('.advanced-table th.sortable');
     headers.forEach(header => {

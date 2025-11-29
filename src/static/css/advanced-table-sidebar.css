@@ -221,9 +221,180 @@
     .table-sidebar.collapsed {
         margin-left: -100%;
     }
+
+    /* Ensure table header doesn't overlap sidebar on mobile */
+    .table-dark.sticky-top {
+        z-index: 999 !important;
+    }
 }
 
 /* Reduce spacing above filter action buttons */
 .filter-actions {
     margin-top: 0.15rem !important;
+}
+
+/* Remove focus outline on buttons */
+.table-sidebar button:focus,
+.table-sidebar button:active,
+.table-controls button:focus,
+.table-controls button:active,
+.btn:focus,
+.btn:active {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Empty state messages */
+.empty-state-message {
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.875rem;
+    padding: 0.5rem 0;
+    margin: 0;
+    font-style: italic;
+}
+
+/* ===================================
+   COLUMN MANAGER STYLES
+   =================================== */
+
+.column-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.column-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    cursor: move;
+    user-select: none;
+    transition: all 0.2s;
+}
+
+.column-item:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.column-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.column-item input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.column-item span {
+    flex: 1;
+    font-size: 0.875rem;
+}
+
+.column-item .drag-handle {
+    color: #adb5bd;
+    cursor: grab;
+}
+
+.column-item .drag-handle:hover {
+    color: #6c757d;
+}
+
+.column-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+/* ===================================
+   SAVED VIEWS STYLES
+   =================================== */
+
+.saved-views-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.saved-view-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.saved-view-item:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.saved-view-item.active {
+    background: #e7f1ff;
+    border-color: #0d6efd;
+    border-left: 3px solid #0d6efd;
+}
+
+.saved-view-item .view-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.saved-view-item .view-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #212529;
+}
+
+.saved-view-item .badge-sm {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+}
+
+.saved-view-item .view-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.saved-view-item .view-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.saved-view-item .view-actions .btn i {
+    margin: 0;
+}
+
+.saved-view-item .view-actions .btn-link {
+    color: #6c757d;
+    text-decoration: none;
+}
+
+.saved-view-item .view-actions .btn-link:hover {
+    color: #0d6efd;
+}
+
+.saved-view-item .view-actions .btn-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.config-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
 }

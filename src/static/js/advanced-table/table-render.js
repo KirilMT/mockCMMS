@@ -50,7 +50,10 @@ AdvancedTable.prototype.render = function () {
 
     this.attachEventListeners();
     this.sidebar.attachEventListeners();
-    this.populateConfigDropdown();
+
+    // Populate sidebar sections
+    this.sidebar.populateColumns();
+    this.sidebar.populateSavedViews();
 };
 
 AdvancedTable.prototype.renderHeader = function () {

@@ -62,15 +62,14 @@
 
 .table-search input {
     flex: 1;
-    padding-right: 35px;
+    padding-right: 70px; /* Make room for clear + apply buttons */
     height: 32px;
     font-size: 0.875rem;
-    /* Make room for clear button inside */
 }
 
 .table-search #clearSearchBtn {
     position: absolute;
-    right: 5px;
+    right: 45px; /* Position before apply button (32px + gap) */
     top: 50%;
     transform: translateY(-50%);
     border: none;

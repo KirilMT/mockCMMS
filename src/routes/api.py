@@ -366,6 +366,68 @@ def delete_table_config(config_id):
     
     return jsonify({"success": True})
 
+@api_bp.route('/table-config/<int:config_id>', methods=['PUT'])
+def update_table_config(config_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+
+    config = db.session.get(TableConfiguration, config_id)
+    if not config or config.user_id != session['user_id']:
+        return jsonify({"error": "Configuration not found or not owned by user"}), 404
+
+    data = request.get_json()
+
+    # Update configuration fields
+    if 'column_order' in data:
+        config.column_order = data['column_order']
+    if 'hidden_columns' in data:
+        config.hidden_columns = data['hidden_columns']
+    if 'filters' in data:
+        config.filters = data['filters']
+    if 'sort_config' in data:
+        config.sort_config = data['sort_config']
+
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+@api_bp.route('/table-config/<page_name>/<int:config_id>/set-default', methods=['POST'])
+def set_default_table_config(page_name, config_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+
+    # Remove default from all configs for this page
+    TableConfiguration.query.filter_by(
+        user_id=session['user_id'],
+        page_name=page_name,
+        is_default=True
+    ).update({'is_default': False})
+
+    # Set this config as default
+    config = db.session.get(TableConfiguration, config_id)
+    if not config or config.user_id != session['user_id']:
+        return jsonify({"error": "Configuration not found or not owned by user"}), 404
+
+    config.is_default = True
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+@api_bp.route('/table-config/<page_name>/<int:config_id>/remove-default', methods=['POST'])
+def remove_default_table_config(page_name, config_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+
+    # Remove default from this config
+    config = db.session.get(TableConfiguration, config_id)
+    if not config or config.user_id != session['user_id']:
+        return jsonify({"error": "Configuration not found or not owned by user"}), 404
+
+    config.is_default = False
+    db.session.commit()
+
+    return jsonify({"success": True})
+
 # --- Enhanced Data Endpoints ---
 @api_bp.route('/<entity>/filtered', methods=['GET'])
 def get_filtered_data(entity):

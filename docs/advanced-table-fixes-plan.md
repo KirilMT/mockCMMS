@@ -369,13 +369,13 @@ loadFiltersFromStorage() {
 
 ### 📊 Progress Tracking
 
-**Overall Progress:** 54% (7/13 tasks completed)
+**Overall Progress:** 62% (8/13 tasks completed)
 
 **Phase 1:** 100% (5/5 tasks) - COMPLETE ✅
-**Phase 2:** 100% (2/2 tasks) - COMPLETE ✅  
+**Phase 2:** 75% (1.5/2 tasks, sub-task 2.2 at 75%) - IN PROGRESS ⏳  
 **Phase 3:** 0% (0/2 tasks) - Not Started
 
-**Current Focus:** Phase 3 - Polish & Testing
+**Current Focus:** Task 2.2d - Search Polish & Final Sidebar Features
 
 **Completed Tasks:**
 
@@ -385,11 +385,151 @@ loadFiltersFromStorage() {
 - ✅ Task 1.4: Constrain Filter "Apply" Button (100%)
 - ✅ Task 1.5: Add Team Column to Users Table (100%)
 - ✅ Task 2.1: Add Filter Validation (100%)
-- ✅ Task 2.2: Implement Sidebar with Real-time Updates (100%)
+- ✅ Task 2.2a: Sidebar Structure Only (100%)
+- ✅ Task 2.2b: Move Filters to Sidebar (100%)
+- ✅ Task 2.2c: Move Columns & Configs to Sidebar (100%)
 
 **Blockers:** None
 
 **Notes:**
+
+- November 29, 2025: ✅ AUTO-APPLY FILTERS - Improved UX for Real-Time Filtering
+  - **Problem:** Manual filter application was cumbersome and unintuitive
+    - Remove last filter → Can't apply → Only option is Clear (weird UX)
+    - Add second filter → First filter not applied → Can't see filtered data to build on
+  - **Solution:** Automatic filter application for seamless UX
+  - **Implementation:**
+    - **Remove filter row → Auto-apply remaining filters**
+      - Remove filter → Remaining filters applied immediately
+      - Remove last filter → Table shows all data (no filters)
+      - Clear button disabled when no filters applied
+    - **Add second filter → First filter auto-applies**
+      - Add filter row → Fill in column + value
+      - Click "Add" for second filter → First filter applies automatically
+      - See filtered data to build second filter on top
+  - **Benefits:**
+    - Real-time filtering (see results immediately)
+    - No manual "Apply" clicks needed for basic operations
+    - Clear button only enabled when filters are actually applied
+    - Intuitive: remove = update table, add next = apply previous
+  - **Apply Button Still Available:**
+    - For manually applying changes to existing filters
+    - For applying filters after editing values
+    - For batch operations
+  - **Test Results:** Much more intuitive and user-friendly
+
+- November 29, 2025: ✅ IMPROVED UPDATE VIEW UX - Separate Active vs Last Loaded
+  - **Problem:** When making changes, active highlight disappeared and Update button disabled
+  - **Solution:** Separate tracking of active view vs last loaded view
+  - **Implementation:**
+    - Added `lastLoadedConfigId` separate from `selectedConfigId`
+    - `selectedConfigId`: Current active view (matches config exactly) - for blue highlight
+    - `lastLoadedConfigId`: Last loaded view (for Update button) - persists through changes
+    - Update button shows view name: "Update 'My View'"
+    - Update button stays enabled even when making changes
+    - After update, view becomes active again (highlight returns)
+  - **Behavior:**
+    - Load view → Both IDs set → Blue highlight + Update enabled
+    - Make changes → selectedConfigId cleared → Highlight removed, Update stays enabled
+    - Click Update → selectedConfigId restored → Highlight returns
+    - Reset Columns → Both IDs cleared → Complete reset
+  - **UX Benefits:**
+    - Always know which view you're updating (shown in button)
+    - Can make changes without losing ability to update
+    - Visual feedback: highlight = exact match, no highlight = modified
+  - **Test Results:** Improved UX, issue resolved
+
+- November 29, 2025: ✅ FOURTH ROUND - Update View Feature + Filter Dropdown Sync
+  - **Filter Dropdown Auto-Update:**
+    - Fixed filter column dropdowns not updating when columns change
+    - Added `refreshFilterDropdowns()` method
+    - Called after `applyColumnChanges()` and `resetColumns()`
+    - Filter dropdowns now reflect real-time column order and visibility
+  - **Update View Feature (NEW):**
+    - Added "Update" button in Saved Views section
+    - Button enabled only when a view is active (loaded)
+    - Updates currently active view with current table state
+    - Confirmation dialog before updating
+    - Success toast notification after update
+    - Backend PUT endpoint added: `/api/table-config/<config_id>`
+  - **UX Improvements:**
+    - Update button disabled when no view is active
+    - Success message shows view name after update
+    - Active view stays loaded after update
+  - **Test Results:** 2/2 features implemented successfully
+
+- November 29, 2025: ✅ THIRD ROUND OF BUG FIXES - Final Polish
+  - **Empty State Message After Remove:**
+    - Fixed "No applied filters" message not appearing when last filter row is removed
+    - Remove button now checks if all rows are gone and shows empty state
+  - **Filter Column Order:**
+    - Filter dropdown now shows columns in table order (left to right)
+    - Uses `columnOrder` instead of original `columns` array
+    - Matches visual column order in Columns section
+  - **Sidebar State Persistence (Clarified):**
+    - Default state: All sections collapsed (`[]`)
+    - During session: Remembers expanded/collapsed state
+    - After refresh: Keeps user preference (good UX)
+    - First-time users see all collapsed
+  - **Test Results:** 2/2 bugs fixed + 1 UX clarification
+
+- November 28, 2025: ✅ SECOND ROUND OF BUG FIXES - All Issues Resolved
+  - **UI/Spacing Fixes:**
+    - Reduced vertical spacing in empty state messages (1rem → 0.5rem padding)
+  - **Sidebar State Persistence:**
+    - Fixed sections expanding after refresh (now properly collapsed by default)
+    - loadExistingFilters now properly adds empty state message
+  - **Set Default Behavior:**
+    - Fixed auto-load issue when clicking star to set/remove default
+    - Setting default now only updates badge, doesn't load the view
+    - Removing default now only updates badge, doesn't trigger load
+  - **Clear Active View Highlight:**
+    - Fixed Reset Columns to clear active view
+    - Fixed Clear Filters to clear active view and refresh saved views
+    - Active highlight now properly removed on all state changes
+  - **Global Search Clear Button:**
+    - Fixed position (was overlapping search button)
+    - Now positioned at right: 45px (before apply button)
+    - Input padding increased to 70px to accommodate both buttons
+  - **Filter Column Dropdown:**
+    - Now only shows visible columns (not hidden ones)
+    - Filters properly exclude hidden columns from selection
+  - **Test Results:** 9/9 additional issues fixed (100%)
+
+- November 27, 2025: ✅ COMPLETED Task 2.2c - Move Columns & Configs to Sidebar
+  - Implemented column manager in sidebar with drag-and-drop reordering
+  - Added column checkboxes for show/hide functionality
+  - Implemented Apply/Reset buttons for column changes
+  - Moved saved configurations from dropdown to sidebar list
+  - Added Load/Save/Delete/Set Default buttons for saved views
+  - Implemented auto-load default configuration on page load
+  - Created backend set-default endpoint
+  - Removed all modal code (showColumnManager, populateConfigDropdown)
+  - Cleaned up toolbar (only Toggle, Search, Row Count, Export)
+  - Added comprehensive CSS for column items and saved views
+  - All sidebar sections now fully functional
+  - No console errors, clean implementation
+  - **User Testing Completed:** All 15 test cases run
+  - **Bug Fixes Applied:**
+    - Removed focus border on buttons for cleaner UI
+    - All sections now collapsed by default
+    - Added "No applied filters" empty state message
+    - Click view name to load (simplified UX, removed load button)
+    - Individual delete buttons per saved view
+    - Star icon toggles default status (can now remove default)
+    - Active view highlight clears when filters/columns change
+    - Fixed delete endpoint (404 error resolved)
+    - Fixed auto-load default after save (keeps new view active)
+    - Fixed mobile z-index for table header
+
+- November 27, 2025: 📋 DEEP DIVE REVIEW COMPLETED
+  - Reviewed and verified all completed tasks (1.1 through 2.2b)
+  - Confirmed sidebar infrastructure is solid and working
+  - Confirmed filters fully functional in sidebar with all bugs fixed
+  - Analyzed current state: No column modal exists, configs in dropdown
+  - Created detailed implementation plan for 2.2c
+  - Ready to proceed with moving columns and configs to sidebar
+  - Updated task 2.2c with detailed implementation checklist
 
 - November 23, 2025: ✅ COMPLETED Task 1.1 - Save/Load Configuration System
 
@@ -767,12 +907,78 @@ loadFiltersFromStorage() {
   - Fixed column sorting (method mismatch, optimized rendering)
   - Optimized vertical spacing (thinner bars, alignment, reduced margins)
 
-**Sub-task 2.2c: Move Columns & Configs to Sidebar** ⏹️ NOT STARTED
+**Sub-task 2.2c: Move Columns & Configs to Sidebar** ✅ COMPLETED
 
-- [ ] Move column manager to sidebar
-- [ ] Move saved configurations to sidebar
-- [ ] Remove all modal code
-- [ ] Deliverable: All controls in sidebar, no modals
+**Pre-Implementation Review Completed:** November 27, 2025
+- ✅ Verified all previous tasks (2.2a, 2.2b) are complete
+- ✅ Confirmed sidebar infrastructure is in place
+- ✅ Confirmed filter functionality working in sidebar
+- ✅ Analyzed current state: No column modal exists, saved configs in dropdown
+- ✅ Implementation plan created (see review document)
+
+**Implementation Completed:** November 27, 2025
+
+**User Testing & Bug Fixes Completed:** November 27, 2025
+- ✅ Removed focus border on buttons (outline: none)
+- ✅ Changed all sections to collapsed by default
+- ✅ Added "No applied filters" message to empty filters section
+- ✅ Improved saved views UX: Click view name to load (removed load button)
+- ✅ Added individual delete buttons per view (removed footer delete button)
+- ✅ Added remove default functionality (click star on default view)
+- ✅ Clear active view highlight when filters/columns change
+- ✅ Fixed deletion endpoint URL (404 error resolved)
+- ✅ Fixed auto-load default after saving (now keeps newly saved view active)
+- ✅ Fixed mobile z-index for table header (sidebar no longer covered)
+
+**Implementation Checklist:**
+- [x] Move column manager to sidebar
+  - [x] Add column checkboxes to "Columns" section
+  - [x] Implement show/hide column logic
+  - [x] Add Apply/Reset buttons for column changes
+  - [x] Update table when columns change
+  - [x] Implement drag-and-drop reordering (from original code)
+- [x] Move saved configurations to sidebar
+  - [x] Update generateHTML() to include saved views list
+  - [x] Add populateSavedViews() method
+  - [x] Wire up Load/Save/Delete/Set Default buttons
+  - [x] Implement deleteConfiguration() and setDefaultConfiguration()
+- [x] Remove all modal code
+  - [x] Remove showColumnManager() method from table-export.js
+  - [x] Remove getDragAfterElement() method (moved to sidebar)
+  - [x] Remove populateConfigDropdown() method from table-config.js
+  - [x] Remove savedConfigsDropdown event listener from table-events.js
+  - [x] Remove showColumnManager event listener from table-events.js
+- [x] Update toolbar
+  - [x] No config dropdown in toolbar
+  - [x] Toolbar only has: Toggle Sidebar, Search, Row Count, Export CSV
+- [x] Backend API updates
+  - [x] Add set-default endpoint at /api/table-config/<page_name>/<config_id>/set-default
+- [x] CSS styling
+  - [x] Add column-item styles with drag-and-drop support
+  - [x] Add saved-view-item styles with selection states
+  - [x] Add action button styles for sidebar sections
+
+**Files Modified:**
+- `src/static/js/advanced-table/table-sidebar.js` - Added column and config management methods
+- `src/static/js/advanced-table/table-config.js` - Updated loadConfiguration, removed populateConfigDropdown
+- `src/static/js/advanced-table/table-render.js` - Call sidebar populate methods instead of dropdown
+- `src/static/js/advanced-table/table-export.js` - Removed showColumnManager and getDragAfterElement
+- `src/static/js/advanced-table/table-events.js` - Removed dropdown and modal event listeners
+- `src/static/css/advanced-table-sidebar.css` - Added column and saved views styles
+- `src/routes/api.py` - Added set-default configuration endpoint
+
+**Key Features Implemented:**
+- ✅ Column checkboxes with show/hide functionality
+- ✅ Drag-and-drop column reordering (preserved from original)
+- ✅ Apply/Reset buttons for column changes
+- ✅ Saved views list with selection state
+- ✅ Load/Save/Delete/Set Default buttons
+- ✅ Auto-load default configuration on page load
+- ✅ Professional UI with proper spacing and colors
+- ✅ All controls now in sidebar (no modals)
+- ✅ Clean toolbar (Toggle, Search, Row Count, Export only)
+
+**Deliverable:** ✅ All controls in sidebar, no modals, clean toolbar
 
 **Sub-task 2.2d: Search with Apply Button & Polish** ⏹️ NOT STARTED
 

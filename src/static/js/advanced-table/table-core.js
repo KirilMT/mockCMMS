@@ -13,7 +13,8 @@ class AdvancedTable {
         this.pageSize = options.pageSize || 25;
 
         this.savedConfigs = [];
-        this.selectedConfigId = null;
+        this.selectedConfigId = null; // Current active view (matches config exactly)
+        this.lastLoadedConfigId = null; // Last loaded view (for Update button)
 
         this.defaultState = {
             columnOrder: [...this.columnOrder],

@@ -7,7 +7,8 @@ class TableSidebar {
     constructor(advancedTable) {
         this.table = advancedTable;
         this.sidebarCollapsed = localStorage.getItem('tableSidebarCollapsed') === 'true';
-        this.expandedSections = JSON.parse(localStorage.getItem('tableSidebarSections') || '["filters"]');
+        // Default to all collapsed, but respect user's saved preferences
+        this.expandedSections = JSON.parse(localStorage.getItem('tableSidebarSections') || '[]');
     }
 
     /**
@@ -34,6 +35,7 @@ class TableSidebar {
                     <div class="section-content ${this.expandedSections.includes('filters') ? '' : 'collapsed'}">
                         <div id="filterRows">
                             <!-- Filter rows will be populated here -->
+                            <p class="empty-state-message" id="noFiltersMessage">No applied filters</p>
                         </div>
                         <div class="filter-actions" style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
                             <button class="btn btn-sm btn-outline-primary" id="addFilterBtn" style="flex: 1;">
@@ -57,7 +59,17 @@ class TableSidebar {
                         <i class="fas fa-chevron-down toggle-icon"></i>
                     </div>
                     <div class="section-content ${this.expandedSections.includes('columns') ? '' : 'collapsed'}">
-                        <p class="text-muted text-center">Column management will be added in Sub-task 2.2c</p>
+                        <div id="columnList" class="column-list">
+                            <!-- Column items will be populated here -->
+                        </div>
+                        <div class="column-actions" style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                            <button class="btn btn-sm btn-primary" id="applyColumnsBtn" style="flex: 1;">
+                                <i class="fas fa-check"></i> Apply
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="resetColumnsBtn" style="flex: 1;">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -69,7 +81,17 @@ class TableSidebar {
                         <i class="fas fa-chevron-down toggle-icon"></i>
                     </div>
                     <div class="section-content ${this.expandedSections.includes('configs') ? '' : 'collapsed'}">
-                        <p class="text-muted text-center">Saved configurations will be added in Sub-task 2.2c</p>
+                        <div id="savedViewsList" class="saved-views-list">
+                            <!-- Saved views will be populated here -->
+                        </div>
+                        <div class="config-actions" style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                            <button class="btn btn-sm btn-success" id="saveViewBtn" style="flex: 1;">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                            <button class="btn btn-sm btn-primary" id="updateViewBtn" style="flex: 1;" disabled>
+                                <i class="fas fa-sync"></i> Update
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -116,6 +138,30 @@ class TableSidebar {
         const clearFiltersBtn = document.getElementById('clearFiltersBtn');
         if (clearFiltersBtn) {
             clearFiltersBtn.addEventListener('click', () => this.clearAllFilters());
+        }
+
+        // Apply Columns button
+        const applyColumnsBtn = document.getElementById('applyColumnsBtn');
+        if (applyColumnsBtn) {
+            applyColumnsBtn.addEventListener('click', () => this.applyColumnChanges());
+        }
+
+        // Reset Columns button
+        const resetColumnsBtn = document.getElementById('resetColumnsBtn');
+        if (resetColumnsBtn) {
+            resetColumnsBtn.addEventListener('click', () => this.resetColumns());
+        }
+
+        // Save View button
+        const saveViewBtn = document.getElementById('saveViewBtn');
+        if (saveViewBtn) {
+            saveViewBtn.addEventListener('click', () => this.saveView());
+        }
+
+        // Update View button
+        const updateViewBtn = document.getElementById('updateViewBtn');
+        if (updateViewBtn) {
+            updateViewBtn.addEventListener('click', () => this.updateView());
         }
 
         // Validate filters to set initial button states
@@ -185,12 +231,11 @@ class TableSidebar {
         // Add rows for each existing filter (array format)
         if (Array.isArray(this.table.filters) && this.table.filters.length > 0) {
             this.table.filters.forEach((filter, index) => {
-                // Pass logic for all rows (addFilterRow handles showing/hiding based on index/existence)
-                // But wait, addFilterRow checks DOM length.
-                // Since we are adding sequentially, the first one will see 0 children, subsequent will see > 0.
-                // So we just need to pass the logic value.
                 this.addFilterRow(filter.column, filter.operator, filter.value, filter.logic);
             });
+        } else {
+            // Show empty state message
+            filterRows.innerHTML = '<p class="empty-state-message" id="noFiltersMessage">No applied filters</p>';
         }
 
         // Update badge
@@ -209,7 +254,28 @@ class TableSidebar {
         const filterRows = document.getElementById('filterRows');
         if (!filterRows) return;
 
-        const isFirstRow = filterRows.children.length === 0;
+        // Hide "No applied filters" message
+        const noFiltersMsg = document.getElementById('noFiltersMessage');
+        if (noFiltersMsg) {
+            noFiltersMsg.style.display = 'none';
+        }
+
+        // AUTO-APPLY: If adding a second filter and first is valid, apply first filter
+        const existingFilterRows = filterRows.querySelectorAll('.filter-row-sidebar');
+        const isAddingSecondFilter = existingFilterRows.length === 1 && !column; // Adding empty row when one exists
+
+        if (isAddingSecondFilter) {
+            const firstRow = existingFilterRows[0];
+            const firstColumn = firstRow.querySelector('.filter-column')?.value;
+            const firstValue = firstRow.querySelector('.filter-value')?.value?.trim();
+
+            // If first filter is complete and valid, apply it before adding second
+            if (firstColumn && firstValue) {
+                this.applyAllFilters();
+            }
+        }
+
+        const isFirstRow = filterRows.children.length === 0 || (filterRows.children.length === 1 && noFiltersMsg);
         const filterRow = document.createElement('div');
         filterRow.className = 'filter-row-sidebar';
         filterRow.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 0.75rem; padding: 0.75rem; background: #f8f9fa; border-radius: 4px; align-items: flex-start;';
@@ -223,9 +289,14 @@ class TableSidebar {
             <div class="filter-inputs" style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
                 <select class="form-select form-select-sm filter-column">
                     <option value="">Select Column</option>
-                    ${this.table.columns.map(col =>
-            `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`
-        ).join('')}
+                    ${this.table.columnOrder
+                        .filter(key => !this.table.hiddenColumns.has(key))
+                        .map(key => {
+                            const col = this.table.columns.find(c => c.key === key);
+                            if (!col) return '';
+                            return `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`;
+                        })
+                        .join('')}
                 </select>
                 <select class="form-select form-select-sm filter-operator" ${!column ? 'disabled' : ''}>
                     <option value="contains" ${operator === 'contains' ? 'selected' : ''}>Contains</option>
@@ -359,10 +430,18 @@ class TableSidebar {
                 }
             }
 
-            // Update badge count - only count actual filter rows, not connectors
+            // Check if all filter rows are gone - show empty state message
             const actualFilterRows = filterRows ? filterRows.querySelectorAll('.filter-row-sidebar') : [];
+            if (actualFilterRows.length === 0 && filterRows) {
+                filterRows.innerHTML = '<p class="empty-state-message" id="noFiltersMessage">No applied filters</p>';
+            }
+
+            // Update badge count
             this.updateFilterBadge(actualFilterRows.length);
             this.validateAllFilters();
+
+            // AUTO-APPLY: Apply remaining filters immediately after removal
+            this.applyAllFilters();
         });
 
         // Initial validation
@@ -454,6 +533,8 @@ class TableSidebar {
         // Update table filters (array format)
         this.table.filters = filters;
         this.table.currentPage = 1; // Reset to first page
+        this.table.selectedConfigId = null; // Clear active view (config changed)
+        // Keep lastLoadedConfigId so Update button stays enabled
 
         // Use updateTable instead of render to preserve sidebar state (filter rows)
         this.table.updateTable();
@@ -463,6 +544,9 @@ class TableSidebar {
 
         // Update button states (specifically Clear button)
         this.validateAllFilters();
+
+        // Refresh saved views to remove active highlight
+        this.populateSavedViews();
     }
 
     /**
@@ -471,12 +555,17 @@ class TableSidebar {
     clearAllFilters() {
         const filterRows = document.getElementById('filterRows');
         if (filterRows) {
-            filterRows.innerHTML = '';
+            filterRows.innerHTML = '<p class="empty-state-message" id="noFiltersMessage">No applied filters</p>';
         }
         this.table.filters = []; // Array format
+        this.table.selectedConfigId = null; // Clear active view (config changed)
+        // Keep lastLoadedConfigId so Update button stays enabled
         this.table.updateTable(); // Use updateTable instead of render
         this.updateFilterBadge(0);
         this.validateAllFilters(); // Update button states
+
+        // Refresh saved views to remove active highlight
+        this.populateSavedViews();
     }
 
     /**
@@ -488,6 +577,514 @@ class TableSidebar {
             badge.textContent = count;
             badge.style.display = count > 0 ? 'inline-block' : 'none';
         }
+    }
+
+    /**
+     * Refresh all filter column dropdowns to reflect current column order/visibility
+     */
+    refreshFilterDropdowns() {
+        const filterRows = document.querySelectorAll('#filterRows .filter-row-sidebar');
+
+        filterRows.forEach(row => {
+            const columnSelect = row.querySelector('.filter-column');
+            if (!columnSelect) return;
+
+            const currentValue = columnSelect.value;
+
+            // Rebuild dropdown options
+            const options = ['<option value="">Select Column</option>'];
+            this.table.columnOrder.forEach(key => {
+                if (!this.table.hiddenColumns.has(key)) {
+                    const col = this.table.columns.find(c => c.key === key);
+                    if (col) {
+                        const selected = col.key === currentValue ? 'selected' : '';
+                        options.push(`<option value="${col.key}" ${selected}>${col.label}</option>`);
+                    }
+                }
+            });
+
+            columnSelect.innerHTML = options.join('');
+        });
+    }
+
+    /**
+     * Populate column manager in sidebar
+     */
+    populateColumns() {
+        const columnList = document.getElementById('columnList');
+        if (!columnList) return;
+
+        columnList.innerHTML = '';
+        this.table.columnOrder.forEach(key => {
+            const col = this.table.columns.find(c => c.key === key);
+            if (!col) return;
+
+            const isVisible = !this.table.hiddenColumns.has(key);
+
+            const listItem = document.createElement('li');
+            listItem.className = 'column-item';
+            listItem.dataset.column = key;
+            listItem.draggable = true;
+            listItem.innerHTML = `
+                <input type="checkbox" ${isVisible ? 'checked' : ''}>
+                <span>${col.label}</span>
+                <i class="fas fa-grip-vertical drag-handle"></i>
+            `;
+
+            // Drag and drop event listeners
+            listItem.addEventListener('dragstart', (e) => {
+                listItem.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', key);
+            });
+
+            listItem.addEventListener('dragend', () => {
+                listItem.classList.remove('dragging');
+            });
+
+            listItem.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const dragging = columnList.querySelector('.dragging');
+                const afterElement = this.getDragAfterElement(columnList, e.clientY);
+
+                if (afterElement == null) {
+                    columnList.appendChild(dragging);
+                } else {
+                    columnList.insertBefore(dragging, afterElement);
+                }
+            });
+
+            columnList.appendChild(listItem);
+        });
+    }
+
+    /**
+     * Get element after drag position (for drag and drop)
+     */
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.column-item:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    /**
+     * Apply column changes from sidebar
+     */
+    applyColumnChanges() {
+        const columnList = document.getElementById('columnList');
+        if (!columnList) return;
+
+        // Get new column order from DOM
+        const newOrder = Array.from(columnList.querySelectorAll('.column-item')).map(item => item.dataset.column);
+
+        // Get hidden columns
+        const newHiddenColumns = new Set();
+        columnList.querySelectorAll('.column-item').forEach(item => {
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            if (!checkbox.checked) {
+                newHiddenColumns.add(item.dataset.column);
+            }
+        });
+
+        // Update table state
+        this.table.columnOrder = newOrder;
+        this.table.hiddenColumns = newHiddenColumns;
+        this.table.selectedConfigId = null; // Clear active view (config changed)
+        // Keep lastLoadedConfigId so Update button stays enabled
+
+        // Update table
+        this.table.updateTable();
+
+        // Refresh filter dropdowns to reflect new column order/visibility
+        this.refreshFilterDropdowns();
+
+        // Refresh saved views to remove active highlight
+        this.populateSavedViews();
+    }
+
+    /**
+     * Reset columns to default state
+     */
+    resetColumns() {
+        // Reset to original column order and make all visible
+        this.table.columnOrder = [...this.table.defaultState.columnOrder];
+        this.table.hiddenColumns = new Set();
+        this.table.selectedConfigId = null;
+        this.table.lastLoadedConfigId = null; // Reset completely on full reset
+
+        // Repopulate column list
+        this.populateColumns();
+
+        // Update table
+        this.table.updateTable();
+
+        // Refresh filter dropdowns to reflect reset columns
+        this.refreshFilterDropdowns();
+
+        // Refresh saved views to remove active highlight
+        this.populateSavedViews();
+    }
+
+    /**
+     * Populate saved views in sidebar
+     */
+    populateSavedViews() {
+        const viewsList = document.getElementById('savedViewsList');
+        const updateBtn = document.getElementById('updateViewBtn');
+
+        if (!viewsList) return;
+
+        viewsList.innerHTML = '';
+
+        if (!Array.isArray(this.table.savedConfigs) || this.table.savedConfigs.length === 0) {
+            viewsList.innerHTML = '<p class="empty-state-message">No saved views</p>';
+            if (updateBtn) updateBtn.disabled = true;
+            return;
+        }
+
+        this.table.savedConfigs.forEach(config => {
+            const viewItem = document.createElement('div');
+            viewItem.className = 'saved-view-item';
+            viewItem.dataset.configId = config.id;
+
+            // Highlight active view (current configuration)
+            const isActive = config.id === this.table.selectedConfigId;
+            if (isActive) {
+                viewItem.classList.add('active');
+            }
+
+            const displayName = config.config_name.length > 25
+                ? config.config_name.substring(0, 24) + '…'
+                : config.config_name;
+
+            viewItem.innerHTML = `
+                <div class="view-info" style="cursor: pointer; flex: 1;">
+                    <span class="view-name" title="${config.config_name}">${displayName}</span>
+                    ${config.is_default ? '<span class="badge badge-primary badge-sm">Default</span>' : ''}
+                </div>
+                <div class="view-actions">
+                    <button class="btn btn-sm btn-link set-default-btn" title="${config.is_default ? 'Remove default' : 'Set as default'}">
+                        <i class="fas fa-star${config.is_default ? ' text-warning' : ''}"></i>
+                    </button>
+                    <button class="btn btn-sm btn-link delete-view-btn" title="Delete this view">
+                        <i class="fas fa-trash text-danger"></i>
+                    </button>
+                </div>
+            `;
+
+            // Click on view info to load it
+            const viewInfo = viewItem.querySelector('.view-info');
+            viewInfo.addEventListener('click', () => {
+                this.loadView(config);
+            });
+
+            // Set/Remove default button
+            viewItem.querySelector('.set-default-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (config.is_default) {
+                    this.removeDefaultView(config.id);
+                } else {
+                    this.setDefaultView(config.id);
+                }
+            });
+
+            // Delete button
+            viewItem.querySelector('.delete-view-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteView(config);
+            });
+
+            viewsList.appendChild(viewItem);
+        });
+
+        // Update button: Enable if there's a last loaded view (even if not currently active)
+        if (updateBtn) {
+            if (this.table.lastLoadedConfigId) {
+                const lastLoadedConfig = this.table.savedConfigs.find(c => c.id === this.table.lastLoadedConfigId);
+                if (lastLoadedConfig) {
+                    updateBtn.disabled = false;
+                    // Show view name in button (truncated if needed)
+                    const displayName = lastLoadedConfig.config_name.length > 15
+                        ? lastLoadedConfig.config_name.substring(0, 14) + '…'
+                        : lastLoadedConfig.config_name;
+                    updateBtn.innerHTML = `<i class="fas fa-sync"></i> Update "${displayName}"`;
+                    updateBtn.title = `Update "${lastLoadedConfig.config_name}" with current settings`;
+                } else {
+                    updateBtn.disabled = true;
+                    updateBtn.innerHTML = '<i class="fas fa-sync"></i> Update';
+                    updateBtn.title = 'Load a view to enable update';
+                }
+            } else {
+                updateBtn.disabled = true;
+                updateBtn.innerHTML = '<i class="fas fa-sync"></i> Update';
+                updateBtn.title = 'Load a view to enable update';
+            }
+        }
+    }
+
+    /**
+     * Save current view configuration
+     */
+    saveView() {
+        const name = prompt('Enter configuration name:');
+        if (!name || !name.trim()) return;
+
+        const duplicate = this.table.savedConfigs.find(c => c.config_name.toLowerCase() === name.trim().toLowerCase());
+        if (duplicate) {
+            ToastNotification.error(`Configuration name "${name.trim()}" already exists. Please choose a different name.`);
+            return;
+        }
+
+        const config = {
+            config_name: name.trim(),
+            column_order: JSON.stringify(this.table.columnOrder),
+            hidden_columns: JSON.stringify(Array.from(this.table.hiddenColumns)),
+            filters: JSON.stringify(this.table.filters),
+            sort_config: JSON.stringify(this.table.currentSort),
+            is_default: false
+        };
+
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+        fetch('/api/table-config/' + this.table.pageName, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(config)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Set this newly saved view as both selected and last loaded
+                    this.table.selectedConfigId = data.id;
+                    this.table.lastLoadedConfigId = data.id;
+
+                    // Reload configurations WITHOUT applying default
+                    // Just refresh the list
+                    fetch('/api/table-config/' + this.table.pageName)
+                        .then(response => response.json())
+                        .then(configs => {
+                            this.table.savedConfigs = configs || [];
+                            this.populateSavedViews();
+                        });
+                } else {
+                    ToastNotification.error('Failed to save configuration: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving configuration:', error);
+                ToastNotification.error('Error saving configuration: ' + error.message);
+            });
+    }
+
+    /**
+     * Update the currently active saved view with current table state
+     */
+    updateView() {
+        if (!this.table.lastLoadedConfigId) {
+            ToastNotification.warning('No view selected. Please load a view first or create a new one.');
+            return;
+        }
+
+        const currentConfig = this.table.savedConfigs.find(c => c.id === this.table.lastLoadedConfigId);
+        if (!currentConfig) {
+            ToastNotification.error('Selected view not found.');
+            return;
+        }
+
+        if (!confirm(`Update view "${currentConfig.config_name}" with current settings?`)) {
+            return;
+        }
+
+        const config = {
+            column_order: JSON.stringify(this.table.columnOrder),
+            hidden_columns: JSON.stringify(Array.from(this.table.hiddenColumns)),
+            filters: JSON.stringify(this.table.filters),
+            sort_config: JSON.stringify(this.table.currentSort)
+        };
+
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+        fetch(`/api/table-config/${this.table.lastLoadedConfigId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(config)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    ToastNotification.success(`View "${currentConfig.config_name}" updated successfully!`);
+
+                    // After update, the current state now matches the saved view
+                    this.table.selectedConfigId = this.table.lastLoadedConfigId;
+
+                    // Reload configurations to refresh the list
+                    fetch('/api/table-config/' + this.table.pageName)
+                        .then(response => response.json())
+                        .then(configs => {
+                            this.table.savedConfigs = configs || [];
+                            this.populateSavedViews();
+                        });
+                } else {
+                    ToastNotification.error('Failed to update configuration: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error updating configuration:', error);
+                ToastNotification.error('Error updating configuration: ' + error.message);
+            });
+    }
+
+    /**
+     * Delete selected view
+     */
+    deleteView(config) {
+        if (!config) return;
+
+        if (!confirm(`Are you sure you want to delete the view "${config.config_name}"?`)) {
+            return;
+        }
+
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+        fetch(`/api/table-config/${config.id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // If deleted view was active or last loaded, clear those IDs
+                    if (this.table.selectedConfigId === config.id) {
+                        this.table.selectedConfigId = null;
+                    }
+                    if (this.table.lastLoadedConfigId === config.id) {
+                        this.table.lastLoadedConfigId = null;
+                    }
+                    // Reload configurations and refresh sidebar
+                    this.table.loadConfiguration();
+                } else {
+                    ToastNotification.error('Failed to delete configuration: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting configuration:', error);
+                ToastNotification.error('Error deleting configuration: ' + error.message);
+            });
+    }
+
+    /**
+     * Load a view configuration
+     */
+    loadView(config) {
+        this.table.applyConfiguration(config);
+        this.table.selectedConfigId = config.id; // Active view (matches exactly)
+        this.table.lastLoadedConfigId = config.id; // Last loaded (for Update button)
+
+        // Refresh all sidebar sections to reflect loaded state
+        this.loadExistingFilters();
+        this.populateColumns();
+        this.populateSavedViews();
+    }
+
+    /**
+     * Set a view as default
+     */
+    setDefaultView(configId) {
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+        fetch(`/api/table-config/${this.table.pageName}/${configId}/set-default`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Just reload the configs list WITHOUT applying the default
+                    fetch('/api/table-config/' + this.table.pageName)
+                        .then(response => response.json())
+                        .then(configs => {
+                            this.table.savedConfigs = configs || [];
+                            this.populateSavedViews();
+                        });
+                } else {
+                    ToastNotification.error('Failed to set default configuration: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error setting default configuration:', error);
+                ToastNotification.error('Error setting default configuration: ' + error.message);
+            });
+    }
+
+    /**
+     * Remove default status from a view
+     */
+    removeDefaultView(configId) {
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+        fetch(`/api/table-config/${this.table.pageName}/${configId}/remove-default`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Just reload the configs list WITHOUT applying anything
+                    fetch('/api/table-config/' + this.table.pageName)
+                        .then(response => response.json())
+                        .then(configs => {
+                            this.table.savedConfigs = configs || [];
+                            this.populateSavedViews();
+                        });
+                } else {
+                    ToastNotification.error('Failed to remove default configuration: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error removing default configuration:', error);
+                ToastNotification.error('Error removing default configuration: ' + error.message);
+            });
     }
 }
 
