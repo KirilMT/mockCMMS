@@ -1,6 +1,6 @@
 // Initialization function
 function initAdvancedTable(containerId, data, columns, pageSize = 25) {
-    console.log('initAdvancedTable called with:', containerId, 'data items:', data?.length);
+
 
     let container = document.getElementById(containerId);
     if (!container) {
@@ -21,7 +21,7 @@ function initAdvancedTable(containerId, data, columns, pageSize = 25) {
         window.advTable = table;
     }
 
-    console.log('Advanced table initialized, window.advTable is:', window.advTable);
+
 
     return table;
 }

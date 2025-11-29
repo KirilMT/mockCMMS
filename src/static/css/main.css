@@ -22,7 +22,7 @@ body {
 .card {
     border: none;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 1.5rem;
 }
 
@@ -41,17 +41,19 @@ body {
 
 .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Form styling */
-.form-control, .form-select {
+.form-control,
+.form-select {
     border-radius: 6px;
     border: 1px solid #ced4da;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
@@ -128,12 +130,12 @@ body {
     .card {
         margin-bottom: 1rem;
     }
-    
+
     .btn {
         font-size: 0.875rem;
         padding: 0.5rem 1rem;
     }
-    
+
     .table-responsive {
         font-size: 0.875rem;
     }
@@ -156,16 +158,45 @@ body {
     padding: 0.5em 0.75em;
 }
 
-.status-operational { background-color: var(--success-color); }
-.status-maintenance { background-color: var(--warning-color); }
-.status-offline { background-color: var(--danger-color); }
-.status-open { background-color: var(--info-color); }
-.status-in-progress { background-color: var(--warning-color); }
-.status-completed { background-color: var(--success-color); }
-.priority-critical { background-color: var(--danger-color); }
-.priority-high { background-color: #fd7e14; }
-.priority-medium { background-color: var(--warning-color); }
-.priority-low { background-color: var(--info-color); }
+.status-operational {
+    background-color: var(--success-color);
+}
+
+.status-maintenance {
+    background-color: var(--warning-color);
+}
+
+.status-offline {
+    background-color: var(--danger-color);
+}
+
+.status-open {
+    background-color: var(--info-color);
+}
+
+.status-in-progress {
+    background-color: var(--warning-color);
+}
+
+.status-completed {
+    background-color: var(--success-color);
+}
+
+.priority-critical {
+    background-color: var(--danger-color);
+}
+
+.priority-high {
+    background-color: #fd7e14;
+}
+
+.priority-medium {
+    background-color: var(--warning-color);
+}
+
+.priority-low {
+    background-color: var(--info-color);
+}
 
 /* Animation utilities */
 .fade-in {
@@ -173,8 +204,15 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .slide-in {
@@ -182,6 +220,30 @@ body {
 }
 
 @keyframes slideIn {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Utility classes for inline style replacement */
+.inline-form {
+    display: inline;
+}
+
+.text-warning-custom {
+    color: orange;
+}
+
+.iframe-full {
+    width: 100%;
+    height: 800px;
+    border: none;
+}
+
+.flash-hidden {
+    display: none;
 }

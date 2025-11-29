@@ -151,7 +151,7 @@
         <div class="container-fluid">
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            <div id="flash-messages" data-messages='{{ messages | tojson }}' style="display: none;"></div>
+            <div id="flash-messages" data-messages='{{ messages | tojson }}' class="flash-hidden"></div>
             {% endif %}
             {% endwith %}
 

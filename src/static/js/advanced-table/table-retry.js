@@ -11,7 +11,7 @@
  * @param {number} [baseDelay=1000] - Base delay in milliseconds for exponential backoff
  * @returns {Promise<Response>} Fetch response
  */
-AdvancedTable.prototype.fetchWithRetry = async function(url, options = {}, maxRetries = 3, baseDelay = 1000) {
+AdvancedTable.prototype.fetchWithRetry = async function (url, options = {}, maxRetries = 3, baseDelay = 1000) {
     let lastError;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -31,7 +31,7 @@ AdvancedTable.prototype.fetchWithRetry = async function(url, options = {}, maxRe
             // For server errors (5xx), retry
             if (response.status >= 500 && attempt < maxRetries) {
                 const delay = baseDelay * Math.pow(2, attempt);
-                console.log(`Server error (${response.status}). Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+
                 await this.sleep(delay);
                 continue;
             }
@@ -44,7 +44,7 @@ AdvancedTable.prototype.fetchWithRetry = async function(url, options = {}, maxRe
             if (error instanceof TypeError && error.message.includes('fetch')) {
                 if (attempt < maxRetries) {
                     const delay = baseDelay * Math.pow(2, attempt);
-                    console.log(`Network error. Retrying in ${delay}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+
 
                     // Show user-friendly message on last retry
                     if (attempt === maxRetries - 1) {
@@ -70,7 +70,7 @@ AdvancedTable.prototype.fetchWithRetry = async function(url, options = {}, maxRe
  * @param {number} ms - Milliseconds to sleep
  * @returns {Promise} Promise that resolves after delay
  */
-AdvancedTable.prototype.sleep = function(ms) {
+AdvancedTable.prototype.sleep = function (ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 };
 
@@ -78,7 +78,7 @@ AdvancedTable.prototype.sleep = function(ms) {
  * Check if user is online
  * @returns {boolean} True if online
  */
-AdvancedTable.prototype.isOnline = function() {
+AdvancedTable.prototype.isOnline = function () {
     return navigator.onLine;
 };
 
@@ -88,7 +88,7 @@ AdvancedTable.prototype.isOnline = function() {
  * @param {string} [offlineMessage] - Custom message to show when offline
  * @returns {Promise} Result of the operation
  */
-AdvancedTable.prototype.withNetworkCheck = async function(operation, offlineMessage = 'You are offline. Please check your connection.') {
+AdvancedTable.prototype.withNetworkCheck = async function (operation, offlineMessage = 'You are offline. Please check your connection.') {
     if (!this.isOnline()) {
         ToastNotification.error(offlineMessage);
         throw new Error('OFFLINE');

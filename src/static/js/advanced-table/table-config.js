@@ -1,5 +1,5 @@
 // Configuration management methods
-AdvancedTable.prototype.saveConfiguration = function() {
+AdvancedTable.prototype.saveConfiguration = function () {
     const name = prompt('Enter configuration name:');
     if (!name || !name.trim()) return;
 
@@ -47,7 +47,7 @@ AdvancedTable.prototype.saveConfiguration = function() {
         });
 };
 
-AdvancedTable.prototype.loadConfiguration = function() {
+AdvancedTable.prototype.loadConfiguration = function () {
     // Show loading overlay for initial load
     this.showTableLoading('Loading saved views...');
 
@@ -86,9 +86,9 @@ AdvancedTable.prototype.loadConfiguration = function() {
         })
         .catch(error => {
             if (error.message === 'NO_CONFIGS') {
-                console.log('No saved configurations available');
+
             } else if (error.message === 'OFFLINE') {
-                console.log('Offline - skipping configuration load');
+
             } else if (error.message === 'Max retries exceeded') {
                 console.error('Failed to load configurations after multiple retries:', error);
                 ToastNotification.error('Unable to load saved views. Please try again later.');
@@ -109,7 +109,7 @@ AdvancedTable.prototype.loadConfiguration = function() {
         });
 };
 
-AdvancedTable.prototype.applyConfiguration = function(config) {
+AdvancedTable.prototype.applyConfiguration = function (config) {
     if (config.column_order) this.columnOrder = JSON.parse(config.column_order);
     if (config.hidden_columns) this.hiddenColumns = new Set(JSON.parse(config.hidden_columns));
     if (config.filters) this.filters = JSON.parse(config.filters);

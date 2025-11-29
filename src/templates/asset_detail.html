@@ -104,7 +104,7 @@
             <td>{{ mo.due_date.strftime('%Y-%m-%d') if mo.due_date else 'N/A' }}</td>
             <td>
                 <a href="{{ url_for('main.edit_mo', mo_id=mo.id) }}" class="btn btn-sm btn-info">Edit</a>
-                <form action="{{ url_for('main.delete_mo', mo_id=mo.id) }}" method="post" style="display:inline;">
+                <form action="{{ url_for('main.delete_mo', mo_id=mo.id) }}" method="post" class="inline-form">
                     <button type="submit" class="btn btn-sm btn-danger"
                         onclick="return confirm('Are you sure you want to delete this MO?');">Delete</button>
                 </form>

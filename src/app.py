@@ -18,7 +18,7 @@ def create_app():
     # Configure the database
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'instance', 'mockcmms.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.secret_key = 'a_very_secret_key_for_mockcmms'
+    app.secret_key = os.getenv('SECRET_KEY', 'dev_key_fallback_do_not_use_in_prod')
 
     # Initialize SQLAlchemy with the app
     db.init_app(app)

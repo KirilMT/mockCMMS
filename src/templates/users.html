@@ -20,7 +20,7 @@
                 key: 'username', label: 'Username', type: 'text', render: function (val, row) {
                     // Add warning icon if technician without team assignment
                     if (row.is_technician && !row.team_id) {
-                        return val + ' <span title="Technician not assigned to a shift team. Cannot be assigned weekend tasks." style="color: orange;">⚠️</span>';
+                        return val + ' <span title="Technician not assigned to a shift team. Cannot be assigned weekend tasks." class="text-warning-custom">⚠️</span>';
                     }
                     return val;
                 }

@@ -290,13 +290,13 @@ class TableSidebar {
                 <select class="form-select form-select-sm filter-column">
                     <option value="">Select Column</option>
                     ${this.table.columnOrder
-                        .filter(key => !this.table.hiddenColumns.has(key))
-                        .map(key => {
-                            const col = this.table.columns.find(c => c.key === key);
-                            if (!col) return '';
-                            return `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`;
-                        })
-                        .join('')}
+                .filter(key => !this.table.hiddenColumns.has(key))
+                .map(key => {
+                    const col = this.table.columns.find(c => c.key === key);
+                    if (!col) return '';
+                    return `<option value="${col.key}" ${col.key === column ? 'selected' : ''}>${col.label}</option>`;
+                })
+                .join('')}
                 </select>
                 <select class="form-select form-select-sm filter-operator" ${!column ? 'disabled' : ''}>
                     <option value="contains" ${operator === 'contains' ? 'selected' : ''}>Contains</option>
@@ -528,7 +528,7 @@ class TableSidebar {
             }
         });
 
-        console.log('Applying filters:', filters);
+
 
         // Update table filters (array format)
         this.table.filters = filters;
