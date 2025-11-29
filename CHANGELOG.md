@@ -8,27 +8,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Advanced Table Enhancements:**
+  - **Column Resizing Polish:** Excel-like column resizing with sub-pixel precision
+    - Columns to the left stay fixed during resize
+    - Columns to the right shift position without changing width
+    - Table width adjusts dynamically to accommodate changes
+    - Smooth 60fps resizing using `requestAnimationFrame`
+    - Click suppression to prevent unintended sorting after resize
+  - **Sidebar UI:** Modern collapsible sidebar with three sections (Filters, Columns, Saved Views)
+  - **Filter Enhancements:** AND/OR logic, auto-apply on changes, validation
+  - **Error Handling:** Loading spinners, exponential backoff retry, offline detection
+  - **Testing Guide:** Comprehensive 200+ test cases covering all functionality
 - **Planning Integration (Major Feature):**
-  - **Planning Module:** Fully integrated the new Planning Module with a custom Gantt chart and Shift Planning capabilities.
-  - **Advanced Scheduling:** Added support for complex shift patterns (Production 3x8h, Maintenance 2x12h) and overnight shifts.
-  - **Team Optimization:** Implemented multi-factor team formation logic (skills, workload, experience).
+  - **Planning Module:** Fully integrated the new Planning Module with a custom Gantt chart and Shift Planning capabilities
+  - **Advanced Scheduling:** Added support for complex shift patterns (Production 3x8h, Maintenance 2x12h) and overnight shifts
+  - **Team Optimization:** Implemented multi-factor team formation logic (skills, workload, experience)
 - **Infrastructure:**
-  - **Test Suite:** Restored and verified the global test suite; fixed cross-module import issues affecting `pytest` discovery.
-  - **Shared Components:** Enhanced `AdvancedTable` component with better height calculation and event handling, shared across all apps.
+  - **Test Suite:** Restored and verified the global test suite; fixed cross-module import issues affecting `pytest` discovery
+  - **Shared Components:** Enhanced `AdvancedTable` component with better height calculation and event handling, shared across all apps
 
 ### Changed
+- **Advanced Table Component:**
+  - Auto-fit padding reduced from 24px to 5px for tighter content fit
+  - All width calculations now use float precision (`getBoundingClientRect()`) to eliminate jitter
+  - Column resizing now updates table width synchronously: `New Width = Start Width + (Column Change)`
 - **Documentation:**
-  - **Restructuring:** Major reorganization of the `docs/` directory.
-    - Moved app-specific documentation to `apps/<app_name>/docs/`.
-    - Refactored the monolithic Planning Module action plan into phase-specific documents.
-    - Cleaned up the root `docs/` directory to focus on project-level roadmaps.
+  - **Restructuring:** Major reorganization of the `docs/` directory
+    - Moved app-specific documentation to `apps/<app_name>/docs/`
+    - Refactored the monolithic Planning Module action plan into phase-specific documents
+    - Cleaned up the root `docs/` directory to focus on project-level roadmaps
+    - Removed completed temporary planning document (`advanced-table-fixes-plan.md`)
 - **Configuration:**
-  - Updated `.env` handling to support new Planning Module configuration flags.
+  - Updated `.env` handling to support new Planning Module configuration flags
 
 ### Fixed
-- **Stability:** Resolved startup crashes related to circular imports in the Planning Engine.
-- **UI/UX:** Fixed various issues with the Advanced Table component (modals, event listeners, viewport height).
-- **Testing:** Fixed `pytest` discovery issues allowing full regression testing of the Planning module.
+- **Advanced Table:**
+  - Fixed save/load configuration persistence across renders
+  - Fixed global search breaking on input
+  - Fixed filter dropdown not updating when columns change
+  - Fixed empty state messages not appearing correctly
+  - Fixed sidebar state persistence after page refresh
+- **Stability:** Resolved startup crashes related to circular imports in the Planning Engine
+- **UI/UX:** Fixed various issues with the Advanced Table component (modals, event listeners, viewport height)
+- **Testing:** Fixed `pytest` discovery issues allowing full regression testing of the Planning module
 
 ## [1.1.0] - 2025-01-28
 

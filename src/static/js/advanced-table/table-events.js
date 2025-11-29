@@ -70,7 +70,15 @@ AdvancedTable.prototype.attachEventListeners = function () {
 
     const headers = this.container.querySelectorAll('.advanced-table th.sortable');
     headers.forEach(header => {
-        header.addEventListener('click', () => {
+        header.addEventListener('click', (e) => {
+            // Ignore clicks that originated from resize handle
+            if (e.target.classList.contains('resize-handle') ||
+                e.target.closest('.resize-handle')) {
+                e.stopPropagation();
+                e.preventDefault();
+                return;
+            }
+
             const column = header.getAttribute('data-column');
             this.sort(column);
         });

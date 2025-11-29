@@ -19,11 +19,17 @@ AdvancedTable.prototype.exportCSV = function(data) {
         csv += values.join(',') + '\n';
     });
 
+    // Generate filename with date and time
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-'); // HH-MM-SS
+    const filename = `${this.pageName}_${dateStr}_${timeStr}.csv`;
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${this.pageName}_export.csv`;
+    a.download = filename;
     a.click();
     window.URL.revokeObjectURL(url);
 };

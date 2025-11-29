@@ -11,8 +11,8 @@
 
 /* For pages where table container should fill viewport (Assets, MOs, Users, Spare Parts) */
 .page-full-height {
-    /* Account for: navbar (56px) + page padding (20px top + 20px bottom) + page title/actions (~80px) */
-    height: calc(100vh - 160px);
+    /* Account for: navbar (56px) + page padding (20px top + 20px bottom) + page title/actions (~100px) */
+    height: calc(100vh - 180px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -39,6 +39,7 @@
 }
 
 .table-responsive {
+    position: relative; /* For absolute positioned loading overlay */
     flex: 1;
     overflow-y: auto;
     overflow-x: auto;
@@ -94,6 +95,25 @@
 
 .advanced-table {
     margin-bottom: 0;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.advanced-table th,
+.advanced-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Highlight only the hovered column header */
+.advanced-table thead.table-dark th {
+    background-color: #343a40;
+    transition: background-color 0.15s ease;
+}
+
+.advanced-table thead.table-dark th:hover {
+    background-color: #495057 !important;
 }
 
 .advanced-table th.sortable {
@@ -103,9 +123,6 @@
     padding-right: 2rem;
 }
 
-.advanced-table th.sortable:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
 
 .advanced-table th i {
     position: absolute;
@@ -348,17 +365,106 @@
     margin-bottom: 1rem;
 }
 
+/* Loading overlay for async operations - SCOPED TO TABLE CONTAINER */
+.table-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(3px);
+}
+
+.table-loading-overlay .table-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.table-loading-overlay .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3rem;
+}
+
+.table-loading-overlay .loading-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+/* Button loading state */
+.btn .spinner-border-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-width: 0.125rem;
+}
+
+/* Column resize handle */
+.resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 20;
+    background: transparent;
+    pointer-events: auto; /* Ensure it captures events */
+}
+
+.resize-handle:hover {
+    background: rgba(0, 123, 255, 0.3);
+    border-right: 2px solid #007bff;
+}
+
+.resize-handle:active {
+    background: rgba(0, 123, 255, 0.5);
+    border-right: 2px solid #0056b3;
+}
+
+/* Ensure table headers handle pointer events correctly */
+.advanced-table th.sortable {
+    position: relative;
+    user-select: none;
+    cursor: pointer;
+}
+
 /* Empty state */
 .table-empty {
     text-align: center;
-    padding: 3rem;
+    padding: 2rem 1rem;
     color: #6c757d;
+    vertical-align: middle;
 }
 
 .table-empty i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
     display: block;
+    color: #adb5bd;
+    opacity: 0.5;
+}
+
+.table-empty p {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.table-empty small {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #868e96;
 }
 
 /* Export progress */

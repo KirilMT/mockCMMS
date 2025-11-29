@@ -631,6 +631,15 @@ class TableSidebar {
                 <i class="fas fa-grip-vertical drag-handle"></i>
             `;
 
+            // Add Enter key support for checkbox
+            const checkbox = listItem.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    checkbox.checked = !checkbox.checked;
+                }
+            });
+
             // Drag and drop event listeners
             listItem.addEventListener('dragstart', (e) => {
                 listItem.classList.add('dragging');
@@ -853,8 +862,12 @@ class TableSidebar {
             is_default: false
         };
 
+        // Get button and show loading state
+        const saveBtn = document.getElementById('saveViewBtn');
+        const loadingState = this.table.showButtonLoading(saveBtn, 'Saving...');
+
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        fetch('/api/table-config/' + this.table.pageName, {
+        this.table.fetchWithRetry('/api/table-config/' + this.table.pageName, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -870,13 +883,15 @@ class TableSidebar {
             })
             .then(data => {
                 if (data.success) {
+                    ToastNotification.success(`View "${name.trim()}" saved successfully!`);
+
                     // Set this newly saved view as both selected and last loaded
                     this.table.selectedConfigId = data.id;
                     this.table.lastLoadedConfigId = data.id;
 
                     // Reload configurations WITHOUT applying default
                     // Just refresh the list
-                    fetch('/api/table-config/' + this.table.pageName)
+                    this.table.fetchWithRetry('/api/table-config/' + this.table.pageName)
                         .then(response => response.json())
                         .then(configs => {
                             this.table.savedConfigs = configs || [];
@@ -887,8 +902,17 @@ class TableSidebar {
                 }
             })
             .catch(error => {
-                console.error('Error saving configuration:', error);
-                ToastNotification.error('Error saving configuration: ' + error.message);
+                if (error.message === 'Max retries exceeded') {
+                    console.error('Failed to save configuration after multiple retries:', error);
+                    ToastNotification.error('Unable to save view. Please check your connection and try again.');
+                } else {
+                    console.error('Error saving configuration:', error);
+                    ToastNotification.error('Error saving configuration: ' + error.message);
+                }
+            })
+            .finally(() => {
+                // Restore button state
+                loadingState.restore();
             });
     }
 
@@ -918,8 +942,12 @@ class TableSidebar {
             sort_config: JSON.stringify(this.table.currentSort)
         };
 
+        // Get button and show loading state
+        const updateBtn = document.getElementById('updateViewBtn');
+        const loadingState = this.table.showButtonLoading(updateBtn, 'Updating...');
+
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        fetch(`/api/table-config/${this.table.lastLoadedConfigId}`, {
+        this.table.fetchWithRetry(`/api/table-config/${this.table.lastLoadedConfigId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -941,7 +969,7 @@ class TableSidebar {
                     this.table.selectedConfigId = this.table.lastLoadedConfigId;
 
                     // Reload configurations to refresh the list
-                    fetch('/api/table-config/' + this.table.pageName)
+                    this.table.fetchWithRetry('/api/table-config/' + this.table.pageName)
                         .then(response => response.json())
                         .then(configs => {
                             this.table.savedConfigs = configs || [];
@@ -952,8 +980,17 @@ class TableSidebar {
                 }
             })
             .catch(error => {
-                console.error('Error updating configuration:', error);
-                ToastNotification.error('Error updating configuration: ' + error.message);
+                if (error.message === 'Max retries exceeded') {
+                    console.error('Failed to update configuration after multiple retries:', error);
+                    ToastNotification.error('Unable to update view. Please check your connection and try again.');
+                } else {
+                    console.error('Error updating configuration:', error);
+                    ToastNotification.error('Error updating configuration: ' + error.message);
+                }
+            })
+            .finally(() => {
+                // Restore button state
+                loadingState.restore();
             });
     }
 
@@ -967,8 +1004,13 @@ class TableSidebar {
             return;
         }
 
+        // Find the delete button for this specific view
+        const viewItem = document.querySelector(`.saved-view-item[data-config-id="${config.id}"]`);
+        const deleteBtn = viewItem ? viewItem.querySelector('.delete-view-btn') : null;
+        const loadingState = deleteBtn ? this.table.showButtonLoading(deleteBtn, '') : null;
+
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        fetch(`/api/table-config/${config.id}`, {
+        this.table.fetchWithRetry(`/api/table-config/${config.id}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -982,6 +1024,8 @@ class TableSidebar {
             })
             .then(data => {
                 if (data.success) {
+                    ToastNotification.success(`View "${config.config_name}" deleted successfully!`);
+
                     // If deleted view was active or last loaded, clear those IDs
                     if (this.table.selectedConfigId === config.id) {
                         this.table.selectedConfigId = null;
@@ -996,8 +1040,19 @@ class TableSidebar {
                 }
             })
             .catch(error => {
-                console.error('Error deleting configuration:', error);
-                ToastNotification.error('Error deleting configuration: ' + error.message);
+                if (error.message === 'Max retries exceeded') {
+                    console.error('Failed to delete configuration after multiple retries:', error);
+                    ToastNotification.error('Unable to delete view. Please check your connection and try again.');
+                } else {
+                    console.error('Error deleting configuration:', error);
+                    ToastNotification.error('Error deleting configuration: ' + error.message);
+                }
+            })
+            .finally(() => {
+                // Restore button state
+                if (loadingState) {
+                    loadingState.restore();
+                }
             });
     }
 

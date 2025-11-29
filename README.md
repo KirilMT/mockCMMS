@@ -29,7 +29,7 @@ mockCMMS/
 │   ├── templates/           # HTML templates
 │   └── app.py               # Flask application factory
 ├── apps/                    # Modular applications
-│   ├── planning/    # planning management module
+│   ├── planning/            # Planning management module
 │   │   ├── src/             # Application source code
 │   │   │   ├── routes/      # Flask blueprints
 │   │   │   ├── services/    # Core business logic
@@ -59,7 +59,7 @@ mockCMMS/
 └── run.py                   # Application entry point
 ```
 
-## 🔧 Applications
+## � Applications
 
 ### Main Application
 - **Core mockCMMS:** Base maintenance management functionality
@@ -67,7 +67,7 @@ mockCMMS/
 - **Configuration Hub:** Manages settings for all integrated applications
 
 ### Modular Apps
-- **[Planning](apps/planning/README.md):** Intelligent maintenance planning system with custom Gantt charts, shift-based scheduling, and skill-based task assignment.
+- **[Planning](apps/planning/README.md):** Intelligent maintenance planning system with custom Gantt charts, shift-based scheduling, and skill-based task assignment
 - **[Reports](apps/reports/README.md):** Comprehensive reporting and analytics system with PDF/Markdown export capabilities
 - **Future Apps:** Additional modules can be easily integrated following the same pattern
 
@@ -132,7 +132,7 @@ mockCMMS/
 8. **Access the application:**
    Open your browser and navigate to `http://127.0.0.1:5000`
 
-## 🔧 Configuration
+## ⚙️ Configuration
 
 ### Environment Variables
 
@@ -149,9 +149,8 @@ mockCMMS/
 - **Disable apps:** Set `APP_NAME_ENABLED=False` in `.env`
 - **Changes take effect:** On next application restart
 
-## 🚀 Running the Application
+## 🏃 Running the Application
 
-### Development Mode
 ```bash
 # Activate virtual environment
 .\.venv\Scripts\Activate.ps1  # Windows PowerShell
@@ -161,12 +160,9 @@ mockCMMS/
 python run.py
 ```
 
-### Production Mode
-```bash
-python run.py
-```
+The application will start in development mode by default. Access it at `http://127.0.0.1:5000`
 
-## 📦 JavaScript Architecture
+## � JavaScript Architecture
 
 ### Overview
 
@@ -216,14 +212,19 @@ The application uses a modular JavaScript architecture for maintainability and c
   - `table-export.js` - CSV export functionality
   - `table-init.js` - Initialization helper
   - `table-sidebar.js` - Sidebar functionality
+  - `table-resize.js` - Excel-like column resizing
+  - `table-loading.js` - Loading states and spinners
+  - `table-retry.js` - Retry mechanisms with exponential backoff
 - **Features:**
-  - Excel-like sorting and filtering
+  - Excel-like sorting and filtering with AND/OR logic
   - Column visibility management
   - Drag-and-drop column reordering
+  - **Excel-like column resizing** with sub-pixel precision
   - Global search across all columns
   - Save/load custom view configurations
   - CSV export
-  - Responsive design
+  - Responsive design with collapsible sidebar
+  - Loading states and automatic retry on failures
 
 ### File Organization
 
@@ -237,12 +238,15 @@ src/static/js/
 │   ├── table-events.js         # Event listeners
 │   ├── table-export.js         # Export functionality
 │   ├── table-init.js           # Helper functions
-│   └── table-sidebar.js        # Sidebar functionality
+│   ├── table-sidebar.js        # Sidebar functionality
+│   ├── table-resize.js         # Column resizing
+│   ├── table-loading.js        # Loading states
+│   └── table-retry.js          # Retry mechanisms
 ├── toast-notification.js       # Toast UI component (general purpose)
 └── flash-messages.js           # Flask flash message integration
 ```
 
-## 🔧 Development Guide
+## �️ Development Guide
 
 ### Adding a New App
 
@@ -289,4 +293,4 @@ Contributions are welcome. Please read the [contributing guidelines](.github/CON
 
 ---
 
-**Version:** 1.2.0 | **Last Updated:** November 21, 2025
+**Version:** 1.2.0 | **Last Updated:** November 29, 2025

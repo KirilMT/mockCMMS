@@ -48,7 +48,10 @@ AdvancedTable.prototype.saveConfiguration = function() {
 };
 
 AdvancedTable.prototype.loadConfiguration = function() {
-    fetch('/api/table-config/' + this.pageName)
+    // Show loading overlay for initial load
+    this.showTableLoading('Loading saved views...');
+
+    this.fetchWithRetry('/api/table-config/' + this.pageName)
         .then(response => {
             if (!response.ok) {
                 if (response.status === 404 || response.status === 401) {
@@ -84,6 +87,11 @@ AdvancedTable.prototype.loadConfiguration = function() {
         .catch(error => {
             if (error.message === 'NO_CONFIGS') {
                 console.log('No saved configurations available');
+            } else if (error.message === 'OFFLINE') {
+                console.log('Offline - skipping configuration load');
+            } else if (error.message === 'Max retries exceeded') {
+                console.error('Failed to load configurations after multiple retries:', error);
+                ToastNotification.error('Unable to load saved views. Please try again later.');
             } else {
                 console.error('Error loading configurations:', error);
                 ToastNotification.warning('Could not load saved configurations');
@@ -94,6 +102,10 @@ AdvancedTable.prototype.loadConfiguration = function() {
             if (this.sidebar) {
                 this.sidebar.populateSavedViews();
             }
+        })
+        .finally(() => {
+            // Always hide loading overlay
+            this.hideTableLoading();
         });
 };
 

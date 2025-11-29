@@ -34,7 +34,7 @@ AdvancedTable.prototype.render = function () {
                         </div>
                     </div>
                     <div class="table-responsive" style="max-height: 100%; overflow-y: auto; overflow-x: auto;">
-                        <table class="table table-striped table-hover advanced-table" style="width: max-content; min-width: 100%;">
+                        <table class="table table-striped table-hover advanced-table">
                             <thead class="table-dark sticky-top">
                                 ${this.renderHeader()}
                             </thead>
@@ -54,11 +54,24 @@ AdvancedTable.prototype.render = function () {
     // Populate sidebar sections
     this.sidebar.populateColumns();
     this.sidebar.populateSavedViews();
+
+    // Initialize column resizing
+    if (typeof this.initColumnResize === 'function') {
+        this.initColumnResize();
+    }
 };
 
 AdvancedTable.prototype.renderHeader = function () {
-    return `<tr>${this.columnOrder
-        .filter(key => !this.hiddenColumns.has(key))
+    const visibleColumns = this.columnOrder.filter(key => !this.hiddenColumns.has(key));
+
+    // Handle all columns hidden
+    if (visibleColumns.length === 0) {
+        return `<tr><th class="text-center">
+            <i class="fas fa-eye-slash"></i> All columns are hidden. Please show at least one column from the sidebar.
+        </th></tr>`;
+    }
+
+    return `<tr>${visibleColumns
         .map(key => {
             const col = this.columns.find(c => c.key === key);
             const sortIcon = this.getSortIcon(key);
@@ -71,13 +84,56 @@ AdvancedTable.prototype.renderHeader = function () {
 };
 
 AdvancedTable.prototype.renderBody = function () {
+    const visibleColumns = this.columnOrder.filter(key => !this.hiddenColumns.has(key));
+
+    // Handle all columns hidden
+    if (visibleColumns.length === 0) {
+        return `
+            <tr>
+                <td class="table-empty">
+                    <i class="fas fa-columns fa-3x mb-3"></i>
+                    <p>All columns are hidden</p>
+                    <small class="text-muted">Use the Columns panel in the sidebar to show columns</small>
+                </td>
+            </tr>
+        `;
+    }
+
     const filteredData = this.getFilteredData();
     const paginatedData = this.getPaginatedData(filteredData);
 
+    // Handle empty states
+    if (paginatedData.length === 0) {
+        const colSpan = visibleColumns.length;
+        let emptyMessage = '';
+
+        if (this.data.length === 0) {
+            // No data at all
+            emptyMessage = 'No data available';
+        } else if (this.globalSearchTerm) {
+            // Search returned no results
+            emptyMessage = `No results found for "${this.globalSearchDisplay}"`;
+        } else if (Array.isArray(this.filters) && this.filters.length > 0) {
+            // Filters returned no results
+            emptyMessage = 'No results match the applied filters';
+        } else {
+            // Other empty state
+            emptyMessage = 'No data to display';
+        }
+
+        return `
+            <tr>
+                <td colspan="${colSpan}" class="table-empty">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>${emptyMessage}</p>
+                </td>
+            </tr>
+        `;
+    }
+
     return paginatedData.map(row => `
         <tr>
-            ${this.columnOrder
-            .filter(key => !this.hiddenColumns.has(key))
+            ${visibleColumns
             .map(key => `<td>${this.formatCellValue(row[key], key, row)}</td>`)
             .join('')}
         </tr>
@@ -134,5 +190,10 @@ AdvancedTable.prototype.updateTable = function () {
                 this.sort(column);
             });
         });
+
+        // Re-initialize column resizing
+        if (typeof this.initColumnResize === 'function') {
+            this.initColumnResize();
+        }
     }
 };

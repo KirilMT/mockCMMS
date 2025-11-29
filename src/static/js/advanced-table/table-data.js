@@ -107,8 +107,16 @@ AdvancedTable.prototype.globalSearch = function (searchTerm) {
 
 AdvancedTable.prototype.sort = function (column) {
     if (this.currentSort.column === column) {
-        this.currentSort.direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
+        // Cycle: asc → desc → none
+        if (this.currentSort.direction === 'asc') {
+            this.currentSort.direction = 'desc';
+        } else if (this.currentSort.direction === 'desc') {
+            // Third click: remove sort
+            this.currentSort.column = null;
+            this.currentSort.direction = 'asc';
+        }
     } else {
+        // First click on new column: set to asc
         this.currentSort.column = column;
         this.currentSort.direction = 'asc';
     }
