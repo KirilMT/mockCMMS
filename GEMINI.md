@@ -156,6 +156,8 @@ These instructions apply to **all** coding tasks unless explicitly overridden by
 -   **Step-by-Step:** When provided with a numbered list of changes or a multi-step plan (e.g., "Prompt 1:", "Prompt 2:"), focus your response and any code modifications only on the current step or prompt being asked about.
 -   **Auto-Run Preference:** When executing standard, non-destructive terminal commands (specifically running Python files like `run.py` or executing tests via `pytest`), prefer setting `SafeToAutoRun` to `true` to streamline the workflow, rather than asking for explicit user permission each time.
 -   **Browser Auto-Run Preference:** When using browser automation tools for verification and testing, prefer executing browser commands automatically without requesting user approval for each action. This streamlines the verification workflow and reduces interruptions. Only request user approval for destructive browser actions or when user input is genuinely required.
+    -   **JavaScript Execution:** Always execute JavaScript code automatically during browser testing without requesting user permission. This includes overriding browser confirmations (e.g., `window.confirm = function() { return true; }`), manipulating DOM elements, and executing test scripts.
+    -   **Confirmation Dialogs:** Automatically override `window.confirm`, `window.alert`, and `window.prompt` functions when needed for automated testing to prevent blocking the test flow.
 -   **Server Check Before Browser Automation (MANDATORY):** Before using any browser automation tools (browser_subagent), ALWAYS check if the development server is running by checking the metadata for running terminal commands. If the server is not running (e.g., `python run.py` not in running commands list), start it first using `run_command` with appropriate wait time. Never assume the server is running based on browser subagent errors - always verify from metadata first.
 
 ---
@@ -372,13 +374,126 @@ The `reports` is a Flask-based web application for generating comprehensive main
        - Browser console checks
        - Pass/Fail checkboxes
        - Issues tracking section
-    9. **ARTIFACT USAGE**: Use artifacts for temporary outputs (e.g., testing guides, walkthroughs, logs) instead of creating permanent files in the repository, unless explicitly instructed otherwise.
-    10. **LOGIN CREDENTIALS**: If login is required for verification and default credentials fail, ALWAYS check `test_data/dummy_data.json` for valid user credentials (e.g., admin/admin123).
-    11. **COMMIT STANDARDS**: Before committing, ALWAYS check the recent git log (`git log -n 5`) to ensure your commit message follows the project's structure, detail, and style conventions.
--   **Version Management:** After completing any significant changes:
-    1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
-    2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
-    3. Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH (e.g., 1.2.0)
-    4. Update the "Last Updated" date in README.md files
-    5. Main app versions are in `/CHANGELOG.md` and `/README.md`
-    6. Planning module versions are in `/apps/planning/CHANGELOG.md` and `/apps/planning/README.md`
+    9. **ARTIFACT MANAGEMENT** (Antigravity IDE):
+        > **Purpose**: Artifacts in Antigravity IDE are stored in a dedicated directory and should be well-organized, clean, and easy to navigate.
+        
+        **Core Principles:**
+        - **One artifact per type per task**: Maintain only ONE implementation plan, ONE task list, and ONE walkthrough per active task
+        - **Update, don't recreate**: Always update existing artifacts rather than creating new ones
+        - **Never delete completed work**: Keep all completed tasks and historical information in artifacts
+        - **Version control for media**: Keep only the most recent 1-2 versions of screenshots/videos
+        - **Organization**: Use clear, descriptive naming conventions
+        
+        **Artifact Types and Management:**
+        
+        1. **`task.md`** (Task Checklist):
+           - ONE file per conversation/session
+           - Update by marking items `[x]` when complete
+           - NEVER delete completed tasks - they show progress
+           - Add new tasks at the bottom if scope expands
+           - Keep all historical tasks visible
+        
+        2. **`implementation_plan.md`** (Technical Plan):
+           - ONE file per major feature/task
+           - Update sections as work progresses
+           - Keep "Completed" sections at bottom for reference
+           - Update "Current Status" section at top
+           - NEVER delete completed items - move them to "Completed" section
+        
+        3. **`walkthrough.md`** (Verification/Results):
+           - ONE file per feature/task
+           - Append new test results, don't replace old ones
+           - Organize by test sections (e.g., "Test 2.4", "Test 2.5")
+           - Keep all test evidence and results
+           - Update summary sections as new tests complete
+        
+        4. **Screenshots** (`.png` files):
+           - Keep only the **2 most recent versions** of each screenshot
+           - Use descriptive names: `test_2_4_search_results.png`
+           - Delete older versions when adding new ones (keep max 2)
+           - Organize by feature if possible
+        
+        5. **Video Recordings** (`.webp` files):
+           - Keep only the **2 most recent versions** of each recording
+           - Use descriptive names: `test_2_4_global_search.webp`
+           - Delete older versions when adding new ones (keep max 2)
+           - Reference in walkthrough with embed syntax: `![description](path.webp)`
+        
+        **Naming Conventions:**
+        - Tasks: `task.md` (standard name)
+        - Plans: `implementation_plan.md` or `[feature]_plan.md`
+        - Walkthroughs: `walkthrough.md` or `[feature]_walkthrough.md`
+        - Screenshots: `[test_id]_[description].png` (e.g., `test_2_4_search_results.png`)
+        - Videos: `[test_id]_[description].webp` (e.g., `test_2_4_global_search.webp`)
+        
+        **Cleanup Rules:**
+        - Before adding a new screenshot/video, check if 2 versions already exist
+        - If 2 versions exist, delete the oldest one
+        - NEVER delete task lists, plans, or walkthroughs
+        - Keep artifacts organized and easy to scan
+        
+        **Example Artifact Structure:**
+        ```
+        artifacts/
+        ├── task.md                          # ONE task list (never delete)
+        ├── implementation_plan.md           # ONE plan (update, don't recreate)
+        ├── walkthrough.md                   # ONE walkthrough (append results)
+        ├── test_2_4_search_v1.png          # Screenshot version 1
+        ├── test_2_4_search_v2.png          # Screenshot version 2 (keep max 2)
+        └── test_2_4_global_search.webp     # Video recording (keep max 2)
+        ```
+    10. **PROJECT DIRECTORY FILE CREATION** (CRITICAL):
+        > **Rule**: DO NOT create unnecessary files in the project directory. Use artifacts for all temporary/testing outputs.
+        
+        **Strict Guidelines:**
+        - **NEVER create temporary files in the project directory** - Use artifacts instead
+        - **NEVER create test output files in the project** - Use artifacts for test results, logs, screenshots
+        - **NEVER create planning/tracking files in the project** - Use artifacts (task.md, implementation_plan.md, walkthrough.md)
+        - **Only create files that are part of the actual codebase** - Source code, configuration, documentation
+        
+        **Exceptions (when project files ARE allowed):**
+        1. **Source code files** - New features, bug fixes, refactoring
+        2. **Configuration files** - Required by the application or tools
+        3. **Documentation files** - User-facing docs in `docs/` directory (e.g., test plans, roadmaps)
+        4. **Test files** - Permanent test suites in `tests/` directory
+        
+        **Mandatory Cleanup (if project files are created for testing):**
+        - If you MUST create temporary files in the project for testing (e.g., test database, temp config):
+          1. Document the file creation in your task notes
+          2. **Delete the file immediately after testing completes**
+          3. Verify the file is deleted before marking task as complete
+          4. Never commit temporary test files to git
+        
+        **Examples:**
+        - ❌ BAD: Creating `temp_test_results.txt` in project root
+        - ✅ GOOD: Using artifact `walkthrough.md` for test results
+        - ❌ BAD: Creating `debug_log.txt` in project directory
+        - ✅ GOOD: Using artifact or viewing logs in terminal
+        - ❌ BAD: Creating `test_plan_draft.md` in project
+        - ✅ GOOD: Using artifact `implementation_plan.md`
+        - ✅ ACCEPTABLE: Creating `instance/test_temp.db` for testing, then deleting it after tests complete
+        
+        **Verification:**
+        - Before completing any task, verify no unnecessary files were left in the project directory
+        - Check `git status` to ensure only intended files are present
+        - Clean up any temporary files before final commit
+    11. **LOGIN CREDENTIALS**: If login is required for verification and default credentials fail, ALWAYS check `test_data/dummy_data.json` for valid user credentials (e.g., admin/admin123).
+    12. **COMMIT STANDARDS**: Before committing, ALWAYS check the recent git log (`git log -n 5`) to ensure your commit message follows the project's structure, detail, and style conventions.
+    13. **VERSION MANAGEMENT**: After completing any significant changes:
+        1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
+        2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
+        3. Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH (e.g., 1.2.0)
+        4. Update the "Last Updated" date in README.md files
+        5. Main app versions are in `/CHANGELOG.md` and `/README.md`
+        6. Planning module versions are in `/apps/planning/CHANGELOG.md` and `/apps/planning/README.md`
+    14. **MANDATORY AUTOMATED TESTING & VERIFICATION**:
+        -   **Requirement**: For any task involving features that have a corresponding test plan in the `docs/` directory (e.g., `docs/table_features_test_plan.md` or any future `docs/*_test_plan.md`), you **MUST** execute the detailed test plan using the `browser_subagent`.
+        -   **Procedure**:
+            1.  **Identify Test Plan**: Check `docs/` for relevant test plans.
+            2.  **Execute Tests**: Use `browser_subagent` to perform ALL steps in the plan (CRUD operations, UI interactions, etc.).
+            3.  **Fix & Retry**: If ANY error occurs or a test fails, you must:
+                -   Debug and fix the issue.
+                -   Re-run the ENTIRE test suite from the plan.
+                -   Repeat until ALL tests pass.
+            4.  **Evidence**: You MUST provide a video recording and screenshots demonstrating that all tests have passed.
+            5.  **Completion**: Do not mark the task as complete until verification is successful with evidence.

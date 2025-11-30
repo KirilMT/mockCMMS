@@ -217,14 +217,129 @@ The `reports` is a Flask-based web application for generating comprehensive main
        - Browser console checks
        - Pass/Fail checkboxes
        - Issues tracking section
-    9. **TEMPORARY OUTPUTS**: Use temporary markdown files (displayed in preview mode) for testing guides, walkthroughs, and logs instead of creating permanent files in the repository, unless explicitly instructed otherwise.
-    10. **LOGIN CREDENTIALS**: If login is required for verification and default credentials fail, ALWAYS check `test_data/dummy_data.json` for valid user credentials (e.g., admin/admin123).
-    11. **COMMIT STANDARDS**: Before committing, ALWAYS check the recent git log (`git log -n 5`) to ensure your commit message follows the project's structure, detail, and style conventions.
--   **Version Management:** After completing any significant changes:
-    1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
-    2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
-    3. Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH (e.g., 1.2.0)
-    4. Update the "Last Updated" date in README.md files
-    5. Main app versions are in `/CHANGELOG.md` and `/README.md`
-    6. Planning module versions are in `/apps/planning/CHANGELOG.md` and `/apps/planning/README.md`
-    7. Reports versions are in `/apps/reports/CHANGELOG.md` and `/apps/reports/README.md`
+    9. **TEMPORARY FILE MANAGEMENT** (GitHub Copilot in other IDEs):
+        > **Purpose**: Since GitHub Copilot doesn't have a dedicated artifact system, use temporary markdown files for planning, tracking, and documentation during development.
+        
+        **Core Principles:**
+        - **One file per type per task**: Maintain only ONE implementation plan, ONE task list, and ONE walkthrough per active task
+        - **Update, don't recreate**: Always update existing temp files rather than creating new ones
+        - **Never delete completed work**: Keep all completed tasks and historical information
+        - **Clear naming**: Use descriptive names with feature identifiers
+        - **Location**: Files are managed by the IDE in a system temp directory (similar to Antigravity's artifact system)
+        
+        **Temp File Types and Management:**
+        
+        1. **`task_[feature].md`** (Task Checklist):
+           - ONE file per feature/task
+           - Update by marking items `[x]` when complete
+           - NEVER delete completed tasks - they show progress
+           - Add new tasks at the bottom if scope expands
+           - Keep all historical tasks visible
+        
+        2. **`plan_[feature].md`** (Technical Plan):
+           - ONE file per major feature/task
+           - Update sections as work progresses
+           - Keep "Completed" sections at bottom for reference
+           - Update "Current Status" section at top
+           - NEVER delete completed items - move them to "Completed" section
+        
+        3. **`walkthrough_[feature].md`** (Verification/Results):
+           - ONE file per feature/task
+           - Append new test results, don't replace old ones
+           - Organize by test sections
+           - Keep all test evidence and results
+           - Update summary sections as new tests complete
+        
+        4. **Screenshots/Evidence**:
+           - Keep only the **2 most recent versions** of each screenshot
+           - Use descriptive names: `test_2_4_search_results.png`
+           - Reference in walkthrough with appropriate paths
+        
+        **Naming Conventions:**
+        **Naming Conventions:**
+        - Tasks: `task_[feature].md` (e.g., `task_table_features.md`)
+        - Plans: `plan_[feature].md` (e.g., `plan_table_features.md`)
+        - Walkthroughs: `walkthrough_[feature].md`
+        - Screenshots: `[test_id]_[description].png` (e.g., `test_2_4_search_results.png`)
+        
+        **File Management:**
+        > **Note**: Temp files are managed by the IDE in a system temp directory (similar to Antigravity's artifact system). Files are NOT stored in the project directory.
+        
+        - Files are stored in the IDE's system temp directory
+        - Use the same naming conventions as artifacts for consistency
+        - The IDE handles file location and organization automatically
+        
+        **Cleanup Rules:**
+        - Before adding new screenshots, check if 2 versions exist and delete oldest
+        - NEVER delete task lists, plans, or walkthroughs
+        - Keep temp files organized and easy to scan
+        - The IDE may automatically clean up temp files when sessions end
+    10. **PROJECT DIRECTORY FILE CREATION** (CRITICAL):
+        > **Rule**: DO NOT create unnecessary files in the project directory. Use IDE temp files for all temporary/testing outputs.
+        
+        **Strict Guidelines:**
+        - **NEVER create temporary files in the project directory** - Use IDE temp file system instead
+        - **NEVER create test output files in the project** - Use temp files for test results, logs, screenshots
+        - **NEVER create planning/tracking files in the project** - Use temp files (task_[feature].md, plan_[feature].md, walkthrough_[feature].md)
+        - **Only create files that are part of the actual codebase** - Source code, configuration, documentation
+        
+        **Exceptions (when project files ARE allowed):**
+        1. **Source code files** - New features, bug fixes, refactoring
+        2. **Configuration files** - Required by the application or tools
+        3. **Documentation files** - User-facing docs in `docs/` directory (e.g., test plans, roadmaps)
+        4. **Test files** - Permanent test suites in `tests/` directory
+        
+        **Mandatory Cleanup (if project files are created for testing):**
+        - If you MUST create temporary files in the project for testing (e.g., test database, temp config):
+          1. Inform the user about the file creation
+          2. **Delete the file immediately after testing completes**
+          3. Remind the user to verify the file is deleted
+          4. Never commit temporary test files to git
+        
+        **Examples:**
+        - ❌ BAD: Creating `temp_test_results.txt` in project root
+        - ✅ GOOD: Using temp file `walkthrough_[feature].md` for test results
+        - ❌ BAD: Creating `debug_log.txt` in project directory
+        - ✅ GOOD: Using temp file or viewing logs in terminal
+        - ❌ BAD: Creating `test_plan_draft.md` in project
+        - ✅ GOOD: Using temp file `plan_[feature].md`
+        - ✅ ACCEPTABLE: Creating `instance/test_temp.db` for testing, then deleting it after tests complete
+        
+        **Verification:**
+        - Before completing any task, remind user to verify no unnecessary files were left in the project directory
+        - Suggest checking `git status` to ensure only intended files are present
+        - Remind user to clean up any temporary files before final commit
+    11. **LOGIN CREDENTIALS**: If login is required for verification and default credentials fail, ALWAYS check `test_data/dummy_data.json` for valid user credentials (e.g., admin/admin123).
+    12. **COMMIT STANDARDS**: Before committing, ALWAYS check the recent git log (`git log -n 5`) to ensure your commit message follows the project's structure, detail, and style conventions.
+    13. **Version Management:** After completing any significant changes:
+        1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
+        2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
+        3. Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH (e.g., 1.2.0)
+        4. Update the "Last Updated" date in README.md files
+        5. Main app versions are in `/CHANGELOG.md` and `/README.md`
+        6. Planning module versions are in `/apps/planning/CHANGELOG.md` and `/apps/planning/README.md`
+        7. Reports versions are in `/apps/reports/CHANGELOG.md` and `/apps/reports/README.md`
+    14. **MANDATORY MANUAL TESTING & VERIFICATION**:
+        > **Note**: GitHub Copilot does not have access to automated browser testing tools. All testing must be performed manually by the user.
+        
+        -   **Requirement**: For any task involving features that have a corresponding test plan in the `docs/` directory (e.g., `docs/table_features_test_plan.md` or any future `docs/*_test_plan.md`), you **MUST** provide clear manual testing instructions.
+        -   **Procedure**:
+            1.  **Identify Test Plan**: Check `docs/` for relevant test plans.
+            2.  **Reference Test Plan**: Direct the user to the specific test plan document (e.g., "Please execute tests from `docs/table_features_test_plan.md`").
+            3.  **Highlight Critical Tests**: If only specific sections are relevant to your changes, explicitly list which test sections to run (e.g., "Please run tests 2.3 (Filtering) and 2.4 (Global Search)").
+            4.  **Provide Context**: Explain what changed and why specific tests are important for verification.
+            5.  **Request Confirmation**: Ask the user to confirm that all tests pass before considering the task complete.
+            6.  **Document Results**: If the user reports test failures, debug and fix issues, then request re-testing.
+        -   **Testing Guide Creation**: When implementing new features or significant changes:
+            1.  Create or update the relevant test plan in `docs/` if it doesn't exist or needs updates.
+            2.  Ensure test plans include:
+                - Clear step-by-step instructions
+                - Expected results for each test
+                - Screenshots or visual checkpoints where applicable
+                - Edge cases and error conditions
+            3.  Use the format from existing test plans (e.g., `docs/table_features_test_plan.md`) for consistency.
+        -   **Completion Criteria**: Do not mark a task as complete until:
+            1.  You have provided clear testing instructions to the user
+            2.  The user has confirmed that tests pass OR
+            3.  The user explicitly approves skipping tests for the current iteration
+
