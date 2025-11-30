@@ -1,5 +1,5 @@
 # mockCMMS Project Roadmap
-_Updated November 29, 2025 - 8:58 PM_
+_Updated November 30, 2025 - 1:42 PM_
 
 ---
 
@@ -167,31 +167,56 @@ The core application can be improved with the following features to support the 
     - **Dependencies:** Blocked by Project Validation (#7)
     - **Reference:** [GitHub Issue #3](https://github.com/KirilMT/mockCMMS/issues/3)
 
+- **[ ] Standardize Naming Conventions** _(Priority: High)_
+    - **Goal:** Establish and enforce consistent naming conventions across the codebase
+    - **Issue:** Inconsistent naming (e.g., `advanced-table` vs `table-` prefixes) leads to confusion and maintenance overhead
+    - **Scope:**
+        - Files and directories (kebab-case vs snake_case)
+        - Variables and functions (camelCase vs snake_case)
+        - CSS classes and IDs
+        - Database tables and columns
+    - **Action:** Define standards in `CONTRIBUTING.md` and refactor existing inconsistencies
+
+- **[ ] Structured Logging & Performance Monitoring** _(Priority: High)_
+    - **Goal:** Implement enterprise-grade logging similar to `apps/planning`
+    - **Features:**
+        - **Structured JSON Logging:** For production environments (easier parsing)
+        - **Request Context:** Include method, path, user agent in logs
+        - **Performance Metrics:** Track request duration and database operation times
+        - **Slow Operation Warnings:** Auto-log warnings for slow requests (>2s) or DB queries (>1s)
+        - **Separated Log Files:** Distinct files for application, error, and performance logs
+    - **Reference:** `apps/planning/src/services/logging_config.py`
+
 #### Asset & Data Management
 
 - **[ ] Advanced Asset & Spares Management** _(Priority: Medium)_
     - **Goal:** Move beyond basic CRUD to more intelligent management
     - **Features:**
-        - **Asset Hierarchy:** Implement full parent-child relationships for assets (e.g., Line > Station > Asset > Sub-asset) and allow metadata (e.g., manuals, diagrams) to be attached
+        - **Asset Hierarchy:** Implement full 5-level hierarchy: `Department -> Location -> Line -> Station -> Equipment` (tooling, robot, etc). Ensure this hierarchy is enforced and visible across all application pages where assets are referenced.
         - **Automated Spares Ordering:** Create a system that automatically flags spare parts for reorder when inventory drops below a certain threshold during task planning
 
 - **[ ] Realistic Data Simulation & Testing Tools** _(Priority: Medium)_
     - **Goal:** Improve the robustness and testability of the entire platform
     - **Features:**
-        - Build a service that can generate realistic mock data (PMs, MOs, technician logs) for stress-testing and demonstration purposes
-        - Create a UI for simulating user inputs, such as manually triggering a breakdown alarm or reporting a technician as absent, to test the system's dynamic response
+        - **High Volume Random Data Generation:** Generate large datasets (thousands of items per table) with realistic, randomized values to mimic production environments.
+        - **Data Simulation Service:** Build a service that can generate realistic mock data (PMs, MOs, technician logs) for stress-testing and demonstration purposes.
+        - **User Input Simulation:** Create a UI for simulating user inputs, such as manually triggering a breakdown alarm or reporting a technician as absent, to test the system's dynamic response.
 
 #### Testing & Quality Assurance
 
-- **[ ] Core Application Test Suite Enhancement** _(Priority: Medium)_
-    - **Objective:** Build a comprehensive, isolated test suite for the main mockCMMS application, separate from the modular app tests
-    - **Details:**
-        - Create a dedicated test runner and configuration for the main application
-        - Develop unit and integration tests for core services (`db_utils`, `shift_utils`, etc.)
-        - Write robust tests for all main API endpoints (`/api/v1/...`)
-        - Implement tests for user authentication and authorization logic
-        - Defer fixing the extensive test failures in the `apps/planning` test suite to focus on core application stability first
-        - **Key Deliverable:** A reliable CI pipeline that runs core application tests on every commit, ensuring the main application remains stable and bug-free
+- **[ ] Comprehensive Testing & CI/CD Pipeline** _(Priority: High)_
+    - **Objective:** Implement a strict "Local -> Commit -> Push -> CI" workflow to ensure code quality and stability
+    - **Philosophy:** "Verify locally before commit, verify globally on push"
+    - **Scope:**
+        - **Pre-Commit Hooks:** Implement `.pre-commit-config.yaml` to run linters (flake8, black), formatters, and basic checks before every commit
+        - **Local Test Runner:** Configure `pytest.ini` and `pyproject.toml` for easy local execution of core tests
+        - **Expanded Test Suite:** Increase core app test coverage from ~2 tests to comprehensive unit/integration tests
+        - **GitHub Actions:**
+            - `ci.yml`: Run tests and linting on push/PR
+            - `code-quality.yml`: Advanced static analysis
+            - `release.yml`: Automated release process
+    - **Reference:** [Troubleshooting-Wizard Tests](https://github.com/KirilMT/Troubleshooting-Wizard/tree/main/tests)
+    - **Key Deliverable:** A robust pipeline where passing local tests is a prerequisite for committing, and passing CI is a prerequisite for merging
 
 - **[ ] UI Regression Automation** _(Priority: Medium)_
     - **Goal:** Ensure critical UI workflows (advanced tables, filters, dropdown persistence, toast handling) are validated automatically
@@ -199,6 +224,23 @@ The core application can be improved with the following features to support the 
 
 #### Advanced Table Component Enhancements
 The Advanced Table component was recently completed with core functionality. The following features were identified but deferred for future development.
+
+- **[ ] Sidebar Toggle Implementation Improvement** _(Priority: Medium)_
+    - **Goal:** Improve sidebar toggle to use CSS class instead of DOM removal for better performance and state preservation
+    - **Current Issue:** Sidebar toggle removes/adds element from DOM, which:
+        - Loses internal state (scroll position, expanded sections)
+        - Prevents smooth CSS animations
+        - Causes performance overhead from DOM manipulation
+        - Makes Test 2.1.3 (Sidebar State Persistence) fail
+    - **Proposed Solution:**
+        - Replace DOM removal with `collapsed` class toggle
+        - Add CSS: `.table-sidebar.collapsed { display: none; }` or use `transform` for animations
+        - Preserve sidebar state when toggling
+        - Enable smooth collapse/expand animations
+    - **Files to Modify:**
+        - `src/static/js/advanced-table/table-sidebar.js` - Update `toggleSidebar()` method
+        - `src/static/css/advanced-table.css` - Add `.collapsed` class styles
+    - **Reference:** Identified during Test 2.1.1 execution (November 30, 2025)
 
 - **[ ] Advanced Filtering** _(Priority: Low)_
     - **Goal:** Provide more sophisticated filtering capabilities
@@ -299,11 +341,26 @@ This application already handles skill-based task assignment. The next logical s
         - Integrate condition validation into task assignment workflow
     - **Reference:** [GitHub Issue #6](https://github.com/KirilMT/mockCMMS/issues/6)
 
-- **[ ] Advanced Technician Management** _(Priority: Medium)_
-    - **Goal:** Track detailed technician status beyond basic skills
+- **[ ] Advanced User & Technician Management** _(Priority: Medium)_
+    - **Goal:** Comprehensive user management with roles, skills, training, and external manpower integration
     - **Features:**
-        - Implement models and UI to manage shifts, availability, and status (e.g., on-call, sick leave, training)
-        - Track and visualize individual technician workload over time
+        - **Roles & Permissions:** Implement role-based access control (RBAC) for different user types
+        - **Skills Management:** Track and manage technician skills and certifications
+        - **Training Tracking:** Record and monitor training completion and requirements
+        - **Manpower API Integration:** Connect to external manpower management system via API to track:
+            - Onsite presence
+            - Sick leave status
+            - Vacation schedules
+            - Real-time availability
+        - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training)
+        - **Workload Tracking:** Track and visualize individual technician workload over time
+
+- **[ ] Shift Calendar Redesign** _(Priority: Medium)_
+    - **Goal:** Improve the usability of the Shift Calendar page
+    - **Features:**
+        - **Calendar Grid View:** Redesign the interface to resemble a standard calendar (month/week view) instead of a list
+        - **No-Scroll Layout:** Optimize the layout to fit within the viewport without requiring vertical scrolling
+        - **Interactive Elements:** Allow clicking on days/shifts for more details without leaving the calendar view
 
 - **[ ] Advanced Planning Algorithms** _(Priority: Medium)_
     - **Goal:** Evolve beyond simple task assignment to holistic planning
