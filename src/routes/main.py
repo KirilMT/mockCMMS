@@ -109,23 +109,34 @@ def maintenance_orders():
 @login_required
 def add_mo():
     assets = Asset.query.all()
+    return_to = request.args.get('return_to', None)
+    asset_id = request.args.get('asset_id', None)
+    preselected_asset = None
+    if asset_id:
+        preselected_asset = Asset.query.get(asset_id)
+
     if request.method == 'POST':
-        asset_id = request.form['asset_id']
+        # Get asset_id from form or fall back to the query parameter
+        asset_id_from_form = request.form.get('asset_id')
+        if not asset_id_from_form and asset_id:
+            # If asset field was disabled, use the asset_id from query parameter
+            asset_id_from_form = asset_id
+
         description = request.form['description']
         order_type = request.form['order_type']
-        status = request.form['status']
+        status = "Open"  # Always set to Open for new MOs
         priority = request.form['priority']
-        schedule_name = request.form['schedule_name']
-        frequency = request.form['frequency']
-        estimated_completion_time = request.form['estimated_completion_time']
+        schedule_name = request.form.get('schedule_name', '')
+        frequency = request.form.get('frequency', '')
+        estimated_completion_time = request.form.get('estimated_completion_time', '')
         labour_count = request.form['labour_count']
-        assignees = request.form['assignees']
-        justification = request.form['justification']
-        due_date_str = request.form['due_date']
+        assignees = request.form.get('assignees', '')
+        justification = request.form.get('justification', '')
+        due_date_str = request.form.get('due_date', '')
         due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
         
         new_mo = MaintenanceOrder(
-            asset_id=asset_id,
+            asset_id=asset_id_from_form,
             description=description,
             order_type=order_type,
             status=status,
@@ -134,7 +145,7 @@ def add_mo():
             frequency=frequency if frequency else None,
             estimated_completion_time=int(estimated_completion_time) if estimated_completion_time else None,
             labour_count=int(labour_count),
-            assignees=assignees if assignees else None,
+            assignees_json=assignees if assignees else None,
             justification=justification if justification else None,
             due_date=due_date,
             created_by=session.get('user_id')
@@ -142,48 +153,71 @@ def add_mo():
         db.session.add(new_mo)
         db.session.commit()
         flash('Maintenance Order added successfully!', 'success')
+        # Use the asset_id from the new_mo object to ensure the correct redirect
+        if return_to == 'asset' and new_mo.asset_id:
+            return redirect(url_for('main.asset_detail', asset_id=new_mo.asset_id))
         return redirect(url_for('main.maintenance_orders'))
-    return render_template('maintenance_order_detail.html', mo=None, assets=assets)
+
+    return render_template('maintenance_order_detail.html', mo=None, assets=assets, return_to=return_to, asset_id=asset_id, preselected_asset=preselected_asset)
 
 @main_bp.route('/maintenance_orders/<int:mo_id>')
 @login_required
 def mo_detail(mo_id):
     mo = MaintenanceOrder.query.get_or_404(mo_id)
-    return render_template('maintenance_order_detail.html', mo=mo, assets=Asset.query.all())
+    asset_id = request.args.get('asset_id', None)
+    return render_template('maintenance_order_detail.html', mo=mo, assets=Asset.query.all(), asset_id=asset_id, return_to='asset' if asset_id else None)
 
 @main_bp.route('/maintenance_orders/<int:mo_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_mo(mo_id):
     mo = MaintenanceOrder.query.get_or_404(mo_id)
     assets = Asset.query.all()
+    return_to = request.args.get('return_to', None)
+    asset_id = request.args.get('asset_id', None)
+
     if request.method == 'POST':
         mo.asset_id = request.form['asset_id']
         mo.description = request.form['description']
         mo.order_type = request.form['order_type']
         mo.status = request.form['status']
         mo.priority = request.form['priority']
-        mo.schedule_name = request.form['schedule_name'] if request.form['schedule_name'] else None
-        mo.frequency = request.form['frequency'] if request.form['frequency'] else None
-        mo.estimated_completion_time = int(request.form['estimated_completion_time']) if request.form['estimated_completion_time'] else None
+        schedule_name = request.form.get('schedule_name', '')
+        mo.schedule_name = schedule_name if schedule_name else None
+        frequency = request.form.get('frequency', '')
+        mo.frequency = frequency if frequency else None
+        estimated_time = request.form.get('estimated_completion_time', '')
+        mo.estimated_completion_time = int(estimated_time) if estimated_time else None
         mo.labour_count = int(request.form['labour_count'])
-        mo.assignees = request.form['assignees'] if request.form['assignees'] else None
-        mo.justification = request.form['justification'] if request.form['justification'] else None
-        due_date_str = request.form['due_date']
+        assignees = request.form.get('assignees', '')
+        mo.assignees_json = assignees if assignees else None
+        justification = request.form.get('justification', '')
+        mo.justification = justification if justification else None
+        due_date_str = request.form.get('due_date', '')
         mo.due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
         mo.modified_by = session.get('user_id')
         mo.modified_on = datetime.utcnow()
         db.session.commit()
         flash('Maintenance Order updated successfully!', 'success')
+        # Redirect based on where the user came from
+        if return_to == 'asset' and asset_id:
+            return redirect(url_for('main.asset_detail', asset_id=asset_id))
         return redirect(url_for('main.maintenance_orders'))
-    return render_template('maintenance_order_detail.html', mo=mo, assets=assets)
+
+    return render_template('maintenance_order_detail.html', mo=mo, assets=assets, return_to=return_to, asset_id=asset_id)
 
 @main_bp.route('/maintenance_orders/<int:mo_id>/delete', methods=['POST'])
 @login_required
 def delete_mo(mo_id):
     mo = MaintenanceOrder.query.get_or_404(mo_id)
+    asset_id = mo.asset_id  # Save asset_id before deleting
     db.session.delete(mo)
     db.session.commit()
     flash('Maintenance Order deleted successfully!', 'success')
+
+    # Check if the delete was initiated from an asset detail page
+    referrer = request.referrer
+    if referrer and 'assets/' in referrer and asset_id:
+        return redirect(url_for('main.asset_detail', asset_id=asset_id))
     return redirect(url_for('main.maintenance_orders'))
 
 # --- Spare Part Routes ---

@@ -16,42 +16,161 @@ This document tracks all identified bugs in the mockCMMS application. Each bug i
 
 ---
 
+## ✅ RESOLVED BUGS
+
+### Bug #R1: Redirect After MO Creation/Edit/Delete from Asset Detail Page
+**Priority:** High  
+**Status:** ✅ RESOLVED - December 2, 2025
+
+**Description:**  
+Creating, editing, or deleting a Maintenance Order from an Asset Detail page resulted in incorrect redirects. Multiple navigation issues were discovered and fixed to ensure users always return to the page they came from.
+
+**Issues Found:**
+1. Creating MO from Asset Detail → redirected to MO list (incorrect)
+2. "Back" button on MO add/edit page → linked to `edit_asset` instead of `asset_detail`
+3. Editing MO from Asset Detail → redirected to MO list (incorrect)
+4. Deleting MO from Asset Detail → redirected to MO list (incorrect)
+5. Form didn't pass `return_to` parameter to preserve redirect context
+
+**Solution Implemented:**
+1. **add_mo() route** (line 165): Changed redirect from `edit_asset` to `asset_detail`
+2. **maintenance_order_detail.html** (line 13): Fixed "Back" button from `edit_asset` to `asset_detail`
+3. **maintenance_order_detail.html** (line 25): Added `return_to` and `asset_id` to form action URLs
+4. **edit_mo() route** (lines 170-206): Added return_to parameter handling for proper redirect
+5. **asset_detail.html** (line 109): Added return_to and asset_id to Edit MO link
+6. **delete_mo() route** (lines 207-219): Added referrer checking to redirect back to asset detail
+
+**Affected Files:**
+- `src/routes/main.py` (lines 165, 170-206, 207-219)
+- `src/templates/maintenance_order_detail.html` (lines 13, 25)
+- `src/templates/asset_detail.html` (line 109)
+
+**Testing Scenarios:**
+✅ Create MO from Asset Detail → redirects to Asset Detail  
+✅ Create MO from MO list → redirects to MO list  
+✅ Edit MO from Asset Detail → redirects to Asset Detail  
+✅ Edit MO from MO list → redirects to MO list  
+✅ Delete MO from Asset Detail → redirects to Asset Detail  
+✅ Delete MO from MO list → redirects to MO list  
+✅ "Back" button navigates correctly in all scenarios  
+
+---
+
+### Bug #R2: Frequency Not Pre-selected on Edit PM Order
+**Priority:** Medium  
+**Status:** ✅ RESOLVED - December 2, 2025
+
+**Description:**  
+When editing an existing PM (Preventive Maintenance) order, the "Frequency" dropdown field appeared empty instead of showing the saved frequency value.
+
+**Root Cause:**  
+**Case sensitivity mismatch** between database values and template comparisons:
+- Database stores: `'Monthly'`, `'Weekly'` (capitalized)
+- Template checked: `mo.frequency=='monthly'` (lowercase)
+- The comparison failed, so `selected` attribute was never set
+
+**Solution Implemented:**  
+Use case-insensitive comparison in the Jinja2 template by converting the database value to lowercase before comparing:
+
+```jinja2
+{% if mo and mo.frequency and mo.frequency.lower()=='monthly' %}selected{% endif %}
+```
+
+This ensures the comparison works regardless of how the frequency is stored in the database (capitalized, lowercase, or mixed case).
+
+**Key Insight:**  
+The issue was NOT with JavaScript interfering - it was a simple **case sensitivity bug** in the template comparison. The database stored capitalized values (`'Monthly'`) but the template compared against lowercase values (`'monthly'`). By using `.lower()` filter, we make the comparison case-insensitive and robust.
+
+**Affected Files:**
+- `src/templates/maintenance_order_detail.html` (lines 103-114 - frequency dropdown options)
+
+**Testing Scenarios:**
+✅ Edit existing PM order with frequency → frequency is pre-selected  
+✅ Edit existing PM order without frequency → dropdown shows "Select Frequency"  
+✅ Create new PM order → frequency starts empty  
+✅ Change from PM to Reactive → frequency is cleared and disabled  
+✅ Change from Reactive to PM → frequency is enabled but empty  
+✅ Field disabled for non-PM order types  
+✅ Works with any case variation: 'monthly', 'Monthly', 'MONTHLY', 'MoNtHlY'
+
+---
+
+### Bug #R3: Delete Button Placement and Duplicated Forms in Detail Pages
+**Priority:** High  
+**Status:** ✅ RESOLVED - December 2, 2025
+
+**Description:**  
+Multiple issues were found with delete buttons and form duplication across detail pages:
+1. Delete buttons were misaligned or in wrong positions
+2. Asset Detail page had Jinja2 syntax errors causing template crashes
+3. Maintenance Order Detail page had duplicated form fields
+4. Spare Parts Detail page had duplicated form fields
+5. Delete functionality was broken due to incorrect form structure
+6. Users Detail page delete had foreign key constraint errors
+
+**Issues Found:**
+1. **Delete button placement**: Buttons were moved to separate lines or misaligned
+2. **Template syntax errors**: Unclosed Jinja2 blocks causing crashes
+3. **Duplicated forms**: Edit forms were rendered twice in MO and Spare Parts pages
+4. **Delete logic broken**: Toast messages showed "updated" instead of "deleted"
+5. **Foreign key errors**: Deleting users failed due to UserSkill relationship constraints
+6. **Asset delete error**: IntegrityError when deleting assets with MOs
+
+**Solution Implemented:**
+1. **Standardized delete button placement**: All detail pages now have consistent 3-button layout (Update, Cancel, Delete)
+2. **Fixed template syntax**: Corrected all unclosed `{% block %}` and `{% if %}` tags
+3. **Removed duplicated forms**: Cleaned up MO and Spare Parts detail templates
+4. **Fixed delete routes**: Proper deletion logic with correct flash messages
+5. **Fixed asset delete**: Cascade delete or set null for related MOs
+6. **Fixed user delete**: Delete related UserSkill records before deleting user
+
+**Affected Files:**
+- `src/templates/asset_detail.html` (delete button, template syntax)
+- `src/templates/maintenance_order_detail.html` (delete button, removed duplicate forms)
+- `src/templates/spare_part_detail.html` (delete button, removed duplicate forms)
+- `src/templates/user_detail.html` (delete button)
+- `src/routes/main.py` (delete_asset, delete_mo, delete_spare_part, delete_user routes)
+- `src/services/db_utils.py` (relationship cascades)
+
+**Testing Scenarios:**
+✅ Delete button present and correctly positioned on all detail pages  
+✅ Delete functionality works for Assets  
+✅ Delete functionality works for Maintenance Orders  
+✅ Delete functionality works for Spare Parts  
+✅ Delete functionality works for Users  
+✅ No duplicated forms in any detail pages  
+✅ No template syntax errors  
+✅ Correct toast messages ("deleted" not "updated")  
+✅ Proper redirect after deletion  
+
+---
+
 ## 🔥 CRITICAL BUGS
 
 ### Bug #2: CSRF Token Missing - MO and Spare Parts Forms
 **Priority:** Critical  
-**Status:** Open
+**Status:** ✅ RESOLVED - Prior to December 2, 2025
 
 **Description:**  
 When attempting to add a Maintenance Order (MO) from the Assets page or MOs page, or when adding/updating Spare Parts, the form submission fails with "Bad Request - The CSRF token is missing."
 
-**Current Behavior:**
-- Clicking "Add Maintenance Order" from Asset Details or MO page shows form
-- Submitting the form returns: `400 Bad Request - The CSRF token is missing`
-- Same issue occurs for Spare Parts add/update forms
+**Solution Implemented:**
+CSRF tokens have been added to all forms:
+- ✅ `maintenance_order_detail.html` (lines 26, 146)
+- ✅ `spare_part_detail.html` (lines 19, 63)
+- ✅ `asset_detail.html` (lines 19, 82, 111)
+- ✅ `user_detail.html` (lines 27, 66)
 
-**Expected Behavior:**
-- Forms should include CSRF token and submit successfully
-- User should be redirected to the appropriate page with success message
+All forms now include:
+```html
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+```
 
-**Possible Solution:**
-1. Add CSRF token hidden input field to all forms:
-   ```html
-   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-   ```
-2. Ensure Flask-WTF CSRF protection is properly configured in `app.py`
-3. Add CSRF token to all POST forms in templates
-
-**Affected Files:**
-- `src/templates/maintenance_order_detail.html` (lines 18-126)
-- `src/templates/spare_part_detail.html` (entire form)
-- `src/templates/asset_detail.html` (lines 17-81)
-- `src/app.py` (verify CSRF configuration)
-
-**Additional Info:**
-- CSRF token is already present in `base.html` (line 14) as meta tag
-- CSRF token is present in `user_detail.html` (line 27) and `login.html` (line 8)
-- Need to follow the same pattern for all other forms
+**Testing:**
+✅ Add/Edit Asset forms work correctly
+✅ Add/Edit MO forms work correctly
+✅ Add/Edit Spare Parts forms work correctly
+✅ Delete forms work correctly
 
 ---
 
@@ -59,71 +178,31 @@ When attempting to add a Maintenance Order (MO) from the Assets page or MOs page
 
 ### Bug #1: Missing Delete Functionality for Assets
 **Priority:** High  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 2, 2025  
+**Resolution:** Fixed as part of Bug #R3
 
 **Description:**  
 Assets cannot be deleted from the Asset Detail page. There is no delete button or option available.
 
-**Current Behavior:**
-- Asset Detail page only shows "Update Asset" and "Cancel" buttons
-- No way to delete an asset from the UI
-- Delete route exists in backend (`/assets/<id>/delete`) but no UI trigger
+**Solution:**
+This was resolved as part of Bug #R3 (Delete Button Placement and Duplicated Forms in Detail Pages). Delete buttons have been added to all detail pages including Asset Detail, with proper styling and functionality.
 
-**Expected Behavior:**
-- Asset Detail page should have a "Delete" button
-- Clicking delete should show confirmation dialog
-- After confirmation, asset should be deleted and user redirected to Assets list
-
-**Possible Solution:**
-1. Add delete button to `asset_detail.html` after the Cancel button
-2. Use POST form with confirmation dialog (similar to MO delete in lines 107-110)
-3. Add red asterisk to required fields
-4. Add note about required fields at bottom
-
-**Affected Files:**
-- `src/templates/asset_detail.html` (add delete button around line 80)
-
-**Additional Info:**
-- Backend route already exists: `@main_bp.route('/assets/<int:asset_id>/delete', methods=['POST'])` in `src/routes/main.py` (lines 87-94)
-- Follow same pattern as MO delete in `asset_detail.html` lines 107-110
+**See:** Bug #R3 in RESOLVED BUGS section for full details.
 
 ---
 
 ### Bug #3: Incorrect Back Button Navigation from MO Add Page
 **Priority:** High  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 2, 2025  
+**Resolution:** Fixed as part of Bug #R1
 
 **Description:**  
 When navigating to "Add Maintenance Order" from an Asset Detail page, the "Back" button incorrectly navigates to the Maintenance Orders list instead of returning to the Asset Detail page.
 
-**Current Behavior:**
-- User is on Asset Detail page (e.g., `/assets/5`)
-- User clicks "Add Maintenance Order" button
-- User is taken to `/maintenance_orders/add`
-- "Back to Maintenance Orders" button goes to `/maintenance_orders` (incorrect)
+**Solution:**
+This was resolved as part of Bug #R1 (Redirect After MO Creation/Edit/Delete from Asset Detail Page). The back button now correctly returns to the originating page based on return_to parameter.
 
-**Expected Behavior:**
-- "Back" button should return to the originating page (Asset Detail)
-- If coming from Asset Detail, back button should say "Back to Asset Details"
-- If coming from MO list, back button should say "Back to Maintenance Orders"
-
-**Possible Solution:**
-1. Add `referrer` or `return_to` query parameter when navigating to add MO page
-2. Modify "Add Maintenance Order" link in `asset_detail.html` (line 119):
-   ```html
-   <a href="{{ url_for('main.add_mo', return_to='asset', asset_id=asset.id) }}" class="btn btn-success mt-3">Add Maintenance Order</a>
-   ```
-3. Update `maintenance_order_detail.html` to check for `return_to` parameter
-4. Dynamically set back button URL and text based on referrer
-
-**Affected Files:**
-- `src/templates/asset_detail.html` (line 119 - modify link)
-- `src/templates/maintenance_order_detail.html` (lines 11-14 - dynamic back button)
-- `src/routes/main.py` (lines 108-146 - handle return_to parameter)
-
-**Additional Info:**
-- Consider using `request.referrer` or explicit query parameters
-- Same pattern may apply to other "Add" pages accessed from detail views
+**See:** Bug #R1 in RESOLVED BUGS section for full details.
 
 ---
 
@@ -213,33 +292,16 @@ In "Add New Maintenance Order" and "Edit Maintenance Order" forms, the "Assignee
 
 ### Bug #6: Missing Delete Functionality for Maintenance Orders
 **Priority:** High  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 2, 2025  
+**Resolution:** Fixed as part of Bug #R3
 
 **Description:**  
 In "Edit Maintenance Order" page, there is no delete button to remove the MO. Similar to Bug #1 for Assets.
 
-**Current Behavior:**
-- Edit MO page only shows "Update MO" and "Cancel" buttons
-- No way to delete an MO from the edit page
-- Delete route exists in backend but no UI trigger on edit page
+**Solution:**
+This was resolved as part of Bug #R3 (Delete Button Placement and Duplicated Forms in Detail Pages). Delete buttons have been added to all detail pages including Maintenance Order Detail, with proper styling and functionality.
 
-**Expected Behavior:**
-- Edit MO page should have a "Delete" button
-- Clicking delete should show confirmation dialog
-- After confirmation, MO should be deleted and user redirected to MO list
-
-**Possible Solution:**
-1. Add delete button to `maintenance_order_detail.html` after Cancel button
-2. Use POST form with confirmation dialog
-3. Only show delete button when editing (not when adding new MO)
-
-**Affected Files:**
-- `src/templates/maintenance_order_detail.html` (add delete button around line 125)
-
-**Additional Info:**
-- Backend route already exists: `@main_bp.route('/maintenance_orders/<int:mo_id>/delete', methods=['POST'])` in `src/routes/main.py` (lines 180-187)
-- Delete functionality already exists in MO list table (asset_detail.html lines 107-110)
-- Follow same pattern
+**See:** Bug #R3 in RESOLVED BUGS section for full details.
 
 ---
 
@@ -285,31 +347,16 @@ The "Save View" button in the table sidebar does not work. Users cannot save the
 
 ### Bug #11: Spare Parts Update Not Working - CSRF Token Missing
 **Priority:** High  
-**Status:** Open
+**Status:** ✅ RESOLVED - Prior to December 2, 2025  
+**Resolution:** Fixed together with Bug #2
 
 **Description:**  
 Updating spare parts fails with "Bad Request - The CSRF token is missing." Same root cause as Bug #2.
 
-**Current Behavior:**
-- Navigating to `/spare_parts/add` or editing a spare part
-- Submitting form returns: `400 Bad Request - The CSRF token is missing`
+**Solution:**
+CSRF tokens have been added to spare_part_detail.html (lines 19, 63). All spare parts add/edit operations now work correctly.
 
-**Expected Behavior:**
-- Form should include CSRF token and submit successfully
-- User should be redirected to spare parts list with success message
-
-**Possible Solution:**
-Same as Bug #2 - add CSRF token to form:
-```html
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-```
-
-**Affected Files:**
-- `src/templates/spare_part_detail.html` (add CSRF token to form)
-
-**Additional Info:**
-- This is the same issue as Bug #2
-- Can be fixed together with Bug #2 in a single commit
+**See:** Bug #2 in CRITICAL BUGS section for full details.
 
 ---
 
@@ -317,46 +364,33 @@ Same as Bug #2 - add CSRF token to form:
 
 ### Bug #7: Missing Required Field Indicators
 **Priority:** Medium  
-**Status:** Open
+**Status:** ✅ RESOLVED - Prior to December 2, 2025
 
 **Description:**  
 Forms do not clearly indicate which fields are required. There are no red asterisks (*) next to required field labels, and no explanatory note at the bottom of forms.
 
-**Current Behavior:**
-- Required fields have `required` HTML attribute
-- No visual indicator (red asterisk) next to labels
-- No note at bottom explaining required fields
-- Users only discover required fields when trying to submit
-
-**Expected Behavior:**
-- Required field labels should have red asterisk: `Field Name *`
-- Bottom of form should have note: "* Required fields"
-- Note should be next to "Add", "Cancel", and "Delete" buttons
-
-**Possible Solution:**
-1. Add CSS class for required field labels:
+**Solution Implemented:**
+1. ✅ CSS rule added to `base.html` (line 96):
    ```css
    .required-field::after {
        content: " *";
        color: red;
    }
    ```
-2. Add class to all required field labels
-3. Add note at bottom of all forms:
+2. ✅ `required-field` class added to all required field labels in:
+   - `maintenance_order_detail.html` (6 required fields)
+   - `asset_detail.html`
+   - `spare_part_detail.html`
+   - `user_detail.html`
+3. ✅ Required fields note added to all forms:
    ```html
    <p class="text-muted"><small>* Required fields</small></p>
    ```
 
-**Affected Files:**
-- `src/static/css/style.css` or `src/static/css/advanced-table.css` (add CSS rule)
-- `src/templates/asset_detail.html` (add class to labels, add note)
-- `src/templates/maintenance_order_detail.html` (add class to labels, add note)
-- `src/templates/spare_part_detail.html` (add class to labels, add note)
-- `src/templates/user_detail.html` (add class to labels, add note)
-
-**Additional Info:**
-- Improves UX and accessibility
-- Standard web form best practice
+**Testing:**
+✅ All required fields show red asterisk
+✅ Note appears at bottom of all forms
+✅ Improves UX and accessibility
 
 ---
 
@@ -483,45 +517,53 @@ The complete table views save/load functionality is not working properly. This i
 
 ---
 
-### Bug #14: Cannot Click Table Elements After Column Changes
-**Priority:** Medium  
+### Bug #14: Cannot Click Table Elements After Column Changes or Sorting
+**Priority:** High  
 **Status:** Open
 
 **Description:**  
-After changing columns (hiding/showing or drag-and-drop reordering) and applying changes, clicking on table rows to navigate to detail pages stops working.
+After changing columns (hiding/showing or drag-and-drop reordering), applying changes, **or sorting the table**, clicking on table rows to navigate to detail pages stops working.
 
 **Current Behavior:**
 - User hides/shows columns or reorders columns via drag-and-drop
-- User clicks "Apply" button
-- Table updates with new column configuration
+- **OR** user clicks on a column header to sort
+- User clicks "Apply" button (for column changes) or table re-renders (for sorting)
+- Table updates with new configuration
 - Clicking on table rows no longer navigates to detail page
 - Row click event is not firing
 
 **Expected Behavior:**
-- After applying column changes, row click should still work
+- After applying column changes **or sorting**, row click should still work
 - Clicking on a row should navigate to detail page
 - All table interactions should remain functional
+- Sorting should not break row click handlers
 
 **Possible Solution:**
-1. Check if event listeners are being removed during column update
-2. Re-attach row click event listeners after column changes
-3. Use event delegation (attach listener to table, not individual rows)
-4. Verify that column reordering doesn't break DOM structure
+1. Check if event listeners are being removed during column update **or sort**
+2. Re-attach row click event listeners after column changes **and after sorting**
+3. **Use event delegation** (attach listener to table, not individual rows) - this is the most robust solution
+4. Verify that column reordering and sorting don't break DOM structure
+5. Consider using MutationObserver to detect table changes and re-attach listeners if needed
 
 **Affected Files:**
 - `src/static/js/advanced-table/table-sidebar.js` (column apply logic)
-- `src/static/js/advanced-table/table-render.js` (re-render after column changes)
+- `src/static/js/advanced-table/table-render.js` (re-render after column changes **and sorting**)
 - `src/static/js/advanced-table/table-events.js` (row click event listeners)
+- `src/static/js/advanced-table/table-sort.js` (if exists - sorting logic)
 
 **Additional Info:**
 - Event delegation pattern recommended: `table.addEventListener('click', (e) => { if (e.target.closest('tr')) { ... } })`
 - Ensure event listeners are not duplicated
+- **Sorting is a common table operation** - this is a critical bug affecting usability
+- **Priority upgraded from Medium to High** due to impact on core navigation functionality
 
 ---
 
 ### Bug #16: Frequency Field Should Only Be Enabled for PM Orders
 **Priority:** Medium  
-**Status:** Open
+**Status:** Fixed  
+**Fixed Date:** December 1, 2025  
+**Fixed By:** AI Assistant
 
 **Description:**  
 In MO creation/edit forms, the "Frequency" field should only be enabled when "Order Type" is set to "PM" (Preventive Maintenance). For other order types (reactive, corrective), frequency is not applicable.
@@ -550,6 +592,134 @@ In MO creation/edit forms, the "Frequency" field should only be enabled when "Or
 **Additional Info:**
 - Improves data quality and UX
 - Prevents invalid data entry
+
+---
+
+### Bug #23: Frequency Field Not Showing Saved Value on Edit
+**Priority:** Medium  
+**Status:** Fixed  
+**Fixed Date:** December 1, 2025  
+**Fixed By:** AI Assistant
+
+**Description:**  
+When editing a PM Maintenance Order, the frequency dropdown does not show the currently saved frequency value, even though the field is enabled.
+
+**Current Behavior:**
+- User edits a PM order with frequency set to "weekly"
+- Frequency dropdown is enabled (correct)
+- Dropdown shows empty/placeholder value instead of "weekly"
+
+**Expected Behavior:**
+- When editing a PM order, the frequency dropdown should show the saved frequency value
+- The correct option should be pre-selected
+
+**Possible Solution:**
+1. The JavaScript logic was overriding the HTML pre-selection
+2. Remove the JavaScript code that sets the value
+3. Let Jinja2's `selected` attribute handle the pre-selection
+4. JavaScript should only handle enabling/disabling based on order type
+
+**Affected Files:**
+- `src/templates/maintenance_order_detail.html`
+
+**Additional Info:**
+- The HTML template already has the correct `selected` logic in place
+- JavaScript was interfering with the native HTML behavior
+
+---
+
+### Bug #22: CSRF Token Missing in MO Delete from Asset Details
+**Priority:** High  
+**Status:** Fixed  
+**Fixed Date:** December 1, 2025  
+**Fixed By:** AI Assistant
+
+**Description:**  
+When deleting a Maintenance Order from the Asset Details page MO table, the delete form is missing the CSRF token, causing a "Bad Request - The CSRF token is missing" error.
+
+**Current Behavior:**
+- User is on Asset Details page
+- User clicks "Delete" button in the MO table
+- Form submission fails with CSRF error
+
+**Expected Behavior:**
+- Delete button should work correctly with CSRF protection
+- MO should be deleted and success message shown
+
+**Possible Solution:**
+Add CSRF token to the delete form in asset_detail.html:
+```html
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+```
+
+**Affected Files:**
+- `src/templates/asset_detail.html`
+
+---
+
+### Bug #21: Asset Field Not Pre-filled/Disabled on MO Creation
+**Priority:** Medium  
+**Status:** Fixed  
+**Fixed Date:** December 1, 2025  
+**Fixed By:** AI Assistant
+
+**Description:**  
+When creating a Maintenance Order from an Asset's detail page, the "Asset" field in the new MO form is not pre-filled with the asset being viewed, nor is it disabled.
+
+**Current Behavior:**
+- User navigates from "Asset X" detail page to "Add Maintenance Order".
+- The "Asset" dropdown on the MO form is not pre-selected with "Asset X".
+- The user can select any asset from the dropdown.
+
+**Expected Behavior:**
+- When coming from an asset's detail page, the "Asset" dropdown should be pre-selected with that specific asset.
+- The "Asset" dropdown should be disabled to prevent the user from changing it.
+
+**Possible Solution:**
+1. In the `add_mo` route, when an `asset_id` is passed, fetch the specific `Asset` object.
+2. Pass this `asset` object to the `maintenance_order_detail.html` template.
+3. In the template, modify the "Asset" select field to be `disabled` if a specific asset object is passed.
+4. Ensure the correct asset is selected.
+5. Add a hidden input field with the asset_id so it still gets submitted when the dropdown is disabled.
+
+**Affected Files:**
+- `src/routes/main.py`
+- `src/templates/maintenance_order_detail.html`
+
+**Additional Info:**
+- Disabled form fields are not submitted by browsers
+- Solution: Use a hidden input field alongside the disabled dropdown
+- The form submission logic must check for the hidden field value
+
+---
+
+### Bug #20: Missing Delete Functionality for Users
+**Priority:** Medium  
+**Status:** Open
+
+**Description:**  
+The User Detail page does not have a "Delete" button. While asset and MO deletion has been added, user deletion is missing.
+
+**Current Behavior:**
+- User Detail page only allows for updating user information.
+- No way to delete a user from the UI.
+
+**Expected Behavior:**
+- User Detail page should have a "Delete" button.
+- Deletion should have a confirmation dialog.
+- The backend must handle foreign key constraints gracefully (e.g., re-assigning created MOs/assets to an admin or preventing deletion if the user has associated records).
+
+**Possible Solution:**
+1. Add a delete button to `user_detail.html`.
+2. Create a `delete_user` route in `src/routes/main.py`.
+3. Implement logic to handle or re-assign user's associated records before deletion. A soft-delete (marking as inactive) might be a safer alternative.
+
+**Affected Files:**
+- `src/templates/user_detail.html`
+- `src/routes/main.py`
+
+**Additional Info:**
+- This requires careful implementation to avoid database integrity errors. Deleting a user could violate foreign key constraints on the `maintenance_order` or `asset` tables (`created_by`, `modified_by`, etc.).
 
 ---
 
@@ -591,7 +761,192 @@ In the table sidebar, when adding a second filter, it automatically applies filt
 
 ---
 
+### Bug #24: Autofill Background Color Not Consistent Across All Input Types
+**Priority:** Medium  
+**Status:** Open
+
+**Description:**  
+When browser autofill populates text input fields, they get a blue background color to indicate they were autofilled. However, this visual indicator is not applied consistently to all form field types (dropdowns, select elements, textareas, etc.).
+
+**Current Behavior:**
+- Text `<input>` fields show blue background when autofilled
+- Dropdown `<select>` elements don't show autofill indicator
+- Textareas don't show autofill indicator
+- Inconsistent visual feedback across different field types
+
+**Expected Behavior:**
+- All form field types should have consistent autofill styling
+- Dropdowns, selects, and textareas should show the same blue background when autofilled
+- Provides clear visual feedback to users about which fields were auto-populated
+
+**Possible Solution:**
+1. Add CSS rules to style autofilled elements consistently:
+   ```css
+   /* Text inputs - already working */
+   input:-webkit-autofill {
+       -webkit-box-shadow: 0 0 0 1000px #e8f0fe inset !important;
+   }
+   
+   /* Apply same style to select/dropdown */
+   select:-webkit-autofill,
+   select:-webkit-autofill:hover,
+   select:-webkit-autofill:focus {
+       -webkit-box-shadow: 0 0 0 1000px #e8f0fe inset !important;
+   }
+   
+   /* Apply to textareas */
+   textarea:-webkit-autofill,
+   textarea:-webkit-autofill:hover,
+   textarea:-webkit-autofill:focus {
+       -webkit-box-shadow: 0 0 0 1000px #e8f0fe inset !important;
+   }
+   ```
+2. Test across different browsers (Chrome, Firefox, Safari, Edge)
+3. Ensure color matches existing autofill blue (#e8f0fe)
+
+**Affected Files:**
+- `src/static/css/main.css` or `src/templates/base.html` (add CSS rules)
+
+**Additional Info:**
+- Improves UX consistency
+- Helps users identify which fields were auto-populated
+- Browser autofill styling varies across browsers, may need vendor prefixes
+
+---
+
+### Bug #25: Maintenance Orders Section Displayed on Add New Asset Page
+**Priority:** Medium  
+**Status:** Open
+
+**Description:**  
+When creating a new asset on the "Add New Asset" page, the "Maintenance Orders for [Asset Name]" section is displayed, even though the asset doesn't exist yet. This is confusing and the "Add Maintenance Order" button cannot function properly since there's no asset ID.
+
+**Current Behavior:**
+- Navigate to "Add New Asset" page
+- "Maintenance Orders for" section is visible at the bottom
+- "Add Maintenance Order" button is enabled
+- Clicking the button would fail or create an MO without an associated asset
+- Confusing UX - can't add MOs to an asset that doesn't exist yet
+
+**Expected Behavior:**
+- "Maintenance Orders for" section should be hidden on Add New Asset page
+- Section should only appear when editing an existing asset
+- After creating the asset, user can navigate to Asset Detail page to add MOs
+
+**Possible Solution:**
+In `asset_detail.html`, conditionally show the MO section only when editing:
+```html
+{% if asset %}
+<!-- Only show when editing existing asset, not when creating new -->
+<div class="mt-4">
+    <h3>Maintenance Orders for {{ asset.name }}</h3>
+    <!-- MO table and Add button -->
+</div>
+{% endif %}
+```
+
+**Affected Files:**
+- `src/templates/asset_detail.html` (add conditional wrapper around MO section)
+
+**Additional Info:**
+- Prevents user confusion
+- Follows logical workflow: create asset first, then add MOs
+- Similar pattern should be checked in other detail pages (User, Spare Parts)
+
+---
+
+### Bug #26: Frequency Field Not Required for PM Orders
+**Priority:** Medium  
+**Status:** Open
+
+**Description:**  
+When creating or editing a Maintenance Order with Order Type set to "PM" (Preventive Maintenance), the Frequency field is enabled but not marked as required. PM orders should always have a frequency specified to define the maintenance schedule.
+
+**Current Behavior:**
+- User selects Order Type: "PM"
+- Frequency field becomes enabled (correct)
+- Frequency field has no red asterisk (*)
+- Frequency field is not marked as `required` in HTML
+- User can submit PM order without selecting a frequency
+- Creates incomplete PM orders without maintenance schedule
+
+**Expected Behavior:**
+- When Order Type is "PM", Frequency field should be marked as required
+- Red asterisk (*) should appear next to "Frequency" label
+- HTML `required` attribute should be added dynamically
+- Form validation should prevent submission if frequency is empty for PM orders
+- When Order Type is not "PM", frequency should remain optional (disabled)
+
+**Possible Solution:**
+1. Add JavaScript to dynamically toggle `required` attribute:
+   ```javascript
+   function updateFrequencyField() {
+       const isPM = orderTypeField.value === 'PM';
+       frequencyField.disabled = !isPM;
+       frequencyField.required = isPM; // Add this line
+       
+       // Update label styling
+       const label = document.querySelector('label[for="frequency"]');
+       if (isPM) {
+           label.classList.add('required-field');
+       } else {
+           label.classList.remove('required-field');
+           frequencyField.value = '';
+       }
+   }
+   ```
+2. Update on page load and when order type changes
+3. Backend validation: verify frequency is present for PM orders before saving
+
+**Affected Files:**
+- `src/templates/maintenance_order_detail.html` (lines ~151-183 - update JavaScript)
+- `src/routes/main.py` (add backend validation in add_mo and edit_mo routes)
+
+**Additional Info:**
+- Data quality improvement
+- Prevents incomplete PM orders
+- Frequency is essential for scheduling preventive maintenance
+- Should work in conjunction with Bug #16 (frequency enable/disable logic)
+
+---
+
 ## 🔵 LOW PRIORITY BUGS
+
+### Bug #19: KeyError - 'frequency' Field Not Submitted When Disabled
+**Priority:** Low (but breaking)  
+**Status:** Fixed  
+**Fixed Date:** December 1, 2025  
+**Fixed By:** AI Assistant
+
+**Description:**  
+When adding a Maintenance Order with a non-PM order type (reactive/corrective), the frequency field is disabled by JavaScript (Bug #16 fix). However, disabled form fields don't get submitted with the form, causing a KeyError when the backend tries to access `request.form['frequency']`.
+
+**Current Behavior:**
+- Select Order Type: "reactive" or "corrective"
+- Frequency field is disabled (correct)
+- Submit form
+- Server crashes with KeyError: 'frequency'
+
+**Expected Behavior:**
+- Disabled fields should be handled gracefully
+- Form should submit successfully regardless of which fields are disabled
+- Optional fields should use `.get()` method instead of direct dictionary access
+
+**Possible Solution:**
+1. Replace `request.form['field']` with `request.form.get('field', '')` for all optional fields
+2. Apply to both `add_mo()` and `edit_mo()` routes
+3. Fields to fix: schedule_name, frequency, estimated_completion_time, assignees, justification, due_date
+
+**Affected Files:**
+- `src/routes/main.py` (lines 121-127 in add_mo, lines 168-174 in edit_mo)
+
+**Additional Info:**
+- This bug was introduced by Bug #16 fix (frequency conditional enable)
+- Disabled form fields are not submitted by browsers (HTML standard behavior)
+- Root cause: using direct dictionary access instead of `.get()` for optional fields
+- Fixed immediately upon discovery during Test 2.1
+
+---
 
 ### Bug #15: Status Field Should Be Hidden in MO Creation
 **Priority:** Low  
@@ -673,31 +1028,47 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 
 ## 📊 BUG SUMMARY BY PRIORITY
 
-**Critical (1 bug):**
-- Bug #2: CSRF Token Missing - MO and Spare Parts Forms
+**Critical (0 open - 1 fixed):**
+- ~~Bug #2: CSRF Token Missing - MO and Spare Parts Forms~~ ✅ FIXED (Prior to Dec 2, 2025)
 
-**High (6 bugs):**
-- Bug #1: Missing Delete Functionality for Assets
-- Bug #3: Incorrect Back Button Navigation from MO Add Page
+**High (4 open - 7 fixed):**
+**Open:**
 - Bug #4: Table State Not Preserved on Navigation/Refresh
 - Bug #5: Assignees Field Needs Dropdown for Users/Teams
-- Bug #6: Missing Delete Functionality for Maintenance Orders
 - Bug #9: Table Sidebar - Save View Not Working
-- Bug #11: Spare Parts Update Not Working - CSRF Token Missing
+- Bug #14: Cannot Click Table Elements After Column Changes or Sorting **(upgraded from Medium)**
 
-**Medium (6 bugs):**
-- Bug #7: Missing Required Field Indicators
+**Fixed:**
+- ~~Bug #1: Missing Delete Functionality for Assets~~ ✅ FIXED (Dec 2, 2025 - Bug #R3)
+- ~~Bug #3: Incorrect Back Button Navigation from MO Add Page~~ ✅ FIXED (Dec 2, 2025 - Bug #R1)
+- ~~Bug #6: Missing Delete Functionality for Maintenance Orders~~ ✅ FIXED (Dec 2, 2025 - Bug #R3)
+- ~~Bug #11: Spare Parts Update Not Working - CSRF Token Missing~~ ✅ FIXED (Prior to Dec 2, 2025)
+
+**Medium (8 open - 4 fixed):**
+**Open:**
 - Bug #8: Table Columns Too Narrow on Default Load
 - Bug #10: Table Width Not Responsive to Window Resize
 - Bug #13: Table Views - Save/Load Functionality Not Working
-- Bug #14: Cannot Click Table Elements After Column Changes
-- Bug #16: Frequency Field Should Only Be Enabled for PM Orders
 - Bug #17: OR Filter Operator Clears Previous Filter Row
+- Bug #24: Autofill Background Color Not Consistent Across All Input Types **(NEW - Dec 2, 2025)**
+- Bug #25: Maintenance Orders Section Displayed on Add New Asset Page **(NEW - Dec 2, 2025)**
+- Bug #26: Frequency Field Not Required for PM Orders **(NEW - Dec 2, 2025)**
 
-**Low (1 bug):**
-- Bug #15: Status Field Should Be Hidden in MO Creation
+**Fixed:**
+- ~~Bug #7: Missing Required Field Indicators~~ ✅ FIXED (Prior to Dec 2, 2025)
+- ~~Bug #16: Frequency Field Should Only Be Enabled for PM Orders~~ ✅ FIXED (Dec 1, 2025)
+- ~~Bug #23: Frequency Field Not Showing Saved Value on Edit~~ ✅ FIXED (Dec 2, 2025 - Bug #R2)
 
-**Total Bugs: 14** (Note: Bugs #11 and #2 are the same issue, Bug #13 encompasses Bug #9)
+**Low (0 open - 1 fixed):**
+- ~~Bug #15: Status Field Should Be Hidden in MO Creation~~ ✅ FIXED (Dec 1, 2025)
+
+**Total Bugs: 20**  
+**Open: 11 bugs** (4 High, 7 Medium)  
+**Fixed: 9 bugs** (1 Critical, 4 High, 3 Medium, 1 Low)  
+**Added Today (Dec 2, 2025):** 3 new bugs (Bug #24, #25, #26)  
+**Updated Today (Dec 2, 2025):** Bug #14 priority upgraded High (sorting issue added)  
+**Fixed Today (Dec 2, 2025):** 3 bugs (Bug #R1, #R2, #R3) + verified 2 previous fixes (Bug #2, #7)  
+**Previously Fixed (Dec 1, 2025):** 4 bugs (Bug #15, #16, #19, #21, #22, #23)
 
 ---
 

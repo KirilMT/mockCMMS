@@ -91,6 +91,13 @@
         .navbar-text {
             color: rgba(255, 255, 255, .75);
         }
+
+        /* Required field indicator - Bug #7 */
+        .required-field::after {
+            content: " *";
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 

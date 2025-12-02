@@ -89,17 +89,17 @@ mockCMMS/
    ```
 
 2. **Create a virtual environment:**
-   ```powershell
+   ```bash
    py -3 -m venv .venv
    ```
 
 3. **Activate the virtual environment:**
    - On **Windows (PowerShell)**:
-     ```powershell
+     ```bash
      .\.venv\Scripts\Activate.ps1
      ```
    - On **Windows (Command Prompt)**:
-     ```cmd
+     ```bash
      .venv\Scripts\activate
      ```
    - On **macOS/Linux (bash/zsh):**

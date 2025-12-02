@@ -83,7 +83,7 @@ class Asset(db.Model):
     asset_type = Column(String(100), nullable=True)  # department/location/line/station/tooling/robot
     cost_center = Column(String(100), nullable=True)  # paint/assembly/biw
     status = Column(String(50), default='Operational')
-    maintenance_orders = relationship('MaintenanceOrder', back_populates='asset', lazy=True)
+    maintenance_orders = db.relationship('MaintenanceOrder', back_populates='asset', lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -207,7 +207,7 @@ class User(db.Model):
     # Relationships
     roles = db.relationship('Role', secondary=user_roles, back_populates='users')
     team = db.relationship('Team', backref='users')
-    skills = relationship('UserSkill', back_populates='user')
+    skills = relationship('UserSkill', back_populates='user', cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
