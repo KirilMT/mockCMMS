@@ -128,6 +128,13 @@ def add_mo():
         priority = request.form['priority']
         schedule_name = request.form.get('schedule_name', '')
         frequency = request.form.get('frequency', '')
+
+        # Bug #26: Validate that PM orders have a frequency
+        if order_type == 'PM' and not frequency:
+            flash('Frequency is required for PM (Preventive Maintenance) orders.', 'error')
+            return render_template('maintenance_order_detail.html', mo=None, assets=assets,
+                                 return_to=return_to, asset_id=asset_id, preselected_asset=preselected_asset)
+
         estimated_completion_time = request.form.get('estimated_completion_time', '')
         labour_count = request.form['labour_count']
         assignees = request.form.get('assignees', '')
@@ -184,6 +191,13 @@ def edit_mo(mo_id):
         schedule_name = request.form.get('schedule_name', '')
         mo.schedule_name = schedule_name if schedule_name else None
         frequency = request.form.get('frequency', '')
+
+        # Bug #26: Validate that PM orders have a frequency
+        if mo.order_type == 'PM' and not frequency:
+            flash('Frequency is required for PM (Preventive Maintenance) orders.', 'error')
+            return render_template('maintenance_order_detail.html', mo=mo, assets=assets,
+                                 return_to=return_to, asset_id=asset_id)
+
         mo.frequency = frequency if frequency else None
         estimated_time = request.form.get('estimated_completion_time', '')
         mo.estimated_completion_time = int(estimated_time) if estimated_time else None

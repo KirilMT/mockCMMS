@@ -208,44 +208,78 @@ This was resolved as part of Bug #R1 (Redirect After MO Creation/Edit/Delete fro
 
 ### Bug #4: Table State Not Preserved on Navigation/Refresh
 **Priority:** High  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 2, 2025
 
 **Description:**  
 When applying filters, global search, column configuration, or saved views to a table, navigating to a detail page and returning (or refreshing the page) resets all table settings to default.
 
-**Current Behavior:**
-- User applies filters, search, column hiding, or loads a saved view
-- User clicks on a row to view detail page
-- User clicks "Back" or browser back button
-- All table settings are reset (filters cleared, columns reset, search cleared)
-- Same issue occurs when refreshing the page (F5)
+**Root Cause:**
+Table state was stored only in memory (JavaScript variables). When the page reloaded or user navigated away, all state was lost.
 
-**Expected Behavior:**
-- Table settings should persist when navigating away and returning
-- Settings should persist on page refresh
-- Settings should be stored in browser (localStorage or sessionStorage)
-- User should see the same table state they left
+**Solution Implemented:**
+Implemented comprehensive state persistence using `localStorage`:
 
-**Possible Solution:**
-1. Store table state in `localStorage` or `sessionStorage`:
-   - Active filters (column, operator, value, logic)
-   - Global search term
-   - Column order and visibility
-   - Active saved view ID
-2. On page load, check for saved state and restore it
-3. Update state whenever user makes changes
-4. Consider using URL query parameters for shareable state
+**Features:**
+- ✅ **Automatic State Saving:** State is saved after every change (sort, filter, search, column changes)
+- ✅ **Automatic State Restoration:** State is restored on page load
+- ✅ **Page-Specific State:** Each table (assets, MOs, spare parts) has its own state key
+- ✅ **State Expiration:** State older than 24 hours is automatically removed
+- ✅ **UI Synchronization:** Search input and filter rows are restored visually
+
+**Persisted State includes:**
+- Current sort column and direction
+- Active filters (column, operator, value, logic)
+- Global search term
+- Hidden columns
+- Column order
+- Current page number
+- Selected configuration ID
+
+**Implementation:**
+
+1. **State Saving (`table-core.js`):**
+```javascript
+saveTableState() {
+    const state = {
+        currentSort, filters, hiddenColumns,
+        columnOrder, currentPage, globalSearchTerm,
+        selectedConfigId, timestamp: Date.now()
+    };
+    localStorage.setItem(`tableState_${this.pageName}`, JSON.stringify(state));
+}
+```
+
+2. **State Restoration (`table-core.js`):**
+```javascript
+restoreTableState() {
+    const savedState = JSON.parse(localStorage.getItem(`tableState_${this.pageName}`));
+    // Check age (max 24 hours)
+    // Restore all state properties
+}
+```
+
+3. **Trigger Points:** State is saved after:
+   - Sorting columns
+   - Applying/clearing filters
+   - Global search
+   - Column show/hide/reorder
+   - Resetting columns
 
 **Affected Files:**
-- `src/static/js/advanced-table/table-init.js` (add state restoration on init)
-- `src/static/js/advanced-table/table-sidebar.js` (save state on filter/column changes)
-- `src/static/js/advanced-table/table-data.js` (save state on search)
-- `src/static/js/advanced-table/table-config.js` (integrate with saved views)
+- `src/static/js/advanced-table/table-core.js` (save/restore methods)
+- `src/static/js/advanced-table/table-data.js` (save after sort/search)
+- `src/static/js/advanced-table/table-sidebar.js` (save after filters/columns, restore filter UI)
+- `src/static/js/advanced-table/table-render.js` (call restore UI methods)
 
-**Additional Info:**
-- This used to work in older versions - check git history for previous implementation
-- State should be page-specific (different state for assets vs MOs vs spare parts)
-- Consider expiration time for stored state (e.g., 24 hours)
+**Testing:**
+✅ Apply filters → navigate to detail → back → filters restored
+✅ Sort table → navigate away → back → sort restored
+✅ Search → refresh page (F5) → search term restored
+✅ Hide columns → navigate away → back → columns still hidden
+✅ Reorder columns → refresh → order preserved
+✅ State expires after 24 hours
+✅ Different tables have separate states (assets vs MOs)
+✅ Filter UI shows restored filters visually
 
 ---
 
@@ -519,43 +553,65 @@ The complete table views save/load functionality is not working properly. This i
 
 ### Bug #14: Cannot Click Table Elements After Column Changes or Sorting
 **Priority:** High  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 2, 2025
 
 **Description:**  
 After changing columns (hiding/showing or drag-and-drop reordering), applying changes, **or sorting the table**, clicking on table rows to navigate to detail pages stops working.
 
-**Current Behavior:**
-- User hides/shows columns or reorders columns via drag-and-drop
-- **OR** user clicks on a column header to sort
-- User clicks "Apply" button (for column changes) or table re-renders (for sorting)
-- Table updates with new configuration
-- Clicking on table rows no longer navigates to detail page
-- Row click event is not firing
+**Root Cause:**
+Row click event listeners were attached to individual row elements during initialization. When the table was re-rendered (after sorting or column changes), new row elements were created, but the event listeners weren't re-attached to the new elements.
 
-**Expected Behavior:**
-- After applying column changes **or sorting**, row click should still work
-- Clicking on a row should navigate to detail page
-- All table interactions should remain functional
-- Sorting should not break row click handlers
+**Solution Implemented:**
+Replaced individual row event listeners with **event delegation** pattern:
+- Attached a single click listener to the `<tbody>` element instead of each row
+- The tbody listener detects clicks on any row, even after table re-renders
+- Added logic to ignore clicks on buttons, links, and action elements
+- Added `cursor: pointer` CSS to tbody tr elements
 
-**Possible Solution:**
-1. Check if event listeners are being removed during column update **or sort**
-2. Re-attach row click event listeners after column changes **and after sorting**
-3. **Use event delegation** (attach listener to table, not individual rows) - this is the most robust solution
-4. Verify that column reordering and sorting don't break DOM structure
-5. Consider using MutationObserver to detect table changes and re-attach listeners if needed
+**Benefits of Event Delegation:**
+- Event listeners survive table re-renders (sorting, filtering, column changes)
+- Better performance (one listener instead of many)
+- More robust and maintainable code
+- No need to manually re-attach listeners after updates
+
+**Code Changes:**
+
+**JavaScript (`table-events.js`):**
+```javascript
+// Old approach: Individual listeners (BROKEN after re-render)
+rows.forEach((row, index) => {
+    row.addEventListener('click', () => { ... });
+});
+
+// New approach: Event delegation (WORKS after re-render)
+const tbody = this.container.querySelector('.advanced-table tbody');
+tbody.addEventListener('click', (e) => {
+    const row = e.target.closest('tr');
+    // ... handle click
+});
+```
+
+**CSS (`advanced-table.css`):**
+```css
+.advanced-table tbody tr {
+    cursor: pointer;  /* Added for visual feedback */
+    transition: background-color 0.15s ease-in-out;
+}
+```
 
 **Affected Files:**
-- `src/static/js/advanced-table/table-sidebar.js` (column apply logic)
-- `src/static/js/advanced-table/table-render.js` (re-render after column changes **and sorting**)
-- `src/static/js/advanced-table/table-events.js` (row click event listeners)
-- `src/static/js/advanced-table/table-sort.js` (if exists - sorting logic)
+- `src/static/js/advanced-table/table-events.js` (lines 75-104)
+- `src/static/css/advanced-table.css` (line 134)
 
-**Additional Info:**
-- Event delegation pattern recommended: `table.addEventListener('click', (e) => { if (e.target.closest('tr')) { ... } })`
-- Ensure event listeners are not duplicated
-- **Sorting is a common table operation** - this is a critical bug affecting usability
-- **Priority upgraded from Medium to High** due to impact on core navigation functionality
+**Testing:**
+✅ Click row → navigates to detail page
+✅ Sort column → click row → still works
+✅ Sort again → click row → still works
+✅ Hide/show columns → click row → still works
+✅ Reorder columns → click row → still works
+✅ Apply filters → click row → still works
+✅ Clicks on Edit/Delete buttons → ignored (actions work)
+✅ Hover shows pointer cursor
 
 ---
 
@@ -816,97 +872,82 @@ When browser autofill populates text input fields, they get a blue background co
 
 ### Bug #25: Maintenance Orders Section Displayed on Add New Asset Page
 **Priority:** Medium  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 2, 2025
 
 **Description:**  
 When creating a new asset on the "Add New Asset" page, the "Maintenance Orders for [Asset Name]" section is displayed, even though the asset doesn't exist yet. This is confusing and the "Add Maintenance Order" button cannot function properly since there's no asset ID.
 
-**Current Behavior:**
-- Navigate to "Add New Asset" page
-- "Maintenance Orders for" section is visible at the bottom
-- "Add Maintenance Order" button is enabled
-- Clicking the button would fail or create an MO without an associated asset
-- Confusing UX - can't add MOs to an asset that doesn't exist yet
+**Solution Implemented:**
+Wrapped the entire "Maintenance Orders for" section in a conditional `{% if asset %}` block in `asset_detail.html`. The section now only appears when editing an existing asset, not when creating a new one.
 
-**Expected Behavior:**
-- "Maintenance Orders for" section should be hidden on Add New Asset page
-- Section should only appear when editing an existing asset
-- After creating the asset, user can navigate to Asset Detail page to add MOs
-
-**Possible Solution:**
-In `asset_detail.html`, conditionally show the MO section only when editing:
 ```html
 {% if asset %}
-<!-- Only show when editing existing asset, not when creating new -->
-<div class="mt-4">
-    <h3>Maintenance Orders for {{ asset.name }}</h3>
+<!-- Only show Maintenance Orders section when editing existing asset -->
+<div class="mt-5">
+    <h2>Maintenance Orders for {{ asset.name }}</h2>
     <!-- MO table and Add button -->
 </div>
 {% endif %}
 ```
 
 **Affected Files:**
-- `src/templates/asset_detail.html` (add conditional wrapper around MO section)
+- `src/templates/asset_detail.html` (lines 88-131)
 
-**Additional Info:**
-- Prevents user confusion
-- Follows logical workflow: create asset first, then add MOs
-- Similar pattern should be checked in other detail pages (User, Spare Parts)
+**Testing:**
+✅ Add New Asset page - MO section is hidden
+✅ Edit Asset page - MO section is visible
+✅ Prevents user confusion about adding MOs to non-existent assets
 
 ---
 
 ### Bug #26: Frequency Field Not Required for PM Orders
 **Priority:** Medium  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 2, 2025
 
 **Description:**  
 When creating or editing a Maintenance Order with Order Type set to "PM" (Preventive Maintenance), the Frequency field is enabled but not marked as required. PM orders should always have a frequency specified to define the maintenance schedule.
 
-**Current Behavior:**
-- User selects Order Type: "PM"
-- Frequency field becomes enabled (correct)
-- Frequency field has no red asterisk (*)
-- Frequency field is not marked as `required` in HTML
-- User can submit PM order without selecting a frequency
-- Creates incomplete PM orders without maintenance schedule
+**Solution Implemented:**
 
-**Expected Behavior:**
-- When Order Type is "PM", Frequency field should be marked as required
-- Red asterisk (*) should appear next to "Frequency" label
-- HTML `required` attribute should be added dynamically
-- Form validation should prevent submission if frequency is empty for PM orders
-- When Order Type is not "PM", frequency should remain optional (disabled)
+**Frontend (JavaScript):**
+Updated the `updateFrequencyField()` function in `maintenance_order_detail.html` to:
+- Dynamically add/remove `required` HTML attribute when order type changes
+- Dynamically add/remove `required-field` CSS class to show/hide red asterisk
+- Frequency is required when PM is selected, optional when disabled for non-PM types
 
-**Possible Solution:**
-1. Add JavaScript to dynamically toggle `required` attribute:
-   ```javascript
-   function updateFrequencyField() {
-       const isPM = orderTypeField.value === 'PM';
-       frequencyField.disabled = !isPM;
-       frequencyField.required = isPM; // Add this line
-       
-       // Update label styling
-       const label = document.querySelector('label[for="frequency"]');
-       if (isPM) {
-           label.classList.add('required-field');
-       } else {
-           label.classList.remove('required-field');
-           frequencyField.value = '';
-       }
-   }
-   ```
-2. Update on page load and when order type changes
-3. Backend validation: verify frequency is present for PM orders before saving
+```javascript
+if (isPM) {
+    frequencyField.disabled = false;
+    frequencyField.required = true;  // Make required
+    frequencyLabel.classList.add('required-field');  // Show asterisk
+} else {
+    frequencyField.disabled = true;
+    frequencyField.required = false;
+    frequencyField.value = '';
+    frequencyLabel.classList.remove('required-field');
+}
+```
+
+**Backend (Python):**
+Added validation in both `add_mo()` and `edit_mo()` routes:
+```python
+# Validate that PM orders have a frequency
+if order_type == 'PM' and not frequency:
+    flash('Frequency is required for PM (Preventive Maintenance) orders.', 'error')
+    return render_template(...)
+```
 
 **Affected Files:**
-- `src/templates/maintenance_order_detail.html` (lines ~151-183 - update JavaScript)
-- `src/routes/main.py` (add backend validation in add_mo and edit_mo routes)
+- `src/templates/maintenance_order_detail.html` (lines 151-197 - JavaScript)
+- `src/routes/main.py` (lines 127-131 in add_mo, lines 195-199 in edit_mo)
 
-**Additional Info:**
-- Data quality improvement
-- Prevents incomplete PM orders
-- Frequency is essential for scheduling preventive maintenance
-- Should work in conjunction with Bug #16 (frequency enable/disable logic)
+**Testing:**
+✅ PM order type selected - frequency shows red asterisk
+✅ PM order type selected - frequency has HTML required attribute
+✅ Submitting PM without frequency - shows error message
+✅ Non-PM order type - frequency has no asterisk, not required
+✅ Switching from PM to Reactive - asterisk removed
+✅ Switching from Reactive to PM - asterisk added
 
 ---
 
@@ -947,6 +988,57 @@ When adding a Maintenance Order with a non-PM order type (reactive/corrective), 
 - Fixed immediately upon discovery during Test 2.1
 
 ---
+
+### Bug #27: MO Table in Asset Details Should Use Advanced Table
+**Priority:** Medium  
+**Status:** Open
+
+**Description:**  
+The "Maintenance Orders for [Asset Name]" section in the Asset Detail page uses a basic HTML table instead of the advanced table component. This creates inconsistency with the rest of the application and lacks features like sorting, filtering, column customization, and search that users expect.
+
+**Current Behavior:**
+- Asset Detail page shows MOs in a basic `<table>` element
+- No sorting, filtering, or search capabilities
+- No column resizing or reordering
+- Inconsistent UX compared to main MO list page
+- Limited functionality for assets with many MOs
+
+**Expected Behavior:**
+- MO table in Asset Detail should use the same advanced table component as main pages
+- Should support:
+  - Column sorting (click headers to sort)
+  - Global search
+  - Column filtering
+  - Column show/hide
+  - Column resizing
+  - Row click to navigate (already working via links)
+- Consistent look and feel across the application
+- Better UX for viewing MOs associated with an asset
+
+**Possible Solution:**
+1. Replace the basic table in `asset_detail.html` with the advanced table component
+2. Initialize the advanced table JavaScript for this table
+3. Configure table with appropriate columns:
+   - ID, Description, Type, Status, Due Date, Actions
+4. Ensure the table is scoped to only this asset's MOs (not all MOs)
+5. Consider making it a reusable component for other detail pages (User, Spare Parts)
+
+**Affected Files:**
+- `src/templates/asset_detail.html` (lines 94-125 - MO table)
+- `src/static/js/advanced-table/table-init.js` (may need to support multiple tables on one page)
+- Potentially create a new template partial: `templates/components/mo_table.html`
+
+**Additional Info:**
+- Improves consistency across the application
+- Better UX for assets with many MOs
+- Same pattern could be applied to:
+  - User Detail page (showing user's assigned MOs)
+  - Spare Parts Detail page (showing MOs using this part)
+- May require advanced table to support multiple instances on the same page
+
+---
+
+## 🔵 LOW PRIORITY BUGS
 
 ### Bug #15: Status Field Should Be Hidden in MO Creation
 **Priority:** Low  
@@ -1031,44 +1123,48 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 **Critical (0 open - 1 fixed):**
 - ~~Bug #2: CSRF Token Missing - MO and Spare Parts Forms~~ ✅ FIXED (Prior to Dec 2, 2025)
 
-**High (4 open - 7 fixed):**
+**High (2 open - 9 fixed):**
 **Open:**
-- Bug #4: Table State Not Preserved on Navigation/Refresh
 - Bug #5: Assignees Field Needs Dropdown for Users/Teams
 - Bug #9: Table Sidebar - Save View Not Working
-- Bug #14: Cannot Click Table Elements After Column Changes or Sorting **(upgraded from Medium)**
 
 **Fixed:**
 - ~~Bug #1: Missing Delete Functionality for Assets~~ ✅ FIXED (Dec 2, 2025 - Bug #R3)
 - ~~Bug #3: Incorrect Back Button Navigation from MO Add Page~~ ✅ FIXED (Dec 2, 2025 - Bug #R1)
+- ~~Bug #4: Table State Not Preserved on Navigation/Refresh~~ ✅ FIXED (Dec 2, 2025)
 - ~~Bug #6: Missing Delete Functionality for Maintenance Orders~~ ✅ FIXED (Dec 2, 2025 - Bug #R3)
 - ~~Bug #11: Spare Parts Update Not Working - CSRF Token Missing~~ ✅ FIXED (Prior to Dec 2, 2025)
+- ~~Bug #14: Cannot Click Table Elements After Column Changes or Sorting~~ ✅ FIXED (Dec 2, 2025)
 
-**Medium (8 open - 4 fixed):**
+**Medium (6 open - 6 fixed):**
 **Open:**
 - Bug #8: Table Columns Too Narrow on Default Load
 - Bug #10: Table Width Not Responsive to Window Resize
 - Bug #13: Table Views - Save/Load Functionality Not Working
 - Bug #17: OR Filter Operator Clears Previous Filter Row
-- Bug #24: Autofill Background Color Not Consistent Across All Input Types **(NEW - Dec 2, 2025)**
-- Bug #25: Maintenance Orders Section Displayed on Add New Asset Page **(NEW - Dec 2, 2025)**
-- Bug #26: Frequency Field Not Required for PM Orders **(NEW - Dec 2, 2025)**
+- Bug #24: Autofill Background Color Not Consistent Across All Input Types **(added Dec 2, 2025)**
+- Bug #27: MO Table in Asset Details Should Use Advanced Table **(NEW - Dec 2, 2025)**
 
 **Fixed:**
 - ~~Bug #7: Missing Required Field Indicators~~ ✅ FIXED (Prior to Dec 2, 2025)
 - ~~Bug #16: Frequency Field Should Only Be Enabled for PM Orders~~ ✅ FIXED (Dec 1, 2025)
 - ~~Bug #23: Frequency Field Not Showing Saved Value on Edit~~ ✅ FIXED (Dec 2, 2025 - Bug #R2)
+- ~~Bug #25: Maintenance Orders Section Displayed on Add New Asset Page~~ ✅ FIXED (Dec 2, 2025)
+- ~~Bug #26: Frequency Field Not Required for PM Orders~~ ✅ FIXED (Dec 2, 2025)
 
-**Low (0 open - 1 fixed):**
-- ~~Bug #15: Status Field Should Be Hidden in MO Creation~~ ✅ FIXED (Dec 1, 2025)
+**Low (1 open - 1 fixed):**
+**Open:**
+- Bug #15: Status Field Should Be Hidden in MO Creation
 
-**Total Bugs: 20**  
-**Open: 11 bugs** (4 High, 7 Medium)  
-**Fixed: 9 bugs** (1 Critical, 4 High, 3 Medium, 1 Low)  
-**Added Today (Dec 2, 2025):** 3 new bugs (Bug #24, #25, #26)  
-**Updated Today (Dec 2, 2025):** Bug #14 priority upgraded High (sorting issue added)  
-**Fixed Today (Dec 2, 2025):** 3 bugs (Bug #R1, #R2, #R3) + verified 2 previous fixes (Bug #2, #7)  
-**Previously Fixed (Dec 1, 2025):** 4 bugs (Bug #15, #16, #19, #21, #22, #23)
+**Fixed:**
+- ~~Bug #19: KeyError - 'frequency' Field Not Submitted When Disabled~~ ✅ FIXED (Dec 1, 2025)
+
+**Total Bugs: 21**  
+**Open: 9 bugs** (2 High, 6 Medium, 1 Low)  
+**Fixed: 12 bugs** (1 Critical, 6 High, 5 Medium)  
+**Added Today (Dec 2, 2025):** 4 new bugs (Bug #24, #25, #26, #27)  
+**Fixed Today (Dec 2, 2025):** 7 bugs (Bug #R1, #R2, #R3, #4, #14, #25, #26) + verified 2 previous fixes (Bug #2, #7)  
+**Previously Fixed (Dec 1, 2025):** 3 bugs (Bug #15, #16, #19, #21, #22, #23)
 
 ---
 

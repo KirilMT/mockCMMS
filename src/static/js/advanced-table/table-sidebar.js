@@ -538,6 +538,7 @@ class TableSidebar {
 
         // Use updateTable instead of render to preserve sidebar state (filter rows)
         this.table.updateTable();
+        this.table.saveTableState(); // Bug #4: Persist state after applying filters
 
         // Update badge to show applied filters count
         this.updateFilterBadge(filters.length);
@@ -561,6 +562,7 @@ class TableSidebar {
         this.table.selectedConfigId = null; // Clear active view (config changed)
         // Keep lastLoadedConfigId so Update button stays enabled
         this.table.updateTable(); // Use updateTable instead of render
+        this.table.saveTableState(); // Bug #4: Persist state after clearing filters
         this.updateFilterBadge(0);
         this.validateAllFilters(); // Update button states
 
@@ -712,6 +714,7 @@ class TableSidebar {
 
         // Update table
         this.table.updateTable();
+        this.table.saveTableState(); // Bug #4: Persist state after column changes
 
         // Refresh filter dropdowns to reflect new column order/visibility
         this.refreshFilterDropdowns();
@@ -735,6 +738,7 @@ class TableSidebar {
 
         // Update table
         this.table.updateTable();
+        this.table.saveTableState(); // Bug #4: Persist state after reset
 
         // Refresh filter dropdowns to reflect reset columns
         this.refreshFilterDropdowns();
@@ -1140,6 +1144,39 @@ class TableSidebar {
                 console.error('Error removing default configuration:', error);
                 ToastNotification.error('Error removing default configuration: ' + error.message);
             });
+    }
+
+    // Bug #4 Fix: Restore filter UI from saved state
+    restoreFilterUI() {
+        if (!this.table.filters || this.table.filters.length === 0) {
+            return;
+        }
+
+        const filterRows = document.getElementById('filterRows');
+        if (!filterRows) return;
+
+        // Clear existing empty state message
+        filterRows.innerHTML = '';
+
+        // Rebuild filter rows from saved state
+        this.table.filters.forEach((filter, index) => {
+            this.addFilterRow(filter.column, filter.operator, filter.value);
+
+            // Set logic for subsequent filters
+            if (index > 0 && filter.logic) {
+                const filterRow = filterRows.children[filterRows.children.length - 1];
+                const logicConnector = filterRow.previousElementSibling;
+                if (logicConnector && logicConnector.classList.contains('filter-logic-connector')) {
+                    const logicRadio = logicConnector.querySelector(`input[value="${filter.logic}"]`);
+                    if (logicRadio) {
+                        logicRadio.checked = true;
+                    }
+                }
+            }
+        });
+
+        // Update filter badge
+        this.updateFilterBadge(this.table.filters.length);
     }
 }
 

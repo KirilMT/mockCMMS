@@ -88,7 +88,8 @@ AdvancedTable.prototype.globalSearch = function (searchTerm) {
             this.globalSearchTerm = null;
             this.globalSearchDisplay = '';
             this.currentPage = 1;
-            this.updateTable(); // Use updateTable instead of render
+            this.updateTable();
+            this.saveTableState(); // Bug #4: Persist state after clearing search
             return;
         }
 
@@ -96,12 +97,14 @@ AdvancedTable.prototype.globalSearch = function (searchTerm) {
         this.globalSearchTerm = searchTerm.toLowerCase();
 
         this.currentPage = 1;
-        this.updateTable(); // Use updateTable instead of render
+        this.updateTable();
+        this.saveTableState(); // Bug #4: Persist state after search
     } catch (error) {
         console.error('Global search error:', error);
         this.globalSearchTerm = null;
         this.globalSearchDisplay = '';
-        this.updateTable(); // Use updateTable instead of render
+        this.updateTable();
+        this.saveTableState(); // Bug #4: Persist state after error
     }
 };
 
@@ -123,4 +126,5 @@ AdvancedTable.prototype.sort = function (column) {
     this.selectedConfigId = null;
     this.currentPage = 1;
     this.updateTable();
+    this.saveTableState(); // Bug #4: Persist state after sorting
 };

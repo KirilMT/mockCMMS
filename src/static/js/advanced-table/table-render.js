@@ -55,6 +55,10 @@ AdvancedTable.prototype.render = function () {
     this.sidebar.populateColumns();
     this.sidebar.populateSavedViews();
 
+    // Bug #4: Restore UI state after render
+    this.restoreSearchUI();
+    this.sidebar.restoreFilterUI();
+
     // Initialize column resizing
     if (typeof this.initColumnResize === 'function') {
         this.initColumnResize();

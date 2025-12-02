@@ -84,18 +84,36 @@ AdvancedTable.prototype.attachEventListeners = function () {
         });
     });
 
-    const rows = this.container.querySelectorAll('.advanced-table tbody tr');
-    rows.forEach((row, index) => {
-        row.style.cursor = 'pointer';
-        row.addEventListener('click', () => {
+    // Bug #14 Fix: Use event delegation instead of attaching to individual rows
+    // This ensures clicks work even after table re-renders (sorting, column changes)
+    const tbody = this.container.querySelector('.advanced-table tbody');
+    if (tbody) {
+        tbody.addEventListener('click', (e) => {
+            // Find the clicked row (handle clicks on td or nested elements)
+            const row = e.target.closest('tr');
+            if (!row || !tbody.contains(row)) return;
+
+            // Ignore clicks on buttons or links (Edit/Delete actions)
+            if (e.target.closest('button, a, .btn, .inline-form')) {
+                return;
+            }
+
+            // Get the row index within the current page
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const rowIndex = rows.indexOf(row);
+
+            if (rowIndex === -1) return;
+
+            // Get the data for this row
             const filteredData = this.getFilteredData();
             const paginatedData = this.getPaginatedData(filteredData);
-            const rowData = paginatedData[index];
+            const rowData = paginatedData[rowIndex];
+
             if (rowData && rowData.id) {
                 this.rowClick(rowData.id);
             }
         });
-    });
+    }
 };
 
 AdvancedTable.prototype.rowClick = function (id) {

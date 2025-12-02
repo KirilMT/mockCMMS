@@ -84,41 +84,48 @@
     </form>
     {% endif %}
 </div>
-<h2 class="mt-5">Maintenance Orders for {{ asset.name }}</h2>
-{% if asset.maintenance_orders %}
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Description</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Due Date</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for mo in asset.maintenance_orders %}
-        <tr>
-            <td>{{ mo.id }}</td>
-            <td><a href="{{ url_for('main.mo_detail', mo_id=mo.id, asset_id=asset.id) }}">{{ mo.description }}</a></td>
-            <td>{{ mo.order_type }}</td>
-            <td>{{ mo.status }}</td>
-            <td>{{ mo.due_date.strftime('%Y-%m-%d') if mo.due_date else 'N/A' }}</td>
-            <td>
-                <a href="{{ url_for('main.edit_mo', mo_id=mo.id, return_to='asset', asset_id=asset.id) }}" class="btn btn-sm btn-info">Edit</a>
-                <form action="{{ url_for('main.delete_mo', mo_id=mo.id) }}" method="post" class="inline-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <button type="submit" class="btn btn-sm btn-danger"
-                        onclick="return confirm('Are you sure you want to delete this MO?');">Delete</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No maintenance orders for this asset.</p>
+
+{% if asset %}
+<!-- Only show Maintenance Orders section when editing existing asset -->
+<div class="mt-5">
+    <h2>Maintenance Orders for {{ asset.name }}</h2>
+    {% if asset.maintenance_orders %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Due Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mo in asset.maintenance_orders %}
+            <tr>
+                <td>{{ mo.id }}</td>
+                <td><a href="{{ url_for('main.mo_detail', mo_id=mo.id, asset_id=asset.id) }}">{{ mo.description }}</a></td>
+                <td>{{ mo.order_type }}</td>
+                <td>{{ mo.status }}</td>
+                <td>{{ mo.due_date.strftime('%Y-%m-%d') if mo.due_date else 'N/A' }}</td>
+                <td>
+                    <a href="{{ url_for('main.edit_mo', mo_id=mo.id, return_to='asset', asset_id=asset.id) }}" class="btn btn-sm btn-info">Edit</a>
+                    <form action="{{ url_for('main.delete_mo', mo_id=mo.id) }}" method="post" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <button type="submit" class="btn btn-sm btn-danger"
+                            onclick="return confirm('Are you sure you want to delete this MO?');">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No maintenance orders for this asset.</p>
+    {% endif %}
+    <a href="{{ url_for('main.add_mo', return_to='asset', asset_id=asset.id) }}" class="btn btn-success mt-3">Add Maintenance Order</a>
+</div>
 {% endif %}
-<a href="{{ url_for('main.add_mo', return_to='asset', asset_id=asset.id) }}" class="btn btn-success mt-3">Add Maintenance Order</a>
+
 {% endblock %}

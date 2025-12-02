@@ -150,22 +150,33 @@ endblock %}
 </div>
 
 <script>
-// Enable/disable frequency field based on order type (Bug #16)
+// Enable/disable and require frequency field based on order type (Bug #16 & #26)
 document.addEventListener('DOMContentLoaded', function() {
     const orderTypeField = document.getElementById('order_type');
     const frequencyField = document.getElementById('frequency');
+    const frequencyLabel = document.querySelector('label[for="frequency"]');
 
     function updateFrequencyField() {
         const isPM = orderTypeField.value === 'PM';
 
         if (isPM) {
-            // Enable the field for PM orders
+            // Enable and require the field for PM orders
             frequencyField.disabled = false;
+            frequencyField.required = true;
+            // Add required-field class to show red asterisk
+            if (frequencyLabel && !frequencyLabel.classList.contains('required-field')) {
+                frequencyLabel.classList.add('required-field');
+            }
             // Don't touch the value - let the HTML 'selected' attribute handle it
         } else {
-            // Disable and clear the field for non-PM orders
+            // Disable, clear, and make optional for non-PM orders
             frequencyField.disabled = true;
+            frequencyField.required = false;
             frequencyField.value = '';
+            // Remove required-field class
+            if (frequencyLabel) {
+                frequencyLabel.classList.remove('required-field');
+            }
         }
     }
 
