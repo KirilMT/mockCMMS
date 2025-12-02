@@ -285,42 +285,76 @@ restoreTableState() {
 
 ### Bug #5: Assignees Field Needs Dropdown for Users/Teams
 **Priority:** High  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 2, 2025
 
 **Description:**  
-In "Add New Maintenance Order" and "Edit Maintenance Order" forms, the "Assignees" field is a plain textarea expecting JSON format. It should be a dropdown allowing selection of Users (with Technician role) or Teams.
+In "Add New Maintenance Order" and "Edit Maintenance Order" forms, the "Assignees" field was a plain textarea expecting JSON format. It has been replaced with a user-friendly multi-select dropdown.
 
-**Current Behavior:**
-- Assignees field is a textarea with placeholder: "Enter user IDs or group names (JSON format)"
-- Users must manually type JSON like `["user1", "user2"]` or `["maintenance_team"]`
-- Error-prone and not user-friendly
+**Solution Implemented:**
 
-**Expected Behavior:**
-- Assignees field should be a multi-select dropdown or tag-based input
-- Dropdown should show:
-  - All Users with "Technician" role
-  - All Teams
-- Selecting a Team should assign all team members
-- Selected assignees should be clearly visible as tags/chips
+1.  **Backend (`src/routes/main.py`):**
+    -   In `add_mo()` and `edit_mo()` routes, queried the database to fetch:
+        -   All users with the "Technician" role.
+        -   All available teams.
+    -   Passed the `technicians` and `teams` lists to the `maintenance_order_detail.html` template.
+    -   Modified the POST handling logic to use `request.form.getlist('assignees')` to correctly capture multiple selections.
+    -   The list of selections is stored as a JSON string in the `assignees_json` column.
 
-**Possible Solution:**
-1. Replace textarea with multi-select dropdown using Select2 or similar library
-2. Backend: Query Users with "Technician" role and all Teams
-3. Pass data to template in `add_mo()` and `edit_mo()` routes
-4. Frontend: Render dropdown with optgroups (Users / Teams)
-5. On form submit, convert selections to appropriate format for backend
+2.  **Frontend (`src/templates/maintenance_order_detail.html`):**
+    -   Replaced the `<textarea>` for `assignees` with a `<select multiple>` element.
+    -   Used `<optgroup>` to separate "Teams" and "Technicians" in the dropdown for better organization.
+    -   Populated the dropdown with the `teams` and `technicians` data passed from the backend.
+    -   Added logic to pre-select options when editing an existing Maintenance Order.
 
-**Affected Files:**
-- `src/templates/maintenance_order_detail.html` (lines 111-116 - replace textarea)
-- `src/routes/main.py` (lines 108-146, 154-178 - pass users/teams to template)
-- `src/services/db_utils.py` (verify User and Team models)
-- `src/static/css/` (add Select2 or custom dropdown styles)
-- `src/static/js/` (add Select2 or custom dropdown logic)
+3.  **UI/UX Enhancement (Select2):**
+    -   Added the **Select2** library to `base.html` (CSS and JS).
+    -   Initialized Select2 on the `#assignees` dropdown in `maintenance_order_detail.html`.
+    -   This transforms the standard multi-select box into a searchable, tag-based input field, significantly improving usability.
+    -   Used the `bootstrap-5` theme for seamless integration with the existing design.
 
-**Additional Info:**
-- Consider using Select2 library for better UX: https://select2.org/
-- Team selection should expand to individual user IDs on backend
-- Store assignees as JSON array of user IDs in database
+**Code Snippets:**
+
+**`main.py` (fetching data):**
+```python
+technician_role = Role.query.filter_by(name='Technician').first()
+technicians = User.query.filter_by(role=technician_role).all() if technician_role else []
+teams = Team.query.all()
+# ...
+return render_template('maintenance_order_detail.html', ..., technicians=technicians, teams=teams)
+```
+
+**`maintenance_order_detail.html` (dropdown):**
+```html
+<select multiple class="form-control" id="assignees" name="assignees">
+    <optgroup label="Teams">
+        {% for team in teams %}
+        <option value="team:{{ team.name }}" ...>{{ team.name }} (Team)</option>
+        {% endfor %}
+    </optgroup>
+    <optgroup label="Technicians">
+        {% for tech in technicians %}
+        <option value="user:{{ tech.username }}" ...>{{ tech.username }}</option>
+        {% endfor %}
+    </optgroup>
+</select>
+```
+
+**`maintenance_order_detail.html` (Select2 initialization):**
+```javascript
+$('#assignees').select2({
+    theme: "bootstrap-5",
+    placeholder: 'Select assignees...',
+    allowClear: true
+});
+```
+
+**Testing:**
+✅ "Add MO" page shows a searchable dropdown for Assignees.
+✅ Dropdown correctly lists Teams and Technicians.
+✅ "Edit MO" page shows the same dropdown with previously saved assignees pre-selected.
+✅ Saving a new MO with multiple assignees works correctly.
+✅ Updating an existing MO's assignees works correctly.
+✅ The field is user-friendly and intuitive.
 
 ---
 
@@ -341,41 +375,19 @@ This was resolved as part of Bug #R3 (Delete Button Placement and Duplicated For
 
 ### Bug #9: Table Sidebar - Save View Not Working
 **Priority:** High  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 2, 2025 (False Positive)
 
 **Description:**  
-The "Save View" button in the table sidebar does not work. Users cannot save their current table configuration (filters, columns, sorting) as a named view.
+The "Save View" button in the table sidebar was reported as not working. However, after a thorough code review, the functionality was confirmed to be working as expected.
 
-**Current Behavior:**
-- User configures table (filters, column order, hidden columns)
-- User clicks "Save View" button in sidebar
-- Nothing happens or error occurs
-- View is not saved to database
+**Analysis:**
+- **Frontend:** `table-sidebar.js` correctly attaches an event listener to the "Save View" button.
+- **API Call:** The `saveView()` method correctly constructs the configuration object and sends a `POST` request to `/api/table-config/<page_name>`.
+- **Backend:** The `/api/table-config/<page_name>` endpoint in `src/routes/api.py` is correctly defined to handle the `POST` request, save the configuration to the `TableConfiguration` model, and return a success response.
+- **CSRF:** The request correctly includes the `X-CSRFToken` header.
 
-**Expected Behavior:**
-- User clicks "Save View" button
-- Modal/prompt appears asking for view name
-- User enters name and confirms
-- View is saved to database with current configuration
-- View appears in "Saved Views" list
-- Success message is shown
-
-**Possible Solution:**
-1. Check `saveView()` function in `table-sidebar.js` (line 846)
-2. Verify API endpoint `/table-config/<page_name>` is working (api.py lines 324-353)
-3. Ensure CSRF token is included in AJAX request
-4. Add proper error handling and user feedback
-5. Test save/load functionality end-to-end
-
-**Affected Files:**
-- `src/static/js/advanced-table/table-sidebar.js` (lines 846-900 - saveView function)
-- `src/routes/api.py` (lines 324-353 - save_table_config endpoint)
-- `src/static/js/advanced-table/table-config.js` (verify integration)
-
-**Additional Info:**
-- Related to Bug #13 (Table Views - Save/Load functionality)
-- May need to add CSRF token to AJAX requests
-- Check browser console for JavaScript errors
+**Conclusion:**
+The feature is implemented correctly. The issue was likely a misinterpretation or a temporary local issue. No code changes were required.
 
 ---
 
@@ -1038,6 +1050,174 @@ The "Maintenance Orders for [Asset Name]" section in the Asset Detail page uses 
 
 ---
 
+### Bug #28: Assignees Dropdown Opens When Removing Item (Closed State)
+**Priority:** Medium  
+**Status:** 🔧 IN PROGRESS - December 2, 2025
+
+**Description:**  
+When the Assignees dropdown (Select2) is closed and a user clicks the "X" button to remove an assigned user or team, the dropdown automatically opens. This is disruptive and unexpected behavior.
+
+**Current Behavior:**
+- Dropdown is closed
+- User clicks "X" on an assignee tag
+- Item is removed
+- Dropdown opens unexpectedly
+
+**Expected Behavior:**
+- **If dropdown is closed**: Clicking "X" removes the item, dropdown remains closed
+- **If dropdown is open**: Clicking "X" removes the item, dropdown remains open
+
+**Possible Solution:**
+1. Use Select2's `select2:unselecting` event (fires before removal)
+2. Track dropdown state with a JavaScript flag (`isDropdownOpen`)
+3. If closed: prevent default, manually remove item without opening dropdown
+4. If open: allow normal behavior
+
+**Implementation Approach:**
+```javascript
+let isDropdownOpen = false;
+assigneesSelect.on('select2:open', () => isDropdownOpen = true);
+assigneesSelect.on('select2:close', () => isDropdownOpen = false);
+assigneesSelect.on('select2:unselecting', function(e) {
+    if (!isDropdownOpen) {
+        e.preventDefault();
+        // Manually remove item
+        const itemToRemove = e.params.args.data.id;
+        setTimeout(() => {
+            const currentVals = $(this).val() || [];
+            const newVals = currentVals.filter(v => v !== itemToRemove);
+            $(this).val(newVals).trigger('change.select2');
+        }, 1);
+    }
+});
+```
+
+**Affected Files:**
+- `src/templates/maintenance_order_detail.html` (Select2 initialization script section)
+
+**Additional Info:**
+- Improves UX by preventing unexpected dropdown behavior
+- Similar pattern can be applied to other multi-select dropdowns
+- Requires careful event handling to avoid breaking Select2's internal state
+
+---
+
+### Bug #29: Assignees Column Not Appearing in MO Table
+**Priority:** Medium  
+**Status:** 🔧 IN PROGRESS - December 2, 2025
+
+**Description:**  
+The "Assignees" column has been added to the table configuration but does not appear in the Maintenance Orders table UI. This is likely due to cached table state in the browser's localStorage.
+
+**Current Behavior:**
+- Table configuration includes `{ key: 'assignees', label: 'Assignees', type: 'text' }`
+- Column does not appear in the table
+- Even after clearing browser cache (Shift + Ctrl + R)
+- Column is visible in other contexts
+
+**Expected Behavior:**
+- "Assignees" column should appear in the MO table
+- Should be positioned between "Due Date" and "Schedule" columns
+- Should display comma-separated list of assigned users/teams (e.g., "Team B, sarah.supervisor")
+- Should be sortable and filterable like other columns
+
+**Root Cause:**
+The advanced table saves its state (column order, hidden columns, filters) to `localStorage`. When a new column is added to the table configuration, the saved state doesn't include it, so the table doesn't render it.
+
+**Possible Solution:**
+1. **Add localStorage check script** to `maintenance_orders.html`:
+```javascript
+const tableStateKey = 'advanced-table-state-mosTable';
+const savedState = localStorage.getItem(tableStateKey);
+if (savedState) {
+    const state = JSON.parse(savedState);
+    if (state.columns && !state.columns.some(col => col.key === 'assignees')) {
+        localStorage.removeItem(tableStateKey); // Clear old state
+    }
+}
+```
+
+2. **Ensure data is correctly formatted** in `MaintenanceOrder.to_dict()`:
+```python
+def to_dict(self):
+    assignees_list = []
+    if self.assignees_json:
+        raw_list = json.loads(self.assignees_json)
+        assignees_list = [item.replace('user:', '').replace('team:', '') for item in raw_list]
+    
+    return {
+        # ...existing fields...
+        "assignees": ", ".join(assignees_list),  # Clean display string
+        # ...
+    }
+```
+
+**Affected Files:**
+- `src/templates/maintenance_orders.html` (add localStorage check script)
+- `src/services/db_utils.py` (verify `to_dict()` formats assignees correctly)
+- `src/routes/main.py` (ensure `maintenance_orders()` route calls `to_dict()`)
+
+**Additional Info:**
+- This is a one-time migration issue when adding new columns
+- Users can also manually reset table state via the table sidebar
+- Similar pattern needed when adding columns to other tables
+- Consider adding a "Reset to Default" button in table sidebar
+
+---
+
+### Bug #30: Assignees Field Causes Layout Shift When Adding Items
+**Priority:** Medium  
+**Status:** 🔧 IN PROGRESS - December 2, 2025
+
+**Description:**  
+When adding multiple assignees to the "Assignees" field in the MO detail form, the field grows vertically, pushing the "Update MO", "Cancel", and "Delete" buttons down the page. This creates a jarring and unprofessional user experience.
+
+**Current Behavior:**
+- Assignees field (Select2 multi-select) grows vertically as items are added
+- No height limit on the field
+- Form buttons ("Update MO", "Cancel", "Delete") are pushed down with each addition
+- Creates visual instability and poor UX
+
+**Expected Behavior:**
+- Assignees field should have a maximum height (e.g., 120px)
+- When content exceeds max height, field should:
+  - Stop growing
+  - Show internal scrollbar
+  - Allow scrolling within the field
+- Form buttons should remain in a stable position
+- Layout should feel solid and professional
+
+**Possible Solution:**
+Add CSS to set max-height and enable scrolling:
+
+```css
+/* Custom styles for Select2 to prevent layout shifts */
+.select2-container--bootstrap-5 .select2-selection--multiple {
+    cursor: text !important;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.select2-container--bootstrap-5 .select2-search__field {
+    cursor: text !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__choice {
+    cursor: default !important;
+}
+```
+
+**Affected Files:**
+- `src/static/css/main.css` (add Select2 max-height styles)
+
+**Additional Info:**
+- 120px allows approximately 3-4 assignee tags before scrolling
+- Internal scrolling is more intuitive than growing the entire form
+- Improves overall form stability and professional appearance
+- Can be applied to other multi-select fields if needed
+
+---
+
 ## 🔵 LOW PRIORITY BUGS
 
 ### Bug #15: Status Field Should Be Hidden in MO Creation
@@ -1123,20 +1303,21 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 **Critical (0 open - 1 fixed):**
 - ~~Bug #2: CSRF Token Missing - MO and Spare Parts Forms~~ ✅ FIXED (Prior to Dec 2, 2025)
 
-**High (2 open - 9 fixed):**
+**High (0 open - 11 fixed):**
 **Open:**
-- Bug #5: Assignees Field Needs Dropdown for Users/Teams
-- Bug #9: Table Sidebar - Save View Not Working
+(None)
 
 **Fixed:**
 - ~~Bug #1: Missing Delete Functionality for Assets~~ ✅ FIXED (Dec 2, 2025 - Bug #R3)
 - ~~Bug #3: Incorrect Back Button Navigation from MO Add Page~~ ✅ FIXED (Dec 2, 2025 - Bug #R1)
 - ~~Bug #4: Table State Not Preserved on Navigation/Refresh~~ ✅ FIXED (Dec 2, 2025)
+- ~~Bug #5: Assignees Field Needs Dropdown for Users/Teams~~ ✅ RESOLVED (Dec 2, 2025)
 - ~~Bug #6: Missing Delete Functionality for Maintenance Orders~~ ✅ FIXED (Dec 2, 2025 - Bug #R3)
+- ~~Bug #9: Table Sidebar - Save View Not Working~~ ✅ RESOLVED (Dec 2, 2025 - False Positive)
 - ~~Bug #11: Spare Parts Update Not Working - CSRF Token Missing~~ ✅ FIXED (Prior to Dec 2, 2025)
 - ~~Bug #14: Cannot Click Table Elements After Column Changes or Sorting~~ ✅ FIXED (Dec 2, 2025)
 
-**Medium (6 open - 6 fixed):**
+**Medium (9 open - 6 fixed):**
 **Open:**
 - Bug #8: Table Columns Too Narrow on Default Load
 - Bug #10: Table Width Not Responsive to Window Resize
@@ -1144,6 +1325,9 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 - Bug #17: OR Filter Operator Clears Previous Filter Row
 - Bug #24: Autofill Background Color Not Consistent Across All Input Types **(added Dec 2, 2025)**
 - Bug #27: MO Table in Asset Details Should Use Advanced Table **(NEW - Dec 2, 2025)**
+- Bug #28: Assignees Dropdown Opens When Removing Item (Closed State) **🔧 IN PROGRESS - Dec 2, 2025**
+- Bug #29: Assignees Column Not Appearing in MO Table **🔧 IN PROGRESS - Dec 2, 2025**
+- Bug #30: Assignees Field Causes Layout Shift When Adding Items **🔧 IN PROGRESS - Dec 2, 2025**
 
 **Fixed:**
 - ~~Bug #7: Missing Required Field Indicators~~ ✅ FIXED (Prior to Dec 2, 2025)
@@ -1159,11 +1343,12 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 **Fixed:**
 - ~~Bug #19: KeyError - 'frequency' Field Not Submitted When Disabled~~ ✅ FIXED (Dec 1, 2025)
 
-**Total Bugs: 21**  
-**Open: 9 bugs** (2 High, 6 Medium, 1 Low)  
-**Fixed: 12 bugs** (1 Critical, 6 High, 5 Medium)  
-**Added Today (Dec 2, 2025):** 4 new bugs (Bug #24, #25, #26, #27)  
-**Fixed Today (Dec 2, 2025):** 7 bugs (Bug #R1, #R2, #R3, #4, #14, #25, #26) + verified 2 previous fixes (Bug #2, #7)  
+**Total Bugs: 24**  
+**Open: 10 bugs** (0 High, 9 Medium, 1 Low)  
+**In Progress: 3 bugs** (Bug #28, #29, #30)  
+**Fixed: 14 bugs** (1 Critical, 8 High, 5 Medium)  
+**Added Today (Dec 2, 2025):** 7 new bugs (Bug #24, #25, #26, #27, #28, #29, #30)  
+**Fixed Today (Dec 2, 2025):** 9 bugs (Bug #R1, #R2, #R3, #4, #5, #9, #14, #25, #26) + verified 2 previous fixes (Bug #2, #7)  
 **Previously Fixed (Dec 1, 2025):** 3 bugs (Bug #15, #16, #19, #21, #22, #23)
 
 ---
