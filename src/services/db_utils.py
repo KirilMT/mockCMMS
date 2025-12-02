@@ -140,35 +140,32 @@ class MaintenanceOrder(db.Model):
     )
 
     def to_dict(self):
+        # Bug #5: Create a user-friendly display string for assignees
+        assignees_list = []
+        if self.assignees_json:
+            try:
+                raw_list = json.loads(self.assignees_json)
+                # Clean up the prefixes for display
+                assignees_list = [item.replace('user:', '').replace('team:', '') for item in raw_list]
+            except json.JSONDecodeError:
+                assignees_list = [self.assignees_json] # Fallback for old plain text
+
         return {
             "id": self.id,
             "asset_id": self.asset_id,
+            "asset_name": self.asset.name if self.asset else "N/A", # Add asset name
             "description": self.description,
             "order_type": self.order_type,
             "status": self.status,
-            "due_date": self.due_date.isoformat() if self.due_date else None,
+            "due_date": self.due_date.strftime('%Y-%m-%d') if self.due_date else None,
             "priority": self.priority,
             "schedule_name": self.schedule_name,
-            "schedule_date": self.schedule_date.isoformat() if self.schedule_date else None,
             "frequency": self.frequency,
-            "completion_date": self.completion_date.isoformat() if self.completion_date else None,
             "estimated_completion_time": self.estimated_completion_time,
-            "assignees": self.assignees_json,  # Legacy JSON field
-            "assignees_users": [user.id for user in self.assignees_users],  # NEW: Proper relationship
-            "created_by": self.created_by,
-            "created_at": self.created_at.isoformat(),
-            "modified_by": self.modified_by,
-            "modified_on": self.modified_on.isoformat() if self.modified_on else None,
+            "assignees": ", ".join(assignees_list), # Use the new display string
             "labour_count": self.labour_count,
-            "associated_mos": self.associated_mos_json,  # Legacy JSON field
-            "associated_orders": [mo.id for mo in self.associated_orders],  # NEW: Proper relationship
-            "total_time_on_job": self.total_time_on_job,
-            "completed_by": self.completed_by,
-            "completed_on": self.completed_on.isoformat() if self.completed_on else None,
-            "justification": self.justification,
-            "url": self.url,
-            "required_spare_parts": [{"part_id": part.id, "description": part.description} for part in self.required_spare_parts],
-            "required_skills": [{"skill_id": skill.id, "name": skill.name} for skill in self.required_skills]
+            "created_by": self.creator.username if self.creator else "N/A",
+            "created_at": self.created_at.strftime('%Y-%m-%d %H:%M'),
         }
 
 class SparePart(db.Model):

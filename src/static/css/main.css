@@ -247,3 +247,13 @@ body {
 .flash-hidden {
     display: none;
 }
+
+/* Custom styles for Select2 to fix cursor issues */
+.select2-container--bootstrap-5 .select2-selection--multiple {
+    cursor: text !important;
+}
+
+.select2-container--bootstrap-5 .select2-search__field {
+    cursor: text !important;
+}
+

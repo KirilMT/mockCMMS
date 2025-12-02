@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from src.services.db_utils import db, Asset, MaintenanceOrder, SparePart, User, Role, Team
-from werkzeug.security import generate_password_hash, check_password_hash
+import json
+from datetime import datetime, timezone
 from functools import wraps
-from datetime import datetime
 
 main_bp = Blueprint('main', __name__)
 
@@ -98,17 +98,19 @@ def delete_asset(asset_id):
 @login_required
 def maintenance_orders():
     all_mos = MaintenanceOrder.query.all()
-    mos_data = []
-    for mo in all_mos:
-        mo_dict = mo.to_dict()
-        mo_dict['asset_name'] = mo.asset.name if mo.asset else 'N/A'
-        mos_data.append(mo_dict)
+    # Bug #5 Fix: Ensure to_dict() is called to process assignees for the table
+    mos_data = [mo.to_dict() for mo in all_mos]
     return render_template('maintenance_orders.html', mos=mos_data)
 
 @main_bp.route('/maintenance_orders/add', methods=['GET', 'POST'])
 @login_required
 def add_mo():
     assets = Asset.query.all()
+    # Bug #5: Fetch technicians (users with 'Technician' role) and teams
+    technician_role = Role.query.filter_by(name='Technician').first()
+    technicians = User.query.filter(User.roles.contains(technician_role)).all() if technician_role else []
+    teams = Team.query.all()
+
     return_to = request.args.get('return_to', None)
     asset_id = request.args.get('asset_id', None)
     preselected_asset = None
@@ -133,11 +135,14 @@ def add_mo():
         if order_type == 'PM' and not frequency:
             flash('Frequency is required for PM (Preventive Maintenance) orders.', 'error')
             return render_template('maintenance_order_detail.html', mo=None, assets=assets,
+                                 technicians=technicians, teams=teams,
                                  return_to=return_to, asset_id=asset_id, preselected_asset=preselected_asset)
 
         estimated_completion_time = request.form.get('estimated_completion_time', '')
         labour_count = request.form['labour_count']
-        assignees = request.form.get('assignees', '')
+        # Bug #5: Handle multi-select form data for assignees
+        assignees_list = request.form.getlist('assignees')
+        assignees_json = json.dumps(assignees_list) if assignees_list else None
         justification = request.form.get('justification', '')
         due_date_str = request.form.get('due_date', '')
         due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
@@ -152,7 +157,7 @@ def add_mo():
             frequency=frequency if frequency else None,
             estimated_completion_time=int(estimated_completion_time) if estimated_completion_time else None,
             labour_count=int(labour_count),
-            assignees_json=assignees if assignees else None,
+            assignees_json=assignees_json,
             justification=justification if justification else None,
             due_date=due_date,
             created_by=session.get('user_id')
@@ -165,20 +170,38 @@ def add_mo():
             return redirect(url_for('main.asset_detail', asset_id=new_mo.asset_id))
         return redirect(url_for('main.maintenance_orders'))
 
-    return render_template('maintenance_order_detail.html', mo=None, assets=assets, return_to=return_to, asset_id=asset_id, preselected_asset=preselected_asset)
+    return render_template('maintenance_order_detail.html', mo=None, assets=assets,
+                           technicians=technicians, teams=teams,
+                           return_to=return_to, asset_id=asset_id, preselected_asset=preselected_asset)
 
 @main_bp.route('/maintenance_orders/<int:mo_id>')
 @login_required
 def mo_detail(mo_id):
     mo = MaintenanceOrder.query.get_or_404(mo_id)
+    assets = Asset.query.all()
+    # Bug #5 Fix: Fetch technicians and teams for the detail view
+    technician_role = Role.query.filter_by(name='Technician').first()
+    technicians = User.query.filter(User.roles.contains(technician_role)).all() if technician_role else []
+    teams = Team.query.all()
+
+    # Pre-select assignees for viewing
+    selected_assignees = json.loads(mo.assignees_json) if mo.assignees_json else []
+
     asset_id = request.args.get('asset_id', None)
-    return render_template('maintenance_order_detail.html', mo=mo, assets=Asset.query.all(), asset_id=asset_id, return_to='asset' if asset_id else None)
+    return render_template('maintenance_order_detail.html', mo=mo, assets=assets,
+                           technicians=technicians, teams=teams, selected_assignees=selected_assignees,
+                           asset_id=asset_id, return_to='asset' if asset_id else None)
 
 @main_bp.route('/maintenance_orders/<int:mo_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_mo(mo_id):
     mo = MaintenanceOrder.query.get_or_404(mo_id)
     assets = Asset.query.all()
+    # Bug #5: Fetch technicians (users with 'Technician' role) and teams
+    technician_role = Role.query.filter_by(name='Technician').first()
+    technicians = User.query.filter(User.roles.contains(technician_role)).all() if technician_role else []
+    teams = Team.query.all()
+
     return_to = request.args.get('return_to', None)
     asset_id = request.args.get('asset_id', None)
 
@@ -196,20 +219,22 @@ def edit_mo(mo_id):
         if mo.order_type == 'PM' and not frequency:
             flash('Frequency is required for PM (Preventive Maintenance) orders.', 'error')
             return render_template('maintenance_order_detail.html', mo=mo, assets=assets,
+                                 technicians=technicians, teams=teams,
                                  return_to=return_to, asset_id=asset_id)
 
         mo.frequency = frequency if frequency else None
         estimated_time = request.form.get('estimated_completion_time', '')
         mo.estimated_completion_time = int(estimated_time) if estimated_time else None
         mo.labour_count = int(request.form['labour_count'])
-        assignees = request.form.get('assignees', '')
-        mo.assignees_json = assignees if assignees else None
+        # Bug #5: Handle multi-select form data for assignees
+        assignees_list = request.form.getlist('assignees')
+        mo.assignees_json = json.dumps(assignees_list) if assignees_list else None
         justification = request.form.get('justification', '')
         mo.justification = justification if justification else None
         due_date_str = request.form.get('due_date', '')
         mo.due_date = datetime.strptime(due_date_str, '%Y-%m-%d') if due_date_str else None
         mo.modified_by = session.get('user_id')
-        mo.modified_on = datetime.utcnow()
+        mo.modified_on = datetime.now(timezone.utc)
         db.session.commit()
         flash('Maintenance Order updated successfully!', 'success')
         # Redirect based on where the user came from
@@ -217,7 +242,12 @@ def edit_mo(mo_id):
             return redirect(url_for('main.asset_detail', asset_id=asset_id))
         return redirect(url_for('main.maintenance_orders'))
 
-    return render_template('maintenance_order_detail.html', mo=mo, assets=assets, return_to=return_to, asset_id=asset_id)
+    # Pre-select assignees for editing
+    selected_assignees = json.loads(mo.assignees_json) if mo.assignees_json else []
+
+    return render_template('maintenance_order_detail.html', mo=mo, assets=assets,
+                           technicians=technicians, teams=teams, selected_assignees=selected_assignees,
+                           return_to=return_to, asset_id=asset_id)
 
 @main_bp.route('/maintenance_orders/<int:mo_id>/delete', methods=['POST'])
 @login_required
