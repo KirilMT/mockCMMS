@@ -564,10 +564,10 @@ The complete table views save/load functionality is not working properly. This i
 ---
 
 ### Bug #14: Cannot Click Table Elements After Column Changes or Sorting
-**Priority:** High  
+**Priority:** High
 **Status:** ✅ RESOLVED - December 2, 2025
 
-**Description:**  
+**Description:**
 After changing columns (hiding/showing or drag-and-drop reordering), applying changes, **or sorting the table**, clicking on table rows to navigate to detail pages stops working.
 
 **Root Cause:**
@@ -628,12 +628,12 @@ tbody.addEventListener('click', (e) => {
 ---
 
 ### Bug #16: Frequency Field Should Only Be Enabled for PM Orders
-**Priority:** Medium  
-**Status:** Fixed  
-**Fixed Date:** December 1, 2025  
+**Priority:** Medium
+**Status:** Fixed
+**Fixed Date:** December 1, 2025
 **Fixed By:** AI Assistant
 
-**Description:**  
+**Description:**
 In MO creation/edit forms, the "Frequency" field should only be enabled when "Order Type" is set to "PM" (Preventive Maintenance). For other order types (reactive, corrective), frequency is not applicable.
 
 **Current Behavior:**
@@ -664,12 +664,12 @@ In MO creation/edit forms, the "Frequency" field should only be enabled when "Or
 ---
 
 ### Bug #23: Frequency Field Not Showing Saved Value on Edit
-**Priority:** Medium  
-**Status:** Fixed  
-**Fixed Date:** December 1, 2025  
+**Priority:** Medium
+**Status:** Fixed
+**Fixed Date:** December 1, 2025
 **Fixed By:** AI Assistant
 
-**Description:**  
+**Description:**
 When editing a PM Maintenance Order, the frequency dropdown does not show the currently saved frequency value, even though the field is enabled.
 
 **Current Behavior:**
@@ -697,12 +697,12 @@ When editing a PM Maintenance Order, the frequency dropdown does not show the cu
 ---
 
 ### Bug #22: CSRF Token Missing in MO Delete from Asset Details
-**Priority:** High  
-**Status:** Fixed  
-**Fixed Date:** December 1, 2025  
+**Priority:** High
+**Status:** Fixed
+**Fixed Date:** December 1, 2025
 **Fixed By:** AI Assistant
 
-**Description:**  
+**Description:**
 When deleting a Maintenance Order from the Asset Details page MO table, the delete form is missing the CSRF token, causing a "Bad Request - The CSRF token is missing" error.
 
 **Current Behavior:**
@@ -726,12 +726,12 @@ Add CSRF token to the delete form in asset_detail.html:
 ---
 
 ### Bug #21: Asset Field Not Pre-filled/Disabled on MO Creation
-**Priority:** Medium  
-**Status:** Fixed  
-**Fixed Date:** December 1, 2025  
+**Priority:** Medium
+**Status:** Fixed
+**Fixed Date:** December 1, 2025
 **Fixed By:** AI Assistant
 
-**Description:**  
+**Description:**
 When creating a Maintenance Order from an Asset's detail page, the "Asset" field in the new MO form is not pre-filled with the asset being viewed, nor is it disabled.
 
 **Current Behavior:**
@@ -762,10 +762,10 @@ When creating a Maintenance Order from an Asset's detail page, the "Asset" field
 ---
 
 ### Bug #20: Missing Delete Functionality for Users
-**Priority:** Medium  
+**Priority:** Medium
 **Status:** Open
 
-**Description:**  
+**Description:**
 The User Detail page does not have a "Delete" button. While asset and MO deletion has been added, user deletion is missing.
 
 **Current Behavior:**
@@ -966,12 +966,12 @@ if order_type == 'PM' and not frequency:
 ## 🔵 LOW PRIORITY BUGS
 
 ### Bug #19: KeyError - 'frequency' Field Not Submitted When Disabled
-**Priority:** Low (but breaking)  
-**Status:** Fixed  
-**Fixed Date:** December 1, 2025  
+**Priority:** Low (but breaking)
+**Status:** Fixed
+**Fixed Date:** December 1, 2025
 **Fixed By:** AI Assistant
 
-**Description:**  
+**Description:**
 When adding a Maintenance Order with a non-PM order type (reactive/corrective), the frequency field is disabled by JavaScript (Bug #16 fix). However, disabled form fields don't get submitted with the form, causing a KeyError when the backend tries to access `request.form['frequency']`.
 
 **Current Behavior:**
@@ -1002,10 +1002,10 @@ When adding a Maintenance Order with a non-PM order type (reactive/corrective), 
 ---
 
 ### Bug #27: MO Table in Asset Details Should Use Advanced Table
-**Priority:** Medium  
+**Priority:** Medium
 **Status:** Open
 
-**Description:**  
+**Description:**
 The "Maintenance Orders for [Asset Name]" section in the Asset Detail page uses a basic HTML table instead of the advanced table component. This creates inconsistency with the rest of the application and lacks features like sorting, filtering, column customization, and search that users expect.
 
 **Current Behavior:**
@@ -1051,10 +1051,10 @@ The "Maintenance Orders for [Asset Name]" section in the Asset Detail page uses 
 ---
 
 ### Bug #28: Assignees Dropdown Opens When Removing Item (Closed State)
-**Priority:** Medium  
+**Priority:** Medium
 **Status:** 🔧 IN PROGRESS - December 2, 2025
 
-**Description:**  
+**Description:**
 When the Assignees dropdown (Select2) is closed and a user clicks the "X" button to remove an assigned user or team, the dropdown automatically opens. This is disruptive and unexpected behavior.
 
 **Current Behavior:**
@@ -1103,73 +1103,46 @@ assigneesSelect.on('select2:unselecting', function(e) {
 ---
 
 ### Bug #29: Assignees Column Not Appearing in MO Table
-**Priority:** Medium  
-**Status:** 🔧 IN PROGRESS - December 2, 2025
+**Priority:** Medium
+**Status:** ✅ RESOLVED - December 3, 2025
 
-**Description:**  
-The "Assignees" column has been added to the table configuration but does not appear in the Maintenance Orders table UI. This is likely due to cached table state in the browser's localStorage.
-
-**Current Behavior:**
-- Table configuration includes `{ key: 'assignees', label: 'Assignees', type: 'text' }`
-- Column does not appear in the table
-- Even after clearing browser cache (Shift + Ctrl + R)
-- Column is visible in other contexts
-
-**Expected Behavior:**
-- "Assignees" column should appear in the MO table
-- Should be positioned between "Due Date" and "Schedule" columns
-- Should display comma-separated list of assigned users/teams (e.g., "Team B, sarah.supervisor")
-- Should be sortable and filterable like other columns
+**Description:**
+The "Assignees" column was added to the table configuration but did not appear in the Maintenance Orders table UI because of cached table state in the browser's `localStorage`.
 
 **Root Cause:**
-The advanced table saves its state (column order, hidden columns, filters) to `localStorage`. When a new column is added to the table configuration, the saved state doesn't include it, so the table doesn't render it.
+The advanced table saves its state (column order, hidden columns, etc.) to `localStorage`. When a new column is added to the configuration, the old saved state in the user's browser doesn't include it, so the table renders without the new column.
 
-**Possible Solution:**
-1. **Add localStorage check script** to `maintenance_orders.html`:
+**Solution Implemented:**
+A script was added to `maintenance_orders.html` that runs on page load. It checks the `localStorage` for the saved table state (`tableState_mosTable`). If the state exists but is missing the new `'assignees'` column, the script automatically clears the outdated state. This forces the table to re-initialize with the new column configuration, making the "Assignees" column appear without requiring users to manually clear their cache.
+
 ```javascript
-const tableStateKey = 'advanced-table-state-mosTable';
+// Script added to maintenance_orders.html
+const tableStateKey = 'tableState_mosTable';
 const savedState = localStorage.getItem(tableStateKey);
 if (savedState) {
     const state = JSON.parse(savedState);
-    if (state.columns && !state.columns.some(col => col.key === 'assignees')) {
+    if (state.columnOrder && !state.columnOrder.includes('assignees')) {
         localStorage.removeItem(tableStateKey); // Clear old state
     }
 }
 ```
 
-2. **Ensure data is correctly formatted** in `MaintenanceOrder.to_dict()`:
-```python
-def to_dict(self):
-    assignees_list = []
-    if self.assignees_json:
-        raw_list = json.loads(self.assignees_json)
-        assignees_list = [item.replace('user:', '').replace('team:', '') for item in raw_list]
-    
-    return {
-        # ...existing fields...
-        "assignees": ", ".join(assignees_list),  # Clean display string
-        # ...
-    }
-```
-
 **Affected Files:**
-- `src/templates/maintenance_orders.html` (add localStorage check script)
-- `src/services/db_utils.py` (verify `to_dict()` formats assignees correctly)
-- `src/routes/main.py` (ensure `maintenance_orders()` route calls `to_dict()`)
+- `src/templates/maintenance_orders.html` (localStorage check script)
+- `src/services/db_utils.py` (verified `to_dict()` formats assignees correctly)
 
-**Additional Info:**
-- This is a one-time migration issue when adding new columns
-- Users can also manually reset table state via the table sidebar
-- Similar pattern needed when adding columns to other tables
-- Consider adding a "Reset to Default" button in table sidebar
+**Testing:**
+✅ "Assignees" column is now visible on the MO table.
+✅ The fix works even if old state is present in localStorage.
+✅ No manual cache clearing is required.
 
 ---
 
 ### Bug #30: Assignees Field Causes Layout Shift When Adding Items
-**Priority:** Medium  
+**Priority:** Medium
 **Status:** 🔧 IN PROGRESS - December 2, 2025
 
-**Description:**  
+**Description:**
 When adding multiple assignees to the "Assignees" field in the MO detail form, the field grows vertically, pushing the "Update MO", "Cancel", and "Delete" buttons down the page. This creates a jarring and unprofessional user experience.
 
 **Current Behavior:**
@@ -1344,11 +1317,11 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 - ~~Bug #19: KeyError - 'frequency' Field Not Submitted When Disabled~~ ✅ FIXED (Dec 1, 2025)
 
 **Total Bugs: 24**  
-**Open: 10 bugs** (0 High, 9 Medium, 1 Low)  
-**In Progress: 3 bugs** (Bug #28, #29, #30)  
-**Fixed: 14 bugs** (1 Critical, 8 High, 5 Medium)  
-**Added Today (Dec 2, 2025):** 7 new bugs (Bug #24, #25, #26, #27, #28, #29, #30)  
-**Fixed Today (Dec 2, 2025):** 9 bugs (Bug #R1, #R2, #R3, #4, #5, #9, #14, #25, #26) + verified 2 previous fixes (Bug #2, #7)  
+**Open: 10 bugs** (0 High, 9 Medium, 1 Low)
+**In Progress: 3 bugs** (Bug #28, #29, #30)
+**Fixed: 14 bugs** (1 Critical, 8 High, 5 Medium)
+**Added Today (Dec 2, 2025):** 7 new bugs (Bug #24, #25, #26, #27, #28, #29, #30)
+**Fixed Today (Dec 2, 2025):** 9 bugs (Bug #R1, #R2, #R3, #4, #5, #9, #14, #25, #26) + verified 2 previous fixes (Bug #2, #7)
 **Previously Fixed (Dec 1, 2025):** 3 bugs (Bug #15, #16, #19, #21, #22, #23)
 
 ---
@@ -1400,3 +1373,4 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 ---
 
 _This document follows the structure and philosophy of `mockCMMS_roadmap.md` and serves as a living document for bug tracking and resolution._
+

@@ -217,15 +217,105 @@ document.addEventListener('DOMContentLoaded', function() {
     assigneesSelect.select2({
         theme: "bootstrap-5",
         placeholder: 'Select assignees...',
-        allowClear: true
+        allowClear: true,
+        closeOnSelect: false
     });
 
-    // Bug #5 Fix: Prevent dropdown from opening on clear, but allow it to stay open if already open.
-    assigneesSelect.on('select2:unselect', function (e) {
-        if ($(this).data('select2').isOpen()) {
+    // Bug #28 refined: keep removal behavior intuitive and caret UX consistent.
+    const containerEl = assigneesSelect.next('.select2-container');
+    const selectionEl = containerEl.find('.select2-selection--multiple');
+    const inlineInput = () => containerEl.find('.select2-search--inline input.select2-search__field');
+
+    const setCaretVisible = (isVisible) => {
+        const input = inlineInput();
+        if (!input.length) {
             return;
         }
-        e.preventDefault();
+        if (isVisible) {
+            input.prop('tabIndex', 0).css('width', '').focus();
+        } else {
+            input.val('').prop('tabIndex', -1).css('width', '0px');
+            if (document.activeElement === input[0]) {
+                input.blur();
+            }
+        }
+    };
+
+    let isOpen = false;
+    let removalWhileClosed = false;
+    let preventCloseReason = null;
+    let preventCloseTimer = null;
+
+    const armPreventClose = (reason) => {
+        preventCloseReason = reason;
+        clearTimeout(preventCloseTimer);
+        preventCloseTimer = setTimeout(() => {
+            preventCloseReason = null;
+        }, 200);
+    };
+
+    setCaretVisible(false);
+
+    selectionEl.on('mousedown.select2Removal', '.select2-selection__choice__remove', () => {
+        if (isOpen) {
+            armPreventClose('removal');
+            setTimeout(() => setCaretVisible(true), 0);
+        }
+        removalWhileClosed = !isOpen;
+        if (removalWhileClosed) {
+            setTimeout(() => setCaretVisible(false), 0);
+        }
+    });
+
+    assigneesSelect.on('select2:opening', (e) => {
+        if (removalWhileClosed && !isOpen) {
+            removalWhileClosed = false;
+            e.preventDefault();
+        }
+    });
+
+    assigneesSelect.on('select2:select', () => {
+        if (isOpen) {
+            armPreventClose('select');
+            setTimeout(() => setCaretVisible(true), 0);
+        }
+    });
+
+    assigneesSelect.on('select2:open', () => {
+        isOpen = true;
+        removalWhileClosed = false;
+        setCaretVisible(true);
+    });
+
+    assigneesSelect.on('select2:closing', (e) => {
+        if (preventCloseReason) {
+            preventCloseReason = null;
+            clearTimeout(preventCloseTimer);
+            e.preventDefault();
+            setCaretVisible(true);
+        }
+    });
+
+    const closeDropdown = () => {
+        assigneesSelect.select2('close');
+    };
+
+    assigneesSelect.on('select2:close', () => {
+        isOpen = false;
+        preventCloseReason = null;
+        clearTimeout(preventCloseTimer);
+        setCaretVisible(false);
+    });
+
+    $(document).on('mousedown.select2Close', (event) => {
+        if (!isOpen) {
+            return;
+        }
+        const target = $(event.target);
+        const dropdown = $('.select2-container--open');
+        if (!selectionEl.is(target) && selectionEl.has(target).length === 0 && !dropdown.is(target) && dropdown.has(target).length === 0) {
+            closeDropdown();
+        }
     });
 });
 </script>

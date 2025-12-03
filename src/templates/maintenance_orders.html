@@ -14,6 +14,23 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Bug #29: Clear localStorage if 'assignees' column is missing
+            const tableStateKey = 'tableState_mosTable';
+            try {
+                const savedStateJSON = localStorage.getItem(tableStateKey);
+                if (savedStateJSON) {
+                    const savedState = JSON.parse(savedStateJSON);
+                    // Check if columnOrder exists and if 'assignees' is missing from it
+                    if (savedState.columnOrder && !savedState.columnOrder.includes('assignees')) {
+                        localStorage.removeItem(tableStateKey);
+                        console.log("Cleared outdated table state for 'mosTable' to show new 'Assignees' column.");
+                    }
+                }
+            } catch (e) {
+                console.error("Error processing table state from localStorage:", e);
+                localStorage.removeItem(tableStateKey); // Clear corrupted state
+            }
+
             const columns = [
                 { key: 'id', label: 'ID', type: 'number' },
                 { key: 'asset_name', label: 'Asset', type: 'text' },

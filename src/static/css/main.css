@@ -257,3 +257,22 @@ body {
     cursor: text !important;
 }
 
+/* Custom styles for Select2 to prevent layout shifts (Bug #30) */
+.select2-container--bootstrap-5.select2-container--focus .select2-selection--multiple,
+.select2-container--bootstrap-5.select2-container--open .select2-selection--multiple {
+    min-height: auto !important; /* Override theme's min-height to prevent empty space */
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple {
+    max-height: 120px; /* Limit height */
+    overflow-y: auto; /* Add scrollbar when needed */
+    cursor: text !important;
+}
+
+.select2-container--bootstrap-5 .select2-search__field {
+    cursor: text !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__choice {
+    cursor: default !important;
+}
