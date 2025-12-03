@@ -83,48 +83,25 @@ mockCMMS/
 
 ### Installation Steps
 
-1. **Navigate to the mockCMMS directory:**
+1. **Clone the repository and navigate to it:**
    ```bash
+   git clone <repository-url>
    cd mockCMMS
    ```
+   
+   > **Note:** If you've already cloned the repository, open your terminal in the `mockCMMS` project root directory (where `run.py` is located).
 
-2. **Create a virtual environment:**
-   ```bash
-   py -3 -m venv .venv
+2. **Run the setup script:**
+   ```powershell
+   .\scripts\setup.ps1
    ```
+   This script will automatically:
+   - Check for Python
+   - Create a virtual environment
+   - Install all dependencies (including modular apps)
+   - Set up the environment configuration
 
-3. **Activate the virtual environment:**
-   - On **Windows (PowerShell)**:
-     ```bash
-     .\.venv\Scripts\Activate.ps1
-     ```
-   - On **Windows (Command Prompt)**:
-     ```bash
-     .venv\Scripts\activate
-     ```
-   - On **macOS/Linux (bash/zsh):**
-     ```bash
-     source .venv/bin/activate
-     ```
-
-4. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-5. **Install modular apps in editable mode:**
-   ```bash
-   pip install -e apps/planning
-   pip install -e apps/reports
-   ```
-
-6. **Set up environment configuration:**
-   ```bash
-   cp .env.example .env
-   ```
-   Edit the `.env` file as needed for your environment.
-
-7. **Run the application:**
+3. **Run the application:**
    ```bash
    python run.py
    ```
