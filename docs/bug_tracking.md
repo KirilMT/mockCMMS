@@ -1052,12 +1052,12 @@ The "Maintenance Orders for [Asset Name]" section in the Asset Detail page uses 
 
 ### Bug #28: Assignees Dropdown Opens When Removing Item (Closed State)
 **Priority:** Medium
-**Status:** 🔧 IN PROGRESS - December 2, 2025
+**Status:** ✅ PARTIALLY RESOLVED - December 3, 2025
 
 **Description:**
 When the Assignees dropdown (Select2) is closed and a user clicks the "X" button to remove an assigned user or team, the dropdown automatically opens. This is disruptive and unexpected behavior.
 
-**Current Behavior:**
+**Original Current Behavior:**
 - Dropdown is closed
 - User clicks "X" on an assignee tag
 - Item is removed
@@ -1065,40 +1065,68 @@ When the Assignees dropdown (Select2) is closed and a user clicks the "X" button
 
 **Expected Behavior:**
 - **If dropdown is closed**: Clicking "X" removes the item, dropdown remains closed
-- **If dropdown is open**: Clicking "X" removes the item, dropdown remains open
+- **If dropdown is open**: Clicking "X" removes the item, dropdown remains open with caret ready
 
-**Possible Solution:**
-1. Use Select2's `select2:unselecting` event (fires before removal)
-2. Track dropdown state with a JavaScript flag (`isDropdownOpen`)
-3. If closed: prevent default, manually remove item without opening dropdown
-4. If open: allow normal behavior
+**Solution Implemented:**
+Implemented Select2 event handlers to track dropdown state and prevent unwanted opening when removing items:
 
-**Implementation Approach:**
 ```javascript
-let isDropdownOpen = false;
-assigneesSelect.on('select2:open', () => isDropdownOpen = true);
-assigneesSelect.on('select2:close', () => isDropdownOpen = false);
-assigneesSelect.on('select2:unselecting', function(e) {
-    if (!isDropdownOpen) {
+let isOpen = false;
+let removalWhileClosed = false;
+
+selectionEl.on('mousedown.select2Removal', '.select2-selection__choice__remove', () => {
+    removalWhileClosed = !isOpen;
+    if (removalWhileClosed) {
+        setTimeout(() => setCaretVisible(false), 0);
+    }
+});
+
+assigneesSelect.on('select2:opening', (e) => {
+    if (removalWhileClosed && !isOpen) {
+        removalWhileClosed = false;
         e.preventDefault();
-        // Manually remove item
-        const itemToRemove = e.params.args.data.id;
-        setTimeout(() => {
-            const currentVals = $(this).val() || [];
-            const newVals = currentVals.filter(v => v !== itemToRemove);
-            $(this).val(newVals).trigger('change.select2');
-        }, 1);
+    }
+});
+
+assigneesSelect.on('select2:open', () => {
+    isOpen = true;
+    removalWhileClosed = false;
+    setCaretVisible(true);
+});
+
+assigneesSelect.on('select2:close', () => {
+    isOpen = false;
+    setCaretVisible(false);
+});
+
+$(document).on('mousedown.select2Close', (event) => {
+    if (!isOpen) return;
+    const target = $(event.target);
+    const dropdown = $('.select2-container--open');
+    if (!selectionEl.is(target) && selectionEl.has(target).length === 0 && 
+        !dropdown.is(target) && dropdown.has(target).length === 0) {
+        assigneesSelect.select2('close');
     }
 });
 ```
 
-**Affected Files:**
-- `src/templates/maintenance_order_detail.html` (Select2 initialization script section)
+**What Works:**
+✅ Dropdown stays closed when removing items (closed state)
+✅ Outside clicks properly close dropdown
+✅ No unwanted dropdown opening when removing assignees
 
-**Additional Info:**
-- Improves UX by preventing unexpected dropdown behavior
-- Similar pattern can be applied to other multi-select dropdowns
-- Requires careful event handling to avoid breaking Select2's internal state
+**Known Limitations (Accepted for Current Iteration):**
+- Caret visibility after adding/removing items while dropdown is open needs refinement
+- User accepted current functionality as sufficient for this iteration
+- Full caret management will be addressed in future iteration if needed
+
+**Affected Files:**
+- `src/templates/maintenance_order_detail.html` (Select2 initialization with closeOnSelect: false and event handlers)
+
+**Testing:**
+✅ Dropdown closed → click "X" → item removed, dropdown stays closed
+✅ Dropdown open → click outside → dropdown closes correctly
+✅ Multiple assignees can be added/removed without unexpected behavior
 
 ---
 
@@ -1166,6 +1194,8 @@ Add CSS to set max-height and enable scrolling:
 ```css
 /* Custom styles for Select2 to prevent layout shifts */
 .select2-container--bootstrap-5 .select2-selection--multiple {
+    max-height: 120px; /* Limit height */
+    overflow-y: auto; /* Add scrollbar when needed */
     cursor: text !important;
     max-height: 120px;
     overflow-y: auto;
@@ -1290,7 +1320,7 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 - ~~Bug #11: Spare Parts Update Not Working - CSRF Token Missing~~ ✅ FIXED (Prior to Dec 2, 2025)
 - ~~Bug #14: Cannot Click Table Elements After Column Changes or Sorting~~ ✅ FIXED (Dec 2, 2025)
 
-**Medium (9 open - 6 fixed):**
+**Medium (7 open - 7 fixed):**
 **Open:**
 - Bug #8: Table Columns Too Narrow on Default Load
 - Bug #10: Table Width Not Responsive to Window Resize
@@ -1298,8 +1328,6 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 - Bug #17: OR Filter Operator Clears Previous Filter Row
 - Bug #24: Autofill Background Color Not Consistent Across All Input Types **(added Dec 2, 2025)**
 - Bug #27: MO Table in Asset Details Should Use Advanced Table **(NEW - Dec 2, 2025)**
-- Bug #28: Assignees Dropdown Opens When Removing Item (Closed State) **🔧 IN PROGRESS - Dec 2, 2025**
-- Bug #29: Assignees Column Not Appearing in MO Table **🔧 IN PROGRESS - Dec 2, 2025**
 - Bug #30: Assignees Field Causes Layout Shift When Adding Items **🔧 IN PROGRESS - Dec 2, 2025**
 
 **Fixed:**
@@ -1308,6 +1336,8 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 - ~~Bug #23: Frequency Field Not Showing Saved Value on Edit~~ ✅ FIXED (Dec 2, 2025 - Bug #R2)
 - ~~Bug #25: Maintenance Orders Section Displayed on Add New Asset Page~~ ✅ FIXED (Dec 2, 2025)
 - ~~Bug #26: Frequency Field Not Required for PM Orders~~ ✅ FIXED (Dec 2, 2025)
+- ~~Bug #28: Assignees Dropdown Opens When Removing Item (Closed State)~~ ✅ PARTIALLY RESOLVED (Dec 3, 2025)
+- ~~Bug #29: Assignees Column Not Appearing in MO Table~~ ✅ FIXED (Dec 3, 2025)
 
 **Low (1 open - 1 fixed):**
 **Open:**
@@ -1317,12 +1347,13 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 - ~~Bug #19: KeyError - 'frequency' Field Not Submitted When Disabled~~ ✅ FIXED (Dec 1, 2025)
 
 **Total Bugs: 24**  
-**Open: 10 bugs** (0 High, 9 Medium, 1 Low)
-**In Progress: 3 bugs** (Bug #28, #29, #30)
-**Fixed: 14 bugs** (1 Critical, 8 High, 5 Medium)
-**Added Today (Dec 2, 2025):** 7 new bugs (Bug #24, #25, #26, #27, #28, #29, #30)
-**Fixed Today (Dec 2, 2025):** 9 bugs (Bug #R1, #R2, #R3, #4, #5, #9, #14, #25, #26) + verified 2 previous fixes (Bug #2, #7)
-**Previously Fixed (Dec 1, 2025):** 3 bugs (Bug #15, #16, #19, #21, #22, #23)
+**Open: 8 bugs** (0 High, 7 Medium, 1 Low)
+**In Progress: 1 bug** (Bug #30)
+**Fixed: 16 bugs** (1 Critical, 8 High, 7 Medium)
+**Added Dec 2, 2025:** 7 new bugs (Bug #24, #25, #26, #27, #28, #29, #30)
+**Fixed Dec 3, 2025:** 2 bugs (Bug #28 - partially, #29)
+**Fixed Dec 2, 2025:** 9 bugs (Bug #R1, #R2, #R3, #4, #5, #9, #14, #25, #26) + verified 2 previous fixes (Bug #2, #7)
+**Previously Fixed (Dec 1, 2025):** 3 bugs (Bug #16, #19, #23)
 
 ---
 
