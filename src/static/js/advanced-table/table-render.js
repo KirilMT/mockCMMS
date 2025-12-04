@@ -63,6 +63,11 @@ AdvancedTable.prototype.render = function () {
     if (typeof this.initColumnResize === 'function') {
         this.initColumnResize();
     }
+
+    // Initialize window resize listener
+    if (typeof this.initResizeListener === 'function') {
+        this.initResizeListener();
+    }
 };
 
 AdvancedTable.prototype.renderHeader = function () {

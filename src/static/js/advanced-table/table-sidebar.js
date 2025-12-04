@@ -186,6 +186,11 @@ class TableSidebar {
 
         // Save state
         localStorage.setItem('tableSidebarCollapsed', this.sidebarCollapsed);
+
+        // Bug #10: Trigger resize to adjust table width
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 300); // Wait for transition
     }
 
     /**

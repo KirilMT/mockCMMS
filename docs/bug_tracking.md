@@ -442,7 +442,8 @@ Forms do not clearly indicate which fields are required. There are no red asteri
 
 ### Bug #8: Table Columns Too Narrow on Default Load
 **Priority:** Medium  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 4, 2025
+**Resolution:** Implemented smart default column widths in `table-resize.js` based on column content type (ID: 65px, CODE: 150px, Description: 350px, Name: 250px, etc.). Fixed logic to use default widths directly instead of Math.max with computed width, allowing columns to be their specified size. Changed CSS min-width from 120px to 50px to allow smaller columns.
 
 **Description:**  
 When tables load for the first time (or sometimes on refresh), columns are too narrow, causing text to wrap or be cut off. Minimum column width should be increased.
@@ -482,7 +483,8 @@ When tables load for the first time (or sometimes on refresh), columns are too n
 
 ### Bug #10: Table Width Not Responsive to Window Resize
 **Priority:** Medium  
-**Status:** Open
+**Status:** ✅ RESOLVED - December 4, 2025
+**Resolution:** Implemented `handleWindowResize` method in `table-resize.js` to dynamically adjust table width to fill the container. Added event listeners for window resize and sidebar toggle to trigger the adjustment. Verified that table expands to fill available space.
 
 **Description:**  
 When resizing the browser window or toggling the sidebar, the table does not adjust its width to fill the available space. This is especially noticeable when loading the page with a smaller window and then maximizing it.
@@ -1400,6 +1402,30 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 4. Begin fixing bugs in recommended order
 5. Update this document as bugs are fixed
 6. Create automated tests to prevent regression
+
+---
+
+### Bug #24: Table Header Not Sticky on Scroll
+**Priority:** High
+**Status:** Open
+
+**Description:**
+The table header scrolls away with the content instead of staying fixed (sticky) at the top of the table view. This makes it difficult to read data in long tables as users lose context of what each column represents.
+
+**Current Behavior:**
+- Header moves up and disappears when scrolling down the table.
+
+**Expected Behavior:**
+- Header should remain fixed at the top of the table view while the body content scrolls.
+
+**Possible Solution:**
+- Check `sticky-top` class usage.
+- Ensure parent container has correct `overflow` and `height` properties.
+- Verify `z-index` context.
+
+**Affected Files:**
+- `src/static/js/advanced-table/table-render.js`
+- `src/static/css/advanced-table.css`
 
 ---
 

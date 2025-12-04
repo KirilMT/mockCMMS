@@ -27,9 +27,28 @@ AdvancedTable.prototype.initColumnResize = function () {
     const headers = table.querySelectorAll('th.sortable');
 
     // Initialize all columns with explicit pixel widths
+    // Initialize all columns with explicit pixel widths
     headers.forEach(th => {
         if (!th.style.width) {
-            th.style.width = th.getBoundingClientRect().width + 'px';
+            // Bug #8: Apply smart default widths based on column content
+            const columnKey = th.dataset.column;
+            let defaultWidth = 0;
+
+            if (columnKey) {
+                const key = columnKey.toLowerCase();
+                if (key.includes('id')) defaultWidth = 65;
+                else if (key.includes('code')) defaultWidth = 150;
+                else if (key.includes('description') || key.includes('desc') || key.includes('summary')) defaultWidth = 350;
+                else if (key.includes('name') || key.includes('title') || key.includes('subject')) defaultWidth = 250;
+                else if (key.includes('status') || key.includes('state') || key.includes('type')) defaultWidth = 140;
+                else if (key.includes('date') || key.includes('time') || key.includes('created') || key.includes('updated')) defaultWidth = 160;
+                else if (key.includes('email') || key.includes('user') || key.includes('assignee')) defaultWidth = 200;
+                else defaultWidth = 150; // General default
+            }
+
+            // If we have a smart default, use it directly. Otherwise use computed width
+            const computedWidth = th.getBoundingClientRect().width;
+            th.style.width = (defaultWidth > 0 ? defaultWidth : computedWidth) + 'px';
         }
 
         // Remove existing resize handle if present
@@ -247,4 +266,41 @@ AdvancedTable.prototype.restoreColumnWidths = function () {
     } catch (error) {
         console.error('Error restoring column widths:', error);
     }
+};
+
+/**
+ * Handle window resize events
+ * Adjusts table width to fill container if needed
+ */
+AdvancedTable.prototype.handleWindowResize = function () {
+    const table = this.container.querySelector('.advanced-table');
+    const wrapper = this.container.querySelector('.advanced-table-wrapper');
+
+    if (!table || !wrapper) return;
+
+    // Get available width from wrapper (minus padding if any)
+    const availableWidth = wrapper.clientWidth;
+    const currentTableWidth = table.getBoundingClientRect().width;
+
+    // If table is smaller than available width, expand it
+    // Use a small buffer (5px) to avoid jitter
+    if (currentTableWidth < availableWidth - 5) {
+        table.style.width = availableWidth + 'px';
+    }
+};
+
+// Initialize resize listener
+AdvancedTable.prototype.initResizeListener = function () {
+    window.addEventListener('resize', () => {
+        // Debounce resize
+        if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+        this.resizeTimeout = setTimeout(() => {
+            this.handleWindowResize();
+        }, 100);
+    });
+
+    // Initial check
+    setTimeout(() => {
+        this.handleWindowResize();
+    }, 500); // Wait for initial render/layout
 };

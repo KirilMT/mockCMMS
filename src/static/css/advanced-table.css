@@ -39,7 +39,8 @@
 }
 
 .table-responsive {
-    position: relative; /* For absolute positioned loading overlay */
+    position: relative;
+    /* For absolute positioned loading overlay */
     flex: 1;
     overflow-y: auto;
     overflow-x: auto;
@@ -63,14 +64,16 @@
 
 .table-search input {
     flex: 1;
-    padding-right: 70px; /* Make room for clear + apply buttons */
+    padding-right: 70px;
+    /* Make room for clear + apply buttons */
     height: 32px;
     font-size: 0.875rem;
 }
 
 .table-search #clearSearchBtn {
     position: absolute;
-    right: 45px; /* Position before apply button (32px + gap) */
+    right: 45px;
+    /* Position before apply button (32px + gap) */
     top: 50%;
     transform: translateY(-50%);
     border: none;
@@ -331,7 +334,7 @@
 .advanced-table th,
 .advanced-table td {
     white-space: nowrap;
-    min-width: 120px;
+    min-width: 50px;
 }
 
 /* Responsive adjustments */
@@ -419,7 +422,8 @@
     user-select: none;
     z-index: 20;
     background: transparent;
-    pointer-events: auto; /* Ensure it captures events */
+    pointer-events: auto;
+    /* Ensure it captures events */
 }
 
 .resize-handle:hover {
