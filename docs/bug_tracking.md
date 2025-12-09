@@ -1170,7 +1170,7 @@ if (savedState) {
 
 ### Bug #30: Assignees Field Causes Layout Shift When Adding Items
 **Priority:** Medium
-**Status:** 🔧 IN PROGRESS - December 2, 2025
+**Status:** ✅ RESOLVED - December 9, 2025
 
 **Description:**
 When adding multiple assignees to the "Assignees" field in the MO detail form, the field grows vertically, pushing the "Update MO", "Cancel", and "Delete" buttons down the page. This creates a jarring and unprofessional user experience.
@@ -1330,7 +1330,7 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 - Bug #17: OR Filter Operator Clears Previous Filter Row
 - Bug #24: Autofill Background Color Not Consistent Across All Input Types **(added Dec 2, 2025)**
 - Bug #27: MO Table in Asset Details Should Use Advanced Table **(NEW - Dec 2, 2025)**
-- Bug #30: Assignees Field Causes Layout Shift When Adding Items **🔧 IN PROGRESS - Dec 2, 2025**
+- ~~Bug #30: Assignees Field Causes Layout Shift When Adding Items~~ ✅ RESOLVED (Dec 9, 2025)
 
 **Fixed:**
 - ~~Bug #7: Missing Required Field Indicators~~ ✅ FIXED (Prior to Dec 2, 2025)
@@ -1350,9 +1350,10 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 
 **Total Bugs: 24**  
 **Open: 8 bugs** (0 High, 7 Medium, 1 Low)
-**In Progress: 1 bug** (Bug #30)
-**Fixed: 16 bugs** (1 Critical, 8 High, 7 Medium)
+**In Progress: 0 bugs**
+**Fixed: 17 bugs** (1 Critical, 8 High, 8 Medium)
 **Added Dec 2, 2025:** 7 new bugs (Bug #24, #25, #26, #27, #28, #29, #30)
+**Fixed Dec 9, 2025:** 1 bug (Bug #30)
 **Fixed Dec 3, 2025:** 2 bugs (Bug #28 - partially, #29)
 **Fixed Dec 2, 2025:** 9 bugs (Bug #R1, #R2, #R3, #4, #5, #9, #14, #25, #26) + verified 2 previous fixes (Bug #2, #7)
 **Previously Fixed (Dec 1, 2025):** 3 bugs (Bug #16, #19, #23)

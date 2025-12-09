@@ -23,7 +23,8 @@ endblock %}
 
 <div class="form-container">
     <form method="POST"
-        action="{% if mo %}{{ url_for('main.edit_mo', mo_id=mo.id, return_to=return_to, asset_id=asset_id) }}{% else %}{{ url_for('main.add_mo', return_to=return_to, asset_id=asset_id) }}{% endif %}" id="mo-form">
+        action="{% if mo %}{{ url_for('main.edit_mo', mo_id=mo.id, return_to=return_to, asset_id=asset_id) }}{% else %}{{ url_for('main.add_mo', return_to=return_to, asset_id=asset_id) }}{% endif %}"
+        id="mo-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="row">
             <div class="col-md-6">
@@ -38,7 +39,8 @@ endblock %}
                     <select class="form-control" id="asset_id" name="asset_id" required>
                         <option value="">Select Asset</option>
                         {% for asset in assets %}
-                        <option value="{{ asset.id }}" {% if mo and mo.asset_id == asset.id %}selected{% endif %}>{{ asset.name }}</option>
+                        <option value="{{ asset.id }}" {% if mo and mo.asset_id==asset.id %}selected{% endif %}>{{
+                            asset.name }}</option>
                         {% endfor %}
                     </select>
                     {% endif %}
@@ -56,7 +58,8 @@ endblock %}
                             Maintenance)</option>
                         <option value="reactive" {% if mo and mo.order_type=='reactive' %}selected{% endif %}>Reactive
                         </option>
-                        <option value="corrective" {% if mo and mo.order_type=='corrective' %}selected{% endif %}>Corrective
+                        <option value="corrective" {% if mo and mo.order_type=='corrective' %}selected{% endif %}>
+                            Corrective
                         </option>
                     </select>
                 </div>
@@ -70,9 +73,12 @@ endblock %}
                         {% else %}
                         <option value="In Progress">In Progress</option>
                         {% endif %}
-                        <option value="Scheduled" {% if mo and mo.status=='Scheduled' %}selected{% endif %}>Scheduled</option>
-                        <option value="Completed" {% if mo and mo.status=='Completed' %}selected{% endif %}>Completed</option>
-                        <option value="Cancelled" {% if mo and mo.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
+                        <option value="Scheduled" {% if mo and mo.status=='Scheduled' %}selected{% endif %}>Scheduled
+                        </option>
+                        <option value="Completed" {% if mo and mo.status=='Completed' %}selected{% endif %}>Completed
+                        </option>
+                        <option value="Cancelled" {% if mo and mo.status=='Cancelled' %}selected{% endif %}>Cancelled
+                        </option>
                     </select>
                 </div>
                 {% endif %}
@@ -93,6 +99,12 @@ endblock %}
                     <input type="date" class="form-control" id="due_date" name="due_date"
                         value="{{ mo.due_date.strftime('%Y-%m-%d') if mo and mo.due_date else '' }}">
                 </div>
+                <!-- Justification moved here to balance columns -->
+                <div class="form-group">
+                    <label for="justification">Justification</label>
+                    <textarea class="form-control" id="justification" name="justification" rows="3"
+                        placeholder="Reason for this maintenance order">{{ mo.justification if mo else '' }}</textarea>
+                </div>
             </div>
             <div class="col-md-6">
                 <div class="form-group">
@@ -104,20 +116,27 @@ endblock %}
                     <label for="frequency">Frequency</label>
                     <select class="form-control" id="frequency" name="frequency">
                         <option value="">Select Frequency</option>
-                        <option value="daily" {% if mo and mo.frequency and mo.frequency.lower()=='daily' %}selected{% endif %}>Daily</option>
-                        <option value="weekly" {% if mo and mo.frequency and mo.frequency.lower()=='weekly' %}selected{% endif %}>Weekly</option>
-                        <option value="monthly" {% if mo and mo.frequency and mo.frequency.lower()=='monthly' %}selected{% endif %}>Monthly</option>
-                        <option value="quarterly" {% if mo and mo.frequency and mo.frequency.lower()=='quarterly' %}selected{% endif %}>Quarterly
+                        <option value="daily" {% if mo and mo.frequency and mo.frequency.lower()=='daily' %}selected{%
+                            endif %}>Daily</option>
+                        <option value="weekly" {% if mo and mo.frequency and mo.frequency.lower()=='weekly' %}selected{%
+                            endif %}>Weekly</option>
+                        <option value="monthly" {% if mo and mo.frequency and mo.frequency.lower()=='monthly'
+                            %}selected{% endif %}>Monthly</option>
+                        <option value="quarterly" {% if mo and mo.frequency and mo.frequency.lower()=='quarterly'
+                            %}selected{% endif %}>Quarterly
                         </option>
-                        <option value="yearly" {% if mo and mo.frequency and mo.frequency.lower()=='yearly' %}selected{% endif %}>Yearly</option>
-                        <option value="one-time" {% if mo and mo.frequency and mo.frequency.lower()=='one-time' %}selected{% endif %}>One-time
+                        <option value="yearly" {% if mo and mo.frequency and mo.frequency.lower()=='yearly' %}selected{%
+                            endif %}>Yearly</option>
+                        <option value="one-time" {% if mo and mo.frequency and mo.frequency.lower()=='one-time'
+                            %}selected{% endif %}>One-time
                         </option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="estimated_completion_time" class="required-field">Estimated Time (minutes)</label>
                     <input type="number" class="form-control" id="estimated_completion_time"
-                        name="estimated_completion_time" value="{{ mo.estimated_completion_time if mo else '' }}" min="0" required>
+                        name="estimated_completion_time" value="{{ mo.estimated_completion_time if mo else '' }}"
+                        min="0" required>
                 </div>
                 <div class="form-group">
                     <label for="labour_count" class="required-field">Labour Count</label>
@@ -130,194 +149,224 @@ endblock %}
                         {% if teams %}
                         <optgroup label="Teams">
                             {% for team in teams %}
-                            <option value="team:{{ team.name }}" {% if 'team:' + team.name in selected_assignees %}selected{% endif %}>{{ team.name }} (Team)</option>
+                            <option value="team:{{ team.name }}" {% if 'team:' + team.name in selected_assignees
+                                %}selected{% endif %}>{{ team.name }} (Team)</option>
                             {% endfor %}
                         </optgroup>
                         {% endif %}
                         {% if technicians %}
                         <optgroup label="Technicians">
                             {% for tech in technicians %}
-                            <option value="user:{{ tech.username }}" {% if 'user:' + tech.username in selected_assignees %}selected{% endif %}>{{ tech.username }}</option>
+                            <option value="user:{{ tech.username }}" {% if 'user:' + tech.username in selected_assignees
+                                %}selected{% endif %}>{{ tech.username }}</option>
                             {% endfor %}
                         </optgroup>
                         {% endif %}
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="justification">Justification</label>
-                    <textarea class="form-control" id="justification" name="justification" rows="3"
-                        placeholder="Reason for this maintenance order">{{ mo.justification if mo else '' }}</textarea>
-                </div>
             </div>
         </div>
-        <p class="text-muted"><small>* Required fields</small></p>
+
+        <!-- Form actions: required note above, then buttons -->
+        <div class="form-actions">
+            <span class="required-note">* Required fields</span>
+            <div class="buttons-row">
+                <button type="submit" class="btn btn-primary">{% if mo %}Update MO{% else %}Add MO{% endif %}</button>
+                <a href="{{ url_for('main.maintenance_orders') }}" class="btn btn-secondary">Cancel</a>
+                {% if mo %}
+                <form action="{{ url_for('main.delete_mo', mo_id=mo.id) }}" method="post" class="d-inline"
+                    onsubmit="return confirm('Are you sure you want to delete this maintenance order?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
     </form>
-</div>
-<div class="form-actions mt-3">
-    <button type="submit" class="btn btn-primary" form="mo-form">{% if mo %}Update MO{% else %}Add MO{% endif %}</button>
-    <a href="{{ url_for('main.maintenance_orders') }}" class="btn btn-secondary">Cancel</a>
-    {% if mo %}
-    <form action="{{ url_for('main.delete_mo', mo_id=mo.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this maintenance order?');">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <button type="submit" class="btn btn-danger">Delete</button>
-    </form>
-    {% endif %}
 </div>
 
 <script>
-// Enable/disable and require frequency field based on order type (Bug #16 & #26)
-document.addEventListener('DOMContentLoaded', function() {
-    const orderTypeField = document.getElementById('order_type');
-    const frequencyField = document.getElementById('frequency');
-    const frequencyLabel = document.querySelector('label[for="frequency"]');
+    // Enable/disable and require frequency field based on order type (Bug #16 & #26)
+    document.addEventListener('DOMContentLoaded', function () {
+        const orderTypeField = document.getElementById('order_type');
+        const frequencyField = document.getElementById('frequency');
+        const frequencyLabel = document.querySelector('label[for="frequency"]');
 
-    function updateFrequencyField() {
-        const isPM = orderTypeField.value === 'PM';
+        function updateFrequencyField() {
+            const isPM = orderTypeField.value === 'PM';
 
-        if (isPM) {
-            // Enable and require the field for PM orders
-            frequencyField.disabled = false;
-            frequencyField.required = true;
-            // Add required-field class to show red asterisk
-            if (frequencyLabel && !frequencyLabel.classList.contains('required-field')) {
-                frequencyLabel.classList.add('required-field');
-            }
-            // Don't touch the value - let the HTML 'selected' attribute handle it
-        } else {
-            // Disable, clear, and make optional for non-PM orders
-            frequencyField.disabled = true;
-            frequencyField.required = false;
-            frequencyField.value = '';
-            // Remove required-field class
-            if (frequencyLabel) {
-                frequencyLabel.classList.remove('required-field');
+            if (isPM) {
+                // Enable and require the field for PM orders
+                frequencyField.disabled = false;
+                frequencyField.required = true;
+                // Add required-field class to show red asterisk
+                if (frequencyLabel && !frequencyLabel.classList.contains('required-field')) {
+                    frequencyLabel.classList.add('required-field');
+                }
+                // Don't touch the value - let the HTML 'selected' attribute handle it
+            } else {
+                // Disable, clear, and make optional for non-PM orders
+                frequencyField.disabled = true;
+                frequencyField.required = false;
+                frequencyField.value = '';
+                // Remove required-field class
+                if (frequencyLabel) {
+                    frequencyLabel.classList.remove('required-field');
+                }
             }
         }
-    }
 
-    // Set initial state on page load
-    updateFrequencyField();
-
-    // Update when user changes the order type
-    orderTypeField.addEventListener('change', function() {
-        const isPM = orderTypeField.value === 'PM';
-
-        if (!isPM) {
-            // Only clear the value when user switches FROM PM to non-PM
-            frequencyField.value = '';
-        }
-        // If switching TO PM, leave the value alone (it will be empty for new MOs,
-        // or keep the existing value for edited MOs)
-
+        // Set initial state on page load
         updateFrequencyField();
-    });
 
-    // Bug #5: Initialize Select2 for assignees dropdown
-    const assigneesSelect = $('#assignees');
-    assigneesSelect.select2({
-        theme: "bootstrap-5",
-        placeholder: 'Select assignees...',
-        allowClear: true,
-        closeOnSelect: false
-    });
+        // Update when user changes the order type
+        orderTypeField.addEventListener('change', function () {
+            const isPM = orderTypeField.value === 'PM';
 
-    // Bug #28 refined: keep removal behavior intuitive and caret UX consistent.
-    const containerEl = assigneesSelect.next('.select2-container');
-    const selectionEl = containerEl.find('.select2-selection--multiple');
-    const inlineInput = () => containerEl.find('.select2-search--inline input.select2-search__field');
-
-    const setCaretVisible = (isVisible) => {
-        const input = inlineInput();
-        if (!input.length) {
-            return;
-        }
-        if (isVisible) {
-            input.prop('tabIndex', 0).css('width', '').focus();
-        } else {
-            input.val('').prop('tabIndex', -1).css('width', '0px');
-            if (document.activeElement === input[0]) {
-                input.blur();
+            if (!isPM) {
+                // Only clear the value when user switches FROM PM to non-PM
+                frequencyField.value = '';
             }
-        }
-    };
+            // If switching TO PM, leave the value alone (it will be empty for new MOs,
+            // or keep the existing value for edited MOs)
 
-    let isOpen = false;
-    let removalWhileClosed = false;
-    let preventCloseReason = null;
-    let preventCloseTimer = null;
+            updateFrequencyField();
+        });
 
-    const armPreventClose = (reason) => {
-        preventCloseReason = reason;
-        clearTimeout(preventCloseTimer);
-        preventCloseTimer = setTimeout(() => {
-            preventCloseReason = null;
-        }, 200);
-    };
+        // Bug #5: Initialize Select2 for assignees dropdown
+        const assigneesSelect = $('#assignees');
+        assigneesSelect.select2({
+            theme: "bootstrap-5",
+            placeholder: 'Select assignees...',
+            allowClear: true,
+            closeOnSelect: false
+        });
 
-    setCaretVisible(false);
+        // Bug #28 refined: keep removal behavior intuitive and caret UX consistent.
+        const containerEl = assigneesSelect.next('.select2-container');
+        const selectionEl = containerEl.find('.select2-selection--multiple');
+        const inlineInput = () => containerEl.find('.select2-search--inline input.select2-search__field');
 
-    selectionEl.on('mousedown.select2Removal', '.select2-selection__choice__remove', () => {
-        if (isOpen) {
-            armPreventClose('removal');
-            setTimeout(() => setCaretVisible(true), 0);
-        }
-        removalWhileClosed = !isOpen;
-        if (removalWhileClosed) {
-            setTimeout(() => setCaretVisible(false), 0);
-        }
-    });
+        const setCaretVisible = (isVisible) => {
+            const input = inlineInput();
+            if (!input.length) {
+                return;
+            }
+            if (isVisible) {
+                input.prop('tabIndex', 0).css('width', '').focus();
+            } else {
+                input.val('').prop('tabIndex', -1).css('width', '0px');
+                if (document.activeElement === input[0]) {
+                    input.blur();
+                }
+            }
+        };
 
-    assigneesSelect.on('select2:opening', (e) => {
-        if (removalWhileClosed && !isOpen) {
+        let isOpen = false;
+        let removalWhileClosed = false;
+        let preventCloseReason = null;
+        let preventCloseTimer = null;
+
+        const armPreventClose = (reason) => {
+            preventCloseReason = reason;
+            clearTimeout(preventCloseTimer);
+            preventCloseTimer = setTimeout(() => {
+                preventCloseReason = null;
+            }, 200);
+        };
+
+        setCaretVisible(false);
+
+        selectionEl.on('mousedown.select2Removal', '.select2-selection__choice__remove', () => {
+            if (isOpen) {
+                armPreventClose('removal');
+                setTimeout(() => setCaretVisible(true), 0);
+            }
+            removalWhileClosed = !isOpen;
+            if (removalWhileClosed) {
+                setTimeout(() => setCaretVisible(false), 0);
+            }
+        });
+
+        // Handle "Clear All" button: Let Select2 clear, but manage dropdown state
+        // Listen for the clearing event which fires when allowClear 'x' is clicked
+        assigneesSelect.on('select2:clearing', (e) => {
+            // This fires BEFORE the clear happens
+            // Capture current state
+            const wasOpen = isOpen;
+
+            // Prevent default opening behavior if it was closed
+            if (!wasOpen) {
+                removalWhileClosed = true;
+            } else {
+                // If open, keep it open
+                armPreventClose('clear');
+            }
+        });
+
+        // After clearing completes, ensure proper state
+        assigneesSelect.on('select2:unselect', (e) => {
+            // Check if this was a "clear all" (no data in event means clear button)
+            if (!e.params || !e.params.data) {
+                if (isOpen) {
+                    setTimeout(() => setCaretVisible(true), 0);
+                } else {
+                    setTimeout(() => setCaretVisible(false), 0);
+                }
+            }
+        });
+
+        assigneesSelect.on('select2:opening', (e) => {
+            if (removalWhileClosed && !isOpen) {
+                removalWhileClosed = false;
+                e.preventDefault();
+            }
+        });
+
+        assigneesSelect.on('select2:select', () => {
+            if (isOpen) {
+                armPreventClose('select');
+                setTimeout(() => setCaretVisible(true), 0);
+            }
+        });
+
+        assigneesSelect.on('select2:open', () => {
+            isOpen = true;
             removalWhileClosed = false;
-            e.preventDefault();
-        }
-    });
+            setCaretVisible(true);
+        });
 
-    assigneesSelect.on('select2:select', () => {
-        if (isOpen) {
-            armPreventClose('select');
-            setTimeout(() => setCaretVisible(true), 0);
-        }
-    });
+        assigneesSelect.on('select2:closing', (e) => {
+            if (preventCloseReason) {
+                preventCloseReason = null;
+                clearTimeout(preventCloseTimer);
+                e.preventDefault();
+                setCaretVisible(true);
+            }
+        });
 
-    assigneesSelect.on('select2:open', () => {
-        isOpen = true;
-        removalWhileClosed = false;
-        setCaretVisible(true);
-    });
+        const closeDropdown = () => {
+            assigneesSelect.select2('close');
+        };
 
-    assigneesSelect.on('select2:closing', (e) => {
-        if (preventCloseReason) {
+        assigneesSelect.on('select2:close', () => {
+            isOpen = false;
             preventCloseReason = null;
             clearTimeout(preventCloseTimer);
-            e.preventDefault();
-            setCaretVisible(true);
-        }
-    });
+            setCaretVisible(false);
+        });
 
-    const closeDropdown = () => {
-        assigneesSelect.select2('close');
-    };
-
-    assigneesSelect.on('select2:close', () => {
-        isOpen = false;
-        preventCloseReason = null;
-        clearTimeout(preventCloseTimer);
-        setCaretVisible(false);
+        $(document).on('mousedown.select2Close', (event) => {
+            if (!isOpen) {
+                return;
+            }
+            const target = $(event.target);
+            const dropdown = $('.select2-container--open');
+            if (!selectionEl.is(target) && selectionEl.has(target).length === 0 && !dropdown.is(target) && dropdown.has(target).length === 0) {
+                closeDropdown();
+            }
+        });
     });
-
-    $(document).on('mousedown.select2Close', (event) => {
-        if (!isOpen) {
-            return;
-        }
-        const target = $(event.target);
-        const dropdown = $('.select2-container--open');
-        if (!selectionEl.is(target) && selectionEl.has(target).length === 0 && !dropdown.is(target) && dropdown.has(target).length === 0) {
-            closeDropdown();
-        }
-    });
-});
 </script>
 
 {% endblock %}
