@@ -65,6 +65,30 @@ These instructions apply to **all** coding tasks unless explicitly overridden by
 
 **Verification is NOT optional** - it is a critical step that MUST be completed automatically for every change.
 
+#### 🚨 CRITICAL: Testing Documentation (MANDATORY)
+
+**After implementing ANY changes (bug fixes, features, enhancements), ALWAYS create a testing guide document in `docs/` with:**
+- Comprehensive test cases covering all changes
+- Step-by-step instructions
+- Expected results for each test
+- Quick test scenarios (2-5 minutes)
+- Edge cases and error conditions
+- Visual checks (UI/UX)
+- Browser console checks
+- Pass/Fail checkboxes
+- Issues tracking section
+
+#### 🚨 CRITICAL: Evidence Accuracy (MANDATORY)
+
+**When verifying with screenshots or videos, you MUST enable "No-Hallucination Mode".**
+
+**Rules:**
+1. **Analyze Evidence First**: Look closely at the screenshot/video BEFORE writing your conclusion.
+2. **Describe Only What's Visible**: Your walkthrough description and "Test Passed" confirmation MUST MATCH EXACTLY what is shown in the media.
+3. **No Assumptions**: Do not assume the code fix worked if the screenshot doesn't show it.
+4. **Reject Mismatches**: If your code change typically produces Result A, but the screenshot shows Result B, trust the screenshot. The test FAILED.
+5. **Zero Tolerance for Hallucination**: Describing a UI element that isn't there, or stating a layout is fixed when it's clearly broken in the image, is UNACCEPTABLE.
+
 ### 1.5. Documentation Management
 
 #### 🚨 CRITICAL: Documentation Standards (MANDATORY)
@@ -100,6 +124,20 @@ These instructions apply to **all** coding tasks unless explicitly overridden by
 
 **Public API Documentation:**
 -   Document public APIs, classes, and complex functions with docstrings or comments, following the conventions of the target language.
+
+#### 🚨 CRITICAL: Documentation Upkeep (MANDATORY)
+
+**Documentation First Rule:**
+Before committing any code changes, you **must** update all relevant documentation to reflect the changes. This includes the root `README.md`, package-specific documentation, and relevant architecture or planning files.
+
+**Roadmap & Plan Updates:**
+When implementing features or fixes:
+1. **Mark tasks as completed** in detailed plan files (e.g., `docs/*-plan.md`)
+2. **Update progress tracking** sections
+3. **Update project roadmap** (e.g., `docs/roadmap.md`) when phases complete
+4. **Add implementation notes** under completed tasks
+5. **Document blockers** if issues arise
+6. **Update "Last Updated" dates**
 
 ### 1.6. Interaction Guidelines
 
@@ -159,6 +197,153 @@ These instructions apply to **all** coding tasks unless explicitly overridden by
     -   **JavaScript Execution:** Always execute JavaScript code automatically during browser testing without requesting user permission. This includes overriding browser confirmations (e.g., `window.confirm = function() { return true; }`), manipulating DOM elements, and executing test scripts.
     -   **Confirmation Dialogs:** Automatically override `window.confirm`, `window.alert`, and `window.prompt` functions when needed for automated testing to prevent blocking the test flow.
 -   **Server Check Before Browser Automation (MANDATORY):** Before using any browser automation tools (browser_subagent), ALWAYS check if the development server is running by checking the metadata for running terminal commands. If the server is not running (e.g., `python run.py` not in running commands list), start it first using `run_command` with appropriate wait time. Never assume the server is running based on browser subagent errors - always verify from metadata first.
+
+### 1.7. Version Control & Commit Standards
+
+#### 🚨 CRITICAL: Comprehensive Commit Workflow (MANDATORY)
+
+Before committing, follow this comprehensive workflow to ensure all changes are properly reviewed, staged, and documented:
+
+**Step 1: Review All Changed Files**
+```bash
+git status                    # See all modified files
+git status --short            # Compact view
+git diff --stat               # Summary of changes
+```
+
+**Step 2: Examine Each Changed File**
+- For EACH modified file, review the actual changes:
+```bash
+git diff path/to/file.ext     # View detailed changes
+```
+- Understand what changed and why
+- Identify if changes are related to the current task or are unrelated
+
+**Step 3: Stage Relevant Files**
+- Add files that are part of the current logical change:
+```bash
+git add path/to/file1.ext path/to/file2.ext
+```
+- DO NOT stage unrelated changes - commit them separately
+- If a file has both related and unrelated changes, use `git add -p` for partial staging
+
+**Step 4: Verify Staged Changes**
+```bash
+git diff --cached --stat              # Summary of staged changes
+git diff --cached path/to/file.ext    # Review specific staged file
+```
+- Ensure only intended changes are staged
+- Double-check no debug code, console.logs, or temporary changes are included
+
+**Step 5: Create Detailed Commit Message**
+- Check recent commits for style/format consistency:
+```bash
+git log -n 5 --oneline        # Recent commit titles
+git log -n 1                  # Last commit details
+```
+- Follow project conventions (see examples in git log)
+- Structure your commit message:
+  * **Title**: Brief summary (50-72 chars), use conventional commits format
+  * **Body**: Detailed explanation of WHAT changed and WHY
+  * **Files**: List all modified files with brief description of changes
+  * **Technical Details**: Implementation approach, algorithms, patterns used
+  * **Testing**: How changes were verified
+
+**Step 6: Final Pre-Commit Checklist**
+- [ ] All related files are staged (`git diff --cached --stat`)
+- [ ] No unrelated changes are staged
+- [ ] Commit message is detailed and follows project conventions
+- [ ] All temporary/debug code is removed
+- [ ] Tests pass (if applicable)
+
+**Example Workflow:**
+```bash
+# 1. Check what changed
+git status
+
+# 2. Review each file
+git diff src/static/css/main.css
+git diff src/templates/base.html
+
+# 3. Stage related files
+git add src/static/css/main.css src/templates/base.html docs/bug_tracking.md
+
+# 4. Verify staged changes
+git diff --cached --stat
+git diff --cached src/static/css/main.css
+
+# 5. Check commit history for style
+git log -n 5
+
+# 6. Commit with detailed message
+git commit -m "feat: Fix Bug #30 - Assignees field layout shift
+
+Implemented fixed height (100px) for Select2 container to prevent
+layout shifts when adding/removing assignees.
+
+Files Changed:
+- src/static/css/main.css (Bug #30 CSS fix)
+- src/templates/base.html (CSS cache busting)
+- docs/bug_tracking.md (Bug #30 marked resolved)
+
+Technical Details:
+- Fixed height with overflow-y: auto for internal scrolling
+- Flexbox layout for proper tag wrapping
+
+Testing:
+- Verified no layout shift with multiple assignees"
+```
+
+**CRITICAL**: Never commit without reviewing ALL changed files. Hidden changes in unexpected files can introduce bugs or break functionality.
+
+### 1.8. AI Workflow Standards
+
+-   **Efficiency is Key:** Perform all necessary edits for a given task in a single, atomic step per file.
+-   **Be Proactive:** Before making changes, use your tools to understand the relevant files and the overall structure.
+-   **Single Edit Rule:** When editing a file, apply all planned changes in one unified edit. Do not split the edit into multiple smaller patches for the same request.
+-   **Complete All Subtasks:** When working on a task, you MUST complete ALL subtasks within that task before moving to the next task. Do NOT leave tasks partially complete. If a task has 8 subtasks, implement all 8 before marking the task as done.
+
+### 1.9. Tooling & Workspace Standards
+
+#### Artifact Management (Antigravity IDE)
+> **Purpose**: Artifacts should be well-organized, clean, and easy to navigate.
+
+**Core Principles:**
+- **One artifact per type per task**: Maintain only ONE implementation plan, ONE task list, and ONE walkthrough per active task
+- **Update, don't recreate**: Always update existing artifacts rather than creating new ones
+- **Never delete completed work**: Keep all completed tasks and historical information in artifacts
+- **Version control for media**: Keep only the most recent 1-2 versions of screenshots/videos
+- **Organization**: Use clear, descriptive naming conventions
+
+**Artifact Types:**
+1. **`task.md`** (Task Checklist): One file per session. Update items `[x]` when complete. Add new items if scope expands.
+2. **`implementation_plan.md`** (Technical Plan): One file per major task. Update status/headers.
+3. **`walkthrough.md`** (Verification): Append new results. Keep evidence.
+
+#### Temporary File Management (Other Environments)
+For environments without native artifact support, use temporary markdown files (e.g., `task_[feature].md`, `plan_[feature].md`) managed in a system temp directory or ignored local directory. Follow the same "One file per type" and "Update, don't recreate" principles.
+
+#### Project Directory File Creation (CRITICAL)
+> **Rule**: DO NOT create unnecessary files in the project directory. Use artifacts/temp files for all temporary/testing outputs.
+
+**Strict Guidelines:**
+- **NEVER create temporary files in the project directory** - Use artifacts/temp files instead
+- **NEVER create test output files in the project** - Use artifacts for test results, logs, screenshots
+- **NEVER create planning/tracking files in the project** - Use artifacts
+- **Only create files that are part of the actual codebase** - Source code, configuration, documentation
+
+**Exceptions (when project files ARE allowed):**
+1. **Source code files** - New features, bug fixes, refactoring
+2. **Configuration files** - Required by the application or tools
+3. **Documentation files** - User-facing docs in `docs/` directory
+4. **Test files** - Permanent test suites in `tests/` directory
+
+**Mandatory Cleanup:**
+- If you MUST create temporary files in the project for testing (e.g., test database):
+  1. Document it
+  2. **Delete immediately after testing**
+  3. Verify deletion
+  4. Never commit temporary files
 
 ---
 
@@ -344,156 +529,32 @@ The `reports` is a Flask-based web application for generating comprehensive main
 
 ## 4. Workspace-Specific Guidelines
 
--   **Git Workflow:** All contributions must follow the process outlined in [**GIT_WORKFLOW.md**](./GIT_WORKFLOW.md).
--   **Commit Messages:** Commit messages must adhere to the conventions described in [**CONTRIBUTING.md**](./CONTRIBUTING.md).
+-   **Git Workflow:** All contributions must follow the process outlined in [**GIT_WORKFLOW.md**](.github/GIT_WORKFLOW.md).
+-   **Commit Messages:** Commit messages must adhere to the conventions described in [**CONTRIBUTING.md**](.github/CONTRIBUTING.md).
 -   **Dependencies:** Manage dependencies via the `requirements.txt` file within each package. Do not create a root-level `requirements.txt`.
 
 ---
 
 ## 5. Workspace-Specific AI Instructions
 
--   **Efficiency is Key:** Perform all necessary edits for a given task in a single, atomic step per file.
--   **Be Proactive:** Before making changes, use your tools to understand the relevant files and the overall structure outlined in this document.
--   **Single Edit Rule:** When editing a file, apply all planned changes in one unified edit. Do not split the edit into multiple smaller patches for the same request.
--   **Documentation First:** Before committing any code changes, you **must** update all relevant documentation to reflect the changes. This includes the root `README.md`, this `GEMINI.md` file, package-specific documentation, files in the `.github/` directory (e.g., `CONTRIBUTING.md`, `GIT_WORKFLOW.md`), and any files in `docs/` directories (root and subdirectories).
--   **Roadmap & Plan Updates:** When implementing features or fixes:
-    1. **Mark tasks as completed** in detailed plan files (e.g., `docs/advanced-table-fixes-plan.md`) by changing `[ ]` to `[x]`
-    2. **Update progress tracking** sections with percentages and current focus
-    3. **Update `docs/mockCMMS_roadmap.md`** when phases complete or status changes
-    4. **Add implementation notes** under completed tasks with important details or decisions
-    5. **Document blockers** if issues arise during implementation
-    6. **Update "Last Updated" dates** in roadmap files
-    7. **COMPLETE ALL SUBTASKS**: When working on a task, you MUST complete ALL subtasks within that task before moving to the next task. Do NOT leave tasks partially complete. If a task has 8 subtasks, implement all 8 before marking the task as done.
-    8. **PROVIDE TESTING GUIDE**: After implementing ANY changes (bug fixes, features, enhancements), ALWAYS create a testing guide document in `docs/` with:
-       - Comprehensive test cases covering all changes
-       - Step-by-step instructions
-       - Expected results for each test
-       - Quick test scenarios (2-5 minutes)
-       - Edge cases and error conditions
-       - Visual checks (UI/UX)
-       - Browser console checks
-       - Pass/Fail checkboxes
-       - Issues tracking section
-    9. **ARTIFACT MANAGEMENT** (Antigravity IDE):
-        > **Purpose**: Artifacts in Antigravity IDE are stored in a dedicated directory and should be well-organized, clean, and easy to navigate.
-        
-        **Core Principles:**
-        - **One artifact per type per task**: Maintain only ONE implementation plan, ONE task list, and ONE walkthrough per active task
-        - **Update, don't recreate**: Always update existing artifacts rather than creating new ones
-        - **Never delete completed work**: Keep all completed tasks and historical information in artifacts
-        - **Version control for media**: Keep only the most recent 1-2 versions of screenshots/videos
-        - **Organization**: Use clear, descriptive naming conventions
-        
-        **Artifact Types and Management:**
-        
-        1. **`task.md`** (Task Checklist):
-           - ONE file per conversation/session
-           - Update by marking items `[x]` when complete
-           - NEVER delete completed tasks - they show progress
-           - Add new tasks at the bottom if scope expands
-           - Keep all historical tasks visible
-        
-        2. **`implementation_plan.md`** (Technical Plan):
-           - ONE file per major feature/task
-           - Update sections as work progresses
-           - Keep "Completed" sections at bottom for reference
-           - Update "Current Status" section at top
-           - NEVER delete completed items - move them to "Completed" section
-        
-        3. **`walkthrough.md`** (Verification/Results):
-           - ONE file per feature/task
-           - Append new test results, don't replace old ones
-           - Organize by test sections (e.g., "Test 2.4", "Test 2.5")
-           - Keep all test evidence and results
-           - Update summary sections as new tests complete
-        
-        4. **Screenshots** (`.png` files):
-           - Keep only the **2 most recent versions** of each screenshot
-           - Use descriptive names: `test_2_4_search_results.png`
-           - Delete older versions when adding new ones (keep max 2)
-           - Organize by feature if possible
-        
-        5. **Video Recordings** (`.webp` files):
-           - Keep only the **2 most recent versions** of each recording
-           - Use descriptive names: `test_2_4_global_search.webp`
-           - Delete older versions when adding new ones (keep max 2)
-           - Reference in walkthrough with embed syntax: `![description](path.webp)`
-        
-        **Naming Conventions:**
-        - Tasks: `task.md` (standard name)
-        - Plans: `implementation_plan.md` or `[feature]_plan.md`
-        - Walkthroughs: `walkthrough.md` or `[feature]_walkthrough.md`
-        - Screenshots: `[test_id]_[description].png` (e.g., `test_2_4_search_results.png`)
-        - Videos: `[test_id]_[description].webp` (e.g., `test_2_4_global_search.webp`)
-        
-        **Cleanup Rules:**
-        - Before adding a new screenshot/video, check if 2 versions already exist
-        - If 2 versions exist, delete the oldest one
-        - NEVER delete task lists, plans, or walkthroughs
-        - Keep artifacts organized and easy to scan
-        
-        **Example Artifact Structure:**
-        ```
-        artifacts/
-        ├── task.md                          # ONE task list (never delete)
-        ├── implementation_plan.md           # ONE plan (update, don't recreate)
-        ├── walkthrough.md                   # ONE walkthrough (append results)
-        ├── test_2_4_search_v1.png          # Screenshot version 1
-        ├── test_2_4_search_v2.png          # Screenshot version 2 (keep max 2)
-        └── test_2_4_global_search.webp     # Video recording (keep max 2)
-        ```
-    10. **PROJECT DIRECTORY FILE CREATION** (CRITICAL):
-        > **Rule**: DO NOT create unnecessary files in the project directory. Use artifacts for all temporary/testing outputs.
-        
-        **Strict Guidelines:**
-        - **NEVER create temporary files in the project directory** - Use artifacts instead
-        - **NEVER create test output files in the project** - Use artifacts for test results, logs, screenshots
-        - **NEVER create planning/tracking files in the project** - Use artifacts (task.md, implementation_plan.md, walkthrough.md)
-        - **Only create files that are part of the actual codebase** - Source code, configuration, documentation
-        
-        **Exceptions (when project files ARE allowed):**
-        1. **Source code files** - New features, bug fixes, refactoring
-        2. **Configuration files** - Required by the application or tools
-        3. **Documentation files** - User-facing docs in `docs/` directory (e.g., test plans, roadmaps)
-        4. **Test files** - Permanent test suites in `tests/` directory
-        
-        **Mandatory Cleanup (if project files are created for testing):**
-        - If you MUST create temporary files in the project for testing (e.g., test database, temp config):
-          1. Document the file creation in your task notes
-          2. **Delete the file immediately after testing completes**
-          3. Verify the file is deleted before marking task as complete
-          4. Never commit temporary test files to git
-        
-        **Examples:**
-        - ❌ BAD: Creating `temp_test_results.txt` in project root
-        - ✅ GOOD: Using artifact `walkthrough.md` for test results
-        - ❌ BAD: Creating `debug_log.txt` in project directory
-        - ✅ GOOD: Using artifact or viewing logs in terminal
-        - ❌ BAD: Creating `test_plan_draft.md` in project
-        - ✅ GOOD: Using artifact `implementation_plan.md`
-        - ✅ ACCEPTABLE: Creating `instance/test_temp.db` for testing, then deleting it after tests complete
-        
-        **Verification:**
-        - Before completing any task, verify no unnecessary files were left in the project directory
-        - Check `git status` to ensure only intended files are present
-        - Clean up any temporary files before final commit
-    11. **LOGIN CREDENTIALS**: If login is required for verification and default credentials fail, ALWAYS check `test_data/dummy_data.json` for valid user credentials (e.g., admin/admin123).
-    12. **COMMIT STANDARDS**: Before committing, ALWAYS check the recent git log (`git log -n 5`) to ensure your commit message follows the project's structure, detail, and style conventions.
-    13. **VERSION MANAGEMENT**: After completing any significant changes:
-        1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
-        2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
-        3. Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH (e.g., 1.2.0)
-        4. Update the "Last Updated" date in README.md files
-        5. Main app versions are in `/CHANGELOG.md` and `/README.md`
-        6. Planning module versions are in `/apps/planning/CHANGELOG.md` and `/apps/planning/README.md`
-    14. **MANDATORY AUTOMATED TESTING & VERIFICATION**:
-        -   **Requirement**: For any task involving features that have a corresponding test plan in the `docs/` directory (e.g., `docs/table_features_test_plan.md` or any future `docs/*_test_plan.md`), you **MUST** execute the detailed test plan using the `browser_subagent`.
-        -   **Procedure**:
-            1.  **Identify Test Plan**: Check `docs/` for relevant test plans.
-            2.  **Execute Tests**: Use `browser_subagent` to perform ALL steps in the plan (CRUD operations, UI interactions, etc.).
-            3.  **Fix & Retry**: If ANY error occurs or a test fails, you must:
-                -   Debug and fix the issue.
-                -   Re-run the ENTIRE test suite from the plan.
-                -   Repeat until ALL tests pass.
-            4.  **Evidence**: You MUST provide a video recording and screenshots demonstrating that all tests have passed.
-            5.  **Completion**: Do not mark the task as complete until verification is successful with evidence.
+1.  **LOGIN CREDENTIALS**: If login is required for verification and default credentials fail, ALWAYS check `test_data/dummy_data.json` for valid user credentials (e.g., admin/admin123).
+
+2.  **VERSION MANAGEMENT**: After completing any significant changes:
+    1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
+    2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
+    3. Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH (e.g., 1.2.0)
+    4. Update the "Last Updated" date in README.md files
+    5. Main app versions are in `/CHANGELOG.md` and `/README.md`
+    6. Planning module versions are in `/apps/planning/CHANGELOG.md` and `/apps/planning/README.md`
+
+3.  **MANDATORY AUTOMATED TESTING & VERIFICATION**:
+    -   **Requirement**: For any task involving features that have a corresponding test plan in the `docs/` directory (e.g., `docs/table_features_test_plan.md` or any future `docs/*_test_plan.md`), you **MUST** execute the detailed test plan using the `browser_subagent`.
+    -   **Procedure**:
+        1.  **Identify Test Plan**: Check `docs/` for relevant test plans.
+        2.  **Execute Tests**: Use `browser_subagent` to perform ALL steps in the plan (CRUD operations, UI interactions, etc.).
+        3.  **Fix & Retry**: If ANY error occurs or a test fails, you must:
+            -   Debug and fix the issue.
+            -   Re-run the ENTIRE test suite from the plan.
+            -   Repeat until ALL tests pass.
+        4.  **Evidence**: You MUST provide a video recording and screenshots demonstrating that all tests have passed.
+        5.  **Completion**: Do not mark the task as complete until verification is successful with evidence.

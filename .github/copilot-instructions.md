@@ -2,9 +2,341 @@
 
 > **⚠️ SYNCHRONIZATION NOTICE:** This file (`copilot-instructions.md`) is for **GitHub Copilot** instructions. A parallel document, `GEMINI.md`, exists for **Gemini Code Assist** instructions. While both documents should be nearly identical (except for model-specific references), they should be kept in sync. **If you make changes to this file, please ensure the corresponding section in `GEMINI.md` is also updated**, and vice versa.
 
-This document provides a comprehensive guide for the GitHub Copilot AI to effectively contribute to this monorepo. Adherence to these guidelines is critical for maintaining code quality, consistency, and a clean project structure.
+This document is divided into two parts:
+1.  **Global AI Coding Standards:** Universal rules for high-quality code generation, applicable to any project.
+2.  **Workspace Context & Specifics:** Detailed information about this specific monorepo, its architecture, and local workflows.
 
-## 1. Monorepo Philosophy
+---
+
+## 1. Global AI Coding Standards
+
+These instructions apply to **all** coding tasks unless explicitly overridden by workspace-specific rules.
+
+### 1.1. Code Quality & Style
+-   **Clarity & Conciseness:** Always generate code that is clear, concise, and well-commented, especially for complex logic or algorithms.
+-   **Conventions:** Adhere to the widely accepted style and formatting conventions for the target language or framework (e.g., PEP 8 for Python, Google JavaScript Style Guide, etc.).
+-   **Paradigm:** Prefer class-based object-oriented programming for languages that support it, unless a functional or procedural approach is clearly more suitable for a simple utility or script.
+-   **Maintainability:** Prioritize maintainability, scalability, and testability. Use modular design, meaningful naming, and separation of concerns.
+-   **Refactoring:** Actively refactor code to improve its structure and remove unused or "dead" code.
+-   **Hardcoding:** Avoid hardcoding values; use configuration files, environment variables, or constants where possible.
+
+### 1.2. Reliability, Security & Performance
+-   **Error Handling:** Include robust error handling appropriate for the language (e.g., try-catch, try-except, error callbacks, etc.) to ensure code reliability.
+-   **Security:** For web applications or code handling user input, always follow security best practices (e.g., input validation, output encoding, use of secure libraries, avoiding injection vulnerabilities, etc.).
+-   **Performance:** Optimize for performance and resource efficiency when relevant, but never at the expense of code clarity or correctness.
+-   **Concurrency:** Handle concurrency and parallelism safely using language features like `async/await`, goroutines, or threads to improve performance.
+
+### 1.3. Architecture & Best Practices
+-   **Libraries:** Prefer using well-established libraries and frameworks for common tasks, and ensure dependencies are properly managed (e.g., `requirements.txt`, `package.json`, etc.).
+-   **API Design:** When designing APIs, follow RESTful conventions or GraphQL best practices to ensure they are intuitive and scalable.
+-   **State Management:** For complex applications, consider state management patterns and libraries (e.g., Redux, MobX, Vuex) for predictable state transitions.
+-   **Infrastructure:** For infrastructure management, prefer Infrastructure as Code (IaC) tools like Terraform or CloudFormation.
+-   **Observability:** Incorporate logging, metrics, and tracing to provide visibility into the application's behavior in production.
+
+### 1.4. Testing & Deployment
+
+#### 🚨 CRITICAL: Comprehensive Automated Verification (MANDATORY)
+
+**ALL verification steps MUST be performed automatically. DO NOT ask the user to verify manually.**
+
+**For UI Changes:**
+-   **MANDATORY**: Use `browser_subagent` tool to perform comprehensive browser verification
+-   The video recording MUST demonstrate ALL implemented, changed, or deleted features
+-   Perform ALL necessary actions (scrolling, clicking, navigating) to show every aspect of the change
+-   Test all user flows affected by the changes
+
+**For Code Logic Changes:**
+-   **MANDATORY**: Run automated tests using `pytest` or equivalent
+-   Create new tests if none exist for the changed functionality
+-   Verify all test cases pass before considering work complete
+
+**For Database Schema Changes:**
+-   **MANDATORY**: Verify database changes automatically:
+  1. Stop the running app if active
+  2. Delete the current database instance (e.g., `instance/mockcmms.db`)
+  3. Restart the app to recreate the database with the new schema
+  4. Run SQL queries to verify schema correctness
+  5. Create automated tests in `tests/` directory to verify schema
+-   Document all migration scripts and their execution results
+
+**General Testing:**
+-   **Verification:** Where appropriate, include basic unit tests or usage examples to demonstrate correctness and facilitate future maintenance.
+-   **CI/CD:** Promote the use of CI/CD pipelines to automate testing and deployment, ensuring code quality and faster release cycles.
+
+**Verification is NOT optional** - it is a critical step that MUST be completed automatically for every change.
+
+#### 🚨 CRITICAL: Testing Documentation (MANDATORY)
+
+**After implementing ANY changes (bug fixes, features, enhancements), ALWAYS create a testing guide document in `docs/` with:**
+- Comprehensive test cases covering all changes
+- Step-by-step instructions
+- Expected results for each test
+- Quick test scenarios (2-5 minutes)
+- Edge cases and error conditions
+- Visual checks (UI/UX)
+- Browser console checks
+- Pass/Fail checkboxes
+- Issues tracking section
+
+### 1.5. Documentation Management
+
+#### 🚨 CRITICAL: Documentation Standards (MANDATORY)
+
+**Documentation quality is CRITICAL to avoid wasting time and resources.**
+
+**All documentation MUST be:**
+-   **Clean**: No duplicate information, no outdated sections
+-   **Clear**: Easy to understand, well-organized structure
+-   **Organized**: Logical flow, proper headings, consistent formatting
+-   **Up-to-date**: Reflects current state, not historical plans or outdated analysis
+
+**When creating or updating documentation:**
+1. **Remove outdated content** - Delete old analysis, completed tasks, historical notes
+2. **Single source of truth** - Each piece of information appears ONCE
+3. **Status-focused** - Show what IS, not what WAS or what WILL BE
+4. **Concise** - Use tables, bullet points, and clear sections
+5. **Scannable** - Users should find information in seconds, not minutes
+
+**Examples of BAD documentation:**
+-   ❌ Mixing "completed work" with "remaining work" in the same section
+-   ❌ Keeping old "issues identified" sections after issues are fixed
+-   ❌ Multiple sections saying the same thing in different ways
+-   ❌ Long narrative explanations when a table would suffice
+
+**Examples of GOOD documentation:**
+-   ✅ Single "Final Status" section showing current state
+-   ✅ Tables summarizing changes (Before → After)
+-   ✅ Clear verification steps with expected results
+-   ✅ Concise summaries with links to details if needed
+
+**Pay attention to documentation management** - This is a critical step that must be executed properly.
+
+**Public API Documentation:**
+-   Document public APIs, classes, and complex functions with docstrings or comments, following the conventions of the target language.
+
+#### 🚨 CRITICAL: Documentation Upkeep (MANDATORY)
+
+**Documentation First Rule:**
+Before committing any code changes, you **must** update all relevant documentation to reflect the changes. This includes the root `README.md`, package-specific documentation, and relevant architecture or planning files.
+
+**Roadmap & Plan Updates:**
+When implementing features or fixes:
+1. **Mark tasks as completed** in detailed plan files (e.g., `docs/*-plan.md`)
+2. **Update progress tracking** sections
+3. **Update project roadmap** (e.g., `docs/roadmap.md`) when phases complete
+4. **Add implementation notes** under completed tasks
+5. **Document blockers** if issues arise
+6. **Update "Last Updated" dates**
+
+### 1.6. Interaction Guidelines
+
+#### 🚨 CRITICAL: Smart Decision-Making (MANDATORY)
+
+**DO NOT ask unnecessary questions or request user review for things you can verify yourself.**
+
+**Before asking the user:**
+1. **Explore all options** - Use available tools to gather information
+2. **Make informed decisions** - Analyze the codebase, run tests, check documentation
+3. **Verify automatically** - Run tests, check database, use browser verification
+4. **Only ask when truly blocked** - Missing requirements, design decisions, user preferences
+
+**Examples of UNNECESSARY questions:**
+-   ❌ "Should I delete this unused model?" (if you verified it's unused, just delete it)
+-   ❌ "Which cleanup phase should I do?" (if user said "do all", do all)
+-   ❌ "Should I run tests?" (always run tests automatically)
+-   ❌ "Can I proceed?" (if you have all information, proceed)
+
+**Examples of NECESSARY questions:**
+-   ✅ "Should we use approach A or B?" (genuine design decision)
+-   ✅ "What should the default value be?" (user preference needed)
+-   ✅ "This will break the API - should we proceed?" (user impact decision)
+
+**Be smart enough to:**
+-   Verify things yourself before asking
+-   Use all available tools and information
+-   Make decisions when you have sufficient context
+-   Only escalate to user when truly necessary
+
+#### 🚨 CRITICAL: File Corruption Handling (MANDATORY)
+
+**NEVER use `git checkout` or `git restore` to fix corrupted files during editing!**
+
+**Why**: Uncommitted changes will be PERMANENTLY LOST. This can result in losing hours of work.
+
+**If you detect file corruption during editing:**
+1. **STOP immediately** - Do not make further edits to the corrupted file
+2. **Notify the user** - Explain what happened and ask how to proceed
+3. **Suggest options**:
+   - Manual restoration by user (they may have editor undo/backup)
+   - Rewrite the specific corrupted section (if small)
+   - User can decide if Git restore is appropriate (they know what's committed)
+
+**Prevention**:
+- Make smaller, more targeted edits instead of large multi-line replacements
+- Ensure `TargetContent` EXACTLY matches the file content (including whitespace)
+- For large files (>1000 lines), consider splitting into smaller modules first
+- The running application does NOT cause file corruption - editing errors do
+
+**General Guidelines:**
+-   **Clarification:** If the request is ambiguous or lacks important details, ask for clarification before generating extensive code.
+-   **Focus:** Keep responses focused on the direct query. Avoid conversational fluff or suggesting unrelated tasks unless explicitly asked.
+-   **Step-by-Step:** When provided with a numbered list of changes or a multi-step plan (e.g., "Prompt 1:", "Prompt 2:"), focus your response and any code modifications only on the current step or prompt being asked about.
+-   **Auto-Run Preference:** When executing standard, non-destructive terminal commands (specifically running Python files like `run.py` or executing tests via `pytest`), prefer setting `SafeToAutoRun` to `true` to streamline the workflow, rather than asking for explicit user permission each time.
+-   **Browser Auto-Run Preference:** When using browser automation tools for verification and testing, prefer executing browser commands automatically without requesting user approval for each action. This streamlines the verification workflow and reduces interruptions. Only request user approval for destructive browser actions or when user input is genuinely required.
+    -   **JavaScript Execution:** Always execute JavaScript code automatically during browser testing without requesting user permission. This includes overriding browser confirmations (e.g., `window.confirm = function() { return true; }`), manipulating DOM elements, and executing test scripts.
+    -   **Confirmation Dialogs:** Automatically override `window.confirm`, `window.alert`, and `window.prompt` functions when needed for automated testing to prevent blocking the test flow.
+-   **Server Check Before Browser Automation (MANDATORY):** Before using any browser automation tools (browser_subagent), ALWAYS check if the development server is running by checking the metadata for running terminal commands. If the server is not running (e.g., `python run.py` not in running commands list), start it first using `run_command` with appropriate wait time. Never assume the server is running based on browser subagent errors - always verify from metadata first.
+
+### 1.7. Version Control & Commit Standards
+
+#### 🚨 CRITICAL: Comprehensive Commit Workflow (MANDATORY)
+
+Before committing, follow this comprehensive workflow to ensure all changes are properly reviewed, staged, and documented:
+
+**Step 1: Review All Changed Files**
+```bash
+git status                    # See all modified files
+git status --short            # Compact view
+git diff --stat               # Summary of changes
+```
+
+**Step 2: Examine Each Changed File**
+- For EACH modified file, review the actual changes:
+```bash
+git diff path/to/file.ext     # View detailed changes
+```
+- Understand what changed and why
+- Identify if changes are related to the current task or are unrelated
+
+**Step 3: Stage Relevant Files**
+- Add files that are part of the current logical change:
+```bash
+git add path/to/file1.ext path/to/file2.ext
+```
+- DO NOT stage unrelated changes - commit them separately
+- If a file has both related and unrelated changes, use `git add -p` for partial staging
+
+**Step 4: Verify Staged Changes**
+```bash
+git diff --cached --stat              # Summary of staged changes
+git diff --cached path/to/file.ext    # Review specific staged file
+```
+- Ensure only intended changes are staged
+- Double-check no debug code, console.logs, or temporary changes are included
+
+**Step 5: Create Detailed Commit Message**
+- Check recent commits for style/format consistency:
+```bash
+git log -n 5 --oneline        # Recent commit titles
+git log -n 1                  # Last commit details
+```
+- Follow project conventions (see examples in git log)
+- Structure your commit message:
+  * **Title**: Brief summary (50-72 chars), use conventional commits format
+  * **Body**: Detailed explanation of WHAT changed and WHY
+  * **Files**: List all modified files with brief description of changes
+  * **Technical Details**: Implementation approach, algorithms, patterns used
+  * **Testing**: How changes were verified
+
+**Step 6: Final Pre-Commit Checklist**
+- [ ] All related files are staged (`git diff --cached --stat`)
+- [ ] No unrelated changes are staged
+- [ ] Commit message is detailed and follows project conventions
+- [ ] All temporary/debug code is removed
+- [ ] Tests pass (if applicable)
+
+**Example Workflow:**
+```bash
+# 1. Check what changed
+git status
+
+# 2. Review each file
+git diff src/static/css/main.css
+git diff src/templates/base.html
+
+# 3. Stage related files
+git add src/static/css/main.css src/templates/base.html docs/bug_tracking.md
+
+# 4. Verify staged changes
+git diff --cached --stat
+git diff --cached src/static/css/main.css
+
+# 5. Check commit history for style
+git log -n 5
+
+# 6. Commit with detailed message
+git commit -m "feat: Fix Bug #30 - Assignees field layout shift
+
+Implemented fixed height (100px) for Select2 container to prevent
+layout shifts when adding/removing assignees.
+
+Files Changed:
+- src/static/css/main.css (Bug #30 CSS fix)
+- src/templates/base.html (CSS cache busting)
+- docs/bug_tracking.md (Bug #30 marked resolved)
+
+Technical Details:
+- Fixed height with overflow-y: auto for internal scrolling
+- Flexbox layout for proper tag wrapping
+
+Testing:
+- Verified no layout shift with multiple assignees"
+```
+
+**CRITICAL**: Never commit without reviewing ALL changed files. Hidden changes in unexpected files can introduce bugs or break functionality.
+
+### 1.8. AI Workflow Standards
+
+-   **Efficiency is Key:** Perform all necessary edits for a given task in a single, atomic step per file.
+-   **Be Proactive:** Before making changes, use your tools to understand the relevant files and the overall structure.
+-   **Single Edit Rule:** When editing a file, apply all planned changes in one unified edit. Do not split the edit into multiple smaller patches for the same request.
+-   **Complete All Subtasks:** When working on a task, you MUST complete ALL subtasks within that task before moving to the next task. Do NOT leave tasks partially complete. If a task has 8 subtasks, implement all 8 before marking the task as done.
+
+### 1.9. Tooling & Workspace Standards
+
+#### Artifact Management (Antigravity IDE)
+> **Purpose**: Artifacts should be well-organized, clean, and easy to navigate.
+
+**Core Principles:**
+- **One artifact per type per task**: Maintain only ONE implementation plan, ONE task list, and ONE walkthrough per active task
+- **Update, don't recreate**: Always update existing artifacts rather than creating new ones
+- **Never delete completed work**: Keep all completed tasks and historical information in artifacts
+- **Version control for media**: Keep only the most recent 1-2 versions of screenshots/videos
+- **Organization**: Use clear, descriptive naming conventions
+
+**Artifact Types:**
+1. **`task.md`** (Task Checklist): One file per session. Update items `[x]` when complete. Add new items if scope expands.
+2. **`implementation_plan.md`** (Technical Plan): One file per major task. Update status/headers.
+3. **`walkthrough.md`** (Verification): Append new results. Keep evidence.
+
+#### Temporary File Management (Other Environments)
+For environments without native artifact support, use temporary markdown files (e.g., `task_[feature].md`, `plan_[feature].md`) managed in a system temp directory or ignored local directory. Follow the same "One file per type" and "Update, don't recreate" principles.
+
+#### Project Directory File Creation (CRITICAL)
+> **Rule**: DO NOT create unnecessary files in the project directory. Use artifacts/temp files for all temporary/testing outputs.
+
+**Strict Guidelines:**
+- **NEVER create temporary files in the project directory** - Use artifacts/temp files instead
+- **NEVER create test output files in the project** - Use artifacts for test results, logs, screenshots
+- **NEVER create planning/tracking files in the project** - Use artifacts
+- **Only create files that are part of the actual codebase** - Source code, configuration, documentation
+
+**Exceptions (when project files ARE allowed):**
+1. **Source code files** - New features, bug fixes, refactoring
+2. **Configuration files** - Required by the application or tools
+3. **Documentation files** - User-facing docs in `docs/` directory
+4. **Test files** - Permanent test suites in `tests/` directory
+
+**Mandatory Cleanup:**
+- If you MUST create temporary files in the project for testing (e.g., test database):
+  1. Document it
+  2. **Delete immediately after testing**
+  3. Verify deletion
+  4. Never commit temporary files
+
+---
+
+## 2. Workspace Context: Monorepo Philosophy
 
 This repository is a monorepo that houses multiple, distinct but related projects (apps).
 
@@ -14,9 +346,9 @@ This repository is a monorepo that houses multiple, distinct but related project
 
 ---
 
-## 2. Core Packages
+## 3. Workspace Context: Core Packages
 
-### 2.1. `apps/planning`
+### 3.1. `apps/planning`
 
 #### Overview
 
@@ -69,7 +401,7 @@ mockCMMS/
 │   │   │   ├── db_utils.py            # Database operations and queries
 │   │   │   ├── dashboard.py           # Dashboard generation logic
 │   │   │   ├── extract_data.py        # Data extraction from external sources
-│   │   │   └── config_manager.py      # Configuration management
+│   │   │   ├── config_manager.py      # Configuration management
 │   │   ├── static/                # CSS/JS assets
 │   │   │   ├── css/               # Stylesheets
 │   │   │   └── js/                # JavaScript modules
@@ -121,7 +453,7 @@ mockCMMS/
 -   **Run the application:** From the repository root, execute `python run.py`. The main app will load enabled modular apps.
 -   **Run tests:** From the repository root, execute `pytest tests/` for main app tests or `pytest apps/planning/tests/` for planning tests.
 
-### 2.2. `apps/reports`
+### 3.2. `apps/reports`
 
 #### Overview
 
@@ -184,162 +516,34 @@ The `reports` is a Flask-based web application for generating comprehensive main
 
 ---
 
-## 3. General Development Guidelines
+## 4. Workspace-Specific Guidelines
 
 -   **Git Workflow:** All contributions must follow the process outlined in [**GIT_WORKFLOW.md**](./GIT_WORKFLOW.md).
 -   **Commit Messages:** Commit messages must adhere to the conventions described in [**CONTRIBUTING.md**](./CONTRIBUTING.md).
--   **Dependencies:** Manage dependencies via the `requirements.t xt` file within each package. Do not create a root-level `requirements.txt`.
--   **Code Style:** Follow PEP 8 for Python and maintain consistency with the existing code style.
+-   **Dependencies:** Manage dependencies via the `requirements.txt` file within each package. Do not create a root-level `requirements.txt`.
 
 ---
 
-## 4. AI-Specific Instructions
+## 5. Workspace-Specific AI Instructions
 
--   **Efficiency is Key:** Perform all necessary edits for a given task in a single, atomic step per file.
--   **Be Proactive:** Before making changes, use your tools to understand the relevant files and the overall structure outlined in this document.
--   **Single Edit Rule:** When editing a file, apply all planned changes in one unified edit. Do not split the edit into multiple smaller patches for the same request.
--   **Documentation First:** Before committing any code changes, you **must** update all relevant documentation, including the root `README.md`, this `copilot-instructions.md` file, and any package-specific documentation, to reflect the changes.
--   **Roadmap & Plan Updates:** When implementing features or fixes:
-    1. **Mark tasks as completed** in detailed plan files (e.g., `docs/advanced-table-fixes-plan.md`) by changing `[ ]` to `[x]`
-    2. **Update progress tracking** sections with percentages and current focus
-    3. **Update `docs/mockCMMS_roadmap.md`** when phases complete or status changes
-    4. **Add implementation notes** under completed tasks with important details or decisions
-    5. **Document blockers** if issues arise during implementation
-    6. **Update "Last Updated" dates** in roadmap files
-    7. **COMPLETE ALL SUBTASKS**: When working on a task, you MUST complete ALL subtasks within that task before moving to the next task. Do NOT leave tasks partially complete. If a task has 8 subtasks, implement all 8 before marking the task as done.
-    8. **PROVIDE TESTING GUIDE**: After implementing ANY changes (bug fixes, features, enhancements), ALWAYS create a testing guide document in `docs/` with:
-       - Comprehensive test cases covering all changes
-       - Step-by-step instructions
-       - Expected results for each test
-       - Quick test scenarios (2-5 minutes)
-       - Edge cases and error conditions
-       - Visual checks (UI/UX)
-       - Browser console checks
-       - Pass/Fail checkboxes
-       - Issues tracking section
-    9. **TEMPORARY FILE MANAGEMENT** (GitHub Copilot in other IDEs):
-        > **Purpose**: Since GitHub Copilot doesn't have a dedicated artifact system, use temporary markdown files for planning, tracking, and documentation during development.
-        
-        **Core Principles:**
-        - **One file per type per task**: Maintain only ONE implementation plan, ONE task list, and ONE walkthrough per active task
-        - **Update, don't recreate**: Always update existing temp files rather than creating new ones
-        - **Never delete completed work**: Keep all completed tasks and historical information
-        - **Clear naming**: Use descriptive names with feature identifiers
-        - **Location**: Files are managed by the IDE in a system temp directory (similar to Antigravity's artifact system)
-        
-        **Temp File Types and Management:**
-        
-        1. **`task_[feature].md`** (Task Checklist):
-           - ONE file per feature/task
-           - Update by marking items `[x]` when complete
-           - NEVER delete completed tasks - they show progress
-           - Add new tasks at the bottom if scope expands
-           - Keep all historical tasks visible
-        
-        2. **`plan_[feature].md`** (Technical Plan):
-           - ONE file per major feature/task
-           - Update sections as work progresses
-           - Keep "Completed" sections at bottom for reference
-           - Update "Current Status" section at top
-           - NEVER delete completed items - move them to "Completed" section
-        
-        3. **`walkthrough_[feature].md`** (Verification/Results):
-           - ONE file per feature/task
-           - Append new test results, don't replace old ones
-           - Organize by test sections
-           - Keep all test evidence and results
-           - Update summary sections as new tests complete
-        
-        4. **Screenshots/Evidence**:
-           - Keep only the **2 most recent versions** of each screenshot
-           - Use descriptive names: `test_2_4_search_results.png`
-           - Reference in walkthrough with appropriate paths
-        
-        **Naming Conventions:**
-        **Naming Conventions:**
-        - Tasks: `task_[feature].md` (e.g., `task_table_features.md`)
-        - Plans: `plan_[feature].md` (e.g., `plan_table_features.md`)
-        - Walkthroughs: `walkthrough_[feature].md`
-        - Screenshots: `[test_id]_[description].png` (e.g., `test_2_4_search_results.png`)
-        
-        **File Management:**
-        > **Note**: Temp files are managed by the IDE in a system temp directory (similar to Antigravity's artifact system). Files are NOT stored in the project directory.
-        
-        - Files are stored in the IDE's system temp directory
-        - Use the same naming conventions as artifacts for consistency
-        - The IDE handles file location and organization automatically
-        
-        **Cleanup Rules:**
-        - Before adding new screenshots, check if 2 versions exist and delete oldest
-        - NEVER delete task lists, plans, or walkthroughs
-        - Keep temp files organized and easy to scan
-        - The IDE may automatically clean up temp files when sessions end
-    10. **PROJECT DIRECTORY FILE CREATION** (CRITICAL):
-        > **Rule**: DO NOT create unnecessary files in the project directory. Use IDE temp files for all temporary/testing outputs.
-        
-        **Strict Guidelines:**
-        - **NEVER create temporary files in the project directory** - Use IDE temp file system instead
-        - **NEVER create test output files in the project** - Use temp files for test results, logs, screenshots
-        - **NEVER create planning/tracking files in the project** - Use temp files (task_[feature].md, plan_[feature].md, walkthrough_[feature].md)
-        - **Only create files that are part of the actual codebase** - Source code, configuration, documentation
-        
-        **Exceptions (when project files ARE allowed):**
-        1. **Source code files** - New features, bug fixes, refactoring
-        2. **Configuration files** - Required by the application or tools
-        3. **Documentation files** - User-facing docs in `docs/` directory (e.g., test plans, roadmaps)
-        4. **Test files** - Permanent test suites in `tests/` directory
-        
-        **Mandatory Cleanup (if project files are created for testing):**
-        - If you MUST create temporary files in the project for testing (e.g., test database, temp config):
-          1. Inform the user about the file creation
-          2. **Delete the file immediately after testing completes**
-          3. Remind the user to verify the file is deleted
-          4. Never commit temporary test files to git
-        
-        **Examples:**
-        - ❌ BAD: Creating `temp_test_results.txt` in project root
-        - ✅ GOOD: Using temp file `walkthrough_[feature].md` for test results
-        - ❌ BAD: Creating `debug_log.txt` in project directory
-        - ✅ GOOD: Using temp file or viewing logs in terminal
-        - ❌ BAD: Creating `test_plan_draft.md` in project
-        - ✅ GOOD: Using temp file `plan_[feature].md`
-        - ✅ ACCEPTABLE: Creating `instance/test_temp.db` for testing, then deleting it after tests complete
-        
-        **Verification:**
-        - Before completing any task, remind user to verify no unnecessary files were left in the project directory
-        - Suggest checking `git status` to ensure only intended files are present
-        - Remind user to clean up any temporary files before final commit
-    11. **LOGIN CREDENTIALS**: If login is required for verification and default credentials fail, ALWAYS check `test_data/dummy_data.json` for valid user credentials (e.g., admin/admin123).
-    12. **COMMIT STANDARDS**: Before committing, ALWAYS check the recent git log (`git log -n 5`) to ensure your commit message follows the project's structure, detail, and style conventions.
-    13. **Version Management:** After completing any significant changes:
-        1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
-        2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
-        3. Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH (e.g., 1.2.0)
-        4. Update the "Last Updated" date in README.md files
-        5. Main app versions are in `/CHANGELOG.md` and `/README.md`
-        6. Planning module versions are in `/apps/planning/CHANGELOG.md` and `/apps/planning/README.md`
-        7. Reports versions are in `/apps/reports/CHANGELOG.md` and `/apps/reports/README.md`
-    14. **MANDATORY MANUAL TESTING & VERIFICATION**:
-        > **Note**: GitHub Copilot does not have access to automated browser testing tools. All testing must be performed manually by the user.
-        
-        -   **Requirement**: For any task involving features that have a corresponding test plan in the `docs/` directory (e.g., `docs/table_features_test_plan.md` or any future `docs/*_test_plan.md`), you **MUST** provide clear manual testing instructions.
-        -   **Procedure**:
-            1.  **Identify Test Plan**: Check `docs/` for relevant test plans.
-            2.  **Reference Test Plan**: Direct the user to the specific test plan document (e.g., "Please execute tests from `docs/table_features_test_plan.md`").
-            3.  **Highlight Critical Tests**: If only specific sections are relevant to your changes, explicitly list which test sections to run (e.g., "Please run tests 2.3 (Filtering) and 2.4 (Global Search)").
-            4.  **Provide Context**: Explain what changed and why specific tests are important for verification.
-            5.  **Request Confirmation**: Ask the user to confirm that all tests pass before considering the task complete.
-            6.  **Document Results**: If the user reports test failures, debug and fix issues, then request re-testing.
-        -   **Testing Guide Creation**: When implementing new features or significant changes:
-            1.  Create or update the relevant test plan in `docs/` if it doesn't exist or needs updates.
-            2.  Ensure test plans include:
-                - Clear step-by-step instructions
-                - Expected results for each test
-                - Screenshots or visual checkpoints where applicable
-                - Edge cases and error conditions
-            3.  Use the format from existing test plans (e.g., `docs/table_features_test_plan.md`) for consistency.
-        -   **Completion Criteria**: Do not mark a task as complete until:
-            1.  You have provided clear testing instructions to the user
-            2.  The user has confirmed that tests pass OR
-            3.  The user explicitly approves skipping tests for the current iteration
+1.  **LOGIN CREDENTIALS**: If login is required for verification and default credentials fail, ALWAYS check `test_data/dummy_data.json` for valid user credentials (e.g., admin/admin123).
+
+2.  **VERSION MANAGEMENT**: After completing any significant changes:
+    1. Update the appropriate `CHANGELOG.md` file(s) with new entries following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
+    2. Update version numbers in both `CHANGELOG.md` and corresponding `README.md` files (must be synchronized)
+    3. Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH (e.g., 1.2.0)
+    4. Update the "Last Updated" date in README.md files
+    5. Main app versions are in `/CHANGELOG.md` and `/README.md`
+    6. Planning module versions are in `/apps/planning/CHANGELOG.md` and `/apps/planning/README.md`
+
+3.  **MANDATORY MANUAL TESTING & VERIFICATION**:
+    > **Note**: GitHub Copilot does not have access to automated browser testing tools. All testing must be performed manually by the user.
+    
+    -   **Requirement**: For any task involving features that have a corresponding test plan in the `docs/` directory (e.g., `docs/table_features_test_plan.md` or any future `docs/*_test_plan.md`), you **MUST** provide clear manual testing instructions.
+    -   **Procedure**:
+        1.  **Identify Test Plan**: Check `docs/` for relevant test plans.
+        2.  **Creation**: If no dedicated test plan exists, create a concise manual test checklist in the PR description or a temporary `test_plan.md`.
+        3.  **Instruction**: Provide step-by-step instructions for the user to manually verify the changes.
+        4.  **Verification**: Ask the user to confirm that all manual tests have passed.
+        5.  **Completion**: Do not mark the task as complete until the user confirms verification.
 
