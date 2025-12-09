@@ -831,9 +831,10 @@ In the table sidebar, when adding a second filter, it automatically applies filt
 
 ---
 
-### Bug #24: Autofill Background Color Not Consistent Across All Input Types
+### Bug #24: Autofill Background Color Inconsistency
 **Priority:** Medium  
-**Status:** Open
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Added CSS rules for `:-webkit-autofill` to `main.css` to force consistent background color across inputs, selects, and textareas.
 
 **Description:**  
 When browser autofill populates text input fields, they get a blue background color to indicate they were autofilled. However, this visual indicator is not applied consistently to all form field types (dropdowns, select elements, textareas, etc.).
@@ -1226,8 +1227,9 @@ Add CSS to set max-height and enable scrolling:
 ## 🔵 LOW PRIORITY BUGS
 
 ### Bug #15: Status Field Should Be Hidden in MO Creation
-**Priority:** Low  
-**Status:** Open
+**Priority:** Low
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Verified that the status field is correctly hidden by existing `{% if mo %}` logic in `maintenance_order_detail.html`. Default status "Open" is handled by backend.
 
 **Description:**  
 When creating a new Maintenance Order, the status should always be "Open". The status field should be hidden from the creation form, as status changes should only happen through other pages or future apps.
@@ -1274,26 +1276,26 @@ When creating a new Maintenance Order, the status should always be "Open". The s
 **Requirement:**  
 Create a comprehensive testing plan for all Advanced Table features. This plan should:
 
-1. **Be Saved as Markdown File**: Store in `docs/` directory
-2. **Be Reusable**: Can be used for future testing cycles
-3. **Be AI-Executable**: AI assistant should be able to follow the plan and execute tests automatically
-4. **Include All Features**: Cover every table feature:
-   - Global search
-   - Column filtering (AND/OR logic)
-   - Column show/hide
-   - Column reordering (drag-and-drop)
-   - Column resizing
-   - Column sorting
-   - Saved views (save, load, delete, set default)
-   - Row click navigation
-   - Export functionality
-   - Sidebar toggle
-   - State persistence
-5. **Provide Evidence**: Each test should produce:
-   - Screenshots of UI state
-   - Video recordings of interactions
-   - Console logs (if applicable)
-   - Pass/Fail status
+1.  **Be Saved as Markdown File**: Store in `docs/` directory
+2.  **Be Reusable**: Can be used for future testing cycles
+3.  **Be AI-Executable**: AI assistant should be able to follow the plan and execute tests automatically
+4.  **Include All Features**: Cover every table feature:
+    - Global search
+    - Column filtering (AND/OR logic)
+    - Column show/hide
+    - Column reordering (drag-and-drop)
+    - Column resizing
+    - Column sorting
+    - Saved views (save, load, delete, set default)
+    - Row click navigation
+    - Export functionality
+    - Sidebar toggle
+    - State persistence
+5.  **Provide Evidence**: Each test should produce:
+    - Screenshots of UI state
+    - Video recordings of interactions
+    - Console logs (if applicable)
+    - Pass/Fail status
 
 **Deliverable:**  
 Create `docs/table_features_test_plan.md` with detailed test cases and execution instructions.
@@ -1308,7 +1310,7 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 **Critical (0 open - 1 fixed):**
 - ~~Bug #2: CSRF Token Missing - MO and Spare Parts Forms~~ ✅ FIXED (Prior to Dec 2, 2025)
 
-**High (0 open - 11 fixed):**
+**High (0 open - 9 fixed):**
 **Open:**
 (None)
 
@@ -1321,38 +1323,41 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 - ~~Bug #9: Table Sidebar - Save View Not Working~~ ✅ RESOLVED (Dec 2, 2025 - False Positive)
 - ~~Bug #11: Spare Parts Update Not Working - CSRF Token Missing~~ ✅ FIXED (Prior to Dec 2, 2025)
 - ~~Bug #14: Cannot Click Table Elements After Column Changes or Sorting~~ ✅ FIXED (Dec 2, 2025)
+- ~~Bug #31: Table Header Not Sticky on Scroll~~ ✅ FIXED (Dec 10, 2025)
 
-**Medium (7 open - 7 fixed):**
+**Medium (5 open - 9 fixed):**
 **Open:**
 - Bug #8: Table Columns Too Narrow on Default Load
 - Bug #10: Table Width Not Responsive to Window Resize
 - Bug #13: Table Views - Save/Load Functionality Not Working
 - Bug #17: OR Filter Operator Clears Previous Filter Row
-- Bug #24: Autofill Background Color Not Consistent Across All Input Types **(added Dec 2, 2025)**
 - Bug #27: MO Table in Asset Details Should Use Advanced Table **(NEW - Dec 2, 2025)**
-- ~~Bug #30: Assignees Field Causes Layout Shift When Adding Items~~ ✅ RESOLVED (Dec 9, 2025)
 
 **Fixed:**
 - ~~Bug #7: Missing Required Field Indicators~~ ✅ FIXED (Prior to Dec 2, 2025)
 - ~~Bug #16: Frequency Field Should Only Be Enabled for PM Orders~~ ✅ FIXED (Dec 1, 2025)
 - ~~Bug #23: Frequency Field Not Showing Saved Value on Edit~~ ✅ FIXED (Dec 2, 2025 - Bug #R2)
+- ~~Bug #24: Autofill Background Color Inconsistency~~ ✅ RESOLVED **(added Dec 2, 2025)**
 - ~~Bug #25: Maintenance Orders Section Displayed on Add New Asset Page~~ ✅ FIXED (Dec 2, 2025)
 - ~~Bug #26: Frequency Field Not Required for PM Orders~~ ✅ FIXED (Dec 2, 2025)
 - ~~Bug #28: Assignees Dropdown Opens When Removing Item (Closed State)~~ ✅ PARTIALLY RESOLVED (Dec 3, 2025)
 - ~~Bug #29: Assignees Column Not Appearing in MO Table~~ ✅ FIXED (Dec 3, 2025)
+- ~~Bug #30: Assignees Field Causes Layout Shift When Adding Items~~ ✅ RESOLVED (Dec 9, 2025)
 
-**Low (1 open - 1 fixed):**
+**Low (0 open - 2 fixed):**
 **Open:**
-- Bug #15: Status Field Should Be Hidden in MO Creation
+(None)
 
 **Fixed:**
+- ~~Bug #15: Status Field Should Be Hidden in MO Creation~~ ✅ Resolved
 - ~~Bug #19: KeyError - 'frequency' Field Not Submitted When Disabled~~ ✅ FIXED (Dec 1, 2025)
 
 **Total Bugs: 24**  
-**Open: 8 bugs** (0 High, 7 Medium, 1 Low)
+**Open: 5 bugs** (0 High, 5 Medium, 0 Low)
 **In Progress: 0 bugs**
-**Fixed: 17 bugs** (1 Critical, 8 High, 8 Medium)
+**Fixed: 21 bugs** (1 Critical, 9 High, 9 Medium, 2 Low)
 **Added Dec 2, 2025:** 7 new bugs (Bug #24, #25, #26, #27, #28, #29, #30)
+**Fixed Dec 10, 2025:** 3 bugs (Bug #31, #24, #15)
 **Fixed Dec 9, 2025:** 1 bug (Bug #30)
 **Fixed Dec 3, 2025:** 2 bugs (Bug #28 - partially, #29)
 **Fixed Dec 2, 2025:** 9 bugs (Bug #R1, #R2, #R3, #4, #5, #9, #14, #25, #26) + verified 2 previous fixes (Bug #2, #7)
@@ -1374,6 +1379,28 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 5. Fix Bug #13 (table views) - includes Bug #9
 6. Fix Bug #5 (assignees dropdown)
 7. Fix remaining medium/low priority bugs
+
+---
+
+### Bug #31: Table Header Not Sticky on Scroll
+**Priority:** High
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Identified root cause as `overflow: hidden` on generic `.table` in `main.css`. Fixed by applying `overflow: visible !important` to `.advanced-table` and using standard `position: sticky` on `th` elements.
+
+**Description:**
+The table header scrolls away with the content instead of staying fixed (sticky) at the top of the table view.
+
+**Root Cause:**
+`main.css` applied `overflow: hidden` to all tables, creating a block formatting context that trapped the sticky header inside the table element.
+
+**Solution Implemented:**
+1. Applied `overflow: visible !important` to `.advanced-table` in `src/static/css/advanced-table.css`.
+2. Ensured `th` elements have `position: sticky` and `top: 0`.
+3. Removed redundant `sticky-top` class from JavaScript.
+
+**Affected Files:**
+- `src/static/js/advanced-table/table-render.js`
+- `src/static/css/advanced-table.css`
 
 ---
 
@@ -1406,27 +1433,7 @@ This testing plan already exists at `docs/table_features_test_plan.md` (20,689 b
 
 ---
 
-### Bug #24: Table Header Not Sticky on Scroll
-**Priority:** High
-**Status:** Open
 
-**Description:**
-The table header scrolls away with the content instead of staying fixed (sticky) at the top of the table view. This makes it difficult to read data in long tables as users lose context of what each column represents.
-
-**Current Behavior:**
-- Header moves up and disappears when scrolling down the table.
-
-**Expected Behavior:**
-- Header should remain fixed at the top of the table view while the body content scrolls.
-
-**Possible Solution:**
-- Check `sticky-top` class usage.
-- Ensure parent container has correct `overflow` and `height` properties.
-- Verify `z-index` context.
-
-**Affected Files:**
-- `src/static/js/advanced-table/table-render.js`
-- `src/static/css/advanced-table.css`
 
 ---
 

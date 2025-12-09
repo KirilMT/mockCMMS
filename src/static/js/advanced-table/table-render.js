@@ -35,7 +35,7 @@ AdvancedTable.prototype.render = function () {
                     </div>
                     <div class="table-responsive" style="max-height: 100%; overflow-y: auto; overflow-x: auto;">
                         <table class="table table-striped table-hover advanced-table">
-                            <thead class="table-dark sticky-top">
+                            <thead class="table-dark">
                                 ${this.renderHeader()}
                             </thead>
                             <tbody>
