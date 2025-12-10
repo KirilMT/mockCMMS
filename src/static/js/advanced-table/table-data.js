@@ -47,20 +47,53 @@ AdvancedTable.prototype.applyFiltersWithLogic = function (row) {
         return true;
     }
 
-    let result = this.applyFilter(row[this.filters[0].column], this.filters[0]);
+    // Phase 1: Group filters into OR-blocks
+    // Example: A OR B AND C OR D -> [[A, B], [C, D]]
+    // Logic: Execute (A OR B) AND (C OR D)
+    const chains = [];
+    let currentChain = [];
 
-    for (let i = 1; i < this.filters.length; i++) {
-        const filter = this.filters[i];
-        const currentResult = this.applyFilter(row[filter.column], filter);
+    this.filters.forEach((filter, index) => {
+        if (index === 0) {
+            currentChain.push(filter);
+        } else {
+            // Check logic of this filter (it defines relation to previous)
+            // But wait, the filter.logic property is "how this filter connects to the PREVIOUS one"
+            if (filter.logic === 'AND') {
+                // Start new chain
+                chains.push(currentChain);
+                currentChain = [filter];
+            } else {
+                // OR - add to current chain
+                currentChain.push(filter);
+            }
+        }
+    });
+    // Push the last chain
+    if (currentChain.length > 0) {
+        chains.push(currentChain);
+    }
 
-        if (filter.logic === 'AND') {
-            result = result && currentResult;
-        } else if (filter.logic === 'OR') {
-            result = result || currentResult;
+    // Phase 2: Evaluate Chains (AND between chains)
+    // If ANY chain returns false, the whole row is false (Short-circuit)
+    for (const chain of chains) {
+        // Evaluate Chain (OR between items in chain)
+        // If ANY item in chain is true, chain is true
+        let chainResult = false;
+
+        for (const filter of chain) {
+            if (this.applyFilter(row[filter.column], filter)) {
+                chainResult = true;
+                break; // Short-circuit OR
+            }
+        }
+
+        if (!chainResult) {
+            return false; // Chain failed, so AND fails
         }
     }
 
-    return result;
+    return true; // All chains passed
 };
 
 AdvancedTable.prototype.applyFilter = function (value, filter) {

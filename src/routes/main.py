@@ -60,13 +60,15 @@ def add_asset():
         db.session.commit()
         flash('Asset added successfully!', 'success')
         return redirect(url_for('main.assets'))
-    return render_template('asset_detail.html', asset=None)
+    return render_template('asset_detail.html', asset=None, active_mos=[])
 
 @main_bp.route('/assets/<int:asset_id>')
 @login_required
 def asset_detail(asset_id):
     asset = Asset.query.get_or_404(asset_id)
-    return render_template('asset_detail.html', asset=asset)
+    # Bug #27: Pass serialized MOs for the Advanced Table
+    active_mos = [mo.to_dict() for mo in asset.maintenance_orders]
+    return render_template('asset_detail.html', asset=asset, active_mos=active_mos)
 
 @main_bp.route('/assets/<int:asset_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -82,7 +84,10 @@ def edit_asset(asset_id):
         db.session.commit()
         flash('Asset updated successfully!', 'success')
         return redirect(url_for('main.assets'))
-    return render_template('asset_detail.html', asset=asset)
+    
+    # Bug #27: Pass serialized MOs for the Advanced Table
+    active_mos = [mo.to_dict() for mo in asset.maintenance_orders]
+    return render_template('asset_detail.html', asset=asset, active_mos=active_mos)
 
 @main_bp.route('/assets/<int:asset_id>/delete', methods=['POST'])
 @login_required

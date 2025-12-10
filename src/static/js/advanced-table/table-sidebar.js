@@ -131,7 +131,11 @@ class TableSidebar {
         // Apply Filters button
         const applyFiltersBtn = document.getElementById('applyFiltersBtn');
         if (applyFiltersBtn) {
-            applyFiltersBtn.addEventListener('click', () => this.applyAllFilters());
+            applyFiltersBtn.addEventListener('click', () => {
+                // Force remove editing state when explicitly applied
+                document.querySelectorAll('.is-editing').forEach(el => el.classList.remove('is-editing'));
+                this.applyAllFilters();
+            });
         }
 
         // Clear All Filters button
@@ -348,9 +352,9 @@ class TableSidebar {
         // Attach event listeners to this row
         this.attachFilterRowListeners(filterRow);
 
-        // Update filter count - only count actual filter rows, not connectors
-        const actualFilterRows = filterRows.querySelectorAll('.filter-row-sidebar');
-        this.updateFilterBadge(actualFilterRows.length);
+        // Update filter count - only show APPLIED filters, not empty/unapplied rows
+        // The badge reflects this.table.filters.length, not DOM row count
+        this.updateFilterBadge(this.table.filters ? this.table.filters.length : 0);
 
         // Re-validate to update button states
         this.validateAllFilters();
@@ -364,7 +368,29 @@ class TableSidebar {
         const operatorSelect = filterRow.querySelector('.filter-operator');
         const valueInput = filterRow.querySelector('.filter-value');
         const removeBtn = filterRow.querySelector('.remove-filter-btn');
-        const logicRadios = filterRow.querySelectorAll('.filter-logic-radio');
+        // Logic radios are in the connector BEFORE this row
+        const connector = filterRow.previousElementSibling;
+        let logicRadios = [];
+        if (connector && connector.classList.contains('filter-logic-connector')) {
+            logicRadios = connector.querySelectorAll('.filter-logic-radio');
+        }
+
+        // State Snapshot for Smart Blur
+        let originalState = null;
+
+        // Helper to enforce editing state
+        const setEditing = () => {
+            if (!filterRow.classList.contains('is-editing')) {
+                // First time entering edit mode - snapshot state
+                originalState = {
+                    column: columnSelect.value,
+                    operator: operatorSelect.value,
+                    value: valueInput.value.trim()
+                };
+            }
+            filterRow.classList.add('is-editing');
+            this.applyAllFilters();
+        };
 
         // Column selection change
         columnSelect.addEventListener('change', () => {
@@ -372,26 +398,108 @@ class TableSidebar {
             operatorSelect.disabled = !column;
             valueInput.disabled = !column;
             valueInput.placeholder = column ? 'Filter value' : 'Select a column first';
-            if (!column) {
-                valueInput.value = '';
-            }
+
+            // Refinement: Always clear value when column changes to trigger "Mute" state
+            // This ensures the user starts fresh and sees the base data (mute logic)
+            valueInput.value = '';
+
             this.validateAllFilters();
+            // Triggers mute logic immediately because value is now empty
+            this.applyAllFilters();
+        });
+
+        // Toggle "is-editing" class on focus to enable "Edit Mute"
+        // User wants the filter to be invalid/muted while being edited
+        // Bind to all inputs explicitly to be robust
+        [columnSelect, operatorSelect, valueInput].forEach(el => {
+            el.addEventListener('focus', setEditing);
+        });
+
+        // Also handle focusout on the row level
+        filterRow.addEventListener('focusout', (e) => {
+            // Use timeout to allow focus to move to another element within the same row
+            setTimeout(() => {
+                // Only proceed if focus has moved OUTSIDE this row entirely
+                if (!filterRow.contains(document.activeElement)) {
+                    // Check if dirty compared to original state
+                    const col = columnSelect.value;
+                    const op = operatorSelect.value;
+                    const val = valueInput.value.trim();
+
+                    let isDirty = false;
+
+                    if (originalState) {
+                        if (col !== originalState.column ||
+                            op !== originalState.operator ||
+                            val !== originalState.value) {
+                            isDirty = true;
+                        }
+                    } else {
+                        // If no original state was captured (shouldn't happen if setEditing worked), assume dirty if content exists
+                        if (col || val) isDirty = true;
+                    }
+
+                    if (!isDirty) {
+                        // Clean (No changes made): Restore functionality (Un-mute)
+                        filterRow.classList.remove('is-editing');
+                        originalState = null; // Clear snapshot
+                        this.applyAllFilters();
+                    } else {
+                        // Dirty (Pending Changes): Maintain "Mute" state
+                        this.applyAllFilters();
+                    }
+                }
+            }, 50);
+        });
+
+        // ESC key to cancel/revert edits (same as clean blur) - for ALL filter inputs
+        // Use keyup: dropdown closes on keydown, then keyup fires and we blur+revert
+        [columnSelect, operatorSelect, valueInput].forEach(el => {
+            el.addEventListener('keyup', (e) => {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Revert to original snapshot if it exists
+                    if (originalState) {
+                        columnSelect.value = originalState.column;
+                        operatorSelect.value = originalState.operator;
+                        valueInput.value = originalState.value;
+                        operatorSelect.disabled = !originalState.column;
+                        valueInput.disabled = !originalState.column;
+                    }
+                    filterRow.classList.remove('is-editing');
+                    originalState = null;
+                    this.applyAllFilters();
+                    this.validateAllFilters();
+                    el.blur();
+                }
+            });
         });
 
         // Operator change
         operatorSelect.addEventListener('change', () => {
+            // setEditing() handled by focus
             this.validateAllFilters();
+            this.applyAllFilters(); // Update immediately
         });
 
         // Value input
         valueInput.addEventListener('input', () => {
+            // setEditing() handled by focus
             this.validateAllFilters();
+            // Even though we mute while editing, we still want to validity checks
+            this.applyAllFilters();
         });
 
         // Logic change
         logicRadios.forEach(radio => {
             radio.addEventListener('change', () => {
-                // No validation needed for logic change, but good to have hook
+                // Bug #17: User requested "mute" logic instead of clearing.
+                // We just triggering validation/application here.
+                // The actual muting happens in applyAllFilters().
+                this.validateAllFilters();
+                // We might want to auto-apply to immediately show the "muted" effect
+                this.applyAllFilters();
             });
         });
 
@@ -400,8 +508,10 @@ class TableSidebar {
             if (e.key === 'Enter') {
                 const applyBtn = document.getElementById('applyFiltersBtn');
                 if (applyBtn && !applyBtn.disabled) {
+                    // Simulate Apply Button Click: Remove editing state and Apply
+                    document.querySelectorAll('.is-editing').forEach(el => el.classList.remove('is-editing'));
                     this.applyAllFilters();
-                    // Blur the input to exit edit mode
+                    originalState = null; // Reset for this row (Apply commits state)
                     valueInput.blur();
                 }
             }
@@ -455,6 +565,7 @@ class TableSidebar {
 
     /**
      * Validate all filters and enable/disable Apply button
+     * Logic: Enable ONLY if filters are "Dirty" (Changed from applied state) or Valid New Filters exist.
      */
     validateAllFilters() {
         const filterRows = document.querySelectorAll('#filterRows .filter-row-sidebar');
@@ -469,33 +580,62 @@ class TableSidebar {
             clearBtn.disabled = !Array.isArray(this.table.filters) || this.table.filters.length === 0;
         }
 
-        // If no filter rows, disable Apply button
-        if (filterRows.length === 0) {
-            applyBtn.disabled = true;
-            return;
+        let allValid = true;
+        let isDirty = false;
+        const appliedFilters = this.table.filters || [];
+
+        // Check 1: Length mismatch (Added or Deleted rows)
+        if (filterRows.length !== appliedFilters.length) {
+            isDirty = true;
         }
 
-        let allValid = true;
-        let hasAtLeastOneCompleteFilter = false;
-
-        filterRows.forEach(row => {
+        filterRows.forEach((row, index) => {
             const column = row.querySelector('.filter-column').value;
             const value = row.querySelector('.filter-value').value.trim();
+            const operator = row.querySelector('.filter-operator').value;
 
             if (column && value) {
-                // This row is complete
-                hasAtLeastOneCompleteFilter = true;
+                // Valid
             } else {
-                // Any row that is NOT complete (missing column OR missing value) makes the set invalid
-                // This forces the user to complete or remove empty rows before applying
+                // Invalid
                 allValid = false;
+            }
+
+            // Check 2: Content mismatch (Edited rows)
+            // If dirty already detected via length, we still check validity
+            // If length matches, we must check content
+            if (!isDirty && index < appliedFilters.length) {
+                const applied = appliedFilters[index];
+                if (column !== applied.column || operator !== applied.operator || value !== applied.value) {
+                    isDirty = true;
+                }
+            } else if (!isDirty && index >= appliedFilters.length) {
+                // Should be covered by length check, but just in case
+                if (column || value) isDirty = true; // New content
             }
         });
 
-        // Enable button only if:
-        // 1. All rows are complete (allValid)
-        // 2. At least one complete filter exists (redundant if allValid is true and length > 0, but safe)
-        applyBtn.disabled = !allValid || !hasAtLeastOneCompleteFilter;
+        // Bug #32: Add Button
+        const addFilterBtn = document.getElementById('addFilterBtn');
+        if (addFilterBtn) {
+            if (filterRows.length === 0) {
+                addFilterBtn.disabled = false;
+            } else {
+                addFilterBtn.disabled = !allValid;
+            }
+        }
+
+        // Apply Button State
+        // Disabled if: No filters to apply OR No Changes (Clean) AND NOT Valid
+        // User Logic: "Only enabled if new filter is added... or edited... and need to reapply"
+        // Also: "disabled if there is no filters" -> Covered by isDirty (0 applied, 0 DOM -> Clean)
+        // If 0 applied, 1 DOM -> Dirty -> Enabled.
+
+        if (!isDirty) {
+            applyBtn.disabled = true;
+        } else {
+            applyBtn.disabled = !allValid;
+        }
     }
 
     /**
@@ -509,6 +649,7 @@ class TableSidebar {
             const column = row.querySelector('.filter-column').value;
             const operator = row.querySelector('.filter-operator').value;
             const value = row.querySelector('.filter-value').value.trim();
+            const isEditing = row.classList.contains('is-editing');
 
             // Get logic from the connector BEFORE this row (if it exists)
             let logic = 'AND';
@@ -523,12 +664,66 @@ class TableSidebar {
                 }
             }
 
-            if (column && value) {
-                // First filter doesn't have logic, subsequent filters use selected logic
-                if (index === 0) {
-                    filters.push({ column, operator, value });
-                } else {
-                    filters.push({ logic, column, operator, value });
+            // Bug #17: Edit Mute - If row is being edited, treat it as incomplete (skip it)
+            if (column && value && !isEditing) {
+                // Bug #17 Refined: Chained Mute Logic
+                // We must check if THIS row is part of a consecutive OR chain that ends in an incomplete row.
+                // If so, we mute this row.
+                // Logic: Look ahead. If we find an OR connector leading to an incomplete row before the chain breaks (changes to AND or ends), mute.
+
+                let muteThisRow = false;
+                let lookAheadIndex = index;
+
+                // Keep looking ahead as long as we have rows
+                while (lookAheadIndex < filterRows.length - 1) {
+                    const currentRowElement = filterRows[lookAheadIndex];
+                    const nextRowElement = filterRows[lookAheadIndex + 1];
+
+                    // Check connector between current lookAhead and next
+                    // The connector is the PREVIOUS sibling of the NEXT row
+                    const connector = nextRowElement.previousElementSibling;
+                    let isOr = false;
+
+                    if (connector && connector.classList.contains('filter-logic-connector')) {
+                        const radio = connector.querySelector('.filter-logic-radio:checked');
+                        if (radio && radio.value === 'OR') {
+                            isOr = true;
+                        }
+                    }
+
+                    if (!isOr) {
+                        // Chain broke (switched to AND or no connector). 
+                        // Since we didn't find an incomplete row yet, this whole chain is valid.
+                        break;
+                    }
+
+                    // We are in an OR chain. Check if the next row is incomplete.
+                    const nextCol = nextRowElement.querySelector('.filter-column').value;
+                    const nextVal = nextRowElement.querySelector('.filter-value').value;
+                    // Check if next row is being edited
+                    const nextIsEditing = nextRowElement.classList.contains('is-editing');
+
+                    if (!nextCol || !nextVal || nextIsEditing) {
+                        // Found an incomplete (or editing) row at the end of this OR link.
+                        // Since we have been in an OR chain starting from 'index', we must mute 'index'.
+                        muteThisRow = true;
+                        break;
+                    }
+
+                    // Next row is valid, but it might be followed by another OR...
+                    lookAheadIndex++;
+                }
+
+                if (!muteThisRow) {
+                    // Standard logic application
+                    // Get logic from the connector BEFORE this row (to determine how to add to filters array)
+                    // ... (existing logic)
+                    // First filter doesn't have logic, subsequent filters use selected logic
+                    if (filters.length === 0) {
+                        filters.push({ column, operator, value });
+                    } else {
+                        filters.push({ logic, column, operator, value });
+                    }
                 }
             }
         });
@@ -605,7 +800,7 @@ class TableSidebar {
                     const col = this.table.columns.find(c => c.key === key);
                     if (col) {
                         const selected = col.key === currentValue ? 'selected' : '';
-                        options.push(`<option value="${col.key}" ${selected}>${col.label}</option>`);
+                        options.push(`< option value = "${col.key}" ${selected}> ${col.label}</option > `);
                     }
                 }
             });
@@ -785,10 +980,10 @@ class TableSidebar {
                 : config.config_name;
 
             viewItem.innerHTML = `
-                <div class="view-info" style="cursor: pointer; flex: 1;">
+                < div class="view-info" style = "cursor: pointer; flex: 1;" >
                     <span class="view-name" title="${config.config_name}">${displayName}</span>
                     ${config.is_default ? '<span class="badge badge-primary badge-sm">Default</span>' : ''}
-                </div>
+                </div >
                 <div class="view-actions">
                     <button class="btn btn-sm btn-link set-default-btn" title="${config.is_default ? 'Remove default' : 'Set as default'}">
                         <i class="fas fa-star${config.is_default ? ' text-warning' : ''}"></i>
@@ -834,7 +1029,7 @@ class TableSidebar {
                     const displayName = lastLoadedConfig.config_name.length > 15
                         ? lastLoadedConfig.config_name.substring(0, 14) + '…'
                         : lastLoadedConfig.config_name;
-                    updateBtn.innerHTML = `<i class="fas fa-sync"></i> Update "${displayName}"`;
+                    updateBtn.innerHTML = `< i class="fas fa-sync" ></i > Update "${displayName}"`;
                     updateBtn.title = `Update "${lastLoadedConfig.config_name}" with current settings`;
                 } else {
                     updateBtn.disabled = true;
@@ -858,7 +1053,7 @@ class TableSidebar {
 
         const duplicate = this.table.savedConfigs.find(c => c.config_name.toLowerCase() === name.trim().toLowerCase());
         if (duplicate) {
-            ToastNotification.error(`Configuration name "${name.trim()}" already exists. Please choose a different name.`);
+            ToastNotification.error(`Configuration name "${name.trim()}" already exists.Please choose a different name.`);
             return;
         }
 
@@ -886,7 +1081,7 @@ class TableSidebar {
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status} `);
                 }
                 return response.json();
             })
@@ -940,7 +1135,7 @@ class TableSidebar {
             return;
         }
 
-        if (!confirm(`Update view "${currentConfig.config_name}" with current settings?`)) {
+        if (!confirm(`Update view "${currentConfig.config_name}" with current settings ? `)) {
             return;
         }
 
@@ -956,7 +1151,7 @@ class TableSidebar {
         const loadingState = this.table.showButtonLoading(updateBtn, 'Updating...');
 
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        this.table.fetchWithRetry(`/api/table-config/${this.table.lastLoadedConfigId}`, {
+        this.table.fetchWithRetry(`/ api / table - config / ${this.table.lastLoadedConfigId} `, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -966,7 +1161,7 @@ class TableSidebar {
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status} `);
                 }
                 return response.json();
             })
@@ -1009,17 +1204,17 @@ class TableSidebar {
     deleteView(config) {
         if (!config) return;
 
-        if (!confirm(`Are you sure you want to delete the view "${config.config_name}"?`)) {
+        if (!confirm(`Are you sure you want to delete the view "${config.config_name}" ? `)) {
             return;
         }
 
         // Find the delete button for this specific view
-        const viewItem = document.querySelector(`.saved-view-item[data-config-id="${config.id}"]`);
+        const viewItem = document.querySelector(`.saved - view - item[data - config - id="${config.id}"]`);
         const deleteBtn = viewItem ? viewItem.querySelector('.delete-view-btn') : null;
         const loadingState = deleteBtn ? this.table.showButtonLoading(deleteBtn, '') : null;
 
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        this.table.fetchWithRetry(`/api/table-config/${config.id}`, {
+        this.table.fetchWithRetry(`/ api / table - config / ${config.id} `, {
             method: 'DELETE',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -1027,7 +1222,7 @@ class TableSidebar {
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status} `);
                 }
                 return response.json();
             })
@@ -1084,7 +1279,7 @@ class TableSidebar {
      */
     setDefaultView(configId) {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        fetch(`/api/table-config/${this.table.pageName}/${configId}/set-default`, {
+        fetch(`/ api / table - config / ${this.table.pageName} /${configId}/set -default `, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -1092,7 +1287,7 @@ class TableSidebar {
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status} `);
                 }
                 return response.json();
             })
@@ -1120,7 +1315,7 @@ class TableSidebar {
      */
     removeDefaultView(configId) {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        fetch(`/api/table-config/${this.table.pageName}/${configId}/remove-default`, {
+        fetch(`/ api / table - config / ${this.table.pageName} /${configId}/remove -default `, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -1128,7 +1323,7 @@ class TableSidebar {
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status} `);
                 }
                 return response.json();
             })
@@ -1172,7 +1367,7 @@ class TableSidebar {
                 const filterRow = filterRows.children[filterRows.children.length - 1];
                 const logicConnector = filterRow.previousElementSibling;
                 if (logicConnector && logicConnector.classList.contains('filter-logic-connector')) {
-                    const logicRadio = logicConnector.querySelector(`input[value="${filter.logic}"]`);
+                    const logicRadio = logicConnector.querySelector(`input[value = "${filter.logic}"]`);
                     if (logicRadio) {
                         logicRadio.checked = true;
                     }
