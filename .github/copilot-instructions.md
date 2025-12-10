@@ -334,6 +334,33 @@ For environments without native artifact support, use temporary markdown files (
   3. Verify deletion
   4. Never commit temporary files
 
+### 1.10. Bug Tracking & Discovery
+
+#### Bug Fix Workflow
+
+1. **Understand the bug**: Read the bug description and affected files
+2. **Apply fix**: Make code changes to resolve the issue
+3. **Provide test instructions**: Give user clear steps to verify the fix manually
+4. **Update documentation**: Mark as "Fixed" with resolution notes
+5. **Request user verification**: Ask user to confirm the fix works
+
+#### Status Transitions
+
+| From | To | Trigger |
+|------|----|---------|
+| Open | In Progress | You start working on the bug |
+| In Progress | Fixed | Code applied, user manually verified |
+| Fixed | ✅ Resolved | **User confirms** fix works |
+
+> [!CAUTION]
+> NEVER mark a bug as "Resolved" without explicit user confirmation.
+
+#### Bug Tracking Document Updates
+
+- **ALWAYS update summary counts** when changing bug statuses
+- **NEVER create duplicate bug IDs** - search document first
+- If you notice potential bugs during code review, **describe them to the user** and wait for confirmation before adding to bug tracking
+
 ---
 
 ## 2. Workspace Context: Monorepo Philosophy

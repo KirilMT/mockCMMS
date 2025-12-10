@@ -345,6 +345,49 @@ For environments without native artifact support, use temporary markdown files (
   3. Verify deletion
   4. Never commit temporary files
 
+### 1.10. Bug Tracking & Discovery
+
+#### 🚨 CRITICAL: Proactive Bug Discovery (MANDATORY)
+
+When browsing or testing the application, if you discover a potential bug or unexpected behavior:
+
+1. **DO NOT add it to any bug tracking document immediately**
+2. **ASK the user first** - Describe what you observed:
+   - What action you were performing
+   - What you expected to happen
+   - What actually happened
+   - Screenshot/evidence if available
+3. **WAIT for user confirmation** - Only add to bug tracking after user explicitly confirms it's a valid bug
+4. **Assign proper priority** - Work with user to determine severity
+
+> [!CAUTION]
+> Adding bugs without user confirmation leads to document pollution and wasted effort on non-issues.
+
+#### Bug Fix Workflow
+
+1. **Before fixing**: Verify the bug exists (browser test, reproduce the issue)
+2. **Apply fix**: Make code changes
+3. **Verify fix**: Use browser automation to confirm fix works
+4. **Update documentation**: Mark as "Fixed" with resolution notes
+5. **Notify user**: Request confirmation before marking "Resolved"
+
+#### Status Transitions
+
+| From | To | Trigger |
+|------|----|---------|
+| Open | In Progress | You start working on the bug |
+| In Progress | Fixed | Code applied, automated verification passed |
+| Fixed | ✅ Resolved | **User confirms** fix works |
+
+> [!CAUTION]
+> NEVER mark a bug as "Resolved" without explicit user confirmation. "Fixed" means code is applied; "Resolved" means user verified.
+
+#### Bug Tracking Document Updates
+
+- **ALWAYS update summary counts** when changing bug statuses
+- **NEVER create duplicate bug IDs** - search document first
+- **Reference this section** instead of duplicating rules in bug tracking documents
+
 ---
 
 ## 2. Workspace Context: Monorepo Philosophy
