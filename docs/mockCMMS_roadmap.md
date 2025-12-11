@@ -1,5 +1,10 @@
 # mockCMMS Project Roadmap
-_Updated December 2, 2025_
+_Updated December 11, 2025_
+
+---
+
+> [!IMPORTANT]
+> **🚀 New to the project? Start here:** If you're unsure whether to work on code quality audit or GitHub best practices first, read the [Implementation Priority Guide](IMPLEMENTATION_PRIORITY_GUIDE.md) for a clear, step-by-step action plan.
 
 ---
 
@@ -388,9 +393,156 @@ The Advanced Table component was recently completed with core functionality. The
 #### Project Infrastructure & Documentation
 Cross-cutting concerns that improve the overall project quality, team collaboration, and maintainability.
 
+> **📚 Best Practices Reference:** This project follows industry-standard best practices for GitHub workflows, repository organization, security, and team collaboration. See the detailed best practices sections below.
+
+##### GitHub Best Practices Implementation
+
+- **[ ] Implement GitHub Organization Best Practices** _(Priority: High)_
+    - **Goal:** Structure GitHub organization, teams, and repositories following enterprise best practices
+    - **Organization Structure:**
+        - Use minimal organizations (one or few) with teams for access segmentation
+        - Teams should be visible and use cascading permissions
+        - Limit organization owners to 2+ people for redundancy
+        - Use security manager role for security-focused teams
+    - **Repository Permissions:**
+        - Set base permissions to "None" at org level
+        - Grant access via teams or individual users at repo level
+        - Repository creation limited to organization owners
+        - Outside collaborator access managed by owners only
+    - **Repository Visibility:**
+        - **Public:** For open-source contributions (current mockCMMS status)
+        - **Internal:** For enterprise-wide visibility (future consideration)
+        - **Private:** For sensitive or proprietary code
+    - **Reference:** [GitHub Guide to Organizations (PDF)](https://resources.github.com/downloads/github-guide-to-organizations.pdf)
+
+- **[ ] Implement Security & Access Control Standards** _(Priority: Critical)_
+    - **Goal:** Enforce security best practices for authentication, tokens, and repository access
+    - **Personal Access Tokens (PAT):**
+        - Always set token expiration (avoid "No Expiry")
+        - Limit token scopes to minimum required permissions
+        - Use `repo` scope for repository access from command line
+        - Rotate tokens regularly and revoke unused tokens
+    - **Two-Factor Authentication (2FA):**
+        - Require 2FA for all organization members
+        - Organization owners can view members' 2FA status
+        - Enforce 2FA requirement at organization level
+    - **Security Features:**
+        - Enable dependency graph for all repositories
+        - Enable Dependabot alerts for security vulnerabilities
+        - Consider code scanning and secret scanning for critical repos
+    - **CODEOWNERS File:**
+        - Define code ownership for critical areas
+        - Require reviews from specific teams/individuals
+        - Use for automated review assignment
+
+- **[ ] Implement Git Workflow Standards** _(Priority: High)_
+    - **Goal:** Establish and enforce consistent Git workflow across all contributors
+    - **Branch Protection Rules:**
+        - Protect `main` and `develop` branches from direct pushes
+        - Require pull requests for all changes
+        - Require status checks to pass before merging
+        - Enforce linear history (rebase or squash)
+    - **Feature Branch Workflow:**
+        - Always work in feature branches (never push directly to `main`/`develop`)
+        - Branch naming: `feature/<name>`, `bugfix/<name>`, `hotfix/<name>`
+        - Branch out from `develop` (or `main` for hotfixes)
+        - Keep feature branches short-lived (days, not weeks)
+    - **Pull Request Standards:**
+        - PRs notify team members and enable code review
+        - All changes must go through PR process (no direct commits)
+        - PR title should be descriptive and follow conventional commits
+        - Include detailed description, testing steps, and screenshots
+    - **Rebase Strategy:**
+        - Update feature branch with interactive rebase before PR
+        - Resolve conflicts locally before creating PR
+        - Use `git rebase -i --autosquash develop` to clean up commits
+        - Force push with `--force-with-lease` if others are on the branch
+    - **Commit Standards:**
+        - Follow conventional commits format: `type(scope): subject`
+        - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+        - Subject: imperative mood, 50 chars max, no period
+        - Body: explain what and why (not how), wrap at 72 chars
+        - Separate subject and body with blank line
+    - **Branch Cleanup:**
+        - Delete feature branches after merging (both local and remote)
+        - Use `git fetch -p` to prune deleted remote branches
+        - Keep `main`/`develop` clean and up-to-date
+
+- **[ ] Implement GitHub Actions CI/CD Workflow** _(Priority: High)_
+    - **Goal:** Automate testing, code quality checks, and deployment
+    - **Workflow Structure:**
+        - **CI Workflow:** Run on push/PR to any branch
+            - Checkout code
+            - Set up Python environment
+            - Install dependencies
+            - Run linters (flake8, black, pylint)
+            - Run test suite (pytest)
+            - Generate coverage report
+        - **Code Quality Workflow:** Advanced static analysis
+            - Security scanning (Bandit, Safety)
+            - Dependency auditing
+            - Code complexity analysis
+            - Documentation coverage
+        - **Release Workflow:** Automated versioning and changelog
+            - Trigger on tag creation
+            - Generate release notes from commits
+            - Create GitHub release
+            - Deploy to staging/production (future)
+    - **Workflow Best Practices:**
+        - Use `self-hosted` runners when available (or GitHub-hosted)
+        - Cache dependencies to speed up builds
+        - Use workflow templates for consistency
+        - Store secrets in GitHub Secrets (never in code)
+        - Use environment-specific secrets for staging/production
+    - **Container Support:**
+        - Use Docker containers for consistent environments
+        - Mount workspace to container for workflow steps
+        - Clean up workspace ownership issues after container runs
+        - Authenticate to private registries using secrets
+    - **Reference Examples:**
+        - CI: [Troubleshooting-Wizard ci.yml](https://github.com/KirilMT/Troubleshooting-Wizard/blob/main/.github/workflows/ci.yml)
+        - Code Quality: [code-quality.yml](https://github.com/KirilMT/Troubleshooting-Wizard/blob/main/.github/workflows/code-quality.yml)
+        - Release: [release.yml](https://github.com/KirilMT/Troubleshooting-Wizard/blob/main/.github/workflows/release.yml)
+
+- **[ ] Implement Repository Standards & Configuration** _(Priority: Medium)_
+    - **Goal:** Standardize repository structure, naming, and configuration
+    - **Naming Conventions:**
+        - Use lowercase for repository names
+        - Use dashes for word separation (kebab-case)
+        - Format: `<area>-<product>-<project>` (e.g., `cmms-planning-scheduler`)
+        - Be descriptive and consistent across organization
+    - **Repository Structure:**
+        - Maintain permissions at team level (not individual)
+        - Use `.gitignore` to exclude system files, IDE configs, dependencies
+        - Include standard files: `README.md`, `LICENSE`, `CONTRIBUTING.md`, `CHANGELOG.md`
+        - Organize code with clear directory structure
+    - **Documentation Standards:**
+        - Use README.md template with standard sections
+        - Keep README.md updated as project evolves
+        - Provide links between related repositories
+        - Use docstrings and inline comments
+        - Document public APIs and complex functions
+        - Keep comments relevant as code evolves
+    - **Dependency Management:**
+        - Track dependencies in version control (`requirements.txt`, `package.json`)
+        - Check download statistics before adding new dependencies
+        - Verify maturity, maintenance, and security of dependencies
+        - Keep dependencies updated (automated Dependabot PRs)
+        - Remove unused dependencies regularly
+        - Test with latest versions before updating
+    - **Code Quality Standards:**
+        - Use consistent code style (PEP 8 for Python, style guides for other languages)
+        - Use docstrings for all public functions/classes
+        - Comment complex logic and non-obvious decisions
+        - Include links to discussions/Stack Overflow in comments when relevant
+        - Keep code clean and remove commented-out blocks
+        - Avoid irrelevant or unprofessional comments
+        - Use descriptive, searchable names (avoid abbreviations)
+        - Organize functions top-down (high-level to low-level)
+
 - **[ ] Project Team Collaboration & Documentation** _(Priority: High)_
-    - **Goal:** Create comprehensive team collaboration documentation and tools
-    - **Features:**
+    - **Goal:** Create comprehensive team collaboration documentation, tools, and implement GitHub team structure best practices
+    - **Documentation & Tools:**
         - **GitHub Tutorial:** Document all GitHub features for team collaboration (issues, projects, repository rules, settings)
         - **CONTRIBUTING.md Update:** Adapt from public contributor focus to private organization team focus
             - Add media/video tutorials for visual learning
@@ -398,6 +550,25 @@ Cross-cutting concerns that improve the overall project quality, team collaborat
         - **Setup Automation:** Create batch script for automatic project setup (replace step-by-step instructions in README.md)
         - **Demo Creation:** Build non-technical demo for stakeholders (management, other teams)
         - **README.md Cleanup:** Move development instructions to CONTRIBUTING.md
+    - **Team Structure Implementation:**
+        - Create teams based on product areas or responsibilities
+        - Use parent/child team hierarchy for organization
+        - Set teams as "Visible" for transparency
+        - Assign team maintainers for each team
+        - Grant repository access at team level (not individual)
+        - Use appropriate permission levels: `read`, `write`, `admin`
+        - Teams can be designated as code owners via CODEOWNERS
+        - Use team mentions (`@org/team-name`) for notifications
+    - **Communication & Workflows:**
+        - Use GitHub Discussions for team conversations
+        - Tag teams for review requests on PRs
+        - Use GitHub Projects for tracking work across repos
+        - Document decisions in ADRs (Architecture Decision Records)
+    - **Onboarding:**
+        - Maintain team member list with roles
+        - Document team responsibilities and ownership areas
+        - Create onboarding guide for new team members
+        - Provide training on Git workflow and GitHub features
     - **Reference:** [GitHub Issue #4](https://github.com/KirilMT/mockCMMS/issues/4)
 
 - **[ ] Fix GitHub Issue Templates** _(Priority: Medium)_

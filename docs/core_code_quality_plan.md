@@ -1,9 +1,14 @@
 # Core mockCMMS Code Quality & Architecture Audit Plan
 
 **Created:** December 1, 2025  
-**Last Updated:** December 2, 2025  
+**Last Updated:** December 11, 2025  
 **Status:** Planning Phase  
 **Scope:** Entire mockCMMS repository (excluding `apps/` directory)
+
+---
+
+> [!IMPORTANT]
+> **🎯 Implementation Strategy:** This audit should be performed alongside GitHub best practices setup. See [Implementation Priority Guide](IMPLEMENTATION_PRIORITY_GUIDE.md) for a complete 6-week action plan showing how to integrate code quality work with infrastructure setup.
 
 ---
 
@@ -55,13 +60,17 @@ This document outlines a comprehensive, systematic approach to auditing and impr
 
 ## 🎯 Objectives
 
+> **📚 Best Practices Foundation:** All audit work must follow the comprehensive GitHub and coding best practices outlined in the [mockCMMS Roadmap - Project Infrastructure & Documentation](mockCMMS_roadmap.md#project-infrastructure--documentation) section. This includes Git workflow standards, security practices, code quality standards, and team collaboration guidelines.
+
 1. **Code Organization:** Ensure proper separation of concerns (HTML, CSS, JavaScript)
 2. **Code Quality:** Remove duplicates, optimize logic, improve readability
-3. **Standards Compliance:** Follow Python PEP 8, JavaScript best practices, CSS conventions
+3. **Standards Compliance:** Follow Python PEP 8, JavaScript best practices, CSS conventions, and GitHub workflow standards
 4. **Comment Quality:** Professional, descriptive comments (no bug references)
 5. **Naming Consistency:** Standardized naming across files, variables, functions, classes
 6. **Performance:** Identify and fix performance bottlenecks
-7. **Security:** Ensure no security vulnerabilities or bad practices
+7. **Security:** Ensure no security vulnerabilities or bad practices (PAT tokens, 2FA, input validation)
+8. **Git Workflow:** Follow feature branch workflow, PR standards, commit message conventions
+9. **Repository Standards:** Adhere to naming conventions, documentation standards, dependency management
 
 ---
 
