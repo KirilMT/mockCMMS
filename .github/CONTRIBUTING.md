@@ -66,6 +66,21 @@ A pull request can be opened from a branch within the repository or from a fork.
 
 If you open a pull request from a personal fork, you should allow repository maintainers to make edits to your fork by turning on "Allow edits from maintainers". Please see [creating a pull request from a fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) in the official GitHub documentation for details.
 
+## Personal Access Tokens (PATs)
+
+To push changes to the repository, you must authenticate using a Personal Access Token (PAT) instead of a password. PATs are more secure and are required for command-line access to GitHub.
+
+### Creating a PAT
+1.  Go to your GitHub **Settings** > **Developer settings** > **Personal access tokens**.
+2.  Click **Generate new token**.
+3.  Give your token a descriptive name (e.g., "mockCMMS-dev").
+4.  Select the desired scopes. For repository access, the `repo` scope is typically sufficient.
+5.  Click **Generate token** and copy the token. **You will not be able to see it again.**
+6.  Store the token securely in a password manager.
+
+### Using a PAT
+When prompted for a password while using Git on the command line, paste your PAT.
+
 ## Commit messages
 
 Commit messages for this repository follow the conventions below. Here is an example:

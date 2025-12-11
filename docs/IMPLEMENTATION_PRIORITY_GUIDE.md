@@ -90,9 +90,9 @@
    
 2. **[ ] Security Basics**
    - Move `SECRET_KEY` to `.env` (if not done)
-   - Document PAT token policy
+   - Document PAT token policy (Completed 2025-12-11)
    - Enable 2FA for your account
-   - Enable Dependabot alerts
+   - Enable Dependabot alerts (Completed 2025-12-11)
 
 3. **[ ] Documentation Standards**
    - Create/update `CONTRIBUTING.md` with:
