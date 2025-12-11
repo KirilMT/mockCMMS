@@ -112,15 +112,15 @@
 
 ### Phase 1: Core Python Backend Audit (Week 2) - **PARALLEL WORK**
 
-**Primary Focus:** Code Quality Audit - Phase 1
-- Work through `core_code_quality_plan.md` Phase 1 (Python Backend)
-- Audit `app.py`, `db_utils.py`, `api.py`, `main.py`
-- Follow the workflow standards you just set up
+1. **[ ] Primary Focus:** Code Quality Audit - Phase 1
+   - Work through `core_code_quality_plan.md` Phase 1 (Python Backend)
+   - Audit `app.py`, `db_utils.py`, `api.py`, `main.py`
+   - Follow the workflow standards you just set up
 
-**Secondary Focus:** CI/CD Setup
-- Create basic GitHub Actions workflow for Python linting
-- Add pytest to CI pipeline
-- This will catch issues in future commits automatically
+2. [ ] Secondary Focus:** CI/CD Setup
+   - Create basic GitHub Actions workflow for Python linting
+   - Add pytest to CI pipeline
+   - This will catch issues in future commits automatically
 
 **Why this order?**
 - Python backend is the foundation of the app
