@@ -14,6 +14,13 @@ These instructions apply to **all** coding tasks unless explicitly overridden by
 
 ### 1.1. Code Quality & Style
 -   **Clarity & Conciseness:** Always generate code that is clear, concise, and well-commented, especially for complex logic or algorithms.
+-   **Comment Standards:** 
+    - Comments explain WHY, not WHAT (code should be self-explanatory)
+    - NEVER reference bug/issue numbers (e.g., `<!-- Bug #5 -->`, `// Bug #5: Fix`)
+    - Focus on business logic, complex algorithms, or non-obvious decisions
+    - Use proper grammar and punctuation
+    - Keep comments concise and relevant
+    - Remove commented-out code blocks
 -   **Conventions:** Adhere to the widely accepted style and formatting conventions for the target language or framework (e.g., PEP 8 for Python, Google JavaScript Style Guide, etc.).
 -   **Paradigm:** Prefer class-based object-oriented programming for languages that support it, unless a functional or procedural approach is clearly more suitable for a simple utility or script.
 -   **Maintainability:** Prioritize maintainability, scalability, and testability. Use modular design, meaningful naming, and separation of concerns.

@@ -180,6 +180,26 @@ The core application can be improved with the following features to support the 
         - Database tables and columns
     - **Action:** Define standards in `CONTRIBUTING.md` and refactor existing inconsistencies
 
+- **[ ] Code Comments Cleanup & Standards** _(Priority: High)_
+    - **Goal:** Ensure all code comments are professional, descriptive, and follow coding standards
+    - **Issues:**
+        - Bug reference comments (e.g., `<!-- Select2 CSS for Bug #5 -->`, `// Bug #5: Initialize Select2`)
+        - Duplicate or redundant comments
+        - Non-descriptive or unclear comments
+        - Inconsistent comment styles across files
+    - **Standards:**
+        - Comments explain WHY, not WHAT (code should be self-explanatory)
+        - No bug/issue references in production code
+        - Use proper grammar and punctuation
+        - Keep comments concise and relevant
+        - Remove commented-out code blocks
+    - **Scope:**
+        - HTML/Jinja2 templates: `<!-- Comment -->`
+        - JavaScript: `// Single line` or `/* Multi-line */`
+        - Python: `# Comment` or `"""Docstring"""`
+        - CSS: `/* Comment */`
+    - **Action:** Audit all files and refactor comments to meet standards
+
 - **[ ] Structured Logging & Performance Monitoring** _(Priority: High)_
     - **Goal:** Implement enterprise-grade logging similar to `apps/planning`
     - **Features:**
@@ -434,6 +454,7 @@ This application is intended for reporting and analytics. The following features
 - **Frontend Architecture Decision:** Evaluate migration to modern framework (Angular/React)
 - **CI/CD Pipeline:** Automated testing, code quality, and deployment
 - **Team Collaboration Documentation:** GitHub workflows and setup automation
+- **Code Comments Cleanup:** Remove bug references, ensure professional descriptive comments
 
 **Medium Priority:**
 - **Advanced Technician Tracking:** Availability, workload, and dynamic status
