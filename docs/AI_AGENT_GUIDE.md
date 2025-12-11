@@ -361,7 +361,33 @@ Status: ✅ COMPLETED
 - Coverage: 32.27% (app.py: 66.67%)
 ```
 
-#### Task: Create test_api_routes.py (Days 3-4) 🔄 NEXT TASK
+#### Task: Create test_api_routes.py (Days 3-4) ✅ COMPLETED (December 11, 2025)
+```
+I'm on Week 2, Day 3-4 (API Endpoint Tests).
+
+Task: Create tests/test_api_routes.py with API endpoint tests
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.2: API Endpoint Tests)
+2. Start with Assets API tests (tests 1-10)
+3. Implement success and error cases for each endpoint
+4. Continue with MOs, Spare Parts, and Users APIs
+5. Run pytest to verify tests pass
+6. Mark all tests [x] in comprehensive_testing_plan.md Section 3.2
+7. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+
+Status: ✅ COMPLETED
+- Created tests/test_api_routes.py with 41 tests (all passing)
+- Organized into 4 test classes (Assets, MOs, Spare Parts, Users)
+- Discovered and fixed 4 API bugs:
+  * Asset API: Fixed field names (location → asset_code, asset_type, cost_center)
+  * SparePart API: Fixed field names (name/quantity → description/stock_quantity)
+- Coverage increased to 44.46% (api.py: 62.50%)
+- Updated comprehensive_testing_plan.md Section 3.2
+- Updated IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+```
+
+#### Task: Create test_main_routes.py (Day 5) 🔄 NEXT TASK
 ```
 I'm on Week 2, Day 1-2 (Test Suite Foundation).
 

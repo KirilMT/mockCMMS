@@ -1,0 +1,475 @@
+"""
+Tests for API routes and endpoints.
+
+This module tests all REST API endpoints for correct data handling,
+status codes, error responses, and data validation.
+"""
+import pytest
+import json
+from datetime import datetime, timedelta, timezone
+from src.services.db_utils import db, Asset, MaintenanceOrder, SparePart, User, Role, Skill
+
+
+class TestAssetsAPI:
+    """Test suite for Assets API endpoints (/v1/assets)."""
+
+    def test_get_assets_empty(self, client, app):
+        """Test GET /v1/assets returns empty list when no assets exist."""
+        with app.app_context():
+            response = client.get('/api/v1/assets')
+            assert response.status_code == 200
+            data = response.get_json()
+            assert isinstance(data, list)
+            assert len(data) == 0
+
+    def test_get_assets_with_data(self, client, multiple_assets):
+        """Test GET /v1/assets returns all assets when data exists."""
+        response = client.get('/api/v1/assets')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert isinstance(data, list)
+        assert len(data) == 3
+
+        # Verify each asset has required fields
+        for asset in data:
+            assert 'id' in asset
+            assert 'name' in asset
+            assert 'asset_code' in asset
+            assert 'status' in asset
+
+    def test_get_asset_by_id_success(self, client, sample_asset):
+        """Test GET /v1/assets/<id> returns specific asset."""
+        response = client.get(f'/api/v1/assets/{sample_asset.id}')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['id'] == sample_asset.id
+        assert data['name'] == sample_asset.name
+        assert data['asset_code'] == sample_asset.asset_code
+
+    def test_get_asset_by_id_not_found(self, client, app):
+        """Test GET /v1/assets/<id> returns 404 for non-existent asset."""
+        with app.app_context():
+            response = client.get('/api/v1/assets/999')
+            assert response.status_code == 404
+            data = response.get_json()
+            assert 'error' in data
+            assert 'not found' in data['error'].lower()
+
+    def test_add_asset_success(self, client, app):
+        """Test POST /v1/assets creates new asset successfully."""
+        with app.app_context():
+            asset_data = {
+                'name': 'New Test Asset',
+                'asset_code': 'NTA-001',
+                'description': 'A newly created test asset',
+                'asset_type': 'robot',
+                'cost_center': 'assembly',
+                'status': 'Operational'
+            }
+            response = client.post('/api/v1/assets',
+                                   data=json.dumps(asset_data),
+                                   content_type='application/json')
+            assert response.status_code == 201
+            data = response.get_json()
+            assert data['name'] == asset_data['name']
+            assert 'id' in data
+
+            # Verify asset was created in database
+            asset = db.session.get(Asset, data['id'])
+            assert asset is not None
+            assert asset.name == asset_data['name']
+
+    def test_add_asset_missing_name(self, client, app):
+        """Test POST /v1/assets without name field returns 400."""
+        with app.app_context():
+            asset_data = {
+                'description': 'Asset without name'
+            }
+            response = client.post('/api/v1/assets',
+                                   data=json.dumps(asset_data),
+                                   content_type='application/json')
+            assert response.status_code == 400
+            data = response.get_json()
+            assert 'error' in data
+            assert 'name' in data['error'].lower() or 'required' in data['error'].lower()
+
+    def test_update_asset_success(self, client, sample_asset):
+        """Test PUT /v1/assets/<id> updates asset successfully."""
+        updated_data = {
+            'name': 'Updated Asset Name',
+            'status': 'Down'
+        }
+        response = client.put(f'/api/v1/assets/{sample_asset.id}',
+                              data=json.dumps(updated_data),
+                              content_type='application/json')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['name'] == updated_data['name']
+        assert data['status'] == updated_data['status']
+
+    def test_update_asset_not_found(self, client, app):
+        """Test PUT /v1/assets/<id> returns 404 for non-existent asset."""
+        with app.app_context():
+            updated_data = {'name': 'Updated Name'}
+            response = client.put('/api/v1/assets/999',
+                                  data=json.dumps(updated_data),
+                                  content_type='application/json')
+            assert response.status_code == 404
+
+    def test_delete_asset_success(self, client, sample_asset, app):
+        """Test DELETE /v1/assets/<id> removes asset successfully."""
+        asset_id = sample_asset.id
+        response = client.delete(f'/api/v1/assets/{asset_id}')
+        assert response.status_code == 200
+
+        # Verify asset was deleted from database
+        with app.app_context():
+            asset = db.session.get(Asset, asset_id)
+            assert asset is None
+
+    def test_delete_asset_not_found(self, client, app):
+        """Test DELETE /v1/assets/<id> returns 404 for non-existent asset."""
+        with app.app_context():
+            response = client.delete('/api/v1/assets/999')
+            assert response.status_code == 404
+
+
+class TestMaintenanceOrdersAPI:
+    """Test suite for Maintenance Orders API endpoints (/v1/mos)."""
+
+    def test_get_mos_empty(self, client, app):
+        """Test GET /v1/mos returns empty list when no MOs exist."""
+        with app.app_context():
+            response = client.get('/api/v1/mos')
+            assert response.status_code == 200
+            data = response.get_json()
+            assert isinstance(data, list)
+            assert len(data) == 0
+
+    def test_get_mos_with_data(self, client, multiple_mos):
+        """Test GET /v1/mos returns all maintenance orders."""
+        response = client.get('/api/v1/mos')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert isinstance(data, list)
+        assert len(data) == 3
+
+    def test_get_mo_by_id_success(self, client, sample_mo):
+        """Test GET /v1/mos/<id> returns specific maintenance order."""
+        response = client.get(f'/api/v1/mos/{sample_mo.id}')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['id'] == sample_mo.id
+        assert data['description'] == sample_mo.description
+        assert data['order_type'] == sample_mo.order_type
+
+    def test_get_mo_by_id_not_found(self, client, app):
+        """Test GET /v1/mos/<id> returns 404 for non-existent MO."""
+        with app.app_context():
+            response = client.get('/api/v1/mos/999')
+            assert response.status_code == 404
+            data = response.get_json()
+            assert 'error' in data
+
+    def test_add_mo_success(self, client, sample_asset, sample_user, app):
+        """Test POST /v1/mos creates new maintenance order."""
+        with app.app_context():
+            mo_data = {
+                'asset_id': sample_asset.id,
+                'description': 'Routine inspection',
+                'order_type': 'PM',
+                'status': 'Open',
+                'priority': 'Medium'
+            }
+            response = client.post('/api/v1/mos',
+                                   data=json.dumps(mo_data),
+                                   content_type='application/json')
+            assert response.status_code == 201
+            data = response.get_json()
+            assert data['description'] == mo_data['description']
+            assert 'id' in data
+
+    def test_add_mo_missing_required_fields(self, client, app):
+        """Test POST /v1/mos without required fields returns 400."""
+        with app.app_context():
+            mo_data = {
+                'description': 'Missing asset_id'
+            }
+            response = client.post('/api/v1/mos',
+                                   data=json.dumps(mo_data),
+                                   content_type='application/json')
+            assert response.status_code == 400
+            data = response.get_json()
+            assert 'error' in data
+
+    def test_add_mo_with_skills(self, client, sample_asset, sample_skill, app):
+        """Test POST /v1/mos with required_skills associates skills."""
+        with app.app_context():
+            mo_data = {
+                'asset_id': sample_asset.id,
+                'description': 'Welding task',
+                'order_type': 'PM',
+                'required_skills': [sample_skill.id]
+            }
+            response = client.post('/api/v1/mos',
+                                   data=json.dumps(mo_data),
+                                   content_type='application/json')
+            assert response.status_code == 201
+            data = response.get_json()
+
+            # Verify MO was created with skills
+            mo = db.session.get(MaintenanceOrder, data['id'])
+            assert mo is not None
+            assert len(mo.required_skills) > 0
+
+    def test_update_mo_success(self, client, sample_mo):
+        """Test PUT /v1/mos/<id> updates maintenance order."""
+        updated_data = {
+            'description': 'Updated description',
+            'status': 'In Progress'
+        }
+        response = client.put(f'/api/v1/mos/{sample_mo.id}',
+                              data=json.dumps(updated_data),
+                              content_type='application/json')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['description'] == updated_data['description']
+
+    def test_update_mo_not_found(self, client, app):
+        """Test PUT /v1/mos/<id> returns 404 for non-existent MO."""
+        with app.app_context():
+            updated_data = {'status': 'Completed'}
+            response = client.put('/api/v1/mos/999',
+                                  data=json.dumps(updated_data),
+                                  content_type='application/json')
+            assert response.status_code == 404
+
+    def test_delete_mo_success(self, client, sample_mo, app):
+        """Test DELETE /v1/mos/<id> removes maintenance order."""
+        mo_id = sample_mo.id
+        response = client.delete(f'/api/v1/mos/{mo_id}')
+        assert response.status_code == 200
+
+        # Verify MO was deleted
+        with app.app_context():
+            mo = db.session.get(MaintenanceOrder, mo_id)
+            assert mo is None
+
+    def test_delete_mo_not_found(self, client, app):
+        """Test DELETE /v1/mos/<id> returns 404 for non-existent MO."""
+        with app.app_context():
+            response = client.delete('/api/v1/mos/999')
+            assert response.status_code == 404
+
+
+class TestSparePartsAPI:
+    """Test suite for Spare Parts API endpoints (/v1/spare_parts)."""
+
+    def test_get_spare_parts_empty(self, client, app):
+        """Test GET /v1/spare_parts returns empty list when no parts exist."""
+        with app.app_context():
+            response = client.get('/api/v1/spare_parts')
+            assert response.status_code == 200
+            data = response.get_json()
+            assert isinstance(data, list)
+            assert len(data) == 0
+
+    def test_get_spare_parts_with_data(self, client, app, sample_spare_part):
+        """Test GET /v1/spare_parts returns all spare parts."""
+        with app.app_context():
+            # Create additional spare parts for testing
+            part2 = SparePart(description='Part 2', stock_quantity=5)
+            part3 = SparePart(description='Part 3', stock_quantity=3)
+            db.session.add_all([part2, part3])
+            db.session.commit()
+
+            response = client.get('/api/v1/spare_parts')
+            assert response.status_code == 200
+            data = response.get_json()
+            assert len(data) >= 3
+
+    def test_get_spare_part_by_id_success(self, client, sample_spare_part):
+        """Test GET /v1/spare_parts/<id> returns specific spare part."""
+        response = client.get(f'/api/v1/spare_parts/{sample_spare_part.id}')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['id'] == sample_spare_part.id
+        assert data['description'] == sample_spare_part.description
+
+    def test_get_spare_part_by_id_not_found(self, client, app):
+        """Test GET /v1/spare_parts/<id> returns 404 for non-existent part."""
+        with app.app_context():
+            response = client.get('/api/v1/spare_parts/999')
+            assert response.status_code == 404
+
+    def test_add_spare_part_success(self, client, app):
+        """Test POST /v1/spare_parts creates new spare part."""
+        with app.app_context():
+            part_data = {
+                'description': 'New Hydraulic Pump',
+                'manufacturer': 'ACME',
+                'stock_quantity': 15,
+                'min_quantity': 3
+            }
+            response = client.post('/api/v1/spare_parts',
+                                   data=json.dumps(part_data),
+                                   content_type='application/json')
+            assert response.status_code == 201
+            data = response.get_json()
+            assert data['description'] == part_data['description']
+            assert 'id' in data
+
+    def test_add_spare_part_missing_required_fields(self, client, app):
+        """Test POST /v1/spare_parts without required fields returns 400."""
+        with app.app_context():
+            part_data = {
+                'manufacturer': 'ACME'
+                # Missing description
+            }
+            response = client.post('/api/v1/spare_parts',
+                                   data=json.dumps(part_data),
+                                   content_type='application/json')
+            assert response.status_code == 400
+
+    def test_update_spare_part_success(self, client, sample_spare_part):
+        """Test PUT /v1/spare_parts/<id> updates spare part."""
+        updated_data = {
+            'stock_quantity': 25,
+            'min_quantity': 5
+        }
+        response = client.put(f'/api/v1/spare_parts/{sample_spare_part.id}',
+                              data=json.dumps(updated_data),
+                              content_type='application/json')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['stock_quantity'] == updated_data['stock_quantity']
+
+    def test_update_spare_part_not_found(self, client, app):
+        """Test PUT /v1/spare_parts/<id> returns 404 for non-existent part."""
+        with app.app_context():
+            updated_data = {'stock_quantity': 50}
+            response = client.put('/api/v1/spare_parts/999',
+                                  data=json.dumps(updated_data),
+                                  content_type='application/json')
+            assert response.status_code == 404
+
+    def test_delete_spare_part_success(self, client, sample_spare_part, app):
+        """Test DELETE /v1/spare_parts/<id> removes spare part."""
+        part_id = sample_spare_part.id
+        response = client.delete(f'/api/v1/spare_parts/{part_id}')
+        assert response.status_code == 200
+
+        # Verify part was deleted
+        with app.app_context():
+            part = db.session.get(SparePart, part_id)
+            assert part is None
+
+    def test_delete_spare_part_not_found(self, client, app):
+        """Test DELETE /v1/spare_parts/<id> returns 404 for non-existent part."""
+        with app.app_context():
+            response = client.delete('/api/v1/spare_parts/999')
+            assert response.status_code == 404
+
+
+class TestUsersAPI:
+    """Test suite for Users API endpoints (/v1/users)."""
+
+    def test_get_users_empty(self, client, app):
+        """Test GET /v1/users returns empty list when no users exist."""
+        with app.app_context():
+            response = client.get('/api/v1/users')
+            assert response.status_code == 200
+            data = response.get_json()
+            assert isinstance(data, list)
+            assert len(data) == 0
+
+    def test_get_users_with_data(self, client, sample_user, sample_admin_user, app):
+        """Test GET /v1/users returns all users."""
+        with app.app_context():
+            response = client.get('/api/v1/users')
+            assert response.status_code == 200
+            data = response.get_json()
+            assert len(data) >= 2
+
+    def test_get_user_by_id_success(self, client, sample_user):
+        """Test GET /v1/users/<id> returns specific user."""
+        response = client.get(f'/api/v1/users/{sample_user.id}')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['id'] == sample_user.id
+        assert data['username'] == sample_user.username
+
+    def test_get_user_by_id_not_found(self, client, app):
+        """Test GET /v1/users/<id> returns 404 for non-existent user."""
+        with app.app_context():
+            response = client.get('/api/v1/users/999')
+            assert response.status_code == 404
+
+    def test_add_user_success(self, client, app):
+        """Test POST /v1/users creates new user."""
+        with app.app_context():
+            user_data = {
+                'username': 'newuser',
+                'email': 'newuser@example.com',
+                'password': 'securepass123',
+                'roles': ['Technician']
+            }
+            response = client.post('/api/v1/users',
+                                   data=json.dumps(user_data),
+                                   content_type='application/json')
+            assert response.status_code == 201
+            data = response.get_json()
+            assert data['username'] == user_data['username']
+            assert 'id' in data
+
+    def test_add_user_missing_required_fields(self, client, app):
+        """Test POST /v1/users without username returns 400."""
+        with app.app_context():
+            user_data = {
+                'email': 'nousername@example.com'
+                # Missing username
+            }
+            response = client.post('/api/v1/users',
+                                   data=json.dumps(user_data),
+                                   content_type='application/json')
+            assert response.status_code == 400
+
+    def test_update_user_success(self, client, sample_user):
+        """Test PUT /v1/users/<id> updates user."""
+        updated_data = {
+            'email': 'updated@example.com',
+            'availability_status': 'On Leave'
+        }
+        response = client.put(f'/api/v1/users/{sample_user.id}',
+                              data=json.dumps(updated_data),
+                              content_type='application/json')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['email'] == updated_data['email']
+
+    def test_update_user_not_found(self, client, app):
+        """Test PUT /v1/users/<id> returns 404 for non-existent user."""
+        with app.app_context():
+            updated_data = {'email': 'updated@example.com'}
+            response = client.put('/api/v1/users/999',
+                                  data=json.dumps(updated_data),
+                                  content_type='application/json')
+            assert response.status_code == 404
+
+    def test_delete_user_success(self, client, sample_user, app):
+        """Test DELETE /v1/users/<id> removes user."""
+        user_id = sample_user.id
+        response = client.delete(f'/api/v1/users/{user_id}')
+        assert response.status_code == 200
+
+        # Verify user was deleted
+        with app.app_context():
+            user = db.session.get(User, user_id)
+            assert user is None
+
+    def test_delete_user_not_found(self, client, app):
+        """Test DELETE /v1/users/<id> returns 404 for non-existent user."""
+        with app.app_context():
+            response = client.delete('/api/v1/users/999')
+            assert response.status_code == 404
+

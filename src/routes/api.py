@@ -35,10 +35,14 @@ def add_asset():
     data = request.get_json()
     if not data or 'name' not in data:
         return jsonify({"error": "Name is required"}), 400
+    if 'asset_code' not in data:
+        return jsonify({"error": "Asset code is required"}), 400
     new_asset = Asset(
+        asset_code=data['asset_code'],
         name=data['name'],
         description=data.get('description'),
-        location=data.get('location'),
+        asset_type=data.get('asset_type'),
+        cost_center=data.get('cost_center'),
         status=data.get('status', 'Operational')
     )
     db.session.add(new_asset)
@@ -55,7 +59,8 @@ def update_asset(asset_id):
         return jsonify({"error": "Invalid JSON"}), 400
     asset.name = data.get('name', asset.name)
     asset.description = data.get('description', asset.description)
-    asset.location = data.get('location', asset.location)
+    asset.asset_type = data.get('asset_type', asset.asset_type)
+    asset.cost_center = data.get('cost_center', asset.cost_center)
     asset.status = data.get('status', asset.status)
     db.session.commit()
     return jsonify(asset.to_dict())
@@ -150,12 +155,13 @@ def get_spare_part(part_id):
 @api_bp.route('/v1/spare_parts', methods=['POST'])
 def add_spare_part():
     data = request.get_json()
-    if not data or 'name' not in data or 'quantity' not in data:
-        return jsonify({"error": "Name and quantity are required"}), 400
+    if not data or 'description' not in data:
+        return jsonify({"error": "Description is required"}), 400
     new_part = SparePart(
-        name=data['name'],
-        description=data.get('description'),
-        quantity=data['quantity'],
+        description=data['description'],
+        manufacturer=data.get('manufacturer'),
+        manufacturer_part_id=data.get('manufacturer_part_id'),
+        stock_quantity=data.get('stock_quantity', 0),
         location=data.get('location'),
         min_quantity=data.get('min_quantity', 0)
     )
@@ -171,9 +177,10 @@ def update_spare_part(part_id):
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid JSON"}), 400
-    part.name = data.get('name', part.name)
     part.description = data.get('description', part.description)
-    part.quantity = data.get('quantity', part.quantity)
+    part.manufacturer = data.get('manufacturer', part.manufacturer)
+    part.manufacturer_part_id = data.get('manufacturer_part_id', part.manufacturer_part_id)
+    part.stock_quantity = data.get('stock_quantity', part.stock_quantity)
     part.location = data.get('location', part.location)
     part.min_quantity = data.get('min_quantity', part.min_quantity)
     db.session.commit()
