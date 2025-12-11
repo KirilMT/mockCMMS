@@ -1,7 +1,64 @@
 # AI Agent Interaction Guide
 
 **Created:** December 11, 2025  
-**Purpose:** Instructions for effectively delegating work to AI coding assistants (GitHub Copilot, Gemini, ChatGPT, etc.)
+**Last Updated:** December 11, 2025  
+**Purpose:** Comprehensive guide for AI assistants working on the mockCMMS project
+
+---
+
+> [!IMPORTANT]
+> **📚 Quick Navigation:** This guide combines interaction patterns with document navigation.
+> 
+> **Current Status (December 11, 2025):**
+> - **Phase:** 1 (Test Suite Foundation)
+> - **Week:** 2, Days 1-2 (Planning & Setup)
+> - **Active Document:** `comprehensive_testing_plan.md`
+> - **Completed:** Planning document created, CI workflow in place
+> - **Next Tasks:** 
+>   1. Configure `pytest.ini` (Day 1-2)
+>   2. Enhance `conftest.py` (Day 1-2)
+>   3. Create `test_app.py` (Day 1-2)
+
+---
+
+## 📚 Document Hierarchy & Navigation
+
+### Understanding the Document Structure
+
+```
+IMPLEMENTATION_PRIORITY_GUIDE.md (START HERE - Master Timeline)
+├── Provides: Overall timeline and phased approach
+├── Current Status: Week 2, Day 1-2 (Test Suite Planning)
+└── Links to:
+    ├── comprehensive_testing_plan.md (ACTIVE - Phase 1) ⭐
+    ├── core_code_quality_plan.md (POSTPONED - Phase 2)
+    └── mockCMMS_roadmap.md (CONTEXT - Strategic vision)
+```
+
+### Document Purpose Reference
+
+| Document | Purpose | When to Use | Update When | Current Status |
+|----------|---------|-------------|-------------|----------------|
+| **IMPLEMENTATION_PRIORITY_GUIDE.md** | Master timeline and coordination | Starting work session, checking phase | Completing phase tasks, finishing weeks | Week 2, Phase 1 active |
+| **comprehensive_testing_plan.md** | 88 tests specification (ACTIVE) | Implementing tests (Week 2) | Completing tests, updating coverage | Planning done, implementing tests |
+| **core_code_quality_plan.md** | Code audit plan (POSTPONED) | After tests pass (Week 3+) | Starting Phase 2, finding issues | Postponed until tests complete |
+| **mockCMMS_roadmap.md** | Strategic vision and features | Understanding goals, planning features | Completing sprints, adding features | Phase 1 active sprint |
+
+---
+
+## 🎯 Current Active Work (December 11, 2025)
+
+**What to do NOW:**
+1. Read `comprehensive_testing_plan.md` Section 3 (Detailed Test Specifications)
+2. Start with Section 5 (Implementation Timeline) → Phase 1
+3. **First Task:** Configure `pytest.ini` for test discovery
+4. **Second Task:** Enhance `tests/conftest.py` with robust fixtures
+5. **Third Task:** Create `tests/test_app.py` (10 tests)
+
+**DO NOT START:**
+- ❌ Code quality audit (Phase 2 - postponed)
+- ❌ Code formatting with `black` (postponed until tests exist)
+- ❌ Linting fixes (postponed until tests exist)
 
 ---
 
@@ -16,16 +73,16 @@ I'm working on the mockCMMS project. Please read the Implementation Priority
 Guide (docs/IMPLEMENTATION_PRIORITY_GUIDE.md) and help me with [SPECIFIC TASK].
 
 Context:
-- Current Phase: [Week X / Phase X]
-- Current Focus: [e.g., "Python Backend Audit" or "Setting up CI/CD"]
-- Specific Task: [e.g., "Create PR template" or "Audit app.py for code quality"]
+- Current Phase: Week 2 / Phase 1 (Test Suite Foundation)
+- Current Focus: Creating comprehensive test suite
+- Specific Task: [e.g., "Configure pytest.ini" or "Create test_app.py"]
 
 Please:
 1. Read the relevant planning documents
-2. Understand the standards we're following
+2. Understand the testing standards we're following
 3. Propose your approach
 4. Wait for my approval before making changes
-5. Update progress in the relevant plan document
+5. Update progress in comprehensive_testing_plan.md
 ```
 
 ---
@@ -37,26 +94,33 @@ Please:
 **Tell AI to read these files IN THIS ORDER:**
 
 1. **First:** `docs/IMPLEMENTATION_PRIORITY_GUIDE.md`
-   - Complete action plan
-   - Shows what phase you're in
+   - Complete action plan showing all 7 weeks
+   - Shows what phase you're in (currently Week 2, Phase 1)
    - Explains how everything fits together
 
-2. **Then:** Based on your current work:
+2. **Then:** Based on your current phase:
    
-   **If doing code quality work:**
+   **Phase 1 (Week 2) - Testing (CURRENT):**
+   ```
+   Read: docs/comprehensive_testing_plan.md
+   Focus: Section 3 (Detailed Test Specifications) - 88 tests
+   Focus: Section 5 (Implementation Timeline) - Days 1-7
+   ```
+   
+   **Phase 2 (Week 3) - Code Quality (POSTPONED):**
    ```
    Read: docs/core_code_quality_plan.md
-   Focus: [Current Phase - e.g., "Phase 1: Python Backend"]
+   Focus: [After tests complete] Phase 1: Python Backend
    ```
    
-   **If setting up infrastructure:**
+   **Strategic Context (Anytime):**
    ```
    Read: docs/mockCMMS_roadmap.md
-   Section: "Project Infrastructure & Documentation"
-   Focus: [Specific best practice - e.g., "Git Workflow Standards"]
+   Section: "ACTIVE WORK" for current sprint
+   Section: "Project Infrastructure & Documentation" for standards
    ```
 
-3. **For standards reference:**
+3. **For coding standards reference:**
    ```
    Read: .github/copilot-instructions.md
    (or .github/GEMINI.md for Gemini Code Assist)
@@ -64,11 +128,94 @@ Please:
 
 ---
 
+## ⚠️ Critical Rules for AI Assistants
+
+### Rule 1: Always Check Current Phase
+Before starting any work:
+1. Open `IMPLEMENTATION_PRIORITY_GUIDE.md`
+2. Find the current week number (Week 2)
+3. Confirm which phase is active (Phase 1: Test Suite Foundation)
+4. Navigate to the correct detailed plan (`comprehensive_testing_plan.md`)
+
+### Rule 2: Update Multiple Documents
+When completing tasks, update:
+1. ✅ The detailed plan (e.g., `comprehensive_testing_plan.md`)
+2. ✅ The weekly breakdown in `IMPLEMENTATION_PRIORITY_GUIDE.md`
+3. ✅ The roadmap status in `mockCMMS_roadmap.md`
+4. ✅ Update "Last Updated" dates
+
+### Rule 3: Never Skip Prerequisites
+DO NOT start:
+- ❌ Phase 2 before Phase 1 is 100% complete
+- ❌ Code formatting before all 88 tests exist and pass
+- ❌ Code audit before test coverage reaches 70%+
+- ❌ Any work outside the current week's scope
+
+### Rule 4: Follow Sequential Order
+Within each plan, follow the defined order:
+- `comprehensive_testing_plan.md`: Days 1-7 sequence (Section 5)
+- `core_code_quality_plan.md`: Phases 1-6 sequence
+- `IMPLEMENTATION_PRIORITY_GUIDE.md`: Weeks 1-7 sequence
+
+### Rule 5: Cross-Reference Before Proceeding
+When user asks to do work:
+1. Check which phase you're in (IMPLEMENTATION_PRIORITY_GUIDE.md)
+2. Verify prerequisites are met (e.g., all tests pass before formatting)
+3. Confirm it's the right time in the sequence
+4. Only then proceed with the work
+
+---
+
+## 🔍 Quick Decision Tree
+
+```
+User asks to do code quality audit:
+├─ Are all 88 tests implemented? 
+│  ├─ NO → Redirect to comprehensive_testing_plan.md
+│  └─ YES → Check test pass rate
+│     ├─ <100% → Fix failing tests first
+│     └─ 100% → Check coverage
+│        ├─ <70% → Add more tests
+│        └─ ≥70% → OK to start audit (core_code_quality_plan.md)
+
+User asks to format code with black:
+├─ Are all tests passing?
+│  ├─ NO → Cannot proceed (too risky)
+│  └─ YES → Is this part of approved audit phase (Phase 2)?
+│     ├─ NO → Wait for Phase 2 (Week 3)
+│     └─ YES → Follow incremental formatting plan
+
+User asks what to work on:
+├─ Open IMPLEMENTATION_PRIORITY_GUIDE.md
+├─ Check "Detailed Week-by-Week Breakdown"
+├─ Find current week (Week 2)
+├─ Navigate to active document (comprehensive_testing_plan.md)
+└─ Execute next unchecked task
+
+User asks about testing:
+├─ Open comprehensive_testing_plan.md
+├─ Check Section 3 for test specifications
+├─ Check Section 5 for implementation timeline
+└─ Start with Day 1 tasks (pytest.ini, conftest.py)
+```
+
+---
+
 ## 🎯 Example Prompts for Common Tasks
 
-### Week 1: Foundation Setup Tasks
+> [!NOTE]
+> **Status Legend:** 
+> - ✅ = Completed (shown for reference only)
+> - 🔄 = Current active work
+> - ⏸️ = Postponed until prerequisites met
 
-#### Task: Create PR Template
+---
+
+### Week 1: Foundation Setup Tasks ✅ COMPLETED
+
+These tasks are completed and shown for reference only.
+
+#### Task: Create PR Template ✅ COMPLETED (2025-12-11)
 ```
 I'm on Week 1 (Foundation Setup) of the mockCMMS Implementation Priority Guide.
 
@@ -86,7 +233,7 @@ Please:
 5. Show me the template before creating the file
 ```
 
-#### Task: Update CONTRIBUTING.md
+#### Task: Update CONTRIBUTING.md ✅ COMPLETED (2025-12-11)
 ```
 I'm on Day 2 of Week 1 (Foundation Setup).
 
@@ -103,36 +250,162 @@ Please:
 4. Show me the proposed changes before applying
 ```
 
-#### Task: Create Basic CI Workflow
+#### Task: Create Basic CI Workflow ✅ COMPLETED (2025-12-11)
 ```
-I'm on Day 3 of Week 1 (Foundation Setup).
+I'm on Week 1 (Foundation Setup).
 
 Task: Create basic GitHub Actions CI workflow
 
 Please:
-1. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 1, Day 3 tasks)
+1. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 1 tasks)
 2. Read docs/mockCMMS_roadmap.md (GitHub Actions CI/CD section)
 3. Create .github/workflows/ci.yml with:
+   - Python 3.12 setup
+   - Install dependencies from requirements.txt
    - Python linting (flake8, black)
-   - Run pytest
-   - Generate coverage report
-4. Use Python 3.12 (check run.py or requirements.txt for version)
-5. Show me the workflow before creating
+   - Run pytest with coverage
+   - Upload coverage to Codecov
+4. Show me the workflow before creating
+5. After creation, mark task complete in IMPLEMENTATION_PRIORITY_GUIDE.md
 ```
 
 ---
 
-### Week 2: Python Backend Audit
+### Week 2: Test Suite Foundation 🔄 CURRENT ACTIVE WORK
 
-#### Task: Audit app.py
+> [!TIP]
+> **Current Priority:** These are the tasks you should be working on NOW (December 11, 2025).
+
+#### Task: Configure pytest.ini 🔄 NEXT TASK
 ```
-I'm on Week 2 (Python Backend Audit) of the Implementation Priority Guide.
+I'm on Week 2, Day 1-2 (Test Suite Foundation) of the Implementation Priority Guide.
+
+Task: Configure pytest.ini for test discovery
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 4.1: Configuration Files)
+2. Create pytest.ini with:
+   - Test path configuration (tests/)
+   - Test file patterns (test_*.py)
+   - Markers for slow/integration/unit tests
+   - Coverage options
+3. Show me the configuration before creating the file
+4. After creating, mark this task complete in comprehensive_testing_plan.md
+5. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+```
+
+#### Task: Enhance conftest.py 🔄 NEXT TASK
+```
+I'm on Week 2, Day 1-2 (Test Suite Foundation).
+
+Task: Enhance tests/conftest.py with comprehensive fixtures
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 4.2: Test Fixtures)
+2. Review apps/planning/tests/conftest.py as reference
+3. Create fixtures for:
+   - app (Flask app in testing mode)
+   - client (test client for requests)
+   - db (database session with auto-rollback)
+   - sample_asset, sample_mo, sample_user (test data)
+4. Show me the proposed fixtures
+5. After approval, mark task complete in comprehensive_testing_plan.md
+6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+```
+
+#### Task: Create test_app.py 🔄 NEXT TASK
+```
+I'm on Week 2, Day 1-2 (Test Suite Foundation).
+
+Task: Create tests/test_app.py with 10 tests
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.1: Application Tests)
+2. Implement all 10 tests listed:
+   - test_create_app_default_config
+   - test_create_app_testing_config
+   - test_database_initialization
+   - test_blueprints_registered
+   - test_secret_key_from_env
+   - test_secret_key_fallback
+   - test_database_uri_configuration
+   - test_app_context
+   - test_request_context
+   - test_error_handlers_registered
+3. Show me the test file before creating
+4. After creation, run pytest to verify tests pass
+5. Mark all 10 tests [x] in comprehensive_testing_plan.md Section 3.1
+6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+```
+
+#### Task: Create test_api_routes.py (Days 3-4)
+```
+I'm on Week 2, Day 3-4 (API Endpoint Tests).
+
+Task: Create tests/test_api_routes.py with API endpoint tests
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.2: API Endpoint Tests)
+2. Start with Assets API tests (tests 1-10)
+3. Implement success and error cases for each endpoint:
+   - test_get_assets_empty
+   - test_get_assets_with_data
+   - test_get_asset_by_id_success
+   - test_get_asset_by_id_not_found
+   - test_add_asset_success
+   - test_add_asset_missing_name
+   - test_update_asset_success
+   - test_update_asset_not_found
+   - test_delete_asset_success
+   - test_delete_asset_not_found
+4. Show me the first batch (Assets API) before proceeding
+5. After approval and testing, mark tests [x] in Section 3.2
+6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+```
+
+#### Task: Create test_main_routes.py (Day 5)
+```
+I'm on Week 2, Day 5 (Web Routes Tests).
+
+Task: Create tests/test_main_routes.py with web page route tests
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.3: Web Routes Tests)
+2. Implement tests for all main routes:
+   - General pages (index, tickets, maintenance_grid)
+   - Assets pages (list, add, detail, edit, delete)
+   - Maintenance Orders pages (list, add, detail, edit, delete)
+   - Spare Parts pages (list, add, detail, edit, delete)
+   - Users pages (list, register)
+3. Focus on testing that pages load (200 status) and forms work
+4. Show me the test file before creating
+5. After creation and testing, mark tests [x] in Section 3.3
+6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+```
+
+---
+
+### Week 3+: Python Backend Audit (POSTPONED - Do NOT Start Yet)
+
+> **⚠️ IMPORTANT:** These tasks are postponed until all 88 tests pass with 70%+ coverage.
+
+#### Task: Audit app.py (EXAMPLE ONLY - Wait for Phase 2)
+```
+⚠️ DO NOT START THIS UNTIL ALL TESTS PASS ⚠️
+
+I'm on Week 3 (Python Backend Audit) of the Implementation Priority Guide.
+
+Prerequisites verified:
+- ✅ All 88 tests implemented
+- ✅ 100% test pass rate
+- ✅ 70%+ code coverage
+- ✅ CI running successfully
 
 Task: Audit src/app.py for code quality issues
 
 Please:
 1. Read docs/core_code_quality_plan.md (Phase 1.1: Code Structure & Organization)
-2. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 2 tasks)
+2. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 3 tasks)
 3. Analyze src/app.py for:
    - PEP 8 compliance
    - Proper Flask factory pattern
@@ -145,9 +418,15 @@ Please:
 7. After fixes, update docs/core_code_quality_plan.md progress
 ```
 
-#### Task: Audit db_utils.py
+#### Task: Audit db_utils.py (EXAMPLE ONLY - Wait for Phase 2)
 ```
-I'm on Week 2, working on Python backend audit.
+⚠️ DO NOT START THIS UNTIL ALL TESTS PASS ⚠️
+
+I'm on Week 3, working on Python backend audit.
+
+Prerequisites verified:
+- ✅ All 88 tests pass
+- ✅ 70%+ code coverage
 
 Task: Audit src/services/db_utils.py
 
@@ -164,6 +443,12 @@ Please:
 5. Wait for approval before changing code
 6. Update progress tracking in core_code_quality_plan.md
 ```
+
+---
+
+### Week 4-5: Frontend Audit (POSTPONED)
+
+> **⚠️ IMPORTANT:** Wait until Week 3 (Python Backend) is complete.
 
 ---
 
@@ -630,6 +915,103 @@ AI should maintain progress tracking like this:
 - [ ] Implement Security & Access Control Standards (In Progress)
 ...
 ```
+
+---
+
+## 🔄 Daily & Weekly Workflow
+
+### Daily Workflow for AI Assistants
+
+```
+1. START OF SESSION
+   ├─ Read: IMPLEMENTATION_PRIORITY_GUIDE.md
+   ├─ Check: Current week (Week 2)
+   ├─ Check: Current day tasks
+   └─ Navigate to: Active detailed plan (comprehensive_testing_plan.md)
+
+2. EXECUTE TASKS
+   ├─ Read: Task specifications from detailed plan
+   ├─ Propose: Approach and implementation
+   ├─ Wait: For user approval
+   ├─ Implement: Approved changes
+   └─ Test: Verify changes work
+
+3. UPDATE DOCUMENTATION
+   ├─ Mark: Completed tasks [x] in detailed plan
+   ├─ Update: Weekly breakdown in IMPLEMENTATION_PRIORITY_GUIDE.md
+   ├─ Update: "Last Updated" dates
+   └─ Commit: Changes with proper commit message
+
+4. END OF SESSION
+   ├─ Summary: What was completed
+   ├─ Next: Suggest next task
+   └─ Status: Update if phase/week changes
+```
+
+### Weekly Workflow
+
+```
+MONDAY (Start of Week)
+├─ Review: IMPLEMENTATION_PRIORITY_GUIDE.md for current week
+├─ Review: Active detailed plan for week's goals
+└─ Set: Daily targets
+
+DAILY (Mon-Fri)
+├─ Execute: 1-3 tasks from daily breakdown
+├─ Update: Progress markers [x]
+└─ Commit: Changes
+
+FRIDAY (End of Week)
+├─ Verify: All week's tasks complete
+├─ Update: mockCMMS_roadmap.md if sprint complete
+├─ Prepare: Next week's work
+└─ Summary: Week's achievements
+```
+
+### Phase Transition Workflow
+
+```
+COMPLETING PHASE 1 (Test Suite):
+1. ✅ Verify: All 88 tests implemented
+2. ✅ Verify: 100% test pass rate
+3. ✅ Verify: 70%+ code coverage
+4. ✅ Verify: CI running successfully
+   ↓
+5. Update comprehensive_testing_plan.md:
+   - Change status to "Completed"
+   - Add completion date
+   - Add summary of achievements
+   ↓
+6. Update mockCMMS_roadmap.md:
+   - Move sprint to "RECENTLY COMPLETED"
+   - Add completion summary
+   - Update "ACTIVE WORK" to Phase 2
+   ↓
+7. Update core_code_quality_plan.md:
+   - Change status from "⏸️ Postponed" to "🟢 In Progress"
+   - Add start date
+   ↓
+8. Update IMPLEMENTATION_PRIORITY_GUIDE.md:
+   - Mark Phase 1 complete [x]
+   - Begin Phase 2 tasks
+```
+
+---
+
+## 📊 Current Status Summary (December 11, 2025)
+
+| Document | Status | Progress | Next Action |
+|----------|--------|----------|-------------|
+| **IMPLEMENTATION_PRIORITY_GUIDE.md** | ✅ Current | Week 2, Day 1-2 | Reference daily for task list |
+| **comprehensive_testing_plan.md** | 🔄 Active | 1/88 tests (planning done) | Implement pytest.ini, conftest.py |
+| **core_code_quality_plan.md** | ⏸️ Postponed | Waiting for tests | Start after Phase 1 complete |
+| **mockCMMS_roadmap.md** | ✅ Current | Phase 1 active | Update when sprint completes |
+
+**Current Phase:** 1 (Test Suite Foundation)  
+**Current Week:** 2  
+**Current Tasks:** Configure pytest.ini, enhance conftest.py, create test_app.py  
+**Next Milestone:** Complete Day 1-2 tasks (pytest infrastructure)  
+**Next Phase Trigger:** All 88 tests pass with 70%+ coverage  
 
 ---
 

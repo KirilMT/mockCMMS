@@ -1,24 +1,59 @@
 # mockCMMS Implementation Priority Guide
 
 **Created:** December 11, 2025  
+**Last Updated:** December 11, 2025
 **Purpose:** Clarify the relationship between core code quality audit and GitHub best practices implementation
 
 ---
 
+> [!IMPORTANT]
+> **📚 Document Navigation:** This guide coordinates multiple planning documents:
+> 
+> **Active Phase 1 (Week 2):**
+> - **[Comprehensive Testing Plan](comprehensive_testing_plan.md)** - 88 tests to implement NOW
+> 
+> **Postponed (Week 3+):**
+> - **[Core Code Quality Plan](core_code_quality_plan.md)** - Code audit (starts after testing)
+> 
+> **Strategic Context:**
+> - **[mockCMMS Roadmap](mockCMMS_roadmap.md)** - Overall project vision and features
+> 
+> **Current Status:** Week 2, Day 1-2 (Test Suite Planning & Setup)
+
+---
+
 > [!TIP]
-> **🤖 Working with AI Assistants?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for detailed instructions on how to effectively delegate tasks from this plan to AI coding assistants (GitHub Copilot, Gemini, ChatGPT, etc.).
+> **🤖 Working with AI Assistants?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for a comprehensive guide on how to navigate between all planning documents, understand the workflow, and effectively delegate tasks to AI coding assistants.
 
 ---
 
 ## 🎯 Executive Summary
 
-**TL;DR:** These are **complementary but separate** tracks. You should work on **BOTH simultaneously** using a phased approach. Start with **Core Code Quality Audit** while setting up **foundational best practices** in parallel.
+**TL;DR:** The project follows a **testing-first approach**. Build a comprehensive test suite FIRST (Week 2), then perform code quality audit SECOND (Week 3+). This ensures safe refactoring and prevents breaking changes.
+
+**Current Priority (Week 2):** Implementing 88 automated tests for the core application.
 
 ---
 
-## 📚 Understanding the Two Documents
+## 📚 Understanding the Three Key Documents
 
-### 1. **Core Code Quality Plan** (`core_code_quality_plan.md`)
+### 1. **Comprehensive Testing Plan** (`comprehensive_testing_plan.md`) - **ACTIVE NOW**
+**What it is:** Detailed specification for building an 88-test automated test suite
+
+**Focus:**
+- Create tests for app.py, db_utils.py, api.py, main.py
+- Achieve 70%+ code coverage
+- Enable safe refactoring and code changes
+- Automate verification of application functionality
+
+**Analogy:** Think of this as **installing security cameras and alarms** - you need them BEFORE cleaning to verify nothing gets broken.
+
+**Duration:** 1 week (Week 2)
+**Status:** ✅ Planning complete, 🔄 Implementation in progress
+
+---
+
+### 2. **Core Code Quality Plan** (`core_code_quality_plan.md`) - **POSTPONED**
 **What it is:** A systematic code audit and cleanup of **existing code**
 
 **Focus:**
@@ -30,11 +65,12 @@
 
 **Analogy:** Think of this as **cleaning up your house** - organizing rooms, removing clutter, fixing broken things.
 
-**Duration:** 2-3 weeks of focused work
+**Duration:** 2-3 weeks of focused work (Weeks 3-5)
+**Status:** ⏸️ Postponed until all tests pass
 
 ---
 
-### 2. **GitHub Best Practices** (`mockCMMS_roadmap.md` - Project Infrastructure section)
+### 3. **GitHub Best Practices** (`mockCMMS_roadmap.md` - Project Infrastructure section)
 **What it is:** Setting up **processes, workflows, and infrastructure** for the project
 
 **Focus:**
@@ -47,6 +83,7 @@
 **Analogy:** Think of this as **setting up house rules** - establishing how to keep the house clean going forward, security systems, maintenance schedules.
 
 **Duration:** 1-2 weeks of setup, then ongoing maintenance
+**Status:** ✅ Foundation complete (Week 1)
 
 ---
 
@@ -110,28 +147,50 @@
 
 ---
 
-### Phase 1: Core Python Backend Audit (Week 2) - **PARALLEL WORK**
+### Phase 1: Test Suite Foundation (Week 2) - **NEW PRIORITY**
 
-1. **[ ] Primary Focus:** Code Quality Audit - Phase 1
-   - Work through `core_code_quality_plan.md` Phase 1 (Python Backend)
-   - Audit `app.py`, `db_utils.py`, `api.py`, `main.py`
-   - Follow the workflow standards you just set up
+1.  **[ ] Primary Focus:** Comprehensive Test Suite Implementation
+    -   [x] Create a detailed testing plan (`docs/comprehensive_testing_plan.md`).
+    -   [ ] Develop a robust test suite for the core `mockCMMS` application.
+    -   [ ] Goal: Achieve significant test coverage for `app.py`, `db_utils.py`, `api.py`, and `main.py`.
 
-2. [ ] Secondary Focus:** CI/CD Setup
-   - Create basic GitHub Actions workflow for Python linting
-   - Add pytest to CI pipeline
-   - This will catch issues in future commits automatically
+2.  **[ ] Secondary Focus:** Foundational CI/CD
+    -   [x] The basic CI workflow is in place.
+    -   [ ] It will be enhanced to run the new comprehensive test suite as it's developed.
+
+---
+
+### Phase 2: Core Python Backend Audit (Week 3) - **POSTPONED**
+
+> **⚠️ PREREQUISITE:** Do NOT start until all 88 tests pass with 70%+ coverage.
+
+1.  **[ ] Primary Focus:** Code Quality Audit - Phase 1
+    -   Work through `core_code_quality_plan.md` Phase 1 (Python Backend)
+    -   Audit `app.py`, `db_utils.py`, `api.py`, `main.py`
+    -   Apply `black` formatting in small incremental batches
+    -   Fix flake8 linting issues
+    -   Follow the workflow standards you set up in Week 1
+
+2.  **[ ] Secondary Focus:** CI/CD Enhancement
+    -   ✅ Basic GitHub Actions workflow already exists
+    -   Enhance CI to include code formatting checks (black)
+    -   Add flake8 linting to CI
+    -   Configure coverage thresholds
+    -   This will catch issues in future commits automatically
 
 **Why this order?**
+- Tests must pass FIRST to ensure changes don't break functionality
 - Python backend is the foundation of the app
-- Setting up CI early means it validates your cleanup work
-- You practice the new workflow on real work
+- CI enhancement validates your cleanup work automatically
+- You practice the new workflow on real work with safety net
 
 **Estimated Time:** 1 week
 
 ---
 
-### Phase 2: Frontend Code Audit (Week 3-4) - **PARALLEL WORK**
+### Phase 3: Frontend Code Audit (Week 4-5) - **POSTPONED**
+
+> **⚠️ PREREQUISITE:** Complete Phase 2 (Python Backend Audit) first.
 
 **Primary Focus:** Code Quality Audit - Phase 2 & 3
 - JavaScript files (Advanced Table component, etc.)
@@ -139,20 +198,23 @@
 - Follow separation of concerns strictly
 
 **Secondary Focus:** Complete CI/CD
-- Add JavaScript linting to CI
-- Add CSS linting to CI
+- Add JavaScript linting to CI (ESLint)
+- Add CSS linting to CI (Stylelint)
 - Set up code quality checks (security scanning)
 
 **Why this order?**
 - Frontend cleanup is independent of backend
 - CI expands to cover all code types
 - Automation catches regressions
+- Backend must be clean first (foundation)
 
 **Estimated Time:** 1-2 weeks
 
 ---
 
-### Phase 3: Templates & Documentation (Week 5) - **PARALLEL WORK**
+### Phase 4: Templates & Documentation (Week 6) - **POSTPONED**
+
+> **⚠️ PREREQUISITE:** Complete Phase 3 (Frontend Audit) first.
 
 **Primary Focus:** Code Quality Audit - Phase 4 & 5
 - HTML templates (inline code removal)
@@ -166,7 +228,7 @@
 - Complete CODEOWNERS file
 
 **Why this order?**
-- Templates depend on clean JS/CSS (from Phase 2)
+- Templates depend on clean JS/CSS (from Phase 3)
 - Documentation improvements can reference new processes
 - Team collaboration setup is last because you now have experience with the workflow
 
@@ -174,7 +236,7 @@
 
 ---
 
-### Phase 4: Repository Standards & Polish (Week 6)
+### Phase 5: Repository Standards & Polish (Week 7)
 
 **Focus:** Final cleanup and standardization
 - Naming conventions across the board
@@ -196,48 +258,69 @@
 
 ### Week 1: Foundation Setup
 **Monday-Tuesday: Git Workflow**
-- [ ] Create PR template
-- [ ] Update CONTRIBUTING.md with commit standards
+- [x] Create PR template
+- [x] Update CONTRIBUTING.md with commit standards
 - [ ] Enable branch protection on `main`
 - [ ] Test workflow with a practice PR
 
 **Wednesday-Thursday: Security**
-- [ ] Move SECRET_KEY to environment variables
+- [x] Move SECRET_KEY to environment variables
 - [ ] Enable 2FA on your account
-- [ ] Enable Dependabot
-- [ ] Document security policies
+- [x] Enable Dependabot
+- [x] Document security policies
 
 **Friday: Documentation**
-- [ ] Update CONTRIBUTING.md with code standards
-- [ ] Document comment standards
-- [ ] Document separation of concerns rules
-- [ ] Review and commit all foundation work
+- [x] Update CONTRIBUTING.md with code standards
+- [x] Document comment standards
+- [x] Document separation of concerns rules
+- [x] Review and commit all foundation work
 
 ---
 
-### Week 2: Python Backend + Basic CI
+### Week 2: Test Suite Foundation
+**Monday-Tuesday: Planning & Setup**
+- [x] Create detailed `comprehensive_testing_plan.md`
+- [ ] Configure `pytest.ini` for test discovery
+- [ ] Enhance `conftest.py` with robust fixtures
+- [ ] Create test infrastructure for in-memory database
+
+**Wednesday-Thursday: Core Application Tests**
+- [ ] Create `tests/test_app.py` - Flask app configuration tests
+- [ ] Create `tests/test_db_utils.py` - Database utility function tests
+- [ ] Create `tests/test_shift_utils.py` - Shift calculation tests
+- [ ] Run tests and verify all pass
+
+**Friday: API & Route Tests**
+- [ ] Expand `tests/test_api.py` - Comprehensive API endpoint tests
+- [ ] Create `tests/test_main_routes.py` - Web page route tests
+- [ ] Update CI workflow to run new test suite
+- [ ] Verify all tests pass in CI
+
+---
+
+### Week 3: Python Backend Audit + CI Enhancement
 **Monday-Wednesday: Python Audit**
 - [ ] Follow `core_code_quality_plan.md` Phase 1.1-1.3
 - [ ] Audit `app.py`, `db_utils.py`
 - [ ] Fix issues found
 - [ ] Create PRs following new workflow
 
-**Thursday-Friday: CI Setup**
-- [ ] Create `.github/workflows/ci.yml`
-- [ ] Add Python linting (flake8, black)
-- [ ] Add pytest execution
+**Thursday-Friday: CI Enhancement**
+- [ ] Add Python linting (flake8, black) to CI
+- [ ] Configure coverage reporting
 - [ ] Test CI on a PR
+- [ ] Ensure all tests pass
 
 ---
 
-### Week 3-4: Frontend Audit + Complete CI
-**Week 3: JavaScript**
+### Week 4-5: Frontend Audit + Complete CI
+**Week 4: JavaScript**
 - [ ] Follow `core_code_quality_plan.md` Phase 2
 - [ ] Audit all Advanced Table JS files
 - [ ] Fix issues, create PRs
 - [ ] Add ESLint to CI
 
-**Week 4: CSS**
+**Week 5: CSS**
 - [ ] Follow `core_code_quality_plan.md` Phase 3
 - [ ] Audit CSS files
 - [ ] Extract inline styles from templates
@@ -245,7 +328,7 @@
 
 ---
 
-### Week 5: Templates + Team Setup
+### Week 6: Templates + Team Setup
 **Monday-Wednesday: Templates**
 - [ ] Follow `core_code_quality_plan.md` Phase 4
 - [ ] Remove inline JavaScript
@@ -260,7 +343,7 @@
 
 ---
 
-### Week 6: Standards + Release
+### Week 7: Standards + Release
 **Monday-Wednesday: Standardization**
 - [ ] Follow `core_code_quality_plan.md` Phase 5
 - [ ] Fix naming inconsistencies
@@ -281,25 +364,26 @@
 **If you're starting TODAY, do these in order:**
 
 ### Day 1 (Today)
-- [ ] Read this entire document
+- [x] Read this entire document
 - [ ] Create a GitHub Project board to track work
-- [ ] Create PR template (`.github/PULL_REQUEST_TEMPLATE.md`)
+- [x] Create PR template (`.github/PULL_REQUEST_TEMPLATE.md`)
 - [ ] Enable branch protection on `main` branch
 
 ### Day 2
-- [ ] Update CONTRIBUTING.md with code standards
-- [ ] Move SECRET_KEY to `.env` if needed
+- [x] Update CONTRIBUTING.md with code standards
+- [x] Move SECRET_KEY to `.env` if needed
 - [ ] Enable 2FA on your account
-- [ ] Enable Dependabot alerts
+- [x] Enable Dependabot alerts
 
 ### Day 3
-- [ ] Create basic CI workflow (`.github/workflows/ci.yml`)
+- [x] Create basic CI workflow (`.github/workflows/ci.yml`)
 - [ ] Test CI with a small change
-- [ ] Document commit message standards
+- [x] Document commit message standards
 
 ### Day 4-5
-- [ ] Start Phase 1 of code quality audit (`app.py`)
-- [ ] Make first cleanup PR following new workflow
+- [x] Create comprehensive testing plan (`comprehensive_testing_plan.md`)
+- [ ] Start Phase 1 of test suite implementation
+- [ ] Make first test PR following new workflow
 - [ ] Get comfortable with the process
 
 ### Day 6+ 
@@ -321,28 +405,47 @@
 ### Short-term Setup (Next 2-3 Days)
 6. ✅ **Create Basic CI Workflow** - Takes 1-2 hours, automates checks
 7. ✅ **Enable Dependabot** - Takes 5 minutes, security automation
-8. ✅ **Test New Workflow** - Takes 1 hour, validate setup
+8. ✅ **Create Comprehensive Testing Plan** - Takes 2-3 hours, defines 88 tests
 
-### Start Audit Work (After Setup Complete)
-9. ✅ **Begin Phase 1: Python Backend Audit** - Systematic cleanup
-10. ✅ **Expand CI as You Go** - Add checks for each file type
+### Start Test Suite Implementation (Current Week 2)
+9. **[ ] Configure pytest.ini** - Takes 30 minutes, test discovery setup
+10. **[ ] Enhance conftest.py** - Takes 1-2 hours, create test fixtures
+11. **[ ] Create test_app.py** - Takes 2-3 hours, 10 tests for Flask app
+12. **[ ] Create test_api_routes.py** - Takes 4-6 hours, 41 API endpoint tests
+13. **[ ] Create test_main_routes.py** - Takes 3-4 hours, 29 web route tests
+14. **[ ] Create test_db_utils.py** - Takes 1-2 hours, 3 database tests
+15. **[ ] Create test_shift_utils.py** - Takes 1-2 hours, 5 shift logic tests
+
+### After All Tests Pass (Week 3+)
+16. **[ ] Begin Phase 2: Python Backend Audit** - Systematic cleanup with test safety net
+17. **[ ] Expand CI for linting** - Add black and flake8 checks
 
 ---
 
 ## 🤔 Common Questions
 
-### Q: Can I skip the GitHub best practices and just do code cleanup?
-**A:** Not recommended. Without proper workflow:
-- Your cleanup commits might be messy
-- You can't track progress effectively
-- You might introduce new issues
-- No automated checks to catch problems
+### Q: Why can't I start the code audit right away?
+**A:** You need tests FIRST because:
+- Code formatting/cleanup might break functionality
+- Without tests, you won't know what broke
+- Tests provide automated safety net
+- CI runs tests on every commit to catch regressions
+- Industry best practice: never refactor without tests
 
-### Q: Can I skip the code audit and just set up processes?
-**A:** Not recommended. You'd have:
-- Clean processes but messy code
-- Technical debt that violates your new standards
-- Confusion about what the "standard" looks like
+### Q: Can I skip writing tests and just be careful with changes?
+**A:** Not recommended. Without tests:
+- You'll waste time manually testing every change
+- Breaking changes will reach production
+- Code confidence will be low
+- Refactoring will be scary and avoided
+- Technical debt will accumulate
+
+### Q: Can I skip the GitHub best practices and just do testing/cleanup?
+**A:** Not recommended. Without proper workflow:
+- Your commits might be messy
+- You can't track progress effectively
+- No automated checks to catch problems
+- Hard to review your own work
 
 ### Q: What if I don't have a team? Do I still need team collaboration setup?
 **A:** Yes, but simplified:
@@ -352,20 +455,20 @@
 - Good habits for when the team grows
 
 ### Q: Can I change the order of phases?
-**A:** Some flexibility exists:
-- Foundation setup must come first
-- Within code audit, you can reorder phases
-- CI/CD can be done incrementally
-- Team setup can be last if working solo
+**A:** Limited flexibility:
+- **Week 1 (Foundation) must come first** - Sets up workflow
+- **Week 2 (Testing) must come second** - Enables safe changes
+- **Week 3+ (Audit) can only start after tests pass** - Required safety net
+- Within code audit (Weeks 3-5), you can reorder sub-phases
 
 ### Q: How do I know if I'm doing it right?
 **A:** Check these indicators:
+- ✅ All 88 tests pass before starting audit
 - ✅ CI passes on all commits
 - ✅ Following PR template
 - ✅ Commit messages follow standards
-- ✅ Code passes linting
-- ✅ No inline styles/scripts in templates
-- ✅ Comments are professional and descriptive
+- ✅ Code coverage is 70%+
+- ✅ Tests run automatically in CI
 
 ---
 
@@ -374,15 +477,22 @@
 Create a GitHub Project board with these columns:
 
 ### Backlog
-- All unchecked items from both plans
+- All unchecked items from all plans
 
-### Foundation Setup (Week 1)
+### Week 1: Foundation Setup ✅
 - Git workflow items
 - Security basics
 - Documentation standards
 
-### In Progress
-- Current week's focus items
+### Week 2: Testing 🔄 ACTIVE
+- pytest configuration
+- Test implementation (88 tests)
+- CI integration
+
+### Week 3+: Code Audit ⏸️ POSTPONED
+- Python backend cleanup
+- Frontend cleanup
+- Template cleanup
 
 ### Code Review
 - PRs waiting for review/merge
@@ -396,15 +506,19 @@ Create a GitHub Project board with these columns:
 
 As you work through this, you'll learn:
 
-**Week 1-2:** Git workflow, PR process, commit standards  
-**Week 3-4:** CI/CD, automated testing, linting  
-**Week 5-6:** Team collaboration, documentation, release process
+**Week 1:** Git workflow, PR process, commit standards, CI/CD basics  
+**Week 2:** Test-driven development, pytest, fixtures, test coverage  
+**Week 3:** Code quality tools (black, flake8), refactoring with safety  
+**Weeks 4-5:** Frontend testing, linting, separation of concerns  
+**Week 6-7:** Team collaboration, documentation, release process
 
 By the end, you'll have:
+- ✅ 88 automated tests protecting your codebase
+- ✅ 70%+ code coverage
 - ✅ Clean, professional codebase
 - ✅ Automated quality checks
 - ✅ Clear development processes
-- ✅ Comprehensive documentation
+- ��� Comprehensive documentation
 - ✅ Industry-standard workflows
 
 ---
@@ -495,17 +609,21 @@ By the end, you'll have:
 
 **Think of it this way:**
 
-- **Core Code Quality** = Cleaning your house
-- **GitHub Best Practices** = Setting up house rules
+- **Week 1: Foundation Setup** = Setting up house rules and security
+- **Week 2: Test Suite** = Installing security cameras and alarms  
+- **Week 3+: Code Quality** = Cleaning your house with cameras recording
 
-You need **both** to have a clean house that **stays** clean!
+You need **all three** in the right order:
+1. Rules first (so you know HOW to clean)
+2. Cameras second (so you can verify nothing breaks)
+3. Cleaning last (with confidence everything is monitored)
 
 **Start with:**
-1. Set up the rules (Week 1)
-2. Clean the house following those rules (Weeks 2-5)
-3. Document everything for future residents (Week 6)
+1. Set up the rules (Week 1) ✅ DONE
+2. Install the cameras/alarms (Week 2) 🔄 CURRENT
+3. Clean the house while cameras watch (Weeks 3-5) ⏸️ POSTPONED
 
-**You're ready to start! Begin with the Day 1 checklist above.** 🚀
+**You're ready for Week 2! Begin with the test suite implementation from comprehensive_testing_plan.md** 🚀
 
 ---
 

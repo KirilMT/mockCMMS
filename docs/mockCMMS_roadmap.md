@@ -78,11 +78,25 @@ _Updated December 11, 2025_
 
 ## 🔥 ACTIVE WORK
 
-_No active sprints at this time. All recent work has been completed._
+**Current Sprint:** Test Suite Foundation (Week 2)
+**Status:** Phase 1 - Planning & Initial Test Creation
+**Started:** December 11, 2025
+**Target Completion:** December 18, 2025
+**Goal:** Create a comprehensive test suite for the core mockCMMS application to ensure code quality and enable safe refactoring.
 
-**Next Steps:**
-- Run comprehensive testing guide for Advanced Table component
-- Plan next sprint from Future Features section below
+---
+
+> [!IMPORTANT]
+> **📋 Detailed Plan:** See [Comprehensive Testing Plan](comprehensive_testing_plan.md) for the complete 88-test specification.
+> 
+> **Related Documentation:**
+> - **[Implementation Priority Guide](IMPLEMENTATION_PRIORITY_GUIDE.md)** - Week-by-week timeline
+> - **[Core Code Quality Plan](core_code_quality_plan.md)** - Postponed until tests are complete
+> 
+> **Next Steps After Completion:**
+> 1. Move this sprint to "Recently Completed" section below
+> 2. Update status in `core_code_quality_plan.md` from "Postponed" to "In Progress"
+> 3. Begin Phase 2 (Core Python Backend Audit) from `IMPLEMENTATION_PRIORITY_GUIDE.md`
 
 ---
 
