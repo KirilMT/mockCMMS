@@ -95,19 +95,18 @@ mockCMMS/
    ```powershell
    .\scripts\setup.ps1
    ```
-   This script will automatically:
-   - Check for Python
-   - Create a virtual environment
-   - Install all dependencies (including modular apps)
-   - Set up the environment configuration
+   The script will guide you through the installation process with clear feedback at each step.
 
-3. **Run the application:**
+3. **Activate the virtual environment:**
+   ```powershell
+   .\.venv\Scripts\Activate.ps1
+   ```
+   > **Note:** If you get an error, make sure you ran the setup script first.
+
+4. **Run the application:**
    ```bash
    python run.py
    ```
-
-8. **Access the application:**
-   Open your browser and navigate to `http://127.0.0.1:5000`
 
 ## ⚙️ Configuration
 
@@ -255,14 +254,6 @@ src/static/js/
 3. All apps reload automatically
 4. Use `.env` to enable/disable apps for testing
 
-## 🗄️ Database Management
-
-### Seeding the Database
-
-```bash
-# Activate virtual environment first
-python src/services/seed.py
-```
 
 ## 🤝 Contributing
 

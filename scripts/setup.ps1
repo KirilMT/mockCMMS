@@ -1,17 +1,34 @@
-# install.ps1
+# setup.ps1 - Enhanced mockCMMS Installation Script
+# Provides detailed feedback and error handling for Windows environments
 
 # Ensure we are in the project root
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $projectRoot = Split-Path -Parent $scriptPath
 Set-Location $projectRoot
 
-Write-Host "Starting mockCMMS installation..." -ForegroundColor Cyan
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "   mockCMMS Installation Script" -ForegroundColor Cyan
+Write-Host "========================================`n" -ForegroundColor Cyan
+
+# Error counter for final summary
+$script:ErrorCount = 0
 
 # 1. Check for Python
-Write-Host "`nChecking for Python..." -ForegroundColor Yellow
+Write-Host "[Step 1/6] Checking for Python..." -ForegroundColor Yellow
 try {
     $pythonVersion = python --version 2>&1
-    Write-Host "   Found: $pythonVersion" -ForegroundColor Green
+    if ($pythonVersion -match "Python (\d+)\.(\d+)") {
+        $major = [int]$Matches[1]
+        $minor = [int]$Matches[2]
+        if ($major -ge 3 -and $minor -ge 12) {
+            Write-Host "   Found: " -NoNewline -ForegroundColor White
+            Write-Host "$pythonVersion" -NoNewline -ForegroundColor White
+            Write-Host " OK" -ForegroundColor Green
+        }
+        else {
+            Write-Warning "   Found: $pythonVersion (Python 3.12+ recommended)"
+        }
+    }
 }
 catch {
     Write-Error "Python is not installed or not in PATH. Please install Python 3.12+."
@@ -19,64 +36,262 @@ catch {
 }
 
 # 2. Create Virtual Environment
-Write-Host "`nSetting up virtual environment..." -ForegroundColor Yellow
+Write-Host "`n[Step 2/6] Setting up virtual environment..." -ForegroundColor Yellow
 if (-not (Test-Path ".venv")) {
-    Write-Host "   Creating .venv..."
+    Write-Host "   Creating " -NoNewline -ForegroundColor White
+    Write-Host ".venv" -NoNewline -ForegroundColor Magenta
+    Write-Host "..." -NoNewline -ForegroundColor White
     python -m venv .venv
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host " OK" -ForegroundColor Green
+    }
+    else {
+        Write-Host " FAILED" -ForegroundColor Red
+        Write-Error "Failed to create virtual environment."
+        exit 1
+    }
 }
 else {
-    Write-Host "   .venv already exists." -ForegroundColor Gray
+    Write-Host "   Virtual environment already exists " -NoNewline -ForegroundColor White
+    Write-Host "OK" -ForegroundColor Green
 }
 
-# 3. Install Dependencies
-Write-Host "`nInstalling dependencies..." -ForegroundColor Yellow
-$pipPath = ".\.venv\Scripts\pip"
+# 3. Verify pip path and install dependencies
+Write-Host "`n[Step 3/6] Installing dependencies..." -ForegroundColor Yellow
+
+# Use correct Windows path
+$pipPath = ".\.venv\Scripts\pip.exe"
+$pythonPath = ".\.venv\Scripts\python.exe"
+
+# Verify pip exists
 if (-not (Test-Path $pipPath)) {
-    # Fallback for non-Windows or different venv structure if needed
-    $pipPath = ".venv/bin/pip" 
+    Write-Error "   pip not found at $pipPath"
+    Write-Error "   Virtual environment may be corrupted. Try deleting .venv and running again."
+    exit 1
 }
 
-# Upgrade pip
-& $pipPath install --upgrade pip | Out-Null
-Write-Host "   Pip upgraded." -ForegroundColor Gray
-
-# Install requirements
-& $pipPath install -r requirements.txt | Out-Null
-Write-Host "   Core dependencies installed." -ForegroundColor Green
-
-# Install modular apps
-Write-Host "   Installing modular apps..." -ForegroundColor Gray
-if (Test-Path "apps/planning") {
-    & $pipPath install -e apps/planning | Out-Null
-    Write-Host "   - Planning app installed." -ForegroundColor Green
+# Upgrade pip (use python -m pip to avoid "cannot modify pip while running" error)
+Write-Host "   Upgrading " -NoNewline -ForegroundColor White
+Write-Host "pip" -NoNewline -ForegroundColor Magenta
+Write-Host "..." -NoNewline -ForegroundColor White
+& $pythonPath -m pip install --upgrade pip --quiet
+if ($LASTEXITCODE -eq 0) {
+    Write-Host " OK" -ForegroundColor Green
 }
-if (Test-Path "apps/reports") {
-    & $pipPath install -e apps/reports | Out-Null
-    Write-Host "   - Reports app installed." -ForegroundColor Green
+else {
+    Write-Host " FAILED (non-critical)" -ForegroundColor Yellow
+    Write-Warning "Could not upgrade pip, continuing with existing version..."
 }
 
-# 4. Environment Configuration
-Write-Host "`nConfiguring environment..." -ForegroundColor Yellow
+# Install core dependencies
+if (Test-Path "requirements.txt") {
+    # Check if Flask is already installed as a proxy for all dependencies
+    $flaskCheck = & $pipPath show Flask 2>$null
+
+    if ($flaskCheck -match "Name: Flask") {
+        # Dependencies already installed - just verify
+        Write-Host "   Core dependencies already installed " -NoNewline -ForegroundColor White
+        Write-Host "OK" -ForegroundColor Green
+    }
+    else {
+        Write-Host "   Installing core dependencies from " -NoNewline -ForegroundColor White
+        Write-Host "requirements.txt" -NoNewline -ForegroundColor Magenta
+        Write-Host "..." -ForegroundColor White
+        Write-Host ""
+
+        # Show installation progress (visible output)
+        & $pipPath install -r requirements.txt
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host ""
+            Write-Host "   Core dependencies installed " -NoNewline -ForegroundColor White
+            Write-Host "OK" -ForegroundColor Green
+        }
+        else {
+            Write-Host ""
+            Write-Host "   Core dependencies installation " -NoNewline -ForegroundColor White
+            Write-Host "FAILED" -ForegroundColor Red
+            Write-Error "pip install failed. Check the output above for errors."
+            exit 1
+        }
+    }
+}
+else {
+    Write-Warning "   requirements.txt not found. Skipping core dependencies."
+    $script:ErrorCount++
+}
+
+# 4. Install modular apps
+Write-Host "`n[Step 4/6] Installing modular apps..." -ForegroundColor Yellow
+
+$appsInstalled = 0
+
+if (Test-Path "apps/planning/setup.py") {
+    # Check if planning is already installed
+    $planningCheck = & $pipPath show planning 2>$null
+
+    if ($planningCheck -match "Name: planning") {
+        # Editable packages need to be reinstalled to update links, but we can do it quietly
+        Write-Host "   " -NoNewline
+        Write-Host "Planning app" -NoNewline -ForegroundColor Magenta
+        Write-Host " (re-linking)..." -NoNewline -ForegroundColor White
+        & $pipPath install -e apps/planning --quiet 2>&1 | Out-Null
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host " OK" -ForegroundColor Green
+            $appsInstalled++
+        }
+        else {
+            Write-Host " FAILED" -ForegroundColor Red
+            $script:ErrorCount++
+        }
+    }
+    else {
+        Write-Host "   Installing " -NoNewline -ForegroundColor White
+        Write-Host "Planning app" -NoNewline -ForegroundColor Magenta
+        Write-Host "..." -ForegroundColor White
+        Write-Host ""
+
+        & $pipPath install -e apps/planning
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host ""
+            Write-Host "   " -NoNewline
+            Write-Host "Planning app" -NoNewline -ForegroundColor Magenta
+            Write-Host " installed " -NoNewline -ForegroundColor White
+            Write-Host "OK" -ForegroundColor Green
+            $appsInstalled++
+        }
+        else {
+            Write-Host ""
+            Write-Host "   " -NoNewline
+            Write-Host "Planning app" -NoNewline -ForegroundColor Magenta
+            Write-Host " installation " -NoNewline -ForegroundColor White
+            Write-Host "FAILED" -ForegroundColor Red
+            Write-Warning "Check the output above for errors."
+            $script:ErrorCount++
+        }
+    }
+}
+else {
+    Write-Host "   Planning app not found (skipping)" -ForegroundColor Gray
+}
+
+if (Test-Path "apps/reports/setup.py") {
+    # Check if reports is already installed
+    $reportsCheck = & $pipPath show reports 2>$null
+
+    if ($reportsCheck -match "Name: reports") {
+        # Editable packages need to be reinstalled to update links, but we can do it quietly
+        Write-Host "   " -NoNewline
+        Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+        Write-Host " (re-linking)..." -NoNewline -ForegroundColor White
+        & $pipPath install -e apps/reports --quiet 2>&1 | Out-Null
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host " OK" -ForegroundColor Green
+            $appsInstalled++
+        }
+        else {
+            Write-Host " FAILED" -ForegroundColor Red
+            $script:ErrorCount++
+        }
+    }
+    else {
+        Write-Host "`n   Installing " -NoNewline -ForegroundColor White
+        Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+        Write-Host "..." -ForegroundColor White
+        Write-Host ""
+
+        & $pipPath install -e apps/reports
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host ""
+            Write-Host "   " -NoNewline
+            Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+            Write-Host " installed " -NoNewline -ForegroundColor White
+            Write-Host "OK" -ForegroundColor Green
+            $appsInstalled++
+        }
+        else {
+            Write-Host ""
+            Write-Host "   " -NoNewline
+            Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+            Write-Host " installation " -NoNewline -ForegroundColor White
+            Write-Host "FAILED" -ForegroundColor Red
+            Write-Warning "Check the output above for errors."
+            $script:ErrorCount++
+        }
+    }
+}
+else {
+    Write-Host "   Reports app not found (skipping)" -ForegroundColor Gray
+}
+
+
+# 5. Environment Configuration
+Write-Host "`n[Step 5/6] Configuring environment..." -ForegroundColor Yellow
 if (-not (Test-Path ".env")) {
     if (Test-Path ".env.example") {
         Copy-Item ".env.example" ".env"
-        Write-Host "   Created .env from .env.example" -ForegroundColor Green
+        Write-Host "   Created " -NoNewline -ForegroundColor White
+        Write-Host ".env" -NoNewline -ForegroundColor Magenta
+        Write-Host " from " -NoNewline -ForegroundColor White
+        Write-Host ".env.example" -NoNewline -ForegroundColor Magenta
+        Write-Host " " -NoNewline
+        Write-Host "OK" -ForegroundColor Green
     }
     else {
-        Write-Warning "   .env.example not found. Please create .env manually."
+        Write-Warning "   .env.example not found. You will need to create .env manually."
+        $script:ErrorCount++
     }
 }
 else {
-    Write-Host "   .env already exists." -ForegroundColor Gray
+    Write-Host "   " -NoNewline
+    Write-Host ".env" -NoNewline -ForegroundColor Magenta
+    Write-Host " already exists " -NoNewline -ForegroundColor White
+    Write-Host "OK" -ForegroundColor Green
 }
 
-# 5. Database Initialization (Optional check)
-Write-Host "`nChecking database..." -ForegroundColor Yellow
+# 6. Database Directory
+Write-Host "`n[Step 6/6] Setting up database directory..." -ForegroundColor Yellow
 if (-not (Test-Path "instance")) {
     New-Item -ItemType Directory -Path "instance" | Out-Null
+    Write-Host "   Created " -NoNewline -ForegroundColor White
+    Write-Host "instance/" -NoNewline -ForegroundColor Magenta
+    Write-Host " directory " -NoNewline -ForegroundColor White
+    Write-Host "OK" -ForegroundColor Green
+}
+else {
+    Write-Host "   " -NoNewline
+    Write-Host "instance/" -NoNewline -ForegroundColor Magenta
+    Write-Host " directory already exists " -NoNewline -ForegroundColor White
+    Write-Host "OK" -ForegroundColor Green
 }
 
-Write-Host "`nInstallation Complete!" -ForegroundColor Cyan
-Write-Host "To run the application:"
-Write-Host "1. Activate the environment: .\.venv\Scripts\Activate.ps1"
-Write-Host "2. Run the app: python run.py"
+# Final Summary
+Write-Host "`n========================================" -ForegroundColor Cyan
+if ($script:ErrorCount -eq 0) {
+    Write-Host "   Installation Complete!" -ForegroundColor Green
+}
+else {
+    Write-Host "   Installation completed with $($script:ErrorCount) warning(s)" -ForegroundColor Yellow
+}
+Write-Host "========================================`n" -ForegroundColor Cyan
+
+
+# Display next steps
+Write-Host ""
+Write-Host "================================================================" -ForegroundColor Cyan
+Write-Host "                        NEXT STEPS                              " -ForegroundColor Yellow
+Write-Host "================================================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  1. Activate the virtual environment:" -ForegroundColor White
+Write-Host "     .\.venv\Scripts\Activate.ps1" -ForegroundColor Magenta
+Write-Host ""
+Write-Host "  2. Run the application:" -ForegroundColor White
+Write-Host "     python run.py" -ForegroundColor Magenta
+Write-Host ""
+Write-Host "================================================================" -ForegroundColor Cyan
+Write-Host ""
+
