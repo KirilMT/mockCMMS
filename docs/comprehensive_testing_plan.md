@@ -595,14 +595,24 @@ testpaths = [
 
 ### 4.2. Test Fixtures (`tests/conftest.py`)
 
-**[ ] Enhance `conftest.py` with:**
--   `app` fixture: Creates Flask app in testing mode
--   `client` fixture: Provides test client for making requests
--   `db` fixture: Provides database session with auto-rollback
--   `sample_asset` fixture: Creates a sample asset for tests
--   `sample_mo` fixture: Creates a sample maintenance order
--   `sample_user` fixture: Creates a sample user
--   `auth_client` fixture: Provides authenticated test client
+**[x] Enhance `conftest.py` with:** ✅ **Completed: December 11, 2025**
+-   `app` fixture: Creates Flask app in testing mode ✅
+-   `client` fixture: Provides test client for making requests ✅
+-   `db_session` fixture: Provides database session with auto-rollback ✅
+-   `sample_asset` fixture: Creates a sample asset for tests ✅
+-   `sample_mo` fixture: Creates a sample maintenance order ✅
+-   `sample_user` fixture: Creates a sample user ✅
+-   `auth_client` fixture: Provides authenticated test client ✅
+
+**Bonus Fixtures Added:**
+-   `runner` fixture: CLI test runner for Click commands
+-   `sample_role` fixture: Sample role (Technician)
+-   `sample_admin_user` fixture: Admin user for permission tests
+-   `sample_team` fixture: Sample team with shift information
+-   `sample_skill` fixture: Sample skill (e.g., Welding)
+-   `sample_spare_part` fixture: Sample spare part with inventory
+-   `multiple_assets` fixture: 3 assets for list/filter testing
+-   `multiple_mos` fixture: Multiple MOs for list/pagination testing
 
 ---
 
@@ -610,7 +620,7 @@ testpaths = [
 
 ### Phase 1: Foundation (Days 1-2)
 -   [x] Configure `pytest.ini` and `pyproject.toml` ✅ **Completed: December 11, 2025** (Both files created)
--   [ ] Enhance `tests/conftest.py` with comprehensive fixtures
+-   [x] Enhance `tests/conftest.py` with comprehensive fixtures ✅ **Completed: December 11, 2025** (15 fixtures)
 -   [ ] Create `tests/test_app.py` (10 tests)
 -   [ ] Run and verify all tests pass
 
