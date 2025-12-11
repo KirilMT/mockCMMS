@@ -1,5 +1,5 @@
 # mockCMMS Project Roadmap
-_Updated November 30, 2025 - 1:42 PM_
+_Updated December 1, 2025_
 
 ---
 
@@ -26,7 +26,7 @@ _Updated November 30, 2025 - 1:42 PM_
 
 ---
 
-## � LIVING DOCUMENT GUIDELINES
+##  LIVING DOCUMENT GUIDELINES
 
 **This roadmap is a living document that evolves with the project.**
 
@@ -66,7 +66,7 @@ _Updated November 30, 2025 - 1:42 PM_
 
 ---
 
-## �🔥 ACTIVE WORK
+## 🔥 ACTIVE WORK
 
 _No active sprints at this time. All recent work has been completed._
 
@@ -138,13 +138,11 @@ The core application can be improved with the following features to support the 
     - **Status:** ✅ Completed (November 29, 2025)
     - **Goal:** Comprehensive code quality audit and security review to ensure professional, production-ready codebase
     - **Outcome:** Audit report generated with prioritized findings.
-    - **Reference:** [Audit Report](file:///C:/Users/kiril/.gemini/antigravity/brain/c76ad166-8bb1-40b2-9de6-ef2a962b4a0d/audit_report.md)
 
 - **[x] Implement Code Quality & Security Fixes** _(Priority: Critical)_
     - **Status:** ✅ Completed (November 29, 2025)
     - **Goal:** Address critical and high-priority issues identified in the audit
     - **Outcome:** Secured SECRET_KEY, improved logging, and cleaned up frontend code.
-    - **Reference:** [Walkthrough](file:///C:/Users/kiril/.gemini/antigravity/brain/c76ad166-8bb1-40b2-9de6-ef2a962b4a0d/walkthrough.md)
     - **Scope:**
         - Move `SECRET_KEY` to environment variables
         - Replace `print()` with `app.logger`
@@ -225,7 +223,8 @@ The core application can be improved with the following features to support the 
 #### Advanced Table Component Enhancements
 The Advanced Table component was recently completed with core functionality. The following features were identified but deferred for future development.
 
-- **[ ] Sidebar Toggle Implementation Improvement** _(Priority: Medium)_
+- **[x] Sidebar Toggle Implementation Improvement** _(Priority: Medium)_
+    - **Status:** ✅ Completed → Verified (December 1, 2025)
     - **Goal:** Improve sidebar toggle to use CSS class instead of DOM removal for better performance and state preservation
     - **Current Issue:** Sidebar toggle removes/adds element from DOM, which:
         - Loses internal state (scroll position, expanded sections)
@@ -318,7 +317,8 @@ Cross-cutting concerns that improve the overall project quality, team collaborat
         - Ensure proper GitHub team integration
     - **Reference:** [GitHub Issue #5](https://github.com/KirilMT/mockCMMS/issues/5)
 
-- **[ ] Restructure GEMINI.md Documentation** _(Priority: Low)_
+- **[x] Restructure GEMINI.md Documentation** _(Priority: Low)_
+    - **Status:** ✅ Completed → Verified (December 1, 2025)
     - **Goal:** Improve documentation structure for better clarity
     - **Changes Required:**
         - Move "Detailed Directory Structure" outside of section 3.1 (apps/workforceManager)

@@ -402,29 +402,7 @@ This repository is a monorepo that houses multiple, distinct but related project
 
 ## 3. Workspace Context: Core Packages
 
-### 3.1. `apps/planning`
-
-#### Overview
-
-The `planning` is a Flask-based web application for managing weekend technician task assignments. Its core purpose is to use skill-based matching and workload optimization to generate efficient work schedules.
-
-#### Core Architectural Shift
-
-A critical piece of context for this package is its ongoing transition from a simple task priority-based system to a more sophisticated **technology skill-based system** for task assignments.
-
--   **Database Impact**: The `technician_task_assignments.priority` column is obsolete. The new schema requires a many-to-many relationship between tasks and the technologies/skills required to perform them.
--   **Logic Impact**: The core assignment logic in `src/services/task_assigner.py` must now prioritize matching task skill requirements with technician skill sets.
-
-#### Key Technologies
-
--   **Backend:** Python, Flask
--   **Data Processing:** pandas, numpy
--   **Database:** SQLite
--   **Frontend:** HTML, CSS, JavaScript (vanilla)
--   **Testing:** Pytest
--   **Containerization:** Docker, Docker Compose
-
-#### Detailed Directory Structure
+### 3.1. Detailed Directory Structure
 
 The repository structure below shows the complete CMMS monorepo with all packages and key files. Pay special attention to the `planning` package, especially `src/services/task_assigner.py`, which contains the core skill-based task assignment logic.
 
@@ -502,12 +480,34 @@ mockCMMS/
 └── run.py                         # ⭐ Application entry point
 ```
 
+### 3.2. `apps/planning`
+
+#### Overview
+
+The `planning` is a Flask-based web application for managing weekend technician task assignments. Its core purpose is to use skill-based matching and workload optimization to generate efficient work schedules.
+
+#### Core Architectural Shift
+
+A critical piece of context for this package is its ongoing transition from a simple task priority-based system to a more sophisticated **technology skill-based system** for task assignments.
+
+-   **Database Impact**: The `technician_task_assignments.priority` column is obsolete. The new schema requires a many-to-many relationship between tasks and the technologies/skills required to perform them.
+-   **Logic Impact**: The core assignment logic in `src/services/task_assigner.py` must now prioritize matching task skill requirements with technician skill sets.
+
+#### Key Technologies
+
+-   **Backend:** Python, Flask
+-   **Data Processing:** pandas, numpy
+-   **Database:** SQLite
+-   **Frontend:** HTML, CSS, JavaScript (vanilla)
+-   **Testing:** Pytest
+-   **Containerization:** Docker, Docker Compose
+
 #### Local Development & Testing
 
 -   **Run the application:** From the repository root, execute `python run.py`. The main app will load enabled modular apps.
 -   **Run tests:** From the repository root, execute `pytest tests/` for main app tests or `pytest apps/planning/tests/` for planning tests.
 
-### 3.2. `apps/reports`
+### 3.3. `apps/reports`
 
 #### Overview
 
