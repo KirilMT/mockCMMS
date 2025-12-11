@@ -13,7 +13,7 @@ This document tracks all identified bugs in the mockCMMS application. Each bug i
 - **Affected Files**: Files that need to be modified
 
 > [!NOTE]
-> For Planning App bugs, see `apps/planning/docs/planning_bug_tracking.md`.
+> **Document Relationship:** This document tracks bugs in existing functionality. For new features and strategic improvements, see `mockCMMS_roadmap.md`. For Planning App bugs, see `apps/planning/docs/planning_bug_tracking.md`.
 
 ---
 
@@ -436,37 +436,6 @@ Apply `getDefaultWidth()` logic to all tables, not just MO table.
 
 ## 🔵 LOW PRIORITY BUGS
 
-### Bug #33: "Select All" Checkbox Behavior
-**Priority:** Low  
-**Status:** Open
-
-**Description:**  
-"Select All" checkbox in table header only selects visible rows on the current page. This is confusing if user wants to bulk action ALL rows across all pages.
-
-**Current Behavior:**
-- Click "Select All" checkbox in table header
-- Only visible rows on current page are selected
-- Rows on other pages are NOT selected
-- No indication that selection is limited to current page
-
-**Expected Behavior:**
-- Option 1: Select all rows across ALL pages (with warning about data volume)
-- Option 2: Show message "Selected X of Y rows on this page" to clarify
-- Option 3: Add dropdown with "Select all on page" vs "Select all X items"
-
-**Possible Solution:**
-1. Add indicator showing "X of Y selected"
-2. When "Select All" is checked, show option to "Select all X items"
-3. Track selection state in table core, not just visible checkboxes
-4. Consider performance for large datasets
-
-**Affected Files:**
-- `src/static/js/advanced-table/table-events.js` (checkbox logic)
-- `src/static/js/advanced-table/table-render.js` (selection state)
-- `src/static/css/advanced-table.css` (selection indicator styling)
-
----
-
 ### Bug #34: Long Text Overflow in Table Cells
 **Priority:** Low  
 **Status:** Open
@@ -560,8 +529,8 @@ Long descriptions or text content in table cells don't wrap or truncate properly
 | Critical | 1 | 0 | 0 | 1 | 2 |
 | High | 2 | 0 | 0 | 9 | 11 |
 | Medium | 0 | 2 | 0 | 11 | 13 |
-| Low | 2 | 0 | 0 | 3 | 5 |
-| **Total** | **5** | **2** | **0** | **24** | **31** |
+| Low | 1 | 0 | 0 | 3 | 4 |
+| **Total** | **4** | **2** | **0** | **24** | **30** |
 
 > [!WARNING]
 > **Critical Bug:** #35 (Delete Functionality Regression) requires immediate attention.
@@ -569,7 +538,7 @@ Long descriptions or text content in table cells don't wrap or truncate properly
 ### Open Bugs
 - **Critical:** #35 Delete Functionality Regression
 - **High:** #13 Table Views Save/Load, #36 Config Warning
-- **Low:** #33 Select All Checkbox, #34 Long Text Overflow
+- **Low:** #34 Long Text Overflow
 
 ### Partially Resolved
 - **Medium:** #7 Required Field Indicators (needs Users page), #8 Column Widths (needs all tables)

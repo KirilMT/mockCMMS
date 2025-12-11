@@ -3,6 +3,11 @@ _Updated December 1, 2025_
 
 ---
 
+> [!TIP]
+> **Document Relationship:** This roadmap tracks new features and strategic improvements. For bugs in existing functionality, see `bug_tracking.md`.
+
+---
+
 ## ⚠️ INSTRUCTIONS FOR AI ASSISTANTS
 
 **When working on this project:**
@@ -241,13 +246,37 @@ The Advanced Table component was recently completed with core functionality. The
         - `src/static/css/advanced-table.css` - Add `.collapsed` class styles
     - **Reference:** Identified during Test 2.1.1 execution (November 30, 2025)
 
-- **[ ] Advanced Filtering** _(Priority: Low)_
-    - **Goal:** Provide more sophisticated filtering capabilities
-    - **Features:**
-        - **Date Range Pickers:** Add calendar-based date range selection for date columns
-        - **Multi-Select Filters:** Allow filtering by multiple values simultaneously (e.g., select multiple teams or statuses)
-        - **Saved Filter Presets:** Create and save commonly-used filter combinations as reusable presets
-        - **Filter Templates:** Share filter patterns across users or teams
+- **[ ] Improved Form Input Controls & Table Filtering** _(Priority: Medium)_
+    - **Goal:** Implement proper input controls for predefined values and date-specific filtering
+    - **Phase 1 - Form Dropdowns (Critical):**
+        - Replace text inputs with dropdowns for fields with predefined options (Priority, Status, Order Type, Frequency)
+        - Distinguish single-select vs multi-select fields (use Select2 for multi-select)
+        - Add backend validation for predefined values
+        - Update database models with ENUM or foreign key constraints
+    - **Phase 2 - Date Filter Operators (Critical):**
+        - Replace text-based operators ("contains", "equals") with date-specific operators for date columns
+        - Implement: Exact Date, Before, After, Between, Is Empty, Is Not Empty
+        - Use HTML5 `<input type="date">` for date inputs
+        - Auto-detect date columns in Advanced Table
+    - **Phase 3 - Conflicting Filter Detection (High Complexity):**
+        - Develop algorithm to detect conflicting filter combinations (e.g., "Status = Open" AND "Status = Closed")
+        - Implement dynamic UI to prevent conflicts:
+            - Option A: Disable conflicting filter options in real-time
+            - Option B: Show warning when conflict detected with option to resolve
+            - Option C: Auto-suggest compatible filters based on current selection
+        - Handle conflicts across AND/OR logic groups
+        - Provide clear user feedback when filters would return no results
+    - **Phase 4 - Advanced Filtering (Optional Enhancement):**
+        - Calendar date pickers with visual widgets
+        - Relative date filters ("Today", "This Week", "Last 7 Days")
+        - Multi-select filters for status/team fields
+        - Saved filter presets and templates
+    - **Affected Files:**
+        - `src/templates/*_detail.html` (form dropdowns)
+        - `src/static/js/advanced-table/table-sidebar.js` (date operators, conflict detection)
+        - `src/static/js/advanced-table/table-data.js` (filter logic)
+        - `src/routes/main.py` (validation)
+        - `src/services/db_utils.py` (model constraints)
 
 - **[ ] Pagination** _(Priority: Low)_
     - **Goal:** Enable efficient navigation through large datasets
@@ -258,13 +287,21 @@ The Advanced Table component was recently completed with core functionality. The
         - **Page Info Display:** Show "Page X of Y" and "Showing 1-25 of 1000 rows"
         - **Persist Page Settings:** Remember page size preference in saved views
 
-- **[ ] Bulk Operations** _(Priority: Low)_
-    - **Goal:** Enable efficient multi-row operations
+- **[ ] Bulk Operations & Selection Improvements** _(Priority: Low)_
+    - **Goal:** Enable efficient multi-row operations and improve selection behavior
     - **Features:**
-        - **Multi-Row Selection:** Checkbox selection for multiple rows with select-all functionality
+        - **Enhanced Select All:** Fix current page-only limitation. Options:
+            - Select all rows across ALL pages (with warning)
+            - Show "Selected X of Y rows on this page" indicator
+            - Add dropdown: "Select all on page" vs "Select all X items"
+        - **Multi-Row Selection:** Track selection state across pagination
         - **Bulk Edit:** Edit common fields across multiple selected rows simultaneously
         - **Bulk Delete:** Delete multiple rows in a single operation with confirmation
         - **Export Selected Rows Only:** Export only the currently selected rows to CSV/Excel
+    - **Affected Files:**
+        - `src/static/js/advanced-table/table-events.js` (checkbox logic)
+        - `src/static/js/advanced-table/table-render.js` (selection state)
+        - `src/static/css/advanced-table.css` (selection indicator styling)
 
 - **[ ] Collaboration Features** _(Priority: Low)_
     - **Goal:** Enable team collaboration around table views and data
@@ -407,7 +444,10 @@ This application is intended for reporting and analytics. The following features
 - **UI Regression Automation:** End-to-end UI testing
 - **Fix GitHub Issue Templates:** Resolve template functionality issues
 
+**Medium Priority:**
+- **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific filter operators
+
 **Low Priority:**
-- **Advanced Table Enhancements:** Date pickers, multi-select, bulk operations, collaboration, automation
+- **Advanced Table Enhancements:** Bulk operations, collaboration, automation
 - **CODEOWNERS Update:** Add new team members
 - **GEMINI.md Restructure:** Improve documentation organization
