@@ -44,6 +44,27 @@ Instances of abusive, harassing, or otherwise unacceptable behavior may be repor
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
+## Coding Standards
+
+To maintain a high level of code quality, all contributions must adhere to the following standards.
+
+### 1. Code Style & Formatting
+-   **Python:** All Python code must follow the [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008/).
+-   **JavaScript:** All JavaScript code should adhere to the [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html).
+-   **General:** Code should be clear, concise, and well-formatted.
+
+### 2. Separation of Concerns
+To ensure the project is maintainable, we strictly enforce the separation of logic, styling, and structure.
+-   **No Inline Styles:** Do not use `style="..."` attributes in HTML. Use external CSS classes instead.
+-   **No Inline Scripts:** Do not use `<script>` tags within HTML files. All JavaScript must be in external `.js` files.
+-   **No Inline Event Handlers:** Do not use `onclick="..."` or other inline event handlers. Use event listeners in your JavaScript files.
+
+### 3. Comment Standards
+Good comments are crucial for explaining the "why" behind the code.
+-   **Explain Intent, Not Implementation:** Code should be self-explanatory. Comments should clarify complex business logic, algorithms, or non-obvious decisions.
+-   **No Issue References:** Do not reference bug or issue numbers in code comments (e.g., `// Fix for #123`). Use commit messages for this.
+-   **Professionalism:** Use proper grammar and punctuation. Avoid commented-out code blocks; remove them instead.
+
 ## Contribution Process
 
 ### Before contributing code

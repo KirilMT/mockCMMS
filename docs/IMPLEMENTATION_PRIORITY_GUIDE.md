@@ -88,18 +88,18 @@
    - Document commit message standards in `CONTRIBUTING.md`
    - Set up basic branch protection on `main` (require PRs)
    
-2. **[ ] Security Basics**
-   - Move `SECRET_KEY` to `.env` (if not done)
+2. **[x] Security Basics**
+   - Move `SECRET_KEY` to `.env` (if not done) (Verified 2025-12-11)
    - Document PAT token policy (Completed 2025-12-11)
    - Enable 2FA for your account
    - Enable Dependabot alerts (Completed 2025-12-11)
 
-3. **[ ] Documentation Standards**
+3. **[x] Documentation Standards**
    - Create/update `CONTRIBUTING.md` with:
-     - Code style guidelines (PEP 8, JS standards)
-     - Comment standards (no bug references)
-     - Separation of concerns rules
-   - Update `.gitignore` if needed
+     - Code style guidelines (PEP 8, JS standards) (Completed 2025-12-11)
+     - Comment standards (no bug references) (Completed 2025-12-11)
+     - Separation of concerns rules (Completed 2025-12-11)
+   - Update `.gitignore` if needed (Not needed -> Verified 2025-12-11)
 
 **Why do this first?**
 - Sets guardrails for the code quality work
