@@ -1,35 +1,56 @@
-## Description
+---
+name: 'Pull Request'
+about: 'Submit a pull request to merge code into the main branch.'
+title: 'feat: [Your feature description]'
+labels: ''
+assignees: ''
 
-Please include a summary of the changes and the related issue. Please also include relevant motivation and context. List any dependencies that are required for this change.
+---
 
-Fixes # (issue)
+### Description
 
-## Type of change
+A clear and concise summary of the changes. Please include the motivation and context for this change.
+*List any dependencies that are required for this change.*
 
-Please delete options that are not relevant.
+---
 
+### Related Issue
+
+*If this PR fixes a specific issue, link it here.*
+- Fixes #[issue_number]
+
+---
+
+### Type of Change
+
+*Please check the type of change that this PR introduces:*
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change requires a documentation update
+- [ ] Documentation update
+- [ ] Chore (e.g., refactoring, adding tests, updating dependencies)
 
-## How Has This Been Tested?
+---
 
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration
+### How Has This Been Tested?
 
-- [ ] Test A
-- [ ] Test B
+Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce.
 
-**Test Configuration**:
-* Firmware version:
-* Hardware:
-* Toolchain:
-* SDK:
+- [ ] Manual testing performed
+- [ ] Automated tests added or updated
 
-## Checklist:
+**Test Configuration (if applicable):**
+*   Firmware version:
+*   Hardware:
+*   Toolchain:
+*   SDK:
+
+---
+
+### Checklist
 
 - [ ] My code follows the style guidelines of this project
-- [ ] I have performed a self-review of my code
+- [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings
