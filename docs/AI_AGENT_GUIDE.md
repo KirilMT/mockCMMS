@@ -328,7 +328,40 @@ Status: ✅ COMPLETED
 - Updated IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
 ```
 
-#### Task: Create test_app.py 🔄 CURRENT TASK
+#### Task: Create test_app.py ✅ COMPLETED (December 11, 2025)
+```
+I'm on Week 2, Day 1-2 (Test Suite Foundation).
+
+Task: Create tests/test_app.py with 10 tests
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.1: Application Tests)
+2. Implement all 10 tests listed:
+   - test_create_app_default_config
+   - test_create_app_testing_config
+   - test_database_initialization
+   - test_blueprints_registered
+   - test_secret_key_from_env
+   - test_secret_key_fallback
+   - test_database_uri_configuration
+   - test_app_context
+   - test_request_context
+   - test_error_handlers_registered
+3. Show me the test file before creating
+4. After creation, run pytest to verify tests pass
+5. Mark all 10 tests [x] in comprehensive_testing_plan.md Section 3.1
+6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+
+Status: ✅ COMPLETED
+- Created tests/test_app.py with 18 tests (10 required + 8 bonus)
+- All 18 tests passing
+- Fixed pytest.ini inline comment issue
+- Updated comprehensive_testing_plan.md Section 3.1
+- Updated IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+- Coverage: 32.27% (app.py: 66.67%)
+```
+
+#### Task: Create test_api_routes.py (Days 3-4) 🔄 NEXT TASK
 ```
 I'm on Week 2, Day 1-2 (Test Suite Foundation).
 

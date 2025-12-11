@@ -61,61 +61,71 @@ This plan supersedes the previous code quality audit plan as the main priority.
 
 **Purpose:** Test the Flask application factory and configuration.
 
-**Test Cases:**
+**Test Cases:** ✅ **Completed: December 11, 2025** (18 tests total: 10 required + 8 bonus)
 
-1.  **[ ] `test_create_app_default_config`**
+1.  **[x] `test_create_app_default_config`** ✅
     -   Create app without specifying config
     -   Assert app is created successfully
     -   Assert default config values are set
 
-2.  **[ ] `test_create_app_testing_config`**
+2.  **[x] `test_create_app_testing_config`** ✅
     -   Create app with `TESTING=True`
     -   Assert testing mode is enabled
     -   Assert test database is used
 
-3.  **[ ] `test_database_initialization`**
+3.  **[x] `test_database_initialization`** ✅
     -   Create app and initialize database
     -   Assert `db` object exists
     -   Assert database tables are created
 
-4.  **[ ] `test_blueprints_registered`**
+4.  **[x] `test_blueprints_registered`** ✅
     -   Create app
     -   Assert `main_bp` is registered
     -   Assert `api_bp` is registered
     -   Assert `planning_bp` is registered (if enabled)
     -   Assert `reports_bp` is registered (if enabled)
 
-5.  **[ ] `test_secret_key_from_env`**
+5.  **[x] `test_secret_key_from_env`** ✅
     -   Set `SECRET_KEY` in environment
     -   Create app
     -   Assert app uses the environment's secret key
 
-6.  **[ ] `test_secret_key_fallback`**
+6.  **[x] `test_secret_key_fallback`** ✅
     -   Ensure `SECRET_KEY` is not in environment
     -   Create app
     -   Assert app generates a fallback secret key
 
-7.  **[ ] `test_database_uri_configuration`**
+7.  **[x] `test_database_uri_configuration`** ✅
     -   Create app
     -   Assert `SQLALCHEMY_DATABASE_URI` is set correctly
 
-8.  **[ ] `test_app_context`**
+8.  **[x] `test_app_context`** ✅
     -   Create app
     -   Push app context
     -   Assert context is active
     -   Pop context
 
-9.  **[ ] `test_request_context`**
+9.  **[x] `test_request_context`** ✅
     -   Create app
     -   Create request context
     -   Assert request context is active
 
-10. **[ ] `test_error_handlers_registered`**
+10. **[x] `test_error_handlers_registered`** ✅
     -   Create app
     -   Assert 404 error handler exists
     -   Assert 500 error handler exists (if implemented)
 
-**Estimated Tests:** 10
+**Bonus Tests Implemented:**
+11. `test_csrf_protection_enabled_in_production`
+12. `test_csrf_protection_disabled_in_testing`
+13. `test_sqlalchemy_track_modifications_disabled`
+14. `test_instance_folder_created`
+15. `test_planning_blueprint_enabled`
+16. `test_planning_blueprint_disabled`
+17. `test_reports_blueprint_enabled`
+18. `test_reports_blueprint_disabled`
+
+**Estimated Tests:** 10 (Actual: 18)
 
 ---
 
@@ -621,7 +631,7 @@ testpaths = [
 ### Phase 1: Foundation (Days 1-2)
 -   [x] Configure `pytest.ini` and `pyproject.toml` ✅ **Completed: December 11, 2025** (Both files created)
 -   [x] Enhance `tests/conftest.py` with comprehensive fixtures ✅ **Completed: December 11, 2025** (15 fixtures)
--   [ ] Create `tests/test_app.py` (10 tests)
+-   [x] Create `tests/test_app.py` (10 tests) ✅ **Completed: December 11, 2025** (18 tests, all passing)
 -   [ ] Run and verify all tests pass
 
 ### Phase 2: API Coverage (Days 3-4)
