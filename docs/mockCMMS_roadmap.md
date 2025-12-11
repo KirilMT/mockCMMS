@@ -1,5 +1,5 @@
 # mockCMMS Project Roadmap
-_Updated December 1, 2025_
+_Updated December 2, 2025_
 
 ---
 
@@ -139,10 +139,13 @@ The core application can be improved with the following features to support the 
 
 #### Code Quality & Architecture
 
+> **📋 Detailed Plan:** See [Core Code Quality Plan](core_code_quality_plan.md) for comprehensive audit and cleanup strategy
+
 - **[x] Project Validation & Code Quality Audit** _(Priority: Critical)_
     - **Status:** ✅ Completed (November 29, 2025)
     - **Goal:** Comprehensive code quality audit and security review to ensure professional, production-ready codebase
     - **Outcome:** Audit report generated with prioritized findings.
+    - **Note:** Initial audit completed. Comprehensive re-audit planned (see Core Code Quality Plan).
 
 - **[x] Implement Code Quality & Security Fixes** _(Priority: Critical)_
     - **Status:** ✅ Completed (November 29, 2025)
@@ -154,6 +157,27 @@ The core application can be improved with the following features to support the 
         - Remove `console.log()` from production JS
         - Fix inline styles and other maintenance issues
     - **Dependencies:** Follows Project Validation Audit
+    - **Note:** Initial fixes completed. Comprehensive cleanup planned (see Core Code Quality Plan).
+
+- **[ ] Core mockCMMS Code Quality Comprehensive Audit & Cleanup** _(Priority: Critical)_
+    - **Status:** 📋 Planning Phase
+    - **Goal:** Systematic, comprehensive audit and cleanup of all core mockCMMS code files
+    - **Detailed Plan:** [core_code_quality_plan.md](core_code_quality_plan.md)
+    - **Scope:**
+        - **Phase 1:** Python Backend Analysis (app.py, routes, services)
+        - **Phase 2:** JavaScript Frontend Analysis (Advanced Table, utilities)
+        - **Phase 3:** CSS Styling Analysis (main.css, advanced-table.css)
+        - **Phase 4:** HTML Templates Analysis (all templates in src/templates/)
+        - **Phase 5:** Cross-Cutting Concerns (naming, configuration, documentation)
+    - **Approach:**
+        - Analyze every single code file in core mockCMMS
+        - Identify issues: duplicates, bad practices, violations of standards
+        - Propose solutions and wait for user approval
+        - Implement approved fixes with comprehensive testing
+        - Commit after user confirmation
+    - **Testing:** Manual testing following `table_features_test_plan.md` methodology
+    - **Estimated Duration:** 2-3 weeks (9-14 days)
+    - **Dependencies:** None (can start immediately)
 
 - **[ ] Frontend Architecture Decision** _(Priority: High)_
     - **Goal:** Evaluate and decide on frontend technology stack migration strategy
@@ -465,7 +489,7 @@ This application is intended for reporting and analytics. The following features
 ## Summary of Key Unimplemented Features
 
 **Critical Priority:**
-- **Project Validation & Code Quality Audit:** Comprehensive security and quality review
+- **Core mockCMMS Code Quality Comprehensive Audit & Cleanup:** Systematic audit of all core code files ([Detailed Plan](core_code_quality_plan.md))
 
 **High Priority:**
 - **Line Conditions for Planning:** Standardize prerequisites for task execution
