@@ -21,6 +21,14 @@ These instructions apply to **all** coding tasks unless explicitly overridden by
     - Use proper grammar and punctuation
     - Keep comments concise and relevant
     - Remove commented-out code blocks
+-   **Code Separation (Separation of Concerns):**
+    - JavaScript code belongs in `.js` files only
+    - CSS code belongs in `.css` files only
+    - HTML code belongs in `.html` templates only
+    - Avoid inline styles (`style="..."`) - use CSS classes instead
+    - Avoid inline scripts (`<script>` in HTML) - use external `.js` files
+    - Avoid inline event handlers (`onclick="..."`) - use event listeners in JS files
+    - Exception: Inline code only when strictly necessary (e.g., dynamic backend values)
 -   **Conventions:** Adhere to the widely accepted style and formatting conventions for the target language or framework (e.g., PEP 8 for Python, Google JavaScript Style Guide, etc.).
 -   **Paradigm:** Prefer class-based object-oriented programming for languages that support it, unless a functional or procedural approach is clearly more suitable for a simple utility or script.
 -   **Maintainability:** Prioritize maintainability, scalability, and testability. Use modular design, meaningful naming, and separation of concerns.

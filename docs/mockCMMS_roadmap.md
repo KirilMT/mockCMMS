@@ -200,6 +200,24 @@ The core application can be improved with the following features to support the 
         - CSS: `/* Comment */`
     - **Action:** Audit all files and refactor comments to meet standards
 
+- **[ ] Separation of Concerns - Code Organization** _(Priority: High)_
+    - **Goal:** Ensure proper separation of HTML, CSS, and JavaScript code
+    - **Issues:**
+        - Inline JavaScript in HTML templates
+        - Inline CSS styles in HTML templates
+        - Mixed code types in single files
+    - **Standards:**
+        - JavaScript code belongs in `.js` files only
+        - CSS code belongs in `.css` files only
+        - HTML code belongs in `.html` templates only
+        - Inline styles/scripts only when strictly necessary (e.g., dynamic values from backend)
+    - **Scope:**
+        - Extract inline `<script>` blocks to separate `.js` files
+        - Extract inline `<style>` blocks to separate `.css` files
+        - Move inline `style="..."` attributes to CSS classes
+        - Move inline `onclick="..."` to event listeners in JS files
+    - **Action:** Audit all templates and refactor to proper file separation
+
 - **[ ] Structured Logging & Performance Monitoring** _(Priority: High)_
     - **Goal:** Implement enterprise-grade logging similar to `apps/planning`
     - **Features:**
@@ -455,6 +473,7 @@ This application is intended for reporting and analytics. The following features
 - **CI/CD Pipeline:** Automated testing, code quality, and deployment
 - **Team Collaboration Documentation:** GitHub workflows and setup automation
 - **Code Comments Cleanup:** Remove bug references, ensure professional descriptive comments
+- **Code Separation:** Proper separation of HTML, CSS, and JavaScript
 
 **Medium Priority:**
 - **Advanced Technician Tracking:** Availability, workload, and dynamic status
