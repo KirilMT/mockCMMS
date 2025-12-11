@@ -42,6 +42,96 @@ This plan supersedes the previous code quality audit plan as the main priority.
 
 ---
 
+## 1.1. Testing Philosophy: What Tests Actually Verify
+
+> [!IMPORTANT]
+> **Understanding Test Limitations:** The tests in this plan are **regression tests** written after code already exists. They verify **consistency** (behavior doesn't change) but NOT **correctness** (behavior is right). Complete code verification requires multiple complementary approaches.
+
+### What Our Tests DO Verify ✅
+
+1. **Regression Prevention** - Future changes won't break existing functionality
+2. **Behavior Documentation** - Tests document how the system currently works
+3. **API Contracts** - Tests show what data endpoints expect/return
+4. **Safe Refactoring** - Code can be restructured without breaking features
+5. **Syntax Correctness** - Code executes without runtime errors
+
+### What Our Tests DON'T Verify ❌
+
+1. **Business Logic Correctness** - Only that logic is CONSISTENT, not necessarily RIGHT
+2. **Code Quality** - Tests don't check style, complexity, or maintainability
+3. **Security Vulnerabilities** - Need dedicated security scanning tools
+4. **Performance** - Need separate performance/load testing
+5. **Requirements Compliance** - Need validation against business requirements
+
+### Complete Verification Strategy (4 Phases)
+
+Testing is just **Phase 1 of 4** in a complete code verification strategy:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 1: Regression Tests (THIS PLAN)                   ✅    │
+│  ─────────────────────────────────────────────────────────────  │
+│  • Verify current behavior doesn't break                        │
+│  • Document what code currently does                            │
+│  • Provide safety net for refactoring                           │
+│  • Tools: pytest, coverage.py                                   │
+│  • Duration: Week 2 (Current)                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 2: Code Quality Analysis (Week 3)               ⏳      │
+│  ─────────────────────────────────────────────────────────────  │
+│  • Verify code style and syntax (linting)                       │
+│  • Verify logic flow (type checking)                            │
+│  • Measure code complexity                                      │
+│  • Find code duplicates                                         ���
+│  • Scan for security vulnerabilities                            │
+│  • Tools: ruff, pylint, mypy, radon, bandit                     │
+│  • See: core_code_quality_plan.md                               │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 3: Requirements Validation (Week 4)             ⏳      │
+│  ─────────────────────────────────────────────────────────────  │
+│  • Review and document business requirements                    │
+│  • Validate code logic against requirements                     │
+│  • Add requirement-based test comments                          │
+│  • Document design decisions and rationale                      │
+│  • Create traceability matrix                                   │
+│  • Tools: Manual review, requirement docs                       │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 4: Enhanced Testing (Week 5+)                   ⏳      │
+│  ─────────────────────────────────────────────────────────────  │
+│  • Add integration tests (complete workflows)                   │
+│  • Add performance tests (load, stress testing)                 │
+│  • Add security tests (penetration, vulnerability)              │
+│  • Add edge case and boundary tests                             │
+│  • Tools: pytest-benchmark, locust, OWASP ZAP                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Verification Methods Summary
+
+| Method | What It Verifies | Tool/Phase |
+|--------|-----------------|-----------|
+| **Regression Tests** | Behavior consistency | pytest (Phase 1) |
+| **Linting** | Code style & syntax | ruff, pylint (Phase 2) |
+| **Type Checking** | Logic flow correctness | mypy (Phase 2) |
+| **Complexity Analysis** | Code maintainability | radon (Phase 2) |
+| **Duplicate Detection** | Code reusability | jscpd (Phase 2) |
+| **Security Scanning** | Vulnerability detection | bandit (Phase 2) |
+| **Requirements Review** | Business logic correctness | Manual (Phase 3) |
+| **Code Review** | Overall quality | Human judgment (Phase 3) |
+| **Integration Tests** | Workflow correctness | pytest (Phase 4) |
+| **Performance Tests** | Speed & efficiency | pytest-benchmark (Phase 4) |
+
+> [!NOTE]
+> **Current Focus:** Phase 1 (Regression Tests). Phases 2-4 are documented in `IMPLEMENTATION_PRIORITY_GUIDE.md` and `core_code_quality_plan.md`.
+
+---
+
 ## 2. Test Suite Statistics
 
 **Estimated Total Tests:** 80+ tests across 5 test files

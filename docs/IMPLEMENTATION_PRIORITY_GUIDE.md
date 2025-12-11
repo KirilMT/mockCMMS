@@ -35,6 +35,115 @@
 
 ---
 
+## 🔍 The 4-Phase Code Verification Strategy
+
+> [!IMPORTANT]
+> **Understanding Code Verification:** Tests alone are NOT enough to verify code correctness. Complete verification requires 4 complementary phases. We are currently on **Phase 1**.
+
+### Phase 1: Regression Tests (Week 2) ✅ **CURRENT**
+**What it verifies:** Behavior consistency  
+**Tools:** pytest, coverage.py  
+**Deliverable:** 88 automated tests with 70%+ coverage
+
+**Purpose:**
+- Verify current behavior doesn't break
+- Document what code currently does
+- Provide safety net for refactoring
+- Enable automated testing in CI/CD
+
+**Limitations:**
+- ❌ Does NOT verify if business logic is correct
+- ❌ Does NOT check code quality or style
+- ❌ Does NOT find security vulnerabilities
+- ✅ Only verifies behavior is CONSISTENT
+
+**See:** `comprehensive_testing_plan.md`
+
+---
+
+### Phase 2: Code Quality Analysis (Week 3) ⏳ **NEXT**
+**What it verifies:** Code style, syntax, complexity, security  
+**Tools:** ruff, pylint, mypy, radon, bandit, jscpd  
+**Deliverable:** Automated analysis reports + fixes
+
+**Purpose:**
+- Find style violations and syntax issues
+- Detect type errors and logic flow problems
+- Measure code complexity and maintainability
+- Identify code duplicates
+- Scan for security vulnerabilities
+
+**Approach:**
+1. **Phase 0 (Automated):** Run all tools, collect results
+2. **Phase 1 (Manual):** Review flagged issues, prioritize fixes
+3. **Fix:** Address critical and high-priority issues
+4. **Verify:** Re-run tools to confirm improvements
+
+**See:** `core_code_quality_plan.md` - Phase 0 & Phase 1
+
+---
+
+### Phase 3: Requirements Validation (Week 4) ⏳
+**What it verifies:** Business logic correctness  
+**Tools:** Manual review, requirement documents  
+**Deliverable:** Requirements validation report
+
+**Purpose:**
+- Review and document business requirements
+- Validate code logic against requirements
+- Add requirement-based test comments (explain WHY)
+- Document design decisions and rationale
+- Create traceability matrix (requirements → code → tests)
+
+**Process:**
+1. Gather all business requirements
+2. Map requirements to code sections
+3. Verify code implements requirements correctly
+4. Identify logic that doesn't match requirements
+5. Add "why" comments to tests and code
+
+**See:** `IMPLEMENTATION_PRIORITY_GUIDE.md` - Week 4
+
+---
+
+### Phase 4: Enhanced Testing (Week 5) ⏳
+**What it verifies:** Workflows, performance, security, edge cases  
+**Tools:** pytest-benchmark, locust, OWASP ZAP  
+**Deliverable:** Enhanced test suite
+
+**Purpose:**
+- Add integration tests (complete user workflows)
+- Add performance tests (load, stress testing)
+- Add security tests (penetration, vulnerability)
+- Add edge case and boundary tests
+
+**Test Types:**
+- **Integration:** End-to-end user journeys
+- **Performance:** Response times, throughput
+- **Security:** Input validation, injection prevention
+- **Edge Cases:** Boundary values, error conditions
+
+**See:** `comprehensive_testing_plan.md` - Phase 4
+
+---
+
+### Verification Methods Summary
+
+| Phase | What It Verifies | Tools | Week |
+|-------|-----------------|-------|------|
+| **Phase 1** | Behavior consistency | pytest, coverage.py | Week 2 ✅ |
+| **Phase 2** | Code style & security | ruff, pylint, mypy, bandit | Week 3 ⏳ |
+| **Phase 3** | Business logic | Manual review | Week 4 ⏳ |
+| **Phase 4** | Workflows & performance | pytest-benchmark, locust | Week 5 ⏳ |
+
+**Bottom Line:** 
+- **Phase 1 (Tests)** → Prevents regressions
+- **Phase 2 (Tools)** → Ensures quality & security
+- **Phase 3 (Review)** → Validates correctness
+- **Phase 4 (Enhanced)** → Proves robustness
+
+---
+
 ## 📚 Understanding the Three Key Documents
 
 ### 1. **Comprehensive Testing Plan** (`comprehensive_testing_plan.md`) - **ACTIVE NOW**
@@ -298,48 +407,142 @@
 
 ---
 
-### Week 3: Python Backend Audit + CI Enhancement
-**Monday-Wednesday: Python Audit**
-- [ ] Follow `core_code_quality_plan.md` Phase 1.1-1.3
-- [ ] Audit `app.py`, `db_utils.py`
-- [ ] Fix issues found
-- [ ] Create PRs following new workflow
+### Week 3: Code Quality Analysis (Automated + Manual)
 
-**Thursday-Friday: CI Enhancement**
-- [ ] Add Python linting (flake8, black) to CI
-- [ ] Configure coverage reporting
-- [ ] Test CI on a PR
-- [ ] Ensure all tests pass
+> [!IMPORTANT]
+> **Prerequisites:** All 88 tests from Week 2 must be passing before starting Week 3.
+
+**Monday: Phase 0 - Automated Analysis (CRITICAL FIRST STEP)**
+- [ ] Install code quality tools (ruff, pylint, mypy, radon, bandit, jscpd)
+- [ ] Run all automated tools and collect results in `audit_results/`
+- [ ] Create baseline metrics document
+- [ ] Categorize issues by severity (Critical/High/Medium/Low)
+- [ ] Create GitHub issues for critical and high priority items
+- [ ] **Deliverable:** `audit_results_full.txt` with all tool outputs
+
+**Tools to Run:**
+```bash
+ruff check src/                    # Fast linting
+pylint src/                        # Comprehensive linting
+mypy src/                          # Type checking
+radon cc src/ -a                   # Complexity analysis
+bandit -r src/                     # Security scanning
+jscpd src/                         # Duplicate detection
+pytest --cov=src tests/            # Coverage analysis
+```
+
+**Tuesday-Wednesday: Phase 1 - Python Backend Manual Audit**
+- [ ] Review `app.py` structure and configuration
+- [ ] Audit `db_utils.py` for SQL injection, query optimization
+- [ ] Audit `api.py` for RESTful conventions, validation
+- [ ] Audit `main.py` for route organization, form handling
+- [ ] Check PEP 8 compliance, docstrings, type hints
+- [ ] **Focus areas:** Issues flagged by automated tools
+
+**Thursday-Friday: Fix Critical & High Priority Issues**
+- [ ] Fix all security vulnerabilities (from bandit)
+- [ ] Fix type errors (from mypy)
+- [ ] Reduce complexity in high-complexity functions (from radon)
+- [ ] Fix major code duplicates (from jscpd)
+- [ ] Improve test coverage for critical paths
+- [ ] Run automated tools again to verify fixes
+- [ ] **Deliverable:** Python Backend Audit Report
 
 ---
 
-### Week 4-5: Frontend Audit + Complete CI
-**Week 4: JavaScript**
-- [ ] Follow `core_code_quality_plan.md` Phase 2
-- [ ] Audit all Advanced Table JS files
-- [ ] Fix issues, create PRs
-- [ ] Add ESLint to CI
+### Week 4: Requirements Validation + JavaScript Frontend
 
-**Week 5: CSS**
-- [ ] Follow `core_code_quality_plan.md` Phase 3
-- [ ] Audit CSS files
-- [ ] Extract inline styles from templates
-- [ ] Add CSS linting to CI
+**Monday-Tuesday: Phase 3 - Requirements Validation**
+- [ ] Review and document all business requirements for core features
+- [ ] Validate Python backend logic against requirements
+- [ ] Add requirement-based comments to tests (explain WHY tests exist)
+- [ ] Document design decisions and rationale
+- [ ] Create traceability matrix (requirements → code → tests)
+- [ ] Identify any logic that doesn't match requirements
+- [ ] **Deliverable:** Requirements Validation Report
+
+**Wednesday-Thursday: JavaScript Frontend Audit**
+- [ ] Run eslint on JavaScript files
+- [ ] Audit Advanced Table component architecture
+- [ ] Check for code duplication in JS modules
+- [ ] Review naming conventions and code style
+- [ ] Check proper use of const/let, arrow functions
+- [ ] Remove console.log statements
+- [ ] **Focus areas:** Issues from eslint and jscpd
+
+**Friday: Fix JavaScript Issues**
+- [ ] Fix high-priority JavaScript issues
+- [ ] Refactor duplicate code in JS
+- [ ] Add JSDoc comments where needed
+- [ ] Test all JavaScript functionality
+- [ ] **Deliverable:** JavaScript Audit Report
 
 ---
 
-### Week 6: Templates + Team Setup
-**Monday-Wednesday: Templates**
+### Week 5: Enhanced Testing (Phase 4) + Templates/CSS
+
+**Monday-Tuesday: Phase 4 - Enhanced Testing**
+- [ ] Add integration tests for complete user workflows
+  - [ ] Create asset → Create MO → Assign technician → Complete MO
+  - [ ] User registration → Login → Create data → Logout
+- [ ] Add performance tests using pytest-benchmark
+  - [ ] Test API endpoint response times
+  - [ ] Test database query performance
+  - [ ] Test page load times
+- [ ] Add security tests
+  - [ ] Test input validation on all forms
+  - [ ] Test SQL injection prevention
+  - [ ] Test XSS prevention
+- [ ] Add edge case and boundary tests
+  - [ ] Test with maximum data loads
+  - [ ] Test with empty/null values
+  - [ ] Test with special characters
+- [ ] **Deliverable:** Enhanced Test Suite Documentation
+
+**Wednesday-Thursday: Templates Audit**
 - [ ] Follow `core_code_quality_plan.md` Phase 4
-- [ ] Remove inline JavaScript
-- [ ] Remove inline CSS
-- [ ] Fix comment issues
+- [ ] Remove all inline JavaScript (move to .js files)
+- [ ] Remove all inline CSS (move to .css files)
+- [ ] Fix comment issues (no bug references)
+- [ ] Ensure proper template structure
+- [ ] **Deliverable:** Templates Audit Report
 
-**Thursday-Friday: Team Collaboration**
-- [ ] Create team structure documentation
-- [ ] Set up GitHub Projects board
-- [ ] Update CODEOWNERS
-- [ ] Create onboarding guide
+**Friday: CSS Audit**
+- [ ] Follow `core_code_quality_plan.md` Phase 3
+- [ ] Audit all CSS files for duplicates
+- [ ] Remove unused CSS selectors
+- [ ] Organize CSS by component
+- [ ] Add CSS linting to CI (stylelint)
+- [ ] **Deliverable:** CSS Audit Report
+
+---
+
+### Week 6: CI/CD Integration + Final Review
+
+**Monday-Tuesday: Integrate All Quality Tools into CI**
+- [ ] Add ruff linting to GitHub Actions workflow
+- [ ] Add pylint to GitHub Actions workflow
+- [ ] Add mypy type checking to GitHub Actions workflow
+- [ ] Add bandit security scanning to GitHub Actions workflow
+- [ ] Add pytest with coverage reporting (fail under 70%)
+- [ ] Add ESLint for JavaScript files
+- [ ] Add stylelint for CSS files
+- [ ] Configure quality gates (PR fails if any tool fails)
+- [ ] **Deliverable:** Complete CI/CD workflow file
+
+**Wednesday: Test CI Pipeline**
+- [ ] Create test PR to verify all CI checks work
+- [ ] Fix any CI configuration issues
+- [ ] Verify quality gates prevent bad code from merging
+- [ ] Document CI pipeline in README.md
+
+**Thursday-Friday: Final Code Review & Documentation**
+- [ ] Run all automated tools one final time
+- [ ] Compare metrics to baseline (show improvement)
+- [ ] Review all audit reports
+- [ ] Update all documentation to reflect changes
+- [ ] Create summary report of all improvements
+- [ ] **Deliverable:** Final Quality Report
 
 ---
 

@@ -187,6 +187,163 @@ This document outlines a comprehensive, systematic approach to auditing and impr
 
 ---
 
+## 🤖 Phase 0: Automated Code Quality Analysis (PREREQUISITE)
+
+> [!IMPORTANT]
+> **Run BEFORE Manual Audit:** Before starting the detailed manual phase-by-phase audit, run all automated tools to identify issues quickly. This provides a baseline and guides where to focus manual review efforts.
+
+### Why Automated Analysis First?
+
+1. **Faster Issue Detection** - Tools find problems in seconds vs. hours of manual review
+2. **Comprehensive Coverage** - Tools analyze entire codebase systematically
+3. **Objective Metrics** - Provides quantifiable measurements (complexity scores, coverage %)
+4. **Guided Manual Review** - Directs human attention to problem areas
+5. **Repeatable** - Can be run continuously in CI/CD
+
+### Automated Tools & What They Verify
+
+| Tool | Purpose | What It Catches | Command |
+|------|---------|----------------|---------|
+| **ruff** | Fast Python linter | Style violations, unused imports, syntax issues | `ruff check src/` |
+| **pylint** | Comprehensive linter | Code smells, complexity, naming issues | `pylint src/` |
+| **mypy** | Static type checker | Type errors, logic flow issues | `mypy src/` |
+| **radon** | Complexity analyzer | High complexity functions, maintainability index | `radon cc src/ -a` |
+| **bandit** | Security scanner | Security vulnerabilities, unsafe patterns | `bandit -r src/` |
+| **jscpd** | Duplicate detector | Copy-paste code, similar blocks | `jscpd src/` |
+| **pytest --cov** | Coverage analyzer | Untested code paths | `pytest --cov=src tests/` |
+
+### Phase 0 Execution Steps
+
+#### Step 1: Install All Tools
+
+```bash
+# Python tools
+pip install ruff pylint mypy radon bandit pytest-cov
+
+# JavaScript tools (Node.js required)
+npm install -g jscpd eslint
+```
+
+#### Step 2: Run Each Tool and Collect Results
+
+```bash
+# Create results directory
+mkdir -p audit_results
+
+# 1. Ruff - Fast linting
+ruff check src/ --output-format=text > audit_results/ruff_report.txt
+
+# 2. Pylint - Comprehensive linting  
+pylint src/ --output-format=text > audit_results/pylint_report.txt
+
+# 3. Mypy - Type checking
+mypy src/ > audit_results/mypy_report.txt
+
+# 4. Radon - Complexity analysis
+radon cc src/ -a -s > audit_results/radon_complexity.txt
+radon mi src/ -s > audit_results/radon_maintainability.txt
+
+# 5. Bandit - Security scanning
+bandit -r src/ -f txt -o audit_results/bandit_security.txt
+
+# 6. JSCPD - Duplicate detection
+jscpd src/ --output audit_results/duplicates_report.txt
+
+# 7. Coverage - Test coverage
+pytest --cov=src --cov-report=term --cov-report=html:audit_results/coverage_html tests/ > audit_results/coverage_report.txt
+```
+
+#### Step 3: Analyze and Prioritize Issues
+
+**Create an issues summary:**
+
+```bash
+# Combine all results into summary
+cat audit_results/*.txt > audit_results/audit_results_full.txt
+```
+
+**Categorize by severity:**
+
+1. **Critical (Fix Immediately)**
+   - Security vulnerabilities (bandit)
+   - Type errors (mypy)
+   - High complexity (radon CC > 15)
+
+2. **High Priority (Fix Soon)**
+   - Code duplicates >10 lines (jscpd)
+   - Low test coverage (<70%) (pytest-cov)
+   - Major pylint violations (scoring < 7.0)
+
+3. **Medium Priority (Fix This Sprint)**
+   - Style violations (ruff, pylint)
+   - Medium complexity (radon CC 10-15)
+   - Maintainability index < 20
+
+4. **Low Priority (Technical Debt)**
+   - Minor style issues
+   - Missing docstrings
+   - Low complexity improvements
+
+#### Step 4: Document Baseline Metrics
+
+**Create `audit_results/baseline_metrics.md`:**
+
+```markdown
+# Baseline Code Quality Metrics
+**Date:** [Current Date]
+**Commit:** [Git SHA]
+
+## Python Code Quality
+- **Ruff Issues:** [Count]
+- **Pylint Score:** [Score/10]
+- **Mypy Errors:** [Count]
+- **Average Complexity:** [Score]
+- **Maintainability Index:** [Score]
+- **Security Issues:** [Count]
+
+## Test Coverage
+- **Overall Coverage:** [%]
+- **Critical Paths Coverage:** [%]
+- **Untested Files:** [Count]
+
+## Code Duplicates
+- **Duplicate Blocks:** [Count]
+- **Duplicate Lines:** [Count]
+- **Duplicate Percentage:** [%]
+
+## Goals (After Audit)
+- Ruff: 0 issues
+- Pylint: 9.0+/10
+- Mypy: 0 errors
+- Complexity: <10 average
+- Security: 0 issues
+- Coverage: >80%
+- Duplicates: <2%
+```
+
+### Phase 0 Deliverables
+
+- [ ] **`audit_results/` directory** - All tool outputs
+- [ ] **`audit_results_full.txt`** - Combined results
+- [ ] **`baseline_metrics.md`** - Initial measurements
+- [ ] **`priority_issues.md`** - Categorized issue list
+- [ ] **GitHub Issues created** - For critical/high priority items
+
+### Integration with Manual Phases
+
+**After Phase 0 completion:**
+
+- **Phase 1 (Python Backend)** - Focus on areas flagged by ruff, pylint, mypy, radon, bandit
+- **Phase 2 (JavaScript Frontend)** - Focus on areas flagged by eslint, jscpd
+- **Phase 3 (Templates)** - Focus on areas flagged by duplicate detection
+- **Phase 4 (CSS)** - Focus on duplicate selectors and unused styles
+- **Phase 5 (Standards)** - Use metrics to verify improvements
+
+> [!NOTE]
+> **Continuous Monitoring:** After initial analysis, add these tools to CI/CD to prevent regression. See Phase 6 for CI integration details.
+
+---
+
 ## 🔍 Audit Phases
 
 ### Phase 1: Python Backend Analysis (Priority: Critical)
