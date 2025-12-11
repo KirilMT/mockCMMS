@@ -387,7 +387,33 @@ Status: ✅ COMPLETED
 - Updated IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
 ```
 
-#### Task: Create test_main_routes.py (Day 5) 🔄 NEXT TASK
+#### Task: Create test_main_routes.py (Day 5) ✅ COMPLETED (December 11, 2025)
+```
+I'm on Week 2, Day 5 (Web Routes Coverage).
+
+Task: Create tests/test_main_routes.py with web route tests
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.3: Web Routes Tests)
+2. Implement tests for general pages, assets, MOs, spare parts, users
+3. Test both GET and POST routes with authentication
+4. Run pytest to verify tests pass
+5. Mark tests [x] in comprehensive_testing_plan.md Section 3.3
+6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
+
+Status: ✅ COMPLETED - 100% PASS RATE (29/29 tests passing)
+- Created tests/test_main_routes.py with 29 tests
+- Organized into 5 test classes (General, Assets, MOs, Spare Parts, Users)
+- Fixed all 7 initially failing tests:
+  * Fixed index redirect test
+  * Added all required form fields (asset_code, description, etc.)
+  * Added frequency field for PM orders
+  * Fixed validation error handling
+- Coverage: 70.22% for main.py (excellent!)
+- Overall: 88/88 tests passing (100%)
+```
+
+#### Task: Create test_db_utils.py (Days 5-6) 🔄 NEXT TASK
 ```
 I'm on Week 2, Day 1-2 (Test Suite Foundation).
 

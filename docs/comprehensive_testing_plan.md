@@ -143,255 +143,212 @@ This plan supersedes the previous code quality audit plan as the main priority.
 - Fixed Asset API: Changed `location` → `asset_code`, `asset_type`, `cost_center`
 - Fixed SparePart API: Changed `name`/`quantity` → `description`/`stock_quantity`
 
-#### Assets API (`/v1/assets`) - ✅ All 10 tests passing
+#### Assets API (`/v1/assets`)
 
 1.  **[x] `test_get_assets_empty`** ✅
+    -   GET `/v1/assets` with no assets in database
+    -   Assert 200 status
+    -   Assert empty list returned
+
 2.  **[x] `test_get_assets_with_data`** ✅
-3.  **[x] `test_get_asset_by_id_success`** ✅
-4.  **[x] `test_get_asset_by_id_not_found`** ✅
-5.  **[x] `test_add_asset_success`** ✅
-6.  **[x] `test_add_asset_missing_name`** ✅
-7.  **[x] `test_update_asset_success`** ✅
-8.  **[x] `test_update_asset_not_found`** ✅
-9.  **[x] `test_delete_asset_success`** ✅
-10. **[x] `test_delete_asset_not_found`** ✅
-
-#### Maintenance Orders API (`/v1/mos`) - ✅ All 11 tests passing
-
-11. **[x] `test_get_mos_empty`** ✅
-12. **[x] `test_get_mos_with_data`** ✅
-13. **[x] `test_get_mo_by_id_success`** ✅
-14. **[x] `test_get_mo_by_id_not_found`** ✅
-15. **[x] `test_add_mo_success`** ✅
-16. **[x] `test_add_mo_missing_required_fields`** ✅
-17. **[x] `test_add_mo_with_skills`** ✅ (Bonus test)
-18. **[x] `test_update_mo_success`** ✅
-19. **[x] `test_update_mo_not_found`** ✅
-20. **[x] `test_delete_mo_success`** ✅
-21. **[x] `test_delete_mo_not_found`** ✅
-
-#### Spare Parts API (`/v1/spare_parts`) - ✅ All 10 tests passing
-
-22. **[x] `test_get_spare_parts_empty`** ✅
-23. **[x] `test_get_spare_parts_with_data`** ✅
-24. **[x] `test_get_spare_part_by_id_success`** ✅
-25. **[x] `test_get_spare_part_by_id_not_found`** ✅
-26. **[x] `test_add_spare_part_success`** ✅
-27. **[x] `test_add_spare_part_missing_required_fields`** ✅
-28. **[x] `test_update_spare_part_success`** ✅
-29. **[x] `test_update_spare_part_not_found`** ✅
-30. **[x] `test_delete_spare_part_success`** ✅
-31. **[x] `test_delete_spare_part_not_found`** ✅
-
-#### Users API (`/v1/users`) - ✅ All 10 tests passing
-
-32. **[x] `test_get_users_empty`** ✅
-33. **[x] `test_get_users_with_data`** ✅
-34. **[x] `test_get_user_by_id_success`** ✅
-35. **[x] `test_get_user_by_id_not_found`** ✅
-36. **[x] `test_add_user_success`** ✅
-37. **[x] `test_add_user_missing_required_fields`** ✅
-38. **[x] `test_update_user_success`** ✅
-39. **[x] `test_update_user_not_found`** ✅
-40. **[x] `test_delete_user_success`** ✅
-41. **[x] `test_delete_user_not_found`** ✅
-
-**Estimated Tests:** 41 (Actual: 41)
+    -   Add 3 assets to database
+    -   GET `/v1/assets`
+    -   Assert 200 status
     -   Assert 3 assets returned
     -   Assert each asset has required fields
 
-3.  **[ ] `test_get_asset_by_id_success`**
+3.  **[x] `test_get_asset_by_id_success`** ✅
     -   Add an asset to database
     -   GET `/v1/assets/<id>`
     -   Assert 200 status
     -   Assert correct asset data returned
 
-4.  **[ ] `test_get_asset_by_id_not_found`**
+4.  **[x] `test_get_asset_by_id_not_found`** ✅
     -   GET `/v1/assets/999` (non-existent ID)
     -   Assert 404 status
     -   Assert error message returned
 
-5.  **[ ] `test_add_asset_success`**
+5.  **[x] `test_add_asset_success`** ✅
     -   POST `/v1/assets` with valid data
     -   Assert 201 status
     -   Assert asset created in database
     -   Assert returned data matches input
 
-6.  **[ ] `test_add_asset_missing_name`**
+6.  **[x] `test_add_asset_missing_name`** ✅
     -   POST `/v1/assets` without `name` field
     -   Assert 400 status
     -   Assert error message about missing name
 
-7.  **[ ] `test_update_asset_success`**
+7.  **[x] `test_update_asset_success`** ✅
     -   Add an asset to database
     -   PUT `/v1/assets/<id>` with updated data
     -   Assert 200 status
     -   Assert asset updated in database
 
-8.  **[ ] `test_update_asset_not_found`**
+8.  **[x] `test_update_asset_not_found`** ✅
     -   PUT `/v1/assets/999` with valid data
     -   Assert 404 status
 
-9.  **[ ] `test_delete_asset_success`**
+9.  **[x] `test_delete_asset_success`** ✅
     -   Add an asset to database
     -   DELETE `/v1/assets/<id>`
     -   Assert 200 status
     -   Assert asset removed from database
 
-10. **[ ] `test_delete_asset_not_found`**
+10. **[x] `test_delete_asset_not_found`** ✅
     -   DELETE `/v1/assets/999`
     -   Assert 404 status
 
 #### Maintenance Orders API (`/v1/mos`)
 
-11. **[ ] `test_get_mos_empty`**
+11. **[x] `test_get_mos_empty`** ✅
     -   GET `/v1/mos` with no MOs in database
     -   Assert 200 status
     -   Assert empty list returned
 
-12. **[ ] `test_get_mos_with_data`**
+12. **[x] `test_get_mos_with_data`** ✅
     -   Add 3 MOs to database
     -   GET `/v1/mos`
     -   Assert 200 status
     -   Assert 3 MOs returned
 
-13. **[ ] `test_get_mo_by_id_success`**
+13. **[x] `test_get_mo_by_id_success`** ✅
     -   Add an MO to database
     -   GET `/v1/mos/<id>`
     -   Assert 200 status
     -   Assert correct MO data returned
 
-14. **[ ] `test_get_mo_by_id_not_found`**
+14. **[x] `test_get_mo_by_id_not_found`** ✅
     -   GET `/v1/mos/999`
     -   Assert 404 status
 
-15. **[ ] `test_add_mo_success`**
+15. **[x] `test_add_mo_success`** ✅
     -   POST `/v1/mos` with valid data (asset_id, description, order_type)
     -   Assert 201 status
     -   Assert MO created in database
 
-16. **[ ] `test_add_mo_missing_required_fields`**
+16. **[x] `test_add_mo_missing_required_fields`** ✅
     -   POST `/v1/mos` without `asset_id`
     -   Assert 400 status
 
-17. **[ ] `test_add_mo_with_skills`**
+17. **[x] `test_add_mo_with_skills`** ✅
     -   POST `/v1/mos` with `required_skills` array
     -   Assert 201 status
     -   Assert skills associated with MO
 
-18. **[ ] `test_update_mo_success`**
+18. **[x] `test_update_mo_success`** ✅
     -   Add an MO to database
     -   PUT `/v1/mos/<id>` with updated data
     -   Assert 200 status
     -   Assert MO updated in database
 
-19. **[ ] `test_update_mo_not_found`**
+19. **[x] `test_update_mo_not_found`** ✅
     -   PUT `/v1/mos/999` with valid data
     -   Assert 404 status
 
-20. **[ ] `test_delete_mo_success`**
+20. **[x] `test_delete_mo_success`** ✅
     -   Add an MO to database
     -   DELETE `/v1/mos/<id>`
     -   Assert 200 status
     -   Assert MO removed from database
 
-21. **[ ] `test_delete_mo_not_found`**
+21. **[x] `test_delete_mo_not_found`** ✅
     -   DELETE `/v1/mos/999`
     -   Assert 404 status
 
 #### Spare Parts API (`/v1/spare_parts`)
 
-22. **[ ] `test_get_spare_parts_empty`**
+22. **[x] `test_get_spare_parts_empty`** ✅
     -   GET `/v1/spare_parts`
     -   Assert 200 status
     -   Assert empty list
 
-23. **[ ] `test_get_spare_parts_with_data`**
+23. **[x] `test_get_spare_parts_with_data`** ✅
     -   Add 3 spare parts to database
     -   GET `/v1/spare_parts`
     -   Assert 200 status
     -   Assert 3 parts returned
 
-24. **[ ] `test_get_spare_part_by_id_success`**
+24. **[x] `test_get_spare_part_by_id_success`** ✅
     -   Add a spare part to database
     -   GET `/v1/spare_parts/<id>`
     -   Assert 200 status
 
-25. **[ ] `test_get_spare_part_by_id_not_found`**
+25. **[x] `test_get_spare_part_by_id_not_found`** ✅
     -   GET `/v1/spare_parts/999`
     -   Assert 404 status
 
-26. **[ ] `test_add_spare_part_success`**
+26. **[x] `test_add_spare_part_success`** ✅
     -   POST `/v1/spare_parts` with valid data
     -   Assert 201 status
 
-27. **[ ] `test_add_spare_part_missing_required_fields`**
+27. **[x] `test_add_spare_part_missing_required_fields`** ✅
     -   POST `/v1/spare_parts` without required fields
     -   Assert 400 status
 
-28. **[ ] `test_update_spare_part_success`**
+28. **[x] `test_update_spare_part_success`** ✅
     -   Add a spare part to database
     -   PUT `/v1/spare_parts/<id>` with updated data
     -   Assert 200 status
 
-29. **[ ] `test_update_spare_part_not_found`**
+29. **[x] `test_update_spare_part_not_found`** ✅
     -   PUT `/v1/spare_parts/999`
     -   Assert 404 status
 
-30. **[ ] `test_delete_spare_part_success`**
+30. **[x] `test_delete_spare_part_success`** ✅
     -   Add a spare part to database
     -   DELETE `/v1/spare_parts/<id>`
     -   Assert 200 status
 
-31. **[ ] `test_delete_spare_part_not_found`**
+31. **[x] `test_delete_spare_part_not_found`** ✅
     -   DELETE `/v1/spare_parts/999`
     -   Assert 404 status
 
 #### Users API (`/v1/users`)
 
-32. **[ ] `test_get_users_empty`**
+32. **[x] `test_get_users_empty`** ✅
     -   GET `/v1/users`
     -   Assert 200 status
     -   Assert empty list
 
-33. **[ ] `test_get_users_with_data`**
+33. **[x] `test_get_users_with_data`** ✅
     -   Add 3 users to database
     -   GET `/v1/users`
     -   Assert 200 status
     -   Assert 3 users returned
 
-34. **[ ] `test_get_user_by_id_success`**
+34. **[x] `test_get_user_by_id_success`** ✅
     -   Add a user to database
     -   GET `/v1/users/<id>`
     -   Assert 200 status
 
-35. **[ ] `test_get_user_by_id_not_found`**
+35. **[x] `test_get_user_by_id_not_found`** ✅
     -   GET `/v1/users/999`
     -   Assert 404 status
 
-36. **[ ] `test_add_user_success`**
+36. **[x] `test_add_user_success`** ✅
     -   POST `/v1/users` with valid data
     -   Assert 201 status
 
-37. **[ ] `test_add_user_missing_required_fields`**
+37. **[x] `test_add_user_missing_required_fields`** ✅
     -   POST `/v1/users` without username
     -   Assert 400 status
 
-38. **[ ] `test_update_user_success`**
+38. **[x] `test_update_user_success`** ✅
     -   Add a user to database
     -   PUT `/v1/users/<id>` with updated data
     -   Assert 200 status
 
-39. **[ ] `test_update_user_not_found`**
+39. **[x] `test_update_user_not_found`** ✅
     -   PUT `/v1/users/999`
     -   Assert 404 status
 
-40. **[ ] `test_delete_user_success`**
+40. **[x] `test_delete_user_success`** ✅
     -   Add a user to database
     -   DELETE `/v1/users/<id>`
     -   Assert 200 status
 
-41. **[ ] `test_delete_user_not_found`**
+41. **[x] `test_delete_user_not_found`** ✅
     -   DELETE `/v1/users/999`
     -   Assert 404 status
 
@@ -403,68 +360,70 @@ This plan supersedes the previous code quality audit plan as the main priority.
 
 **Purpose:** Test all web page routes for correct rendering and form handling.
 
+**✅ Completed: December 11, 2025** (29 tests, all passing - 100%)
+
 **Test Cases:**
 
 #### General Pages
 
-1.  **[ ] `test_index_page_loads`**
+1.  **[x] `test_index_page_loads`** ✅
     -   GET `/`
     -   Assert 200 status
     -   Assert "Dashboard" or expected content in response
 
-2.  **[ ] `test_tickets_page_loads`**
+2.  **[x] `test_tickets_page_loads`** ✅
     -   GET `/tickets/TICKET-001`
     -   Assert 200 status
 
-3.  **[ ] `test_maintenance_grid_page_loads`**
+3.  **[x] `test_maintenance_grid_page_loads`** ✅
     -   GET `/maintenance_grid/1,2,3`
     -   Assert 200 status
 
 #### Assets Pages
 
-4.  **[ ] `test_assets_list_page_loads`**
+4.  **[x] `test_assets_list_page_loads`** ✅
     -   GET `/assets`
     -   Assert 200 status
     -   Assert page contains assets table or expected content
 
-5.  **[ ] `test_assets_add_page_get`**
+5.  **[x] `test_assets_add_page_get`** ✅
     -   GET `/assets/add`
     -   Assert 200 status
     -   Assert form is present
 
-6.  **[ ] `test_assets_add_page_post_success`**
+6.  **[x] `test_assets_add_page_post_success`** ✅
     -   POST `/assets/add` with valid form data
     -   Assert redirect to assets list (302 or 303)
     -   Assert asset created in database
 
-7.  **[ ] `test_assets_add_page_post_validation_error`**
+7.  **[x] `test_assets_add_page_post_validation_error`** ✅
     -   POST `/assets/add` with invalid data
     -   Assert 200 status (form re-rendered with errors)
     -   Assert error message displayed
 
-8.  **[ ] `test_asset_detail_page_loads`**
+8.  **[x] `test_asset_detail_page_loads`** ✅
     -   Add an asset to database
     -   GET `/assets/<id>`
     -   Assert 200 status
     -   Assert asset details displayed
 
-9.  **[ ] `test_asset_detail_page_not_found`**
+9.  **[x] `test_asset_detail_page_not_found`** ✅
     -   GET `/assets/999`
     -   Assert 404 status
 
-10. **[ ] `test_asset_edit_page_get`**
+10. **[x] `test_asset_edit_page_get`** ✅
     -   Add an asset to database
     -   GET `/assets/<id>/edit`
     -   Assert 200 status
     -   Assert form pre-filled with asset data
 
-11. **[ ] `test_asset_edit_page_post_success`**
+11. **[x] `test_asset_edit_page_post_success`** ✅
     -   Add an asset to database
     -   POST `/assets/<id>/edit` with updated data
     -   Assert redirect
     -   Assert asset updated in database
 
-12. **[ ] `test_asset_delete_post_success`**
+12. **[x] `test_asset_delete_post_success`** ✅
     -   Add an asset to database
     -   POST `/assets/<id>/delete`
     -   Assert redirect
@@ -472,38 +431,38 @@ This plan supersedes the previous code quality audit plan as the main priority.
 
 #### Maintenance Orders Pages
 
-13. **[ ] `test_mos_list_page_loads`**
+13. **[x] `test_mos_list_page_loads`** ✅
     -   GET `/maintenance_orders`
     -   Assert 200 status
 
-14. **[ ] `test_mo_add_page_get`**
+14. **[x] `test_mo_add_page_get`** ✅
     -   GET `/maintenance_orders/add`
     -   Assert 200 status
     -   Assert form is present
 
-15. **[ ] `test_mo_add_page_post_success`**
+15. **[x] `test_mo_add_page_post_success`** ✅
     -   Add an asset to database
     -   POST `/maintenance_orders/add` with valid data
     -   Assert redirect
     -   Assert MO created in database
 
-16. **[ ] `test_mo_detail_page_loads`**
+16. **[x] `test_mo_detail_page_loads`** ✅
     -   Add an MO to database
     -   GET `/maintenance_orders/<id>`
     -   Assert 200 status
 
-17. **[ ] `test_mo_edit_page_get`**
+17. **[x] `test_mo_edit_page_get`** ✅
     -   Add an MO to database
     -   GET `/maintenance_orders/<id>/edit`
     -   Assert 200 status
 
-18. **[ ] `test_mo_edit_page_post_success`**
+18. **[x] `test_mo_edit_page_post_success`** ✅
     -   Add an MO to database
     -   POST `/maintenance_orders/<id>/edit` with updated data
     -   Assert redirect
     -   Assert MO updated in database
 
-19. **[ ] `test_mo_delete_post_success`**
+19. **[x] `test_mo_delete_post_success`** ✅
     -   Add an MO to database
     -   POST `/maintenance_orders/<id>/delete`
     -   Assert redirect
@@ -511,36 +470,36 @@ This plan supersedes the previous code quality audit plan as the main priority.
 
 #### Spare Parts Pages
 
-20. **[ ] `test_spare_parts_list_page_loads`**
+20. **[x] `test_spare_parts_list_page_loads`** ✅
     -   GET `/spare_parts`
     -   Assert 200 status
 
-21. **[ ] `test_spare_part_add_page_get`**
+21. **[x] `test_spare_part_add_page_get`** ✅
     -   GET `/spare_parts/add`
     -   Assert 200 status
 
-22. **[ ] `test_spare_part_add_page_post_success`**
+22. **[x] `test_spare_part_add_page_post_success`** ✅
     -   POST `/spare_parts/add` with valid data
     -   Assert redirect
     -   Assert spare part created in database
 
-23. **[ ] `test_spare_part_detail_page_loads`**
+23. **[x] `test_spare_part_detail_page_loads`** ✅
     -   Add a spare part to database
     -   GET `/spare_parts/<id>`
     -   Assert 200 status
 
-24. **[ ] `test_spare_part_edit_page_get`**
+24. **[x] `test_spare_part_edit_page_get`** ✅
     -   Add a spare part to database
     -   GET `/spare_parts/<id>/edit`
     -   Assert 200 status
 
-25. **[ ] `test_spare_part_edit_page_post_success`**
+25. **[x] `test_spare_part_edit_page_post_success`** ✅
     -   Add a spare part to database
     -   POST `/spare_parts/<id>/edit` with updated data
     -   Assert redirect
     -   Assert spare part updated in database
 
-26. **[ ] `test_spare_part_delete_post_success`**
+26. **[x] `test_spare_part_delete_post_success`** ✅
     -   Add a spare part to database
     -   POST `/spare_parts/<id>/delete`
     -   Assert redirect
@@ -548,16 +507,16 @@ This plan supersedes the previous code quality audit plan as the main priority.
 
 #### Users Pages
 
-27. **[ ] `test_users_list_page_loads`**
+27. **[x] `test_users_list_page_loads`** ✅
     -   GET `/users`
     -   Assert 200 status
 
-28. **[ ] `test_register_page_get`**
+28. **[x] `test_register_page_get`** ✅
     -   GET `/register`
     -   Assert 200 status
     -   Assert registration form is present
 
-29. **[ ] `test_register_page_post_success`**
+29. **[x] `test_register_page_post_success`** ✅
     -   POST `/register` with valid data
     -   Assert redirect
     -   Assert user created in database
@@ -690,9 +649,15 @@ testpaths = [
 -   [x] Fix API bugs discovered by tests ✅ **4 bugs fixed**
 
 ### Phase 3: Web Routes Coverage (Day 5)
--   [ ] Create `tests/test_main_routes.py` (29 tests)
--   [ ] Implement all web route tests
--   [ ] Run and verify all tests pass
+-   [x] Create `tests/test_main_routes.py` (29 tests) ✅ **Completed: December 11, 2025**
+-   [x] Implement all web route tests ✅ **29/29 tests implemented**
+-   [x] Run and verify all tests pass ✅ **29/29 passing (100%)** - ALL FIXED!
+
+**Fixes Applied:**
+- Fixed index redirect test to follow redirects
+- Added all required form fields (asset_code, description, manufacturer_part_id, location, etc.)
+- Added frequency field for PM maintenance orders
+- Fixed validation error test to handle KeyError exceptions properly
 
 ### Phase 4: Utilities Coverage (Day 5-6)
 -   [ ] Create `tests/test_db_utils.py` (3 tests)
@@ -815,4 +780,3 @@ The following tasks are officially postponed until the test suite provides adequ
 -   **Comprehensive Code Audit:** The detailed line-by-line audit described in `core_code_quality_plan.md`.
 
 **This testing plan is now the single source of truth for the current development sprint.**
-
