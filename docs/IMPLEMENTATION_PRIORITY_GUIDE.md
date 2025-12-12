@@ -388,20 +388,20 @@
 
 ### Week 2: Test Suite Foundation
 **Monday-Tuesday: Planning & Setup**
-- [x] Create detailed `comprehensive_testing_plan.md`
-- [ ] Configure `pytest.ini` for test discovery
-- [ ] Enhance `conftest.py` with robust fixtures
-- [ ] Create test infrastructure for in-memory database
+- [x] Create detailed `comprehensive_testing_plan.md` ✅
+- [x] Configure `pytest.ini` for test discovery ✅
+- [x] Enhance `conftest.py` with robust fixtures ✅
+- [x] Create test infrastructure for in-memory database ✅
 
 **Wednesday-Thursday: Core Application Tests**
-- [ ] Create `tests/test_app.py` - Flask app configuration tests
-- [ ] Create `tests/test_db_utils.py` - Database utility function tests
+- [x] Create `tests/test_app.py` - Flask app configuration tests ✅
+- [x] Create `tests/test_db_utils.py` - Database utility function tests ✅
 - [ ] Create `tests/test_shift_utils.py` - Shift calculation tests
 - [ ] Run tests and verify all pass
 
 **Friday: API & Route Tests**
-- [ ] Expand `tests/test_api.py` - Comprehensive API endpoint tests
-- [ ] Create `tests/test_main_routes.py` - Web page route tests
+- [x] Expand `tests/test_api.py` - Comprehensive API endpoint tests ✅ (Created test_api_routes.py with 41 tests)
+- [x] Create `tests/test_main_routes.py` - Web page route tests ✅ (29 tests, all passing)
 - [ ] Update CI workflow to run new test suite
 - [ ] Verify all tests pass in CI
 
@@ -616,7 +616,7 @@ pytest --cov=src tests/            # Coverage analysis
 11. **[x] Create test_app.py** - ✅ Completed: December 11, 2025 (18 tests for Flask app, all passing)
 12. **[x] Create test_api_routes.py** - ✅ Completed: December 11, 2025 (41 API endpoint tests, all passing, 4 bugs fixed)
 13. **[x] Create test_main_routes.py** - ✅ Completed: December 11, 2025 (29 web route tests, ALL PASSING - 100%)
-14. **[ ] Create test_db_utils.py** - Takes 1-2 hours, 3 database tests
+14. **[x] Create test_db_utils.py** - ✅ Completed: December 12, 2025 (3 database tests, all passing, 70.59% coverage achieved!)
 15. **[ ] Create test_shift_utils.py** - Takes 1-2 hours, 5 shift logic tests
 
 ### After All Tests Pass (Week 3+)
