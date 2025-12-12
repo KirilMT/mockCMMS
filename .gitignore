@@ -183,3 +183,19 @@ apps/reports/instance/reports/*
 
 # Legacy packages directory (if any remains)
 packages/
+
+# Code Quality & Audit Results
+audit_results/
+audit_results_*.txt
+baseline_metrics.md
+*.audit
+*.lint
+*.complexity
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
