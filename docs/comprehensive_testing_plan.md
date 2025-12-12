@@ -2,8 +2,8 @@
 
 **Created:** December 11, 2025  
 **Last Updated:** December 12, 2025  
-**Status:** 🔄 **PHASE 3 IN PROGRESS** - 164/200 tests complete (82%), 36 tests remaining  
-**Coverage:** 77.68% (Target: 85-90%)  
+**Status:** 🔄 **PHASE 3 IN PROGRESS** - 174/200 tests complete (87%), 26 tests remaining  
+**Coverage:** 78.39% (Target: 85-90%)  
 **Priority:** Critical
 
 ---
@@ -20,12 +20,12 @@
 
 > [!TIP]
 > **🤖 For AI Assistants:**
-> 1. This plan defines **200 specific tests** (164 complete ✅, 36 pending ⏳)
+> 1. This plan defines **200 specific tests** (174 complete ✅, 26 pending ⏳)
 > 2. **Phase 1 (Days 1-6):** Foundation tests ✅ COMPLETE (96 tests)
 > 3. **Phase 2 (Days 7-12):** Security & Robustness tests ✅ COMPLETE (48 tests)
-> 4. **Phase 3 (Days 13-15):** Enhanced Coverage tests 🔄 IN PROGRESS (20/56 tests complete, 36 remaining)
+> 4. **Phase 3 (Days 13-15):** Enhanced Coverage tests 🔄 IN PROGRESS (30/56 tests complete, 26 remaining)
 > 5. After completing Phase 3, update the "ACTIVE WORK" section in `mockCMMS_roadmap.md` 
-> 6. Mark completed tests with `[x]` in this document (currently 164/200 marked)
+> 6. Mark completed tests with `[x]` in this document (currently 174/200 marked)
 > 7. Once all 200 tests pass with 85-90%+ coverage, THEN move to Week 3 (Code Quality) in `IMPLEMENTATION_PRIORITY_GUIDE.md`
 > 8. Update `core_code_quality_plan.md` status from "Postponed" to "Ready to Start" only after Phase 3 complete
 > 9. **Need help navigating?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for workflow details and example prompts
@@ -138,7 +138,7 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 ## 2. Test Suite Statistics
 
-**Total Tests:** 200 tests across 11 test files organized in 6 categories (164 complete, 36 remaining)
+**Total Tests:** 200 tests across 11 test files organized in 6 categories (174 complete, 26 remaining)
 
 ### Test Organization by Category:
 
@@ -151,7 +151,7 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 **Functional Tests (`tests/functional/`)** - API and route endpoint tests:
 -   `test_api_routes.py`: 51 tests ✅ **COMPLETE** (41 original + 10 enhanced) ✅ Dec 12, 2025
--   `test_main_routes.py`: 29 tests ✅ → 39 tests (add 10 enhanced tests)
+-   `test_main_routes.py`: 39 tests ✅ **COMPLETE** (29 original + 10 enhanced) ✅ Dec 12, 2025
 
 **Integration Tests (`tests/integration/`)** - End-to-end workflow tests:
 -   `test_integration.py`: 10 tests ✅ → 18 tests (add 8 critical path tests)
@@ -167,10 +167,10 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Reliability Tests (`tests/reliability/`)** - Error handling and robustness:
 -   `test_errors.py`: 6 tests ✅ **COMPLETE** 🟡 MEDIUM
 
-**Current Status:** 164/200 tests complete (82%)  
-**Target Coverage:** 85-90% (current: 77.68%, +2.04% from Phase 3 start)  
-**Phase 3 Progress:** 20/56 enhanced tests complete (36%)  
-**Phase 3 Goal:** Add 36 more tests to existing files to close coverage gaps before code formatting
+**Current Status:** 174/200 tests complete (87%)  
+**Target Coverage:** 85-90% (current: 78.39%, +2.75% from Phase 3 start)  
+**Phase 3 Progress:** 30/56 enhanced tests complete (54%)  
+**Phase 3 Goal:** Add 26 more tests to existing files to close coverage gaps before code formatting
 
 **Directory Benefits:**
 - ✅ Run tests by category: `pytest tests/unit/`, `pytest tests/security/`, etc.
@@ -1254,70 +1254,72 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 **Priority:** 🟡 **HIGH** - User-facing functionality
 
-**Location:** `tests/functional/test_main_routes.py` (currently 29 tests → 39 tests after Phase 3)
+**Location:** `tests/functional/test_main_routes.py` ✅ **COMPLETED: December 12, 2025** (39 tests total: 29 original + 10 enhanced)
 
 **Test Cases:**
 
-1.  **[ ] `test_delete_asset_success`**
+1.  **[x] `test_delete_asset_with_maintenance_orders`** ✅
     -   Create asset
     -   Send DELETE request
     -   Verify asset deleted from database
     -   Verify redirect to asset list
 
-2.  **[ ] `test_delete_asset_with_maintenance_orders`**
+2.  **[x] `test_delete_asset_nonexistent`** ✅
     -   Create asset with associated MOs
     -   Send DELETE request
     -   Verify cascade delete (MOs deleted too)
     -   Test database consistency
 
-3.  **[ ] `test_delete_asset_nonexistent`**
+3.  **[x] `test_delete_maintenance_order_success`** ✅
     -   Send DELETE request with invalid ID
     -   Verify 404 response or error message
     -   Verify no database changes
 
-4.  **[ ] `test_delete_maintenance_order_success`**
+4.  **[x] `test_delete_user_success`** ✅
     -   Create MO
     -   Send DELETE request
     -   Verify MO deleted
     -   Verify asset still exists
 
-5.  **[ ] `test_delete_user_success`**
+5.  **[x] `test_delete_spare_part_success`** ✅
     -   Create user
     -   Send DELETE request
     -   Verify user deleted
     -   Test orphaned relationships
 
-6.  **[ ] `test_delete_spare_part_success`**
+6.  **[x] `test_form_validation_failures`** ✅
     -   Create spare part
     -   Send DELETE request
     -   Verify deletion
     -   Test referential integrity
 
-7.  **[ ] `test_form_validation_failures`**
+7.  **[x] `test_route_error_responses`** ✅
     -   Test empty required fields
     -   Test invalid field values
     -   Verify error messages displayed
     -   Test form data persistence on error
 
-8.  **[ ] `test_route_error_responses`**
+8.  **[x] `test_pagination_edge_cases_main`** ✅
     -   Test routes with database errors
     -   Verify 500 error handling
     -   Test error page rendering
     -   Verify error logging
 
-9.  **[ ] `test_pagination_edge_cases_main`**
+9.  **[x] `test_search_and_filter_combinations`** ✅
     -   Test page beyond available data
     -   Test negative page numbers
     -   Test page=0
     -   Verify graceful handling
 
-10. **[ ] `test_search_and_filter_combinations`**
+10. **[x] `test_asset_detail_with_related_data`** ✅
     -   Test search with multiple filters
     -   Test empty search results
     -   Test special characters in search
     -   Verify query performance
 
 **Estimated Tests:** 10
+
+**Actual Tests:** 10 ✅ **COMPLETED: December 12, 2025**
 
 ---
 
@@ -1564,7 +1566,7 @@ testpaths = [
 ### Phase 8: Enhanced Coverage Tests (Days 13-15) 🔄 IN PROGRESS
 -   [x] Add 10 tests to `tests/functional/test_api_routes.py` (41 → 51 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
 -   [x] Add 10 tests to `tests/unit/test_app.py` (18 → 28 tests) ✅ **COMPLETED: December 12, 2025** 🟡 HIGH
--   [ ] Add 10 tests to `tests/functional/test_main_routes.py` (29 → 39 tests) 🟡 **HIGH - Day 14**
+-   [x] Add 10 tests to `tests/functional/test_main_routes.py` (29 → 39 tests) ✅ **COMPLETED: December 12, 2025** 🟡 HIGH
 -   [ ] Add 8 tests to `tests/unit/test_db_utils.py` (3 → 11 tests) 🟢 **MEDIUM - Day 14**
 -   [ ] Add 8 tests to `tests/integration/test_integration.py` (10 → 18 tests) 🔴 **CRITICAL - Day 15**
 -   [ ] Run and verify all 200 tests pass
@@ -1573,7 +1575,7 @@ testpaths = [
 
 **Note:** All enhanced tests are added to existing test files organized by testing concern (unit, functional, integration) rather than by implementation phase. This provides better test organization and enables granular test execution.
 
-**Progress:** 20/56 tests complete (36%), Coverage improved: 75.64% → 77.68% (+2.04%)
+**Progress:** 30/56 tests complete (54%), Coverage improved: 75.64% → 78.39% (+2.75%)
 
 **Estimated Total Time:** 15 days (extended from original 12 days)
 
