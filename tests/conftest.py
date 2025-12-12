@@ -448,3 +448,20 @@ def multiple_mos(app, multiple_assets, sample_user):
             db.session.refresh(mo)
         return mos
 
+
+@pytest.fixture(scope='function')
+def logged_in_user(client, sample_user):
+    """
+    Create a logged-in user session for testing authenticated endpoints.
+
+    Args:
+        client: Flask test client
+        sample_user: User fixture
+
+    Returns:
+        User: The logged-in user
+    """
+    with client.session_transaction() as sess:
+        sess['user_id'] = sample_user.id
+        sess['username'] = sample_user.username
+    return sample_user
