@@ -10,7 +10,7 @@
 > **📚 Document Navigation:** This guide coordinates multiple planning documents:
 > 
 > **Active Phase 1 (Week 2 EXTENDED):**
-> - **[Comprehensive Testing Plan](comprehensive_testing_plan.md)** - 200 tests to implement (174 ✅ COMPLETE!, 26 ⏳ PENDING Phase 3)
+> - **[Comprehensive Testing Plan](comprehensive_testing_plan.md)** - 200 tests to implement (182 ✅ COMPLETE!, 18 ⏳ PENDING Phase 3)
 > 
 > **Postponed (Week 3+):**
 > - **[Core Code Quality Plan](core_code_quality_plan.md)** - Code audit (starts after testing)
@@ -43,14 +43,14 @@
 ### Phase 1: Regression Tests (Week 2) ✅ **COMPLETE**
 **What it verifies:** Behavior consistency  
 **Tools:** pytest, coverage.py  
-**Deliverable:** 174 automated tests with 78.39% coverage ✅
+**Deliverable:** 182 automated tests with 78.39% coverage ✅
 
 **Purpose:**
 - Verify current behavior doesn't break
 - Document what code currently does
 - Provide safety net for refactoring
 
-**Status:** ✅ 174/200 tests implemented and passing! (Phase 3: 30/56 complete)
+**Status:** ✅ 182/200 tests implemented and passing! (Phase 3: 38/56 complete)
 - Enable automated testing in CI/CD
 
 **Limitations:**
@@ -431,7 +431,7 @@
 
 > [!IMPORTANT]
 > **Prerequisites:** All 144 tests from Week 2 must be passing before starting Week 3.
-> **Current Status:** ✅ Phase 2 Complete (144/144 tests), 🔄 Phase 3 IN PROGRESS (174/200, 26 remaining)
+> **Current Status:** ✅ Phase 2 Complete (144/144 tests), 🔄 Phase 3 IN PROGRESS (182/200, 18 remaining)
 
 **Monday: Phase 0 - Automated Analysis (CRITICAL FIRST STEP)**
 - [ ] Install code quality tools (ruff, pylint, mypy, radon, bandit, jscpd)
@@ -669,8 +669,8 @@ pytest --cov=src tests/            # Coverage analysis
 
 24. **[x] Add 10 tests to tests/functional/test_api_routes.py** - API error handling, complex queries, bulk ops (41 → 51 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
 25. **[x] Add 10 tests to tests/unit/test_app.py** - Module loading, configuration, security headers (18 → 28 tests) ✅ **COMPLETED: December 12, 2025** 🟡 HIGH  
-26. **[ ] Add 10 tests to tests/functional/test_main_routes.py** - DELETE operations, form validation, edge cases (29 → 39 tests) 🟡 HIGH
-27. **[ ] Add 8 tests to tests/unit/test_db_utils.py** - Model methods, constraints, relationships (3 → 11 tests) 🟢 MEDIUM
+26. **[x] Add 10 tests to tests/functional/test_main_routes.py** - DELETE operations, form validation, edge cases (29 → 39 tests) ✅ **COMPLETED: December 12, 2025** 🟡 HIGH
+27. **[x] Add 8 tests to tests/unit/test_db_utils.py** - Model methods, constraints, relationships (3 → 11 tests) ✅ **COMPLETED: December 12, 2025** 🟢 MEDIUM
 28. **[ ] Add 8 tests to tests/integration/test_integration.py** - Critical path workflows (10 → 18 tests) 🔴 CRITICAL
 29. **[ ] Verify all 200 tests pass** - Final validation before code formatting
 30. **[ ] Achieve 85-90%+ code coverage** - Target for code formatting safety
