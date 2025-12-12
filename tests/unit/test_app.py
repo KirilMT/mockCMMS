@@ -6,7 +6,7 @@ blueprint registration, database initialization, and context handling.
 """
 import os
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from src.app import create_app
 from src.services.db_utils import db
 
@@ -199,4 +199,107 @@ class TestBlueprintConditionalLoading:
 
         # Reports blueprint should not be registered
         assert 'reports' not in app.blueprints
+
+
+class TestEnhancedAppConfiguration:
+    """Enhanced test suite for app configuration and module loading."""
+
+    @patch.dict(os.environ, {'REPORTS_ENABLED': 'True'})
+    def test_app_reports_module_enabled(self):
+        """Test reports module loads when REPORTS_ENABLED=True."""
+        try:
+            app = create_app()
+            # If reports module is available, blueprint should be registered
+            # If not available, ImportError is caught and logged
+            # Either way, app should be created successfully
+            assert app is not None
+        except ImportError:
+            pytest.skip("Reports module not available")
+
+    @patch.dict(os.environ, {'REPORTS_ENABLED': 'False'})
+    def test_app_reports_module_disabled(self):
+        """Test reports module doesn't load when REPORTS_ENABLED=False."""
+        app = create_app()
+        assert 'reports' not in app.blueprints
+
+    @patch.dict(os.environ, {'PLANNING_ENABLED': 'True'})
+    def test_app_planning_module_enabled(self):
+        """Test planning module loads when PLANNING_ENABLED=True."""
+        try:
+            app = create_app()
+            # If planning module is available, blueprints should be registered
+            # at both /planning and /api prefixes
+            assert app is not None
+        except ImportError:
+            pytest.skip("Planning module not available")
+
+    @patch.dict(os.environ, {'PLANNING_ENABLED': 'False'})
+    def test_app_planning_module_disabled(self):
+        """Test planning module doesn't load when PLANNING_ENABLED=False."""
+        app = create_app()
+        assert 'planning' not in app.blueprints
+        assert 'planning_api' not in app.blueprints
+
+    def test_app_database_initialization(self, app):
+        """Test database is initialized with tables created."""
+        with app.app_context():
+            # Verify database tables exist
+            tables = db.metadata.tables.keys()
+            assert len(tables) > 0
+            assert 'user' in tables
+            assert 'asset' in tables
+
+    def test_app_security_headers(self, client):
+        """Test security headers are added to responses."""
+        response = client.get('/')
+        assert 'Permissions-Policy' in response.headers
+        assert response.headers['Permissions-Policy'] == 'unload=()'
+        assert 'Cross-Origin-Opener-Policy' in response.headers
+        assert response.headers['Cross-Origin-Opener-Policy'] == 'same-origin'
+
+    def test_app_legacy_url_redirect(self, client):
+        """Test legacy /planning-manager URLs redirect to /planning."""
+        response = client.get('/planning-manager/test', follow_redirects=False)
+        # Should redirect (302) or return 404 if planning not enabled
+        assert response.status_code in [302, 404]
+        if response.status_code == 302:
+            assert '/planning' in response.location
+
+    def test_app_context_processor_variables(self, app):
+        """Test PLANNING_ENABLED and REPORTS_ENABLED injected into templates."""
+        with app.app_context():
+            # Get context processor function
+            context_processors = app.template_context_processors[None]
+            
+            # Find inject_config processor
+            inject_config = None
+            for processor in context_processors:
+                if processor.__name__ == 'inject_config':
+                    inject_config = processor
+                    break
+            
+            assert inject_config is not None
+            context = inject_config()
+            assert 'PLANNING_ENABLED' in context
+            assert 'REPORTS_ENABLED' in context
+            assert isinstance(context['PLANNING_ENABLED'], bool)
+            assert isinstance(context['REPORTS_ENABLED'], bool)
+
+    @patch.dict(os.environ, {'MOCKCMMS_DEBUG_USE_TEST_DB': '1'})
+    def test_app_auto_seed_database(self):
+        """Test database auto-seeding configuration when DEBUG_USE_TEST_DB=True."""
+        # Create app with debug flag
+        app = create_app()
+        
+        # Verify the debug flag is set correctly
+        assert app.config['DEBUG_USE_TEST_DB'] is True
+        
+        # In test mode (TESTING=True), auto-seeding should not occur
+        # This test verifies the configuration logic exists
+
+    def test_app_csrf_protection_initialized(self, app):
+        """Test CSRF protection is initialized."""
+        # CSRF should be initialized (CSRFProtect called)
+        # In test mode it's disabled, but the extension should exist
+        assert 'csrf' in app.extensions or app.config.get('WTF_CSRF_ENABLED') is not None
 

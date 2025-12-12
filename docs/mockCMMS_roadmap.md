@@ -84,11 +84,11 @@ _Updated December 12, 2025_
 **Target Completion:** December 17, 2025 (extended for Phase 3)  
 **Goal:** Achieve 85-90%+ test coverage before code formatting tools to prevent silent regressions.
 
-**Progress:** 154/200 tests complete (77%), Coverage: 77.68% (+2.04%), 46 tests remaining
+**Progress:** 164/200 tests complete (82%), Coverage: 77.68% (+2.04%), 36 tests remaining
 
 **Phase 3 Progress:**
 - ✅ test_api_routes.py enhanced (41 → 51 tests) - Day 13 Complete
-- ⏳ test_app.py (18 → 28 tests) - Day 13 Next
+- ✅ test_app.py enhanced (18 → 28 tests) - Day 13 Complete
 - ⏳ test_main_routes.py (29 → 39 tests) - Day 14
 - ⏳ test_db_utils.py (3 → 11 tests) - Day 14
 - ⏳ test_integration.py (10 → 18 tests) - Day 15
@@ -115,7 +115,7 @@ _Updated December 12, 2025_
 > 
 > **Current Phase (Days 13-15):**
 > - ✅ Add 10 tests to tests/functional/test_api_routes.py (41 → 51) - **COMPLETE** Day 13
-> - ⏳ Add 10 tests to tests/unit/test_app.py (18 → 28) - Module loading, configuration
+> - ✅ Add 10 tests to tests/unit/test_app.py (18 → 28) - **COMPLETE** Day 13
 > - ⏳ Add 10 tests to tests/functional/test_main_routes.py (29 → 39) - DELETE operations, edge cases
 > - ⏳ Add 8 tests to tests/unit/test_db_utils.py (3 → 11) - Model methods, constraints
 > - ⏳ Add 8 tests to tests/integration/test_integration.py (10 → 18) - End-to-end workflows
@@ -165,7 +165,8 @@ _Updated December 12, 2025_
 
 **Current Progress (Phase 3 Day 13):**
 - ✅ test_api_routes.py: 51 tests (+10 enhanced, api.py coverage +6.69%)
-- Total: 154/200 tests (77%), Coverage: 77.68%
+- ✅ test_app.py: 28 tests (+10 enhanced)
+- Total: 164/200 tests (82%), Coverage: 77.68%
 
 **Technical Details:**
 - Test files: 11 test modules

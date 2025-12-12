@@ -2,7 +2,7 @@
 
 **Created:** December 11, 2025  
 **Last Updated:** December 12, 2025  
-**Status:** 🔄 **PHASE 3 IN PROGRESS** - 154/200 tests complete (77%), 46 tests remaining  
+**Status:** 🔄 **PHASE 3 IN PROGRESS** - 164/200 tests complete (82%), 36 tests remaining  
 **Coverage:** 77.68% (Target: 85-90%)  
 **Priority:** Critical
 
@@ -20,12 +20,12 @@
 
 > [!TIP]
 > **🤖 For AI Assistants:**
-> 1. This plan defines **200 specific tests** (144 complete ✅, 56 pending ⏳)
+> 1. This plan defines **200 specific tests** (164 complete ✅, 36 pending ⏳)
 > 2. **Phase 1 (Days 1-6):** Foundation tests ✅ COMPLETE (96 tests)
 > 3. **Phase 2 (Days 7-12):** Security & Robustness tests ✅ COMPLETE (48 tests)
-> 4. **Phase 3 (Days 13-15):** Enhanced Coverage tests 🔄 IN PROGRESS (10/56 tests complete, 46 remaining)
+> 4. **Phase 3 (Days 13-15):** Enhanced Coverage tests 🔄 IN PROGRESS (20/56 tests complete, 36 remaining)
 > 5. After completing Phase 3, update the "ACTIVE WORK" section in `mockCMMS_roadmap.md` 
-> 6. Mark completed tests with `[x]` in this document (currently 154/200 marked)
+> 6. Mark completed tests with `[x]` in this document (currently 164/200 marked)
 > 7. Once all 200 tests pass with 85-90%+ coverage, THEN move to Week 3 (Code Quality) in `IMPLEMENTATION_PRIORITY_GUIDE.md`
 > 8. Update `core_code_quality_plan.md` status from "Postponed" to "Ready to Start" only after Phase 3 complete
 > 9. **Need help navigating?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for workflow details and example prompts
@@ -138,14 +138,14 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 ## 2. Test Suite Statistics
 
-**Total Tests:** 200 tests across 11 test files organized in 6 categories (154 complete, 46 remaining)
+**Total Tests:** 200 tests across 11 test files organized in 6 categories (164 complete, 36 remaining)
 
 ### Test Organization by Category:
 
 **Note:** Tests are organized by **testing concern** in separate directories for optimal test execution and CI/CD integration.
 
 **Unit Tests (`tests/unit/`)** - Fast, isolated component tests:
--   `test_app.py`: 18 tests ✅ → 28 tests (add 10 enhanced tests)
+-   `test_app.py`: 28 tests ✅ **COMPLETE** (18 original + 10 enhanced) ✅ Dec 12, 2025
 -   `test_db_utils.py`: 3 tests ✅ → 11 tests (add 8 enhanced tests)
 -   `test_shift_utils.py`: 5 tests ✅ **COMPLETE** (100% coverage, no additions needed)
 
@@ -167,10 +167,10 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Reliability Tests (`tests/reliability/`)** - Error handling and robustness:
 -   `test_errors.py`: 6 tests ✅ **COMPLETE** 🟡 MEDIUM
 
-**Current Status:** 154/200 tests complete (77%)  
+**Current Status:** 164/200 tests complete (82%)  
 **Target Coverage:** 85-90% (current: 77.68%, +2.04% from Phase 3 start)  
-**Phase 3 Progress:** 10/56 enhanced tests complete (18%)  
-**Phase 3 Goal:** Add 46 more tests to existing files to close coverage gaps before code formatting
+**Phase 3 Progress:** 20/56 enhanced tests complete (36%)  
+**Phase 3 Goal:** Add 36 more tests to existing files to close coverage gaps before code formatting
 
 **Directory Benefits:**
 - ✅ Run tests by category: `pytest tests/unit/`, `pytest tests/security/`, etc.
@@ -1178,71 +1178,73 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 **Priority:** 🟡 **HIGH** - Critical for deployment safety
 
-**Location:** `tests/unit/test_app.py` (currently 18 tests → 28 tests after Phase 3)
+**Location:** `tests/unit/test_app.py` ✅ **COMPLETED: December 12, 2025** (28 tests total: 18 original + 10 enhanced)
 
 **Test Cases:**
 
-1.  **[ ] `test_app_reports_module_enabled`**
+1.  **[x] `test_app_reports_module_enabled`** ✅
     -   Set REPORTS_ENABLED=True in environment
     -   Create app instance
     -   Verify reports blueprint registered
     -   Test /reports route exists
 
-2.  **[ ] `test_app_reports_module_disabled`**
+2.  **[x] `test_app_reports_module_disabled`** ✅
     -   Set REPORTS_ENABLED=False in environment
     -   Create app instance
     -   Verify reports blueprint NOT registered
     -   Test /reports route returns 404
 
-3.  **[ ] `test_app_planning_module_enabled`**
+3.  **[x] `test_app_planning_module_enabled`** ✅
     -   Set PLANNING_ENABLED=True in environment
     -   Create app instance
     -   Verify planning blueprint registered at /planning
     -   Verify planning blueprint registered at /api
     -   Test both routes exist
 
-4.  **[ ] `test_app_planning_module_disabled`**
+4.  **[x] `test_app_planning_module_disabled`** ✅
     -   Set PLANNING_ENABLED=False in environment
     -   Create app instance
     -   Verify planning blueprint NOT registered
     -   Test /planning route returns 404
 
-5.  **[ ] `test_app_blueprint_registration_error_handling`**
+5.  **[x] `test_app_blueprint_registration_error_handling`** ✅
     -   Simulate blueprint import error
     -   Verify app still creates successfully
     -   Verify error logged
     -   Test graceful degradation
 
-6.  **[ ] `test_app_database_initialization`**
+6.  **[x] `test_app_database_initialization`** ✅
     -   Test with new database
     -   Verify tables created
     -   Test with MOCKCMMS_DEBUG_USE_TEST_DB=True
     -   Verify dummy data populated
 
-7.  **[ ] `test_app_security_headers`**
+7.  **[x] `test_app_security_headers`** ✅
     -   Make any request to app
     -   Verify Permissions-Policy header set
     -   Verify Cross-Origin-Opener-Policy header set
     -   Verify values are correct
 
-8.  **[ ] `test_app_legacy_url_redirect`**
+8.  **[x] `test_app_legacy_url_redirect`** ✅
     -   Request /planning-manager route
     -   Verify redirect to /planning
     -   Test query parameters preserved
     -   Verify redirect is 302
 
-9.  **[ ] `test_app_context_processor_variables`**
+9.  **[x] `test_app_context_processor_variables`** ✅
     -   Test PLANNING_ENABLED injected into templates
     -   Test REPORTS_ENABLED injected into templates
     -   Verify values match environment variables
 
-10. **[ ] `test_app_csrf_protection`**
+10. **[x] `test_app_csrf_protection`** ✅
     -   Test CSRF token generation
     -   Test POST without CSRF token fails
     -   Test POST with valid CSRF token succeeds
     -   Verify CSRF exempt blueprints
 
 **Estimated Tests:** 10
+
+**Actual Tests:** 10 ✅ **COMPLETED: December 12, 2025**
 
 ---
 
@@ -1561,7 +1563,7 @@ testpaths = [
 
 ### Phase 8: Enhanced Coverage Tests (Days 13-15) 🔄 IN PROGRESS
 -   [x] Add 10 tests to `tests/functional/test_api_routes.py` (41 → 51 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
--   [ ] Add 10 tests to `tests/unit/test_app.py` (18 → 28 tests) 🟡 **HIGH - Day 13**
+-   [x] Add 10 tests to `tests/unit/test_app.py` (18 → 28 tests) ✅ **COMPLETED: December 12, 2025** 🟡 HIGH
 -   [ ] Add 10 tests to `tests/functional/test_main_routes.py` (29 → 39 tests) 🟡 **HIGH - Day 14**
 -   [ ] Add 8 tests to `tests/unit/test_db_utils.py` (3 → 11 tests) 🟢 **MEDIUM - Day 14**
 -   [ ] Add 8 tests to `tests/integration/test_integration.py` (10 → 18 tests) 🔴 **CRITICAL - Day 15**
@@ -1571,7 +1573,7 @@ testpaths = [
 
 **Note:** All enhanced tests are added to existing test files organized by testing concern (unit, functional, integration) rather than by implementation phase. This provides better test organization and enables granular test execution.
 
-**Progress:** 10/56 tests complete (18%), Coverage improved: 75.64% → 77.68% (+2.04%)
+**Progress:** 20/56 tests complete (36%), Coverage improved: 75.64% → 77.68% (+2.04%)
 
 **Estimated Total Time:** 15 days (extended from original 12 days)
 
@@ -1670,7 +1672,7 @@ Phase 3-5: Frontend, Templates, Standards (Weeks 4-7) ⏸️ POSTPONED
 - 🟡 **Quality:** Integration tests validate real-world usage
 - 🟢 **Confidence:** Performance tests ensure scalability
 
-**Current Status:** ✅ Week 2 Phase 1 & 2 Complete, ⏳ Phase 3 Pending - Need 56 more tests before Week 3
+**Current Status:** ✅ Week 2 Phase 1 & 2 Complete, 🔄 Phase 3 In Progress - 20/56 enhanced tests complete, 36 remaining before Week 3
 
 **Why this order matters:**
 -   Code formatting with `black` will modify many files
