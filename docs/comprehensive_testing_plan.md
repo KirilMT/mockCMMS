@@ -2,7 +2,7 @@
 
 **Created:** December 11, 2025  
 **Last Updated:** December 12, 2025  
-**Status:** ✅ **COMPLETE** - All 96 tests passing (100%)  
+**Status:** 🔄 **IN PROGRESS** - Phase 1 Complete (96/144), Phase 2 Pending (48 tests)  
 **Priority:** Critical
 
 ---
@@ -19,12 +19,14 @@
 
 > [!TIP]
 > **🤖 For AI Assistants:**
-> 1. This plan defines **88 specific tests** that must be implemented
-> 2. After completing this plan, update the "ACTIVE WORK" section in `mockCMMS_roadmap.md`
-> 3. Mark completed tests with `[x]` in this document
-> 4. Once all tests pass, move to Phase 2 (Core Python Backend Audit) in `IMPLEMENTATION_PRIORITY_GUIDE.md`
-> 5. Update `core_code_quality_plan.md` status from "Postponed" to "In Progress" when starting Phase 2
-> 6. **Need help navigating?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for workflow details and example prompts
+> 1. This plan defines **144 specific tests** that must be implemented (96 complete + 48 pending)
+> 2. **Phase 1 (Days 1-6):** Foundation tests ✅ COMPLETE
+> 3. **Phase 2 (Days 7-12):** Security & Robustness tests ⏳ CURRENT
+> 4. After completing this plan, update the "ACTIVE WORK" section in `mockCMMS_roadmap.md`
+> 5. Mark completed tests with `[x]` in this document
+> 6. Once all tests pass, move to Week 3 Phase 2 (Code Quality) in `IMPLEMENTATION_PRIORITY_GUIDE.md`
+> 7. Update `core_code_quality_plan.md` status from "Postponed" to "In Progress" when starting Week 3
+> 8. **Need help navigating?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for workflow details and example prompts
 
 ---
 
@@ -134,18 +136,29 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 ## 2. Test Suite Statistics
 
-**Total Tests:** 96 tests across 5 test files
+**Total Tests:** 144 tests across 11 test files
 
 ### Breakdown by File:
+
+**Phase 1: Foundation Tests (COMPLETED)**
 -   `tests/test_app.py`: 18 tests ✅ **COMPLETED** (10 required + 8 bonus)
 -   `tests/test_api_routes.py`: 41 tests ✅ **COMPLETED**
 -   `tests/test_main_routes.py`: 29 tests ✅ **COMPLETED**
 -   `tests/test_db_utils.py`: 3 tests ✅ **COMPLETED**
 -   `tests/test_shift_utils.py`: 5 tests ✅ **COMPLETED**
 
-**Final Results:** ✅ **96/96 tests passing (100%)**  
-**Coverage:** 73.60% (✅ Exceeded 70% target!)  
-**Status:** Week 2 Test Suite Foundation - **COMPLETE!** 🎉
+**Phase 2: Security & Robustness Tests (IN PROGRESS)**
+-   `tests/test_auth.py`: 8 tests ❌ **PENDING** 🔴 CRITICAL
+-   `tests/test_validation.py`: 6 tests ❌ **PENDING** 🟡 HIGH
+-   `tests/test_errors.py`: 6 tests ❌ **PENDING** 🟡 MEDIUM
+-   `tests/test_integration.py`: 10 tests ❌ **PENDING** 🟡 MEDIUM
+-   `tests/test_advanced_validation.py`: 10 tests ❌ **PENDING** 🟡 MEDIUM
+-   `tests/test_performance.py`: 8 tests ❌ **PENDING** 🟢 LOW
+
+**Current Progress:** 96/144 tests complete (66.7%)  
+**Remaining Work:** 48 tests (Phase 2)  
+**Coverage:** 73.60% (current), Target: 80%+ after Phase 2  
+**Status:** Week 2 Extended - Security & Robustness Testing
 
 ---
 
@@ -681,6 +694,378 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 ---
 
+### 3.6. Authentication & Security Tests (`tests/test_auth.py`)
+
+**Purpose:** Test authentication, authorization, and security features.
+
+**🔴 CRITICAL PRIORITY** - These tests are essential for production security.
+
+**Test Cases:**
+
+1.  **[ ] `test_login_success`**
+    -   POST to `/login` with valid credentials
+    -   Assert 200/302 status (success or redirect)
+    -   Assert session is created
+    -   Assert user is logged in
+
+2.  **[ ] `test_login_invalid_credentials`**
+    -   POST to `/login` with invalid password
+    -   Assert 401/403 status or error message
+    -   Assert session is NOT created
+    -   Assert user is NOT logged in
+
+3.  **[ ] `test_logout`**
+    -   Login first
+    -   POST to `/logout`
+    -   Assert session is destroyed
+    -   Assert user is logged out
+    -   Assert redirect to login page
+
+4.  **[ ] `test_protected_route_requires_auth`**
+    -   Access protected route without login
+    -   Assert 401/403 status or redirect to login
+    -   Login and try again
+    -   Assert 200 status (access granted)
+
+5.  **[ ] `test_admin_only_route_blocks_technician`**
+    -   Login as Technician role
+    -   Access admin-only route
+    -   Assert 403 status (forbidden)
+    -   Login as Admin role
+    -   Assert 200 status (access granted)
+
+6.  **[ ] `test_password_hashing`**
+    -   Create user with password
+    -   Assert password is hashed (not plain text in DB)
+    -   Assert hash verification works
+    -   Assert incorrect password fails verification
+
+7.  **[ ] `test_session_management`**
+    -   Login and get session cookie
+    -   Make authenticated request with session
+    -   Assert request succeeds
+    -   Logout and try same session
+    -   Assert session is invalid
+
+8.  **[ ] `test_csrf_protection`**
+    -   POST to form without CSRF token
+    -   Assert 400/403 status (CSRF validation fails)
+    -   POST with valid CSRF token
+    -   Assert 200 status (request succeeds)
+
+**Estimated Tests:** 8
+
+---
+
+### 3.7. Data Validation Tests (`tests/test_validation.py`)
+
+**Purpose:** Test input validation and security against common attacks.
+
+**🟡 HIGH PRIORITY** - Prevents data corruption and security vulnerabilities.
+
+**Test Cases:**
+
+1.  **[ ] `test_sql_injection_prevention`**
+    -   Submit form with SQL injection payload (e.g., `'; DROP TABLE assets; --`)
+    -   Assert payload is escaped/sanitized
+    -   Assert database is not affected
+    -   Assert data is stored safely
+
+2.  **[ ] `test_xss_prevention`**
+    -   Submit form with XSS payload (e.g., `<script>alert('XSS')</script>`)
+    -   Assert payload is escaped in HTML output
+    -   Assert script does not execute
+    -   Assert data is displayed safely
+
+3.  **[ ] `test_required_fields_validation`**
+    -   POST to create asset without required field (e.g., no name)
+    -   Assert 400 status or validation error
+    -   Assert error message indicates missing field
+    -   Assert database record is NOT created
+
+4.  **[ ] `test_unique_constraint_handling`**
+    -   Create asset with asset_code "TEST-001"
+    -   Try to create another asset with same code
+    -   Assert 400/409 status or validation error
+    -   Assert error message indicates duplicate
+    -   Assert only one record exists
+
+5.  **[ ] `test_data_type_validation`**
+    -   POST asset with invalid data type (e.g., string for integer field)
+    -   Assert 400 status or validation error
+    -   Assert error message indicates type mismatch
+
+6.  **[ ] `test_max_length_validation`**
+    -   POST asset with name exceeding max length (256+ chars)
+    -   Assert 400 status or validation error
+    -   Assert data is not truncated silently
+
+**Estimated Tests:** 6
+
+---
+
+### 3.8. Error Handling Tests (`tests/test_errors.py`)
+
+**Purpose:** Test error pages and exception handling.
+
+**🟡 MEDIUM PRIORITY** - Ensures graceful failure and good UX.
+
+**Test Cases:**
+
+1.  **[ ] `test_404_page_renders`**
+    -   GET non-existent route (e.g., `/nonexistent`)
+    -   Assert 404 status
+    -   Assert custom 404 page renders
+    -   Assert page contains helpful message
+
+2.  **[ ] `test_500_error_handling`**
+    -   Trigger server error (e.g., force exception in route)
+    -   Assert 500 status
+    -   Assert custom 500 page renders (if implemented)
+    -   Assert error is logged
+
+3.  **[ ] `test_database_error_recovery`**
+    -   Simulate database error (e.g., disconnect)
+    -   Make request that requires database
+    -   Assert graceful error handling
+    -   Assert error message to user
+
+4.  **[ ] `test_invalid_id_handling`**
+    -   GET asset detail with invalid ID (e.g., 999999)
+    -   Assert 404 status
+    -   Assert error message displayed
+    -   GET asset with non-integer ID (e.g., "abc")
+    -   Assert 400/404 status
+
+5.  **[ ] `test_concurrent_update_conflict`**
+    -   Load asset for editing (timestamp T1)
+    -   Another user updates same asset (timestamp T2)
+    -   Submit first edit
+    -   Assert conflict detection or last-write-wins behavior
+
+6.  **[ ] `test_transaction_rollback_on_error`**
+    -   Start transaction to create MO with invalid data
+    -   Assert transaction is rolled back
+    -   Assert database is unchanged
+    -   Assert no partial data is saved
+
+**Estimated Tests:** 6
+
+---
+
+### 3.9. Integration Tests (`tests/test_integration.py`)
+
+**Purpose:** Test complete workflows and multi-step processes.
+
+**🟡 MEDIUM PRIORITY** - Validates end-to-end functionality.
+
+**Test Cases:**
+
+1.  **[ ] `test_complete_maintenance_workflow`**
+    -   Create asset
+    -   Create maintenance order for asset
+    -   Assign technician to MO
+    -   Update MO status to "In Progress"
+    -   Complete MO
+    -   Assert all state transitions work
+    -   Assert data consistency throughout
+
+2.  **[ ] `test_user_registration_to_assignment`**
+    -   Register new user as Technician
+    -   Assign skill to technician
+    -   Assign technician to team
+    -   Create MO requiring that skill
+    -   Assign MO to technician
+    -   Assert complete user lifecycle works
+
+3.  **[ ] `test_asset_lifecycle`**
+    -   Create new asset
+    -   Create PM schedule for asset
+    -   Generate MOs from schedule
+    -   Complete MOs
+    -   Update asset status to "Maintenance"
+    -   Complete maintenance and return to "Operational"
+    -   Assert asset state tracking works
+
+4.  **[ ] `test_data_flow_across_modules`**
+    -   Create spare part
+    -   Create MO requiring that spare part
+    -   Link spare part to MO
+    -   Complete MO
+    -   Assert spare part inventory is updated
+    -   Assert data flows correctly between modules
+
+5.  **[ ] `test_planning_integration`**
+    -   Create multiple MOs with different skills
+    -   Create technicians with various skills
+    -   Trigger planning/assignment logic
+    -   Assert MOs are assigned based on skills
+    -   Assert workload distribution is balanced
+
+6.  **[ ] `test_shift_team_rotation_workflow`**
+    -   Create teams with shift assignments
+    -   Query shift for specific dates
+    -   Create MOs for those dates
+    -   Assert MOs are assigned to correct shift
+    -   Assert rotation pattern is followed
+
+7.  **[ ] `test_cascade_relationships`**
+    -   Create asset with multiple MOs
+    -   Delete asset
+    -   Assert cascade delete of MOs (or prevention)
+    -   Create MO with spare parts
+    -   Delete MO
+    -   Assert spare parts are handled correctly
+
+8.  **[ ] `test_multi_user_concurrent_access`**
+    -   Two users access same asset simultaneously
+    -   Both try to edit
+    -   Assert concurrent access is handled
+    -   Assert data integrity maintained
+
+9.  **[ ] `test_reports_integration`**
+    -   Create MOs with different statuses
+    -   Generate report
+    -   Assert report contains correct data
+    -   Assert report filters work
+    -   Assert export functionality works
+
+10. **[ ] `test_search_and_filter_integration`**
+    -   Create assets with various attributes
+    -   Search by name, code, type
+    -   Filter by status, cost center
+    -   Assert search results are correct
+    -   Assert filters work in combination
+
+**Estimated Tests:** 10-12
+
+---
+
+### 3.10. Advanced Validation Tests (`tests/test_advanced_validation.py`)
+
+**Purpose:** Test boundary conditions, edge cases, and advanced scenarios.
+
+**🟡 MEDIUM PRIORITY** - Ensures robustness under edge conditions.
+
+**Test Cases:**
+
+1.  **[ ] `test_boundary_conditions`**
+    -   Create asset with minimum valid values
+    -   Create asset with maximum valid values
+    -   Assert both are accepted
+    -   Try just beyond boundaries
+    -   Assert validation rejects
+
+2.  **[ ] `test_null_and_none_handling`**
+    -   Submit form with null/None values in optional fields
+    -   Assert nulls are handled gracefully
+    -   Query data with null values
+    -   Assert queries work correctly
+
+3.  **[ ] `test_empty_string_validation`**
+    -   POST asset with empty string for required field
+    -   Assert validation rejects
+    -   POST with whitespace-only string
+    -   Assert validation rejects
+
+4.  **[ ] `test_concurrent_updates`**
+    -   Two requests update same asset simultaneously
+    -   Assert no data loss
+    -   Assert integrity is maintained
+    -   Assert last-write-wins or optimistic locking works
+
+5.  **[ ] `test_transaction_rollbacks`**
+    -   Create MO with invalid related data
+    -   Assert transaction is rolled back
+    -   Assert partial data is not saved
+    -   Assert database is consistent
+
+6.  **[ ] `test_cascade_delete_prevention`**
+    -   Create asset with completed MOs
+    -   Try to delete asset
+    -   Assert cascade delete is prevented (if business rule)
+    -   Or assert cascade works correctly (if allowed)
+
+7.  **[ ] `test_unique_constraint_race_condition`**
+    -   Two requests create asset with same code simultaneously
+    -   Assert only one succeeds
+    -   Assert database constraint is enforced
+
+8.  **[ ] `test_foreign_key_constraint_enforcement`**
+    -   Try to create MO with non-existent asset_id
+    -   Assert foreign key constraint prevents creation
+    -   Assert error message is helpful
+
+9.  **[ ] `test_date_boundary_validation`**
+    -   Create MO with past due date
+    -   Create MO with far future date
+    -   Assert dates are validated
+    -   Assert date logic works correctly
+
+10. **[ ] `test_pagination_edge_cases`**
+    -   Query with page beyond available pages
+    -   Query with negative page number
+    -   Query with zero items per page
+    -   Assert pagination handles edge cases
+
+**Estimated Tests:** 10
+
+---
+
+### 3.11. Performance Tests (`tests/test_performance.py`)
+
+**Purpose:** Test query performance and scalability.
+
+**🟢 LOW PRIORITY** - Ensures application scales well.
+
+**Test Cases:**
+
+1.  **[ ] `test_large_dataset_queries`**
+    -   Populate database with 1000+ assets
+    -   Query all assets
+    -   Assert query completes in < 2 seconds
+    -   Assert pagination works efficiently
+
+2.  **[ ] `test_pagination_performance`**
+    -   Query page 1, 50, 100 of large dataset
+    -   Assert all pages load in similar time
+    -   Assert no degradation on later pages
+
+3.  **[ ] `test_n_plus_one_query_detection`**
+    -   Query assets with related MOs
+    -   Monitor SQL query count
+    -   Assert eager loading is used
+    -   Assert query count is optimal (not N+1)
+
+4.  **[ ] `test_search_performance`**
+    -   Search large dataset by name
+    -   Assert search completes in < 1 second
+    -   Assert indexes are being used
+
+5.  **[ ] `test_complex_filter_performance`**
+    -   Apply multiple filters (status, type, center)
+    -   Assert query is optimized
+    -   Assert response time is acceptable
+
+6.  **[ ] `test_concurrent_request_handling`**
+    -   Simulate 10 concurrent requests
+    -   Assert all complete successfully
+    -   Assert no deadlocks or timeouts
+
+7.  **[ ] `test_memory_usage_with_large_results`**
+    -   Query very large result set
+    -   Assert memory usage is reasonable
+    -   Assert no memory leaks
+
+8.  **[ ] `test_database_connection_pooling`**
+    -   Make multiple sequential requests
+    -   Assert connections are reused
+    -   Assert no connection exhaustion
+
+**Estimated Tests:** 8
+
+---
+
 ## 4. Test Infrastructure
 
 ### 4.1. Configuration Files
@@ -734,54 +1119,67 @@ testpaths = [
 
 ## 5. Implementation Timeline
 
-### Phase 1: Foundation (Days 1-2)
--   [x] Configure `pytest.ini` and `pyproject.toml` ✅ **Completed: December 11, 2025** (Both files created)
--   [x] Enhance `tests/conftest.py` with comprehensive fixtures ✅ **Completed: December 11, 2025** (15 fixtures)
--   [x] Create `tests/test_app.py` (10 tests) ✅ **Completed: December 11, 2025** (18 tests, all passing)
--   [ ] Run and verify all tests pass
+### Phase 1: Foundation Tests (Days 1-6) ✅ COMPLETED
+-   [x] Configure `pytest.ini` and `pyproject.toml` ✅ **Completed: December 11, 2025**
+-   [x] Enhance `tests/conftest.py` with comprehensive fixtures ✅ **Completed: December 11, 2025**
+-   [x] Create `tests/test_app.py` (18 tests) ✅ **Completed: December 11, 2025**
+-   [x] Run and verify all tests pass ✅
 
-### Phase 2: API Coverage (Days 3-4)
+### Phase 2: API & Routes Coverage (Days 3-5) ✅ COMPLETED
 -   [x] Create `tests/test_api_routes.py` (41 tests) ✅ **Completed: December 11, 2025**
--   [x] Implement all API endpoint tests ✅ **All 41 tests implemented**
--   [x] Run and verify all tests pass ✅ **100% pass rate (41/41)**
--   [x] Fix API bugs discovered by tests ✅ **4 bugs fixed**
+-   [x] Implement all API endpoint tests ✅
+-   [x] Run and verify all tests pass ✅
+-   [x] Fix API bugs discovered by tests ✅
 
-### Phase 3: Web Routes Coverage (Day 5)
+### Phase 3: Web Routes Coverage (Day 5) ✅ COMPLETED
 -   [x] Create `tests/test_main_routes.py` (29 tests) ✅ **Completed: December 11, 2025**
--   [x] Implement all web route tests ✅ **29/29 tests implemented**
--   [x] Run and verify all tests pass ✅ **29/29 passing (100%)** - ALL FIXED!
+-   [x] Implement all web route tests ✅
+-   [x] Run and verify all tests pass ✅
 
-**Fixes Applied:**
-- Fixed index redirect test to follow redirects
-- Added all required form fields (asset_code, description, manufacturer_part_id, location, etc.)
-- Added frequency field for PM maintenance orders
-- Fixed validation error test to handle KeyError exceptions properly
-
-### Phase 4: Utilities Coverage (Day 5-6)
+### Phase 4: Utilities Coverage (Days 5-6) ✅ COMPLETED
 -   [x] Create `tests/test_db_utils.py` (3 tests) ✅ **Completed: December 12, 2025**
 -   [x] Create `tests/test_shift_utils.py` (5 tests) ✅ **Completed: December 12, 2025**
 -   [x] Run and verify all tests pass ✅ **96/96 passing!**
 
-### Phase 5: CI Integration (Day 6-7)
--   [ ] Update `.github/workflows/ci.yml` to run full test suite
+### Phase 5: Security & Validation (Days 7-9) 🔄 CURRENT
+-   [ ] Create `tests/test_auth.py` (8 tests) 🔴 **CRITICAL - Day 7**
+-   [ ] Create `tests/test_validation.py` (6 tests) 🟡 **HIGH - Day 7**
+-   [ ] Create `tests/test_errors.py` (6 tests) 🟡 **MEDIUM - Day 8**
+-   [ ] Run and verify all 116 tests pass
+
+### Phase 6: Integration & Advanced Testing (Days 9-11) ⏳ PENDING
+-   [ ] Create `tests/test_integration.py` (10 tests) 🟡 **MEDIUM - Day 9-10**
+-   [ ] Create `tests/test_advanced_validation.py` (10 tests) 🟡 **MEDIUM - Day 10**
+-   [ ] Create `tests/test_performance.py` (8 tests) 🟢 **LOW - Day 11**
+-   [ ] Run and verify all 144 tests pass
+
+### Phase 7: Final Validation & CI Integration (Day 12) ⏳ PENDING
+-   [ ] Run complete test suite (144 tests)
+-   [ ] Verify 80%+ code coverage achieved
+-   [ ] Update CI workflow to run full test suite
 -   [ ] Add coverage reporting to CI
 -   [ ] Verify all tests pass in CI environment
--   [ ] Set coverage thresholds (target: 70%+)
+-   [ ] Documentation updates complete
+
+**Estimated Total Time:** 12 days (extended from original 7 days)
 
 ---
 
 ## 6. Success Criteria
 
 ### Test Coverage Goals:
--   **Overall:** 70%+ code coverage
--   **Critical paths:** 90%+ coverage (API endpoints, database operations)
+-   **Overall:** 80%+ code coverage (current: 73.60%)
+-   **Critical paths:** 90%+ coverage (API endpoints, database operations, authentication)
+-   **Security:** 90%+ coverage (authentication, authorization, input validation)
 -   **All tests pass:** 100% pass rate in CI
 
 ### Quality Metrics:
--   All 96 tests implemented ✅
--   All tests pass locally and in CI ✅
--   Test execution time < 30 seconds ✅
+-   All 144 tests implemented ✅ (96 complete, 48 pending)
+-   All tests pass locally and in CI
+-   Test execution time < 60 seconds ✅
 -   No flaky tests (tests that randomly fail/pass) ✅
+-   Security vulnerabilities: 0 critical, 0 high
+-   Code quality: All automated checks passing
 
 ---
 
@@ -828,12 +1226,29 @@ Phase 3-5: Frontend, Templates, Standards (Weeks 4-7) ⏸️ POSTPONED
 
 ### 8.3. When to Start Code Quality Audit
 
-**✅ Prerequisites MET - Ready to start `core_code_quality_plan.md`:**
--   ✅ All 96 tests in this plan are implemented
--   ✅ All tests pass locally (100% pass rate)
--   ✅ All tests pass in CI (GitHub Actions) - Pending final CI update
--   ✅ Code coverage reaches 70%+ overall (73.60% achieved)
--   ✅ Coverage reaches 90%+ for critical paths (shift_utils: 100%, db_utils: 85.31%)
+**⏳ Prerequisites NOT YET MET - Continue with Phase 2 tests:**
+-   ✅ Phase 1 tests implemented (96/144 tests)
+-   ✅ Phase 1 tests pass locally (100% pass rate)
+-   ⏳ Phase 2 tests implemented (0/48 tests) ← **CURRENT BLOCKER**
+-   ⏳ All 144 tests pass locally (100% pass rate)
+-   ⏳ All 144 tests pass in CI (GitHub Actions)
+-   ⏳ Code coverage reaches 80%+ overall (current: 73.60%)
+-   ⏳ Security coverage reaches 90%+ (current: 0%)
+
+**Do NOT start `core_code_quality_plan.md` until:**
+- ✅ All 144 tests in this plan are implemented
+- ✅ All 144 tests pass (100% pass rate)
+- ✅ Coverage reaches 80%+
+- ✅ Security tests validate authentication/authorization
+- ✅ Integration tests validate end-to-end workflows
+
+**Why extended scope matters:**
+- 🔴 **Security:** Authentication/authorization vulnerabilities are critical
+- 🟡 **Robustness:** Validation/error handling prevents data corruption
+- 🟡 **Quality:** Integration tests validate real-world usage
+- 🟢 **Confidence:** Performance tests ensure scalability
+
+**Current Status:** Week 2 Extended - Must complete Phase 2 tests before Week 3
 
 **Why this order matters:**
 -   Code formatting with `black` will modify many files
