@@ -2,7 +2,7 @@
 
 **Created:** December 11, 2025  
 **Last Updated:** December 12, 2025  
-**Status:** ✅ **COMPLETE** - All 144 tests implemented and passing!  
+**Status:** 🔄 **PHASE 3 PLANNED** - 144/200 tests complete, 56 enhanced coverage tests pending  
 **Priority:** Critical
 
 ---
@@ -19,14 +19,15 @@
 
 > [!TIP]
 > **🤖 For AI Assistants:**
-> 1. This plan defines **144 specific tests** that have been implemented ✅ ALL COMPLETE
+> 1. This plan defines **200 specific tests** (144 complete ✅, 56 pending ⏳)
 > 2. **Phase 1 (Days 1-6):** Foundation tests ✅ COMPLETE (96 tests)
 > 3. **Phase 2 (Days 7-12):** Security & Robustness tests ✅ COMPLETE (48 tests)
-> 4. After completing this plan, update the "ACTIVE WORK" section in `mockCMMS_roadmap.md` ✅ DONE
-> 5. Mark completed tests with `[x]` in this document ✅ DONE (all 144 tests marked)
-> 6. Once all tests pass, move to Week 3 Phase 2 (Code Quality) in `IMPLEMENTATION_PRIORITY_GUIDE.md` 🚀 READY
-> 7. Update `core_code_quality_plan.md` status from "Postponed" to "Ready to Start" ✅ DONE
-> 8. **Need help navigating?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for workflow details and example prompts
+> 4. **Phase 3 (Days 13-15):** Enhanced Coverage tests ⏳ PENDING (56 tests)
+> 5. After completing Phase 3, update the "ACTIVE WORK" section in `mockCMMS_roadmap.md` 
+> 6. Mark completed tests with `[x]` in this document (currently 144/200 marked)
+> 7. Once all 200 tests pass with 85-90%+ coverage, THEN move to Week 3 (Code Quality) in `IMPLEMENTATION_PRIORITY_GUIDE.md`
+> 8. Update `core_code_quality_plan.md` status from "Postponed" to "Ready to Start" only after Phase 3 complete
+> 9. **Need help navigating?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for workflow details and example prompts
 
 ---
 
@@ -136,28 +137,44 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 ## 2. Test Suite Statistics
 
-**Total Tests:** 144 tests across 11 test files
+**Total Tests:** 200 tests across 11 test files organized in 6 categories (144 complete, 56 to be added)
 
-### Breakdown by File:
+### Test Organization by Category:
 
-**Phase 1: Foundation Tests (COMPLETED)**
--   `tests/test_app.py`: 18 tests ✅ **COMPLETED** (10 required + 8 bonus)
--   `tests/test_api_routes.py`: 41 tests ✅ **COMPLETED**
--   `tests/test_main_routes.py`: 29 tests ✅ **COMPLETED**
--   `tests/test_db_utils.py`: 3 tests ✅ **COMPLETED**
--   `tests/test_shift_utils.py`: 5 tests ✅ **COMPLETED**
+**Note:** Tests are organized by **testing concern** in separate directories for optimal test execution and CI/CD integration.
 
-**Phase 2: Security & Robustness Tests (COMPLETE)**
--   `tests/test_auth.py`: 8 tests ✅ **COMPLETED** 🔴 CRITICAL
--   `tests/test_validation.py`: 6 tests ✅ **COMPLETED** 🟡 HIGH
--   `tests/test_errors.py`: 6 tests ✅ **COMPLETED** 🟡 MEDIUM
--   `tests/test_integration.py`: 10 tests ✅ **COMPLETED** 🟡 MEDIUM
--   `tests/test_advanced_validation.py`: 10 tests ✅ **COMPLETED** 🟡 MEDIUM
--   `tests/test_performance.py`: 8 tests ✅ **COMPLETED** 🟢 LOW
+**Unit Tests (`tests/unit/`)** - Fast, isolated component tests:
+-   `test_app.py`: 18 tests ✅ → 28 tests (add 10 enhanced tests)
+-   `test_db_utils.py`: 3 tests ✅ → 11 tests (add 8 enhanced tests)
+-   `test_shift_utils.py`: 5 tests ✅ **COMPLETE** (100% coverage, no additions needed)
 
-**Final Status:** 144/144 tests complete (100%) ✅  
-**Coverage:** 75.64% (exceeded 70% requirement!)  
-**Status:** Week 2 Complete - Ready for Week 3 (Code Quality Analysis)
+**Functional Tests (`tests/functional/`)** - API and route endpoint tests:
+-   `test_api_routes.py`: 41 tests ✅ → 51 tests (add 10 enhanced tests)
+-   `test_main_routes.py`: 29 tests ✅ → 39 tests (add 10 enhanced tests)
+
+**Integration Tests (`tests/integration/`)** - End-to-end workflow tests:
+-   `test_integration.py`: 10 tests ✅ → 18 tests (add 8 critical path tests)
+
+**Security Tests (`tests/security/`)** - Authentication, validation, security:
+-   `test_auth.py`: 8 tests ✅ **COMPLETE** 🔴 CRITICAL
+-   `test_validation.py`: 6 tests ✅ **COMPLETE** 🟡 HIGH
+-   `test_advanced_validation.py`: 10 tests ✅ **COMPLETE** 🟡 MEDIUM
+
+**Performance Tests (`tests/performance/`)** - Scalability and optimization:
+-   `test_performance.py`: 8 tests ✅ **COMPLETE** 🟢 LOW
+
+**Reliability Tests (`tests/reliability/`)** - Error handling and robustness:
+-   `test_errors.py`: 6 tests ✅ **COMPLETE** 🟡 MEDIUM
+
+**Current Status:** 144/200 tests complete (72%)  
+**Target Coverage:** 85-90% (current: 75.64%)  
+**Phase 3 Goal:** Add 56 tests to existing files to close coverage gaps before code formatting
+
+**Directory Benefits:**
+- ✅ Run tests by category: `pytest tests/unit/`, `pytest tests/security/`, etc.
+- ✅ Optimize CI/CD: Run fast tests first, slow tests in separate stages
+- ✅ Clear organization: Easy to find tests by purpose
+- ✅ Industry standard: Follows pytest and industry best practices
 
 ---
 
@@ -1077,6 +1094,372 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 ---
 
+### 3.12. Enhanced API Coverage Tests (Add to `tests/functional/test_api_routes.py`)
+
+**Purpose:** Achieve 85%+ coverage for api.py by adding error handling, complex queries, and edge case tests to the existing test file.
+
+**Priority:** 🔴 **CRITICAL** - Close coverage gaps before code formatting
+
+**Location:** `tests/functional/test_api_routes.py` (currently 41 tests → 51 tests after Phase 3)
+
+**Test Cases:**
+
+1.  **[ ] `test_api_error_responses_400`**
+    -   Test invalid JSON payloads
+    -   Test missing required fields
+    -   Test invalid data types
+    -   Assert 400 Bad Request responses
+
+2.  **[ ] `test_api_error_responses_404`**
+    -   Test GET with non-existent IDs
+    -   Test PUT with non-existent resources
+    -   Test DELETE with non-existent resources
+    -   Assert 404 Not Found responses
+
+3.  **[ ] `test_api_error_responses_500`**
+    -   Test database connection errors (simulated)
+    -   Test constraint violations
+    -   Assert 500 Internal Server Error responses
+    -   Verify error messages returned
+
+4.  **[ ] `test_api_table_config_operations`**
+    -   Test save table configuration (lines 333-360)
+    -   Test set as default (removes other defaults)
+    -   Test delete table configuration
+    -   Test with authentication required
+
+5.  **[ ] `test_api_complex_filters`**
+    -   Test multiple filter combinations
+    -   Test sorting with multiple fields
+    -   Test pagination with filters
+    -   Verify query optimization
+
+6.  **[ ] `test_api_bulk_operations`**
+    -   Test bulk create operations
+    -   Test bulk update operations
+    -   Test transaction rollback on partial failure
+    -   Verify all-or-nothing behavior
+
+7.  **[ ] `test_api_authentication_required`**
+    -   Test all endpoints without authentication
+    -   Verify 401 responses
+    -   Test with invalid session
+    -   Test session expiry
+
+8.  **[ ] `test_api_role_management`**
+    -   Test user role assignment
+    -   Test role creation in user update
+    -   Test role removal
+    -   Verify relationship updates
+
+9.  **[ ] `test_api_query_parameter_validation`**
+    -   Test invalid query parameters
+    -   Test parameter type validation
+    -   Test parameter range validation
+    -   Test SQL injection attempts
+
+10. **[ ] `test_api_response_format_consistency`**
+    -   Verify all endpoints return consistent JSON format
+    -   Test success response structure
+    -   Test error response structure
+    -   Verify HTTP headers
+
+**Estimated Tests:** 10
+
+---
+
+### 3.13. Enhanced App Configuration Tests (Add to `tests/unit/test_app.py`)
+
+**Purpose:** Achieve 85%+ coverage for app.py by adding module loading, error handling, and configuration tests to the existing test file.
+
+**Priority:** 🟡 **HIGH** - Critical for deployment safety
+
+**Location:** `tests/unit/test_app.py` (currently 18 tests → 28 tests after Phase 3)
+
+**Test Cases:**
+
+1.  **[ ] `test_app_reports_module_enabled`**
+    -   Set REPORTS_ENABLED=True in environment
+    -   Create app instance
+    -   Verify reports blueprint registered
+    -   Test /reports route exists
+
+2.  **[ ] `test_app_reports_module_disabled`**
+    -   Set REPORTS_ENABLED=False in environment
+    -   Create app instance
+    -   Verify reports blueprint NOT registered
+    -   Test /reports route returns 404
+
+3.  **[ ] `test_app_planning_module_enabled`**
+    -   Set PLANNING_ENABLED=True in environment
+    -   Create app instance
+    -   Verify planning blueprint registered at /planning
+    -   Verify planning blueprint registered at /api
+    -   Test both routes exist
+
+4.  **[ ] `test_app_planning_module_disabled`**
+    -   Set PLANNING_ENABLED=False in environment
+    -   Create app instance
+    -   Verify planning blueprint NOT registered
+    -   Test /planning route returns 404
+
+5.  **[ ] `test_app_blueprint_registration_error_handling`**
+    -   Simulate blueprint import error
+    -   Verify app still creates successfully
+    -   Verify error logged
+    -   Test graceful degradation
+
+6.  **[ ] `test_app_database_initialization`**
+    -   Test with new database
+    -   Verify tables created
+    -   Test with MOCKCMMS_DEBUG_USE_TEST_DB=True
+    -   Verify dummy data populated
+
+7.  **[ ] `test_app_security_headers`**
+    -   Make any request to app
+    -   Verify Permissions-Policy header set
+    -   Verify Cross-Origin-Opener-Policy header set
+    -   Verify values are correct
+
+8.  **[ ] `test_app_legacy_url_redirect`**
+    -   Request /planning-manager route
+    -   Verify redirect to /planning
+    -   Test query parameters preserved
+    -   Verify redirect is 302
+
+9.  **[ ] `test_app_context_processor_variables`**
+    -   Test PLANNING_ENABLED injected into templates
+    -   Test REPORTS_ENABLED injected into templates
+    -   Verify values match environment variables
+
+10. **[ ] `test_app_csrf_protection`**
+    -   Test CSRF token generation
+    -   Test POST without CSRF token fails
+    -   Test POST with valid CSRF token succeeds
+    -   Verify CSRF exempt blueprints
+
+**Estimated Tests:** 10
+
+---
+
+### 3.14. Enhanced Main Routes Tests (Add to `tests/functional/test_main_routes.py`)
+
+**Purpose:** Achieve 90%+ coverage for main.py by adding DELETE operations and edge case tests to the existing test file.
+
+**Priority:** 🟡 **HIGH** - User-facing functionality
+
+**Location:** `tests/functional/test_main_routes.py` (currently 29 tests → 39 tests after Phase 3)
+
+**Test Cases:**
+
+1.  **[ ] `test_delete_asset_success`**
+    -   Create asset
+    -   Send DELETE request
+    -   Verify asset deleted from database
+    -   Verify redirect to asset list
+
+2.  **[ ] `test_delete_asset_with_maintenance_orders`**
+    -   Create asset with associated MOs
+    -   Send DELETE request
+    -   Verify cascade delete (MOs deleted too)
+    -   Test database consistency
+
+3.  **[ ] `test_delete_asset_nonexistent`**
+    -   Send DELETE request with invalid ID
+    -   Verify 404 response or error message
+    -   Verify no database changes
+
+4.  **[ ] `test_delete_maintenance_order_success`**
+    -   Create MO
+    -   Send DELETE request
+    -   Verify MO deleted
+    -   Verify asset still exists
+
+5.  **[ ] `test_delete_user_success`**
+    -   Create user
+    -   Send DELETE request
+    -   Verify user deleted
+    -   Test orphaned relationships
+
+6.  **[ ] `test_delete_spare_part_success`**
+    -   Create spare part
+    -   Send DELETE request
+    -   Verify deletion
+    -   Test referential integrity
+
+7.  **[ ] `test_form_validation_failures`**
+    -   Test empty required fields
+    -   Test invalid field values
+    -   Verify error messages displayed
+    -   Test form data persistence on error
+
+8.  **[ ] `test_route_error_responses`**
+    -   Test routes with database errors
+    -   Verify 500 error handling
+    -   Test error page rendering
+    -   Verify error logging
+
+9.  **[ ] `test_pagination_edge_cases_main`**
+    -   Test page beyond available data
+    -   Test negative page numbers
+    -   Test page=0
+    -   Verify graceful handling
+
+10. **[ ] `test_search_and_filter_combinations`**
+    -   Test search with multiple filters
+    -   Test empty search results
+    -   Test special characters in search
+    -   Verify query performance
+
+**Estimated Tests:** 10
+
+---
+
+### 3.15. Enhanced Database Tests (Add to `tests/unit/test_db_utils.py`)
+
+**Purpose:** Achieve 95%+ coverage for db_utils.py by adding model methods and constraint tests to the existing test file.
+
+**Priority:** 🟢 **MEDIUM** - Already well covered
+
+**Location:** `tests/unit/test_db_utils.py` (currently 3 tests → 11 tests after Phase 3)
+
+**Test Cases:**
+
+**Test Cases:**
+
+1.  **[ ] `test_user_password_hashing`**
+    -   Test set_password method
+    -   Test check_password method
+    -   Verify password never stored plain text
+    -   Test password updates
+
+2.  **[ ] `test_user_to_dict_method`**
+    -   Test to_dict() without roles
+    -   Test to_dict(include_roles=True)
+    -   Verify all fields serialized
+    -   Test with missing optional fields
+
+3.  **[ ] `test_model_string_representations`**
+    -   Test __repr__ for all models
+    -   Verify readable output
+    -   Test with None values
+    -   Test with special characters
+
+4.  **[ ] `test_database_constraints`**
+    -   Test unique constraints (asset_code, etc.)
+    -   Test NOT NULL constraints
+    -   Test foreign key constraints
+    -   Verify IntegrityError raised
+
+5.  **[ ] `test_cascade_relationships_all_models`**
+    -   Test Asset → MaintenanceOrder cascade
+    -   Test User → roles cascade
+    -   Test Team → users relationship
+    -   Verify orphan prevention
+
+6.  **[ ] `test_model_default_values`**
+    -   Create models without optional fields
+    -   Verify defaults applied
+    -   Test timestamp defaults
+    -   Test enum defaults
+
+7.  **[ ] `test_query_filter_edge_cases`**
+    -   Test filter by None values
+    -   Test filter by empty strings
+    -   Test filter with special characters
+    -   Verify SQL injection prevention
+
+8.  **[ ] `test_relationship_back_references`**
+    -   Test bi-directional relationships
+    -   Verify backref works
+    -   Test relationship updates
+    -   Test relationship deletions
+
+**Estimated Tests:** 8
+
+---
+
+### 3.16. Critical Path Integration Tests (Add to `tests/integration/test_integration.py`)
+
+**Purpose:** Add end-to-end workflow tests to the existing test file to protect main business logic.
+
+**Priority:** 🔴 **CRITICAL** - Protects main business logic
+
+**Location:** `tests/integration/test_integration.py` (currently 10 tests → 18 tests after Phase 3)
+
+**Test Cases:**
+
+1.  **[ ] `test_complete_asset_lifecycle`**
+    -   Create asset
+    -   Update asset details
+    -   Create MO for asset
+    -   Update MO status
+    -   Complete MO
+    -   Generate report (if enabled)
+    -   Delete asset
+    -   Verify all steps work together
+
+2.  **[ ] `test_complete_user_workflow`**
+    -   Create user account
+    -   Assign roles
+    -   Login
+    -   Create assets/MOs
+    -   Update profile
+    -   Logout
+    -   Delete user
+
+3.  **[ ] `test_maintenance_order_workflow`**
+    -   Create reactive MO
+    -   Assign technicians
+    -   Add spare parts
+    -   Update status through lifecycle
+    -   Complete and close
+    -   Verify history
+
+4.  **[ ] `test_search_and_reporting_workflow`**
+    -   Create multiple assets
+    -   Search by various criteria
+    -   Filter results
+    -   Sort results
+    -   Export/download (if implemented)
+
+5.  **[ ] `test_concurrent_user_operations`**
+    -   Simulate two users editing same asset
+    -   Test last-write-wins
+    -   Verify no data corruption
+    -   Test locking behavior (if implemented)
+
+6.  **[ ] `test_error_recovery_workflow`**
+    -   Trigger database error
+    -   Verify rollback
+    -   Retry operation
+    -   Verify data consistency
+
+7.  **[ ] `test_session_management_workflow`**
+    -   Login
+    -   Perform operations
+    -   Session timeout
+    -   Verify redirect to login
+    -   Re-login and continue
+
+8.  **[ ] `test_table_configuration_workflow`**
+    -   Save custom column order
+    -   Save custom filters
+    -   Set as default
+    -   Switch configurations
+    -   Delete configuration
+    -   Verify persistence
+
+**Estimated Tests:** 8
+
+---
+
+**Estimated Total Time:** 12 days (extended from original 7 days)
+
+**NEW PHASE 8: Enhanced Coverage (Days 13-15) - ADDED**
+
+---
+
 ## 4. Test Infrastructure
 
 ### 4.1. Configuration Files
@@ -1172,7 +1555,19 @@ testpaths = [
 -   [ ] Verify all tests pass in CI environment (pending first GitHub Actions run)
 -   [x] Documentation updates complete ✅ DONE
 
-**Estimated Total Time:** 12 days (extended from original 7 days)
+### Phase 8: Enhanced Coverage Tests (Days 13-15) ⏳ PENDING
+-   [ ] Add 10 tests to `tests/functional/test_api_routes.py` (41 → 51 tests) 🔴 **CRITICAL - Day 13**
+-   [ ] Add 10 tests to `tests/unit/test_app.py` (18 → 28 tests) 🟡 **HIGH - Day 13**
+-   [ ] Add 10 tests to `tests/functional/test_main_routes.py` (29 → 39 tests) 🟡 **HIGH - Day 14**
+-   [ ] Add 8 tests to `tests/unit/test_db_utils.py` (3 → 11 tests) 🟢 **MEDIUM - Day 14**
+-   [ ] Add 8 tests to `tests/integration/test_integration.py` (10 → 18 tests) 🔴 **CRITICAL - Day 15**
+-   [ ] Run and verify all 200 tests pass
+-   [ ] Achieve 85-90%+ code coverage
+-   [ ] Update CI to enforce higher coverage threshold
+
+**Note:** All enhanced tests are added to existing test files organized by testing concern (unit, functional, integration) rather than by implementation phase. This provides better test organization and enables granular test execution.
+
+**Estimated Total Time:** 15 days (extended from original 12 days)
 
 ---
 
@@ -1204,10 +1599,14 @@ This testing plan is **Phase 1** of the comprehensive implementation strategy ou
 ```
 Phase 0: Foundation Setup (Week 1) ✅ COMPLETED
     ↓
-Phase 1: Test Suite Foundation (Week 2) ✅ COMPLETE (THIS PLAN)
+Phase 1: Test Suite Foundation (Week 2 Phase 1 & 2) ✅ COMPLETE (THIS PLAN)
     ↓
-Phase 2: Core Python Backend Audit (Week 3) 🚀 READY TO START
-    - All prerequisites met!
+Phase 1.5: Enhanced Coverage (Week 2 Phase 3) ⏳ PENDING (56 tests needed)
+    - Must achieve 85-90%+ coverage before proceeding
+    - Critical for safe code formatting (black, etc.)
+    ↓
+Phase 2: Core Python Backend Audit (Week 3) ⏸️ POSTPONED
+    - Waiting for Phase 1.5 completion
     - See: core_code_quality_plan.md
     ↓
 Phase 3-5: Frontend, Templates, Standards (Weeks 4-7) ⏸️ POSTPONED
@@ -1264,7 +1663,7 @@ Phase 3-5: Frontend, Templates, Standards (Weeks 4-7) ⏸️ POSTPONED
 - 🟡 **Quality:** Integration tests validate real-world usage
 - 🟢 **Confidence:** Performance tests ensure scalability
 
-**Current Status:** ✅ Week 2 Complete - Ready for Week 3 (Code Quality Analysis)
+**Current Status:** ✅ Week 2 Phase 1 & 2 Complete, ⏳ Phase 3 Pending - Need 56 more tests before Week 3
 
 **Why this order matters:**
 -   Code formatting with `black` will modify many files

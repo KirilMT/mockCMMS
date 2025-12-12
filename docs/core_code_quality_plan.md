@@ -16,15 +16,19 @@
 > - **[mockCMMS Roadmap](mockCMMS_roadmap.md)** - Strategic context
 > 
 > **Prerequisites Before Starting This Plan:**
-> 1. ✅ All 144 tests from `comprehensive_testing_plan.md` must be implemented (144/144 complete - 100%)
-> 2. ✅ All tests must pass (100% pass rate) (144/144 passing - 100% ✅)
-> 3. ✅ Code coverage must reach 70%+ overall (Current: 75.64%, Minimum: 70% ✅, Stretch Goal: 80%+)
-> 4. ✅ Security coverage comprehensive (Current: All security tests passing, Phase 2 complete)
-> 5. ✅ CI must be running the full test suite successfully (CI configured with pytest + coverage in .github/workflows/ci.yml)
+> 1. ⏳ All 200 tests from `comprehensive_testing_plan.md` must be implemented (144/200 complete - 72%)
+> 2. ⏳ All tests must pass (100% pass rate) (144/144 passing currently ✅, need 200/200)
+> 3. ⏳ Code coverage must reach 85%+ overall (Current: 75.64%, Target: 85-90%+)
+> 4. ⏳ Critical coverage gaps must be closed (api.py: 62.50%, app.py: 67.68%, main.py: 80.05%)
+> 5. ⏳ CI must be running the full test suite successfully (CI configured with pytest + coverage in .github/workflows/ci.yml)
 > 
-> **Status:** 🚀 **READY TO START** - All critical prerequisites met!  
-> **Current Progress:** 144/144 tests complete, 75.64% coverage achieved (exceeds 70% requirement).  
-> **When to Start:** Immediately (Week 3)
+> **Status:** ⏸️ **POSTPONED** - Week 2 Phase 3 must complete first!  
+> **Current Progress:** 144/200 tests complete, 75.64% coverage (need 85%+ before code formatting).  
+> **When to Start:** After Week 2 Phase 3 completes (200 tests, 85%+ coverage)
+> 
+> **⚠️ CRITICAL:** Running black or other code formatting tools with current coverage (75.64%) is RISKY.
+> Coverage gaps mean untested code paths could break silently during formatting. Phase 3 tests
+> (56 additional tests) will close these gaps and make code formatting safe.
 
 ---  
 **Scope:** Entire mockCMMS repository (excluding `apps/` directory)

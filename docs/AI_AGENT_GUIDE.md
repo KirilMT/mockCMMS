@@ -10,13 +10,13 @@
 > **📚 Quick Navigation:** This guide combines interaction patterns with document navigation.
 > 
 > **Current Status (December 12, 2025):**
-> - **Phase:** Week 2 COMPLETE! ✅ Test Suite Foundation + Security & Robustness  
-> - **Progress:** Phase 1 complete (Days 1-6), Phase 2 complete (Days 7-12)
-> - **Active Document:** `comprehensive_testing_plan.md` (COMPLETE!)
-> - **Test Progress:** 144/144 tests complete (100%) 🎉
-> - **Coverage:** 75.64% (exceeds 70% requirement!)
-> - **Next Phase:** Week 3 - Code Quality Analysis
-> - **Milestone:** Ready to begin production-quality code audit!
+> - **Phase:** Week 2 Phase 2 COMPLETE, Phase 3 PENDING ⏳
+> - **Progress:** Phase 1 complete (Days 1-6), Phase 2 complete (Days 7-12), Phase 3 planned (Days 13-15)
+> - **Active Document:** `comprehensive_testing_plan.md` (Phase 3 - Enhanced Coverage)
+> - **Test Progress:** 144/200 tests complete (72%), 56 enhanced coverage tests needed
+> - **Coverage:** 75.64% (current), Target: 85-90%+ for Phase 3
+> - **Next Tasks:** Enhanced coverage tests before code formatting (test_api_enhanced.py, test_app_enhanced.py, etc.)
+> - **Critical:** Must close coverage gaps before running black formatting tool
 
 ---
 
@@ -56,16 +56,16 @@ IMPLEMENTATION_PRIORITY_GUIDE.md (START HERE - Master Timeline)
 
 | Document | Purpose | When to Use | Update When | Current Status |
 |----------|---------|-------------|-------------|----------------|
-| **IMPLEMENTATION_PRIORITY_GUIDE.md** | Master timeline and coordination | Starting work session, checking phase | Completing phase tasks, finishing weeks | Week 2 Complete, Ready for Week 3 |
-| **comprehensive_testing_plan.md** | 144 tests specification (COMPLETE!) | Reference for test coverage | All tests complete | 144/144 tests complete (100%) ✅ |
-| **core_code_quality_plan.md** | Code audit plan (READY TO START) | Week 3 - Code Quality Analysis | Starting Phase 2, finding issues | Ready to begin! |
-| **mockCMMS_roadmap.md** | Strategic vision and features | Understanding goals, planning features | Completing sprints, adding features | Update with Week 2 completion |
+| **IMPLEMENTATION_PRIORITY_GUIDE.md** | Master timeline and coordination | Starting work session, checking phase | Completing phase tasks, finishing weeks | Week 2 Phase 3 Pending (144/200 tests) |
+| **comprehensive_testing_plan.md** | 200 tests specification (Phase 3 PENDING) | Reference for test coverage | Completing Phase 3 tests | 144/200 tests complete (72%) ⏳ |
+| **core_code_quality_plan.md** | Code audit plan (POSTPONED) | Week 3 - Code Quality Analysis | After Phase 3 complete | Postponed until 200 tests done |
+| **mockCMMS_roadmap.md** | Strategic vision and features | Understanding goals, planning features | Completing sprints, adding features | Active: Phase 3 Pending |
 
 ---
 
 ## 🎯 Current Active Work (December 12, 2025)
 
-**Week 2 Status:** ✅ **COMPLETE** - All 144 tests passing!
+**Week 2 Status:** ✅ **Phase 1 & 2 COMPLETE**, ⏳ **Phase 3 PENDING** - 144/200 tests (72%)
 
 ### Week 2 Phase 1 Results (Days 1-6):
 
@@ -94,16 +94,13 @@ IMPLEMENTATION_PRIORITY_GUIDE.md (START HERE - Master Timeline)
 - ✅ test_errors.py - 6 tests (all passing) 🟡 MEDIUM
 - ✅ test_integration.py - 10 tests (all passing) 🟡 MEDIUM
 - ✅ test_advanced_validation.py - 10 tests (all passing) 🟡 MEDIUM
-- ✅ test_performance.py - 8 tests (all passing) ← **JUST COMPLETED!** 🟢 LOW
+- ✅ test_performance.py - 8 tests (all passing) 🟢 LOW
 
-**Pending (0/48 Phase 2 tests):**
-- 🎉 **ALL TESTS COMPLETE!**
-
-**Final Status:**
+**Phase 2 Final Status:**
 - 🎯 Total: 144/144 tests (100%) ✅
-- 🎯 Coverage: 75.64% (exceeds 70% requirement!) ✅
+- 🎯 Coverage: 75.64% ✅
 - 🎯 Phase 2: 48/48 tests complete (100%) ✅
-- 🎯 Remaining: 0 tests ✅
+- 🎯 All tests passing ✅
 
 **Phase 2 Goals - ALL ACHIEVED:**
 - ✅ Implemented all 48 tests
@@ -112,13 +109,45 @@ IMPLEMENTATION_PRIORITY_GUIDE.md (START HERE - Master Timeline)
 - ✅ 100% test pass rate
 - ✅ Production-ready quality
 
-### **🎉 WEEK 2 COMPLETE! Ready for Week 3!**
+### ⏳ Week 2 Phase 3 - Enhanced Coverage (Days 13-15) - PENDING
 
-**Next Phase: Week 3 - Code Quality Analysis**
-- Prerequisites: ✅ ALL MET
-- All 144 tests passing: ✅ DONE
-- 70%+ coverage achieved: ✅ DONE (75.64%)
-- Ready to begin: ✅ YES
+**Reason for Phase 3:**
+Coverage analysis revealed critical gaps that must be closed before code formatting tools:
+- 🔴 api.py: 62.50% (129 lines missing)
+- 🟡 app.py: 67.68% (32 lines missing)
+- 🟡 main.py: 80.05% (73 lines missing)
+
+**Planned (56 tests to be added to existing files in organized directories):**
+- ❌ tests/functional/test_api_routes.py - Add 10 tests (41 → 51) 🔴 CRITICAL
+- ❌ tests/unit/test_app.py - Add 10 tests (18 → 28) 🟡 HIGH
+- ❌ tests/functional/test_main_routes.py - Add 10 tests (29 → 39) 🟡 HIGH
+- ❌ tests/unit/test_db_utils.py - Add 8 tests (3 → 11) 🟢 MEDIUM
+- ❌ tests/integration/test_integration.py - Add 8 tests (10 → 18) 🔴 CRITICAL
+
+**Test Organization:** Tests organized in 6 directories by testing concern:
+- `tests/unit/` - Fast, isolated component tests (26 → 44 tests)
+- `tests/functional/` - API and route tests (70 → 90 tests)
+- `tests/integration/` - End-to-end workflows (10 → 18 tests)
+- `tests/security/` - Auth, validation, security (24 tests ✅)
+- `tests/performance/` - Scalability, optimization (8 tests ✅)
+- `tests/reliability/` - Error handling, robustness (6 tests ✅)
+
+**Phase 3 Goals:**
+- 🎯 Implement 56 additional tests
+- 🎯 Achieve 85-90% code coverage
+- 🎯 Close all critical coverage gaps
+- 🎯 Protect against black formatting regressions
+- 🎯 100% test pass rate (200/200 tests)
+
+### **🎯 NEXT STEP: Begin Phase 3 Enhanced Coverage Tests**
+
+**Prerequisites for Week 3:**
+- ⏳ All 200 tests passing (currently 144/200)
+- ⏳ 85-90%+ coverage (currently 75.64%)
+- ⏳ Critical gaps closed
+- ✅ Phase 1 & 2 complete
+
+**Next Action:** Create test_api_enhanced.py (Day 13)
 
 ### **After Phase 2 Completion:**
 - Verify all 144 tests passing (100%)
@@ -161,7 +190,7 @@ Please:
 
 1. **First:** `docs/IMPLEMENTATION_PRIORITY_GUIDE.md`
    - Complete action plan showing all 7 weeks
-   - Shows what phase you're in (Week 2 Extended - Phase 1 complete, Phase 2 in progress)
+   - Shows what phase you're in (Week 2 Extended - Phase 1 & 2 complete, Phase 3 pending)
    - Explains how everything fits together
 
 2. **Then:** Based on your current phase:
@@ -355,7 +384,7 @@ Please:
 ### Week 2: Test Suite Foundation ✅ COMPLETE!
 
 > [!TIP]
-> **Status:** All 144 tests implemented and passing! Week 2 complete as of December 12, 2025.
+> **Status:** Phase 1 & 2 complete (144 tests)! Phase 3 pending (56 tests). Week 2 complete as of December 15, 2025 (planned).
 
 #### Task: Configure pytest.ini ✅ COMPLETED (December 11, 2025)
 ```
@@ -713,22 +742,164 @@ Results:
   * test_database_connection_pooling
 - Updated comprehensive_testing_plan.md Section 3.11
 - Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 144/144 tests passing (100%)! Week 2 COMPLETE!
+- Overall: 144/144 tests passing (100%)! Week 2 Phase 2 COMPLETE!
 ```
 
 ---
 
+### Week 2 Phase 3: Enhanced Coverage Tests (Days 13-15) ⏳ PENDING
 
-### Week 3+: Code Quality Analysis (READY TO START!)
+> **🔴 CRITICAL PRIORITY:** Coverage analysis revealed gaps that must be closed before code formatting
+> **Current Coverage:** 75.64% (144/200 tests)
+> **Target Coverage:** 85-90%+ (200/200 tests)
+> **Goal:** Protect against regressions during black formatting and code quality tools
 
-> **✅ PREREQUISITES MET:** All 144 tests complete and passing!
-> **Final Status:** 144/144 tests complete (100%), 75.64% coverage ✅
-> **Next:** Begin Week 3 - Code Quality Analysis from core_code_quality_plan.md
-> **Next:** Complete Phase 2 tests (test_performance.py)
+**Coverage Gaps Identified:**
+- 🔴 api.py: 62.50% (missing 129 lines - error handling, complex queries)
+- 🟡 app.py: 67.68% (missing 32 lines - module loading, error handling)
+- 🟡 main.py: 80.05% (missing 73 lines - DELETE operations, edge cases)
+- 🟢 db_utils.py: 85.66% (missing 41 lines - model methods)
 
-#### Task: Phase 0 - Run Automated Analysis Tools (EXAMPLE - Wait for All 144 Tests)
+#### Task: Add 10 Enhanced Tests to tests/functional/test_api_routes.py (Day 13) 🔴 CRITICAL - ⏳ NEXT
 ```
-⚠️ DO NOT START THIS UNTIL ALL 144 TESTS PASS ⚠️
+I'm on Week 2, Day 13 (Enhanced API Coverage).
+
+Task: Add 10 comprehensive tests to existing tests/functional/test_api_routes.py file
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.12: Enhanced API Coverage Tests)
+2. Add 10 tests to tests/functional/test_api_routes.py covering:
+   - API error responses (400, 404, 500)
+   - Table configuration operations (lines 333-360)
+   - Complex filters and queries
+   - Bulk operations
+   - Authentication requirements
+   - Role management
+   - Query parameter validation
+   - Response format consistency
+3. Focus on untested lines: 252-258, 279-289, 333-360, 364-374, 403-421, 441-486
+4. Run pytest to verify tests pass
+5. Check coverage improvement (62.50% → 85%+)
+6. Verify total: 51 tests in tests/functional/test_api_routes.py (41 existing + 10 new)
+7. Mark tests [x] in comprehensive_testing_plan.md Section 3.12
+
+Status: ⏳ PENDING - CRITICAL for code formatting safety
+```
+
+#### Task: Add 10 Enhanced Tests to tests/unit/test_app.py (Day 13) 🟡 HIGH - ⏳ NEXT
+```
+I'm on Week 2, Day 13 (Enhanced App Configuration Coverage).
+
+Task: Add 10 comprehensive tests to existing tests/unit/test_app.py file
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.13: Enhanced App Configuration Tests)
+2. Add 10 tests to tests/unit/test_app.py covering:
+   - Reports module enabled/disabled
+   - Planning module enabled/disabled
+   - Blueprint registration errors
+   - Database initialization
+   - Security headers
+   - Legacy URL redirects
+   - Context processor variables
+   - CSRF protection
+3. Focus on untested lines: 46-49, 70-74, 84-85, 95-106, 114, 126-133
+4. Run pytest to verify tests pass
+5. Check coverage improvement (67.68% → 85%+)
+6. Verify total: 28 tests in tests/unit/test_app.py (18 existing + 10 new)
+7. Mark tests [x] in comprehensive_testing_plan.md Section 3.13
+
+Status: ⏳ PENDING - HIGH priority for deployment safety
+```
+
+#### Task: Add 10 Enhanced Tests to tests/functional/test_main_routes.py (Day 14) 🟡 HIGH - ⏳ NEXT
+```
+I'm on Week 2, Day 14 (Enhanced Main Routes Coverage).
+
+Task: Add 10 comprehensive tests to existing tests/functional/test_main_routes.py file
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.14: Enhanced Main Routes Tests)
+2. Add 10 tests to tests/functional/test_main_routes.py covering:
+   - DELETE operations for all resources
+   - CASCADE delete behavior
+   - DELETE with non-existent resources
+   - Form validation failures
+   - Route error responses
+   - Pagination edge cases
+   - Search and filter combinations
+3. Focus on untested lines: 123, 130, 141-142, 175, 225-226, 247, 269, 473-524
+4. Run pytest to verify tests pass
+5. Check coverage improvement (80.05% → 90%+)
+6. Verify total: 39 tests in tests/functional/test_main_routes.py (29 existing + 10 new)
+7. Mark tests [x] in comprehensive_testing_plan.md Section 3.14
+
+Status: ⏳ PENDING - HIGH priority for user-facing safety
+```
+
+#### Task: Add 8 Enhanced Tests to tests/unit/test_db_utils.py (Day 14) 🟢 MEDIUM - ⏳ NEXT
+```
+I'm on Week 2, Day 14 (Enhanced Database Coverage).
+
+Task: Add 8 comprehensive tests to existing tests/unit/test_db_utils.py file
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.15: Enhanced Database Tests)
+2. Add 8 tests to tests/unit/test_db_utils.py covering:
+   - User password hashing methods
+   - Model to_dict methods
+   - Model __repr__ methods
+   - Database constraints
+   - Cascade relationships
+   - Model default values
+   - Query filter edge cases
+   - Relationship back-references
+3. Focus on untested lines: 146-151, 326-331, 382-383, 395-397, 402-403
+4. Run pytest to verify tests pass
+5. Check coverage improvement (85.66% → 95%+)
+6. Verify total: 11 tests in tests/unit/test_db_utils.py (3 existing + 8 new)
+7. Mark tests [x] in comprehensive_testing_plan.md Section 3.15
+
+Status: ⏳ PENDING - MEDIUM priority (already well covered)
+```
+
+#### Task: Add 8 Critical Path Tests to tests/integration/test_integration.py (Day 15) 🔴 CRITICAL - ⏳ NEXT
+```
+I'm on Week 2, Day 15 (Critical Path Integration Tests).
+
+Task: Add 8 comprehensive workflow tests to existing tests/integration/test_integration.py file
+
+Please:
+1. Read docs/comprehensive_testing_plan.md (Section 3.16: Critical Path Integration Tests)
+2. Add 8 end-to-end tests to tests/integration/test_integration.py covering:
+   - Complete asset lifecycle
+   - Complete user workflow
+   - Maintenance order workflow
+   - Search and reporting workflow
+   - Concurrent user operations
+   - Error recovery workflow
+   - Session management workflow
+   - Table configuration workflow
+3. Test complete business processes end-to-end
+4. Run pytest to verify all 200 tests pass
+5. Verify coverage reaches 85-90%+
+6. Verify total: 18 tests in tests/integration/test_integration.py (10 existing + 8 new)
+7. Mark tests [x] in comprehensive_testing_plan.md Section 3.16
+
+Status: ⏳ PENDING - CRITICAL for protecting main business logic
+```
+
+---
+
+### Week 3+: Code Quality Analysis (POSTPONED UNTIL PHASE 3 COMPLETE!)
+
+> **⏸️ PREREQUISITES NOT YET MET:** Must complete all 200 tests (Phase 3) before starting Week 3
+> **Current Status:** 144/200 tests complete (72%), 56 tests pending
+> **Coverage:** 75.64% (current), need 85-90%+ before code formatting
+
+#### Task: Phase 0 - Run Automated Analysis Tools (POSTPONED)
+```
+⚠️ DO NOT START THIS UNTIL ALL 200 TESTS PASS ⚠️
 
 I'm transitioning from Week 2 (Testing) to Week 3 (Code Quality Analysis).
 

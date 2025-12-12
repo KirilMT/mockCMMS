@@ -10,7 +10,7 @@
 > **📚 Document Navigation:** This guide coordinates multiple planning documents:
 > 
 > **Active Phase 1 (Week 2 EXTENDED):**
-> - **[Comprehensive Testing Plan](comprehensive_testing_plan.md)** - 144 tests to implement (144 ✅ COMPLETE!)
+> - **[Comprehensive Testing Plan](comprehensive_testing_plan.md)** - 200 tests to implement (144 ✅ COMPLETE!, 56 ⏳ PENDING Phase 3)
 > 
 > **Postponed (Week 3+):**
 > - **[Core Code Quality Plan](core_code_quality_plan.md)** - Code audit (starts after testing)
@@ -656,11 +656,33 @@ pytest --cov=src tests/            # Coverage analysis
 20. **[x] Create test_advanced_validation.py** - ✅ Completed: December 12, 2025 (10 advanced validation tests, 136/144 total tests, 75.64% coverage!)
 21. **[x] Create test_performance.py** - ✅ Completed: December 12, 2025 (8 performance tests, 144/144 total tests, 75.64% coverage!)
 22. **[x] Verify all 144 tests pass** - ✅ Completed: December 12, 2025 (100% pass rate achieved!)
-23. **[x] Achieve 80%+ code coverage** - ⏳ 75.64% achieved (exceeds 70% requirement, approaching 80% target)
+23. **[x] Achieve 70%+ code coverage** - ✅ 75.64% achieved (exceeds 70% requirement)
 
-### After All Tests Pass (Week 3+)
-24. **[ ] Begin Phase 2: Python Backend Audit** - Systematic cleanup with test safety net
-25. **[ ] Expand CI for linting** - Add black and flake8 checks
+### Week 2 PHASE 3 - Enhanced Coverage (Days 13-15) ⏳ PENDING - **CRITICAL FOR CODE FORMATTING**
+
+> **⚠️ CRITICAL:** Coverage analysis revealed gaps that must be closed before running black formatting:
+> - 🔴 api.py: 62.50% coverage (missing error handling, complex queries)
+> - 🟡 app.py: 67.68% coverage (missing module loading tests)
+> - 🟡 main.py: 80.05% coverage (missing DELETE operation tests)
+> 
+> **Strategy:** Add 56 tests to existing test files (organized by topic) rather than creating new files.
+
+24. **[ ] Add 10 tests to tests/functional/test_api_routes.py** - API error handling, complex queries, bulk ops (41 → 51 tests) 🔴 CRITICAL
+25. **[ ] Add 10 tests to tests/unit/test_app.py** - Module loading, configuration, security headers (18 → 28 tests) 🟡 HIGH  
+26. **[ ] Add 10 tests to tests/functional/test_main_routes.py** - DELETE operations, form validation, edge cases (29 → 39 tests) 🟡 HIGH
+27. **[ ] Add 8 tests to tests/unit/test_db_utils.py** - Model methods, constraints, relationships (3 → 11 tests) 🟢 MEDIUM
+28. **[ ] Add 8 tests to tests/integration/test_integration.py** - Critical path workflows (10 → 18 tests) 🔴 CRITICAL
+29. **[ ] Verify all 200 tests pass** - Final validation before code formatting
+30. **[ ] Achieve 85-90%+ code coverage** - Target for code formatting safety
+
+**🎯 Week 2 Phase 3 Goal:** Close all critical coverage gaps by adding tests to existing files.  
+**Estimated Time:** 3 days (Days 13-15)  
+**Total Tests:** 200 (144 existing + 56 additions to existing files)  
+**Test Files:** 11 files (same as current - no new files created)
+
+### After Enhanced Coverage (Week 3+)
+31. **[ ] Begin Phase 2: Python Backend Audit** - Systematic cleanup with test safety net
+32. **[ ] Expand CI for linting** - Add black and flake8 checks
 
 ---
 
