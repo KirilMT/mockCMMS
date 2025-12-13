@@ -14,7 +14,7 @@
 > - **[mockCMMS Roadmap](mockCMMS_roadmap.md)** - Strategic features and current active work
 > - **[Core Code Quality Plan](core_code_quality_plan.md)** - Postponed code audit (resumes after testing)
 > 
-> **Current Status:** Week 2 COMPLETE - Week 3 IN PROGRESS (Phase 0 Complete, Phase 1 In Progress).
+> **Current Status:** Week 2 COMPLETE - Week 3 Phase 0 Complete - Phase 1 Ready to Start
 
 ---
 
@@ -83,12 +83,12 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
-│  PHASE 2: Code Quality Analysis (Week 3)               ⏳      │
+│  PHASE 2: Code Quality Analysis (Week 3)               ⏳       │
 │  ─────────────────────────────────────────────────────────────  │
 │  • Verify code style and syntax (linting)                       │
 │  • Verify logic flow (type checking)                            │
 │  • Measure code complexity                                      │
-│  • Find code duplicates                                         ���
+│  • Find code duplicates                                         │
 │  • Scan for security vulnerabilities                            │
 │  • Tools: ruff, pylint, mypy, radon, bandit                     │
 │  • See: core_code_quality_plan.md                               │
@@ -1875,6 +1875,20 @@ Phase 3-5: Frontend, Templates, Standards (Weeks 4-7) ⏸️ POSTPONED
 - ✅ Coverage reaches 80%+
 - ✅ Security tests validate authentication/authorization
 - ✅ Integration tests validate end-to-end workflows
+
+**Week 3 Iterative Quality Loop (Per File/Group):**
+
+For each file or group of files, repeat until perfect:
+
+1. **Step 1: Flake8** → Run `flake8 [file]`, fix style issues
+2. **Step 2: Black** → Run `black [file]`, review formatting changes
+3. **Step 3: Tests** → Run `pytest tests/`, verify all 210 pass (✅ checkpoint)
+4. **Step 4: Manual Audit** → Review logic, architecture, patterns (what tools can't catch)
+5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete ✅
+
+**Key Principle:** After Step 3, flake8/black/tests must all pass before manual audit.
+
+**See:** `core_code_quality_plan.md` for detailed workflow per file type (Python, JavaScript, CSS, HTML, etc.)
 
 **Why extended scope matters:**
 - 🔴 **Security:** Authentication/authorization vulnerabilities are critical

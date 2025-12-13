@@ -79,7 +79,7 @@ _Updated December 13, 2025_
 ## 🔥 ACTIVE WORK
 
 **Current Sprint:** Week 3 - Code Quality Analysis  
-**Status:** Phase 0 Complete, Phase 1 In Progress  
+**Status:** Phase 0 Complete, Phase 1 In Progress (app.py complete)  
 **Started:** December 13, 2025  
 **Target Completion:** December 20, 2025  
 **Goal:** Systematic code audit and cleanup with automated tools and manual review.
@@ -91,8 +91,20 @@ _Updated December 13, 2025_
 - ✅ Created db_seeding.py module with 9 helper functions
 - ✅ 210/210 tests passing, 82.99% coverage maintained
 
-**Phase 1 In Progress:**
-- 🔄 Python backend manual audit (api.py, main.py remaining)
+**Phase 1 Ready to Start (December 13, 2025):**
+- 🔄 Next: Start with app.py (Step 1: Flake8)
+
+**Iterative Quality Loop (Per File/Group):**
+
+For each file or group of files, repeat until perfect:
+
+1. **Step 1: Flake8** → Run linter, fix style issues
+2. **Step 2: Black** → Auto-format, review changes
+3. **Step 3: Tests** → Run all 210 tests, verify pass (✅ checkpoint)
+4. **Step 4: Manual Audit** → Review logic, architecture, patterns (what tools can't catch)
+5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete
+
+**Key Principle:** After Step 3, flake8/black/tests should all pass before manual audit.
 
 ---
 

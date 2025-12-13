@@ -3,7 +3,7 @@
 **Created:** December 11, 2025  
 **Last Updated:** December 13, 2025
 **Purpose:** Clarify the relationship between core code quality audit and GitHub best practices implementation
-**Current Phase:** Week 3 - Phase 0 Complete, Phase 1 In Progress
+**Current Phase:** Week 3 - Phase 0 Complete, Phase 1 In Progress (app.py complete)
 
 ---
 
@@ -32,7 +32,7 @@
 
 **TL;DR:** The project follows a **testing-first approach**. Build a comprehensive test suite FIRST (Week 2), then perform code quality audit SECOND (Week 3+). This ensures safe refactoring and prevents breaking changes.
 
-**Current Priority (Week 2):** Implementing 144 automated tests for the core application.
+**Current Priority (Week 3):** Code Quality Analysis - Format code, then manual audit.
 
 ---
 
@@ -227,7 +227,7 @@
 
 ## 🚀 Recommended Implementation Plan
 
-### Phase 0: Foundation Setup (Week 1) - **START HERE**
+### Phase 0: Foundation Setup (Week 1) - ✅ **COMPLETE**
 
 **Goal:** Set up minimum viable infrastructure to support clean development
 
@@ -272,22 +272,34 @@
 
 ---
 
-### Phase 2: Core Python Backend Audit (Week 3) - ✅ **READY TO START**
+### Phase 2: Core Python Backend Audit (Week 3) - 🔄 **IN PROGRESS**
 
 > **✅ PREREQUISITES MET:** All 210 tests pass with 82.99% coverage.
 
-1.  **[ ] Primary Focus:** Code Quality Audit - Phase 1
-    -   Work through `core_code_quality_plan.md` Phase 1 (Python Backend)
-    -   Audit `app.py`, `db_utils.py`, `api.py`, `main.py`
-    -   Apply `black` formatting in small incremental batches
-    -   Fix flake8 linting issues
+**Week 3 Correct Workflow:**
+1. ✅ **Phase 0:** Automated analysis (ruff, pylint, radon, bandit) - COMPLETE
+2. ⏳ **Phase 1.1:** Fix flake8 issues (15 min) - NEXT STEP
+3. ⏳ **Phase 1.2:** Apply black formatting (15 min)
+4. ⏳ **Phase 1.3:** Manual audit (3-4 hours) - api.py, main.py, db_utils.py, app.py
+5. ⏳ **Phase 1.4:** Final verification (15 min)
+6. ⏳ **Phase 2:** Update CI with quality gates
+
+**Strategy:** Format first (clean code easier to review), then manual audit
+
+1.  **[ ] Primary Focus:** Code Quality Analysis
+    -   ✅ Phase 0: Run ruff, pylint, mypy, radon, bandit (COMPLETE)
+    -   ✅ Fix all critical/high priority issues (COMPLETE)
+    -   [ ] Fix remaining flake8 issues (NEXT - 15 min)
+    -   [ ] Apply `black` formatting (15 min)
+    -   [ ] Manual audit: api.py, main.py, db_utils.py, app.py (3-4 hours)
+    -   [ ] Final verification (15 min)
     -   Follow the workflow standards you set up in Week 1
 
 2.  **[ ] Secondary Focus:** CI/CD Enhancement
     -   ✅ Basic GitHub Actions workflow already exists
-    -   Enhance CI to include code formatting checks (black)
-    -   Add flake8 linting to CI
-    -   Configure coverage thresholds
+    -   [ ] Enhance CI to include code formatting checks (black)
+    -   [ ] Add flake8 linting to CI
+    -   [ ] Configure coverage thresholds
     -   This will catch issues in future commits automatically
 
 **Why this order?**
@@ -368,8 +380,8 @@
 
 ## 📋 Detailed Week-by-Week Breakdown
 
-### Week 1: Foundation Setup
-**Monday-Tuesday: Git Workflow**
+### Week 1: Foundation Setup ✅ COMPLETED
+**Monday-Tuesday: Git Workflow** ✅ COMPLETED
 - [x] Create PR template
 - [x] Update CONTRIBUTING.md with commit standards
 - [ ] Enable branch protection on `main`
@@ -463,13 +475,40 @@ jscpd src/                         # Duplicate detection
 pytest --cov=src tests/            # Coverage analysis
 ```
 
-**Tuesday-Wednesday: Phase 1 - Python Backend Manual Audit** 🔄 IN PROGRESS
-- [x] Review `app.py` structure and configuration ✅ (docstrings, imports, logging)
-- [x] Audit `db_utils.py` for SQL injection, query optimization ✅ (refactored complexity)
-- [ ] Audit `api.py` for RESTful conventions, validation
-- [ ] Audit `main.py` for route organization, form handling
-- [x] Check PEP 8 compliance, docstrings, type hints ✅ (Phase 0)
-- [x] **Major refactoring:** Created `db_seeding.py` module ✅
+**Tuesday-Wednesday: Phase 1 - Python Backend Iterative Quality Loop** 🔄 IN PROGRESS
+
+**Iterative Quality Loop (Per File/Group):**
+
+Repeat for each file until perfect:
+
+1. **Step 1: Flake8** → Run `flake8 [file]`, fix style issues
+2. **Step 2: Black** → Run `black [file]`, review formatting changes
+3. **Step 3: Tests** → Run `pytest tests/`, verify all 210 pass (✅ checkpoint)
+4. **Step 4: Manual Audit** → Review logic, architecture, patterns (what tools can't catch)
+5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete ✅
+
+**Key Principle:** After Step 3, flake8/black/tests must all pass before proceeding to manual audit.
+
+**Progress:**
+- [ ] `app.py` - PENDING (Step 1: Flake8)
+- [ ] `api.py` - PENDING
+- [ ] `main.py` - PENDING
+- [ ] `db_utils.py` - PENDING
+- [ ] `shift_utils.py` - PENDING
+- [ ] `db_seeding.py` - PENDING
+
+**Phase 0 Complete:** Automated analysis done, excellent scores achieved
+
+**app.py Audit Results:**
+- ✅ Flask factory pattern: EXCELLENT
+- ✅ Blueprint registration: EXCELLENT
+- ✅ Database initialization: EXCELLENT
+- ✅ Error handling & logging: EXCELLENT
+- ✅ Security (SECRET_KEY): EXCELLENT
+- ✅ PEP 8 compliance: EXCELLENT
+- ✅ Comment quality: EXCELLENT
+- ✅ Code duplication: MINIMAL
+- ✅ **VERDICT:** Production-ready, no issues found
 
 **Thursday-Friday: Fix Critical & High Priority Issues** ✅ COMPLETE
 - [x] Fix all security vulnerabilities (from bandit) ✅ 0 issues found
@@ -493,21 +532,19 @@ pytest --cov=src tests/            # Coverage analysis
 - [ ] Identify any logic that doesn't match requirements
 - [ ] **Deliverable:** Requirements Validation Report
 
-**Wednesday-Thursday: JavaScript Frontend Audit**
-- [ ] Run eslint on JavaScript files
-- [ ] Audit Advanced Table component architecture
-- [ ] Check for code duplication in JS modules
-- [ ] Review naming conventions and code style
-- [ ] Check proper use of const/let, arrow functions
-- [ ] Remove console.log statements
-- [ ] **Focus areas:** Issues from eslint and jscpd
+**Wednesday-Friday: JavaScript Frontend Iterative Quality Loop**
 
-**Friday: Fix JavaScript Issues**
-- [ ] Fix high-priority JavaScript issues
-- [ ] Refactor duplicate code in JS
-- [ ] Add JSDoc comments where needed
-- [ ] Test all JavaScript functionality
-- [ ] **Deliverable:** JavaScript Audit Report
+For each JavaScript file or group, repeat until perfect:
+
+1. **Step 1: ESLint** → Run `eslint [file]`, fix code quality issues
+2. **Step 2: Prettier** → Run `prettier --write [file]`, review formatting
+3. **Step 3: Browser Tests** → Load app, test functionality, check console (✅ checkpoint)
+4. **Step 4: Manual Audit** → Review architecture, logic, patterns (what tools can't catch)
+5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete ✅
+
+**See:** `core_code_quality_plan.md` Phase 2 for detailed JavaScript workflow
+
+**Deliverable:** JavaScript Audit Report with formatted, audited codebase
 
 ---
 
@@ -531,21 +568,31 @@ pytest --cov=src tests/            # Coverage analysis
   - [ ] Test with special characters
 - [ ] **Deliverable:** Enhanced Test Suite Documentation
 
-**Wednesday-Thursday: Templates Audit**
-- [ ] Follow `core_code_quality_plan.md` Phase 4
-- [ ] Remove all inline JavaScript (move to .js files)
-- [ ] Remove all inline CSS (move to .css files)
-- [ ] Fix comment issues (no bug references)
-- [ ] Ensure proper template structure
-- [ ] **Deliverable:** Templates Audit Report
+**Wednesday-Thursday: HTML Templates Iterative Quality Loop**
 
-**Friday: CSS Audit**
-- [ ] Follow `core_code_quality_plan.md` Phase 3
-- [ ] Audit all CSS files for duplicates
-- [ ] Remove unused CSS selectors
-- [ ] Organize CSS by component
-- [ ] Add CSS linting to CI (stylelint)
-- [ ] **Deliverable:** CSS Audit Report
+For each HTML template file or group, repeat until perfect:
+
+1. **Step 1: HTML Validation** → Run validator (W3C/html-validate), fix syntax
+2. **Step 2: Prettier** → Run `prettier --write [file]`, review formatting
+3. **Step 3: Render Tests** → Load page, verify rendering, check Flask logs (✅ checkpoint)
+4. **Step 4: Manual Audit** → Review structure, accessibility, separation of concerns
+5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete ✅
+
+**See:** `core_code_quality_plan.md` Phase 4 for detailed HTML workflow
+
+**Friday: CSS Iterative Quality Loop**
+
+For each CSS file or group, repeat until perfect:
+
+1. **Step 1: Stylelint** → Run `stylelint [file]`, fix CSS issues
+2. **Step 2: Prettier** → Run `prettier --write [file]`, review formatting
+3. **Step 3: Visual Tests** → Load app, verify styles, test responsive (✅ checkpoint)
+4. **Step 4: Manual Audit** → Review organization, duplicates, performance
+5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete ✅
+
+**See:** `core_code_quality_plan.md` Phase 3 for detailed CSS workflow
+
+**Deliverables:** Templates Audit Report + CSS Audit Report
 
 ---
 
@@ -630,19 +677,19 @@ pytest --cov=src tests/            # Coverage analysis
 
 ## 🎯 What to Do FIRST (Priority Order)
 
-### Immediate Actions (This Week)
+### Week 3 Current Actions (In Progress)
 1. ✅ **Create PR Template** - Takes 30 minutes, immediate benefit
 2. ✅ **Enable Branch Protection** - Takes 10 minutes, protects main
 3. ✅ **Update CONTRIBUTING.md** - Takes 2 hours, documents standards
 4. ✅ **Move SECRET_KEY to .env** - Takes 15 minutes, critical security
 5. ✅ **Enable 2FA** - Takes 10 minutes, account security
 
-### Short-term Setup (Next 2-3 Days)
+### Week 3 Phase 1 Tasks (Current Focus)
 6. ✅ **Create Basic CI Workflow** - Takes 1-2 hours, automates checks
 7. ✅ **Enable Dependabot** - Takes 5 minutes, security automation
 8. ✅ **Create Comprehensive Testing Plan** - Takes 2-3 hours, defines 96 tests
 
-### Start Test Suite Implementation (Current Week 2)
+### Week 2 Test Suite Implementation ✅ COMPLETED
 9. **[x] Configure pytest.ini** - ✅ Completed: December 11, 2025 (30 minutes, test discovery setup)
 10. **[x] Enhance conftest.py** - ✅ Completed: December 11, 2025 (15 comprehensive fixtures created)
 11. **[x] Create test_app.py** - ✅ Completed: December 11, 2025 (18 tests for Flask app, all passing)
@@ -686,10 +733,12 @@ pytest --cov=src tests/            # Coverage analysis
 29. **[x] Verify all 210 tests pass** - ✅ Final validation complete (82.99% coverage)
 30. **[x] Achieve 80-85% code coverage** - ✅ TARGET ACHIEVED (82.99%)
 
-**🎯 Week 2 Phase 3 Result:** Achieved 82.99% coverage (target: 80-85%) with 210 total tests ✅  
-**Estimated Time:** 4 days (Days 13-16)  
-**Total Tests:** 210 (144 original + 66 Phase 3 additions)  
-**Test Files:** 11 files organized in 6 directories
+**🎯 Week 2 Phase 3 Result:** ✅ COMPLETE (December 13, 2025)
+- Achieved 82.99% coverage (target: 80-85%) ✅
+- Total Tests: 210 (144 original + 46 enhanced + 20 targeted)
+- Test Files: 11 files organized in 6 directories
+- All tests passing (100% pass rate)
+- Ready for Week 3 Code Quality Analysis
 
 ### After Enhanced Coverage (Week 3+)
 31. **[ ] Begin Phase 2: Python Backend Audit** - Systematic cleanup with test safety net
@@ -754,21 +803,27 @@ Create a GitHub Project board with these columns:
 ### Backlog
 - All unchecked items from all plans
 
-### Week 1: Foundation Setup ✅
-- Git workflow items
-- Security basics
-- Documentation standards
+### Week 1: Foundation Setup ✅ COMPLETE
+- ✅ Git workflow items
+- ✅ Security basics
+- ✅ Documentation standards
 
 ### Week 2: Testing ✅ COMPLETE
-- pytest configuration ✅
-- Test implementation (210 tests) ✅
-- CI integration ✅
-- Coverage: 82.99% ✅
+- ✅ pytest configuration
+- ✅ Test implementation (210 tests)
+- ✅ CI integration
+- ✅ Coverage: 82.99%
 
-### Week 3: Code Audit 🚀 READY
-- Python backend cleanup
-- Frontend cleanup
-- Template cleanup
+### Week 3: Code Quality Analysis 🔄 IN PROGRESS
+- ✅ Phase 0: Automated analysis (Ruff, Pylint, Radon, Bandit)
+- 🔄 Phase 1: Manual audit (app.py ✅, db_utils.py ✅, api.py/main.py in progress)
+- ⏳ Phase 2: Code formatting (flake8, then black)
+- ⏳ Phase 3: CI quality gates
+
+### Week 4-5: Frontend & Templates ⏳ PENDING
+- JavaScript audit
+- CSS cleanup
+- Template separation of concerns
 
 ### Code Review
 - PRs waiting for review/merge

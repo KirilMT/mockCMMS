@@ -2,8 +2,8 @@
 
 **Created:** December 1, 2025  
 **Last Updated:** December 13, 2025  
-**Status:** 🔄 **PHASE 0 COMPLETE - PHASE 1 IN PROGRESS** (As of December 13, 2025)
-**Prerequisites Met:** All 210 tests complete with 82.99% coverage. Phase 0 automated analysis complete with excellent scores.
+**Status:** 🔄 **PHASE 0 COMPLETE - PHASE 1 READY** (Ready for flake8 → black → manual audit)
+**Prerequisites Met:** All 210 tests complete with 82.99% coverage. Phase 0 automated analysis complete (Ruff: 0, Pylint: 9.15/10, Radon: A, Bandit: 0).
 
 ---
 
@@ -142,14 +142,14 @@ This document outlines a comprehensive, systematic approach to auditing and impr
 - [ ] `scripts/setup.ps1` - Setup automation script
 
 ### Python Files (`src/`)
-- [ ] `src/__init__.py` - Package initialization
-- [x] `src/app.py` - Flask application factory ✅ Phase 0 (docstrings, imports, logging)
-- [ ] `src/routes/api.py` - REST API endpoints
-- [ ] `src/routes/main.py` - Web interface routes
-- [ ] `src/services/__init__.py` - Services package initialization
-- [x] `src/services/db_utils.py` - Database utilities ✅ Phase 0 (refactored, docstrings)
-- [x] `src/services/db_seeding.py` - Database seeding helpers ✅ Phase 0 (new module)
-- [x] `src/services/shift_utils.py` - Shift management utilities ✅ Phase 0 (docstrings)
+- [x] `src/__init__.py` - Package initialization ✅ Phase 0
+- [x] `src/app.py` - Flask application factory ✅ Phase 0
+- [x] `src/routes/api.py` - REST API endpoints ✅ Phase 0
+- [x] `src/routes/main.py` - Web interface routes ✅ Phase 0
+- [x] `src/services/__init__.py` - Services package initialization ✅ Phase 0
+- [x] `src/services/db_utils.py` - Database utilities ✅ Phase 0 (refactored)
+- [x] `src/services/db_seeding.py` - Database seeding helpers ✅ Phase 0 (created)
+- [x] `src/services/shift_utils.py` - Shift management utilities ✅ Phase 0
 
 ### JavaScript Files (`src/static/js/`)
 - [ ] `src/static/js/advanced-table/table-core.js`
@@ -377,238 +377,646 @@ cat audit_results/*.txt > audit_results/audit_results_full.txt
 ## 🔍 Audit Phases
 
 ### Phase 1: Python Backend Analysis (Priority: Critical)
-**Estimated Duration:** 2-3 days  
-**Focus:** Core application logic, database operations, API endpoints
+**Estimated Duration:** 1 day  
+**Focus:** Iterative quality loop per file/group
 
-#### 1.1 Code Structure & Organization
-- [ ] Review `app.py` for proper Flask factory pattern
-- [ ] Check blueprint registration and configuration
-- [ ] Verify database initialization and connection handling
-- [ ] Review error handling and logging practices
+**Strategy:** For each file or group of files, follow this iterative loop until perfect:
 
-#### 1.2 Database Layer (`db_utils.py`)
-- [ ] Check for SQL injection vulnerabilities
-- [ ] Review query optimization opportunities
-- [ ] Verify proper use of SQLAlchemy ORM
-- [ ] Check for N+1 query problems
-- [ ] Ensure proper transaction handling
+#### Iterative Quality Loop (Per File/Group)
 
-#### 1.3 API Routes (`api.py`)
-- [ ] Verify RESTful conventions
+**Step 1: Flake8 Linting**
+- [ ] Run `flake8 [file]` to identify style issues
+- [ ] Fix any problems found
+- [ ] Proceed to Step 2
+
+**Step 2: Black Formatting**
+- [ ] Run `black [file]` to auto-format code
+- [ ] Review changes
+- [ ] Proceed to Step 3
+
+**Step 3: Test Verification**
+- [ ] Run `pytest tests/` (verify all 210 tests pass)
+- [ ] Fix any broken tests
+- [ ] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
+
+**Step 4: Manual Audit**
+
+Focus on logic, architecture, and patterns that tools can't catch:
+
+**API Routes (`src/routes/api.py`) - 1 hour:**
+- [ ] Verify RESTful conventions (proper HTTP methods, status codes)
 - [ ] Check input validation and sanitization
 - [ ] Review error responses and status codes
-- [ ] Ensure proper authentication/authorization (if applicable)
+- [ ] Ensure proper authentication/authorization
 - [ ] Check for duplicate code across endpoints
+- [ ] Verify proper use of Flask patterns
 
-#### 1.4 Web Routes (`main.py`)
+**Web Routes (`src/routes/main.py`) - 1 hour:**
 - [ ] Review route organization and naming
 - [ ] Check for duplicate logic between routes
 - [ ] Verify proper template rendering
 - [ ] Review form handling and validation
 - [ ] Check flash message usage
+- [ ] Verify proper error handling
 
-#### 1.5 Python Code Quality
-- [ ] PEP 8 compliance (line length, imports, spacing)
-- [ ] Docstring completeness and quality
-- [ ] Type hints usage (where beneficial)
-- [ ] Remove unused imports and variables
-- [ ] Check for code duplication (DRY principle)
-- [ ] Review exception handling patterns
+**Database Layer (`src/services/db_utils.py`) - 1 hour:**
+- [ ] Check for SQL injection vulnerabilities
+- [ ] Review query optimization opportunities
+- [ ] Verify proper use of SQLAlchemy ORM
+- [ ] Check for N+1 query problems
+- [ ] Ensure proper transaction handling
+- [ ] Review model relationships and constraints
 
-**Deliverable:** Python Backend Audit Report with findings and recommendations
+**Application Core (`src/app.py`) - 30 min:**
+- [ ] Verify Flask factory pattern implementation
+- [ ] Check blueprint registration
+- [ ] Review configuration handling
+- [ ] Verify error handler setup
+- [ ] Check security settings (SECRET_KEY, etc.)
+
+**Utilities (`src/services/shift_utils.py`, `src/services/db_seeding.py`) - 30 min:**
+- [ ] Review business logic correctness
+- [ ] Check for edge cases
+- [ ] Verify proper error handling
+
+**Step 5: Document & Loop (If Changes Made)**
+
+If Step 4 resulted in modifications:
+- [ ] Document what was changed and why
+- [ ] Update any affected tests
+- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- [ ] Mark file as COMPLETE ✅
+- [ ] Move to next file/group
+
+#### Final Verification (After All Files Complete)
+- [ ] Run `ruff check src/` (verify 0 issues)
+- [ ] Run `pylint src/` (verify 9.0+ score)
+- [ ] Run `pytest --cov=src tests/` (verify 82.99%+ coverage)
+- [ ] Update `audit_results/baseline_metrics.md` with final scores
+- [ ] Document all findings in audit report
+- [ ] Mark Phase 1 COMPLETE
+
+**Deliverable:** Formatted, audited Python codebase with documented findings
+
+**File Tracking Template:**
+```markdown
+### [filename] Status
+- [ ] Step 1: Flake8
+- [ ] Step 2: Black
+- [ ] Step 3: Tests
+- [ ] Step 4: Manual audit
+- [ ] Step 5: Loop (if needed)
+- [ ] COMPLETE ✅
+```
 
 ---
 
 ### Phase 2: JavaScript Frontend Analysis (Priority: Critical)
 **Estimated Duration:** 3-4 days  
-**Focus:** Advanced Table component, UI interactions, client-side logic
+**Focus:** Iterative quality loop per file/group
 
-#### 2.1 Advanced Table Component Architecture
+**Strategy:** For each JavaScript file or group of files, follow this iterative loop until perfect:
+
+#### Iterative Quality Loop (Per File/Group)
+
+**Step 1: ESLint Linting**
+- [ ] Run `eslint [file]` to identify code quality issues
+- [ ] Fix any problems found (style, unused vars, etc.)
+- [ ] Proceed to Step 2
+
+**Step 2: Prettier Formatting**
+- [ ] Run `prettier --write [file]` to auto-format code
+- [ ] Review changes for consistency
+- [ ] Proceed to Step 3
+
+**Step 3: Browser Testing**
+- [ ] Load application in browser
+- [ ] Test affected functionality
+- [ ] Check browser console for errors
+- [ ] Verify no JavaScript exceptions
+- [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
+
+**Step 4: Manual Audit**
+
+Focus on architecture, logic, and patterns that tools can't catch:
+
+**Advanced Table Core (`table-core.js`, `table-init.js`) - 1 hour:**
 - [ ] Review module organization and dependencies
 - [ ] Check for circular dependencies
-- [ ] Verify proper encapsulation and separation of concerns
-- [ ] Review class structure and inheritance
-- [ ] Check for code duplication across modules
-
-#### 2.2 Code Quality & Standards
-- [ ] Consistent naming conventions (camelCase for variables/functions)
-- [ ] Proper use of `const`, `let` (no `var`)
-- [ ] Arrow functions vs regular functions consistency
-- [ ] Proper error handling (try-catch blocks)
-- [ ] Remove `console.log()` statements (use proper logging)
+- [ ] Verify proper encapsulation and class structure
+- [ ] Review initialization patterns
 - [ ] Check for memory leaks (event listener cleanup)
 
-#### 2.3 Performance Optimization
+**Table Rendering (`table-render.js`, `table-sidebar.js`, `table-resize.js`) - 1 hour:**
 - [ ] Review DOM manipulation efficiency
 - [ ] Check for unnecessary re-renders
 - [ ] Verify proper use of event delegation
-- [ ] Review debouncing/throttling for expensive operations
-- [ ] Check for efficient data structures and algorithms
+- [ ] Review template string usage
+- [ ] Check for duplicate rendering logic
 
-#### 2.4 Browser Compatibility
-- [ ] Verify ES6+ feature usage and browser support
-- [ ] Check for polyfills if needed
-- [ ] Test cross-browser compatibility
+**Table Data Management (`table-data.js`, `table-config.js`, `table-export.js`) - 1 hour:**
+- [ ] Review data filtering and sorting logic
+- [ ] Check for efficient data structures
+- [ ] Verify proper state management
+- [ ] Review configuration persistence
+- [ ] Check export functionality correctness
 
-#### 2.5 Code Comments & Documentation
+**Table Events & Loading (`table-events.js`, `table-loading.js`, `table-retry.js`) - 1 hour:**
+- [ ] Review event handling patterns
+- [ ] Check for proper error handling (try-catch)
+- [ ] Verify retry logic with exponential backoff
+- [ ] Review loading state management
+- [ ] Check for race conditions
+
+**UI Components (`toast-notification.js`, `flash-messages.js`) - 30 min:**
+- [ ] Review component API design
+- [ ] Check for proper error handling
+- [ ] Verify browser compatibility (ES6+ features)
+- [ ] Review timing and auto-dismiss logic
+
+**Code Quality Checks (All Files):**
+- [ ] Consistent naming conventions (camelCase)
+- [ ] Proper use of `const`, `let` (no `var`)
+- [ ] Arrow functions vs regular functions consistency
+- [ ] Remove `console.log()` statements
 - [ ] Remove bug reference comments (e.g., `// Bug #5`)
-- [ ] Ensure comments explain WHY, not WHAT
 - [ ] Add JSDoc comments for public methods
 - [ ] Remove commented-out code blocks
 
-**Deliverable:** JavaScript Frontend Audit Report with findings and recommendations
+**Step 5: Document & Loop (If Changes Made)**
+
+If Step 4 resulted in modifications:
+- [ ] Document what was changed and why
+- [ ] Update any affected browser tests
+- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- [ ] Mark file as COMPLETE ✅
+- [ ] Move to next file/group
+
+#### Final Verification (After All Files Complete)
+- [ ] Run `eslint src/static/js/` (verify 0 errors)
+- [ ] Test all JavaScript functionality in browser
+- [ ] Check browser console for any warnings/errors
+- [ ] Verify no memory leaks (DevTools Memory profiler)
+- [ ] Document all findings in audit report
+- [ ] Mark Phase 2 COMPLETE
+
+**Deliverable:** Formatted, audited JavaScript codebase with documented findings
+
+**File Tracking Template:**
+```markdown
+### [filename] Status
+- [ ] Step 1: ESLint
+- [ ] Step 2: Prettier
+- [ ] Step 3: Browser tests
+- [ ] Step 4: Manual audit
+- [ ] Step 5: Loop (if needed)
+- [ ] COMPLETE ✅
+```
 
 ---
 
 ### Phase 3: CSS Styling Analysis (Priority: High)
 **Estimated Duration:** 1-2 days  
-**Focus:** Stylesheet organization, consistency, optimization
+**Focus:** Iterative quality loop per file/group
 
-#### 3.1 CSS Organization
+**Strategy:** For each CSS file or group of files, follow this iterative loop until perfect:
+
+#### Iterative Quality Loop (Per File/Group)
+
+**Step 1: Stylelint Linting**
+- [ ] Run `stylelint [file]` to identify CSS issues
+- [ ] Fix any problems found (syntax, order, etc.)
+- [ ] Proceed to Step 2
+
+**Step 2: Prettier Formatting**
+- [ ] Run `prettier --write [file]` to auto-format CSS
+- [ ] Review changes for consistency
+- [ ] Proceed to Step 3
+
+**Step 3: Visual Testing**
+- [ ] Load application in browser
+- [ ] Verify styles render correctly
+- [ ] Test responsive breakpoints
+- [ ] Check for visual regressions
+- [ ] ✅ **Checkpoint:** After this step, Stylelint/Prettier/visual tests should all pass
+
+**Step 4: Manual Audit**
+
+Focus on organization, optimization, and patterns that tools can't catch:
+
+**Main Styles (`main.css`) - 1 hour:**
 - [ ] Review file structure and organization
 - [ ] Check for logical grouping of styles
 - [ ] Verify proper use of CSS custom properties (variables)
-- [ ] Review media query organization
-
-#### 3.2 CSS Quality & Standards
-- [ ] Consistent naming conventions (BEM, kebab-case, etc.)
-- [ ] Remove duplicate styles
-- [ ] Check for unused CSS rules
-- [ ] Verify proper specificity (avoid `!important` overuse)
 - [ ] Review color consistency (use variables)
 - [ ] Check for magic numbers (use named variables)
+- [ ] Remove duplicate styles
 
-#### 3.3 Performance & Optimization
-- [ ] Minimize CSS file size
+**Advanced Table Styles (`advanced-table.css`, `advanced-table-sidebar.css`) - 1 hour:**
+- [ ] Review component-specific organization
+- [ ] Check for unused CSS rules
+- [ ] Verify proper specificity (avoid `!important` overuse)
+- [ ] Review selector performance
+- [ ] Check for duplicate selectors across files
+
+**Responsive Design (All Files):**
+- [ ] Verify mobile-first approach
+- [ ] Check breakpoint consistency
+- [ ] Review media query organization
+- [ ] Test on multiple screen sizes
+
+**Performance & Optimization (All Files):**
 - [ ] Remove unused vendor prefixes
 - [ ] Optimize selectors for performance
 - [ ] Check for CSS that could be simplified
+- [ ] Verify efficient use of inheritance
 
-#### 3.4 Responsive Design
-- [ ] Verify mobile-first approach
-- [ ] Check breakpoint consistency
-- [ ] Review responsive utilities
+**Naming Conventions (All Files):**
+- [ ] Consistent naming (BEM, kebab-case, etc.)
+- [ ] Remove bug reference comments
+- [ ] Ensure comments are descriptive
 
-**Deliverable:** CSS Styling Audit Report with findings and recommendations
+**Step 5: Document & Loop (If Changes Made)**
+
+If Step 4 resulted in modifications:
+- [ ] Document what was changed and why
+- [ ] Update any affected visual tests
+- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- [ ] Mark file as COMPLETE ✅
+- [ ] Move to next file/group
+
+#### Final Verification (After All Files Complete)
+- [ ] Run `stylelint src/static/css/` (verify 0 errors)
+- [ ] Visual regression test on all pages
+- [ ] Test responsive design on multiple devices
+- [ ] Verify no unused CSS (coverage tools)
+- [ ] Document all findings in audit report
+- [ ] Mark Phase 3 COMPLETE
+
+**Deliverable:** Formatted, audited CSS codebase with documented findings
+
+**File Tracking Template:**
+```markdown
+### [filename] Status
+- [ ] Step 1: Stylelint
+- [ ] Step 2: Prettier
+- [ ] Step 3: Visual tests
+- [ ] Step 4: Manual audit
+- [ ] Step 5: Loop (if needed)
+- [ ] COMPLETE ✅
+```
 
 ---
 
 ### Phase 4: HTML Templates Analysis (Priority: High)
 **Estimated Duration:** 2-3 days  
-**Focus:** Template structure, separation of concerns, accessibility
+**Focus:** Iterative quality loop per file/group
 
-#### 4.1 Separation of Concerns
+**Strategy:** For each HTML template file or group of files, follow this iterative loop until perfect:
+
+#### Iterative Quality Loop (Per File/Group)
+
+**Step 1: HTML Validation**
+- [ ] Run HTML validator (W3C or `html-validate`) on rendered output
+- [ ] Fix any syntax errors or warnings
+- [ ] Proceed to Step 2
+
+**Step 2: Prettier Formatting**
+- [ ] Run `prettier --write [file]` to auto-format HTML
+- [ ] Review changes for consistency
+- [ ] Proceed to Step 3
+
+**Step 3: Render Testing**
+- [ ] Load page in browser
+- [ ] Verify template renders correctly
+- [ ] Test all dynamic content
+- [ ] Check for template errors in Flask logs
+- [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
+
+**Step 4: Manual Audit**
+
+Focus on structure, accessibility, and patterns that tools can't catch:
+
+**Base Template (`base.html`) - 30 min:**
+- [ ] Review Jinja2 template inheritance structure
+- [ ] Check for proper block definitions
+- [ ] Verify meta tags and SEO elements
+- [ ] Review script/style loading order
+
+**List Pages (`assets.html`, `maintenance_orders.html`, `spare_parts.html`, `users.html`) - 2 hours:**
+- [ ] Check for duplicate template blocks
+- [ ] Verify proper use of includes and macros
+- [ ] Review table structure and accessibility
+- [ ] Check for inline JavaScript/CSS violations
+- [ ] Verify proper form structure
+
+**Detail Pages (`asset_detail.html`, `maintenance_order_detail.html`, etc.) - 2 hours:**
+- [ ] Review form handling and validation
+- [ ] Check for inline styles (`style="..."` attributes)
+- [ ] Check for inline event handlers (`onclick="..."` attributes)
+- [ ] Verify proper error message display
+- [ ] Review template variable naming
+
+**Specialized Pages (`shift_calendar.html`, `maintenance_grid.html`, `planning.html`) - 1 hour:**
+- [ ] Review complex template logic
+- [ ] Check for JavaScript extraction opportunities
+- [ ] Verify proper data binding
+
+**Separation of Concerns (All Files):**
 - [ ] Identify inline JavaScript (`<script>` blocks in templates)
 - [ ] Identify inline CSS (`<style>` blocks in templates)
 - [ ] Identify inline styles (`style="..."` attributes)
 - [ ] Identify inline event handlers (`onclick="..."` attributes)
 - [ ] Create extraction plan for each violation
 
-#### 4.2 Template Structure
-- [ ] Review Jinja2 template inheritance
-- [ ] Check for duplicate template blocks
-- [ ] Verify proper use of includes and macros
-- [ ] Review template variable naming
-
-#### 4.3 HTML Quality & Standards
-- [ ] Semantic HTML usage
+**HTML Quality & Standards (All Files):**
+- [ ] Semantic HTML usage (header, nav, main, section, article)
 - [ ] Proper heading hierarchy (h1, h2, h3...)
-- [ ] Form structure and validation
-- [ ] Accessibility (ARIA labels, alt text, etc.)
+- [ ] Accessibility (ARIA labels, alt text, role attributes)
+- [ ] Form accessibility (labels, fieldsets, error messages)
 - [ ] Remove commented-out HTML blocks
-
-#### 4.4 Comment Quality
 - [ ] Remove bug reference comments (e.g., `<!-- Bug #5 -->`)
-- [ ] Ensure comments are descriptive and necessary
-- [ ] Remove redundant comments
 
-**Deliverable:** HTML Templates Audit Report with findings and recommendations
+**Step 5: Document & Loop (If Changes Made)**
+
+If Step 4 resulted in modifications:
+- [ ] Document what was changed and why
+- [ ] Update any affected render tests
+- [ ] Extract inline code to separate files if needed
+- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- [ ] Mark file as COMPLETE ✅
+- [ ] Move to next file/group
+
+#### Final Verification (After All Files Complete)
+- [ ] Validate all rendered HTML (W3C validator)
+- [ ] Run accessibility audit (axe DevTools or Lighthouse)
+- [ ] Verify no inline JavaScript/CSS/styles remain
+- [ ] Test all templates render without errors
+- [ ] Document all findings in audit report
+- [ ] Mark Phase 4 COMPLETE
+
+**Deliverable:** Formatted, audited HTML templates with documented findings
+
+**File Tracking Template:**
+```markdown
+### [filename] Status
+- [ ] Step 1: HTML validation
+- [ ] Step 2: Prettier
+- [ ] Step 3: Render tests
+- [ ] Step 4: Manual audit
+- [ ] Step 5: Loop (if needed)
+- [ ] COMPLETE ✅
+```
 
 ---
 
 ### Phase 5: Root-Level & Configuration Files (Priority: High)
 **Estimated Duration:** 1-2 days  
-**Focus:** Entry points, configuration, documentation, CI/CD
+**Focus:** Iterative quality loop per file/group
 
-#### 5.1 Application Entry Point
-- [ ] Review `run.py` structure and error handling
+**Strategy:** For each root-level file or group of files, follow this iterative loop until perfect:
+
+#### Iterative Quality Loop (Per File/Group)
+
+**Step 1: Format/Lint Check**
+- [ ] Run appropriate linter for file type:
+  - Python: `flake8 [file]`
+  - Markdown: `markdownlint [file]`
+  - JSON: `jsonlint [file]`
+  - PowerShell: `PSScriptAnalyzer`
+- [ ] Fix any problems found
+- [ ] Proceed to Step 2
+
+**Step 2: Auto-Formatting**
+- [ ] Run appropriate formatter:
+  - Python: `black [file]`
+  - Markdown: `prettier --write [file]`
+  - JSON: `prettier --write [file]`
+- [ ] Review changes
+- [ ] Proceed to Step 3
+
+**Step 3: Functional Testing**
+- [ ] Test file functionality:
+  - `run.py`: Start application
+  - `requirements.txt`: Install dependencies
+  - `setup.ps1`: Run setup script
+  - Documentation: Verify links and accuracy
+- [ ] Verify no errors or warnings
+- [ ] ✅ **Checkpoint:** After this step, linting/formatting/functionality should all pass
+
+**Step 4: Manual Audit**
+
+Focus on correctness, completeness, and patterns that tools can't catch:
+
+**Application Entry Point (`run.py`) - 30 min:**
+- [ ] Review structure and error handling
 - [ ] Check for proper environment variable loading
 - [ ] Verify development vs production configuration
-- [ ] Review command-line argument handling (if any)
+- [ ] Review command-line argument handling
+- [ ] Check security settings
 
-#### 5.2 Dependency Management
-- [ ] Review `requirements.txt` organization
+**Dependency Management (`requirements.txt`, `requirements-dev.txt`) - 30 min:**
+- [ ] Review organization and grouping
 - [ ] Check for unused dependencies
 - [ ] Verify version pinning strategy
-- [ ] Check for security vulnerabilities in dependencies
+- [ ] Run `pip-audit` for security vulnerabilities
+- [ ] Check for outdated packages
 
-#### 5.3 Documentation Files
-- [ ] Review README.md accuracy and completeness
+**Configuration Files (`.env.example`, `.gitignore`) - 30 min:**
+- [ ] Verify `.env.example` completeness
+- [ ] Check for sensitive data patterns
+- [ ] Review `.gitignore` coverage
+- [ ] Verify all necessary files are ignored
+
+**Documentation Files (`README.md`, `CHANGELOG.md`, `GEMINI.md`) - 1 hour:**
+- [ ] Review accuracy and completeness
 - [ ] Check CHANGELOG.md format and updates
-- [ ] Review GEMINI.md for consistency with copilot-instructions.md
-- [ ] Verify all documentation cross-references are valid
+- [ ] Verify GEMINI.md consistency with copilot-instructions.md
+- [ ] Validate all cross-references and links
 - [ ] Check for outdated information
+- [ ] Verify setup instructions are current
 
-#### 5.4 GitHub Configuration
+**GitHub Configuration (`.github/` files) - 1 hour:**
 - [ ] Review issue templates functionality
 - [ ] Check CONTRIBUTING.md accuracy
 - [ ] Verify GIT_WORKFLOW.md reflects actual practices
 - [ ] Review CODEOWNERS assignments
 - [ ] Check PR template completeness
+- [ ] Verify workflow files (if any)
 
-#### 5.5 Test Infrastructure
-- [ ] Review `tests/conftest.py` configuration
-- [ ] Check test coverage and organization
-- [ ] Verify test data in `test_data/dummy_data.json`
+**Test Infrastructure (`tests/conftest.py`, `test_data/`) - 30 min:**
 - [ ] Review pytest configuration
+- [ ] Check test fixture organization
+- [ ] Verify test data in `test_data/dummy_data.json`
+- [ ] Review test coverage configuration
 
-#### 5.6 Scripts & Automation
-- [ ] Review `scripts/setup.ps1` functionality
-- [ ] Check for error handling in scripts
+**Scripts & Automation (`scripts/setup.ps1`) - 30 min:**
+- [ ] Review functionality and logic
+- [ ] Check for error handling
 - [ ] Verify cross-platform compatibility notes
 - [ ] Check for hardcoded paths or values
+- [ ] Review user feedback messages
 
-**Deliverable:** Root-Level & Configuration Audit Report
+**Step 5: Document & Loop (If Changes Made)**
+
+If Step 4 resulted in modifications:
+- [ ] Document what was changed and why
+- [ ] Update any affected documentation
+- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- [ ] Mark file as COMPLETE ✅
+- [ ] Move to next file/group
+
+#### Final Verification (After All Files Complete)
+- [ ] Run full application setup from scratch (test `setup.ps1`)
+- [ ] Verify all documentation links work
+- [ ] Run `pip-audit` for security vulnerabilities
+- [ ] Test application startup with `run.py`
+- [ ] Document all findings in audit report
+- [ ] Mark Phase 5 COMPLETE
+
+**Deliverable:** Formatted, audited root-level files with documented findings
+
+**File Tracking Template:**
+```markdown
+### [filename] Status
+- [ ] Step 1: Lint
+- [ ] Step 2: Format
+- [ ] Step 3: Functional test
+- [ ] Step 4: Manual audit
+- [ ] Step 5: Loop (if needed)
+- [ ] COMPLETE ✅
+```
 
 ---
 
 ### Phase 6: Cross-Cutting Concerns (Priority: Medium)
 **Estimated Duration:** 1-2 days  
-**Focus:** Naming conventions, consistency, final cleanup
+**Focus:** Iterative quality loop for consistency checks
 
-#### 6.1 Naming Conventions Audit
+**Strategy:** Perform cross-cutting analysis across all files, following iterative loop:
+
+#### Iterative Quality Loop (Cross-Cutting)
+
+**Step 1: Automated Consistency Checks**
+- [ ] Run naming convention checker across all files
+- [ ] Run duplicate code detector (jscpd) across entire codebase
+- [ ] Check for inconsistent patterns
+- [ ] Proceed to Step 2
+
+**Step 2: Generate Consistency Report**
+- [ ] Create report of naming violations
+- [ ] List duplicate code blocks
+- [ ] Identify inconsistent patterns
+- [ ] Proceed to Step 3
+
+**Step 3: Verify No Regressions**
+- [ ] Run all tests (`pytest tests/`)
+- [ ] Test application functionality
+- [ ] Verify all previous phases still pass
+- [ ] ✅ **Checkpoint:** After this step, all automated checks should pass
+
+**Step 4: Manual Audit**
+
+Focus on consistency and patterns across the entire codebase:
+
+**Naming Conventions Audit (2 hours):**
+
 - [ ] **Files & Directories:**
   - Python: `snake_case.py`
-  - JavaScript: `kebab-case.js` or `camelCase.js`
+  - JavaScript: `kebab-case.js`
   - CSS: `kebab-case.css`
   - Templates: `snake_case.html`
+  - Document any violations
+
 - [ ] **Variables & Functions:**
   - Python: `snake_case`
   - JavaScript: `camelCase`
+  - Document any violations
+
 - [ ] **Classes:**
   - Python: `PascalCase`
   - JavaScript: `PascalCase`
   - CSS: `kebab-case` or BEM
+  - Document any violations
+
 - [ ] **Constants:**
   - Python: `UPPER_SNAKE_CASE`
   - JavaScript: `UPPER_SNAKE_CASE`
+  - Document any violations
+
 - [ ] **Database:**
   - Tables: `snake_case`
   - Columns: `snake_case`
+  - Document any violations
 
-#### 6.2 Environment Configuration
+**Environment Configuration (30 min):**
 - [ ] Review `.env.example` completeness
 - [ ] Check for sensitive data in version control
 - [ ] Verify all environment variables are documented
 - [ ] Review default values and fallbacks
+- [ ] Cross-reference with actual usage in code
 
-#### 6.3 Final Consistency Check
+**Code Duplication Analysis (1 hour):**
+- [ ] Review jscpd report for duplicate blocks
+- [ ] Identify opportunities for refactoring
+- [ ] Check for duplicate logic across Python/JavaScript
+- [ ] Verify no duplicate CSS rules
+- [ ] Check for duplicate template blocks
+
+**Final Consistency Check (1 hour):**
 - [ ] Verify naming consistency across all files
 - [ ] Check for remaining code duplicates
 - [ ] Review overall code organization
 - [ ] Verify all standards are applied consistently
+- [ ] Check for any missed issues from previous phases
 
-**Deliverable:** Cross-Cutting Concerns Audit Report
+**Step 5: Document & Loop (If Changes Made)**
+
+If Step 4 resulted in modifications:
+- [ ] Document what was changed and why
+- [ ] Update affected files
+- [ ] 🔄 **Loop back to Step 1** and repeat until perfect
+
+If Step 4 resulted in NO modifications:
+- [ ] Mark Phase 6 as COMPLETE ✅
+
+#### Final Verification (After All Checks Complete)
+- [ ] Run all automated tools one final time:
+  - [ ] `ruff check src/`
+  - [ ] `pylint src/`
+  - [ ] `eslint src/static/js/`
+  - [ ] `stylelint src/static/css/`
+  - [ ] `jscpd src/`
+- [ ] Run full test suite (`pytest --cov=src tests/`)
+- [ ] Verify all 210 tests pass
+- [ ] Verify coverage remains 82.99%+
+- [ ] Test full application functionality
+- [ ] Document all findings in final audit report
+- [ ] Update `audit_results/baseline_metrics.md` with final scores
+- [ ] Mark Phase 6 COMPLETE
+
+**Deliverable:** Cross-cutting concerns audit report with final consistency verification
+
+**Tracking Template:**
+```markdown
+### Cross-Cutting Concerns Status
+- [ ] Step 1: Automated checks
+- [ ] Step 2: Generate report
+- [ ] Step 3: Verify no regressions
+- [ ] Step 4: Manual audit
+- [ ] Step 5: Loop (if needed)
+- [ ] COMPLETE ✅
+```
 
 ---
 
