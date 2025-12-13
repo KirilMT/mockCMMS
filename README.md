@@ -261,4 +261,4 @@ Contributions are welcome. Please read the [contributing guidelines](.github/CON
 
 ---
 
-**Version:** 1.2.0 | **Last Updated:** November 29, 2025
+**Version:** 1.2.0 | **Last Updated:** December 13, 2025

@@ -765,3 +765,219 @@ class TestEnhancedAPIErrorHandling:
                 assert isinstance(data, dict)
                 assert 'error' in data or 'message' in data  # Error responses have error field
 
+
+class TestAPIEdgeCasesAndErrorPaths:
+    """Test suite for API edge cases and uncovered error paths."""
+
+    def test_add_asset_missing_asset_code(self, client, app):
+        """Test POST /v1/assets without asset_code returns 400."""
+        with app.app_context():
+            asset_data = {
+                'name': 'Asset Without Code',
+                'description': 'Missing asset_code field'
+            }
+            response = client.post('/api/v1/assets',
+                                   data=json.dumps(asset_data),
+                                   content_type='application/json')
+            assert response.status_code == 400
+            data = response.get_json()
+            assert 'error' in data
+            assert 'asset code' in data['error'].lower()
+
+    def test_update_asset_invalid_json(self, client, sample_asset, app):
+        """Test PUT /v1/assets/<id> with invalid JSON returns 400."""
+        with app.app_context():
+            response = client.put(f'/api/v1/assets/{sample_asset.id}',
+                                  data='',  # Empty data
+                                  content_type='application/json')
+            assert response.status_code == 400
+            data = response.get_json()
+            assert data is None or 'error' in data
+
+    def test_update_mo_invalid_json(self, client, sample_mo, app):
+        """Test PUT /v1/mos/<id> with invalid JSON returns 400."""
+        with app.app_context():
+            response = client.put(f'/api/v1/mos/{sample_mo.id}',
+                                  data=None,  # No data
+                                  content_type='application/json')
+            assert response.status_code == 400
+
+    def test_update_spare_part_invalid_json(self, client, sample_spare_part, app):
+        """Test PUT /v1/spare_parts/<id> with invalid JSON returns 400."""
+        with app.app_context():
+            response = client.put(f'/api/v1/spare_parts/{sample_spare_part.id}',
+                                  data='',
+                                  content_type='application/json')
+            assert response.status_code == 400
+
+    def test_update_user_invalid_json(self, client, sample_user, app):
+        """Test PUT /v1/users/<id> with invalid JSON returns 400."""
+        with app.app_context():
+            response = client.put(f'/api/v1/users/{sample_user.id}',
+                                  data=None,
+                                  content_type='application/json')
+            assert response.status_code == 400
+
+    def test_add_role_duplicate_name(self, client, app):
+        """Test POST /v1/roles with duplicate name returns 409."""
+        with app.app_context():
+            # Create first role
+            role_data = {'name': 'UniqueRole', 'description': 'First role'}
+            response = client.post('/api/v1/roles',
+                                   data=json.dumps(role_data),
+                                   content_type='application/json')
+            assert response.status_code == 201
+
+            # Try to create duplicate
+            response = client.post('/api/v1/roles',
+                                   data=json.dumps(role_data),
+                                   content_type='application/json')
+            assert response.status_code == 409
+            data = response.get_json()
+            assert 'error' in data
+            assert 'already exists' in data['error'].lower()
+
+    def test_add_role_missing_name(self, client, app):
+        """Test POST /v1/roles without name returns 400."""
+        with app.app_context():
+            role_data = {'description': 'Role without name'}
+            response = client.post('/api/v1/roles',
+                                   data=json.dumps(role_data),
+                                   content_type='application/json')
+            assert response.status_code == 400
+            data = response.get_json()
+            assert 'error' in data
+
+    def test_register_user_duplicate_username(self, client, sample_user, app):
+        """Test POST /v1/users with duplicate username returns 409."""
+        with app.app_context():
+            user_data = {
+                'username': sample_user.username,  # Duplicate
+                'email': 'different@example.com',
+                'password': 'password123'
+            }
+            response = client.post('/api/v1/users',
+                                   data=json.dumps(user_data),
+                                   content_type='application/json')
+            assert response.status_code == 409
+            data = response.get_json()
+            assert 'error' in data
+            assert 'already exists' in data['error'].lower()
+
+    def test_register_user_duplicate_email(self, client, sample_user, app):
+        """Test POST /v1/users with duplicate email returns 409."""
+        with app.app_context():
+            user_data = {
+                'username': 'differentuser',
+                'email': sample_user.email,  # Duplicate
+                'password': 'password123'
+            }
+            response = client.post('/api/v1/users',
+                                   data=json.dumps(user_data),
+                                   content_type='application/json')
+            assert response.status_code == 409
+
+    def test_filtered_data_invalid_entity(self, client, app):
+        """Test GET /<entity>/filtered with invalid entity returns 400."""
+        with app.app_context():
+            response = client.get('/api/invalid_entity/filtered')
+            assert response.status_code == 400
+            data = response.get_json()
+            assert 'error' in data
+            assert 'invalid entity' in data['error'].lower()
+
+    def test_login_missing_credentials(self, client, app):
+        """Test POST /v1/auth/login without username/password returns 400."""
+        with app.app_context():
+            # Missing password
+            response = client.post('/api/v1/auth/login',
+                                   data=json.dumps({'username': 'testuser'}),
+                                   content_type='application/json')
+            assert response.status_code == 400
+            data = response.get_json()
+            assert 'message' in data
+
+            # Missing username
+            response = client.post('/api/v1/auth/login',
+                                   data=json.dumps({'password': 'testpass'}),
+                                   content_type='application/json')
+            assert response.status_code == 400
+
+    def test_login_invalid_credentials(self, client, sample_user, app):
+        """Test POST /v1/auth/login with wrong password returns 401."""
+        with app.app_context():
+            response = client.post('/api/v1/auth/login',
+                                   data=json.dumps({
+                                       'username': sample_user.username,
+                                       'password': 'wrongpassword'
+                                   }),
+                                   content_type='application/json')
+            assert response.status_code == 401
+            data = response.get_json()
+            assert 'message' in data
+            assert 'invalid' in data['message'].lower()
+
+    def test_update_table_config_not_owned(self, client, app, logged_in_user):
+        """Test PUT /table-config/<id> for config not owned by user returns 404."""
+        with app.app_context():
+            # Create config for another user
+            from src.services.db_utils import TableConfiguration
+            other_config = TableConfiguration(
+                user_id=999,  # Different user
+                page_name='assets',
+                config_name='Other User Config',
+                column_order=json.dumps(['name']),
+                is_default=False
+            )
+            db.session.add(other_config)
+            db.session.commit()
+            config_id = other_config.id
+
+            # Try to update it
+            response = client.put(f'/api/table-config/{config_id}',
+                                  data=json.dumps({'column_order': json.dumps(['status'])}),
+                                  content_type='application/json')
+            assert response.status_code == 404
+            data = response.get_json()
+            assert 'error' in data
+
+    def test_set_default_table_config_not_owned(self, client, app, logged_in_user):
+        """Test POST /table-config/<page>/<id>/set-default for config not owned returns 404."""
+        with app.app_context():
+            # Create config for another user
+            from src.services.db_utils import TableConfiguration
+            other_config = TableConfiguration(
+                user_id=999,  # Different user
+                page_name='assets',
+                config_name='Other User Config',
+                column_order=json.dumps(['name']),
+                is_default=False
+            )
+            db.session.add(other_config)
+            db.session.commit()
+            config_id = other_config.id
+
+            # Try to set as default
+            response = client.post(f'/api/table-config/assets/{config_id}/set-default')
+            assert response.status_code == 404
+
+    def test_remove_default_table_config_not_owned(self, client, app, logged_in_user):
+        """Test POST /table-config/<page>/<id>/remove-default for config not owned returns 404."""
+        with app.app_context():
+            # Create config for another user
+            from src.services.db_utils import TableConfiguration
+            other_config = TableConfiguration(
+                user_id=999,  # Different user
+                page_name='assets',
+                config_name='Other User Config',
+                column_order=json.dumps(['name']),
+                is_default=True
+            )
+            db.session.add(other_config)
+            db.session.commit()
+            config_id = other_config.id
+
+            # Try to remove default
+            response = client.post(f'/api/table-config/assets/{config_id}/remove-default')
+            assert response.status_code == 404
+
