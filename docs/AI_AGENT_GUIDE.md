@@ -1,1147 +1,1294 @@
-# AI Agent Interaction Guide
+# AI Agent Guide - Code Quality Audit
 
-**Created:** December 11, 2025  
+**Created:** December 13, 2025  
 **Last Updated:** December 13, 2025  
-**Purpose:** Comprehensive guide for AI assistants working on the mockCMMS project
-**Current Phase:** Week 3 - Phase 0 Complete, Phase 1 Ready to Start
+**Purpose:** AI prompts for all 49 tasks in core_code_quality_plan.md
 
 ---
 
-> [!IMPORTANT]
-> **📚 Quick Navigation:** This guide combines interaction patterns with document navigation.
-> 
-> **Current Status (December 13, 2025):**
-> - **Phase:** Week 3 - Phase 0 COMPLETE ✅, Phase 1 Ready to Start 🔄
-> - **Progress:** Week 2 complete (210 tests), Phase 0 complete (automated analysis)
-> - **Active Document:** `core_code_quality_plan.md` (Phase 1 - Python Backend)
-> - **Test Progress:** 210/210 tests complete (100%) ✅
-> - **Coverage:** 82.99% (TARGET ACHIEVED) ✅
-> - **Phase 0 Results:** Ruff: 0, Pylint: 9.15/10, Radon: A(2.0), Bandit: 0 ✅
-> - **Phase 1 Strategy:** Iterative loop per file (flake8 → black → tests → audit → loop)
-> - **Next Step:** Start with app.py - Step 1: flake8 src/app.py
-> **Workflow:** Iterative loop per file (flake8 → black → tests → audit → loop if needed)
-> - **Achievement:** Critical complexity refactoring E(33) → A(2) ✅
-> - **Next Steps:** Apply iterative quality loop to each file until perfect
+## 📚 Quick Links
+
+**Related Documentation:**
+- 📋 [core_code_quality_plan.md](core_code_quality_plan.md) - The audit structure (49 tasks, 6 phases)
+- 🗓️ [IMPLEMENTATION_PRIORITY_GUIDE.md](IMPLEMENTATION_PRIORITY_GUIDE.md) - Overall timeline (7 weeks)
+- 🗺️ [mockCMMS_roadmap.md](mockCMMS_roadmap.md) - Strategic vision and standards
+- ✅ [comprehensive_testing_plan.md](comprehensive_testing_plan.md) - Testing foundation (210 tests complete)
+
+**Update After Each Task:**
+- ✏️ Mark `[x]` in [core_code_quality_plan.md](core_code_quality_plan.md) for completed tasks
+- 📝 Add completion notes with date and issue count
+- 🔄 Update "ACTIVE WORK" in [mockCMMS_roadmap.md](mockCMMS_roadmap.md) when phases complete
 
 ---
 
-## 🔍 Understanding the 4-Phase Verification Strategy
+## 📋 Overview
 
-> [!IMPORTANT]
-> **Tests Alone Are NOT Enough:** The project uses a comprehensive 4-phase approach to verify code quality. Phase 1 (Testing) is complete. Phases 2-4 are documented and ready.
+This guide provides ready-to-use prompts for AI assistants working on the mockCMMS code quality audit. Each prompt corresponds to a task in `core_code_quality_plan.md`.
 
-### Quick Phase Reference
+**Structure:** 49 tasks across 6 phases
+- **Phase 1:** Python Backend (6 tasks)
+- **Phase 2:** JavaScript Frontend (13 tasks)
+- **Phase 3:** CSS Styling (3 tasks)
+- **Phase 4:** HTML Templates (16 tasks)
+- **Phase 5:** Root-Level Files (7 tasks)
+- **Phase 6:** Cross-Cutting Concerns (4 tasks)
 
-| Phase | Focus | Tools | Status | Week |
-|-------|-------|-------|--------|------|
-| **Phase 1** | Regression Testing | pytest, coverage.py | ✅ Complete | Week 2 |
-| **Phase 2** | Code Quality Analysis | ruff, pylint, mypy, bandit | 🔄 In Progress | Week 3 |
-| **Phase 3** | Requirements Validation | Manual review | ⏳ Planned | Week 4 |
-| **Phase 4** | Enhanced Testing | Integration, performance | ⏳ Planned | Week 5 |
-
-**See:** `IMPLEMENTATION_PRIORITY_GUIDE.md` - Section "The 4-Phase Code Verification Strategy" for complete details.
+**Workflow per task:** Lint → Format → Test → Manual Audit → Loop or Commit
 
 ---
 
-## 📚 Document Hierarchy & Navigation
+## Phase 1: Python Backend Analysis (6 tasks)
 
-### Understanding the Document Structure
-
-```
-IMPLEMENTATION_PRIORITY_GUIDE.md (START HERE - Master Timeline)
-├── Provides: Overall timeline and phased approach
-├── Current Status: Week 3 - Phase 0 Complete, Phase 1 In Progress
-└── Links to:
-    ├── comprehensive_testing_plan.md (COMPLETE - 210/210 tests) ✅
-    ├── core_code_quality_plan.md (IN PROGRESS - Week 3) 🔄
-    └── mockCMMS_roadmap.md (CONTEXT - Strategic vision)
-```
-
-### Document Purpose Reference
-
-| Document | Purpose | When to Use | Update When | Current Status |
-|----------|---------|-------------|-------------|----------------|
-| **IMPLEMENTATION_PRIORITY_GUIDE.md** | Master timeline and coordination | Starting work session, checking phase | Completing phase tasks, finishing weeks | Week 2 Complete (210/210 tests, 82.99% coverage) ✅ |
-| **comprehensive_testing_plan.md** | 210 tests specification (ALL COMPLETE) | Reference for test coverage | Maintaining test suite | 210/210 tests complete (100%), 82.99% coverage ✅ |
-| **core_code_quality_plan.md** | Code audit plan (IN PROGRESS) | Week 3 - Code Quality Analysis | After Week 2 complete | Phase 0 Complete, Phase 1 In Progress 🔄 |
-| **mockCMMS_roadmap.md** | Strategic vision and features | Understanding goals, planning features | Completing sprints, adding features | Active: Phase 3 Pending |
-
----
-
-## 🎯 Current Active Work (December 13, 2025)
-
-**Week 2 Status:** ✅ **ALL PHASES COMPLETE** - 210/210 tests (100%) ✅
-**Coverage:** 82.99% (Target: 80-85%) ✅ **TARGET ACHIEVED**
-
-### Week 2 Phase 1 Results (Days 1-6):
-
-**Completed (96/144 tests - 66.7%):**
-- ✅ pytest.ini and pyproject.toml configured
-- ✅ conftest.py with 15 fixtures
-- ✅ test_app.py - 18 tests (all passing)
-- ✅ test_api_routes.py - 41 tests (all passing)
-- ✅ test_main_routes.py - 29 tests (all passing)
-- ✅ test_db_utils.py - 3 tests (all passing)
-- ✅ test_shift_utils.py - 5 tests (all passing)
-
-**Coverage Achievements (Phase 1):**
-- ✅ **Overall: 73.60%** (Target for Phase 1: 70%) 🎉
-- ✅ shift_utils.py: 100% coverage
-- ✅ db_utils.py: 85.31% coverage
-- ✅ main.py: 74.04% coverage
-- ✅ api.py: 62.50% coverage
-- ✅ app.py: 67.68% coverage
-
-### ✅ Week 2 Phase 2 - Security & Robustness (Days 7-12) - COMPLETE!
-
-**Completed (48/48 Phase 2 tests):**
-- ✅ test_auth.py - 8 tests (all passing) 🔴 CRITICAL
-- ✅ test_validation.py - 6 tests (all passing) 🟡 HIGH
-- ✅ test_errors.py - 6 tests (all passing) 🟡 MEDIUM
-- ✅ test_integration.py - 10 tests (all passing) 🟡 MEDIUM
-- ✅ test_advanced_validation.py - 10 tests (all passing) 🟡 MEDIUM
-- ✅ test_performance.py - 8 tests (all passing) 🟢 LOW
-
-**Phase 2 Final Status:**
-- 🎯 Total: 144/144 tests (100%) ✅
-- 🎯 Coverage: 75.64% ✅
-- 🎯 Phase 2: 48/48 tests complete (100%) ✅
-- 🎯 All tests passing ✅
-
-**Phase 2 Goals - ALL ACHIEVED:**
-- ✅ Implemented all 48 tests
-- ✅ Achieved 75.64% code coverage at Phase 2 completion (now 77.68% in Phase 3)
-- ✅ Security coverage: Comprehensive
-- ✅ 100% test pass rate
-- ✅ Production-ready quality
-
-### ✅ Week 2 Phase 3 - Enhanced Coverage (Days 13-15) - COMPLETE
-
-**Reason for Phase 3:**
-Coverage analysis revealed critical gaps that must be closed before code formatting tools:
-- 🔴 api.py: 62.50% (129 lines missing) → 69.19% after Phase 3
-- 🟡 app.py: 67.68% (32 lines missing) → 70.71% after Phase 3
-- 🟡 main.py: 80.05% (73 lines missing) → 81.42% after Phase 3
-
-**Completed (46 tests added to existing files in organized directories):**
-- ✅ tests/functional/test_api_routes.py - 51 tests COMPLETE (41 → 51) ✅ Dec 12
-- ✅ tests/unit/test_app.py - 28 tests COMPLETE (18 → 28) ✅ Dec 12
-- ✅ tests/functional/test_main_routes.py - 39 tests COMPLETE (29 → 39) ✅ Dec 12
-- ✅ tests/unit/test_db_utils.py - 11 tests COMPLETE (3 → 11) ✅ Dec 12
-- ✅ tests/integration/test_integration.py - 18 tests COMPLETE (10 → 18) ✅ Dec 12
-
-**Test Organization:** Tests organized in 6 directories by testing concern:
-- `tests/unit/` - Fast, isolated component tests (26 tests, need +18)
-- `tests/functional/` - API and route tests (80 tests, need +10) - **51/90 complete** ✅
-- `tests/integration/` - End-to-end workflows (10 tests, need +8)
-- `tests/security/` - Auth, validation, security (24 tests ✅)
-- `tests/performance/` - Scalability, optimization (8 tests ✅)
-- `tests/reliability/` - Error handling, robustness (6 tests ✅)
-
-**Progress:** 46/46 enhanced tests complete (100%), Coverage: 78.39% (+2.75%) ✅
-
-**Phase 3 Goals:**
-- ✅ Implement 46 additional tests
-- ✅ Achieved 82.99% code coverage (target: 80-85%)
-- 🟡 Close critical coverage gaps (partially achieved)
-- ✅ Protect against black formatting regressions
-- ✅ 100% test pass rate (210/210 tests)
-
-### ✅ Week 2 Phase 3 (Final) - Targeted Coverage Enhancement (Day 16) - COMPLETE
-
-**Phase 3 Enhancement Strategy:**
-Phase 3 achieved 78.39% coverage but fell short of 80-85% target. Analysis showed 244 uncovered lines concentrated in error paths and edge cases.
-
-**Strategy:** Add 20 **targeted tests** for uncovered error paths rather than more happy path tests.
-
-**Completed (20 tests added):**
-- ✅ tests/unit/test_app.py - 33 tests COMPLETE (28 → 33, +5 error handling tests) ✅ Dec 13
-- ✅ tests/functional/test_api_routes.py - 66 tests COMPLETE (51 → 66, +15 edge case tests) ✅ Dec 13
-
-**Progress:** 20/20 targeted tests complete (100%), Coverage: 78.39% → 82.99% (+4.60%) ✅
-
-**Phase 3 Final Results:**
-- ✅ Achieved 82.99% coverage (TARGET MET: 80-85%)
-- ✅ app.py: 70.71% → 88.89% (+18.18%)
-- ✅ api.py: 69.19% → 78.78% (+9.59%)
-- ✅ All 210 tests passing (100%)
-- ✅ Ready for Week 3 Code Quality Analysis
-
-### **🎯 WEEK 2 COMPLETE - READY FOR WEEK 3**
-
-**Prerequisites for Week 3:**
-- ✅ All 210 tests passing (210/210, 100%)
-- ✅ 82.99% coverage achieved (target: 80-85%)
-- ✅ All critical gaps closed
-- ✅ Phases 1, 2, 3 complete
-
-**Next Action:** Run flake8 src/ and fix any issues (15 min), then black, then manual audit
-
----
-
-## 🤖 Quick Start - How to Delegate Work to AI
-
-### The Magic Phrase Template
-
-Use this template when asking AI to work on the project:
+### Task 1.1: API Routes (`src/routes/api.py`)
 
 ```
-I'm working on the mockCMMS project. Please read the Implementation Priority 
-Guide (docs/IMPLEMENTATION_PRIORITY_GUIDE.md) and help me with [SPECIFIC TASK].
+I'm on Week 3, Phase 1, Task 1.1 of the mockCMMS code quality audit.
 
-Context:
-- Current Phase: Week 3 / Phase 1 (Python Backend Audit)
-- Current Focus: Code quality analysis and cleanup
-- Specific Task: [e.g., "Audit api.py" or "Audit main.py"]
+Task: Audit src/routes/api.py using the 5-step iterative loop
 
 Please:
-1. Read the relevant planning documents
-2. Understand the code quality standards we're following
-3. Propose your approach
-4. Wait for my approval before making changes
-5. Update progress in core_code_quality_plan.md
-```
 
----
-
-## 📋 AI Agent Entry Points (What to Tell AI to Read)
-
-### For New AI Sessions - Start Here
-
-**Tell AI to read these files IN THIS ORDER:**
-
-1. **First:** `docs/IMPLEMENTATION_PRIORITY_GUIDE.md`
-   - Complete action plan showing all 7 weeks
-   - Shows what phase you're in (Week 3 - Phase 0 complete, Phase 1 in progress)
-   - Explains how everything fits together
-
-2. **Then:** Based on your current phase:
-   
-   **Phase 1 (Week 2, Days 1-6) - Foundation Tests ✅ COMPLETE:**
-   ```
-   Status: 96/144 foundation tests implemented and passing
-   Coverage: 73.60% (exceeded Phase 1 target of 70%)
-   Next: Phase 2 Security & Robustness Tests (Days 7-12)
-   ```
-   
-   **Phase 2 (Week 2, Days 7-12) - Security & Robustness ✅ COMPLETE:**
-   ```
-   Read: docs/comprehensive_testing_plan.md
-   Focus: Sections 3.6-3.11 (48 additional tests)
-   Completed: test_auth.py (8 tests) ✅
-   Completed: test_validation.py (6 tests) ✅
-   Completed: test_errors.py (6 tests) ✅
-   Completed: test_integration.py (10 tests) ✅
-   Completed: test_advanced_validation.py (10 tests) ✅
-   Completed: test_performance.py (8 tests) ✅
-   Target: 144 total tests, 70%+ coverage
-   Final Result: 144/144 tests (100%), 75.64% coverage ✅
-   ```
-   
-   **Week 3 - Code Quality Analysis 🔄 IN PROGRESS:**
-   ```
-   Read: docs/core_code_quality_plan.md
-   Status: Phase 0 Complete ✅, Phase 1 Ready 🔄
-   Strategy: Format first, then manual audit
-   Next: flake8 (15 min) → black (15 min) → manual audit (3-4 hours) → verify (15 min)
-   ```
-   
-   **Strategic Context (Anytime):**
-   ```
-   Read: docs/mockCMMS_roadmap.md
-   Section: "ACTIVE WORK" for current sprint
-   Section: "Project Infrastructure & Documentation" for standards
-   ```
-
-3. **For coding standards reference:**
-   ```
-   Read: .github/copilot-instructions.md
-   (or .github/GEMINI.md for Gemini Code Assist)
-   ```
-
----
-
-## ⚠️ Critical Rules for AI Assistants
-
-### Rule 1: Always Check Current Phase
-Before starting any work:
-1. Open `IMPLEMENTATION_PRIORITY_GUIDE.md`
-2. Find the current week number (Week 3)
-3. Confirm which phase is active (Phase 1: Python Backend Audit)
-4. Navigate to the correct detailed plan (`core_code_quality_plan.md`)
-
-### Rule 2: Update Multiple Documents
-When completing tasks, update:
-1. ✅ The detailed plan (e.g., `comprehensive_testing_plan.md`)
-2. ✅ The weekly breakdown in `IMPLEMENTATION_PRIORITY_GUIDE.md`
-3. ✅ The roadmap status in `mockCMMS_roadmap.md`
-4. ✅ Update "Last Updated" dates
-
-### Rule 3: Never Skip Prerequisites
-DO NOT start:
-- ❌ Phase 2 before Phase 1 is 100% complete
-- ❌ Code formatting before all 96 tests exist and pass
-- ❌ Code audit before test coverage reaches 70%+
-- ❌ Any work outside the current week's scope
-
-### Rule 4: Follow Sequential Order
-Within each plan, follow the defined order:
-- `comprehensive_testing_plan.md`: Days 1-7 sequence (Section 5)
-- `core_code_quality_plan.md`: Phases 1-6 sequence
-- `IMPLEMENTATION_PRIORITY_GUIDE.md`: Weeks 1-7 sequence
-
-### Rule 5: Cross-Reference Before Proceeding
-When user asks to do work:
-1. Check which phase you're in (IMPLEMENTATION_PRIORITY_GUIDE.md)
-2. Verify prerequisites are met (e.g., all tests pass before formatting)
-3. Confirm it's the right time in the sequence
-4. Only then proceed with the work
-
----
-
-## 🔍 Quick Decision Tree
-
-```
-User asks to do code quality audit:
-├─ Are all 96 tests implemented? 
-│  ├─ NO → Redirect to comprehensive_testing_plan.md
-│  └─ YES → Check test pass rate
-│     ├─ <100% → Fix failing tests first
-│     └─ 100% → Check coverage
-│        ├─ <70% → Add more tests
-│        └─ ≥70% → OK to start audit (core_code_quality_plan.md)
-
-User asks to format code with black:
-├─ Are all tests passing?
-│  ├─ NO → Cannot proceed (too risky)
-│  └─ YES → Is this part of approved audit phase (Phase 2)?
-│     ├─ NO → Wait for Phase 2 (Week 3)
-│     └─ YES → Follow incremental formatting plan
-
-User asks what to work on:
-├─ Open IMPLEMENTATION_PRIORITY_GUIDE.md
-├─ Check "Detailed Week-by-Week Breakdown"
-├─ Find current week (Week 3)
-├─ Navigate to active document (core_code_quality_plan.md)
-└─ Execute next unchecked task
-
-User asks about testing:
-├─ Open comprehensive_testing_plan.md
-├─ Check Section 3 for test specifications
-├─ Check Section 5 for implementation timeline
-└─ Start with Day 1 tasks (pytest.ini, conftest.py)
-```
-
----
-
-## 🎯 Example Prompts for Common Tasks
-
-> [!NOTE]
-> **Status Legend:** 
-> - ✅ = Completed (shown for reference only)
-> - 🔄 = Current active work
-> - ⏸️ = Postponed until prerequisites met
-
----
-
-### Week 1: Foundation Setup Tasks ✅ COMPLETED
-
-These tasks are completed and shown for reference only.
-
-#### Task: Create PR Template ✅ COMPLETED (2025-12-11)
-```
-I'm on Week 1 (Foundation Setup) of the mockCMMS Implementation Priority Guide.
-
-Task: Create a Pull Request template
-
-Please:
-1. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 1 section)
-2. Read .github/copilot-instructions.md for PR standards
-3. Create .github/PULL_REQUEST_TEMPLATE.md
-4. Include sections for:
-   - Description of changes
-   - Type of change (bugfix, feature, docs, etc.)
-   - Testing performed
-   - Checklist (follows standards, tested, docs updated)
-5. Show me the template before creating the file
-```
-
-#### Task: Update CONTRIBUTING.md ✅ COMPLETED (2025-12-11)
-```
-I'm on Day 2 of Week 1 (Foundation Setup).
-
-Task: Update CONTRIBUTING.md with code standards
-
-Please:
-1. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 1, Day 2 tasks)
-2. Read docs/mockCMMS_roadmap.md (GitHub Best Practices sections)
-3. Update CONTRIBUTING.md to include:
-   - Code style standards (PEP 8, JS best practices)
-   - Comment standards (no bug references, professional)
-   - Separation of concerns rules
-   - Commit message standards (Conventional Commits)
-4. Show me the proposed changes before applying
-```
-
-#### Task: Create Basic CI Workflow ✅ COMPLETED (2025-12-11)
-```
-I'm on Week 1 (Foundation Setup).
-
-Task: Create basic GitHub Actions CI workflow
-
-Please:
-1. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 1 tasks)
-2. Read docs/mockCMMS_roadmap.md (GitHub Actions CI/CD section)
-3. Create .github/workflows/ci.yml with:
-   - Python 3.12 setup
-   - Install dependencies from requirements.txt
-   - Python linting (flake8, black)
-   - Run pytest with coverage
-   - Upload coverage to Codecov
-4. Show me the workflow before creating
-5. After creation, mark task complete in IMPLEMENTATION_PRIORITY_GUIDE.md
-```
-
----
-
-### Week 2: Test Suite Foundation ✅ COMPLETE!
-
-> [!TIP]
-> **Status:** All phases complete (210 tests) ✅! Week 2 completed: December 12, 2025. Ready for Week 3.
-
-#### Task: Configure pytest.ini ✅ COMPLETED (December 11, 2025)
-```
-I'm on Week 2, Day 1-2 (Test Suite Foundation) of the Implementation Priority Guide.
-
-Task: Configure pytest.ini for test discovery
-
-Please:
-1. Read docs/comprehensive_testing_plan.md (Section 4.1: Configuration Files)
-2. Create pytest.ini with:
-   - Test path configuration (tests/)
-   - Test file patterns (test_*.py)
-   - Markers for slow/integration/unit tests
-   - Coverage options
-3. Show me the configuration before creating the file
-4. After creating, mark this task complete in comprehensive_testing_plan.md
-5. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-
-Status: ✅ COMPLETED
-- Created pytest.ini with full configuration
-- Created pyproject.toml with project metadata
-- Verified configuration works with pytest
-- Updated comprehensive_testing_plan.md
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md
-```
-
-#### Task: Enhance conftest.py ✅ COMPLETED (December 11, 2025)
-```
-I'm on Week 2, Day 1-2 (Test Suite Foundation).
-
-Task: Enhance tests/conftest.py with comprehensive fixtures
-
-Please:
-1. Read docs/comprehensive_testing_plan.md (Section 4.2: Test Fixtures)
-2. Review apps/planning/tests/conftest.py as reference
-3. Create fixtures for:
-   - app (Flask app in testing mode)
-   - client (test client for requests)
-   - db (database session with auto-rollback)
-   - sample_asset, sample_mo, sample_user (test data)
-4. Show me the proposed fixtures
-5. After approval, mark task complete in comprehensive_testing_plan.md
-6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-
-Status: ✅ COMPLETED
-- Created 15 comprehensive fixtures in tests/conftest.py
-- Required fixtures: app, client, db_session, sample_asset, sample_mo, sample_user, auth_client
-- Bonus fixtures: runner, sample_role, sample_admin_user, sample_team, sample_skill, 
-  sample_spare_part, multiple_assets, multiple_mos
-- Updated comprehensive_testing_plan.md Section 4.2
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-```
-
-#### Task: Create test_app.py ✅ COMPLETED (December 11, 2025)
-```
-I'm on Week 2, Day 1-2 (Test Suite Foundation).
-
-Task: Create tests/test_app.py with 10 tests
-
-Please:
-1. Read docs/comprehensive_testing_plan.md (Section 3.1: Application Tests)
-2. Implement all 10 tests listed:
-   - test_create_app_default_config
-   - test_create_app_testing_config
-   - test_database_initialization
-   - test_blueprints_registered
-   - test_secret_key_from_env
-   - test_secret_key_fallback
-   - test_database_uri_configuration
-   - test_app_context
-   - test_request_context
-   - test_error_handlers_registered
-3. Show me the test file before creating
-4. After creation, run pytest to verify tests pass
-5. Mark all 10 tests [x] in comprehensive_testing_plan.md Section 3.1
-6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-
-Status: ✅ COMPLETED
-- Created tests/test_app.py with 18 tests (10 required + 8 bonus)
-- All 18 tests passing
-- Fixed pytest.ini inline comment issue
-- Updated comprehensive_testing_plan.md Section 3.1
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-- Coverage: 32.27% (app.py: 66.67%)
-```
-
-#### Task: Create test_api_routes.py (Days 3-4) ✅ COMPLETED (December 11, 2025)
-```
-I'm on Week 2, Day 3-4 (API Endpoint Tests).
-
-Task: Create tests/test_api_routes.py with API endpoint tests
-
-Please:
-1. Read docs/comprehensive_testing_plan.md (Section 3.2: API Endpoint Tests)
-2. Start with Assets API tests (tests 1-10)
-3. Implement success and error cases for each endpoint
-4. Continue with MOs, Spare Parts, and Users APIs
-5. Run pytest to verify tests pass
-6. Mark all tests [x] in comprehensive_testing_plan.md Section 3.2
-7. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-
-Status: ✅ COMPLETED
-- Created tests/test_api_routes.py with 41 tests (all passing)
-- Organized into 4 test classes (Assets, MOs, Spare Parts, Users)
-- Discovered and fixed 4 API bugs:
-  * Asset API: Fixed field names (location → asset_code, asset_type, cost_center)
-  * SparePart API: Fixed field names (name/quantity → description/stock_quantity)
-- Coverage increased to 44.46% (api.py: 62.50%)
-- Updated comprehensive_testing_plan.md Section 3.2
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-```
-
-#### Task: Create test_main_routes.py (Day 5) ✅ COMPLETED (December 11, 2025)
-```
-I'm on Week 2, Day 5 (Web Routes Coverage).
-
-Task: Create tests/test_main_routes.py with web route tests
-
-Please:
-1. Read docs/comprehensive_testing_plan.md (Section 3.3: Web Routes Tests)
-2. Implement tests for general pages, assets, MOs, spare parts, users
-3. Test both GET and POST routes with authentication
-4. Run pytest to verify tests pass
-5. Mark tests [x] in comprehensive_testing_plan.md Section 3.3
-6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-
-Status: ✅ COMPLETED - 100% PASS RATE (29/29 tests passing)
-- Created tests/test_main_routes.py with 29 tests
-- Organized into 5 test classes (General, Assets, MOs, Spare Parts, Users)
-- Fixed all 7 initially failing tests:
-  * Fixed index redirect test
-  * Added all required form fields (asset_code, description, etc.)
-  * Added frequency field for PM orders
-  * Fixed validation error handling
-- Coverage: 70.22% for main.py (excellent!)
-- Overall: 96/96 tests passing (100%) after completing all test files
-```
-
-#### Task: Create test_db_utils.py (Days 5-6) ✅ COMPLETED (December 12, 2025)
-```
-I'm on Week 2, Days 5-6 (Utilities Coverage).
-
-Task: Create tests/test_db_utils.py with database utility tests
-
-Please:
-1. Read docs/comprehensive_testing_plan.md (Section 3.4: Database Utilities Tests)
-2. Implement 3 tests:
-   - test_populate_dummy_data
-   - test_populate_dummy_data_idempotent
-   - test_database_models_relationships
-3. Test database population, idempotency, and model relationships
-4. Run pytest to verify tests pass
-5. Mark tests [x] in comprehensive_testing_plan.md Section 3.4
-6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-
-Status: ✅ COMPLETED - 100% PASS RATE (3/3 tests passing)
-- Created tests/test_db_utils.py with 3 comprehensive tests
-- test_populate_dummy_data: Verifies database population works
-- test_populate_dummy_data_idempotent: Tests unique constraint enforcement
-- test_database_models_relationships: Validates ORM relationships and cascade
-- Coverage increased to 73.60% overall (db_utils.py: 85.31%)
-- Updated comprehensive_testing_plan.md Section 3.4
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-- Overall: 96/96 tests passing (100%) after all tests complete
-```
-
-#### Task: Create test_shift_utils.py (Days 5-6) ✅ COMPLETED (December 12, 2025)
-```
-I'm on Week 2, Days 5-6 (Utilities Coverage).
-
-Task: Create tests/test_shift_utils.py with shift calculation tests
-
-Please:
-1. Read docs/comprehensive_testing_plan.md (Section 3.5: Shift Utilities Tests)
-2. Implement 5 tests:
-   - test_get_shift_teams_shift_a
-   - test_get_shift_teams_shift_b
-   - test_get_shift_teams_shift_c
-   - test_get_shift_teams_rotation_cycle
-   - test_get_shift_teams_invalid_input
-3. Test shift rotation logic for all three shifts
-4. Run pytest to verify tests pass
-5. Mark tests [x] in comprehensive_testing_plan.md Section 3.5
-6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-
-Status: ✅ COMPLETED - 100% PASS RATE (5/5 tests passing)
-- Created tests/test_shift_utils.py with 5 comprehensive tests
-- test_get_shift_teams_shift_a/b/c: Verifies correct team assignment
-- test_get_shift_teams_rotation_cycle: Tests Pitman schedule rotation
-- test_get_shift_teams_invalid_input: Tests error handling
-- Coverage: shift_utils.py achieved 100% coverage!
-- Updated comprehensive_testing_plan.md Section 3.5
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 checklist
-- Overall: 96/144 tests passing (66.7%) - Phase 1 COMPLETE! 🎉
-```
-
----
-
-### Week 2 Phase 2: Security & Robustness Tests (Days 7-12) ✅ COMPLETE
-
-> **✅ MILESTONE ACHIEVED:** All security tests complete!
-> **Final Status:** 144/144 tests (100%), Week 2 COMPLETE! 🎉
-
-#### Task: Create test_auth.py (Day 7) ✅ COMPLETED (December 12, 2025)
-```
-I'm on Week 2, Day 7 (Security & Authentication Testing).
-
-Task: Create tests/test_auth.py with authentication & security tests
-
-Please:
-1. Read docs/comprehensive_testing_plan.md (Section 3.6: Authentication & Security Tests)
-2. Implement 8 critical security tests:
-   - test_login_success
-   - test_login_invalid_credentials
-   - test_logout
-   - test_protected_route_requires_auth
-   - test_admin_only_route_blocks_technician
-   - test_password_hashing
-   - test_session_management
-   - test_csrf_protection
-3. Test authentication flows, authorization, session management
-4. Run pytest to verify all 104 tests pass (96 existing + 8 new)
-5. Mark tests [x] in comprehensive_testing_plan.md Section 3.6
-6. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 2 Phase 2 checklist
-
-Status: ✅ COMPLETED - 100% PASS RATE (8/8 tests passing)
-- Created tests/test_auth.py with 8 comprehensive security tests
-- test_login_success/invalid_credentials: Authentication flows
-- test_logout: Session destruction
-- test_protected_route_requires_auth: Route protection
-- test_admin_only_route_blocks_technician: Role-based access
-- test_password_hashing: Secure password storage
-- test_session_management: Session lifecycle
-- test_csrf_protection: CSRF readiness
-- Coverage increased to 75.29%
-- Updated comprehensive_testing_plan.md Section 3.6
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 104/144 tests passing (72.2%) at the time
-```
-
-#### Task: Create test_validation.py (Day 7-8) 🟡 HIGH - ✅ COMPLETED
-```
-✅ COMPLETED: December 12, 2025
-
-Task: Create tests/test_validation.py with input validation tests
-
-Results:
-- Created tests/test_validation.py with 6 comprehensive validation tests
-- All tests passing: 110/144 tests (76.4%)
-- Coverage: 75.29%
-- Tests implemented:
-  * test_sql_injection_prevention
-  * test_xss_prevention
-  * test_required_fields_validation
-  * test_unique_constraint_handling
-  * test_data_type_validation
-  * test_max_length_validation
-- Updated comprehensive_testing_plan.md Section 3.7
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 110/144 tests passing (76.4%)
-```
-
-#### Task: Create test_errors.py (Day 7-9) 🟡 MEDIUM - ✅ COMPLETED
-```
-✅ COMPLETED: December 12, 2025
-
-Task: Create tests/test_errors.py with error handling tests
-
-Results:
-- Created tests/test_errors.py with 6 comprehensive error handling tests
-- All tests passing: 116/144 tests (80.6%)
-- Coverage: 75.29%
-- Tests implemented:
-  * test_404_page_renders
-  * test_500_error_handling
-  * test_database_error_recovery
-  * test_invalid_id_handling
-  * test_concurrent_update_conflict
-  * test_transaction_rollback_on_error
-- Updated comprehensive_testing_plan.md Section 3.8
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 116/144 tests passing (80.6%)
-```
-
-#### Task: Create test_integration.py (Day 9-10) 🟡 MEDIUM - ✅ COMPLETED
-```
-✅ COMPLETED: December 12, 2025
-
-Task: Create tests/test_integration.py with integration tests
-
-Results:
-- Created tests/test_integration.py with 10 comprehensive end-to-end workflow tests
-- All tests passing: 126/144 tests (87.5%)
-- Coverage: 75.29%
-- Tests implemented:
-  * test_complete_maintenance_workflow
-  * test_user_registration_to_assignment
-  * test_asset_lifecycle
-  * test_data_flow_across_modules
-  * test_planning_integration
-  * test_shift_team_rotation_workflow
-  * test_cascade_relationships
-  * test_multi_user_concurrent_access
-  * test_reports_integration
-  * test_search_and_filter_integration
-- Updated comprehensive_testing_plan.md Section 3.9
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 126/144 tests passing (87.5%) at that time
-```
-
-#### Task: Create test_advanced_validation.py (Day 10-11) 🟡 MEDIUM - ✅ COMPLETED
-```
-✅ COMPLETED: December 12, 2025
-
-Task: Create tests/test_advanced_validation.py with advanced validation tests
-
-Results:
-- Created tests/test_advanced_validation.py with 10 comprehensive edge case tests
-- All tests passing: 136/144 tests (94.4%)
-- Coverage: 78.39%
-- Tests implemented:
-  * test_boundary_conditions
-  * test_null_and_none_handling
-  * test_empty_string_validation
-  * test_concurrent_updates
-  * test_transaction_rollbacks
-  * test_cascade_delete_prevention
-  * test_unique_constraint_race_condition
-  * test_foreign_key_constraint_enforcement
-  * test_date_boundary_validation
-  * test_pagination_edge_cases
-- Updated comprehensive_testing_plan.md Section 3.10
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 136/144 tests passing (94.4%)
-```
-
-#### Task: Create test_performance.py (Day 11-12) 🟢 LOW - ✅ COMPLETED
-```
-✅ COMPLETED: December 12, 2025
-
-Task: Create tests/test_performance.py with performance tests
-
-Results:
-- Created tests/test_performance.py with 8 comprehensive performance tests
-- All tests passing: 144/144 tests (100%) 🎉
-- Coverage: 78.39%
-- Tests implemented:
-  * test_large_dataset_queries
-  * test_pagination_performance
-  * test_n_plus_one_query_detection
-  * test_search_performance
-  * test_complex_filter_performance
-  * test_concurrent_request_handling
-  * test_memory_usage_with_large_results
-  * test_database_connection_pooling
-- Updated comprehensive_testing_plan.md Section 3.11
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 182/182 tests passing (100%)! Week 2 Phase 3 Task 4 COMPLETE!
-```
-
----
-
-### Week 2 Phase 3: Enhanced Coverage Tests (Days 13-15) 🔄 IN PROGRESS
-
-> **🔴 CRITICAL PRIORITY:** Coverage analysis revealed gaps that must be closed before code formatting
-> **Current Coverage:** 78.39% (after 46 enhanced tests), 82.99% final (after 20 targeted tests)
-> **Target Coverage:** 85-90%+ (close to target)
-> **Goal:** Protect against regressions during black formatting and code quality tools
-
-**Coverage Gaps Identified:**
-- 🔴 api.py: 62.50% (missing 129 lines - error handling, complex queries)
-- 🟡 app.py: 67.68% (missing 32 lines - module loading, error handling)
-- 🟡 main.py: 80.05% (missing 73 lines - DELETE operations, edge cases)
-- 🟢 db_utils.py: 85.66% (missing 41 lines - model methods)
-
-#### Task: Add 10 Enhanced Tests to tests/functional/test_api_routes.py (Day 13) ✅ COMPLETED (December 12, 2025)
-```
-Week 2, Day 13 (Enhanced API Coverage) - COMPLETED
-
-Task: Add 10 comprehensive tests to existing tests/functional/test_api_routes.py file
-
-Completed:
-1. ✅ Read docs/comprehensive_testing_plan.md (Section 3.12)
-2. ✅ Added 10 tests to tests/functional/test_api_routes.py:
-   - test_api_error_responses_400 (invalid JSON, missing fields)
-   - test_api_error_responses_404 (non-existent resources)
-   - test_api_error_responses_500 (constraint violations)
-   - test_api_table_config_operations (save, set default, delete)
-   - test_api_complex_filters (multiple filters, sorting, pagination)
-   - test_api_bulk_operations (bulk create/update)
-   - test_api_authentication_required (401 responses)
-   - test_api_role_management (role assignment)
-   - test_api_query_parameter_validation (invalid params, SQL injection)
-   - test_api_response_format_consistency (JSON format consistency)
-3. ✅ Added logged_in_user fixture to conftest.py
-4. ✅ All 51 tests pass (41 original + 10 new)
-5. ✅ Coverage improved: 62.50% → 69.19% (+6.69% for api.py)
-6. ✅ Total coverage: 75.64% → 77.68% (+2.04%)
-7. ✅ Verified total: 164 tests passing (144 + 20)
-8. ✅ Marked tests [x] in comprehensive_testing_plan.md Section 3.12
-
-Result: 30/56 Phase 3 tests complete (54%), api.py coverage significantly improved
-```
-
-#### Task: Add 10 Enhanced Tests to tests/unit/test_app.py (Day 13) 🟡 HIGH - ✅ COMPLETED (December 12, 2025)
-```
-Status: ✅ COMPLETED - December 12, 2025
-
-Results:
-- Added 10 comprehensive tests to tests/unit/test_app.py
-- All tests passing: 164/190 tests (86%)
-- Coverage: 78.39%
-- Tests implemented:
-  * test_app_reports_module_enabled
-  * test_app_reports_module_disabled
-  * test_app_planning_module_enabled
-  * test_app_planning_module_disabled
-  * test_app_blueprint_registration_error_handling
-  * test_app_database_initialization
-  * test_app_security_headers
-  * test_app_legacy_url_redirect
-  * test_app_context_processor_variables
-  * test_app_csrf_protection
-- Updated comprehensive_testing_plan.md Section 3.13
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 164/190 tests passing (86%)
-```
-
-#### Task: Add 10 Enhanced Tests to tests/functional/test_main_routes.py (Day 14) 🟡 HIGH - ✅ COMPLETED (December 12, 2025)
-```
-Status: ✅ COMPLETED - December 12, 2025
-
-Results:
-- Added 10 comprehensive tests to tests/functional/test_main_routes.py
-- All tests passing: 174/190 tests (92%)
-- Coverage: 78.39%
-- Tests implemented:
-  * test_delete_asset_with_maintenance_orders
-  * test_delete_asset_nonexistent
-  * test_delete_maintenance_order_success
-  * test_delete_user_success
-  * test_delete_spare_part_success
-  * test_form_validation_failures
-  * test_route_error_responses
-  * test_pagination_edge_cases_main
-  * test_search_and_filter_combinations
-  * test_asset_detail_with_related_data
-- Updated comprehensive_testing_plan.md Section 3.14
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 174/190 tests passing (92%)
-```
-
-#### Task: Add 8 Enhanced Tests to tests/unit/test_db_utils.py (Day 14) 🟢 MEDIUM - ✅ COMPLETED (December 12, 2025)
-```
-Status: ✅ COMPLETED - December 12, 2025
-
-Results:
-- Added 8 comprehensive tests to tests/unit/test_db_utils.py
-- All tests passing: 182/190 tests (96%)
-- Coverage: 78.39%
-- Tests implemented:
-  * test_user_password_hashing
-  * test_user_to_dict_method
-  * test_model_string_representations
-  * test_database_constraints
-  * test_cascade_relationships_all_models
-  * test_model_default_values
-  * test_query_filter_edge_cases
-  * test_relationship_back_references
-- Updated comprehensive_testing_plan.md Section 3.15
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 182/190 tests passing (96%)
-```
-
-#### Task: Add 8 Critical Path Tests to tests/integration/test_integration.py (Day 15) 🔴 CRITICAL - ✅ COMPLETED (December 12, 2025)
-```
-Status: ✅ COMPLETED - December 12, 2025
-
-Results:
-- Added 8 comprehensive workflow tests to tests/integration/test_integration.py
-- All tests passing: 190/190 tests (100%)
-- Coverage: 78.39%
-- Tests implemented:
-  * test_complete_asset_lifecycle_enhanced
-  * test_complete_user_workflow_enhanced
-  * test_maintenance_order_workflow_enhanced
-  * test_search_and_reporting_workflow_enhanced
-  * test_concurrent_user_operations_enhanced
-  * test_error_recovery_workflow_enhanced
-  * test_session_management_workflow_enhanced
-  * test_table_configuration_workflow_enhanced
-- Updated comprehensive_testing_plan.md Section 3.16
-- Updated IMPLEMENTATION_PRIORITY_GUIDE.md checklist
-- Overall: 190/190 tests passing (100%) ✅
-- Total in file: 18 tests (10 original + 8 enhanced)
-
-Phase 3 Complete - Ready for Week 3!
-```
-
----
-
-### Week 3: Code Quality Analysis (🔄 IN PROGRESS)
-
-> **✅ PHASE 0 COMPLETE:** Automated analysis complete with excellent scores
-> **Current Status:** Phase 1 In Progress (api.py, main.py remaining)
-> **Phase 0 Results:** Ruff: 0, Pylint: 9.15/10, Radon: A(2.0), Bandit: 0
-
-#### Task: Phase 0 - Run Automated Analysis Tools ✅ COMPLETED (December 13, 2025)
-```
-✅ COMPLETED: December 13, 2025
-
-Results:
-- Ruff: 0 issues (perfect)
-- Pylint: 9.15/10 (excellent)
-- Radon: Average complexity A (2.0)
-- Bandit: 0 security issues
-- Coverage: 82.99% maintained
-- Tests: 210/210 passing
-
-Major Refactoring:
-- Created src/services/db_seeding.py module
-- Refactored populate_dummy_data() from E(33) to A(2)
-- Extracted 9 helper functions
-- Fixed all style violations
-
-Please:
-1. Read docs/core_code_quality_plan.md (Phase 0: Automated Code Quality Analysis)
-2. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 3: Monday tasks)
-3. Install all tools: ruff, pylint, mypy, radon, bandit, jscpd
-4. Run each tool and save results to audit_results/ directory
-5. Create baseline_metrics.md with all measurements
-6. Categorize issues by severity (Critical/High/Medium/Low)
-7. Create GitHub issues for critical items
-8. Update IMPLEMENTATION_PRIORITY_GUIDE.md Week 3 checklist
-```
-
-#### Phase 0 Results ✅ COMPLETED (December 13, 2025)
-```
-✅ COMPLETED: December 13, 2025
-
-Results:
-- ✅ Flask factory pattern: EXCELLENT
-- ✅ Blueprint registration: EXCELLENT
-- ✅ Database initialization: EXCELLENT
-- ✅ Error handling & logging: EXCELLENT
-- ✅ Security (SECRET_KEY): EXCELLENT
-- ✅ PEP 8 compliance: EXCELLENT
-- ✅ Comment quality: EXCELLENT (no bug references)
-- ✅ Code duplication: MINIMAL (acceptable)
-- ✅ Coverage: 88.89% (210/210 tests passing)
-- ✅ **VERDICT:** Production-ready, no issues found
-
-Phase 0 + Phase 1 manual audit complete:
-- Added module docstring
-- Fixed import order (os before flask)
-- Converted logging to lazy % formatting
-- Added function docstrings
-- Completed full Phase 1.1 checklist review
-- No critical, high, or medium priority issues identified
-
-I'm on Week 3 (Python Backend Audit) of the Implementation Priority Guide.
-
-Prerequisites verified:
-- ✅ All 210 tests implemented
-- ✅ 100% test pass rate (210/210)
-- ✅ 82.99% code coverage (target: 80-85%)
-- ✅ CI running successfully
-
-Task: Audit src/app.py for code quality issues
-
-Please:
-1. Read docs/core_code_quality_plan.md (Phase 1.1: Code Structure & Organization)
-2. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 3 tasks)
-3. Analyze src/app.py for:
-   - PEP 8 compliance
-   - Proper Flask factory pattern
-   - Comment quality (no bug references)
-   - Security issues (SECRET_KEY handling)
-   - Code duplication
-4. List all issues found with severity (Critical, High, Medium, Low)
-5. Propose fixes for critical and high priority issues
-6. Wait for my approval before making changes
-7. After fixes, update docs/core_code_quality_plan.md progress
-```
-
-#### Task: Iterative Quality Loop (Per File/Group) 🔄 CURRENT WORKFLOW
-
-```
-Task: Apply iterative quality loop to [filename]
-
-Workflow (repeat until file is perfect):
-
-**Step 1: Flake8 Linting**
-1. Run: flake8 [file]
-2. Fix any problems found
-3. Proceed to Step 2
-
-**Step 2: Black Formatting**
-1. Run: black [file]
-2. Review changes
-3. Proceed to Step 3
-
-**Step 3: Test Verification**
-1. Run: pytest tests/
-2. Verify all 210 tests pass
-3. Fix any broken tests
-4. ✅ Checkpoint: flake8/black/tests should all pass
-5. Proceed to Step 4
+**Step 1: Format/Lint Check**
+- Run: flake8 src/routes/api.py
+- Fix any problems found
+- Proceed to Step 2
+
+**Step 2: Auto-Formatting**
+- Run: black src/routes/api.py
+- Review changes
+- Proceed to Step 3
+
+**Step 3: Functional Testing**
+- Run: pytest tests/
+- Verify all 210 tests pass
+- ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
 
 **Step 4: Manual Audit**
-
-Focus on logic, architecture, patterns (not style):
-
-**For api.py (1 hour):**
-- [ ] Verify RESTful conventions
-- [ ] Check input validation
-- [ ] Review error responses
-- [ ] Check authentication/authorization
-- [ ] Check for duplicate code
+Focus on logic and architecture (not style):
+- [ ] Verify RESTful conventions (proper HTTP methods, status codes)
+- [ ] Check input validation and sanitization
+- [ ] Review error responses and status codes
+- [ ] Ensure proper authentication/authorization
+- [ ] Check for duplicate code across endpoints
 - [ ] Verify proper use of Flask patterns
+- [ ] Review database query efficiency
+- [ ] Check for SQL injection vulnerabilities
 
-**For main.py (1 hour):**
-- [ ] Review route organization
-- [ ] Check for duplicate logic
-- [ ] Verify template rendering
-- [ ] Review form handling
-- [ ] Check flash messages
+**Step 5: Document & Loop (If Changes Made)**
+If Step 4 resulted in modifications:
+- Document what was changed and why
+- 🔄 Loop back to Step 1 and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- Mark task as COMPLETE ✅
+- Commit with message: `refactor(api): audit and improve api.py [Phase 1.1]`
+- Update [core_code_quality_plan.md](core_code_quality_plan.md): Mark Task 1.1 [x]
+- Move to Task 1.2
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 1.2: Web Routes (`src/routes/main.py`)
+
+```
+I'm on Week 3, Phase 1, Task 1.2 of the mockCMMS code quality audit.
+
+Task: Audit src/routes/main.py using the 5-step iterative loop
+
+Please:
+
+**Step 1: Format/Lint Check**
+- Run: flake8 src/routes/main.py
+- Fix any problems found
+- Proceed to Step 2
+
+**Step 2: Auto-Formatting**
+- Run: black src/routes/main.py
+- Review changes
+- Proceed to Step 3
+
+**Step 3: Functional Testing**
+- Run: pytest tests/
+- Verify all 210 tests pass
+- ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
+
+**Step 4: Manual Audit**
+Focus on logic and architecture:
+- [ ] Review route organization and naming
+- [ ] Check form handling and validation
+- [ ] Verify proper use of flash messages
+- [ ] Review redirect logic and status codes
+- [ ] Check for duplicate code across routes
+- [ ] Verify proper template rendering
+- [ ] Review session management
+- [ ] Check authorization on protected routes
+
+**Step 5: Document & Loop (If Changes Made)**
+If Step 4 resulted in modifications:
+- Document what was changed and why
+- 🔄 Loop back to Step 1 and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- Mark task as COMPLETE ✅
+- Commit with message: `refactor(routes): audit and improve main.py [Phase 1.2]`
+- Move to Task 1.3
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 1.3: Database Utilities (`src/services/db_utils.py`)
+
+```
+I'm on Week 3, Phase 1, Task 1.3 of the mockCMMS code quality audit.
+
+Task: Audit src/services/db_utils.py using the 5-step iterative loop
+
+Please:
+
+**Step 1: Format/Lint Check**
+- Run: flake8 src/services/db_utils.py
+- Fix any problems found
+- Proceed to Step 2
+
+**Step 2: Auto-Formatting**
+- Run: black src/services/db_utils.py
+- Review changes
+- Proceed to Step 3
+
+**Step 3: Functional Testing**
+- Run: pytest tests/
+- Verify all 210 tests pass
+- ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
+
+**Step 4: Manual Audit**
+Focus on database logic:
+- [ ] Review model definitions and relationships
+- [ ] Check for proper use of SQLAlchemy patterns
+- [ ] Verify cascade delete configurations
+- [ ] Review index definitions for performance
+- [ ] Check for N+1 query problems
+- [ ] Verify proper use of transactions
+- [ ] Review password hashing implementation
+- [ ] Check model method implementations
+
+**Step 5: Document & Loop (If Changes Made)**
+If Step 4 resulted in modifications:
+- Document what was changed and why
+- 🔄 Loop back to Step 1 and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- Mark task as COMPLETE ✅
+- Commit with message: `refactor(db): audit and improve db_utils.py [Phase 1.3]`
+- Move to Task 1.4
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 1.4: Database Seeding (`src/services/db_seeding.py`)
+
+```
+I'm on Week 3, Phase 1, Task 1.4 of the mockCMMS code quality audit.
+
+Task: Audit src/services/db_seeding.py using the 5-step iterative loop
+
+Please:
+
+**Step 1: Format/Lint Check**
+- Run: flake8 src/services/db_seeding.py
+- Fix any problems found
+- Proceed to Step 2
+
+**Step 2: Auto-Formatting**
+- Run: black src/services/db_seeding.py
+- Review changes
+- Proceed to Step 3
+
+**Step 3: Functional Testing**
+- Run: pytest tests/
+- Verify all 210 tests pass
+- ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
+
+**Step 4: Manual Audit**
+Focus on seeding logic:
+- [ ] Review function organization and naming
+- [ ] Check for code duplication across seed functions
 - [ ] Verify proper error handling
+- [ ] Review data generation logic
+- [ ] Check for hardcoded values that should be configurable
+- [ ] Verify idempotency of seed operations
+- [ ] Review function complexity
+- [ ] Check docstring completeness
 
-**For db_utils.py (1 hour):**
-- [ ] Check SQL injection vulnerabilities
-- [ ] Review query optimization
-- [ ] Verify SQLAlchemy ORM usage
-- [ ] Check N+1 query problems
-- [ ] Review transaction handling
-- [ ] Review model relationships
+**Step 5: Document & Loop (If Changes Made)**
+If Step 4 resulted in modifications:
+- Document what was changed and why
+- 🔄 Loop back to Step 1 and repeat until file is perfect
 
-**For app.py (30 min):**
-- [ ] Verify Flask factory pattern
-- [ ] Check blueprint registration
-- [ ] Review configuration
-- [ ] Check security settings
+If Step 4 resulted in NO modifications:
+- Mark task as COMPLETE ✅
+- Commit with message: `refactor(db): audit and improve db_seeding.py [Phase 1.4]`
+- Move to Task 1.5
 
-**For utilities (30 min):**
-- [ ] Review business logic
-- [ ] Check edge cases
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 1.5: Shift Utilities (`src/services/shift_utils.py`)
+
+```
+I'm on Week 3, Phase 1, Task 1.5 of the mockCMMS code quality audit.
+
+Task: Audit src/services/shift_utils.py using the 5-step iterative loop
+
+Please:
+
+**Step 1: Format/Lint Check**
+- Run: flake8 src/services/shift_utils.py
+- Fix any problems found
+- Proceed to Step 2
+
+**Step 2: Auto-Formatting**
+- Run: black src/services/shift_utils.py
+- Review changes
+- Proceed to Step 3
+
+**Step 3: Functional Testing**
+- Run: pytest tests/
+- Verify all 210 tests pass
+- ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
+
+**Step 4: Manual Audit**
+Focus on shift calculation logic:
+- [ ] Review shift rotation algorithm
+- [ ] Check date/time handling
+- [ ] Verify edge case handling (year boundaries, etc.)
+- [ ] Review function naming and clarity
+- [ ] Check for magic numbers (use constants)
+- [ ] Verify docstring accuracy
+- [ ] Review test coverage completeness
+- [ ] Check for potential timezone issues
+
+**Step 5: Document & Loop (If Changes Made)**
+If Step 4 resulted in modifications:
+- Document what was changed and why
+- 🔄 Loop back to Step 1 and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- Mark task as COMPLETE ✅
+- Commit with message: `refactor(services): audit and improve shift_utils.py [Phase 1.5]`
+- Move to Task 1.6
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 1.6: Flask Application Factory (`src/app.py`)
+
+```
+I'm on Week 3, Phase 1, Task 1.6 of the mockCMMS code quality audit.
+
+Task: Audit src/app.py using the 5-step iterative loop
+
+Please:
+
+**Step 1: Format/Lint Check**
+- Run: flake8 src/app.py
+- Fix any problems found
+- Proceed to Step 2
+
+**Step 2: Auto-Formatting**
+- Run: black src/app.py
+- Review changes
+- Proceed to Step 3
+
+**Step 3: Functional Testing**
+- Run: pytest tests/
+- Verify all 210 tests pass
+- ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
+
+**Step 4: Manual Audit**
+Focus on application factory pattern:
+- [ ] Verify proper Flask factory pattern implementation
+- [ ] Review configuration loading
+- [ ] Check SECRET_KEY handling (must be from env)
+- [ ] Verify database initialization
+- [ ] Review blueprint registration logic
+- [ ] Check error handler registration
+- [ ] Verify logging configuration
+- [ ] Review module loading for apps/planning and apps/reports
+
+**Step 5: Document & Loop (If Changes Made)**
+If Step 4 resulted in modifications:
+- Document what was changed and why
+- 🔄 Loop back to Step 1 and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- Mark task as COMPLETE ✅
+- Commit with message: `refactor(app): audit and improve app.py [Phase 1.6]`
+- Phase 1 COMPLETE - Move to Phase 2
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+## Phase 1 Final Verification
+
+After all 6 tasks complete:
+- [ ] Run full test suite: `pytest tests/` (all 210 tests must pass)
+- [ ] Check coverage: `pytest --cov=src tests/` (maintain 82.99%+)
+- [ ] Run pylint: `pylint src/` (maintain 9.15/10+)
+- [ ] Verify application starts: `python run.py`
+- [ ] Document findings in audit report
+- [ ] Mark Phase 1 COMPLETE ✅
+
+**Deliverable:** 6 commits, all Python backend files audited and improved
+
+
+---
+
+## Phase 2: JavaScript Frontend Analysis (13 tasks)
+
+### Task 2.1: Advanced Table Core (`src/static/js/advanced-table/table-core.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.1 of the mockCMMS code quality audit.
+
+Task: Audit table-core.js using the 5-step iterative loop
+
+Please:
+
+**Step 1: Format/Lint Check**
+- Run: eslint src/static/js/advanced-table/table-core.js
+- Fix any problems found
+- Proceed to Step 2
+
+**Step 2: Auto-Formatting**
+- Run: prettier --write src/static/js/advanced-table/table-core.js
+- Review changes
+- Proceed to Step 3
+
+**Step 3: Functional Testing**
+- Load application in browser
+- Test Advanced Table functionality
+- Check browser console for errors
+- ✅ Checkpoint: ESLint/Prettier/browser tests should all pass
+
+**Step 4: Manual Audit**
+Focus on architecture:
+- [ ] Review class structure and encapsulation
+- [ ] Check for circular dependencies
+- [ ] Verify proper initialization patterns
+- [ ] Review event listener cleanup (memory leaks)
+- [ ] Check naming conventions (camelCase)
+- [ ] Remove console.log() statements
+- [ ] Remove bug reference comments
+- [ ] Add JSDoc comments for public methods
+- [ ] Review error handling
+
+**Step 5: Document & Loop (If Changes Made)**
+If Step 4 resulted in modifications:
+- Document what was changed and why
+- 🔄 Loop back to Step 1 and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- Mark task as COMPLETE ✅
+- Commit with message: `refactor(table): audit and improve table-core.js [Phase 2.1]`
+- Move to Task 2.2
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.2: Table Initialization (`src/static/js/advanced-table/table-init.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.2 of the mockCMMS code quality audit.
+
+Task: Audit table-init.js using the 5-step iterative loop
+
+Please follow the same 5-step process as Task 2.1:
+1. ESLint check
+2. Prettier formatting
+3. Browser testing
+4. Manual audit focusing on:
+   - [ ] Initialization logic clarity
+   - [ ] Configuration validation
+   - [ ] Error handling during init
+   - [ ] Remove console.log()
+   - [ ] Remove bug references
+   - [ ] Add JSDoc comments
+5. Document & loop or commit
+
+Commit message: `refactor(table): audit and improve table-init.js [Phase 2.2]`
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.3: Table Rendering (`src/static/js/advanced-table/table-render.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.3 of the mockCMMS code quality audit.
+
+Task: Audit table-render.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review HTML generation patterns
+- [ ] Check for XSS vulnerabilities
+- [ ] Verify proper escaping of user data
+- [ ] Review template literal usage
+- [ ] Check for duplicate rendering logic
+- [ ] Verify accessibility (ARIA labels)
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+Commit message: `refactor(table): audit and improve table-render.js [Phase 2.3]`
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.4: Table Data Operations (`src/static/js/advanced-table/table-data.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.4 of the mockCMMS code quality audit.
+
+Task: Audit table-data.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review filtering logic efficiency
+- [ ] Check sorting algorithm performance
+- [ ] Verify pagination calculations
+- [ ] Review data transformation logic
+- [ ] Check for immutability violations
+- [ ] Verify edge case handling (empty data, null values)
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+Commit message: `refactor(table): audit and improve table-data.js [Phase 2.4]`
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.5: Table Configuration (`src/static/js/advanced-table/table-config.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.5 of the mockCMMS code quality audit.
+
+Task: Audit table-config.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review localStorage usage patterns
+- [ ] Check for storage quota handling
+- [ ] Verify JSON serialization safety
+- [ ] Review configuration validation
+- [ ] Check for race conditions
+- [ ] Verify default configuration handling
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+Commit message: `refactor(table): audit and improve table-config.js [Phase 2.5]`
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.6: Table Events (`src/static/js/advanced-table/table-events.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.6 of the mockCMMS code quality audit.
+
+Task: Audit table-events.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review event delegation patterns
+- [ ] Check for memory leaks (listener cleanup)
+- [ ] Verify event handler organization
+- [ ] Review debouncing/throttling usage
+- [ ] Check for duplicate event bindings
+- [ ] Verify proper event.preventDefault() usage
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+Commit message: `refactor(table): audit and improve table-events.js [Phase 2.6]`
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.7: Table Export (`src/static/js/advanced-table/table-export.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.7 of the mockCMMS code quality audit.
+
+Task: Audit table-export.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review CSV generation logic
+- [ ] Check for proper escaping of special characters
+- [ ] Verify encoding handling (UTF-8)
+- [ ] Review file download implementation
+- [ ] Check for browser compatibility
+- [ ] Verify large dataset handling
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+Commit message: `refactor(table): audit and improve table-export.js [Phase 2.7]`
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.8: Table Sidebar (`src/static/js/advanced-table/table-sidebar.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.8 of the mockCMMS code quality audit.
+
+Task: Audit table-sidebar.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review sidebar toggle implementation
+- [ ] Check state persistence
+- [ ] Verify filter UI logic
+- [ ] Review column visibility controls
+- [ ] Check for duplicate code
+- [ ] Verify accessibility
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+Commit message: `refactor(table): audit and improve table-sidebar.js [Phase 2.8]`
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.9: Table Resize (`src/static/js/advanced-table/table-resize.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.9 of the mockCMMS code quality audit.
+
+Task: Audit table-resize.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review column resize algorithm
+- [ ] Check for performance issues during drag
+- [ ] Verify minimum/maximum width constraints
+- [ ] Review mouse event handling
+- [ ] Check for memory leaks
+- [ ] Verify state persistence
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+Commit message: `refactor(table): audit and improve table-resize.js [Phase 2.9]`
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.10: Table Loading States (`src/static/js/advanced-table/table-loading.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.10 of the mockCMMS code quality audit.
+
+Task: Audit table-loading.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review loading indicator implementation
+- [ ] Check for proper show/hide logic
+- [ ] Verify spinner positioning
+- [ ] Review timeout handling
+- [ ] Check for race conditions
+- [ ] Verify accessibility (ARIA live regions)
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+Commit message: `refactor(table): audit and improve table-loading.js [Phase 2.10]`
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+### Task 2.11: Table Retry Logic (`src/static/js/advanced-table/table-retry.js`)
+
+```
+I'm on Week 3, Phase 2, Task 2.11 of the mockCMMS code quality audit.
+
+Task: Audit table-retry.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review exponential backoff implementation
+- [ ] Check retry limit configuration
 - [ ] Verify error handling
+- [ ] Review promise chain logic
+- [ ] Check for infinite retry loops
+- [ ] Verify user feedback during retries
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
 
-**Step 5: Document & Loop**
+Commit message: `refactor(table): audit and improve table-retry.js [Phase 2.11]`
 
-If Step 4 made changes:
-1. Document what was changed and why
-2. Update any affected tests
-3. 🔄 Loop back to Step 1
-
-If Step 4 made NO changes:
-1. Mark file COMPLETE ✅
-2. Move to next file
-
-**File Tracking:**
-```markdown
-### [filename] Status
-- [ ] Step 1: Flake8
-- [ ] Step 2: Black
-- [ ] Step 3: Tests
-- [ ] Step 4: Manual audit
-- [ ] Step 5: Loop (if needed)
-- [ ] COMPLETE ✅
-```
-
-**After All Files Complete:**
-1. Run: ruff check src/
-2. Run: pylint src/
-3. Run: pytest --cov=src tests/
-4. Update audit_results/baseline_metrics.md
-5. Mark Phase 1 COMPLETE in core_code_quality_plan.md
-6. Update AI_AGENT_GUIDE.md
+Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Week 4-5: Frontend Audit (POSTPONED)
+### Task 2.12: Toast Notifications (`src/static/js/toast-notification.js`)
 
-> **⚠️ IMPORTANT:** Wait until Week 3 (Python Backend) is complete.
+```
+I'm on Week 3, Phase 2, Task 2.12 of the mockCMMS code quality audit.
+
+Task: Audit toast-notification.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review notification queue management
+- [ ] Check for memory leaks (DOM cleanup)
+- [ ] Verify auto-dismiss timing
+- [ ] Review accessibility (ARIA roles)
+- [ ] Check for duplicate notifications
+- [ ] Verify z-index and positioning
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+Commit message: `refactor(js): audit and improve toast-notification.js [Phase 2.12]`
+
+Show me your findings and proposed changes before implementing.
+```
 
 ---
 
-### Week 3: JavaScript Audit
+### Task 2.13: Flash Messages Handler (`src/static/js/flash-messages.js`)
 
-#### Task: Audit Advanced Table Component
 ```
-I'm on Week 3 (JavaScript Audit) of the Implementation Priority Guide.
+I'm on Week 3, Phase 2, Task 2.13 of the mockCMMS code quality audit.
 
-Task: Audit src/static/js/advanced-table/ files
+Task: Audit flash-messages.js using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review Flask flash message integration
+- [ ] Check category mapping logic
+- [ ] Verify DOM ready handling
+- [ ] Review error handling
+- [ ] Check for duplicate message display
+- [ ] Verify proper cleanup
+- [ ] Remove console.log()
+- [ ] Remove bug references
+- [ ] Add JSDoc comments
+
+**Step 5: Document & Loop (If Changes Made)**
+If Step 4 resulted in modifications:
+- Document what was changed and why
+- 🔄 Loop back to Step 1 and repeat until file is perfect
+
+If Step 4 resulted in NO modifications:
+- Mark task as COMPLETE ✅
+- Commit with message: `refactor(js): audit and improve flash-messages.js [Phase 2.13]`
+- Phase 2 COMPLETE - Move to Phase 3
+
+Show me your findings and proposed changes before implementing.
+```
+
+---
+
+## Phase 2 Final Verification
+
+After all 13 tasks complete:
+- [ ] Load application in browser
+- [ ] Test all Advanced Table features
+- [ ] Check browser console (no errors)
+- [ ] Verify toast notifications work
+- [ ] Test flash messages from Flask
+- [ ] Run ESLint on all JS files
+- [ ] Document findings in audit report
+- [ ] Mark Phase 2 COMPLETE ✅
+
+**Deliverable:** 13 commits, all JavaScript files audited and improved
+
+
+---
+
+## Phase 3: CSS Styling Analysis (3 tasks)
+
+### Task 3.1: Main Styles (`src/static/css/main.css`)
+
+```
+I'm on Week 4, Phase 3, Task 3.1 of the mockCMMS code quality audit.
+
+Task: Audit main.css using the 5-step iterative loop
 
 Please:
-1. Read docs/core_code_quality_plan.md (Phase 2: JavaScript Frontend)
-2. Read docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 3 tasks)
-3. Check all table-*.js files for:
-   - Code duplication across files
-   - Consistent naming conventions
-   - Professional comments (no bug references)
-   - ESLint compliance
-   - Modern JavaScript practices (ES6+)
-4. List issues by file
-5. Propose refactoring to eliminate duplication
-6. Wait for approval
-7. Update progress in core_code_quality_plan.md
+
+**Step 1: Format/Lint Check**
+- Run: stylelint src/static/css/main.css
+- Fix any problems found
+
+**Step 2: Auto-Formatting**
+- Run: prettier --write src/static/css/main.css
+- Review changes
+
+**Step 3: Visual Testing**
+- Load application in browser
+- Verify styles render correctly
+- Test responsive breakpoints
+
+**Step 4: Manual Audit**
+- [ ] Review file structure and organization
+- [ ] Check for logical grouping of styles
+- [ ] Verify CSS custom properties usage
+- [ ] Review color consistency
+- [ ] Check for magic numbers
+- [ ] Remove duplicate styles
+- [ ] Verify mobile-first approach
+- [ ] Check breakpoint consistency
+- [ ] Remove unused vendor prefixes
+- [ ] Optimize selectors
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `refactor(css): audit and improve main.css [Phase 3.1]`
+
+Show me your findings before implementing.
 ```
 
 ---
 
-### Week 4: CSS Audit
+### Task 3.2: Advanced Table Styles (`src/static/css/advanced-table.css`)
 
-#### Task: Extract Inline Styles
 ```
-I'm on Week 4 (CSS Audit) working on separation of concerns.
+I'm on Week 4, Phase 3, Task 3.2 of the mockCMMS code quality audit.
 
-Task: Remove inline styles from templates
+Task: Audit advanced-table.css using the 5-step iterative loop
 
-Please:
-1. Read docs/core_code_quality_plan.md (Phase 3 & 4: CSS and Templates)
-2. Read .github/copilot-instructions.md (Separation of Concerns section)
-3. Scan src/templates/*.html for:
-   - Inline style="..." attributes
-   - Inline <style> blocks
-4. For each inline style found:
-   - Extract to appropriate CSS file (main.css or advanced-table.css)
-   - Create semantic CSS class
-   - Update template to use class
-5. Show me the changes file by file
-6. Wait for approval before applying
-7. Update both core_code_quality_plan.md and affected template files
+Manual audit focus:
+- [ ] Review component-specific styles
+- [ ] Check for naming consistency (BEM or similar)
+- [ ] Verify responsive table behavior
+- [ ] Review z-index usage
+- [ ] Check for duplicate styles
+- [ ] Verify color scheme consistency
+- [ ] Review animation performance
+- [ ] Check accessibility (focus states, contrast)
+
+Commit message: `refactor(css): audit and improve advanced-table.css [Phase 3.2]`
+
+Show me your findings before implementing.
 ```
+
+---
+
+### Task 3.3: Form Styles (`src/static/css/forms.css`)
+
+```
+I'm on Week 4, Phase 3, Task 3.3 of the mockCMMS code quality audit.
+
+Task: Audit forms.css using the 5-step iterative loop
+
+Manual audit focus:
+- [ ] Review form element styling
+- [ ] Check input validation styles
+- [ ] Verify error message styling
+- [ ] Review button styles consistency
+- [ ] Check for duplicate form styles
+- [ ] Verify accessibility (labels, focus)
+- [ ] Review responsive form behavior
+- [ ] Check color contrast ratios
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `refactor(css): audit and improve forms.css [Phase 3.3]`
+Phase 3 COMPLETE - Move to Phase 4
+
+Show me your findings before implementing.
+```
+
+---
+
+## Phase 3 Final Verification
+
+After all 3 tasks complete:
+- [ ] Load all pages in browser
+- [ ] Test responsive design (mobile, tablet, desktop)
+- [ ] Verify color consistency
+- [ ] Check accessibility (contrast, focus states)
+- [ ] Run stylelint on all CSS files
+- [ ] Document findings
+- [ ] Mark Phase 3 COMPLETE ✅
+
+**Deliverable:** 3 commits, all CSS files audited and improved
+
+---
+
+## Phase 4: HTML Templates Analysis (16 tasks)
+
+### Task 4.1: Base Template (`src/templates/base.html`)
+
+```
+I'm on Week 4, Phase 4, Task 4.1 of the mockCMMS code quality audit.
+
+Task: Audit base.html using the 5-step iterative loop
+
+**Step 1: Format/Lint Check**
+- Run: djlint src/templates/base.html --reformat
+- Fix any problems
+
+**Step 2: Auto-Formatting**
+- Review djlint changes
+- Verify proper indentation
+
+**Step 3: Functional Testing**
+- Load application
+- Verify template renders correctly
+- Check all pages using base template
+
+**Step 4: Manual Audit**
+- [ ] Remove inline styles (move to CSS)
+- [ ] Remove inline scripts (move to JS files)
+- [ ] Remove bug reference comments
+- [ ] Verify proper Jinja2 syntax
+- [ ] Check for hardcoded values
+- [ ] Review meta tags
+- [ ] Verify accessibility (lang, ARIA)
+- [ ] Check for duplicate blocks
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `refactor(templates): audit and improve base.html [Phase 4.1]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 4.2-4.16: Individual Templates
+
+For each template (index.html, assets.html, asset_detail.html, maintenance_orders.html, mo_detail.html, spare_parts.html, spare_part_detail.html, users.html, user_detail.html, login.html, register.html, 404.html, 500.html, components/table.html, components/filters.html):
+
+```
+I'm on Week 4, Phase 4, Task 4.[X] of the mockCMMS code quality audit.
+
+Task: Audit [TEMPLATE_NAME] using the 5-step iterative loop
+
+Follow same process as Task 4.1:
+1. djlint formatting
+2. Review changes
+3. Browser testing
+4. Manual audit:
+   - [ ] Remove inline styles
+   - [ ] Remove inline scripts
+   - [ ] Remove bug references
+   - [ ] Check Jinja2 syntax
+   - [ ] Verify form handling
+   - [ ] Check CSRF tokens
+   - [ ] Review accessibility
+   - [ ] Check for duplicate code
+5. Document & loop or commit
+
+Commit message: `refactor(templates): audit and improve [TEMPLATE_NAME] [Phase 4.X]`
+
+Show me your findings before implementing.
+```
+
+---
+
+## Phase 4 Final Verification
+
+After all 16 tasks complete:
+- [ ] Load all pages in browser
+- [ ] Test all forms
+- [ ] Verify no inline styles remain
+- [ ] Verify no inline scripts remain
+- [ ] Check for console errors
+- [ ] Run djlint on all templates
+- [ ] Document findings
+- [ ] Mark Phase 4 COMPLETE ✅
+
+**Deliverable:** 16 commits, all templates audited and improved
+
+---
+
+## Phase 5: Root-Level Files Analysis (7 tasks)
+
+### Task 5.1: Application Entry Point (`run.py`)
+
+```
+I'm on Week 5, Phase 5, Task 5.1 of the mockCMMS code quality audit.
+
+Task: Audit run.py using the 5-step iterative loop
+
+**Step 1-3:** flake8 → black → pytest (all 210 tests pass)
+
+**Step 4: Manual Audit**
+- [ ] Review application startup logic
+- [ ] Check environment variable handling
+- [ ] Verify proper error handling
+- [ ] Review debug mode configuration
+- [ ] Check for hardcoded values
+- [ ] Verify logging setup
+- [ ] Review docstring
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `refactor(root): audit and improve run.py [Phase 5.1]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 5.2: Requirements (`requirements.txt`)
+
+```
+I'm on Week 5, Phase 5, Task 5.2 of the mockCMMS code quality audit.
+
+Task: Audit requirements.txt
+
+**Step 1: Dependency Check**
+- Run: pip-audit
+- Check for security vulnerabilities
+
+**Step 2: Version Review**
+- Check for outdated packages
+- Verify version pinning strategy
+
+**Step 3: Functional Testing**
+- Create fresh venv
+- Install requirements
+- Run application
+
+**Step 4: Manual Audit**
+- [ ] Remove unused dependencies
+- [ ] Verify all dependencies needed
+- [ ] Check version compatibility
+- [ ] Review security advisories
+- [ ] Organize by category (comments)
+- [ ] Pin critical versions
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `chore(deps): audit and improve requirements.txt [Phase 5.2]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 5.3: Environment Configuration (`.env.example`)
+
+```
+I'm on Week 5, Phase 5, Task 5.3 of the mockCMMS code quality audit.
+
+Task: Audit .env.example
+
+**Step 4: Manual Audit**
+- [ ] Verify all env vars documented
+- [ ] Check for sensitive data
+- [ ] Review default values
+- [ ] Verify variable naming
+- [ ] Add descriptions/comments
+- [ ] Check consistency with code
+- [ ] Verify app enable flags
+
+Commit message: `docs(config): audit and improve .env.example [Phase 5.3]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 5.4: Documentation (`README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`)
+
+```
+I'm on Week 5, Phase 5, Task 5.4 of the mockCMMS code quality audit.
+
+Task: Audit documentation files
+
+**Step 4: Manual Audit**
+- [ ] Verify README accuracy
+- [ ] Check setup instructions
+- [ ] Review feature descriptions
+- [ ] Verify links work
+- [ ] Check CONTRIBUTING standards
+- [ ] Review CHANGELOG format
+- [ ] Update version numbers
+- [ ] Check for outdated info
+
+Commit message: `docs: audit and improve documentation [Phase 5.4]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 5.5: GitHub Configuration (`.github/` files)
+
+```
+I'm on Week 5, Phase 5, Task 5.5 of the mockCMMS code quality audit.
+
+Task: Audit GitHub configuration files
+
+**Step 4: Manual Audit**
+- [ ] Review issue templates
+- [ ] Check PR template
+- [ ] Verify workflow files
+- [ ] Review CODEOWNERS
+- [ ] Check funding.yml
+- [ ] Verify dependabot.yml
+- [ ] Review security policy
+
+Commit message: `docs(github): audit and improve GitHub configuration [Phase 5.5]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 5.6: Test Infrastructure (`tests/conftest.py`, `test_data/dummy_data.json`)
+
+```
+I'm on Week 5, Phase 5, Task 5.6 of the mockCMMS code quality audit.
+
+Task: Audit test infrastructure
+
+**Step 1-3:** flake8 → black → pytest
+
+**Step 4: Manual Audit**
+- [ ] Review pytest configuration
+- [ ] Check fixture organization
+- [ ] Verify test data validity
+- [ ] Review coverage configuration
+- [ ] Check for duplicate fixtures
+- [ ] Verify fixture scope
+
+Commit message: `test: audit and improve test infrastructure [Phase 5.6]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 5.7: Scripts (`scripts/setup.ps1`)
+
+```
+I'm on Week 5, Phase 5, Task 5.7 of the mockCMMS code quality audit.
+
+Task: Audit setup.ps1
+
+**Step 1: Lint Check**
+- Run: PSScriptAnalyzer on setup.ps1
+
+**Step 3: Functional Testing**
+- Run script in test environment
+
+**Step 4: Manual Audit**
+- [ ] Review functionality
+- [ ] Check error handling
+- [ ] Verify cross-platform notes
+- [ ] Check for hardcoded paths
+- [ ] Review user feedback messages
+- [ ] Verify idempotency
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `chore(scripts): audit and improve setup.ps1 [Phase 5.7]`
+Phase 5 COMPLETE - Move to Phase 6
+
+Show me your findings before implementing.
+```
+
+---
+
+## Phase 5 Final Verification
+
+After all 7 tasks complete:
+- [ ] Run setup script from scratch
+- [ ] Verify all documentation links
+- [ ] Run pip-audit
+- [ ] Test application startup
+- [ ] Document findings
+- [ ] Mark Phase 5 COMPLETE ✅
+
+**Deliverable:** 7 commits, all root files audited
+
+---
+
+## Phase 6: Cross-Cutting Concerns (4 tasks)
+
+### Task 6.1: Naming Conventions Audit
+
+```
+I'm on Week 5, Phase 6, Task 6.1 of the mockCMMS code quality audit.
+
+Task: Audit naming conventions across entire codebase
+
+**Step 1: Automated Check**
+- Run naming convention checker
+
+**Step 2: Generate Report**
+- Create report of violations
+- Categorize by severity
+
+**Step 3: Verify No Regressions**
+- Run all tests (210 must pass)
+
+**Step 4: Manual Audit**
+- [ ] Files & Directories (Python: snake_case, JS: kebab-case)
+- [ ] Variables & Functions (Python: snake_case, JS: camelCase)
+- [ ] Classes (PascalCase)
+- [ ] Constants (UPPER_SNAKE_CASE)
+- [ ] Database (snake_case)
+- [ ] Document violations
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `refactor(naming): standardize naming conventions [Phase 6.1]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 6.2: Environment Configuration Audit
+
+```
+I'm on Week 5, Phase 6, Task 6.2 of the mockCMMS code quality audit.
+
+Task: Audit environment configuration usage
+
+**Step 1: Scan Codebase**
+- Find all environment variable usage
+
+**Step 2: Generate Report**
+- List all env vars used
+- Compare with .env.example
+
+**Step 3: Verify No Regressions**
+- Run all tests
+
+**Step 4: Manual Audit**
+- [ ] Review .env.example completeness
+- [ ] Check for sensitive data in git
+- [ ] Verify all vars documented
+- [ ] Review default values
+- [ ] Cross-reference with code
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `refactor(config): audit and standardize environment configuration [Phase 6.2]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 6.3: Code Duplication Analysis
+
+```
+I'm on Week 5, Phase 6, Task 6.3 of the mockCMMS code quality audit.
+
+Task: Analyze code duplication
+
+**Step 1: Run Duplicate Detector**
+- Run: jscpd across entire codebase
+
+**Step 2: Generate Report**
+- List duplicate blocks
+- Prioritize by size/impact
+
+**Step 3: Verify No Regressions**
+- Run all tests
+
+**Step 4: Manual Audit**
+- [ ] Review jscpd report
+- [ ] Identify refactoring opportunities
+- [ ] Check Python/JavaScript duplicates
+- [ ] Verify no duplicate CSS rules
+- [ ] Check duplicate template blocks
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `refactor(duplication): remove code duplicates [Phase 6.3]`
+
+Show me your findings before implementing.
+```
+
+---
+
+### Task 6.4: Final Consistency Check
+
+```
+I'm on Week 5, Phase 6, Task 6.4 of the mockCMMS code quality audit.
+
+Task: Final consistency check across all code
+
+**Step 1: Run All Linters**
+- flake8, pylint, eslint, stylelint, djlint
+
+**Step 2: Generate Final Report**
+- Create audit summary
+- List remaining issues
+
+**Step 3: Verify No Regressions**
+- Run all 210 tests
+- Verify all pass
+
+**Step 4: Manual Audit**
+- [ ] Verify naming consistency
+- [ ] Check for remaining duplicates
+- [ ] Review overall organization
+- [ ] Verify standards applied
+- [ ] Check for missed issues
+
+**Step 5: Document & Loop or Commit**
+
+Commit message: `refactor(final): final consistency check [Phase 6.4]`
+ALL PHASES COMPLETE ✅
+
+Show me your findings before implementing.
+```
+
+---
+
+## Phase 6 Final Verification
+
+After all 4 tasks complete:
+- [ ] Run all linters one final time
+- [ ] Run all 210 tests (100% pass)
+- [ ] Verify 82.99%+ coverage maintained
+- [ ] Test application end-to-end
+- [ ] Create final audit report
+- [ ] Mark Phase 6 COMPLETE ✅
+- [ ] Mark ALL 49 TASKS COMPLETE ✅
+
+**Deliverable:** 4 commits, comprehensive audit complete
 
 ---
 
@@ -1155,43 +1302,41 @@ Please:
 │  "What to do and when"                                   │
 │                                                          │
 │  Week 1: Foundation Setup                               │
-│  Week 2: Python Audit ──────┐                          │
-│  Week 3: JavaScript Audit   │                           │
-│  Week 4: CSS Audit          │                           │
-│  Week 5: Templates          │                           │
-│  Week 6: Polish             │                           │
-└──────────────────────────────┼──────────────────────────┘
-                               │
-                               ↓
-         ┌─────────────────────┴─────────────────────┐
-         │                                            │
-         ↓                                            ↓
-┌──────────────────────┐              ┌──────────────���───────────┐
-│ core_code_quality_   │              │ mockCMMS_roadmap.md      │
-│ plan.md              │              │                          │
-│ "HOW to audit code"  │              │ "WHAT standards to use"  │
-│                      │              │                          │
-│ Phase 1: Python      │              │ GitHub Best Practices:   │
-│ Phase 2: JavaScript  │              │ - Git Workflow           │
-│ Phase 3: CSS         │              │ - Security Standards     │
-│ Phase 4: Templates   │              │ - CI/CD Setup            │
-│ Phase 5: Standards   │              │ - Repository Standards   │
-└──────────────────────┘              └──────────────────────────┘
+│  Week 2: Testing ────────┐                              │
+│  Week 3: Code Quality    │                              │
+│  Week 4-5: Audit         │                              │
+│  Week 6-7: Polish        │                              │
+└──────────────────────────┼──────────────────────────────┘
+                           │
+                           ↓
+         ┌─────────────────┴─────────────────────┐
+         │                                        │
+         ↓                                        ↓
+┌──────────────────────┐          ┌─────────────────────────┐
+│ core_code_quality_   │          │ mockCMMS_roadmap.md      │
+│ plan.md              │          │                          │
+│ "HOW to audit code"  │          │ "WHAT standards to use"  │
+│                      │          │                          │
+│ Phase 1: Python      │          │ GitHub Best Practices:   │
+│ Phase 2: JavaScript  │          │ - Git Workflow           │
+│ Phase 3: CSS         │          │ - Security Standards     │
+│ Phase 4: Templates   │          │ - CI/CD Setup            │
+│ Phase 5: Root Files  │          │ - Repository Standards   │
+│ Phase 6: Cross-Cut   │          │                          │
+└──────────────────────┘          └──────────────────────────┘
 ```
 
 **AI reads:**
 1. **IMPLEMENTATION_PRIORITY_GUIDE.md** → Knows what week/phase you're in
-2. **core_code_quality_plan.md** → Knows HOW to audit that phase
-3. **mockCMMS_roadmap.md** → Knows WHAT standards to follow
-4. **copilot-instructions.md** → Knows project-specific rules
+2. **AI_AGENT_GUIDE.md** (this file) → Gets exact prompts for each task
+3. **core_code_quality_plan.md** → Understands the audit structure
+4. **mockCMMS_roadmap.md** → Knows WHAT standards to follow
 
 ---
 
 ## 🚨 How to Prevent AI from Creating Duplicates
 
 ### Built-in Safeguards
-
-The documents now have safeguards to prevent duplication:
 
 #### 1. **Cross-References**
 Each document references the others:
@@ -1202,22 +1347,13 @@ Each document references the others:
 **What to tell AI:**
 ```
 Before making changes:
-1. Search all 3 planning documents for related content
+1. Search all planning documents for related content
 2. Check if this task is already tracked elsewhere
 3. Update only the relevant document
 4. Add cross-references if needed
 ```
 
-#### 2. **Living Document Guidelines**
-All plans have "Avoid Duplicates" sections telling AI:
-```
-Before adding new issues:
-- Search document for existing entries
-- Consolidate related issues into single entries
-- Cross-reference when necessary
-```
-
-#### 3. **Progress Tracking**
+#### 2. **Progress Tracking**
 Each plan has checkboxes `[ ]` and `[x]`:
 ```
 AI should:
@@ -1234,9 +1370,8 @@ AI should:
 ### 1. **Always Provide Context**
 ```
 ❌ Bad: "Fix app.py"
-✅ Good: "I'm on Week 2, Python audit. Please audit app.py following 
-         Phase 1.1 of core_code_quality_plan.md. Focus on Flask 
-         factory pattern and SECRET_KEY handling."
+✅ Good: "I'm on Phase 1, Task 1.6. Please audit app.py following 
+         the prompt in AI_AGENT_GUIDE.md Task 1.6."
 ```
 
 ### 2. **Reference Specific Sections**
@@ -1258,17 +1393,17 @@ Always include:
 ```
 Always include:
 "After completing this task, update the progress tracking in 
-[relevant document]"
+core_code_quality_plan.md"
 "Mark the checkbox [x] for completed items"
-"Add completion notes with date and summary"
+"Add completion notes with date"
 ```
 
 ### 5. **One Task at a Time**
 ```
-❌ Bad: "Do everything in Week 1"
-✅ Good: "Do Day 1, Task 1: Create PR template"
+❌ Bad: "Do all of Phase 1"
+✅ Good: "Do Task 1.1: API Routes"
          (Then after completion)
-         "Do Day 1, Task 2: Enable branch protection"
+         "Do Task 1.2: Web Routes"
 ```
 
 ---
@@ -1279,35 +1414,30 @@ Use this workflow for every task:
 
 ### Step 1: Context Setting
 ```
-I'm working on mockCMMS project.
-Current: [Week X, Day Y / Phase X]
-Task: [Specific task from Implementation Priority Guide]
+I'm working on mockCMMS code quality audit.
+Current: Phase [X], Task [X.Y]
+Task: [Task name from core_code_quality_plan.md]
 ```
 
-### Step 2: Document References
+### Step 2: Get the Prompt
 ```
-Please read:
-1. docs/IMPLEMENTATION_PRIORITY_GUIDE.md ([specific section])
-2. docs/core_code_quality_plan.md ([if doing audit work])
-3. docs/mockCMMS_roadmap.md ([if setting up infrastructure])
+Please use the prompt from AI_AGENT_GUIDE.md Task [X.Y]
 ```
 
-### Step 3: Task Instructions
+### Step 3: AI Executes
 ```
-Please:
-1. [First action - usually analyze/read code]
-2. [Second action - usually identify issues]
-3. [Third action - usually propose solution]
-4. Wait for my approval
-5. [After approval: implement changes]
-6. Update progress in [relevant document]
+AI will:
+1. Run linters/formatters
+2. Run tests
+3. Perform manual audit
+4. Show you findings
+5. Wait for approval
 ```
 
 ### Step 4: Review & Approve
 ```
-AI shows you proposed changes
 You review and either:
-- "Approved, proceed" 
+- "Approved, proceed with fixes"
 - "Change X before proceeding"
 - "Skip this, move to next task"
 ```
@@ -1316,8 +1446,8 @@ You review and either:
 ```
 After AI completes:
 - Check the changes
-- Run tests if applicable
-- Verify progress was updated in docs
+- Run tests (210 must pass)
+- Verify progress updated in core_code_quality_plan.md
 - Commit with proper message
 ```
 
@@ -1325,60 +1455,48 @@ After AI completes:
 
 ## 🔄 Document Update Protocol for AI
 
-When AI updates planning documents, it should:
-
-### For IMPLEMENTATION_PRIORITY_GUIDE.md
-```
-✅ Update: Week completion status
-✅ Update: "Last Updated" date
-✅ Add: Notes about deviations from plan
-❌ Don't: Change the structure or remove completed items
-```
+When AI updates planning documents:
 
 ### For core_code_quality_plan.md
 ```
-✅ Mark: [x] for completed file audits
+✅ Mark: [x] for completed tasks
 ✅ Add: Completion dates and issue counts
 ✅ Update: Progress tracking section
-✅ Add: Links to PRs or commits
 ❌ Don't: Delete completed phases or remove historical data
 ```
 
 ### For mockCMMS_roadmap.md
 ```
-✅ Mark: [x] for completed best practice tasks
-✅ Update: Status fields (Planning → In Progress → Complete)
-✅ Move: Completed items to "Recently Completed" section
+✅ Update: "ACTIVE WORK" section status
 ✅ Update: "Last Updated" date at top
-❌ Don't: Remove completed items or change priority structure
+✅ Move: Completed sprints to "Recently Completed"
+❌ Don't: Remove completed items or change structure
 ```
 
 ---
 
 ## 🎯 AI Agent Checklist
 
-Before AI starts any task, it should confirm:
+Before AI starts any task:
 
 ```
 Pre-Task Checklist:
-[ ] Read Implementation Priority Guide for current week/phase
-[ ] Read relevant section of core_code_quality_plan.md OR roadmap
-[ ] Understand the specific standards to follow
-[ ] Know which files to analyze/modify
+[ ] Read AI_AGENT_GUIDE.md for the specific task prompt
+[ ] Read core_code_quality_plan.md for context
+[ ] Understand which files to analyze/modify
 [ ] Know where to update progress
 
 During Task:
-[ ] Search for duplicates before adding new content
-[ ] Follow established naming conventions
+[ ] Follow the 5-step iterative loop
+[ ] Run all automated checks first
+[ ] Show findings before implementing fixes
 [ ] Apply coding standards from copilot-instructions.md
-[ ] Create changes in feature branch (not main)
 [ ] Write proper commit messages
 
 Post-Task:
-[ ] Update progress in relevant planning document
-[ ] Mark checkboxes [x] for completed items
+[ ] Update progress in core_code_quality_plan.md
+[ ] Mark checkbox [x] for completed task
 [ ] Add completion notes with date
-[ ] Update "Last Updated" timestamps
 [ ] Suggest next task from the plan
 ```
 
@@ -1386,26 +1504,12 @@ Post-Task:
 
 ## 💡 Advanced AI Delegation Patterns
 
-### Pattern 1: Multi-Day Tasks
+### Pattern 1: Iterative Refinement
 ```
-For tasks spanning multiple days:
-
-Day 1: "Audit all Python files, create issue list"
-Day 2: "Fix Critical and High priority issues from yesterday's list"
-Day 3: "Fix Medium priority issues, update documentation"
-
-Each day:
-- AI references yesterday's work
-- Updates progress continuously
-- Commits at end of day with summary
-```
-
-### Pattern 2: Iterative Refinement
-```
-Round 1: "Audit app.py, list all issues"
-Round 2: "For issue #1 (SECRET_KEY), propose fix"
-Round 3: "Apply approved fix, test, commit"
-Round 4: "Move to issue #2..."
+Round 1: "Run Step 1-3 of Task 1.1, show me lint/format/test results"
+Round 2: "Now do Step 4 manual audit, list all issues found"
+Round 3: "Fix issues 1-3, then loop back to Step 1"
+Round 4: "No more issues? Commit and move to Task 1.2"
 
 Benefits:
 - You review each change
@@ -1413,80 +1517,15 @@ Benefits:
 - Easier to track progress
 ```
 
-### Pattern 3: Parallel Tracks
+### Pattern 2: Batch Similar Tasks
 ```
-Monday AM: "Set up Python linting in CI" (Infrastructure track)
-Monday PM: "Audit app.py" (Code quality track)
-Tuesday AM: "Test CI on app.py changes" (Integration)
-Tuesday PM: "Audit db_utils.py" (Code quality track)
+"Complete all Phase 2 JavaScript table-*.js files (Tasks 2.1-2.11)"
 
-AI manages both tracks:
-- Updates both core_code_quality_plan.md and roadmap
-- Ensures code changes trigger CI
-- Verifies standards are enforced
-```
-
----
-
-## 🚀 Example: Complete Week 1, Day 1 Session
-
-### Your Prompt:
-```
-I'm starting the mockCMMS Implementation Priority Guide.
-
-Current: Week 1, Day 1 (Foundation Setup)
-
-Please read:
-1. docs/IMPLEMENTATION_PRIORITY_GUIDE.md (Week 1, Day 1 section)
-2. docs/mockCMMS_roadmap.md (Git Workflow Standards section)
-3. .github/copilot-instructions.md (Git workflow section)
-
-Tasks for today:
-1. Create .github/PULL_REQUEST_TEMPLATE.md
-2. Enable branch protection on main (I'll do this in GitHub UI)
-3. Create GitHub Project board structure (I'll do this in GitHub UI)
-
-Please help with Task 1: Create the PR template.
-
-Requirements:
-- Include all sections from the Implementation Guide
-- Follow conventional commits format for title
-- Include testing checklist
-- Include standards compliance checklist
-- Show me the template before creating the file
-```
-
-### AI Response:
-```
-I've read the planning documents. Here's the proposed PR template:
-
-[Shows template content]
-
-Does this look good? Should I:
-1. Create the file?
-2. Make any changes first?
-```
-
-### You Approve:
-```
-Looks good! Please:
-1. Create the file
-2. Update docs/IMPLEMENTATION_PRIORITY_GUIDE.md:
-   - Mark [x] for "Create PR template" under Week 1, Day 1
-   - Add completion note with today's date
-3. Suggest the next task for Day 1
-```
-
-### AI Completes:
-```
-✅ Created .github/PULL_REQUEST_TEMPLATE.md
-✅ Updated docs/IMPLEMENTATION_PRIORITY_GUIDE.md
-✅ Next task: Enable branch protection (you'll do via GitHub UI)
-
-After you complete branch protection, the next code task is:
-Day 2, Task 1: Update CONTRIBUTING.md with code standards
-
-Would you like me to prepare that now, or wait until tomorrow?
+AI will:
+- Execute each task sequentially
+- Show findings for each file
+- Wait for approval before moving to next
+- Commit after each task
 ```
 
 ---
@@ -1495,162 +1534,50 @@ Would you like me to prepare that now, or wait until tomorrow?
 
 ### First Session with New AI Agent
 
-Use this comprehensive prompt:
-
 ```
-I'm working on the mockCMMS project, an open-source CMMS (Computerized 
-Maintenance Management System) built with Flask.
+I'm working on the mockCMMS project code quality audit.
 
-Project Structure:
-- Main app: src/ (Flask app, routes, templates, static files)
-- Modular apps: apps/planning, apps/reports
-- Documentation: docs/
-- Tests: tests/
+We're following a structured 49-task audit plan across 6 phases.
 
-I'm following a 6-week improvement plan with two parallel tracks:
-1. Code quality audit (clean up existing code)
-2. Best practices setup (prevent future issues)
+Please read:
+1. docs/AI_AGENT_GUIDE.md (this file - has prompts for all 49 tasks)
+2. docs/core_code_quality_plan.md (the audit structure)
+3. docs/IMPLEMENTATION_PRIORITY_GUIDE.md (overall timeline)
 
-The master plan is in: docs/IMPLEMENTATION_PRIORITY_GUIDE.md
+Current status:
+- Phase 0: Complete (automated analysis done)
+- Phase 1: In Progress (Task 1.1 complete, working on 1.2)
 
-Please:
-1. Read that file completely
-2. Read .github/copilot-instructions.md for project standards
-3. Tell me what week/phase you think I should be in based on git history
-4. Suggest what task to start with
-
-After you understand the project, I'll give you specific tasks following 
-the Implementation Priority Guide.
+Tell me:
+1. What task should we work on next?
+2. What's the prompt for that task?
 ```
 
 ---
 
-## 📊 Progress Tracking for AI
-
-AI should maintain progress tracking like this:
-
-### In IMPLEMENTATION_PRIORITY_GUIDE.md:
-```markdown
-## Week 1: Foundation Setup
-- [x] Day 1: PR Template (Completed 2025-12-11)
-- [x] Day 1: Branch Protection (Completed 2025-12-11)
-- [x] Day 1: Project Board (Completed 2025-12-11)
-- [ ] Day 2: Update CONTRIBUTING.md (In Progress)
-- [ ] Day 2: Security Setup
-...
-```
+## 📊 Progress Tracking Example
 
 ### In core_code_quality_plan.md:
 ```markdown
 ### Phase 1: Python Backend Analysis
-- [x] src/app.py - Audited 2025-12-11 (5 issues found, 5 fixed)
-- [ ] src/services/db_utils.py - In Progress
-- [ ] src/routes/api.py
-...
-```
-
-### In mockCMMS_roadmap.md:
-```markdown
-- [x] Implement Git Workflow Standards (Completed 2025-12-11)
-  - Created PR template
-  - Enabled branch protection
-  - Documented commit message standards
-- [ ] Implement Security & Access Control Standards (In Progress)
+- [x] Task 1.1: API Routes (Completed 2025-12-13, 3 issues fixed)
+- [ ] Task 1.2: Web Routes (In Progress)
+- [ ] Task 1.3: Database Utilities
 ...
 ```
 
 ---
 
-## 🔄 Daily & Weekly Workflow
+## 📊 Current Status (December 13, 2025)
 
-### Daily Workflow for AI Assistants
+| Document | Status | Progress |
+|----------|--------|----------|
+| **AI_AGENT_GUIDE.md** | ✅ Complete | All 49 prompts ready |
+| **core_code_quality_plan.md** | 🔄 In Progress | Phase 0 ✅, Phase 1 started |
+| **comprehensive_testing_plan.md** | ✅ Complete | 210/210 tests ✅ |
+| **mockCMMS_roadmap.md** | 📚 Reference | Strategic context |
 
-```
-1. START OF SESSION
-   ├─ Read: IMPLEMENTATION_PRIORITY_GUIDE.md
-   ├─ Check: Current week (Week 2)
-   ├─ Check: Current day tasks
-   └─ Navigate to: Active detailed plan (comprehensive_testing_plan.md)
-
-2. EXECUTE TASKS
-   ├─ Read: Task specifications from detailed plan
-   ├─ Propose: Approach and implementation
-   ├─ Wait: For user approval
-   ├─ Implement: Approved changes
-   └─ Test: Verify changes work
-
-3. UPDATE DOCUMENTATION
-   ├─ Mark: Completed tasks [x] in detailed plan
-   ├─ Update: Weekly breakdown in IMPLEMENTATION_PRIORITY_GUIDE.md
-   ├─ Update: "Last Updated" dates
-   └─ Commit: Changes with proper commit message
-
-4. END OF SESSION
-   ├─ Summary: What was completed
-   ├─ Next: Suggest next task
-   └─ Status: Update if phase/week changes
-```
-
-### Weekly Workflow
-
-```
-MONDAY (Start of Week)
-├─ Review: IMPLEMENTATION_PRIORITY_GUIDE.md for current week
-├─ Review: Active detailed plan for week's goals
-└─ Set: Daily targets
-
-DAILY (Mon-Fri)
-├─ Execute: 1-3 tasks from daily breakdown
-├─ Update: Progress markers [x]
-└─ Commit: Changes
-
-FRIDAY (End of Week)
-├─ Verify: All week's tasks complete
-├─ Update: mockCMMS_roadmap.md if sprint complete
-├─ Prepare: Next week's work
-└─ Summary: Week's achievements
-```
-
-### Phase Transition Workflow
-
-```
-COMPLETING PHASE 1 (Test Suite):
-1. ✅ Verify: All 96 tests implemented
-2. ✅ Verify: 100% test pass rate
-3. ✅ Verify: 70%+ code coverage
-4. ✅ Verify: CI running successfully
-   ↓
-5. Update comprehensive_testing_plan.md:
-   - Change status to "Completed"
-   - Add completion date
-   - Add summary of achievements
-   ↓
-6. Update mockCMMS_roadmap.md:
-   - Move sprint to "RECENTLY COMPLETED"
-   - Add completion summary
-   - Update "ACTIVE WORK" to Phase 2
-   ↓
-7. Update core_code_quality_plan.md:
-   - Change status from "⏸️ Postponed" to "🟢 In Progress"
-   - Add start date
-   ↓
-8. Update IMPLEMENTATION_PRIORITY_GUIDE.md:
-   - Mark Phase 1 complete [x]
-   - Begin Phase 2 tasks
-```
-
----
-
-## 📊 Current Status Summary (December 13, 2025)
-
-| Document | Status | Progress | Next Action |
-|----------|--------|----------|-------------|
-| **IMPLEMENTATION_PRIORITY_GUIDE.md** | 🔄 In Progress | Week 3 - Phase 0 Complete | Continue Phase 1 |
-| **comprehensive_testing_plan.md** | ✅ Complete | 210/210 tests (100%) ✅ | Reference for maintenance |
-| **core_code_quality_plan.md** | 🔄 In Progress | Phase 0 Complete, Phase 1 In Progress | Audit api.py, main.py |
-| **mockCMMS_roadmap.md** | 📚 Reference | Strategic context | Updated with Phase 0 completion |
-
-**Current Phase:** Week 3 - Python Backend Audit (api.py, main.py remaining)
+**Current Task:** Phase 1, Task 1.2 (Web Routes)
 
 ---
 
@@ -1658,43 +1585,32 @@ COMPLETING PHASE 1 (Test Suite):
 
 You know AI understands the project when it:
 
-✅ References the correct planning documents without being asked  
-✅ Knows what week/phase you're in  
-✅ Suggests next tasks from the plan  
-✅ Updates progress in correct documents  
-✅ Doesn't create duplicate content  
-✅ Follows established coding standards  
-✅ Asks for approval before major changes  
+✅ Uses prompts from AI_AGENT_GUIDE.md without being asked  
+✅ Follows the 5-step loop for each task  
+✅ Shows findings before implementing fixes  
+✅ Updates progress in core_code_quality_plan.md  
 ✅ Writes proper commit messages  
-✅ Cross-references related tasks  
+✅ Suggests next task after completion  
 
 ---
 
 ## 🎯 Quick Reference Commands
 
-### Check Current Status
+### Start a Task
 ```
-"What week/phase am I on according to the Implementation Priority Guide?"
-"What tasks are marked complete vs incomplete in core_code_quality_plan.md?"
-"What's the next task I should work on?"
+"Please execute Task [X.Y] from AI_AGENT_GUIDE.md"
 ```
 
-### Start New Task
+### Check Status
 ```
-"I want to work on [Task Name] from Week [X].
-Please read the relevant docs and help me with this task."
+"What's the current task status in core_code_quality_plan.md?"
+"What's the next task I should work on?"
 ```
 
 ### Update Progress
 ```
-"We just completed [Task Name].
-Please update the progress in all relevant planning documents."
-```
-
-### Verify Standards
-```
-"Check if [file/code] follows the standards in copilot-instructions.md"
-"Does this commit message follow conventional commits format?"
+"We just completed Task [X.Y].
+Please update core_code_quality_plan.md and suggest next task."
 ```
 
 ---
@@ -1702,29 +1618,23 @@ Please update the progress in all relevant planning documents."
 ## 🎉 Final Tips
 
 ### Do's ✅
-- ✅ Always reference specific documents and sections
-- ✅ Provide context (week, phase, task)
-- ✅ Request approval before changes
-- ✅ Ask AI to update progress tracking
-- ✅ Work on one task at a time
-- ✅ Verify AI read the correct documents
+- ✅ Use the prompts from this guide (copy-paste ready)
+- ✅ One task at a time
+- ✅ Review findings before approving fixes
+- ✅ Verify all 210 tests pass after each task
+- ✅ Update progress tracking
 
 ### Don'ts ❌
-- ❌ Assume AI remembers previous sessions
-- ❌ Give vague instructions ("make it better")
-- ❌ Let AI make changes without approval
+- ❌ Skip the 5-step loop
+- ❌ Let AI make changes without showing findings first
 - ❌ Skip progress tracking updates
-- ❌ Work on multiple unrelated tasks simultaneously
-- ❌ Forget to verify AI's proposed changes
+- ❌ Work on multiple tasks simultaneously
 
 ---
 
-**Remember:** AI is a powerful tool, but YOU are the project owner. AI proposes, you approve. AI implements, you verify. AI updates docs, you review.
-
-**The documents are your contract with the AI** - they ensure consistent, high-quality work across all sessions.
+**Remember:** This guide provides ready-to-use prompts for all 49 tasks. Just reference the task number, and AI knows exactly what to do.
 
 ---
 
 **Last Updated:** December 13, 2025  
-**Next Review:** After Week 3 completion (Code Quality Analysis)
-
+**Next Review:** After Phase 1 completion

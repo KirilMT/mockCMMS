@@ -475,27 +475,31 @@ jscpd src/                         # Duplicate detection
 pytest --cov=src tests/            # Coverage analysis
 ```
 
-**Tuesday-Wednesday: Phase 1 - Python Backend Iterative Quality Loop** 🔄 IN PROGRESS
+**Tuesday-Wednesday: Phase 1 - Python Backend (6 Tasks)** 🔄 IN PROGRESS
 
-**Iterative Quality Loop (Per File/Group):**
+**Task-Based Structure (One commit per task):**
 
-Repeat for each file until perfect:
+Each task follows the 5-step iterative loop until perfect:
 
 1. **Step 1: Flake8** → Run `flake8 [file]`, fix style issues
 2. **Step 2: Black** → Run `black [file]`, review formatting changes
 3. **Step 3: Tests** → Run `pytest tests/`, verify all 210 pass (✅ checkpoint)
 4. **Step 4: Manual Audit** → Review logic, architecture, patterns (what tools can't catch)
-5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete ✅
+5. **Step 5: Loop or Commit** → If Step 4 made changes: loop to Step 1; else commit and move to next task
 
-**Key Principle:** After Step 3, flake8/black/tests must all pass before proceeding to manual audit.
+**Key Principle:** After Step 3, flake8/black/tests must all pass before manual audit.
 
-**Progress:**
-- [ ] `app.py` - PENDING (Step 1: Flake8)
-- [ ] `api.py` - PENDING
-- [ ] `main.py` - PENDING
-- [ ] `db_utils.py` - PENDING
-- [ ] `shift_utils.py` - PENDING
-- [ ] `db_seeding.py` - PENDING
+**Phase 1 Tasks (6 tasks, 6 commits):**
+- [ ] Task 1.1: API Routes (`src/routes/api.py`) - 1 hour
+- [ ] Task 1.2: Web Routes (`src/routes/main.py`) - 1 hour
+- [ ] Task 1.3: Database Layer (`src/services/db_utils.py`) - 1 hour
+- [ ] Task 1.4: Application Core (`src/app.py`) - 30 minutes
+- [ ] Task 1.5: Shift Utilities (`src/services/shift_utils.py`) - 15 minutes
+- [ ] Task 1.6: Database Seeding (`src/services/db_seeding.py`) - 15 minutes
+
+**Commit Message Format:** `refactor(scope): audit and improve [file] [Phase X.Y]`
+
+**See:** `core_code_quality_plan.md` Phase 1 for detailed task specifications
 
 **Phase 0 Complete:** Automated analysis done, excellent scores achieved
 
@@ -523,7 +527,26 @@ Repeat for each file until perfect:
 
 ### Week 4: Requirements Validation + JavaScript Frontend
 
-**Monday-Tuesday: Phase 3 - Requirements Validation**
+**Monday-Tuesday: Phase 2 - JavaScript Frontend (13 Tasks)**
+
+**Phase 2 Tasks (13 tasks, 13 commits):**
+- [ ] Task 2.1: Advanced Table Core (`table-core.js`) - 30 min
+- [ ] Task 2.2: Advanced Table Init (`table-init.js`) - 30 min
+- [ ] Task 2.3: Table Rendering (`table-render.js`) - 20 min
+- [ ] Task 2.4: Table Sidebar (`table-sidebar.js`) - 20 min
+- [ ] Task 2.5: Table Resize (`table-resize.js`) - 20 min
+- [ ] Task 2.6: Table Data Management (`table-data.js`) - 20 min
+- [ ] Task 2.7: Table Configuration (`table-config.js`) - 20 min
+- [ ] Task 2.8: Table Export (`table-export.js`) - 20 min
+- [ ] Task 2.9: Table Events (`table-events.js`) - 20 min
+- [ ] Task 2.10: Table Loading (`table-loading.js`) - 20 min
+- [ ] Task 2.11: Table Retry (`table-retry.js`) - 20 min
+- [ ] Task 2.12: Toast Notification (`toast-notification.js`) - 15 min
+- [ ] Task 2.13: Flash Messages (`flash-messages.js`) - 15 min
+
+**See:** `core_code_quality_plan.md` Phase 2 for detailed task specifications
+
+**Wednesday-Thursday: Phase 3 - Requirements Validation**
 - [ ] Review and document all business requirements for core features
 - [ ] Validate Python backend logic against requirements
 - [ ] Add requirement-based comments to tests (explain WHY tests exist)
@@ -532,19 +555,14 @@ Repeat for each file until perfect:
 - [ ] Identify any logic that doesn't match requirements
 - [ ] **Deliverable:** Requirements Validation Report
 
-**Wednesday-Friday: JavaScript Frontend Iterative Quality Loop**
+**Friday: Phase 3 - CSS Styling (3 Tasks)**
 
-For each JavaScript file or group, repeat until perfect:
+**Phase 3 Tasks (3 tasks, 3 commits):**
+- [ ] Task 3.1: Main Styles (`src/static/css/main.css`) - 1 hour
+- [ ] Task 3.2: Advanced Table Styles (`advanced-table.css`) - 30 min
+- [ ] Task 3.3: Advanced Table Sidebar Styles (`advanced-table-sidebar.css`) - 30 min
 
-1. **Step 1: ESLint** → Run `eslint [file]`, fix code quality issues
-2. **Step 2: Prettier** → Run `prettier --write [file]`, review formatting
-3. **Step 3: Browser Tests** → Load app, test functionality, check console (✅ checkpoint)
-4. **Step 4: Manual Audit** → Review architecture, logic, patterns (what tools can't catch)
-5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete ✅
-
-**See:** `core_code_quality_plan.md` Phase 2 for detailed JavaScript workflow
-
-**Deliverable:** JavaScript Audit Report with formatted, audited codebase
+**See:** `core_code_quality_plan.md` Phase 3 for detailed task specifications
 
 ---
 
@@ -568,31 +586,30 @@ For each JavaScript file or group, repeat until perfect:
   - [ ] Test with special characters
 - [ ] **Deliverable:** Enhanced Test Suite Documentation
 
-**Wednesday-Thursday: HTML Templates Iterative Quality Loop**
+**Wednesday-Thursday: Phase 4 - HTML Templates (16 Tasks)**
 
-For each HTML template file or group, repeat until perfect:
+**Phase 4 Tasks (16 tasks, 16 commits):**
+- [ ] Task 4.1: Base Template (`base.html`) - 30 min
+- [ ] Task 4.2-4.5: List Pages (assets, MOs, spare parts, users) - 2 hours
+- [ ] Task 4.6-4.7: Index & Login - 40 min
+- [ ] Task 4.8-4.12: Detail Pages (5 files) - 2.5 hours
+- [ ] Task 4.13-4.15: Specialized Pages (3 files) - 1.5 hours
+- [ ] Task 4.16: Advanced Table Component - 20 min
 
-1. **Step 1: HTML Validation** → Run validator (W3C/html-validate), fix syntax
-2. **Step 2: Prettier** → Run `prettier --write [file]`, review formatting
-3. **Step 3: Render Tests** → Load page, verify rendering, check Flask logs (✅ checkpoint)
-4. **Step 4: Manual Audit** → Review structure, accessibility, separation of concerns
-5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete ✅
+**See:** `core_code_quality_plan.md` Phase 4 for detailed task specifications
 
-**See:** `core_code_quality_plan.md` Phase 4 for detailed HTML workflow
+**Friday: Phase 5 - Root-Level Files (7 Tasks)**
 
-**Friday: CSS Iterative Quality Loop**
+**Phase 5 Tasks (7 tasks, 7 commits):**
+- [ ] Task 5.1: Application Entry Point (`run.py`) - 30 min
+- [ ] Task 5.2: Dependency Management (requirements files) - 30 min
+- [ ] Task 5.3: Configuration Files (`.env.example`, `.gitignore`) - 30 min
+- [ ] Task 5.4: Documentation Files (README, CHANGELOG, GEMINI) - 1 hour
+- [ ] Task 5.5: GitHub Configuration (`.github/` files) - 1 hour
+- [ ] Task 5.6: Test Infrastructure (`conftest.py`, test data) - 30 min
+- [ ] Task 5.7: Scripts & Automation (`setup.ps1`) - 30 min
 
-For each CSS file or group, repeat until perfect:
-
-1. **Step 1: Stylelint** → Run `stylelint [file]`, fix CSS issues
-2. **Step 2: Prettier** → Run `prettier --write [file]`, review formatting
-3. **Step 3: Visual Tests** → Load app, verify styles, test responsive (✅ checkpoint)
-4. **Step 4: Manual Audit** → Review organization, duplicates, performance
-5. **Step 5: Loop** → If Step 4 made changes: document + loop to Step 1; else mark complete ✅
-
-**See:** `core_code_quality_plan.md` Phase 3 for detailed CSS workflow
-
-**Deliverables:** Templates Audit Report + CSS Audit Report
+**See:** `core_code_quality_plan.md` Phase 5 for detailed task specifications
 
 ---
 
@@ -625,12 +642,16 @@ For each CSS file or group, repeat until perfect:
 
 ---
 
-### Week 7: Standards + Release
-**Monday-Wednesday: Standardization**
-- [ ] Follow `core_code_quality_plan.md` Phase 5
-- [ ] Fix naming inconsistencies
-- [ ] Clean up dependencies
-- [ ] Final documentation review
+### Week 7: Cross-Cutting Concerns + Release
+**Monday-Wednesday: Phase 6 - Cross-Cutting Concerns (4 Tasks)**
+
+**Phase 6 Tasks (4 tasks, 4 commits):**
+- [ ] Task 6.1: Naming Conventions Audit - 2 hours
+- [ ] Task 6.2: Environment Configuration Audit - 30 min
+- [ ] Task 6.3: Code Duplication Analysis - 1 hour
+- [ ] Task 6.4: Final Consistency Check - 1 hour
+
+**See:** `core_code_quality_plan.md` Phase 6 for detailed task specifications
 
 **Thursday-Friday: Release Preparation**
 - [ ] Update CHANGELOG.md
