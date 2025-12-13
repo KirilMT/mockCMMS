@@ -230,7 +230,7 @@ else {
 
 
 # 5. Environment Configuration
-Write-Host "`n[Step 5/6] Configuring environment..." -ForegroundColor Yellow
+Write-Host "`n[Step 5/5] Configuring environment..." -ForegroundColor Yellow
 if (-not (Test-Path ".env")) {
     if (Test-Path ".env.example") {
         Copy-Item ".env.example" ".env"
@@ -250,22 +250,6 @@ else {
     Write-Host "   " -NoNewline
     Write-Host ".env" -NoNewline -ForegroundColor Magenta
     Write-Host " already exists " -NoNewline -ForegroundColor White
-    Write-Host "OK" -ForegroundColor Green
-}
-
-# 6. Database Directory
-Write-Host "`n[Step 6/6] Setting up database directory..." -ForegroundColor Yellow
-if (-not (Test-Path "instance")) {
-    New-Item -ItemType Directory -Path "instance" | Out-Null
-    Write-Host "   Created " -NoNewline -ForegroundColor White
-    Write-Host "instance/" -NoNewline -ForegroundColor Magenta
-    Write-Host " directory " -NoNewline -ForegroundColor White
-    Write-Host "OK" -ForegroundColor Green
-}
-else {
-    Write-Host "   " -NoNewline
-    Write-Host "instance/" -NoNewline -ForegroundColor Magenta
-    Write-Host " directory already exists " -NoNewline -ForegroundColor White
     Write-Host "OK" -ForegroundColor Green
 }
 

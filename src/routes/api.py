@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request, session
 from src.services.db_utils import db, Skill, Asset, MaintenanceOrder, SparePart, User, Role, TableConfiguration
 import json
-from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 
 api_bp = Blueprint('api', __name__)

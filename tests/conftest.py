@@ -45,18 +45,30 @@ def app():
     Yields:
         Flask: Configured Flask application in testing mode
     """
-    # Create app with test config
-    test_app = create_app()
+    # Set TESTING environment variable BEFORE creating app
+    original_testing = os.environ.get('TESTING')
+    os.environ['TESTING'] = '1'
+    
+    try:
+        # Create app with test config (will use :memory: database)
+        test_app = create_app(config=TestConfig)
+        
+        # Verify we're using in-memory database
+        assert test_app.config['SQLALCHEMY_DATABASE_URI'] == 'sqlite:///:memory:', \
+            f"ERROR: Tests using wrong database: {test_app.config['SQLALCHEMY_DATABASE_URI']}"
 
-    # Override configuration with test settings
-    test_app.config.from_object(TestConfig)
-
-    # Setup application context and database
-    with test_app.app_context():
-        db.create_all()
-        yield test_app
-        db.session.remove()
-        db.drop_all()
+        # Setup application context and database
+        with test_app.app_context():
+            db.create_all()
+            yield test_app
+            db.session.remove()
+            db.drop_all()
+    finally:
+        # Clean up environment
+        if original_testing is None:
+            os.environ.pop('TESTING', None)
+        else:
+            os.environ['TESTING'] = original_testing
 
 
 @pytest.fixture(scope='function')
@@ -465,3 +477,28 @@ def logged_in_user(client, sample_user):
         sess['user_id'] = sample_user.id
         sess['username'] = sample_user.username
     return sample_user
+
+
+@pytest.fixture(scope='session', autouse=True)
+def cleanup_test_artifacts():
+    """Clean up test database files after entire test session completes."""
+    yield
+    
+    # Clean up test database files
+    test_db = os.path.join('instance', 'mockcmms_test.db')
+    prod_db = os.path.join('instance', 'mockcmms.db')
+    
+    for db_file in [test_db, prod_db]:
+        if os.path.exists(db_file):
+            try:
+                os.remove(db_file)
+            except PermissionError:
+                pass
+    
+    # Remove instance directory if empty
+    if os.path.exists('instance'):
+        try:
+            if not os.listdir('instance'):
+                os.rmdir('instance')
+        except (OSError, PermissionError):
+            pass

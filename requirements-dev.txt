@@ -1,0 +1,28 @@
+# Development and Code Quality Tools
+# Install with: pip install -r requirements-dev.txt
+
+# Code Formatting (ESSENTIAL - Run always)
+black==24.10.0
+autopep8==2.3.2
+
+# Linting (ESSENTIAL - Run always)
+flake8==7.0.0
+ruff==0.8.4
+
+# Code Quality Analysis (OPTIONAL - Run periodically)
+pylint==3.3.2
+radon==6.0.1
+bandit==1.8.0
+
+# Type Checking (OPTIONAL - Run periodically)
+mypy==1.13.0
+
+# Testing (ESSENTIAL - Run always)
+# Note: pytest is also in requirements.txt (needed for app testing)
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-mock==3.14.0
+
+# Pre-commit hooks (OPTIONAL - Configure later)
+# Run 'pre-commit install' only when ready to use
+pre-commit==4.0.1

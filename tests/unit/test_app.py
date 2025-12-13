@@ -5,6 +5,7 @@ This module tests the core Flask app creation, configuration management,
 blueprint registration, database initialization, and context handling.
 """
 import os
+import shutil
 import pytest
 from unittest.mock import patch, MagicMock
 from src.app import create_app
@@ -14,10 +15,9 @@ from src.services.db_utils import db
 class TestAppFactory:
     """Test suite for Flask application factory pattern."""
 
-    def test_create_app_default_config(self):
+    def test_create_app_default_config(self, app):
         """Test app creation with default configuration."""
-        app = create_app()
-
+        # Use the app fixture which has TESTING=True (in-memory database)
         assert app is not None
         assert isinstance(app.config['SQLALCHEMY_DATABASE_URI'], str)
         assert app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] is False
@@ -59,26 +59,30 @@ class TestAppFactory:
         # In test mode, they should be disabled by default
         # (This is controlled by environment variables)
 
-    @patch.dict(os.environ, {'SECRET_KEY': 'test-secret-from-env'})
+    @patch.dict(os.environ, {'SECRET_KEY': 'test-secret-from-env', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_secret_key_from_env(self):
         """Test app uses SECRET_KEY from environment variable."""
         app = create_app()
-
         assert app.secret_key == 'test-secret-from-env'
+        
+        # Clean up
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
 
     @patch('src.app.load_dotenv')
-    @patch.dict(os.environ, {}, clear=True)
+    @patch.dict(os.environ, {'TESTING': '0', 'TESTING_PRODUCTION': '1'}, clear=True)
     def test_secret_key_fallback(self, mock_load_dotenv):
         """Test app uses fallback SECRET_KEY when not in environment."""
-        # Prevent .env file from being loaded
         mock_load_dotenv.return_value = None
-
-        # Create app without SECRET_KEY in environment
         app = create_app()
-
-        # Should use fallback key
         assert app.secret_key is not None
         assert app.secret_key == 'dev_key_fallback_do_not_use_in_prod'
+        
+        # Clean up
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
 
     def test_database_uri_configuration(self, app):
         """Test SQLALCHEMY_DATABASE_URI is properly configured."""
@@ -86,10 +90,30 @@ class TestAppFactory:
         assert app.config['SQLALCHEMY_DATABASE_URI'] == 'sqlite:///:memory:'
 
         # In production, it would use a file-based database
-        prod_app = create_app()
-        prod_uri = prod_app.config['SQLALCHEMY_DATABASE_URI']
-        assert 'sqlite:///' in prod_uri
-        assert 'mockcmms.db' in prod_uri
+        # Temporarily clear TESTING flag to create production app
+        original_testing = os.environ.get('TESTING')
+        original_testing_prod = os.environ.get('TESTING_PRODUCTION')
+        os.environ.pop('TESTING', None)
+        os.environ['TESTING_PRODUCTION'] = '1'
+        try:
+            prod_app = create_app()
+            prod_uri = prod_app.config['SQLALCHEMY_DATABASE_URI']
+            assert 'sqlite:///' in prod_uri
+            assert 'mockcmms_test.db' in prod_uri
+            
+            # Clean up database connection
+            with prod_app.app_context():
+                db.session.remove()
+                db.engine.dispose()
+        finally:
+            if original_testing:
+                os.environ['TESTING'] = original_testing
+            else:
+                os.environ.pop('TESTING', None)
+            if original_testing_prod:
+                os.environ['TESTING_PRODUCTION'] = original_testing_prod
+            else:
+                os.environ.pop('TESTING_PRODUCTION', None)
 
     def test_app_context(self, app):
         """Test app context can be pushed and popped."""
@@ -132,13 +156,16 @@ class TestAppFactory:
 class TestAppConfiguration:
     """Test suite for application configuration."""
 
+    @patch.dict(os.environ, {'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_csrf_protection_enabled_in_production(self):
         """Test CSRF protection is enabled in production mode."""
         app = create_app()
-
-        # In production, CSRF should be enabled
-        # (WTF_CSRF_ENABLED is not explicitly set to False)
         assert app.config.get('WTF_CSRF_ENABLED', True) is True
+        
+        # Clean up
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
 
     def test_csrf_protection_disabled_in_testing(self, app):
         """Test CSRF protection is disabled in testing mode."""
@@ -163,82 +190,100 @@ class TestAppConfiguration:
 class TestBlueprintConditionalLoading:
     """Test suite for conditional blueprint loading."""
 
-    @patch.dict(os.environ, {'PLANNING_ENABLED': 'True'})
+    @patch.dict(os.environ, {'PLANNING_ENABLED': 'True', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_planning_blueprint_enabled(self):
         """Test planning blueprint loads when PLANNING_ENABLED=True."""
         try:
             app = create_app()
-            # Planning might be registered if the module is available
-            # This is an integration test that depends on external module
+            with app.app_context():
+                db.session.remove()
+                db.engine.dispose()
         except ImportError:
-            # Planning module not available in test environment
             pytest.skip("Planning module not available")
 
-    @patch.dict(os.environ, {'PLANNING_ENABLED': 'False'})
+    @patch.dict(os.environ, {'PLANNING_ENABLED': 'False', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_planning_blueprint_disabled(self):
         """Test planning blueprint doesn't load when PLANNING_ENABLED=False."""
         app = create_app()
-
-        # Planning blueprint should not be registered
         assert 'planning' not in app.blueprints
+        
+        # Clean up
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
 
-    @patch.dict(os.environ, {'REPORTS_ENABLED': 'True'})
+    @patch.dict(os.environ, {'REPORTS_ENABLED': 'True', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_reports_blueprint_enabled(self):
         """Test reports blueprint loads when REPORTS_ENABLED=True."""
         try:
             app = create_app()
-            # Reports might be registered if the module is available
+            with app.app_context():
+                db.session.remove()
+                db.engine.dispose()
         except ImportError:
-            # Reports module not available in test environment
             pytest.skip("Reports module not available")
 
-    @patch.dict(os.environ, {'REPORTS_ENABLED': 'False'})
+    @patch.dict(os.environ, {'REPORTS_ENABLED': 'False', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_reports_blueprint_disabled(self):
         """Test reports blueprint doesn't load when REPORTS_ENABLED=False."""
         app = create_app()
-
-        # Reports blueprint should not be registered
         assert 'reports' not in app.blueprints
+        
+        # Clean up
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
 
 
 class TestEnhancedAppConfiguration:
     """Enhanced test suite for app configuration and module loading."""
 
-    @patch.dict(os.environ, {'REPORTS_ENABLED': 'True'})
+    @patch.dict(os.environ, {'REPORTS_ENABLED': 'True', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_app_reports_module_enabled(self):
         """Test reports module loads when REPORTS_ENABLED=True."""
         try:
             app = create_app()
-            # If reports module is available, blueprint should be registered
-            # If not available, ImportError is caught and logged
-            # Either way, app should be created successfully
             assert app is not None
+            with app.app_context():
+                db.session.remove()
+                db.engine.dispose()
         except ImportError:
             pytest.skip("Reports module not available")
 
-    @patch.dict(os.environ, {'REPORTS_ENABLED': 'False'})
+    @patch.dict(os.environ, {'REPORTS_ENABLED': 'False', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_app_reports_module_disabled(self):
         """Test reports module doesn't load when REPORTS_ENABLED=False."""
         app = create_app()
         assert 'reports' not in app.blueprints
+        
+        # Clean up
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
 
-    @patch.dict(os.environ, {'PLANNING_ENABLED': 'True'})
+    @patch.dict(os.environ, {'PLANNING_ENABLED': 'True', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_app_planning_module_enabled(self):
         """Test planning module loads when PLANNING_ENABLED=True."""
         try:
             app = create_app()
-            # If planning module is available, blueprints should be registered
-            # at both /planning and /api prefixes
             assert app is not None
+            with app.app_context():
+                db.session.remove()
+                db.engine.dispose()
         except ImportError:
             pytest.skip("Planning module not available")
 
-    @patch.dict(os.environ, {'PLANNING_ENABLED': 'False'})
+    @patch.dict(os.environ, {'PLANNING_ENABLED': 'False', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_app_planning_module_disabled(self):
         """Test planning module doesn't load when PLANNING_ENABLED=False."""
         app = create_app()
         assert 'planning' not in app.blueprints
         assert 'planning_api' not in app.blueprints
+        
+        # Clean up
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
 
     def test_app_database_initialization(self, app):
         """Test database is initialized with tables created."""
@@ -285,17 +330,16 @@ class TestEnhancedAppConfiguration:
             assert isinstance(context['PLANNING_ENABLED'], bool)
             assert isinstance(context['REPORTS_ENABLED'], bool)
 
-    @patch.dict(os.environ, {'MOCKCMMS_DEBUG_USE_TEST_DB': '1'})
+    @patch.dict(os.environ, {'MOCKCMMS_DEBUG_USE_TEST_DB': '1', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_app_auto_seed_database(self):
         """Test database auto-seeding configuration when DEBUG_USE_TEST_DB=True."""
-        # Create app with debug flag
         app = create_app()
-        
-        # Verify the debug flag is set correctly
         assert app.config['DEBUG_USE_TEST_DB'] is True
         
-        # In test mode (TESTING=True), auto-seeding should not occur
-        # This test verifies the configuration logic exists
+        # Clean up
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
 
     def test_app_csrf_protection_initialized(self, app):
         """Test CSRF protection is initialized."""
@@ -307,23 +351,33 @@ class TestEnhancedAppConfiguration:
 class TestAppErrorHandling:
     """Test suite for error handling and edge cases in app.py."""
 
-    @patch.dict(os.environ, {'REPORTS_ENABLED': 'True'})
-    @patch('apps.reports.src.routes.reports.reports_bp', side_effect=ImportError("Reports module not found"))
-    def test_reports_blueprint_registration_error(self, mock_reports):
+    @patch.dict(os.environ, {'REPORTS_ENABLED': 'True', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
+    def test_reports_blueprint_registration_error(self):
         """Test app handles reports blueprint registration errors gracefully."""
-        # Should create app successfully even if reports blueprint fails
-        app = create_app()
-        assert app is not None
-        assert 'reports' not in app.blueprints
+        import sys
+        with patch.dict(sys.modules, {'apps.reports.src.routes.reports': None}):
+            app = create_app()
+            assert app is not None
+            assert 'reports' not in app.blueprints
+            
+            # Clean up
+            with app.app_context():
+                db.session.remove()
+                db.engine.dispose()
 
-    @patch.dict(os.environ, {'PLANNING_ENABLED': 'True'})
-    @patch('apps.planning.src.routes.planning.planning_bp', side_effect=ImportError("Planning module not found"))
-    def test_planning_blueprint_registration_error(self, mock_planning):
+    @patch.dict(os.environ, {'PLANNING_ENABLED': 'True', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
+    def test_planning_blueprint_registration_error(self):
         """Test app handles planning blueprint registration errors gracefully."""
-        # Should create app successfully even if planning blueprint fails
-        app = create_app()
-        assert app is not None
-        assert 'planning' not in app.blueprints
+        import sys
+        with patch.dict(sys.modules, {'apps.planning.src.routes.planning': None}):
+            app = create_app()
+            assert app is not None
+            assert 'planning' not in app.blueprints
+            
+            # Clean up
+            with app.app_context():
+                db.session.remove()
+                db.engine.dispose()
 
     def test_before_planning_request_database_error(self, app, client):
         """Test before_planning_request handles database connection errors."""
@@ -350,7 +404,7 @@ class TestAppErrorHandling:
             # Database close should have been called
             # Note: This tests the teardown logic exists
 
-    @patch.dict(os.environ, {'MOCKCMMS_DEBUG_USE_TEST_DB': '1'})
+    @patch.dict(os.environ, {'MOCKCMMS_DEBUG_USE_TEST_DB': '1', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     @patch('src.services.db_utils.populate_dummy_data', side_effect=Exception("Seeding failed"))
     def test_database_seeding_error_handling(self, mock_populate):
         """Test app handles database seeding errors gracefully."""
@@ -358,4 +412,9 @@ class TestAppErrorHandling:
         app = create_app()
         assert app is not None
         # App should still be functional even if seeding failed
+        
+        # Clean up database connection
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
 

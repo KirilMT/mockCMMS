@@ -499,7 +499,6 @@ def shift_calendar():
     for day in range(1, num_days + 1):
         date_obj = datetime(year, month, day)
         week_num = date_obj.isocalendar()[1]
-        is_odd_week = (week_num % 2) != 0
         
         day_data = {
             'date_str': date_obj.strftime('%Y-%m-%d'),
