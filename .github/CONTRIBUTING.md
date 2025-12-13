@@ -65,6 +65,81 @@ Good comments are crucial for explaining the "why" behind the code.
 -   **No Issue References:** Do not reference bug or issue numbers in code comments (e.g., `// Fix for #123`). Use commit messages for this.
 -   **Professionalism:** Use proper grammar and punctuation. Avoid commented-out code blocks; remove them instead.
 
+### 4. Testing Standards
+
+**As of December 2025, this project follows a strict test-first approach with comprehensive test coverage.**
+
+#### Testing Philosophy
+
+**Core Principle: Tests are the safety net for all code changes.**
+
+#### When Adding New Code
+
+1. **Check for existing tests** - Search `tests/` directory for related test files
+2. **Run existing tests** - Verify current tests pass: `pytest tests/`
+3. **Create/Update tests FIRST** - Write tests for new functionality before implementing
+4. **Implement code** - Write the actual feature/fix
+5. **Verify tests pass** - All tests (old + new) must pass
+6. **Check coverage** - Run `pytest --cov=src tests/` to ensure new code paths are tested
+
+#### When Modifying Existing Code
+
+1. **Identify affected tests** - Find tests that cover the code being modified
+2. **Run tests BEFORE changes** - Establish baseline (all should pass)
+3. **Make code changes** - Implement modifications
+4. **Run tests AFTER changes** - Verify nothing broke
+5. **If tests fail** - CRITICAL DECISION POINT:
+   - **Option A**: Code is wrong → Fix the code to match test expectations
+   - **Option B**: Test is wrong → Update test to match new correct behavior
+   - **Decision criteria**: Prioritize test correctness unless requirements changed
+6. **Update tests if needed** - Adjust tests only if requirements genuinely changed
+
+#### Test Organization
+
+Tests are organized in 6 categories:
+- `tests/unit/` - Fast, isolated component tests
+- `tests/functional/` - API and route endpoint tests
+- `tests/integration/` - End-to-end workflow tests
+- `tests/security/` - Authentication, validation, security
+- `tests/performance/` - Scalability and optimization
+- `tests/reliability/` - Error handling and robustness
+
+**Separate Test File When:**
+- Different testing concern (Performance vs Functionality)
+- Different security level (Auth tests need extra scrutiny)
+- Different execution timing (Slow integration tests)
+- Cross-cutting concern (Validation applies to all components)
+
+**Combine Tests When:**
+- Same component/module (All API tests in test_api_routes.py)
+- Same testing level (Unit tests for db_utils together)
+- Same execution context (Fast unit tests together)
+- Natural cohesion (CRUD operations for same resource)
+
+#### Coverage Philosophy
+
+- Coverage isn't about test count—it's about testing all code paths
+- Test success cases, failure cases, and edge cases
+- **Target**: 80-85% overall coverage (current: 82.99%)
+- **Critical paths**: 90%+ coverage (auth, API, database)
+
+#### Avoiding Test Duplicates
+
+1. **Search before creating** - Use `findstr /S "def test_" tests\*.py` (Windows) or `grep -r "def test_" tests/` (Unix)
+2. **Check test names** - Look for similar test names in the same module
+3. **Review test file** - Read existing tests in the file you're modifying
+4. **Consolidate if needed** - Merge duplicate tests into comprehensive ones
+
+#### Before Submitting a Pull Request
+
+1. Run the full test suite: `pytest tests/`
+2. Ensure all tests pass
+3. Add tests for new functionality
+4. Maintain or improve code coverage: `pytest --cov=src tests/`
+5. Verify coverage meets targets (80-85% overall)
+
+**Reference:** See `tests/README.md` for test suite organization and complete testing strategy.
+
 ## Contribution Process
 
 ### Before contributing code

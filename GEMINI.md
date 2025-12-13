@@ -80,6 +80,75 @@ These instructions apply to **all** coding tasks unless explicitly overridden by
 
 **Verification is NOT optional** - it is a critical step that MUST be completed automatically for every change.
 
+#### 🚨 CRITICAL: Test-Driven Development Philosophy (MANDATORY)
+
+**Core Principle: Tests are the safety net for all code changes.**
+
+**As of December 2025, the project follows a strict test-first approach:**
+
+**When Adding New Code:**
+1. **Check for existing tests** - Search `tests/` directory for related test files
+2. **Run existing tests** - Verify current tests pass before making changes
+3. **Create/Update tests FIRST** - Write tests for new functionality before implementing
+4. **Implement code** - Write the actual feature/fix
+5. **Verify tests pass** - All tests (old + new) must pass
+6. **Check coverage** - Ensure new code paths are tested
+
+**When Modifying Existing Code:**
+1. **Identify affected tests** - Find tests that cover the code being modified
+2. **Run tests BEFORE changes** - Establish baseline (all should pass)
+3. **Make code changes** - Implement modifications
+4. **Run tests AFTER changes** - Verify nothing broke
+5. **If tests fail** - CRITICAL DECISION POINT:
+   - **Option A**: Code is wrong → Fix the code to match test expectations
+   - **Option B**: Test is wrong → Update test to match new correct behavior
+   - **Decision criteria**: Prioritize test correctness unless requirements changed
+6. **Update tests if needed** - Adjust tests only if requirements genuinely changed
+
+**Test Organization Guidelines:**
+
+**Separate Test File When:**
+- Different testing concern (Performance vs Functionality)
+- Different security level (Auth tests need extra scrutiny)
+- Different execution timing (Slow integration tests)
+- Cross-cutting concern (Validation applies to all components)
+- Different ownership (Security team owns auth tests)
+- Industry convention (Everyone separates auth tests)
+
+**Combine Tests When:**
+- Same component/module (All API tests in test_api_routes.py)
+- Same testing level (Unit tests for db_utils together)
+- Same execution context (Fast unit tests together)
+- Natural cohesion (CRUD operations for same resource)
+
+**Coverage Philosophy:**
+- Coverage isn't about test count—it's about testing all code paths
+- Test success cases, failure cases, and edge cases
+- Target: 80-85% overall coverage (achieved: 82.99%)
+- Critical paths: 90%+ coverage (auth, API, database)
+
+**Avoiding Test Duplicates:**
+1. **Search before creating** - Use `findstr /S "def test_" tests\*.py` to find existing tests
+2. **Check test names** - Look for similar test names in the same module
+3. **Review test file** - Read existing tests in the file you're modifying
+4. **Consolidate if needed** - Merge duplicate tests into comprehensive ones
+
+**Test Failure Decision Tree:**
+```
+Test fails after code change:
+├─ Did requirements change?
+│  ├─ YES → Update test to match new requirements
+│  └─ NO → Continue to next question
+├─ Is the test testing correct behavior?
+│  ├─ YES → Fix the code (test is right, code is wrong)
+│  └─ NO → Fix the test (test is wrong, code is right)
+├─ When in doubt:
+│  └─ Prioritize test correctness (tests define expected behavior)
+```
+
+**Reference Documentation:**
+- See `tests/README.md` for test suite organization and complete testing strategy
+
 #### 🚨 CRITICAL: Testing Documentation (MANDATORY)
 
 **After implementing ANY changes (bug fixes, features, enhancements), ALWAYS create a testing guide document in `docs/` with:**
@@ -318,7 +387,63 @@ Testing:
 -   **Single Edit Rule:** When editing a file, apply all planned changes in one unified edit. Do not split the edit into multiple smaller patches for the same request.
 -   **Complete All Subtasks:** When working on a task, you MUST complete ALL subtasks within that task before moving to the next task. Do NOT leave tasks partially complete. If a task has 8 subtasks, implement all 8 before marking the task as done.
 
-### 1.9. Tooling & Workspace Standards
+### 1.9. Advanced PowerShell Operations (Fallback Only)
+
+#### When to Use
+
+**ONLY use PowerShell commands as a fallback when standard file read/write operations fail or are insufficient.**
+
+When working with files across the project (documentation, code, configuration), you may need advanced search, verification, and analysis operations.
+
+#### Core Operations
+
+**1. Pattern Search Across Files:**
+```powershell
+# Single directory
+Select-String -Path "<directory>/*.md" -Pattern "<search_term>" | Select-Object Filename, LineNumber, Line | Format-Table -AutoSize -Wrap
+
+# Multiple specific files
+$files = @("<path1>","<path2>","<path3>")
+Select-String -Path $files -Pattern "<pattern>" | Select-Object Filename, LineNumber | Format-Table -AutoSize
+
+# With context lines
+Select-String -Path "<file_path>" -Pattern "<pattern>" -Context 2,2
+```
+
+**2. Batch Pattern Verification:**
+```powershell
+# Check multiple patterns and count occurrences
+$patterns = @("<pattern1>", "<pattern2>", "<pattern3>")
+foreach($p in $patterns) {
+    Write-Host "`n=== Pattern: $p ==="
+    Select-String -Path $files -Pattern $p | Measure-Object | Select-Object Count
+}
+```
+
+**3. File Statistics:**
+```powershell
+# Line counts
+Get-ChildItem <directory>/*.md | Select-Object Name, @{Name="Lines";Expression={(Get-Content $_.FullName).Count}} | Format-Table -AutoSize
+
+# Preview file content
+(Get-Content "<file_path>" | Select-Object -First <N>) -join "`n"
+```
+
+#### Best Practices
+
+1. **Use as Fallback Only** - Prefer standard file tools (fsRead, fsReplace, fsWrite)
+2. **Be Proactive** - Search before bulk updates, verify after changes
+3. **Escape Regex** - Special chars: `.` → `\.`, use `.*` for wildcards, `|` for OR
+4. **Understand Output** - Read results, identify inconsistencies, inform updates
+
+#### Common Use Cases
+
+- **Before bulk updates:** Find all occurrences to understand scope
+- **After updates:** Verify all instances were changed correctly
+- **Consistency checks:** Ensure values match across multiple files
+- **Finding duplicates:** Locate redundant information
+
+### 1.10. Tooling & Workspace Standards
 
 #### Artifact Management (Antigravity IDE)
 > **Purpose**: Artifacts should be well-organized, clean, and easy to navigate.
@@ -360,7 +485,7 @@ For environments without native artifact support, use temporary markdown files (
   3. Verify deletion
   4. Never commit temporary files
 
-### 1.10. Bug Tracking & Discovery
+### 1.11. Bug Tracking & Discovery
 
 #### 🚨 CRITICAL: Proactive Bug Discovery (MANDATORY)
 
