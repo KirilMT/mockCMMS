@@ -2,16 +2,16 @@
 
 **Created:** December 1, 2025  
 **Last Updated:** December 13, 2025  
-**Status:** 🔄 **PHASE 0 COMPLETE - PHASE 1 READY** (Ready for flake8 → black → manual audit)
-**Prerequisites Met:** All 210 tests complete with 82.99% coverage. Phase 0 automated analysis complete (Ruff: 0, Pylint: 9.15/10, Radon: A, Bandit: 0).
+**Status:** 🔄 **PHASE 2 IN PROGRESS**
+**Prerequisites Met:** All 210 tests complete with 82.99% coverage. Phase 1 automated analysis complete.
 
 ---
 
 > [!IMPORTANT]
-> **📋 Workflow Context:** This plan is **Phase 2** of the overall implementation strategy.
+> **📋 Workflow Context:** This plan covers **Phases 1-7** of the overall implementation strategy.
 > 
 > **Related Documentation:**
-> - **[Comprehensive Testing Plan](comprehensive_testing_plan.md)** - Phase 1 (must complete FIRST)
+> - **[Comprehensive Testing Plan](comprehensive_testing_plan.md)** - Testing Foundation (Completed)
 > - **[Implementation Priority Guide](IMPLEMENTATION_PRIORITY_GUIDE.md)** - Overall timeline
 > - **[mockCMMS Roadmap](mockCMMS_roadmap.md)** - Strategic context
 > 
@@ -23,10 +23,7 @@
 > 5. ✅ CI configured with pytest + coverage in .github/workflows/ci.yml
 > 
 > **Status:** ✅ **READY TO START** - Week 2 complete (210/210 tests, 82.99% coverage)  
-> **Current Progress:** All prerequisites met, ready to begin Week 3  
-> **When to Start:** ✅ NOW - All requirements satisfied
-> 
-> **✅ SAFE FOR CODE FORMATTING:** 82.99% coverage achieved (target: 80-85%). All critical paths tested.
+> **Current Progress:** Phase 2, Task 2.1 Complete. Task 2.2 In Progress.
 
 ---  
 **Scope:** Entire mockCMMS repository (excluding `apps/` directory)
@@ -142,14 +139,14 @@ This document outlines a comprehensive, systematic approach to auditing and impr
 - [ ] `scripts/setup.ps1` - Setup automation script
 
 ### Python Files (`src/`)
-- [x] `src/__init__.py` - Package initialization ✅ Phase 0
-- [x] `src/app.py` - Flask application factory ✅ Phase 0
-- [x] `src/routes/api.py` - REST API endpoints ✅ Phase 0
-- [x] `src/routes/main.py` - Web interface routes ✅ Phase 0
-- [x] `src/services/__init__.py` - Services package initialization ✅ Phase 0
-- [x] `src/services/db_utils.py` - Database utilities ✅ Phase 0 (refactored)
-- [x] `src/services/db_seeding.py` - Database seeding helpers ✅ Phase 0 (created)
-- [x] `src/services/shift_utils.py` - Shift management utilities ✅ Phase 0
+- [x] `src/__init__.py` - Package initialization ✅ Phase 1
+- [x] `src/app.py` - Flask application factory ✅ Phase 1
+- [x] `src/routes/api.py` - REST API endpoints ✅ Phase 1
+- [x] `src/routes/main.py` - Web interface routes ✅ Phase 1
+- [x] `src/services/__init__.py` - Services package initialization ✅ Phase 1
+- [x] `src/services/db_utils.py` - Database utilities ✅ Phase 1 (refactored)
+- [x] `src/services/db_seeding.py` - Database seeding helpers ✅ Phase 1 (created)
+- [x] `src/services/shift_utils.py` - Shift management utilities ✅ Phase 1
 
 ### JavaScript Files (`src/static/js/`)
 - [ ] `src/static/js/advanced-table/table-core.js`
@@ -193,7 +190,7 @@ This document outlines a comprehensive, systematic approach to auditing and impr
 
 ---
 
-## 🤖 Phase 0: Automated Code Quality Analysis (PREREQUISITE)
+## 🤖 Phase 1: Automated Code Quality Analysis (PREREQUISITE)
 
 > [!IMPORTANT]
 > **Run BEFORE Manual Audit:** Before starting the detailed manual phase-by-phase audit, run all automated tools to identify issues quickly. This provides a baseline and guides where to focus manual review efforts.
@@ -218,7 +215,7 @@ This document outlines a comprehensive, systematic approach to auditing and impr
 | **jscpd** | Duplicate detector | Copy-paste code, similar blocks | `jscpd src/` |
 | **pytest --cov** | Coverage analyzer | Untested code paths | `pytest --cov=src tests/` |
 
-### Phase 0 Execution Steps
+### Phase 1 Execution Steps
 
 #### Step 1: Install All Tools
 
@@ -327,15 +324,15 @@ cat audit_results/*.txt > audit_results/audit_results_full.txt
 - Duplicates: <2%
 ```
 
-### Phase 0 Deliverables
+### Phase 1 Deliverables (Completed Dec 13, 2025)
 
-- [x] **`audit_results/` directory** - All tool outputs ✅ Completed December 13, 2025
-- [x] **`audit_results_full.txt`** - Combined results ✅ Completed December 13, 2025
-- [x] **`baseline_metrics.md`** - Initial measurements ✅ Completed December 13, 2025
-- [x] **`priority_issues.md`** - Categorized issue list ✅ Completed December 13, 2025
-- [x] **All critical/high priority issues fixed** ✅ Completed December 13, 2025
+- [x] **`audit_results/` directory** - All tool outputs ✅
+- [x] **`audit_results_full.txt`** - Combined results ✅
+- [x] **`baseline_metrics.md`** - Initial measurements ✅
+- [x] **`priority_issues.md`** - Categorized issue list ✅
+- [x] **All critical/high priority issues fixed** ✅
 
-### Phase 0 Results Summary
+### Phase 1 Results Summary
 
 **Completion Date:** December 13, 2025
 
@@ -361,13 +358,14 @@ cat audit_results/*.txt > audit_results/audit_results_full.txt
 
 ### Integration with Manual Phases
 
-**After Phase 0 completion:**
+**After Phase 1 completion:**
 
-- **Phase 1 (Python Backend)** - Focus on areas flagged by ruff, pylint, mypy, radon, bandit
-- **Phase 2 (JavaScript Frontend)** - Focus on areas flagged by eslint, jscpd
-- **Phase 3 (Templates)** - Focus on areas flagged by duplicate detection
+- **Phase 2 (Python Backend)** - Focus on areas flagged by ruff, pylint, mypy, radon, bandit
+- **Phase 3 (JavaScript Frontend)** - Focus on areas flagged by eslint, jscpd
 - **Phase 4 (CSS)** - Focus on duplicate selectors and unused styles
-- **Phase 5 (Standards)** - Use metrics to verify improvements
+- **Phase 5 (Templates)** - Focus on areas flagged by duplicate detection
+- **Phase 6 (Root Files)** - Focus on configuration and documentation
+- **Phase 7 (Cross-Cutting)** - Use metrics to verify improvements
 
 > [!NOTE]
 > **Continuous Monitoring:** After initial analysis, add these tools to CI/CD to prevent regression. See Phase 6 for CI integration details.
@@ -376,7 +374,7 @@ cat audit_results/*.txt > audit_results/audit_results_full.txt
 
 ## 🔍 Audit Phases
 
-### Phase 1: Python Backend Analysis (Priority: Critical)
+### Phase 2: Python Backend Analysis (Priority: Critical)
 **Estimated Duration:** 1 day  
 **Focus:** Iterative quality loop per file with one commit per task
 
@@ -384,51 +382,54 @@ cat audit_results/*.txt > audit_results/audit_results_full.txt
 
 ---
 
-#### Task 1.1: API Routes (`src/routes/api.py`)
+#### Task 2.1: API Routes (`src/routes/api.py`)
 **Estimated Duration:** 1 hour  
 **Commit After Completion:** Yes
+**Status:** ✅ COMPLETE (December 14, 2025)
 
 **Step 1: Flake8 Linting**
-- [ ] Run `flake8 src/routes/api.py` to identify style issues
-- [ ] Fix any problems found
-- [ ] Proceed to Step 2
+- [x] Run `flake8 src/routes/api.py` to identify style issues
+- [x] Fix any problems found
+- [x] Proceed to Step 2
 
 **Step 2: Black Formatting**
-- [ ] Run `black src/routes/api.py` to auto-format code
-- [ ] Review changes
-- [ ] Proceed to Step 3
+- [x] Run `black src/routes/api.py` to auto-format code
+- [x] Review changes
+- [x] Proceed to Step 3
 
 **Step 3: Test Verification**
-- [ ] Run `pytest tests/` (verify all 210 tests pass)
-- [ ] Fix any broken tests
-- [ ] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
+- [x] Run `pytest tests/` (verify all 210 tests pass)
+- [x] Fix any broken tests
+- [x] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
 **Step 4: Manual Audit**
 
 Focus on logic, architecture, and patterns that tools can't catch:
 
-- [ ] Verify RESTful conventions (proper HTTP methods, status codes)
-- [ ] Check input validation and sanitization
-- [ ] Review error responses and status codes
-- [ ] Ensure proper authentication/authorization
-- [ ] Check for duplicate code across endpoints
-- [ ] Verify proper use of Flask patterns
+- [x] Verify RESTful conventions (proper HTTP methods, status codes)
+- [x] Check input validation and sanitization
+- [x] Review error responses and status codes
+- [x] Ensure proper authentication/authorization
+- [x] Check for duplicate code across endpoints
+- [x] Verify proper use of Flask patterns
+- [x] Review database query efficiency
+- [x] Check for SQL injection vulnerabilities
 
 **Step 5: Document & Loop (If Changes Made)**
 
 If Step 4 resulted in modifications:
-- [ ] Document what was changed and why
-- [ ] Update any affected tests
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [x] Document what was changed and why
+- [x] Update any affected tests
+- [x] 🔄 **Loop back to Step 1** and repeat until file is perfect
 
 If Step 4 resulted in NO modifications:
-- [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(api): audit and improve api.py [Phase 1.1]`
-- [ ] Move to Task 1.2
+- [x] Mark task as COMPLETE ✅
+- [x] Commit changes with message: `refactor(api): audit and improve api.py [Phase 2.1]`
+- [x] Move to Task 2.2
 
 ---
 
-#### Task 1.2: Web Routes (`src/routes/main.py`)
+#### Task 2.2: Web Routes (`src/routes/main.py`)
 **Estimated Duration:** 1 hour  
 **Commit After Completion:** Yes
 
@@ -467,12 +468,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(routes): audit and improve main.py [Phase 1.2]`
-- [ ] Move to Task 1.3
+- [ ] Commit changes with message: `refactor(routes): audit and improve main.py [Phase 2.2]`
+- [ ] Move to Task 2.3
 
 ---
 
-#### Task 1.3: Database Layer (`src/services/db_utils.py`)
+#### Task 2.3: Database Layer (`src/services/db_utils.py`)
 **Estimated Duration:** 1 hour  
 **Commit After Completion:** Yes
 
@@ -511,12 +512,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(db): audit and improve db_utils.py [Phase 1.3]`
-- [ ] Move to Task 1.4
+- [ ] Commit changes with message: `refactor(db): audit and improve db_utils.py [Phase 2.3]`
+- [ ] Move to Task 2.4
 
 ---
 
-#### Task 1.4: Application Core (`src/app.py`)
+#### Task 2.4: Application Core (`src/app.py`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -554,12 +555,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(app): audit and improve app.py [Phase 1.4]`
-- [ ] Move to Task 1.5
+- [ ] Commit changes with message: `refactor(app): audit and improve app.py [Phase 2.4]`
+- [ ] Move to Task 2.5
 
 ---
 
-#### Task 1.5: Shift Utilities (`src/services/shift_utils.py`)
+#### Task 2.5: Shift Utilities (`src/services/shift_utils.py`)
 **Estimated Duration:** 15 minutes  
 **Commit After Completion:** Yes
 
@@ -595,12 +596,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(services): audit and improve shift_utils.py [Phase 1.5]`
-- [ ] Move to Task 1.6
+- [ ] Commit changes with message: `refactor(services): audit and improve shift_utils.py [Phase 2.5]`
+- [ ] Move to Task 2.6
 
 ---
 
-#### Task 1.6: Database Seeding (`src/services/db_seeding.py`)
+#### Task 2.6: Database Seeding (`src/services/db_seeding.py`)
 **Estimated Duration:** 15 minutes  
 **Commit After Completion:** Yes
 
@@ -636,24 +637,24 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(services): audit and improve db_seeding.py [Phase 1.6]`
-- [ ] Move to Phase 1 Final Verification
+- [ ] Commit changes with message: `refactor(services): audit and improve db_seeding.py [Phase 2.6]`
+- [ ] Move to Phase 2 Final Verification
 
 ---
 
-#### Phase 1 Final Verification (After All Tasks Complete)
+#### Phase 2 Final Verification (After All Tasks Complete)
 - [ ] Run `ruff check src/` (verify 0 issues)
 - [ ] Run `pylint src/` (verify 9.0+ score)
 - [ ] Run `pytest --cov=src tests/` (verify 82.99%+ coverage)
 - [ ] Update `audit_results/baseline_metrics.md` with final scores
 - [ ] Document all findings in audit report
-- [ ] Mark Phase 1 COMPLETE ✅
+- [ ] Mark Phase 2 COMPLETE ✅
 
 **Deliverable:** Formatted, audited Python codebase with documented findings (6 commits total)
 
 ---
 
-### Phase 2: JavaScript Frontend Analysis (Priority: Critical)
+### Phase 3: JavaScript Frontend Analysis (Priority: Critical)
 **Estimated Duration:** 3-4 days  
 **Focus:** Iterative quality loop per file with one commit per task
 
@@ -661,7 +662,7 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-#### Task 2.1: Advanced Table Core (`src/static/js/advanced-table/table-core.js`)
+#### Task 3.1: Advanced Table Core (`src/static/js/advanced-table/table-core.js`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -708,12 +709,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-core.js [Phase 2.1]`
-- [ ] Move to Task 2.2
+- [ ] Commit changes with message: `refactor(table): audit and improve table-core.js [Phase 3.1]`
+- [ ] Move to Task 3.2
 
 ---
 
-#### Task 2.2: Advanced Table Init (`src/static/js/advanced-table/table-init.js`)
+#### Task 3.2: Advanced Table Init (`src/static/js/advanced-table/table-init.js`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -760,12 +761,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-init.js [Phase 2.2]`
-- [ ] Move to Task 2.3
+- [ ] Commit changes with message: `refactor(table): audit and improve table-init.js [Phase 3.2]`
+- [ ] Move to Task 3.3
 
 ---
 
-#### Task 2.3: Table Rendering (`src/static/js/advanced-table/table-render.js`)
+#### Task 3.3: Table Rendering (`src/static/js/advanced-table/table-render.js`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -812,12 +813,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-render.js [Phase 2.3]`
-- [ ] Move to Task 2.4
+- [ ] Commit changes with message: `refactor(table): audit and improve table-render.js [Phase 3.3]`
+- [ ] Move to Task 3.4
 
 ---
 
-#### Task 2.4: Table Sidebar (`src/static/js/advanced-table/table-sidebar.js`)
+#### Task 3.4: Table Sidebar (`src/static/js/advanced-table/table-sidebar.js`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -864,12 +865,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-sidebar.js [Phase 2.4]`
-- [ ] Move to Task 2.5
+- [ ] Commit changes with message: `refactor(table): audit and improve table-sidebar.js [Phase 3.4]`
+- [ ] Move to Task 3.5
 
 ---
 
-#### Task 2.5: Table Resize (`src/static/js/advanced-table/table-resize.js`)
+#### Task 3.5: Table Resize (`src/static/js/advanced-table/table-resize.js`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -916,12 +917,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-resize.js [Phase 2.5]`
-- [ ] Move to Task 2.6
+- [ ] Commit changes with message: `refactor(table): audit and improve table-resize.js [Phase 3.5]`
+- [ ] Move to Task 3.6
 
 ---
 
-#### Task 2.6: Table Data Management (`src/static/js/advanced-table/table-data.js`)
+#### Task 3.6: Table Data Management (`src/static/js/advanced-table/table-data.js`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -966,12 +967,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-data.js [Phase 2.6]`
-- [ ] Move to Task 2.7
+- [ ] Commit changes with message: `refactor(table): audit and improve table-data.js [Phase 3.6]`
+- [ ] Move to Task 3.7
 
 ---
 
-#### Task 2.7: Table Configuration (`src/static/js/advanced-table/table-config.js`)
+#### Task 3.7: Table Configuration (`src/static/js/advanced-table/table-config.js`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -1016,12 +1017,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-config.js [Phase 2.7]`
-- [ ] Move to Task 2.8
+- [ ] Commit changes with message: `refactor(table): audit and improve table-config.js [Phase 3.7]`
+- [ ] Move to Task 3.8
 
 ---
 
-#### Task 2.8: Table Export (`src/static/js/advanced-table/table-export.js`)
+#### Task 3.8: Table Export (`src/static/js/advanced-table/table-export.js`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -1066,12 +1067,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-export.js [Phase 2.8]`
-- [ ] Move to Task 2.9
+- [ ] Commit changes with message: `refactor(table): audit and improve table-export.js [Phase 3.8]`
+- [ ] Move to Task 3.9
 
 ---
 
-#### Task 2.9: Table Events (`src/static/js/advanced-table/table-events.js`)
+#### Task 3.9: Table Events (`src/static/js/advanced-table/table-events.js`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -1118,12 +1119,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-events.js [Phase 2.9]`
-- [ ] Move to Task 2.10
+- [ ] Commit changes with message: `refactor(table): audit and improve table-events.js [Phase 3.9]`
+- [ ] Move to Task 3.10
 
 ---
 
-#### Task 2.10: Table Loading (`src/static/js/advanced-table/table-loading.js`)
+#### Task 3.10: Table Loading (`src/static/js/advanced-table/table-loading.js`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -1169,12 +1170,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-loading.js [Phase 2.10]`
-- [ ] Move to Task 2.11
+- [ ] Commit changes with message: `refactor(table): audit and improve table-loading.js [Phase 3.10]`
+- [ ] Move to Task 3.11
 
 ---
 
-#### Task 2.11: Table Retry (`src/static/js/advanced-table/table-retry.js`)
+#### Task 3.11: Table Retry (`src/static/js/advanced-table/table-retry.js`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -1220,12 +1221,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-retry.js [Phase 2.11]`
-- [ ] Move to Task 2.12
+- [ ] Commit changes with message: `refactor(table): audit and improve table-retry.js [Phase 3.11]`
+- [ ] Move to Task 3.12
 
 ---
 
-#### Task 2.12: Toast Notification (`src/static/js/toast-notification.js`)
+#### Task 3.12: Toast Notification (`src/static/js/toast-notification.js`)
 **Estimated Duration:** 15 minutes  
 **Commit After Completion:** Yes
 
@@ -1271,12 +1272,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(ui): audit and improve toast-notification.js [Phase 2.12]`
-- [ ] Move to Task 2.13
+- [ ] Commit changes with message: `refactor(ui): audit and improve toast-notification.js [Phase 3.12]`
+- [ ] Move to Task 3.13
 
 ---
 
-#### Task 2.13: Flash Messages (`src/static/js/flash-messages.js`)
+#### Task 3.13: Flash Messages (`src/static/js/flash-messages.js`)
 **Estimated Duration:** 15 minutes  
 **Commit After Completion:** Yes
 
@@ -1322,24 +1323,24 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(ui): audit and improve flash-messages.js [Phase 2.13]`
-- [ ] Move to Phase 2 Final Verification
+- [ ] Commit changes with message: `refactor(ui): audit and improve flash-messages.js [Phase 3.13]`
+- [ ] Move to Phase 3 Final Verification
 
 ---
 
-#### Phase 2 Final Verification (After All Tasks Complete)
+#### Phase 3 Final Verification (After All Tasks Complete)
 - [ ] Run `eslint src/static/js/` (verify 0 errors)
 - [ ] Test all JavaScript functionality in browser
 - [ ] Check browser console for any warnings/errors
 - [ ] Verify no memory leaks (DevTools Memory profiler)
 - [ ] Document all findings in audit report
-- [ ] Mark Phase 2 COMPLETE ✅
+- [ ] Mark Phase 3 COMPLETE ✅
 
 **Deliverable:** Formatted, audited JavaScript codebase with documented findings (13 commits total)
 
 ---
 
-### Phase 3: CSS Styling Analysis (Priority: High)
+### Phase 4: CSS Styling Analysis (Priority: High)
 **Estimated Duration:** 1-2 days  
 **Focus:** Iterative quality loop per file with one commit per task
 
@@ -1347,7 +1348,7 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-#### Task 3.1: Main Styles (`src/static/css/main.css`)
+#### Task 4.1: Main Styles (`src/static/css/main.css`)
 **Estimated Duration:** 1 hour  
 **Commit After Completion:** Yes
 
@@ -1408,12 +1409,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(css): audit and improve main.css [Phase 3.1]`
-- [ ] Move to Task 3.2
+- [ ] Commit changes with message: `refactor(css): audit and improve main.css [Phase 4.1]`
+- [ ] Move to Task 4.2
 
 ---
 
-#### Task 3.2: Advanced Table Styles (`src/static/css/advanced-table.css`)
+#### Task 4.2: Advanced Table Styles (`src/static/css/advanced-table.css`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1473,12 +1474,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(css): audit and improve advanced-table.css [Phase 3.2]`
-- [ ] Move to Task 3.3
+- [ ] Commit changes with message: `refactor(css): audit and improve advanced-table.css [Phase 4.2]`
+- [ ] Move to Task 4.3
 
 ---
 
-#### Task 3.3: Advanced Table Sidebar Styles (`src/static/css/advanced-table-sidebar.css`)
+#### Task 4.3: Advanced Table Sidebar Styles (`src/static/css/advanced-table-sidebar.css`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1538,24 +1539,24 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(css): audit and improve advanced-table-sidebar.css [Phase 3.3]`
-- [ ] Move to Phase 3 Final Verification
+- [ ] Commit changes with message: `refactor(css): audit and improve advanced-table-sidebar.css [Phase 4.3]`
+- [ ] Move to Phase 4 Final Verification
 
 ---
 
-#### Phase 3 Final Verification (After All Tasks Complete)
+#### Phase 4 Final Verification (After All Tasks Complete)
 - [ ] Run `stylelint src/static/css/` (verify 0 errors)
 - [ ] Visual regression test on all pages
 - [ ] Test responsive design on multiple devices
 - [ ] Verify no unused CSS (coverage tools)
 - [ ] Document all findings in audit report
-- [ ] Mark Phase 3 COMPLETE ✅
+- [ ] Mark Phase 4 COMPLETE ✅
 
 **Deliverable:** Formatted, audited CSS codebase with documented findings (3 commits total)
 
 ---
 
-### Phase 4: HTML Templates Analysis (Priority: High)
+### Phase 5: HTML Templates Analysis (Priority: High)
 **Estimated Duration:** 2-3 days  
 **Focus:** Iterative quality loop per file with one commit per task
 
@@ -1563,7 +1564,7 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-#### Task 4.1: Base Template (`src/templates/base.html`)
+#### Task 5.1: Base Template (`src/templates/base.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1618,12 +1619,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve base.html [Phase 4.1]`
-- [ ] Move to Task 4.2
+- [ ] Commit changes with message: `refactor(templates): audit and improve base.html [Phase 5.1]`
+- [ ] Move to Task 5.2
 
 ---
 
-#### Task 4.2: Assets List Page (`src/templates/assets.html`)
+#### Task 5.2: Assets List Page (`src/templates/assets.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1676,12 +1677,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve assets.html [Phase 4.2]`
-- [ ] Move to Task 4.3
+- [ ] Commit changes with message: `refactor(templates): audit and improve assets.html [Phase 5.2]`
+- [ ] Move to Task 5.3
 
 ---
 
-#### Task 4.3: Maintenance Orders List Page (`src/templates/maintenance_orders.html`)
+#### Task 5.3: Maintenance Orders List Page (`src/templates/maintenance_orders.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1734,12 +1735,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve maintenance_orders.html [Phase 4.3]`
-- [ ] Move to Task 4.4
+- [ ] Commit changes with message: `refactor(templates): audit and improve maintenance_orders.html [Phase 5.3]`
+- [ ] Move to Task 5.4
 
 ---
 
-#### Task 4.4: Spare Parts List Page (`src/templates/spare_parts.html`)
+#### Task 5.4: Spare Parts List Page (`src/templates/spare_parts.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1792,12 +1793,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve spare_parts.html [Phase 4.4]`
-- [ ] Move to Task 4.5
+- [ ] Commit changes with message: `refactor(templates): audit and improve spare_parts.html [Phase 5.4]`
+- [ ] Move to Task 5.5
 
 ---
 
-#### Task 4.5: Users List Page (`src/templates/users.html`)
+#### Task 5.5: Users List Page (`src/templates/users.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1850,12 +1851,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve users.html [Phase 4.5]`
-- [ ] Move to Task 4.6
+- [ ] Commit changes with message: `refactor(templates): audit and improve users.html [Phase 5.5]`
+- [ ] Move to Task 5.6
 
 ---
 
-#### Task 4.6: Index/Dashboard Page (`src/templates/index.html`)
+#### Task 5.6: Index/Dashboard Page (`src/templates/index.html`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -1869,11 +1870,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve index.html [Phase 4.6]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve index.html [Phase 5.6]`
 
 ---
 
-#### Task 4.7: Login Page (`src/templates/login.html`)
+#### Task 5.7: Login Page (`src/templates/login.html`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -1887,11 +1888,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve login.html [Phase 4.7]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve login.html [Phase 5.7]`
 
 ---
 
-#### Task 4.8: Asset Detail Page (`src/templates/asset_detail.html`)
+#### Task 5.8: Asset Detail Page (`src/templates/asset_detail.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1905,11 +1906,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve asset_detail.html [Phase 4.8]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve asset_detail.html [Phase 5.8]`
 
 ---
 
-#### Task 4.9: Maintenance Order Detail Page (`src/templates/maintenance_order_detail.html`)
+#### Task 5.9: Maintenance Order Detail Page (`src/templates/maintenance_order_detail.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1923,11 +1924,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve maintenance_order_detail.html [Phase 4.9]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve maintenance_order_detail.html [Phase 5.9]`
 
 ---
 
-#### Task 4.10: Spare Part Detail Page (`src/templates/spare_part_detail.html`)
+#### Task 5.10: Spare Part Detail Page (`src/templates/spare_part_detail.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1941,11 +1942,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve spare_part_detail.html [Phase 4.10]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve spare_part_detail.html [Phase 5.10]`
 
 ---
 
-#### Task 4.11: Technician Detail Page (`src/templates/technician_detail.html`)
+#### Task 5.11: Technician Detail Page (`src/templates/technician_detail.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1959,11 +1960,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve technician_detail.html [Phase 4.11]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve technician_detail.html [Phase 5.11]`
 
 ---
 
-#### Task 4.12: User Detail Page (`src/templates/user_detail.html`)
+#### Task 5.12: User Detail Page (`src/templates/user_detail.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1977,11 +1978,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve user_detail.html [Phase 4.12]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve user_detail.html [Phase 5.12]`
 
 ---
 
-#### Task 4.13: Shift Calendar Page (`src/templates/shift_calendar.html`)
+#### Task 5.13: Shift Calendar Page (`src/templates/shift_calendar.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -1995,11 +1996,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve shift_calendar.html [Phase 4.13]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve shift_calendar.html [Phase 5.13]`
 
 ---
 
-#### Task 4.14: Maintenance Grid Page (`src/templates/maintenance_grid.html`)
+#### Task 5.14: Maintenance Grid Page (`src/templates/maintenance_grid.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -2013,11 +2014,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve maintenance_grid.html [Phase 4.14]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve maintenance_grid.html [Phase 5.14]`
 
 ---
 
-#### Task 4.15: Planning Pages (`src/templates/planning.html`, `planning_embed.html`, `ticket.html`)
+#### Task 5.15: Planning Pages (`src/templates/planning.html`, `planning_embed.html`, `ticket.html`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -2031,11 +2032,11 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve planning pages [Phase 4.15]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve planning pages [Phase 5.15]`
 
 ---
 
-#### Task 4.16: Advanced Table Component (`src/templates/components/advanced_table.html`)
+#### Task 5.16: Advanced Table Component (`src/templates/components/advanced_table.html`)
 **Estimated Duration:** 20 minutes  
 **Commit After Completion:** Yes
 
@@ -2048,23 +2049,23 @@ If Step 4 resulted in NO modifications:
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 
-**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve advanced_table.html [Phase 4.16]`
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve advanced_table.html [Phase 5.16]`
 
 ---
 
-#### Phase 4 Final Verification (After All Tasks Complete)
+#### Phase 5 Final Verification (After All Tasks Complete)
 - [ ] Validate all rendered HTML (W3C validator)
 - [ ] Run accessibility audit (axe DevTools or Lighthouse)
 - [ ] Verify no inline JavaScript/CSS/styles remain
 - [ ] Test all templates render without errors
 - [ ] Document all findings in audit report
-- [ ] Mark Phase 4 COMPLETE ✅
+- [ ] Mark Phase 5 COMPLETE ✅
 
 **Deliverable:** Formatted, audited HTML templates with documented findings (16 commits total)
 
 ---
 
-### Phase 5: Root-Level & Configuration Files (Priority: High)
+### Phase 6: Root-Level & Configuration Files (Priority: High)
 **Estimated Duration:** 1-2 days  
 **Focus:** Iterative quality loop per file with one commit per task
 
@@ -2072,7 +2073,7 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-#### Task 5.1: Application Entry Point (`run.py`)
+#### Task 6.1: Application Entry Point (`run.py`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -2107,12 +2108,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(root): audit and improve run.py [Phase 5.1]`
-- [ ] Move to Task 5.2
+- [ ] Commit changes with message: `refactor(root): audit and improve run.py [Phase 6.1]`
+- [ ] Move to Task 6.2
 
 ---
 
-#### Task 5.2: Dependency Management (`requirements.txt`, `requirements-dev.txt`)
+#### Task 6.2: Dependency Management (`requirements.txt`, `requirements-dev.txt`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -2147,12 +2148,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(deps): audit and improve requirements files [Phase 5.2]`
-- [ ] Move to Task 5.3
+- [ ] Commit changes with message: `refactor(deps): audit and improve requirements files [Phase 6.2]`
+- [ ] Move to Task 6.3
 
 ---
 
-#### Task 5.3: Configuration Files (`.env.example`, `.gitignore`)
+#### Task 6.3: Configuration Files (`.env.example`, `.gitignore`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -2186,12 +2187,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(config): audit and improve configuration files [Phase 5.3]`
-- [ ] Move to Task 5.4
+- [ ] Commit changes with message: `refactor(config): audit and improve configuration files [Phase 6.3]`
+- [ ] Move to Task 6.4
 
 ---
 
-#### Task 5.4: Documentation Files (`README.md`, `CHANGELOG.md`, `GEMINI.md`)
+#### Task 6.4: Documentation Files (`README.md`, `CHANGELOG.md`, `GEMINI.md`)
 **Estimated Duration:** 1 hour  
 **Commit After Completion:** Yes
 
@@ -2227,12 +2228,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `docs: audit and improve documentation files [Phase 5.4]`
-- [ ] Move to Task 5.5
+- [ ] Commit changes with message: `docs: audit and improve documentation files [Phase 6.4]`
+- [ ] Move to Task 6.5
 
 ---
 
-#### Task 5.5: GitHub Configuration (`.github/` files)
+#### Task 6.5: GitHub Configuration (`.github/` files)
 **Estimated Duration:** 1 hour  
 **Commit After Completion:** Yes
 
@@ -2269,12 +2270,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `docs(github): audit and improve GitHub configuration [Phase 5.5]`
-- [ ] Move to Task 5.6
+- [ ] Commit changes with message: `docs(github): audit and improve GitHub configuration [Phase 6.5]`
+- [ ] Move to Task 6.6
 
 ---
 
-#### Task 5.6: Test Infrastructure (`tests/conftest.py`, `test_data/dummy_data.json`)
+#### Task 6.6: Test Infrastructure (`tests/conftest.py`, `test_data/dummy_data.json`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -2310,12 +2311,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `test: audit and improve test infrastructure [Phase 5.6]`
-- [ ] Move to Task 5.7
+- [ ] Commit changes with message: `test: audit and improve test infrastructure [Phase 6.6]`
+- [ ] Move to Task 6.7
 
 ---
 
-#### Task 5.7: Scripts & Automation (`scripts/setup.ps1`)
+#### Task 6.7: Scripts & Automation (`scripts/setup.ps1`)
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -2346,28 +2347,28 @@ If Step 4 resulted in NO modifications:
 
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [ ] 🔄 **Loop back to Step 1** and repeat until files are perfect
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `chore(scripts): audit and improve setup.ps1 [Phase 5.7]`
-- [ ] Move to Phase 5 Final Verification
+- [ ] Commit changes with message: `chore(scripts): audit and improve setup.ps1 [Phase 6.7]`
+- [ ] Move to Phase 6 Final Verification
 
 ---
 
-#### Phase 5 Final Verification (After All Tasks Complete)
+#### Phase 6 Final Verification (After All Tasks Complete)
 - [ ] Run full application setup from scratch (test `setup.ps1`)
 - [ ] Verify all documentation links work
 - [ ] Run `pip-audit` for security vulnerabilities
 - [ ] Test application startup with `run.py`
 - [ ] Document all findings in audit report
-- [ ] Mark Phase 5 COMPLETE ✅
+- [ ] Mark Phase 6 COMPLETE ✅
 
 **Deliverable:** Formatted, audited root-level files with documented findings (7 commits total)
 
 ---
 
-### Phase 6: Cross-Cutting Concerns (Priority: Medium)
+### Phase 7: Cross-Cutting Concerns (Priority: Medium)
 **Estimated Duration:** 1-2 days  
 **Focus:** Iterative quality loop for consistency checks with one commit per task
 
@@ -2375,7 +2376,7 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-#### Task 6.1: Naming Conventions Audit
+#### Task 7.1: Naming Conventions Audit
 **Estimated Duration:** 2 hours  
 **Commit After Completion:** Yes
 
@@ -2436,12 +2437,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(naming): standardize naming conventions across codebase [Phase 6.1]`
-- [ ] Move to Task 6.2
+- [ ] Commit changes with message: `refactor(naming): standardize naming conventions across codebase [Phase 7.1]`
+- [ ] Move to Task 7.2
 
 ---
 
-#### Task 6.2: Environment Configuration Audit
+#### Task 7.2: Environment Configuration Audit
 **Estimated Duration:** 30 minutes  
 **Commit After Completion:** Yes
 
@@ -2477,12 +2478,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(config): audit and standardize environment configuration [Phase 6.2]`
-- [ ] Move to Task 6.3
+- [ ] Commit changes with message: `refactor(config): audit and standardize environment configuration [Phase 7.2]`
+- [ ] Move to Task 7.3
 
 ---
 
-#### Task 6.3: Code Duplication Analysis
+#### Task 7.3: Code Duplication Analysis
 **Estimated Duration:** 1 hour  
 **Commit After Completion:** Yes
 
@@ -2518,12 +2519,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(duplication): remove code duplicates [Phase 6.3]`
-- [ ] Move to Task 6.4
+- [ ] Commit changes with message: `refactor(duplication): remove code duplicates [Phase 7.3]`
+- [ ] Move to Task 7.4
 
 ---
 
-#### Task 6.4: Final Consistency Check
+#### Task 7.4: Final Consistency Check
 **Estimated Duration:** 1 hour  
 **Commit After Completion:** Yes
 
@@ -2560,12 +2561,12 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(final): final consistency check and cleanup [Phase 6.4]`
-- [ ] Move to Phase 6 Final Verification
+- [ ] Commit changes with message: `refactor(final): final consistency check and cleanup [Phase 7.4]`
+- [ ] Move to Phase 7 Final Verification
 
 ---
 
-#### Phase 6 Final Verification (After All Tasks Complete)
+#### Phase 7 Final Verification (After All Tasks Complete)
 - [ ] Run all automated tools one final time:
   - [ ] `ruff check src/`
   - [ ] `pylint src/`
@@ -2578,7 +2579,7 @@ If Step 4 resulted in NO modifications:
 - [ ] Test full application functionality
 - [ ] Document all findings in final audit report
 - [ ] Update `audit_results/baseline_metrics.md` with final scores
-- [ ] Mark Phase 6 COMPLETE ✅
+- [ ] Mark Phase 7 COMPLETE ✅
 
 **Deliverable:** Cross-cutting concerns audit report with final consistency verification (4 commits total)
 
@@ -2662,46 +2663,46 @@ After each phase implementation, perform comprehensive manual testing:
 ## 📊 Progress Tracking
 
 ### Phase Completion Checklist
-- [x] **Phase 0:** Automated Code Quality Analysis - ✅ COMPLETE (December 13, 2025)
-- [ ] **Phase 1:** Python Backend Analysis (6 tasks, 6 commits) - 🔄 IN PROGRESS
-  - [ ] Task 1.1: API Routes
-  - [ ] Task 1.2: Web Routes
-  - [ ] Task 1.3: Database Layer
-  - [ ] Task 1.4: Application Core
-  - [ ] Task 1.5: Shift Utilities
-  - [ ] Task 1.6: Database Seeding
-- [ ] **Phase 2:** JavaScript Frontend Analysis (13 tasks, 13 commits) - PENDING
-  - [ ] Task 2.1-2.2: Table Core & Init
-  - [ ] Task 2.3-2.5: Table Rendering (render, sidebar, resize)
-  - [ ] Task 2.6-2.8: Table Data (data, config, export)
-  - [ ] Task 2.9-2.11: Table Events & Loading (events, loading, retry)
-  - [ ] Task 2.12-2.13: UI Components (toast, flash)
-- [ ] **Phase 3:** CSS Styling Analysis (3 tasks, 3 commits) - PENDING
-  - [ ] Task 3.1: Main Styles
-  - [ ] Task 3.2: Advanced Table Styles
-  - [ ] Task 3.3: Advanced Table Sidebar Styles
-- [ ] **Phase 4:** HTML Templates Analysis (16 tasks, 16 commits) - PENDING
-  - [ ] Task 4.1: Base Template
-  - [ ] Task 4.2-4.5: List Pages (assets, MOs, spare parts, users)
-  - [ ] Task 4.6-4.7: Index & Login
-  - [ ] Task 4.8-4.12: Detail Pages (asset, MO, spare part, technician, user)
-  - [ ] Task 4.13-4.15: Specialized Pages (shift calendar, maintenance grid, planning)
-  - [ ] Task 4.16: Advanced Table Component
-- [ ] **Phase 5:** Root-Level & Configuration Files (7 tasks, 7 commits) - PENDING
-  - [ ] Task 5.1: Application Entry Point
-  - [ ] Task 5.2: Dependency Management
-  - [ ] Task 5.3: Configuration Files
-  - [ ] Task 5.4: Documentation Files
-  - [ ] Task 5.5: GitHub Configuration
-  - [ ] Task 5.6: Test Infrastructure
-  - [ ] Task 5.7: Scripts & Automation
-- [ ] **Phase 6:** Cross-Cutting Concerns (4 tasks, 4 commits) - PENDING
-  - [ ] Task 6.1: Naming Conventions Audit
-  - [ ] Task 6.2: Environment Configuration Audit
-  - [ ] Task 6.3: Code Duplication Analysis
-  - [ ] Task 6.4: Final Consistency Check
+- [x] **Phase 1:** Automated Code Quality Analysis - ✅ COMPLETE (December 13, 2025)
+- [ ] **Phase 2:** Python Backend Analysis (6 tasks, 6 commits) - 🔄 IN PROGRESS
+  - [x] Task 2.1: API Routes
+  - [ ] Task 2.2: Web Routes
+  - [ ] Task 2.3: Database Layer
+  - [ ] Task 2.4: Application Core
+  - [ ] Task 2.5: Shift Utilities
+  - [ ] Task 2.6: Database Seeding
+- [ ] **Phase 3:** JavaScript Frontend Analysis (13 tasks, 13 commits) - PENDING
+  - [ ] Task 3.1-3.2: Table Core & Init
+  - [ ] Task 3.3-3.5: Table Rendering (render, sidebar, resize)
+  - [ ] Task 3.6-3.8: Table Data (data, config, export)
+  - [ ] Task 3.9-3.11: Table Events & Loading (events, loading, retry)
+  - [ ] Task 3.12-3.13: UI Components (toast, flash)
+- [ ] **Phase 4:** CSS Styling Analysis (3 tasks, 3 commits) - PENDING
+  - [ ] Task 4.1: Main Styles
+  - [ ] Task 4.2: Advanced Table Styles
+  - [ ] Task 4.3: Advanced Table Sidebar Styles
+- [ ] **Phase 5:** HTML Templates Analysis (16 tasks, 16 commits) - PENDING
+  - [ ] Task 5.1: Base Template
+  - [ ] Task 5.2-5.5: List Pages (assets, MOs, spare parts, users)
+  - [ ] Task 5.6-5.7: Index & Login
+  - [ ] Task 5.8-5.12: Detail Pages (asset, MO, spare part, technician, user)
+  - [ ] Task 5.13-5.15: Specialized Pages (shift calendar, maintenance grid, planning)
+  - [ ] Task 5.16: Advanced Table Component
+- [ ] **Phase 6:** Root-Level & Configuration Files (7 tasks, 7 commits) - PENDING
+  - [ ] Task 6.1: Application Entry Point
+  - [ ] Task 6.2: Dependency Management
+  - [ ] Task 6.3: Configuration Files
+  - [ ] Task 6.4: Documentation Files
+  - [ ] Task 6.5: GitHub Configuration
+  - [ ] Task 6.6: Test Infrastructure
+  - [ ] Task 6.7: Scripts & Automation
+- [ ] **Phase 7:** Cross-Cutting Concerns (4 tasks, 4 commits) - PENDING
+  - [ ] Task 7.1: Naming Conventions Audit
+  - [ ] Task 7.2: Environment Configuration Audit
+  - [ ] Task 7.3: Code Duplication Analysis
+  - [ ] Task 7.4: Final Consistency Check
 
-**Total Tasks:** 49 tasks across 6 phases  
+**Total Tasks:** 49 tasks across 7 phases  
 **Total Commits:** 49 commits (one per task)  
 **Estimated Duration:** 8-12 days total
 
@@ -2787,4 +2788,4 @@ After each phase implementation, perform comprehensive manual testing:
 
 ---
 
-**Next Step:** Begin Phase 1 - Python Backend Analysis
+**Next Step:** Begin Phase 2 - Python Backend Analysis

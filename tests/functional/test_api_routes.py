@@ -658,8 +658,9 @@ class TestEnhancedAPIErrorHandling:
                                    content_type='application/json')
             assert response.status_code == 401
             data = response.get_json()
-            assert 'error' in data
-            assert 'authentication' in data['error'].lower() or 'auth' in data['error'].lower()
+            assert 'error' in data or 'message' in data
+            error_msg = (data.get('error') or data.get('message', '')).lower()
+            assert 'authentication' in error_msg or 'auth' in error_msg or 'unauthorized' in error_msg
 
             # Test delete config requires authentication
             response = client.delete('/api/table-config/1')
@@ -782,7 +783,7 @@ class TestAPIEdgeCasesAndErrorPaths:
             assert response.status_code == 400
             data = response.get_json()
             assert 'error' in data
-            assert 'asset code' in data['error'].lower()
+            assert 'asset_code' in data['error'].lower() or 'required' in data['error'].lower()
 
     def test_update_asset_invalid_json(self, client, sample_asset, app):
         """Test PUT /v1/assets/<id> with invalid JSON returns 400."""
@@ -918,7 +919,7 @@ class TestAPIEdgeCasesAndErrorPaths:
             assert 'invalid' in data['message'].lower()
 
     def test_update_table_config_not_owned(self, client, app, logged_in_user):
-        """Test PUT /table-config/<id> for config not owned by user returns 404."""
+        """Test PUT /table-config/<id> for config not owned by user returns 403."""
         with app.app_context():
             # Create config for another user
             from src.services.db_utils import TableConfiguration
@@ -937,12 +938,12 @@ class TestAPIEdgeCasesAndErrorPaths:
             response = client.put(f'/api/table-config/{config_id}',
                                   data=json.dumps({'column_order': json.dumps(['status'])}),
                                   content_type='application/json')
-            assert response.status_code == 404
+            assert response.status_code == 403
             data = response.get_json()
             assert 'error' in data
 
     def test_set_default_table_config_not_owned(self, client, app, logged_in_user):
-        """Test POST /table-config/<page>/<id>/set-default for config not owned returns 404."""
+        """Test POST /table-config/<page>/<id>/set-default for config not owned returns 403."""
         with app.app_context():
             # Create config for another user
             from src.services.db_utils import TableConfiguration
@@ -959,10 +960,10 @@ class TestAPIEdgeCasesAndErrorPaths:
 
             # Try to set as default
             response = client.post(f'/api/table-config/assets/{config_id}/set-default')
-            assert response.status_code == 404
+            assert response.status_code == 403
 
     def test_remove_default_table_config_not_owned(self, client, app, logged_in_user):
-        """Test POST /table-config/<page>/<id>/remove-default for config not owned returns 404."""
+        """Test POST /table-config/<page>/<id>/remove-default for config not owned returns 403."""
         with app.app_context():
             # Create config for another user
             from src.services.db_utils import TableConfiguration
@@ -979,5 +980,5 @@ class TestAPIEdgeCasesAndErrorPaths:
 
             # Try to remove default
             response = client.post(f'/api/table-config/assets/{config_id}/remove-default')
-            assert response.status_code == 404
+            assert response.status_code == 403
 

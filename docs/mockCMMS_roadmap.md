@@ -1,5 +1,5 @@
 # mockCMMS Project Roadmap
-_Updated December 13, 2025_
+_Updated December 14, 2025_
 
 ---
 
@@ -83,7 +83,7 @@ _Updated December 13, 2025_
 **Started:** December 13, 2025  
 **Target:** December 20, 2025  
 
-**Progress:** 1/49 tasks complete (Phase 0 + Task 1.1)  
+**Progress:** 2/49 tasks complete (Phase 0 + Task 1.1)  
 **Workflow:** Lint → Format → Test → Audit → Commit (per task)
 
 ---
@@ -96,6 +96,9 @@ _Updated December 13, 2025_
 ---
 
 ## ✅ RECENTLY COMPLETED
+
+### Phase 1: Python Backend (Task 1.1 - December 14, 2025)
+- ✅ Audited and improved `src/routes/api.py` for RESTful conventions, validation, and security.
 
 ### Phase 0: Automated Code Quality Analysis (December 13, 2025)
 - ✅ Ruff: 0 issues, Pylint: 9.15/10, Radon: A(2.0), Bandit: 0
