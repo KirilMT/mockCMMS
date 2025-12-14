@@ -6,23 +6,23 @@ black==24.10.0
 autopep8==2.3.2
 
 # Linting (ESSENTIAL - Run always)
-flake8==7.0.0
-ruff==0.8.4
+flake8==7.3.0
+ruff==0.14.9
 
 # Code Quality Analysis (OPTIONAL - Run periodically)
-pylint==3.3.2
+pylint==3.3.9
 radon==6.0.1
-bandit==1.8.0
+bandit==1.8.6
 
 # Type Checking (OPTIONAL - Run periodically)
-mypy==1.13.0
+mypy==1.19.0
 
 # Testing (ESSENTIAL - Run always)
 # Note: pytest is also in requirements.txt (needed for app testing)
-pytest==8.3.4
-pytest-cov==6.0.0
-pytest-mock==3.14.0
+pytest==8.4.2
+pytest-cov==6.3.0
+pytest-mock==3.15.1
 
 # Pre-commit hooks (OPTIONAL - Configure later)
 # Run 'pre-commit install' only when ready to use
-pre-commit==4.0.1
+pre-commit==4.3.0
