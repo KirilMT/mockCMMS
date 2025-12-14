@@ -39,7 +39,7 @@ setup(
         'types-pytz==2025.2.0.20250809',
         'typing_extensions==4.14.1',
         'tzdata==2025.2',
-        'Werkzeug==3.1.3',
+        'Werkzeug==3.1.4',
         'wrapt==1.17.3',
         'WTForms==3.2.1',
     ],
