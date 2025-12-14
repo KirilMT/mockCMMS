@@ -79,10 +79,10 @@ _Updated December 15, 2025_
 ## 🔥 ACTIVE WORK
 
 **Current Sprint:** Code Quality Analysis
-**Status:** Phase 1 Complete ✅, Phase 2 In Progress 🔄
+**Status:** Phase 2 In Progress 🔄
 **Started:** December 13, 2025  
 
-**Progress:** 2/49 tasks complete (Phase 1 + Task 2.1)
+**Progress:** 2/49 tasks complete
 **Workflow:** Lint → Format → Test → Audit → Commit (per task)
 
 ---
@@ -181,10 +181,10 @@ The core application can be improved with the following features to support the 
 
 - **[ ] Standardize Naming Conventions** _(Priority: High)_
     - **Goal:** Establish and enforce consistent naming conventions across the codebase.
-    - **Issue:** Inconsistent naming (e.g., `advanced-table` vs. `table-` prefixes) leads to confusion and maintenance overhead.
+    - **Issue:** Inconsistent naming (e.g., `advanced-table` vs `table-` prefixes) leads to confusion and maintenance overhead.
     - **Scope:**
-        - Files and directories (kebab-case vs. snake_case)
-        - Variables and functions (camelCase vs. snake_case)
+        - Files and directories (kebab-case vs snake_case)
+        - Variables and functions (camelCase vs snake_case)
         - CSS classes and IDs
         - Database tables and columns
     - **Action:** Define standards in `CONTRIBUTING.md` and refactor existing inconsistencies.
@@ -340,7 +340,7 @@ The Advanced Table component was recently completed with core functionality. The
         - **Enhanced Select All:** Fix the current page-only limitation. Options:
             - Select all rows across ALL pages (with a warning).
             - Show a "Selected X of Y rows on this page" indicator.
-            - Add a dropdown: "Select all on page" vs. "Select all X items."
+            - Add a dropdown: "Select all on page" vs "Select all X items."
         - **Multi-Row Selection:** Track selection state across pagination.
         - **Bulk Edit:** Edit common fields across multiple selected rows simultaneously.
         - **Bulk Delete:** Delete multiple rows in a single operation with confirmation.
@@ -514,7 +514,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
         - Use docstrings for all public functions/classes.
         - Comment on complex logic and non-obvious decisions.
         - Include links to discussions/Stack Overflow in comments when relevant.
-        - Keep the code clean and remove commented-out blocks.
+        - Keep the code clean and remove commented-out code blocks.
         - Avoid irrelevant or unprofessional comments.
         - Use descriptive, searchable names (avoid abbreviations).
         - Organize functions top-down (high-level to low-level).
