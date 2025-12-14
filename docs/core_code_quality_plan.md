@@ -1,14 +1,14 @@
 # Core mockCMMS Code Quality & Architecture Audit Plan
 
 **Created:** December 1, 2025  
-**Last Updated:** December 13, 2025  
-**Status:** 🔄 **PHASE 2 IN PROGRESS**
-**Prerequisites Met:** All 210 tests complete with 82.99% coverage. Phase 1 automated analysis complete.
+**Last Updated:** December 15, 2025
+**Status:** 🔄 **Phase 2 (Python Backend) IN PROGRESS**
+**Prerequisites Met:** All 210 tests complete with 82.99% coverage. Phase 1 (Automated Analysis) complete.
 
 ---
 
 > [!IMPORTANT]
-> **📋 Workflow Context:** This plan covers **Phases 1-7** of the overall implementation strategy.
+> **📋 Workflow Context:** This plan details the 7 phases of the Code Quality Audit.
 > 
 > **Related Documentation:**
 > - **[Comprehensive Testing Plan](comprehensive_testing_plan.md)** - Testing Foundation (Completed)
@@ -22,7 +22,7 @@
 > 4. ✅ Critical coverage gaps closed (api.py: 78.78%, app.py: 88.89%, main.py: 81.42%)
 > 5. ✅ CI configured with pytest + coverage in .github/workflows/ci.yml
 > 
-> **Status:** ✅ **READY TO START** - Week 2 complete (210/210 tests, 82.99% coverage)  
+> **Status:** ✅ **READY TO START** (210/210 tests, 82.99% coverage)
 > **Current Progress:** Phase 2, Task 2.1 Complete. Task 2.2 In Progress.
 
 ---  
@@ -31,7 +31,7 @@
 ---
 
 > [!IMPORTANT]
-> **🎯 Implementation Strategy:** This audit should be performed alongside GitHub best practices setup. See [Implementation Priority Guide](IMPLEMENTATION_PRIORITY_GUIDE.md) for a complete 6-week action plan showing how to integrate code quality work with infrastructure setup.
+> **🎯 Implementation Strategy:** This audit should be performed alongside GitHub best practices setup. See [Implementation Priority Guide](IMPLEMENTATION_PRIORITY_GUIDE.md) for a complete action plan showing how to integrate code quality work with infrastructure setup.
 
 ---
 
@@ -374,17 +374,13 @@ cat audit_results/*.txt > audit_results/audit_results_full.txt
 
 ## 🔍 Audit Phases
 
-### Phase 2: Python Backend Analysis (Priority: Critical)
-**Estimated Duration:** 1 day  
-**Focus:** Iterative quality loop per file with one commit per task
-
+### Phase 2: Python Backend Analysis
+**Focus:** Iterative quality loop per file with one commit per task.
 **Strategy:** Each task below represents one file or logical group. Follow the 5-step iterative loop for each task until perfect, then commit before moving to the next task.
 
 ---
 
 #### Task 2.1: API Routes (`src/routes/api.py`)
-**Estimated Duration:** 1 hour  
-**Commit After Completion:** Yes
 **Status:** ✅ COMPLETE (December 14, 2025)
 
 **Step 1: Flake8 Linting**
@@ -403,9 +399,7 @@ cat audit_results/*.txt > audit_results/audit_results_full.txt
 - [x] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on logic, architecture, and patterns that tools can't catch:
-
 - [x] Verify RESTful conventions (proper HTTP methods, status codes)
 - [x] Check input validation and sanitization
 - [x] Review error responses and status codes
@@ -416,7 +410,6 @@ Focus on logic, architecture, and patterns that tools can't catch:
 - [x] Check for SQL injection vulnerabilities
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [x] Document what was changed and why
 - [x] Update any affected tests
@@ -430,8 +423,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 2.2: Web Routes (`src/routes/main.py`)
-**Estimated Duration:** 1 hour  
-**Commit After Completion:** Yes
 
 **Step 1: Flake8 Linting**
 - [ ] Run `flake8 src/routes/main.py` to identify style issues
@@ -449,9 +440,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on logic, architecture, and patterns that tools can't catch:
-
 - [ ] Review route organization and naming
 - [ ] Check for duplicate logic between routes
 - [ ] Verify proper template rendering
@@ -460,7 +449,6 @@ Focus on logic, architecture, and patterns that tools can't catch:
 - [ ] Verify proper error handling
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected tests
@@ -474,8 +462,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 2.3: Database Layer (`src/services/db_utils.py`)
-**Estimated Duration:** 1 hour  
-**Commit After Completion:** Yes
 
 **Step 1: Flake8 Linting**
 - [ ] Run `flake8 src/services/db_utils.py` to identify style issues
@@ -493,9 +479,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on logic, architecture, and patterns that tools can't catch:
-
 - [ ] Check for SQL injection vulnerabilities
 - [ ] Review query optimization opportunities
 - [ ] Verify proper use of SQLAlchemy ORM
@@ -504,7 +488,6 @@ Focus on logic, architecture, and patterns that tools can't catch:
 - [ ] Review model relationships and constraints
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected tests
@@ -518,8 +501,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 2.4: Application Core (`src/app.py`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: Flake8 Linting**
 - [ ] Run `flake8 src/app.py` to identify style issues
@@ -537,9 +518,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on logic, architecture, and patterns that tools can't catch:
-
 - [ ] Verify Flask factory pattern implementation
 - [ ] Check blueprint registration
 - [ ] Review configuration handling
@@ -547,7 +526,6 @@ Focus on logic, architecture, and patterns that tools can't catch:
 - [ ] Check security settings (SECRET_KEY, etc.)
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected tests
@@ -561,8 +539,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 2.5: Shift Utilities (`src/services/shift_utils.py`)
-**Estimated Duration:** 15 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: Flake8 Linting**
 - [ ] Run `flake8 src/services/shift_utils.py` to identify style issues
@@ -580,15 +556,12 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on logic, architecture, and patterns that tools can't catch:
-
 - [ ] Review business logic correctness
 - [ ] Check for edge cases
 - [ ] Verify proper error handling
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected tests
@@ -602,8 +575,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 2.6: Database Seeding (`src/services/db_seeding.py`)
-**Estimated Duration:** 15 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: Flake8 Linting**
 - [ ] Run `flake8 src/services/db_seeding.py` to identify style issues
@@ -621,15 +592,12 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on logic, architecture, and patterns that tools can't catch:
-
 - [ ] Review business logic correctness
 - [ ] Check for edge cases
 - [ ] Verify proper error handling
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected tests
@@ -654,17 +622,13 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-### Phase 3: JavaScript Frontend Analysis (Priority: Critical)
-**Estimated Duration:** 3-4 days  
-**Focus:** Iterative quality loop per file with one commit per task
-
+### Phase 3: JavaScript Frontend Analysis
+**Focus:** Iterative quality loop per file with one commit per task.
 **Strategy:** Each task below represents one file or logical group. Follow the 5-step iterative loop for each task until perfect, then commit before moving to the next task.
 
 ---
 
 #### Task 3.1: Advanced Table Core (`src/static/js/advanced-table/table-core.js`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-core.js` to identify code quality issues
@@ -684,9 +648,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review module organization and dependencies
 - [ ] Check for circular dependencies
 - [ ] Verify proper encapsulation and class structure
@@ -701,7 +663,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -715,8 +676,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.2: Advanced Table Init (`src/static/js/advanced-table/table-init.js`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-init.js` to identify code quality issues
@@ -736,9 +695,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review module organization and dependencies
 - [ ] Check for circular dependencies
 - [ ] Verify proper encapsulation and class structure
@@ -753,7 +710,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -767,8 +723,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.3: Table Rendering (`src/static/js/advanced-table/table-render.js`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-render.js` to identify code quality issues
@@ -788,9 +742,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review DOM manipulation efficiency
 - [ ] Check for unnecessary re-renders
 - [ ] Verify proper use of event delegation
@@ -805,7 +757,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -819,8 +770,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.4: Table Sidebar (`src/static/js/advanced-table/table-sidebar.js`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-sidebar.js` to identify code quality issues
@@ -840,9 +789,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review DOM manipulation efficiency
 - [ ] Check for unnecessary re-renders
 - [ ] Verify proper use of event delegation
@@ -857,7 +804,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -871,8 +817,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.5: Table Resize (`src/static/js/advanced-table/table-resize.js`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-resize.js` to identify code quality issues
@@ -892,9 +836,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review DOM manipulation efficiency
 - [ ] Check for unnecessary re-renders
 - [ ] Verify proper use of event delegation
@@ -909,7 +851,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -923,8 +864,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.6: Table Data Management (`src/static/js/advanced-table/table-data.js`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-data.js` to identify code quality issues
@@ -944,9 +883,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review data filtering and sorting logic
 - [ ] Check for efficient data structures
 - [ ] Verify proper state management
@@ -959,7 +896,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -973,8 +909,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.7: Table Configuration (`src/static/js/advanced-table/table-config.js`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-config.js` to identify code quality issues
@@ -994,9 +928,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review configuration persistence
 - [ ] Check for efficient data structures
 - [ ] Verify proper state management
@@ -1009,7 +941,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -1023,8 +954,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.8: Table Export (`src/static/js/advanced-table/table-export.js`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-export.js` to identify code quality issues
@@ -1044,9 +973,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Check export functionality correctness
 - [ ] Review data formatting logic
 - [ ] Verify proper error handling
@@ -1059,7 +986,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -1073,8 +999,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.9: Table Events (`src/static/js/advanced-table/table-events.js`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-events.js` to identify code quality issues
@@ -1094,9 +1018,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review event handling patterns
 - [ ] Check for proper error handling (try-catch)
 - [ ] Check for race conditions
@@ -1111,7 +1033,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -1125,8 +1046,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.10: Table Loading (`src/static/js/advanced-table/table-loading.js`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-loading.js` to identify code quality issues
@@ -1146,9 +1065,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review loading state management
 - [ ] Check for proper error handling (try-catch)
 - [ ] Verify timing and state transitions
@@ -1162,7 +1079,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -1176,8 +1092,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.11: Table Retry (`src/static/js/advanced-table/table-retry.js`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/advanced-table/table-retry.js` to identify code quality issues
@@ -1197,9 +1111,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Verify retry logic with exponential backoff
 - [ ] Check for proper error handling (try-catch)
 - [ ] Review timing and backoff calculations
@@ -1213,7 +1125,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -1227,8 +1138,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.12: Toast Notification (`src/static/js/toast-notification.js`)
-**Estimated Duration:** 15 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/toast-notification.js` to identify code quality issues
@@ -1248,9 +1157,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review component API design
 - [ ] Check for proper error handling
 - [ ] Verify browser compatibility (ES6+ features)
@@ -1264,7 +1171,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -1278,8 +1184,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 3.13: Flash Messages (`src/static/js/flash-messages.js`)
-**Estimated Duration:** 15 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: ESLint Linting**
 - [ ] Run `eslint src/static/js/flash-messages.js` to identify code quality issues
@@ -1299,9 +1203,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on architecture, logic, and patterns that tools can't catch:
-
 - [ ] Review component API design
 - [ ] Check for proper error handling
 - [ ] Verify browser compatibility (ES6+ features)
@@ -1315,7 +1217,6 @@ Focus on architecture, logic, and patterns that tools can't catch:
 - [ ] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected browser tests
@@ -1340,17 +1241,13 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-### Phase 4: CSS Styling Analysis (Priority: High)
-**Estimated Duration:** 1-2 days  
-**Focus:** Iterative quality loop per file with one commit per task
-
+### Phase 4: CSS Styling Analysis
+**Focus:** Iterative quality loop per file with one commit per task.
 **Strategy:** Each task below represents one file or logical group. Follow the 5-step iterative loop for each task until perfect, then commit before moving to the next task.
 
 ---
 
 #### Task 4.1: Main Styles (`src/static/css/main.css`)
-**Estimated Duration:** 1 hour  
-**Commit After Completion:** Yes
 
 **Step 1: Stylelint Linting**
 - [ ] Run `stylelint src/static/css/main.css` to identify CSS issues
@@ -1370,9 +1267,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, Stylelint/Prettier/visual tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on organization, optimization, and patterns that tools can't catch:
-
 - [ ] Review file structure and organization
 - [ ] Check for logical grouping of styles
 - [ ] Verify proper use of CSS custom properties (variables)
@@ -1401,7 +1296,6 @@ Focus on organization, optimization, and patterns that tools can't catch:
 - [ ] Ensure comments are descriptive
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected visual tests
@@ -1415,8 +1309,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 4.2: Advanced Table Styles (`src/static/css/advanced-table.css`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: Stylelint Linting**
 - [ ] Run `stylelint src/static/css/advanced-table.css` to identify CSS issues
@@ -1436,9 +1328,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, Stylelint/Prettier/visual tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on organization, optimization, and patterns that tools can't catch:
-
 - [ ] Review component-specific organization
 - [ ] Check for unused CSS rules
 - [ ] Verify proper specificity (avoid `!important` overuse)
@@ -1466,7 +1356,6 @@ Focus on organization, optimization, and patterns that tools can't catch:
 - [ ] Ensure comments are descriptive
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected visual tests
@@ -1480,8 +1369,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 4.3: Advanced Table Sidebar Styles (`src/static/css/advanced-table-sidebar.css`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: Stylelint Linting**
 - [ ] Run `stylelint src/static/css/advanced-table-sidebar.css` to identify CSS issues
@@ -1501,9 +1388,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, Stylelint/Prettier/visual tests should all pass
 
 **Step 4: Manual Audit**
-
 Focus on organization, optimization, and patterns that tools can't catch:
-
 - [ ] Review component-specific organization
 - [ ] Check for unused CSS rules
 - [ ] Verify proper specificity (avoid `!important` overuse)
@@ -1531,7 +1416,6 @@ Focus on organization, optimization, and patterns that tools can't catch:
 - [ ] Ensure comments are descriptive
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected visual tests
@@ -1556,17 +1440,13 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-### Phase 5: HTML Templates Analysis (Priority: High)
-**Estimated Duration:** 2-3 days  
-**Focus:** Iterative quality loop per file with one commit per task
-
+### Phase 5: HTML Templates Analysis
+**Focus:** Iterative quality loop per file with one commit per task.
 **Strategy:** Each task below represents one file or logical group. Follow the 5-step iterative loop for each task until perfect, then commit before moving to the next task.
 
 ---
 
 #### Task 5.1: Base Template (`src/templates/base.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: HTML Validation**
 - [ ] Run HTML validator (W3C or `html-validate`) on rendered output
@@ -1586,9 +1466,7 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
-
 Focus on structure, accessibility, and patterns that tools can't catch:
-
 - [ ] Review Jinja2 template inheritance structure
 - [ ] Check for proper block definitions
 - [ ] Verify meta tags and SEO elements
@@ -1610,7 +1488,6 @@ Focus on structure, accessibility, and patterns that tools can't catch:
 - [ ] Remove bug reference comments (e.g., `<!-- Bug #5 -->`)
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update any affected render tests
@@ -1625,8 +1502,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 5.2: Assets List Page (`src/templates/assets.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: HTML Validation**
 - [ ] Run HTML validator on rendered output
@@ -1646,7 +1521,6 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
-
 - [ ] Check for duplicate template blocks
 - [ ] Verify proper use of includes and macros
 - [ ] Review table structure and accessibility
@@ -1669,7 +1543,6 @@ If Step 4 resulted in NO modifications:
 - [ ] Remove bug reference comments
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Extract inline code to separate files if needed
@@ -1683,8 +1556,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 5.3: Maintenance Orders List Page (`src/templates/maintenance_orders.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: HTML Validation**
 - [ ] Run HTML validator on rendered output
@@ -1704,7 +1575,6 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
-
 - [ ] Check for duplicate template blocks
 - [ ] Verify proper use of includes and macros
 - [ ] Review table structure and accessibility
@@ -1727,7 +1597,6 @@ If Step 4 resulted in NO modifications:
 - [ ] Remove bug reference comments
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Extract inline code to separate files if needed
@@ -1741,8 +1610,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 5.4: Spare Parts List Page (`src/templates/spare_parts.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: HTML Validation**
 - [ ] Run HTML validator on rendered output
@@ -1762,7 +1629,6 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
-
 - [ ] Check for duplicate template blocks
 - [ ] Verify proper use of includes and macros
 - [ ] Review table structure and accessibility
@@ -1785,7 +1651,6 @@ If Step 4 resulted in NO modifications:
 - [ ] Remove bug reference comments
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Extract inline code to separate files if needed
@@ -1799,8 +1664,6 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 5.5: Users List Page (`src/templates/users.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
 
 **Step 1: HTML Validation**
 - [ ] Run HTML validator on rendered output
@@ -1820,7 +1683,6 @@ If Step 4 resulted in NO modifications:
 - [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
-
 - [ ] Check for duplicate template blocks
 - [ ] Verify proper use of includes and macros
 - [ ] Review table structure and accessibility
@@ -1843,7 +1705,6 @@ If Step 4 resulted in NO modifications:
 - [ ] Remove bug reference comments
 
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Extract inline code to separate files if needed
@@ -1857,11 +1718,7 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 5.6: Index/Dashboard Page (`src/templates/index.html`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review form handling and validation
 - [ ] Check for inline styles/JavaScript/event handlers
@@ -1869,17 +1726,12 @@ If Step 4 resulted in NO modifications:
 - [ ] Review template variable naming
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve index.html [Phase 5.6]`
 
 ---
 
 #### Task 5.7: Login Page (`src/templates/login.html`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review form handling and validation
 - [ ] Check for inline styles/JavaScript/event handlers
@@ -1887,17 +1739,12 @@ If Step 4 resulted in NO modifications:
 - [ ] Review template variable naming
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve login.html [Phase 5.7]`
 
 ---
 
 #### Task 5.8: Asset Detail Page (`src/templates/asset_detail.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review form handling and validation
 - [ ] Check for inline styles/JavaScript/event handlers
@@ -1905,17 +1752,12 @@ If Step 4 resulted in NO modifications:
 - [ ] Review template variable naming
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve asset_detail.html [Phase 5.8]`
 
 ---
 
 #### Task 5.9: Maintenance Order Detail Page (`src/templates/maintenance_order_detail.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review form handling and validation
 - [ ] Check for inline styles/JavaScript/event handlers
@@ -1923,17 +1765,12 @@ If Step 4 resulted in NO modifications:
 - [ ] Review template variable naming
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve maintenance_order_detail.html [Phase 5.9]`
 
 ---
 
 #### Task 5.10: Spare Part Detail Page (`src/templates/spare_part_detail.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review form handling and validation
 - [ ] Check for inline styles/JavaScript/event handlers
@@ -1941,17 +1778,12 @@ If Step 4 resulted in NO modifications:
 - [ ] Review template variable naming
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve spare_part_detail.html [Phase 5.10]`
 
 ---
 
 #### Task 5.11: Technician Detail Page (`src/templates/technician_detail.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review form handling and validation
 - [ ] Check for inline styles/JavaScript/event handlers
@@ -1959,17 +1791,12 @@ If Step 4 resulted in NO modifications:
 - [ ] Review template variable naming
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve technician_detail.html [Phase 5.11]`
 
 ---
 
 #### Task 5.12: User Detail Page (`src/templates/user_detail.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review form handling and validation
 - [ ] Check for inline styles/JavaScript/event handlers
@@ -1977,17 +1804,12 @@ If Step 4 resulted in NO modifications:
 - [ ] Review template variable naming
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve user_detail.html [Phase 5.12]`
 
 ---
 
 #### Task 5.13: Shift Calendar Page (`src/templates/shift_calendar.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review complex template logic
 - [ ] Check for JavaScript extraction opportunities
@@ -1995,17 +1817,12 @@ If Step 4 resulted in NO modifications:
 - [ ] Check for inline styles/JavaScript/event handlers
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve shift_calendar.html [Phase 5.13]`
 
 ---
 
 #### Task 5.14: Maintenance Grid Page (`src/templates/maintenance_grid.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review complex template logic
 - [ ] Check for JavaScript extraction opportunities
@@ -2013,17 +1830,12 @@ If Step 4 resulted in NO modifications:
 - [ ] Check for inline styles/JavaScript/event handlers
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve maintenance_grid.html [Phase 5.14]`
 
 ---
 
 #### Task 5.15: Planning Pages (`src/templates/planning.html`, `planning_embed.html`, `ticket.html`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing for all 3 files
-
 **Step 4: Manual Audit** (all 3 files)
 - [ ] Review complex template logic
 - [ ] Check for JavaScript extraction opportunities
@@ -2031,24 +1843,18 @@ If Step 4 resulted in NO modifications:
 - [ ] Check for inline styles/JavaScript/event handlers
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve planning pages [Phase 5.15]`
 
 ---
 
 #### Task 5.16: Advanced Table Component (`src/templates/components/advanced_table.html`)
-**Estimated Duration:** 20 minutes  
-**Commit After Completion:** Yes
-
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
-
 **Step 4: Manual Audit**
 - [ ] Review component structure
 - [ ] Check for inline styles/JavaScript/event handlers
 - [ ] Verify proper use of includes and macros
 - [ ] Check separation of concerns
 - [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
-
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve advanced_table.html [Phase 5.16]`
 
 ---
@@ -2065,47 +1871,35 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-### Phase 6: Root-Level & Configuration Files (Priority: High)
-**Estimated Duration:** 1-2 days  
-**Focus:** Iterative quality loop per file with one commit per task
-
+### Phase 6: Root-Level & Configuration Files
+**Focus:** Iterative quality loop per file with one commit per task.
 **Strategy:** Each task below represents one file or logical group. Follow the 5-step iterative loop for each task until perfect, then commit before moving to the next task.
 
 ---
 
 #### Task 6.1: Application Entry Point (`run.py`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1: Format/Lint Check**
 - [ ] Run `flake8 run.py` to identify style issues
 - [ ] Fix any problems found
 - [ ] Proceed to Step 2
-
 **Step 2: Auto-Formatting**
 - [ ] Run `black run.py` to auto-format code
 - [ ] Review changes
 - [ ] Proceed to Step 3
-
 **Step 3: Functional Testing**
 - [ ] Start application with `python run.py`
 - [ ] Verify no errors or warnings
 - [ ] ✅ **Checkpoint:** After this step, linting/formatting/functionality should all pass
-
 **Step 4: Manual Audit**
-
 - [ ] Review structure and error handling
 - [ ] Check for proper environment variable loading
 - [ ] Verify development vs production configuration
 - [ ] Review command-line argument handling
 - [ ] Check security settings
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `refactor(root): audit and improve run.py [Phase 6.1]`
@@ -2114,38 +1908,28 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 6.2: Dependency Management (`requirements.txt`, `requirements-dev.txt`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1: Format/Lint Check**
 - [ ] Review file format and organization
 - [ ] Check for syntax issues
 - [ ] Proceed to Step 2
-
 **Step 2: Auto-Formatting**
 - [ ] Sort dependencies alphabetically if needed
 - [ ] Review changes
 - [ ] Proceed to Step 3
-
 **Step 3: Functional Testing**
 - [ ] Test dependency installation: `pip install -r requirements.txt`
 - [ ] Verify no errors or warnings
 - [ ] ✅ **Checkpoint:** After this step, formatting/functionality should all pass
-
 **Step 4: Manual Audit**
-
 - [ ] Review organization and grouping
 - [ ] Check for unused dependencies
 - [ ] Verify version pinning strategy
 - [ ] Run `pip-audit` for security vulnerabilities
 - [ ] Check for outdated packages
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] 🔄 **Loop back to Step 1** and repeat until files are perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `refactor(deps): audit and improve requirements files [Phase 6.2]`
@@ -2154,37 +1938,27 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 6.3: Configuration Files (`.env.example`, `.gitignore`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1: Format/Lint Check**
 - [ ] Review file format and organization
 - [ ] Check for syntax issues
 - [ ] Proceed to Step 2
-
 **Step 2: Auto-Formatting**
 - [ ] Format files if needed
 - [ ] Review changes
 - [ ] Proceed to Step 3
-
 **Step 3: Functional Testing**
 - [ ] Verify `.env.example` can be copied to `.env`
 - [ ] Test `.gitignore` patterns
 - [ ] ✅ **Checkpoint:** After this step, formatting/functionality should all pass
-
 **Step 4: Manual Audit**
-
 - [ ] Verify `.env.example` completeness
 - [ ] Check for sensitive data patterns
 - [ ] Review `.gitignore` coverage
 - [ ] Verify all necessary files are ignored
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] 🔄 **Loop back to Step 1** and repeat until files are perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `refactor(config): audit and improve configuration files [Phase 6.3]`
@@ -2193,39 +1967,29 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 6.4: Documentation Files (`README.md`, `CHANGELOG.md`, `GEMINI.md`)
-**Estimated Duration:** 1 hour  
-**Commit After Completion:** Yes
-
 **Step 1: Format/Lint Check**
 - [ ] Run `markdownlint` on all markdown files
 - [ ] Fix any problems found
 - [ ] Proceed to Step 2
-
 **Step 2: Auto-Formatting**
 - [ ] Run `prettier --write` on markdown files
 - [ ] Review changes
 - [ ] Proceed to Step 3
-
 **Step 3: Functional Testing**
 - [ ] Verify all links work
 - [ ] Check markdown rendering
 - [ ] ✅ **Checkpoint:** After this step, linting/formatting/links should all pass
-
 **Step 4: Manual Audit**
-
 - [ ] Review accuracy and completeness
 - [ ] Check CHANGELOG.md format and updates
 - [ ] Verify GEMINI.md consistency with copilot-instructions.md
 - [ ] Validate all cross-references and links
 - [ ] Check for outdated information
 - [ ] Verify setup instructions are current
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] 🔄 **Loop back to Step 1** and repeat until files are perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `docs: audit and improve documentation files [Phase 6.4]`
@@ -2234,40 +1998,30 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 6.5: GitHub Configuration (`.github/` files)
-**Estimated Duration:** 1 hour  
-**Commit After Completion:** Yes
-
 **Step 1: Format/Lint Check**
 - [ ] Run `markdownlint` on markdown files
 - [ ] Check YAML syntax for templates
 - [ ] Fix any problems found
 - [ ] Proceed to Step 2
-
 **Step 2: Auto-Formatting**
 - [ ] Run `prettier --write` on markdown and YAML files
 - [ ] Review changes
 - [ ] Proceed to Step 3
-
 **Step 3: Functional Testing**
 - [ ] Verify all links work
 - [ ] Test issue template rendering (if possible)
 - [ ] ✅ **Checkpoint:** After this step, linting/formatting/functionality should all pass
-
 **Step 4: Manual Audit**
-
 - [ ] Review issue templates functionality
 - [ ] Check CONTRIBUTING.md accuracy
 - [ ] Verify GIT_WORKFLOW.md reflects actual practices
 - [ ] Review CODEOWNERS assignments
 - [ ] Check PR template completeness
 - [ ] Verify workflow files (if any)
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] 🔄 **Loop back to Step 1** and repeat until files are perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `docs(github): audit and improve GitHub configuration [Phase 6.5]`
@@ -2276,39 +2030,29 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 6.6: Test Infrastructure (`tests/conftest.py`, `test_data/dummy_data.json`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1: Format/Lint Check**
 - [ ] Run `flake8 tests/conftest.py`
 - [ ] Run `jsonlint test_data/dummy_data.json`
 - [ ] Fix any problems found
 - [ ] Proceed to Step 2
-
 **Step 2: Auto-Formatting**
 - [ ] Run `black tests/conftest.py`
 - [ ] Run `prettier --write test_data/dummy_data.json`
 - [ ] Review changes
 - [ ] Proceed to Step 3
-
 **Step 3: Functional Testing**
 - [ ] Run `pytest tests/` to verify configuration works
 - [ ] Verify test data loads correctly
 - [ ] ✅ **Checkpoint:** After this step, linting/formatting/functionality should all pass
-
 **Step 4: Manual Audit**
-
 - [ ] Review pytest configuration
 - [ ] Check test fixture organization
 - [ ] Verify test data in `test_data/dummy_data.json`
 - [ ] Review test coverage configuration
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] 🔄 **Loop back to Step 1** and repeat until files are perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `test: audit and improve test infrastructure [Phase 6.6]`
@@ -2317,38 +2061,28 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 6.7: Scripts & Automation (`scripts/setup.ps1`)
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1: Format/Lint Check**
 - [ ] Run `PSScriptAnalyzer` on setup.ps1
 - [ ] Fix any problems found
 - [ ] Proceed to Step 2
-
 **Step 2: Auto-Formatting**
 - [ ] Format PowerShell script if needed
 - [ ] Review changes
 - [ ] Proceed to Step 3
-
 **Step 3: Functional Testing**
 - [ ] Run setup script in test environment
 - [ ] Verify no errors or warnings
 - [ ] ✅ **Checkpoint:** After this step, linting/formatting/functionality should all pass
-
 **Step 4: Manual Audit**
-
 - [ ] Review functionality and logic
 - [ ] Check for error handling
 - [ ] Verify cross-platform compatibility notes
 - [ ] Check for hardcoded paths or values
 - [ ] Review user feedback messages
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] 🔄 **Loop back to Step 1** and repeat until files are perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `chore(scripts): audit and improve setup.ps1 [Phase 6.7]`
@@ -2368,73 +2102,56 @@ If Step 4 resulted in NO modifications:
 
 ---
 
-### Phase 7: Cross-Cutting Concerns (Priority: Medium)
-**Estimated Duration:** 1-2 days  
-**Focus:** Iterative quality loop for consistency checks with one commit per task
-
+### Phase 7: Cross-Cutting Concerns
+**Focus:** Iterative quality loop for consistency checks with one commit per task.
 **Strategy:** Each task below represents a cross-cutting concern. Follow the 5-step iterative loop for each task until perfect, then commit before moving to the next task.
 
 ---
 
 #### Task 7.1: Naming Conventions Audit
-**Estimated Duration:** 2 hours  
-**Commit After Completion:** Yes
-
 **Step 1: Automated Consistency Checks**
 - [ ] Run naming convention checker across all files
 - [ ] Check for inconsistent patterns
 - [ ] Proceed to Step 2
-
 **Step 2: Generate Consistency Report**
 - [ ] Create report of naming violations
 - [ ] Categorize by file type and severity
 - [ ] Proceed to Step 3
-
 **Step 3: Verify No Regressions**
 - [ ] Run all tests (`pytest tests/`)
 - [ ] Test application functionality
 - [ ] Verify all previous phases still pass
-- [ ] ✅ **Checkpoint:** After this step, all automated checks should pass
-
+- [ ] ✅ **Checkpoint:** After this step, all automated checks should all pass
 **Step 4: Manual Audit**
-
 Focus on consistency and patterns across the entire codebase:
-
 - [ ] **Files & Directories:**
   - Python: `snake_case.py`
   - JavaScript: `kebab-case.js`
   - CSS: `kebab-case.css`
   - Templates: `snake_case.html`
   - Document any violations
-
 - [ ] **Variables & Functions:**
   - Python: `snake_case`
   - JavaScript: `camelCase`
   - Document any violations
-
 - [ ] **Classes:**
   - Python: `PascalCase`
   - JavaScript: `PascalCase`
   - CSS: `kebab-case` or BEM
   - Document any violations
-
 - [ ] **Constants:**
   - Python: `UPPER_SNAKE_CASE`
   - JavaScript: `UPPER_SNAKE_CASE`
   - Document any violations
-
 - [ ] **Database:**
   - Tables: `snake_case`
   - Columns: `snake_case`
   - Document any violations
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update affected files
 - [ ] 🔄 **Loop back to Step 1** and repeat until perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `refactor(naming): standardize naming conventions across codebase [Phase 7.1]`
@@ -2443,39 +2160,29 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 7.2: Environment Configuration Audit
-**Estimated Duration:** 30 minutes  
-**Commit After Completion:** Yes
-
 **Step 1: Automated Consistency Checks**
 - [ ] Scan codebase for environment variable usage
 - [ ] Check for undocumented variables
 - [ ] Proceed to Step 2
-
 **Step 2: Generate Consistency Report**
 - [ ] List all environment variables used in code
 - [ ] Compare with `.env.example`
 - [ ] Proceed to Step 3
-
 **Step 3: Verify No Regressions**
 - [ ] Run all tests (`pytest tests/`)
 - [ ] Test application functionality
 - [ ] ✅ **Checkpoint:** After this step, all automated checks should pass
-
 **Step 4: Manual Audit**
-
 - [ ] Review `.env.example` completeness
 - [ ] Check for sensitive data in version control
 - [ ] Verify all environment variables are documented
 - [ ] Review default values and fallbacks
 - [ ] Cross-reference with actual usage in code
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update affected files
 - [ ] 🔄 **Loop back to Step 1** and repeat until perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `refactor(config): audit and standardize environment configuration [Phase 7.2]`
@@ -2484,39 +2191,29 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 7.3: Code Duplication Analysis
-**Estimated Duration:** 1 hour  
-**Commit After Completion:** Yes
-
 **Step 1: Automated Consistency Checks**
 - [ ] Run duplicate code detector (jscpd) across entire codebase
 - [ ] Generate duplication report
 - [ ] Proceed to Step 2
-
 **Step 2: Generate Consistency Report**
 - [ ] List duplicate code blocks
 - [ ] Prioritize by size and impact
 - [ ] Proceed to Step 3
-
 **Step 3: Verify No Regressions**
 - [ ] Run all tests (`pytest tests/`)
 - [ ] Test application functionality
 - [ ] ✅ **Checkpoint:** After this step, all automated checks should pass
-
 **Step 4: Manual Audit**
-
 - [ ] Review jscpd report for duplicate blocks
 - [ ] Identify opportunities for refactoring
 - [ ] Check for duplicate logic across Python/JavaScript
 - [ ] Verify no duplicate CSS rules
 - [ ] Check for duplicate template blocks
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update affected files
 - [ ] 🔄 **Loop back to Step 1** and repeat until perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `refactor(duplication): remove code duplicates [Phase 7.3]`
@@ -2525,40 +2222,30 @@ If Step 4 resulted in NO modifications:
 ---
 
 #### Task 7.4: Final Consistency Check
-**Estimated Duration:** 1 hour  
-**Commit After Completion:** Yes
-
 **Step 1: Automated Consistency Checks**
 - [ ] Run all linters one final time
 - [ ] Run all formatters one final time
 - [ ] Proceed to Step 2
-
 **Step 2: Generate Consistency Report**
 - [ ] Create final audit summary
 - [ ] List any remaining issues
 - [ ] Proceed to Step 3
-
 **Step 3: Verify No Regressions**
 - [ ] Run all tests (`pytest tests/`)
 - [ ] Test application functionality
 - [ ] Verify all previous phases still pass
 - [ ] ✅ **Checkpoint:** After this step, all automated checks should pass
-
 **Step 4: Manual Audit**
-
 - [ ] Verify naming consistency across all files
 - [ ] Check for remaining code duplicates
 - [ ] Review overall code organization
 - [ ] Verify all standards are applied consistently
 - [ ] Check for any missed issues from previous phases
-
 **Step 5: Document & Loop (If Changes Made)**
-
 If Step 4 resulted in modifications:
 - [ ] Document what was changed and why
 - [ ] Update affected files
 - [ ] 🔄 **Loop back to Step 1** and repeat until perfect
-
 If Step 4 resulted in NO modifications:
 - [ ] Mark task as COMPLETE ✅
 - [ ] Commit changes with message: `refactor(final): final consistency check and cleanup [Phase 7.4]`
@@ -2703,8 +2390,7 @@ After each phase implementation, perform comprehensive manual testing:
   - [ ] Task 7.4: Final Consistency Check
 
 **Total Tasks:** 49 tasks across 7 phases  
-**Total Commits:** 49 commits (one per task)  
-**Estimated Duration:** 8-12 days total
+**Total Commits:** 49 commits (one per task)
 
 ### Metrics to Track
 - **Issues Found:** Total number of issues identified

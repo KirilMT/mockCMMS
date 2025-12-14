@@ -1,7 +1,7 @@
 # AI Agent Guide - Code Quality Audit
 
 **Created:** December 13, 2025  
-**Last Updated:** December 14, 2025  
+**Last Updated:** December 15, 2025
 **Purpose:** AI prompts for all 49 tasks in core_code_quality_plan.md
 
 ---
@@ -9,8 +9,8 @@
 ## 📚 Quick Links
 
 **Related Documentation:**
-- 📋 [core_code_quality_plan.md](core_code_quality_plan.md) - The audit structure (49 tasks, 6 phases)
-- 🗓️ [IMPLEMENTATION_PRIORITY_GUIDE.md](IMPLEMENTATION_PRIORITY_GUIDE.md) - Overall timeline (7 weeks)
+- 📋 [core_code_quality_plan.md](core_code_quality_plan.md) - The audit structure (49 tasks, 7 phases)
+- 🗓️ [IMPLEMENTATION_PRIORITY_GUIDE.md](IMPLEMENTATION_PRIORITY_GUIDE.md) - Overall timeline
 - 🗺️ [mockCMMS_roadmap.md](mockCMMS_roadmap.md) - Strategic vision and standards
 - ✅ [comprehensive_testing_plan.md](comprehensive_testing_plan.md) - Testing foundation (210 tests complete)
 
@@ -25,24 +25,25 @@
 
 This guide provides ready-to-use prompts for AI assistants working on the mockCMMS code quality audit. Each prompt corresponds to a task in `core_code_quality_plan.md`.
 
-**Structure:** 49 tasks across 6 phases
-- **Phase 1:** Python Backend (6 tasks)
-- **Phase 2:** JavaScript Frontend (13 tasks)
-- **Phase 3:** CSS Styling (3 tasks)
-- **Phase 4:** HTML Templates (16 tasks)
-- **Phase 5:** Root-Level Files (7 tasks)
-- **Phase 6:** Cross-Cutting Concerns (4 tasks)
+**Structure:** 49 tasks across 7 phases
+- **Phase 1:** Automated Code Quality Analysis (1 task)
+- **Phase 2:** Python Backend (6 tasks)
+- **Phase 3:** JavaScript Frontend (13 tasks)
+- **Phase 4:** CSS Styling (3 tasks)
+- **Phase 5:** HTML Templates (16 tasks)
+- **Phase 6:** Root-Level Files (7 tasks)
+- **Phase 7:** Cross-Cutting Concerns (4 tasks)
 
 **Workflow per task:** Lint → Format → Test → Manual Audit → Loop or Commit
 
 ---
 
-## Phase 1: Python Backend Analysis (6 tasks)
+## Phase 2: Python Backend Analysis (6 tasks)
 
-### Task 1.1: API Routes (`src/routes/api.py`) ✅ Completed
+### Task 2.1: API Routes (`src/routes/api.py`) ✅ Completed
 
 ```
-I'm on Week 3, Phase 1, Task 1.1 of the mockCMMS code quality audit.
+I'm on Phase 2, Task 2.1 of the mockCMMS code quality audit.
 
 Task: Audit src/routes/api.py using the 5-step iterative loop
 
@@ -81,19 +82,19 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - Mark task as COMPLETE ✅
-- Commit with message: `refactor(api): audit and improve api.py [Phase 1.1]`
-- Update [core_code_quality_plan.md](core_code_quality_plan.md): Mark Task 1.1 [x]
-- Move to Task 1.2
+- Commit with message: `refactor(api): audit and improve api.py [Phase 2.1]`
+- Update [core_code_quality_plan.md](core_code_quality_plan.md): Mark Task 2.1 [x]
+- Move to Task 2.2
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 1.2: Web Routes (`src/routes/main.py`)
+### Task 2.2: Web Routes (`src/routes/main.py`)
 
 ```
-I'm on Week 3, Phase 1, Task 1.2 of the mockCMMS code quality audit.
+I'm on Phase 2, Task 2.2 of the mockCMMS code quality audit.
 
 Task: Audit src/routes/main.py using the 5-step iterative loop
 
@@ -132,18 +133,18 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - Mark task as COMPLETE ✅
-- Commit with message: `refactor(routes): audit and improve main.py [Phase 1.2]`
-- Move to Task 1.3
+- Commit with message: `refactor(routes): audit and improve main.py [Phase 2.2]`
+- Move to Task 2.3
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 1.3: Database Utilities (`src/services/db_utils.py`)
+### Task 2.3: Database Utilities (`src/services/db_utils.py`)
 
 ```
-I'm on Week 3, Phase 1, Task 1.3 of the mockCMMS code quality audit.
+I'm on Phase 2, Task 2.3 of the mockCMMS code quality audit.
 
 Task: Audit src/services/db_utils.py using the 5-step iterative loop
 
@@ -182,18 +183,18 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - Mark task as COMPLETE ✅
-- Commit with message: `refactor(db): audit and improve db_utils.py [Phase 1.3]`
-- Move to Task 1.4
+- Commit with message: `refactor(db): audit and improve db_utils.py [Phase 2.3]`
+- Move to Task 2.4
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 1.4: Database Seeding (`src/services/db_seeding.py`)
+### Task 2.4: Database Seeding (`src/services/db_seeding.py`)
 
 ```
-I'm on Week 3, Phase 1, Task 1.4 of the mockCMMS code quality audit.
+I'm on Phase 2, Task 2.4 of the mockCMMS code quality audit.
 
 Task: Audit src/services/db_seeding.py using the 5-step iterative loop
 
@@ -232,18 +233,18 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - Mark task as COMPLETE ✅
-- Commit with message: `refactor(db): audit and improve db_seeding.py [Phase 1.4]`
-- Move to Task 1.5
+- Commit with message: `refactor(db): audit and improve db_seeding.py [Phase 2.4]`
+- Move to Task 2.5
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 1.5: Shift Utilities (`src/services/shift_utils.py`)
+### Task 2.5: Shift Utilities (`src/services/shift_utils.py`)
 
 ```
-I'm on Week 3, Phase 1, Task 1.5 of the mockCMMS code quality audit.
+I'm on Phase 2, Task 2.5 of the mockCMMS code quality audit.
 
 Task: Audit src/services/shift_utils.py using the 5-step iterative loop
 
@@ -282,18 +283,18 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - Mark task as COMPLETE ✅
-- Commit with message: `refactor(services): audit and improve shift_utils.py [Phase 1.5]`
-- Move to Task 1.6
+- Commit with message: `refactor(services): audit and improve shift_utils.py [Phase 2.5]`
+- Move to Task 2.6
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 1.6: Flask Application Factory (`src/app.py`)
+### Task 2.6: Flask Application Factory (`src/app.py`)
 
 ```
-I'm on Week 3, Phase 1, Task 1.6 of the mockCMMS code quality audit.
+I'm on Phase 2, Task 2.6 of the mockCMMS code quality audit.
 
 Task: Audit src/app.py using the 5-step iterative loop
 
@@ -332,15 +333,15 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - Mark task as COMPLETE ✅
-- Commit with message: `refactor(app): audit and improve app.py [Phase 1.6]`
-- Phase 1 COMPLETE - Move to Phase 2
+- Commit with message: `refactor(app): audit and improve app.py [Phase 2.6]`
+- Phase 2 COMPLETE - Move to Phase 3
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-## Phase 1 Final Verification
+## Phase 2 Final Verification
 
 After all 6 tasks complete:
 - [ ] Run full test suite: `pytest tests/` (all 210 tests must pass)
@@ -348,19 +349,19 @@ After all 6 tasks complete:
 - [ ] Run pylint: `pylint src/` (maintain 9.15/10+)
 - [ ] Verify application starts: `python run.py`
 - [ ] Document findings in audit report
-- [ ] Mark Phase 1 COMPLETE ✅
+- [ ] Mark Phase 2 COMPLETE ✅
 
 **Deliverable:** 6 commits, all Python backend files audited and improved
 
 
 ---
 
-## Phase 2: JavaScript Frontend Analysis (13 tasks)
+## Phase 3: JavaScript Frontend Analysis (13 tasks)
 
-### Task 2.1: Advanced Table Core (`src/static/js/advanced-table/table-core.js`)
+### Task 3.1: Advanced Table Core (`src/static/js/advanced-table/table-core.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.1 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.1 of the mockCMMS code quality audit.
 
 Task: Audit table-core.js using the 5-step iterative loop
 
@@ -401,22 +402,22 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - Mark task as COMPLETE ✅
-- Commit with message: `refactor(table): audit and improve table-core.js [Phase 2.1]`
-- Move to Task 2.2
+- Commit with message: `refactor(table): audit and improve table-core.js [Phase 3.1]`
+- Move to Task 3.2
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.2: Table Initialization (`src/static/js/advanced-table/table-init.js`)
+### Task 3.2: Table Initialization (`src/static/js/advanced-table/table-init.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.2 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.2 of the mockCMMS code quality audit.
 
 Task: Audit table-init.js using the 5-step iterative loop
 
-Please follow the same 5-step process as Task 2.1:
+Please follow the same 5-step process as Task 3.1:
 1. ESLint check
 2. Prettier formatting
 3. Browser testing
@@ -429,17 +430,17 @@ Please follow the same 5-step process as Task 2.1:
    - [ ] Add JSDoc comments
 5. Document & loop or commit
 
-Commit message: `refactor(table): audit and improve table-init.js [Phase 2.2]`
+Commit message: `refactor(table): audit and improve table-init.js [Phase 3.2]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.3: Table Rendering (`src/static/js/advanced-table/table-render.js`)
+### Task 3.3: Table Rendering (`src/static/js/advanced-table/table-render.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.3 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.3 of the mockCMMS code quality audit.
 
 Task: Audit table-render.js using the 5-step iterative loop
 
@@ -454,17 +455,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(table): audit and improve table-render.js [Phase 2.3]`
+Commit message: `refactor(table): audit and improve table-render.js [Phase 3.3]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.4: Table Data Operations (`src/static/js/advanced-table/table-data.js`)
+### Task 3.4: Table Data Operations (`src/static/js/advanced-table/table-data.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.4 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.4 of the mockCMMS code quality audit.
 
 Task: Audit table-data.js using the 5-step iterative loop
 
@@ -479,17 +480,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(table): audit and improve table-data.js [Phase 2.4]`
+Commit message: `refactor(table): audit and improve table-data.js [Phase 3.4]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.5: Table Configuration (`src/static/js/advanced-table/table-config.js`)
+### Task 3.5: Table Configuration (`src/static/js/advanced-table/table-config.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.5 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.5 of the mockCMMS code quality audit.
 
 Task: Audit table-config.js using the 5-step iterative loop
 
@@ -504,17 +505,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(table): audit and improve table-config.js [Phase 2.5]`
+Commit message: `refactor(table): audit and improve table-config.js [Phase 3.5]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.6: Table Events (`src/static/js/advanced-table/table-events.js`)
+### Task 3.6: Table Events (`src/static/js/advanced-table/table-events.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.6 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.6 of the mockCMMS code quality audit.
 
 Task: Audit table-events.js using the 5-step iterative loop
 
@@ -529,17 +530,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(table): audit and improve table-events.js [Phase 2.6]`
+Commit message: `refactor(table): audit and improve table-events.js [Phase 3.6]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.7: Table Export (`src/static/js/advanced-table/table-export.js`)
+### Task 3.7: Table Export (`src/static/js/advanced-table/table-export.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.7 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.7 of the mockCMMS code quality audit.
 
 Task: Audit table-export.js using the 5-step iterative loop
 
@@ -554,17 +555,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(table): audit and improve table-export.js [Phase 2.7]`
+Commit message: `refactor(table): audit and improve table-export.js [Phase 3.7]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.8: Table Sidebar (`src/static/js/advanced-table/table-sidebar.js`)
+### Task 3.8: Table Sidebar (`src/static/js/advanced-table/table-sidebar.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.8 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.8 of the mockCMMS code quality audit.
 
 Task: Audit table-sidebar.js using the 5-step iterative loop
 
@@ -579,17 +580,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(table): audit and improve table-sidebar.js [Phase 2.8]`
+Commit message: `refactor(table): audit and improve table-sidebar.js [Phase 3.8]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.9: Table Resize (`src/static/js/advanced-table/table-resize.js`)
+### Task 3.9: Table Resize (`src/static/js/advanced-table/table-resize.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.9 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.9 of the mockCMMS code quality audit.
 
 Task: Audit table-resize.js using the 5-step iterative loop
 
@@ -604,17 +605,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(table): audit and improve table-resize.js [Phase 2.9]`
+Commit message: `refactor(table): audit and improve table-resize.js [Phase 3.9]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.10: Table Loading States (`src/static/js/advanced-table/table-loading.js`)
+### Task 3.10: Table Loading States (`src/static/js/advanced-table/table-loading.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.10 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.10 of the mockCMMS code quality audit.
 
 Task: Audit table-loading.js using the 5-step iterative loop
 
@@ -629,17 +630,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(table): audit and improve table-loading.js [Phase 2.10]`
+Commit message: `refactor(table): audit and improve table-loading.js [Phase 3.10]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.11: Table Retry Logic (`src/static/js/advanced-table/table-retry.js`)
+### Task 3.11: Table Retry Logic (`src/static/js/advanced-table/table-retry.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.11 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.11 of the mockCMMS code quality audit.
 
 Task: Audit table-retry.js using the 5-step iterative loop
 
@@ -654,17 +655,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(table): audit and improve table-retry.js [Phase 2.11]`
+Commit message: `refactor(table): audit and improve table-retry.js [Phase 3.11]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.12: Toast Notifications (`src/static/js/toast-notification.js`)
+### Task 3.12: Toast Notifications (`src/static/js/toast-notification.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.12 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.12 of the mockCMMS code quality audit.
 
 Task: Audit toast-notification.js using the 5-step iterative loop
 
@@ -679,17 +680,17 @@ Manual audit focus:
 - [ ] Remove bug references
 - [ ] Add JSDoc comments
 
-Commit message: `refactor(js): audit and improve toast-notification.js [Phase 2.12]`
+Commit message: `refactor(js): audit and improve toast-notification.js [Phase 3.12]`
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-### Task 2.13: Flash Messages Handler (`src/static/js/flash-messages.js`)
+### Task 3.13: Flash Messages Handler (`src/static/js/flash-messages.js`)
 
 ```
-I'm on Week 3, Phase 2, Task 2.13 of the mockCMMS code quality audit.
+I'm on Phase 3, Task 3.13 of the mockCMMS code quality audit.
 
 Task: Audit flash-messages.js using the 5-step iterative loop
 
@@ -711,15 +712,15 @@ If Step 4 resulted in modifications:
 
 If Step 4 resulted in NO modifications:
 - Mark task as COMPLETE ✅
-- Commit with message: `refactor(js): audit and improve flash-messages.js [Phase 2.13]`
-- Phase 2 COMPLETE - Move to Phase 3
+- Commit with message: `refactor(js): audit and improve flash-messages.js [Phase 3.13]`
+- Phase 3 COMPLETE - Move to Phase 4
 
 Show me your findings and proposed changes before implementing.
 ```
 
 ---
 
-## Phase 2 Final Verification
+## Phase 3 Final Verification
 
 After all 13 tasks complete:
 - [ ] Load application in browser
@@ -729,19 +730,19 @@ After all 13 tasks complete:
 - [ ] Test flash messages from Flask
 - [ ] Run ESLint on all JS files
 - [ ] Document findings in audit report
-- [ ] Mark Phase 2 COMPLETE ✅
+- [ ] Mark Phase 3 COMPLETE ✅
 
 **Deliverable:** 13 commits, all JavaScript files audited and improved
 
 
 ---
 
-## Phase 3: CSS Styling Analysis (3 tasks)
+## Phase 4: CSS Styling Analysis (3 tasks)
 
-### Task 3.1: Main Styles (`src/static/css/main.css`)
+### Task 4.1: Main Styles (`src/static/css/main.css`)
 
 ```
-I'm on Week 4, Phase 3, Task 3.1 of the mockCMMS code quality audit.
+I'm on Phase 4, Task 4.1 of the mockCMMS code quality audit.
 
 Task: Audit main.css using the 5-step iterative loop
 
@@ -774,17 +775,17 @@ Please:
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `refactor(css): audit and improve main.css [Phase 3.1]`
+Commit message: `refactor(css): audit and improve main.css [Phase 4.1]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 3.2: Advanced Table Styles (`src/static/css/advanced-table.css`)
+### Task 4.2: Advanced Table Styles (`src/static/css/advanced-table.css`)
 
 ```
-I'm on Week 4, Phase 3, Task 3.2 of the mockCMMS code quality audit.
+I'm on Phase 4, Task 4.2 of the mockCMMS code quality audit.
 
 Task: Audit advanced-table.css using the 5-step iterative loop
 
@@ -798,17 +799,17 @@ Manual audit focus:
 - [ ] Review animation performance
 - [ ] Check accessibility (focus states, contrast)
 
-Commit message: `refactor(css): audit and improve advanced-table.css [Phase 3.2]`
+Commit message: `refactor(css): audit and improve advanced-table.css [Phase 4.2]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 3.3: Form Styles (`src/static/css/forms.css`)
+### Task 4.3: Form Styles (`src/static/css/forms.css`)
 
 ```
-I'm on Week 4, Phase 3, Task 3.3 of the mockCMMS code quality audit.
+I'm on Phase 4, Task 4.3 of the mockCMMS code quality audit.
 
 Task: Audit forms.css using the 5-step iterative loop
 
@@ -824,15 +825,15 @@ Manual audit focus:
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `refactor(css): audit and improve forms.css [Phase 3.3]`
-Phase 3 COMPLETE - Move to Phase 4
+Commit message: `refactor(css): audit and improve forms.css [Phase 4.3]`
+Phase 4 COMPLETE - Move to Phase 5
 
 Show me your findings before implementing.
 ```
 
 ---
 
-## Phase 3 Final Verification
+## Phase 4 Final Verification
 
 After all 3 tasks complete:
 - [ ] Load all pages in browser
@@ -841,18 +842,18 @@ After all 3 tasks complete:
 - [ ] Check accessibility (contrast, focus states)
 - [ ] Run stylelint on all CSS files
 - [ ] Document findings
-- [ ] Mark Phase 3 COMPLETE ✅
+- [ ] Mark Phase 4 COMPLETE ✅
 
 **Deliverable:** 3 commits, all CSS files audited and improved
 
 ---
 
-## Phase 4: HTML Templates Analysis (16 tasks)
+## Phase 5: HTML Templates Analysis (16 tasks)
 
-### Task 4.1: Base Template (`src/templates/base.html`)
+### Task 5.1: Base Template (`src/templates/base.html`)
 
 ```
-I'm on Week 4, Phase 4, Task 4.1 of the mockCMMS code quality audit.
+I'm on Phase 5, Task 5.1 of the mockCMMS code quality audit.
 
 Task: Audit base.html using the 5-step iterative loop
 
@@ -881,23 +882,23 @@ Task: Audit base.html using the 5-step iterative loop
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `refactor(templates): audit and improve base.html [Phase 4.1]`
+Commit message: `refactor(templates): audit and improve base.html [Phase 5.1]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 4.2-4.16: Individual Templates
+### Task 5.2-5.16: Individual Templates
 
 For each template (index.html, assets.html, asset_detail.html, maintenance_orders.html, mo_detail.html, spare_parts.html, spare_part_detail.html, users.html, user_detail.html, login.html, register.html, 404.html, 500.html, components/table.html, components/filters.html):
 
 ```
-I'm on Week 4, Phase 4, Task 4.[X] of the mockCMMS code quality audit.
+I'm on Phase 5, Task 5.[X] of the mockCMMS code quality audit.
 
 Task: Audit [TEMPLATE_NAME] using the 5-step iterative loop
 
-Follow same process as Task 4.1:
+Follow same process as Task 5.1:
 1. djlint formatting
 2. Review changes
 3. Browser testing
@@ -912,14 +913,14 @@ Follow same process as Task 4.1:
    - [ ] Check for duplicate code
 5. Document & loop or commit
 
-Commit message: `refactor(templates): audit and improve [TEMPLATE_NAME] [Phase 4.X]`
+Commit message: `refactor(templates): audit and improve [TEMPLATE_NAME] [Phase 5.X]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-## Phase 4 Final Verification
+## Phase 5 Final Verification
 
 After all 16 tasks complete:
 - [ ] Load all pages in browser
@@ -929,18 +930,18 @@ After all 16 tasks complete:
 - [ ] Check for console errors
 - [ ] Run djlint on all templates
 - [ ] Document findings
-- [ ] Mark Phase 4 COMPLETE ✅
+- [ ] Mark Phase 5 COMPLETE ✅
 
 **Deliverable:** 16 commits, all templates audited and improved
 
 ---
 
-## Phase 5: Root-Level Files Analysis (7 tasks)
+## Phase 6: Root-Level Files Analysis (7 tasks)
 
-### Task 5.1: Application Entry Point (`run.py`)
+### Task 6.1: Application Entry Point (`run.py`)
 
 ```
-I'm on Week 5, Phase 5, Task 5.1 of the mockCMMS code quality audit.
+I'm on Phase 6, Task 6.1 of the mockCMMS code quality audit.
 
 Task: Audit run.py using the 5-step iterative loop
 
@@ -957,17 +958,17 @@ Task: Audit run.py using the 5-step iterative loop
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `refactor(root): audit and improve run.py [Phase 5.1]`
+Commit message: `refactor(root): audit and improve run.py [Phase 6.1]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 5.2: Requirements (`requirements.txt`)
+### Task 6.2: Requirements (`requirements.txt`)
 
 ```
-I'm on Week 5, Phase 5, Task 5.2 of the mockCMMS code quality audit.
+I'm on Phase 6, Task 6.2 of the mockCMMS code quality audit.
 
 Task: Audit requirements.txt
 
@@ -994,17 +995,17 @@ Task: Audit requirements.txt
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `chore(deps): audit and improve requirements.txt [Phase 5.2]`
+Commit message: `chore(deps): audit and improve requirements.txt [Phase 6.2]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 5.3: Environment Configuration (`.env.example`)
+### Task 6.3: Environment Configuration (`.env.example`)
 
 ```
-I'm on Week 5, Phase 5, Task 5.3 of the mockCMMS code quality audit.
+I'm on Phase 6, Task 6.3 of the mockCMMS code quality audit.
 
 Task: Audit .env.example
 
@@ -1017,17 +1018,17 @@ Task: Audit .env.example
 - [ ] Check consistency with code
 - [ ] Verify app enable flags
 
-Commit message: `docs(config): audit and improve .env.example [Phase 5.3]`
+Commit message: `docs(config): audit and improve .env.example [Phase 6.3]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 5.4: Documentation (`README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`)
+### Task 6.4: Documentation (`README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`)
 
 ```
-I'm on Week 5, Phase 5, Task 5.4 of the mockCMMS code quality audit.
+I'm on Phase 6, Task 6.4 of the mockCMMS code quality audit.
 
 Task: Audit documentation files
 
@@ -1041,17 +1042,17 @@ Task: Audit documentation files
 - [ ] Update version numbers
 - [ ] Check for outdated info
 
-Commit message: `docs: audit and improve documentation [Phase 5.4]`
+Commit message: `docs: audit and improve documentation [Phase 6.4]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 5.5: GitHub Configuration (`.github/` files)
+### Task 6.5: GitHub Configuration (`.github/` files)
 
 ```
-I'm on Week 5, Phase 5, Task 5.5 of the mockCMMS code quality audit.
+I'm on Phase 6, Task 6.5 of the mockCMMS code quality audit.
 
 Task: Audit GitHub configuration files
 
@@ -1064,17 +1065,17 @@ Task: Audit GitHub configuration files
 - [ ] Verify dependabot.yml
 - [ ] Review security policy
 
-Commit message: `docs(github): audit and improve GitHub configuration [Phase 5.5]`
+Commit message: `docs(github): audit and improve GitHub configuration [Phase 6.5]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 5.6: Test Infrastructure (`tests/conftest.py`, `test_data/dummy_data.json`)
+### Task 6.6: Test Infrastructure (`tests/conftest.py`, `test_data/dummy_data.json`)
 
 ```
-I'm on Week 5, Phase 5, Task 5.6 of the mockCMMS code quality audit.
+I'm on Phase 6, Task 6.6 of the mockCMMS code quality audit.
 
 Task: Audit test infrastructure
 
@@ -1088,17 +1089,17 @@ Task: Audit test infrastructure
 - [ ] Check for duplicate fixtures
 - [ ] Verify fixture scope
 
-Commit message: `test: audit and improve test infrastructure [Phase 5.6]`
+Commit message: `test: audit and improve test infrastructure [Phase 6.6]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 5.7: Scripts (`scripts/setup.ps1`)
+### Task 6.7: Scripts (`scripts/setup.ps1`)
 
 ```
-I'm on Week 5, Phase 5, Task 5.7 of the mockCMMS code quality audit.
+I'm on Phase 6, Task 6.7 of the mockCMMS code quality audit.
 
 Task: Audit setup.ps1
 
@@ -1118,15 +1119,15 @@ Task: Audit setup.ps1
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `chore(scripts): audit and improve setup.ps1 [Phase 5.7]`
-Phase 5 COMPLETE - Move to Phase 6
+Commit message: `chore(scripts): audit and improve setup.ps1 [Phase 6.7]`
+Phase 6 COMPLETE - Move to Phase 7
 
 Show me your findings before implementing.
 ```
 
 ---
 
-## Phase 5 Final Verification
+## Phase 6 Final Verification
 
 After all 7 tasks complete:
 - [ ] Run setup script from scratch
@@ -1134,18 +1135,18 @@ After all 7 tasks complete:
 - [ ] Run pip-audit
 - [ ] Test application startup
 - [ ] Document findings
-- [ ] Mark Phase 5 COMPLETE ✅
+- [ ] Mark Phase 6 COMPLETE ✅
 
 **Deliverable:** 7 commits, all root files audited
 
 ---
 
-## Phase 6: Cross-Cutting Concerns (4 tasks)
+## Phase 7: Cross-Cutting Concerns (4 tasks)
 
-### Task 6.1: Naming Conventions Audit
+### Task 7.1: Naming Conventions Audit
 
 ```
-I'm on Week 5, Phase 6, Task 6.1 of the mockCMMS code quality audit.
+I'm on Phase 7, Task 7.1 of the mockCMMS code quality audit.
 
 Task: Audit naming conventions across entire codebase
 
@@ -1169,17 +1170,17 @@ Task: Audit naming conventions across entire codebase
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `refactor(naming): standardize naming conventions [Phase 6.1]`
+Commit message: `refactor(naming): standardize naming conventions [Phase 7.1]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 6.2: Environment Configuration Audit
+### Task 7.2: Environment Configuration Audit
 
 ```
-I'm on Week 5, Phase 6, Task 6.2 of the mockCMMS code quality audit.
+I'm on Phase 7, Task 7.2 of the mockCMMS code quality audit.
 
 Task: Audit environment configuration usage
 
@@ -1202,17 +1203,17 @@ Task: Audit environment configuration usage
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `refactor(config): audit and standardize environment configuration [Phase 6.2]`
+Commit message: `refactor(config): audit and standardize environment configuration [Phase 7.2]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 6.3: Code Duplication Analysis
+### Task 7.3: Code Duplication Analysis
 
 ```
-I'm on Week 5, Phase 6, Task 6.3 of the mockCMMS code quality audit.
+I'm on Phase 7, Task 7.3 of the mockCMMS code quality audit.
 
 Task: Analyze code duplication
 
@@ -1235,17 +1236,17 @@ Task: Analyze code duplication
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `refactor(duplication): remove code duplicates [Phase 6.3]`
+Commit message: `refactor(duplication): remove code duplicates [Phase 7.3]`
 
 Show me your findings before implementing.
 ```
 
 ---
 
-### Task 6.4: Final Consistency Check
+### Task 7.4: Final Consistency Check
 
 ```
-I'm on Week 5, Phase 6, Task 6.4 of the mockCMMS code quality audit.
+I'm on Phase 7, Task 7.4 of the mockCMMS code quality audit.
 
 Task: Final consistency check across all code
 
@@ -1269,7 +1270,7 @@ Task: Final consistency check across all code
 
 **Step 5: Document & Loop or Commit**
 
-Commit message: `refactor(final): final consistency check [Phase 6.4]`
+Commit message: `refactor(final): final consistency check [Phase 7.4]`
 ALL PHASES COMPLETE ✅
 
 Show me your findings before implementing.
@@ -1277,7 +1278,7 @@ Show me your findings before implementing.
 
 ---
 
-## Phase 6 Final Verification
+## Phase 7 Final Verification
 
 After all 4 tasks complete:
 - [ ] Run all linters one final time
@@ -1285,7 +1286,7 @@ After all 4 tasks complete:
 - [ ] Verify 82.99%+ coverage maintained
 - [ ] Test application end-to-end
 - [ ] Create final audit report
-- [ ] Mark Phase 6 COMPLETE ✅
+- [ ] Mark Phase 7 COMPLETE ✅
 - [ ] Mark ALL 49 TASKS COMPLETE ✅
 
 **Deliverable:** 4 commits, comprehensive audit complete
@@ -1301,11 +1302,9 @@ After all 4 tasks complete:
 │  IMPLEMENTATION_PRIORITY_GUIDE.md (MASTER PLAN)         │
 │  "What to do and when"                                   │
 │                                                          │
-│  Week 1: Foundation Setup                               │
-│  Week 2: Testing ────────┐                              │
-│  Week 3: Code Quality    │                              │
-│  Week 4-5: Audit         │                              │
-│  Week 6-7: Polish        │                              │
+│  Phase 1: Testing ────────┐                              │
+│  Phase 2: Code Quality    │                              │
+│  Phase 3-7: Audit         │                              │
 └──────────────────────────┼──────────────────────────────┘
                            │
                            ↓
@@ -1327,7 +1326,7 @@ After all 4 tasks complete:
 ```
 
 **AI reads:**
-1. **IMPLEMENTATION_PRIORITY_GUIDE.md** → Knows what week/phase you're in
+1. **IMPLEMENTATION_PRIORITY_GUIDE.md** → Knows what phase you're in
 2. **AI_AGENT_GUIDE.md** (this file) → Gets exact prompts for each task
 3. **core_code_quality_plan.md** → Understands the audit structure
 4. **mockCMMS_roadmap.md** → Knows WHAT standards to follow
@@ -1370,8 +1369,8 @@ AI should:
 ### 1. **Always Provide Context**
 ```
 ❌ Bad: "Fix app.py"
-✅ Good: "I'm on Phase 1, Task 1.6. Please audit app.py following 
-         the prompt in AI_AGENT_GUIDE.md Task 1.6."
+✅ Good: "I'm on Phase 2, Task 2.6. Please audit app.py following
+         the prompt in AI_AGENT_GUIDE.md Task 2.6."
 ```
 
 ### 2. **Reference Specific Sections**
@@ -1400,10 +1399,10 @@ core_code_quality_plan.md"
 
 ### 5. **One Task at a Time**
 ```
-❌ Bad: "Do all of Phase 1"
-✅ Good: "Do Task 1.1: API Routes"
+❌ Bad: "Do all of Phase 2"
+✅ Good: "Do Task 2.1: API Routes"
          (Then after completion)
-         "Do Task 1.2: Web Routes"
+         "Do Task 2.2: Web Routes"
 ```
 
 ---
@@ -1484,7 +1483,7 @@ Pre-Task Checklist:
 [ ] Read AI_AGENT_GUIDE.md for the specific task prompt
 [ ] Read core_code_quality_plan.md for context
 [ ] Understand which files to analyze/modify
-[ ] Know where to update progress
+- [ ] Know where to update progress
 
 During Task:
 [ ] Follow the 5-step iterative loop
@@ -1506,10 +1505,10 @@ Post-Task:
 
 ### Pattern 1: Iterative Refinement
 ```
-Round 1: "Run Step 1-3 of Task 1.1, show me lint/format/test results"
+Round 1: "Run Step 1-3 of Task 2.1, show me lint/format/test results"
 Round 2: "Now do Step 4 manual audit, list all issues found"
 Round 3: "Fix issues 1-3, then loop back to Step 1"
-Round 4: "No more issues? Commit and move to Task 1.2"
+Round 4: "No more issues? Commit and move to Task 2.2"
 
 Benefits:
 - You review each change
@@ -1519,7 +1518,7 @@ Benefits:
 
 ### Pattern 2: Batch Similar Tasks
 ```
-"Complete all Phase 2 JavaScript table-*.js files (Tasks 2.1-2.11)"
+"Complete all Phase 3 JavaScript table-*.js files (Tasks 3.1-3.11)"
 
 AI will:
 - Execute each task sequentially
@@ -1537,7 +1536,7 @@ AI will:
 ```
 I'm working on the mockCMMS project code quality audit.
 
-We're following a structured 49-task audit plan across 6 phases.
+We're following a structured 49-task audit plan across 7 phases.
 
 Please read:
 1. docs/AI_AGENT_GUIDE.md (this file - has prompts for all 49 tasks)
@@ -1545,8 +1544,8 @@ Please read:
 3. docs/IMPLEMENTATION_PRIORITY_GUIDE.md (overall timeline)
 
 Current status:
-- Phase 0: Complete (automated analysis done)
-- Phase 1: In Progress (Task 1.1 complete, working on 1.2)
+- Phase 1: Complete (automated analysis done)
+- Phase 2: In Progress (Task 2.1 complete, working on 2.2)
 
 Tell me:
 1. What task should we work on next?
@@ -1559,10 +1558,10 @@ Tell me:
 
 ### In core_code_quality_plan.md:
 ```markdown
-### Phase 1: Python Backend Analysis
-- [x] Task 1.1: API Routes (Completed 2025-12-13, 3 issues fixed)
-- [ ] Task 1.2: Web Routes (In Progress)
-- [ ] Task 1.3: Database Utilities
+### Phase 2: Python Backend Analysis
+- [x] Task 2.1: API Routes (Completed 2025-12-13, 3 issues fixed)
+- [ ] Task 2.2: Web Routes (In Progress)
+- [ ] Task 2.3: Database Utilities
 ...
 ```
 
@@ -1573,11 +1572,11 @@ Tell me:
 | Document | Status | Progress |
 |----------|--------|----------|
 | **AI_AGENT_GUIDE.md** | ✅ Complete | All 49 prompts ready |
-| **core_code_quality_plan.md** | 🔄 In Progress | Phase 0 ✅, Phase 1 started |
+| **core_code_quality_plan.md** | 🔄 In Progress | Phase 1 ✅, Phase 2 started |
 | **comprehensive_testing_plan.md** | ✅ Complete | 210/210 tests ✅ |
 | **mockCMMS_roadmap.md** | 📚 Reference | Strategic context |
 
-**Current Task:** Phase 1, Task 1.2 (Web Routes)
+**Current Task:** Phase 2, Task 2.2 (Web Routes)
 
 ---
 
@@ -1610,7 +1609,7 @@ You know AI understands the project when it:
 ### Update Progress
 ```
 "We just completed Task [X.Y].
-Please update core_code_quality_plan.md and suggest next task."
+Please update core_code_quality_plan.md and suggest the next task."
 ```
 
 ---
@@ -1637,4 +1636,4 @@ Please update core_code_quality_plan.md and suggest next task."
 ---
 
 **Last Updated:** December 13, 2025  
-**Next Review:** After Phase 1 completion
+**Next Review:** After Phase 2 completion
