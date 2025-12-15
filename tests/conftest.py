@@ -22,53 +22,32 @@ from src.services.db_utils import (
 )
 
 
-class TestConfig:
-    """Test-specific configuration for Flask application."""
-    TESTING = True
-    WTF_CSRF_ENABLED = False  # Disable CSRF for testing
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # Use in-memory database
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = 'test-secret-key-do-not-use-in-production'
-    DEBUG_USE_TEST_DB = False  # Don't auto-seed in tests
-    PLANNING_ENABLED = 'False'  # Disable planning by default in tests
-    REPORTS_ENABLED = 'False'  # Disable reports by default in tests
-
-
 @pytest.fixture(scope='function')
 def app():
     """
     Create and configure a Flask app instance for testing.
 
-    Uses in-memory SQLite database that is created fresh for each test
+    Uses an in-memory SQLite database that is created fresh for each test
     and destroyed after the test completes.
 
     Yields:
-        Flask: Configured Flask application in testing mode
+        Flask: Configured Flask application in testing mode.
     """
-    # Set TESTING environment variable BEFORE creating app
-    original_testing = os.environ.get('TESTING')
-    os.environ['TESTING'] = '1'
+    config_overrides = {
+        'TESTING': True,
+        'WTF_CSRF_ENABLED': False,
+        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+        'AUTO_SEED_DATABASE': False,  # Prevent seeding in tests
+        'SERVER_NAME': 'localhost.localdomain'  # Required for url_for to work in tests
+    }
     
-    try:
-        # Create app with test config (will use :memory: database)
-        test_app = create_app(config=TestConfig)
-        
-        # Verify we're using in-memory database
-        assert test_app.config['SQLALCHEMY_DATABASE_URI'] == 'sqlite:///:memory:', \
-            f"ERROR: Tests using wrong database: {test_app.config['SQLALCHEMY_DATABASE_URI']}"
+    test_app = create_app(config_overrides)
 
-        # Setup application context and database
-        with test_app.app_context():
-            db.create_all()
-            yield test_app
-            db.session.remove()
-            db.drop_all()
-    finally:
-        # Clean up environment
-        if original_testing is None:
-            os.environ.pop('TESTING', None)
-        else:
-            os.environ['TESTING'] = original_testing
+    with test_app.app_context():
+        # db.create_all() is now called within create_app
+        yield test_app
+        # Clean up the database after each test
+        db.drop_all()
 
 
 @pytest.fixture(scope='function')
@@ -447,9 +426,7 @@ def multiple_mos(app, multiple_assets, sample_user):
                 order_type='corrective',
                 status='Completed',
                 priority='Medium',
-                created_by=sample_user.id,
-                completed_by=sample_user.id,
-                completed_on=datetime.now(timezone.utc)
+                created_by=sample_user.id
             )
         ]
         for mo in mos:

@@ -70,19 +70,11 @@ class TestAppFactory:
             db.session.remove()
             db.engine.dispose()
 
-    @patch('src.app.load_dotenv')
-    @patch.dict(os.environ, {'TESTING': '0', 'TESTING_PRODUCTION': '1'}, clear=True)
-    def test_secret_key_fallback(self, mock_load_dotenv):
-        """Test app uses fallback SECRET_KEY when not in environment."""
-        mock_load_dotenv.return_value = None
-        app = create_app()
-        assert app.secret_key is not None
-        assert app.secret_key == 'dev_key_fallback_do_not_use_in_prod'
-        
-        # Clean up
-        with app.app_context():
-            db.session.remove()
-            db.engine.dispose()
+    def test_secret_key_fallback(self):
+        """Test app uses a fallback secret key when not in the environment."""
+        with patch.dict(os.environ, {}, clear=True):
+            app = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'})
+            assert app.secret_key == 'dev_key_fallback_for_testing'
 
     def test_database_uri_configuration(self, app):
         """Test SQLALCHEMY_DATABASE_URI is properly configured."""
@@ -304,11 +296,10 @@ class TestEnhancedAppConfiguration:
 
     def test_app_legacy_url_redirect(self, client):
         """Test legacy /planning-manager URLs redirect to /planning."""
-        response = client.get('/planning-manager/test', follow_redirects=False)
-        # Should redirect (302) or return 404 if planning not enabled
-        assert response.status_code in [302, 404]
-        if response.status_code == 302:
-            assert '/planning' in response.location
+        with patch.dict('os.environ', {'PLANNING_ENABLED': 'True'}):
+            response = client.get('/planning-manager/test', follow_redirects=False)
+            assert response.status_code == 301
+            assert '/planning/test' in response.location
 
     def test_app_context_processor_variables(self, app):
         """Test PLANNING_ENABLED and REPORTS_ENABLED injected into templates."""
@@ -330,16 +321,15 @@ class TestEnhancedAppConfiguration:
             assert isinstance(context['PLANNING_ENABLED'], bool)
             assert isinstance(context['REPORTS_ENABLED'], bool)
 
-    @patch.dict(os.environ, {'MOCKCMMS_DEBUG_USE_TEST_DB': '1', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
-    def test_app_auto_seed_database(self):
-        """Test database auto-seeding configuration when DEBUG_USE_TEST_DB=True."""
-        app = create_app()
-        assert app.config['DEBUG_USE_TEST_DB'] is True
-        
-        # Clean up
-        with app.app_context():
-            db.session.remove()
-            db.engine.dispose()
+    @patch('src.app.populate_dummy_data')
+    def test_app_auto_seed_database(self, mock_populate_dummy_data):
+        """Test that the database is auto-seeded based on the configuration."""
+        create_app({
+            'TESTING': True,
+            'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+            'AUTO_SEED_DATABASE': True
+        })
+        mock_populate_dummy_data.assert_called_once()
 
     def test_app_csrf_protection_initialized(self, app):
         """Test CSRF protection is initialized."""

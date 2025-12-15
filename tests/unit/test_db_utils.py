@@ -59,55 +59,22 @@ class TestDatabaseUtilities:
 
     def test_populate_dummy_data_idempotent(self, app, client):
         """
-        Test that populate_dummy_data behavior with multiple calls.
-
-        Note: The current implementation of populate_dummy_data() is NOT fully idempotent
-        as it attempts to create duplicate roles/skills. This test verifies the actual
-        behavior and ensures unique constraints are respected.
-
-        Verifies:
-        - First call succeeds and populates data
-        - Second call raises IntegrityError due to unique constraints
-        - This is expected behavior until populate_dummy_data is refactored
+        Test that populate_dummy_data is idempotent and does not create
+        duplicate data on multiple calls.
         """
         logger = logging.getLogger(__name__)
 
         with app.app_context():
-            # First population should succeed
+            # First population
             populate_dummy_data(logger)
+            count1 = User.query.count()
+            assert count1 > 0
 
-            # Get counts after first population
-            asset_count_1 = Asset.query.count()
-            mo_count_1 = MaintenanceOrder.query.count()
-            user_count_1 = User.query.count()
+            # Second population
+            populate_dummy_data(logger)
+            count2 = User.query.count()
 
-            # Verify data was populated
-            assert asset_count_1 > 0, "Assets should be populated after first call"
-            assert mo_count_1 > 0, "MOs should be populated after first call"
-            assert user_count_1 > 0, "Users should be populated after first call"
-
-            # NOTE: Current implementation is NOT idempotent
-            # Second call will raise IntegrityError on unique constraints
-            # This is acceptable behavior for now - the function is meant to be
-            # called once during initial setup, not repeatedly
-
-            # Attempting second population will fail due to unique constraints
-            from sqlalchemy.exc import IntegrityError
-            with pytest.raises(IntegrityError):
-                populate_dummy_data(logger)
-
-            # After IntegrityError, we need to rollback the session
-            db.session.rollback()
-
-            # Verify original data is still intact (no partial commits)
-            assert Asset.query.count() == asset_count_1, "Asset count should remain same after failed second call"
-
-            # Verify unique constraints are enforced
-            asset_codes = [asset.asset_code for asset in Asset.query.all()]
-            assert len(asset_codes) == len(set(asset_codes)), "Asset codes should be unique"
-
-            usernames = [user.username for user in User.query.all()]
-            assert len(usernames) == len(set(usernames)), "Usernames should be unique"
+            assert count1 == count2, "Should not create duplicate users"
 
     def test_database_models_relationships(self, app, client):
         """

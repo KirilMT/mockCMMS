@@ -450,9 +450,11 @@ class TestIntegration:
 
         # Step 1: Create teams
         with app.app_context():
-            team_a = Team(name='Team A', shift_type='Early', rotation_pattern='Pattern 1')
-            team_b = Team(name='Team B', shift_type='Late', rotation_pattern='Pattern 2')
-            db.session.add_all([team_a, team_b])
+            team_a = Team(name='Team A')
+            team_b = Team(name='Team B')
+            team_c = Team(name='Team C')
+            team_d = Team(name='Team D')
+            db.session.add_all([team_a, team_b, team_c, team_d])
             db.session.commit()
             team_a_id = team_a.id
             team_b_id = team_b.id
@@ -485,8 +487,7 @@ class TestIntegration:
             assert user2.team_id == team_b_id
 
             team_a = db.session.get(Team, team_a_id)
-            assert team_a.shift_type == 'Early'
-            assert team_a.rotation_pattern == 'Pattern 1'
+            assert team_a.name == 'Team A'
 
     def test_cascade_relationships(self, client, app, admin_user):
         """

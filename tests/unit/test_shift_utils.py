@@ -18,10 +18,10 @@ class TestShiftUtilities:
         """Create test teams for shift calculations."""
         with app.app_context():
             # Create 4 teams (A, B, C, D) as required by Pitman schedule
-            team_a = Team(name='Team A', shift_type='Late', rotation_pattern='Pattern 1')
-            team_b = Team(name='Team B', shift_type='Early', rotation_pattern='Pattern 1')
-            team_c = Team(name='Team C', shift_type='Early', rotation_pattern='Pattern 2')
-            team_d = Team(name='Team D', shift_type='Late', rotation_pattern='Pattern 2')
+            team_a = Team(name='Team A')
+            team_b = Team(name='Team B')
+            team_c = Team(name='Team C')
+            team_d = Team(name='Team D')
 
             db.session.add_all([team_a, team_b, team_c, team_d])
             db.session.commit()

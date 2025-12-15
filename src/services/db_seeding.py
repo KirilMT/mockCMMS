@@ -1,246 +1,153 @@
+# src/services/db_seeding.py
+
 """Database seeding helper functions."""
+import json
+import os
 from datetime import datetime, timedelta, timezone
 from .db_utils import (
     db, Role, Team, User, Skill, UserSkill, Asset,
     MaintenanceOrder, SparePart
 )
 
-
-def _load_dummy_data(dummy_data_path, logger):
-    """Load and parse dummy data JSON file."""
-    import json
+def _load_dummy_data(logger):
+    """Load and parse the dummy data JSON file."""
     try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        dummy_data_path = os.path.join(current_dir, '..', '..', 'test_data', 'dummy_data.json')
         with open(dummy_data_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        logger.error("Dummy data file not found at %s", dummy_data_path)
-        return None
+        logger.error(f"Dummy data file not found at {dummy_data_path}")
     except json.JSONDecodeError:
-        logger.error("Error decoding JSON from %s", dummy_data_path)
-        return None
+        logger.error(f"Error decoding JSON from {dummy_data_path}")
+    return None
 
+def _get_or_create(model, **kwargs):
+    """Fetches a database object or creates it if it doesn't exist."""
+    instance = db.session.query(model).filter_by(**kwargs).first()
+    if instance:
+        return instance, False
+    else:
+        instance = model(**kwargs)
+        db.session.add(instance)
+        return instance, True
 
-def _create_roles(data, logger):
-    """Create roles from data."""
+def _create_roles(roles_data, logger):
+    """Create roles from data, ensuring no duplicates."""
     roles = {}
-    for role_data in data.get("roles", []):
-        role = Role(name=role_data["name"], description=role_data.get("description", ""))
-        db.session.add(role)
-        roles[role_data["name"]] = role
-    db.session.commit()
-    logger.info("Populated %d roles.", len(roles))
+    for role_info in roles_data:
+        role, created = _get_or_create(Role, name=role_info["name"])
+        if created:
+            role.description = role_info.get("description", "")
+        roles[role.name] = role
+    logger.info(f"Loaded {len(roles)} roles.")
     return roles
 
-
-def _create_teams(logger):
+def _create_teams(teams_data, logger):
     """Create shift teams."""
-    teams_config = [
-        {"name": "Team A", "shift_type": "Early", "rotation_pattern": "Pattern 1"},
-        {"name": "Team B", "shift_type": "Late", "rotation_pattern": "Pattern 1"},
-        {"name": "Team C", "shift_type": "Early", "rotation_pattern": "Pattern 2"},
-        {"name": "Team D", "shift_type": "Late", "rotation_pattern": "Pattern 2"}
-    ]
     teams = {}
-    for team_data in teams_config:
-        team = Team(
-            name=team_data["name"],
-            shift_type=team_data["shift_type"],
-            rotation_pattern=team_data["rotation_pattern"]
-        )
-        db.session.add(team)
-        teams[team_data["name"]] = team
-    db.session.commit()
-    logger.info("Populated %d teams.", len(teams))
+    for team_info in teams_data:
+        team, _ = _get_or_create(Team, name=team_info["name"])
+        teams[team.name] = team
+    logger.info(f"Loaded {len(teams)} teams.")
     return teams
 
+def _create_users(users_data, roles, teams, logger):
+    """Create users and assign roles and teams."""
+    for user_info in users_data:
+        user, created = _get_or_create(User, username=user_info["username"])
+        if created:
+            user.email = user_info["email"]
+            user.set_password(user_info["password"])
+            user.team = teams.get(user_info.get("team"))
+            for role_name in user_info.get("roles", []):
+                if role_name in roles and roles[role_name] not in user.roles:
+                    user.roles.append(roles[role_name])
+    logger.info(f"Processed {len(users_data)} users.")
 
-def _create_users(data, roles, logger):
-    """Create users from data."""
-    users = {}
-    for user_data in data.get("users", []):
-        user = User(username=user_data["username"], email=user_data["email"])
-        user.set_password(user_data["password"])
-        for role_name in user_data.get("roles", []):
-            if role_name in roles:
-                user.roles.append(roles[role_name])
-        db.session.add(user)
-        users[user_data["username"]] = user
-    db.session.commit()
-    logger.info("Populated %d users.", len(users))
-    return users
-
-
-def _create_skills(data, logger):
-    """Create skills from data."""
+def _create_skills(skills_data, logger):
+    """Create skills and associate them with users."""
     skills = {}
-    for skill_data in data.get("skills", []):
-        if isinstance(skill_data, str):
-            skill = Skill(name=skill_data)
-            skills[skill_data] = skill
-        else:
-            skill = Skill(name=skill_data["name"])
-            skills[skill_data["name"]] = skill
-        db.session.add(skill)
-    db.session.commit()
-    logger.info("Populated %d skills.", len(skills))
+    for skill_info in skills_data:
+        skill, _ = _get_or_create(Skill, name=skill_info["name"])
+        skills[skill.name] = skill
+        for user_skill_info in skill_info.get("users", []):
+            user = User.query.filter_by(username=user_skill_info["username"]).first()
+            if user:
+                user_skill, created = _get_or_create(UserSkill, user=user, skill=skill)
+                if created:
+                    user_skill.skill_level = user_skill_info.get("level", 1)
+    logger.info(f"Loaded {len(skills)} skills and their user associations.")
     return skills
 
-
-def _create_technicians(data, teams, skills, logger):
-    """Create technicians with skills."""
-    technicians = {}
-    technician_role = Role.query.filter_by(name='Technician').first()
-    if not technician_role:
-        technician_role = Role(name='Technician')
-        db.session.add(technician_role)
-        db.session.commit()
-
-    for tech_data in data.get("technicians", []):
-        if isinstance(tech_data, str):
-            username = tech_data
-            tech_info = {}
-        else:
-            username = tech_data["name"]
-            tech_info = tech_data
-
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            user = User(username=username, email=f"{username}@example.com")
-            user.set_password("password")
-            user.roles.append(technician_role)
-            db.session.add(user)
-
-        user.availability_status = tech_info.get("availability_status", "Available")
-        if "shift_team" in tech_info and tech_info["shift_team"] in teams:
-            user.team = teams[tech_info["shift_team"]]
-
-        technicians[username] = user
-        db.session.flush()
-
-        if isinstance(tech_data, dict):
-            for skill_assignment in tech_data.get("skills", []):
-                skill_name = skill_assignment["skill"]
-                if skill_name in skills:
-                    existing_skill = UserSkill.query.filter_by(
-                        user_id=user.id, skill_id=skills[skill_name].id).first()
-                    if not existing_skill:
-                        user_skill = UserSkill(
-                            user_id=user.id,
-                            skill_id=skills[skill_name].id,
-                            skill_level=skill_assignment.get("level", 1)
-                        )
-                        db.session.add(user_skill)
-
-    db.session.commit()
-    logger.info("Populated technicians as Users with skills.")
-    return technicians
-
-
-def _create_assets(data, logger):
-    """Create assets from data."""
+def _create_assets(assets_data, logger):
+    """Create assets."""
     assets = {}
-    for i, asset_data in enumerate(data.get("assets", [])):
-        asset = Asset(
-            asset_code=asset_data.get("asset_code", f"AST-{i + 1:04d}"),
-            name=asset_data["name"],
-            description=asset_data.get("description", ""),
-            asset_type=asset_data.get("asset_type", "equipment"),
-            cost_center=asset_data.get("cost_center", "general"),
-            status=asset_data.get("status", "Operational")
-        )
-        db.session.add(asset)
-        assets[asset_data["name"]] = asset
-    db.session.commit()
-    logger.info("Populated %d assets.", len(assets))
+    for i, asset_info in enumerate(assets_data):
+        asset, _ = _get_or_create(Asset, name=asset_info["name"])
+        asset.asset_code = asset_info.get("asset_code", f"AST-{i+1:04d}")
+        asset.description = asset_info.get("description", "")
+        asset.asset_type = asset_info.get("asset_type", "equipment")
+        asset.cost_center = asset_info.get("cost_center", "general")
+        asset.status = asset_info.get("status", "Operational")
+        assets[asset.name] = asset
+    logger.info(f"Processed {len(assets_data)} assets.")
     return assets
 
-
-def _create_maintenance_orders(data, assets, skills, logger):
-    """Create maintenance orders from data."""
-    maintenance_orders = {}
-    for mo_data in data.get("maintenance_orders", []):
-        asset = assets.get(mo_data["asset"])
+def _create_maintenance_orders(orders_data, assets, skills, logger):
+    """Create maintenance orders."""
+    for mo_info in orders_data:
+        asset = assets.get(mo_info["asset"])
         if asset:
             due_date = None
-            if mo_data.get("due_days_from_now") is not None:
-                due_date = datetime.now(timezone.utc) + timedelta(
-                    days=mo_data["due_days_from_now"])
+            if mo_info.get("due_days_from_now") is not None:
+                due_date = datetime.now(timezone.utc) + timedelta(days=mo_info["due_days_from_now"])
 
-            mo = MaintenanceOrder(
-                asset=asset,
-                description=mo_data["description"],
-                order_type=mo_data.get("order_type", "PM"),
-                status=mo_data.get("status", "Open"),
-                due_date=due_date,
-                priority=mo_data.get("priority", "Medium"),
-                schedule_name=mo_data.get("schedule_name"),
-                frequency=mo_data.get("frequency"),
-                estimated_completion_time=mo_data.get("estimated_completion_time", 60),
-                labour_count=mo_data.get("labour_count", 1),
-                justification=mo_data.get("justification")
-            )
-            db.session.add(mo)
-            db.session.flush()
+            mo, _ = _get_or_create(MaintenanceOrder, description=mo_info["description"], asset=asset)
+            mo.order_type = mo_info.get("order_type", "PM")
+            mo.status = mo_info.get("status", "Open")
+            mo.due_date = due_date
+            mo.priority = mo_info.get("priority", "Medium")
+            mo.schedule_name = mo_info.get("schedule_name")
+            mo.frequency = mo_info.get("frequency")
+            mo.estimated_completion_time = mo_info.get("estimated_completion_time", 60)
 
-            for skill_name in mo_data.get("required_skills", []):
-                if skill_name in skills:
+            for skill_name in mo_info.get("required_skills", []):
+                if skill_name in skills and skills[skill_name] not in mo.required_skills:
                     mo.required_skills.append(skills[skill_name])
+    logger.info(f"Processed {len(orders_data)} maintenance orders.")
 
-            maintenance_orders[mo_data["description"]] = mo
+def _create_spare_parts(parts_data, logger):
+    """Create spare parts."""
+    for part_info in parts_data:
+        part, _ = _get_or_create(SparePart, description=part_info["description"])
+        part.manufacturer = part_info.get("manufacturer", "")
+        part.manufacturer_part_id = part_info.get("manufacturer_part_id", "")
+        part.stock_quantity = part_info.get("quantity", 0)
+        part.location = part_info.get("location", "")
+        part.min_quantity = part_info.get("min_quantity", 0)
+    logger.info(f"Processed {len(parts_data)} spare parts.")
 
-    db.session.commit()
-    logger.info("Populated %d maintenance orders with skills.", len(maintenance_orders))
-    return maintenance_orders
-
-
-def _create_spare_parts(data, logger):
-    """Create spare parts from data."""
-    for part_data in data.get("spare_parts", []):
-        part = SparePart(
-            description=part_data.get("description", part_data.get("name", "")),
-            manufacturer=part_data.get("manufacturer", ""),
-            manufacturer_part_id=part_data.get("manufacturer_part_id", ""),
-            stock_quantity=part_data.get("quantity", 0),
-            location=part_data.get("location", ""),
-            min_quantity=part_data.get("min_quantity", 0)
-        )
-        db.session.add(part)
-    db.session.commit()
-    logger.info("Populated spare parts.")
-
-
-def _create_schedules(data, maintenance_orders, logger):
-    """Create planning schedules if planning app is enabled."""
-    import os
-    if os.getenv('PLANNING_ENABLED', 'False').lower() not in ('true', '1', 't'):
+def populate_dummy_data(logger):
+    """Populates the database with initial dummy data."""
+    logger.info("Checking if database needs to be populated.")
+    if Role.query.first() or User.query.first():
+        logger.info("Database already contains data. Skipping population.")
         return
 
-    try:
-        from apps.planning.src.services.planning_models import Schedule, PlanningTask
+    logger.info("Populating database with dummy data.")
+    data = _load_dummy_data(logger)
+    if not data:
+        return
 
-        for schedule_data in data.get("schedules", []):
-            schedule = Schedule(
-                name=schedule_data["name"],
-                start_date=datetime.fromisoformat(schedule_data["start_date"]),
-                end_date=datetime.fromisoformat(schedule_data["end_date"]),
-                planning_status=schedule_data.get("planning_status", "Draft")
-            )
-            db.session.add(schedule)
-            db.session.flush()
+    with db.session.begin_nested():
+        roles = _create_roles(data.get('roles', []), logger)
+        teams = _create_teams(data.get('teams', []), logger)
+        _create_users(data.get('users', []), roles, teams, logger)
+        skills = _create_skills(data.get('skills', []), logger)
+        assets = _create_assets(data.get('assets', []), logger)
+        _create_maintenance_orders(data.get('maintenance_orders', []), assets, skills, logger)
+        _create_spare_parts(data.get('spare_parts', []), logger)
 
-            for mo_description in schedule_data.get("maintenance_orders", []):
-                mo = maintenance_orders.get(mo_description)
-                if mo:
-                    planning_task = PlanningTask(
-                        schedule_id=schedule.id,
-                        maintenance_order_id=mo.id,
-                        status='Unplanned'
-                    )
-                    db.session.add(planning_task)
-
-        db.session.commit()
-        logger.info("Populated %d schedules with planning tasks.", len(data.get('schedules', [])))
-    except ImportError:
-        logger.warning("Could not import planning models. Skipping schedule seeding.")
-    except Exception as e:
-        logger.error("An error occurred during schedule seeding: %s", e)
+    db.session.commit()
+    logger.info("Dummy data population complete.")
