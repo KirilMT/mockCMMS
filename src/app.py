@@ -5,11 +5,12 @@
 import os
 import sqlite3
 import traceback
-from flask import Flask, g, request, redirect, jsonify
+from flask import Flask, g, request, redirect, jsonify, session
 from flask_wtf.csrf import CSRFProtect
 from dotenv import load_dotenv
 
-from .services.db_utils import db, populate_dummy_data
+from .services.db_utils import db, User
+from .services.db_seeding import populate_dummy_data
 
 def create_app(config_overrides=None):
     """Create and configure the Flask application."""
@@ -83,6 +84,12 @@ def _register_blueprints(app, csrf):
 
 def _register_request_handlers(app):
     """Register before_request, after_request, and teardown_appcontext handlers."""
+    @app.before_request
+    def load_logged_in_user():
+        """If a user id is in the session, load the user object from the database into g.user."""
+        user_id = session.get('user_id')
+        g.user = User.query.get(user_id) if user_id is not None else None
+
     @app.before_request
     def redirect_legacy_urls():
         if request.path.startswith('/planning-manager'):
