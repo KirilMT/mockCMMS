@@ -27,7 +27,7 @@ def _get_technicians_and_teams():
     technician_role = Role.query.filter_by(name='Technician').first()
     technicians = User.query.filter(User.roles.contains(technician_role)).all() if technician_role else []
     teams = Team.query.all()
-    return technicians, teams
+    return technicians or [], teams or []
 
 # --- Form Processing Helper for Maintenance Orders ---
 def _process_mo_form(mo, form_data):
