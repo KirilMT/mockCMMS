@@ -1,7 +1,11 @@
+"""Application entry point."""
+
 import sys
-import os
 from pathlib import Path
+
 from dotenv import load_dotenv
+
+from src.app import create_app
 
 # Load environment variables
 load_dotenv()
@@ -10,7 +14,6 @@ load_dotenv()
 current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
 
-from src.app import create_app
 
 app = create_app()
 
