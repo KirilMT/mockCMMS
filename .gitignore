@@ -203,3 +203,7 @@ coverage.xml
 node_modules/
 package-lock.json
 package.jsoncoverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright-artifacts/
