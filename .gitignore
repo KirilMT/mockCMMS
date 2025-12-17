@@ -197,6 +197,7 @@ htmlcov/
 .coverage
 coverage.xml
 *.cover
+.pytest_cache/
 
 # Node modules (for local jscpd)
 node_modules/

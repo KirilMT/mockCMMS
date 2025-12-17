@@ -1,6 +1,7 @@
 """
 Test run.py application entry point.
 """
+
 import pytest
 from run import app
 
