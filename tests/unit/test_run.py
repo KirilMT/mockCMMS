@@ -2,25 +2,37 @@
 Test run.py application entry point.
 """
 
+import sys
+from unittest.mock import patch
 import pytest
 
 
 class TestRunEntry:
     """Test the application entry point."""
 
+    def setup_method(self):
+        """Ensure run module is not in sys.modules so it re-executes."""
+        if "run" in sys.modules:
+            del sys.modules["run"]
+
+    def teardown_method(self):
+        """Clean up run module from sys.modules."""
+        if "run" in sys.modules:
+            del sys.modules["run"]
+
     def test_run_app_import(self):
         """Test that run.py can be imported and app is created."""
-        from run import app
+        # Patch db.create_all to prevent UnboundExecutionError (CI issue)
+        # Patch load_dotenv to prevent environment side effects
+        with patch("src.app.db.create_all"), patch("dotenv.load_dotenv"):
+            import run
 
-        assert app is not None
-        assert app.name == "src.app"
+            assert run.app is not None
+            assert run.app.name == "src.app"
 
     def test_run_app_config(self):
         """Test that the app from run.py has expected configuration."""
-        from run import app
+        with patch("src.app.db.create_all"), patch("dotenv.load_dotenv"):
+            import run
 
-        # It should be in development/debug mode by default as per run.py
-        # But create_app might default to config.Config or DevelopmentConfig
-        # run.py sets debug=True in app.run(), but that doesn't change app.debug unless set before
-        # Let's just check it exists
-        assert app.config is not None
+            assert run.app.config is not None
