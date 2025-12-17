@@ -29,6 +29,9 @@ def app():
 
     Uses an in-memory SQLite database that is created fresh for each test
     and destroyed after the test completes.
+    
+    Properly manages database connections to prevent ResourceWarning about
+    unclosed database connections during garbage collection.
 
     Yields:
         Flask: Configured Flask application in testing mode.
@@ -37,8 +40,16 @@ def app():
         'TESTING': True,
         'WTF_CSRF_ENABLED': False,
         'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
+        'SQLALCHEMY_BINDS': {
+            'planning': 'sqlite:///:memory:'  # In-memory for planning models
+        },
         'AUTO_SEED_DATABASE': False,  # Prevent seeding in tests
-        'SERVER_NAME': 'localhost.localdomain'  # Required for url_for to work in tests
+        'SERVER_NAME': 'localhost.localdomain',  # Required for url_for to work
+        # Ensure connections are properly recycled
+        'SQLALCHEMY_ENGINE_OPTIONS': {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+        }
     }
     
     test_app = create_app(config_overrides)
@@ -46,7 +57,19 @@ def app():
     with test_app.app_context():
         # db.create_all() is now called within create_app
         yield test_app
-        # Clean up the database after each test
+        
+        # Proper cleanup sequence to prevent ResourceWarnings:
+        # 1. Remove all scoped sessions (returns connections to pool)
+        db.session.remove()
+        
+        # 2. Close all checked-out connections
+        if hasattr(db.engine, 'pool'):
+            db.engine.pool.dispose()
+        
+        # 3. Dispose of the engine (closes all connections)
+        db.engine.dispose()
+        
+        # 4. Drop all tables (cleanup)
         db.drop_all()
 
 
@@ -458,23 +481,35 @@ def logged_in_user(client, sample_user):
 
 @pytest.fixture(scope='session', autouse=True)
 def cleanup_test_artifacts():
-    """Clean up test database files after entire test session completes."""
+    """Clean up test database files after entire test session completes.
+    
+    IMPORTANT: Only clean up TEST database files, never production data.
+    The mockcmms.db is the production database and must NEVER be deleted by tests.
+    
+    Also runs explicit garbage collection to ensure all SQLite connections
+    are properly closed before pytest checks for resource leaks.
+    """
     yield
     
-    # Clean up test database files
+    # Force garbage collection to clean up any remaining SQLite connections
+    # This prevents ResourceWarning about unclosed database connections
+    import gc
+    gc.collect()
+    
+    # Only clean up TEST database files - NEVER touch production mockcmms.db
     test_db = os.path.join('instance', 'mockcmms_test.db')
-    prod_db = os.path.join('instance', 'mockcmms.db')
     
-    for db_file in [test_db, prod_db]:
-        if os.path.exists(db_file):
-            try:
-                os.remove(db_file)
-            except PermissionError:
-                pass
+    if os.path.exists(test_db):
+        try:
+            os.remove(test_db)
+        except PermissionError:
+            pass
     
-    # Remove instance directory if empty
+    # Remove instance directory ONLY if it's empty
+    # This ensures we never delete the directory if mockcmms.db exists
     if os.path.exists('instance'):
         try:
+            # os.rmdir only succeeds if directory is empty - safe operation
             if not os.listdir('instance'):
                 os.rmdir('instance')
         except (OSError, PermissionError):

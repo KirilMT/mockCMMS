@@ -8,7 +8,5 @@ based on skill-based matching and workload optimization.
 __version__ = "1.0.0"
 __author__ = "Weekend Planning Team"
 
-# Package-level imports for easier access
-from .app import create_app
-
-__all__ = ['create_app']
+# Package-level imports removed to prevent circular dependencies
+# accessing submodules (like planning_models) which are imported by app/planning.

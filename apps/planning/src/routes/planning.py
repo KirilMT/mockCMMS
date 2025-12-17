@@ -25,7 +25,7 @@ from apps.planning.src.services.extract_data import extract_data, get_current_da
 from apps.planning.src.services.data_processing import sanitize_data, calculate_work_time
 from apps.planning.src.services.dashboard import generate_html_files
 from apps.planning.src.services.config_manager import TECHNICIANS, TECHNICIAN_GROUPS, TECHNICIAN_LINES, load_app_config
-from apps.planning.src.services.db_utils import (
+from apps.planning.src.services.planning_db_utils import (
     get_db_connection, TaskManager, TechnologyManager, TechnicianGroupManager,
     get_all_technician_skills_by_name, update_technician_skill, get_technician_skills_by_id,
     get_or_create_satellite_point, update_satellite_point, delete_satellite_point,
@@ -690,11 +690,8 @@ def view_schedule(schedule_id):
                 # Build JSON data for the table
                 assigned_to = 'Not assigned'
                 assigned_to_skills = ''
-                if pt.assigned_users:
-                    assigned_to = ', '.join([user.username for user in pt.assigned_users])
-                    # user.skills returns UserSkill objects, need to access .skill.name
-                    assigned_to_skills = '|'.join([', '.join([us.skill.name for us in user.skills]) for user in pt.assigned_users])
-                elif pt.assigned_user:
+                # Check for assigned user (assigned_users M2M disabled for cross-DB compatibility)
+                if pt.assigned_user:
                     assigned_to = pt.assigned_user.username
                     # pt.assigned_user.skills returns UserSkill objects
                     assigned_to_skills = ', '.join([us.skill.name for us in pt.assigned_user.skills]) if pt.assigned_user.skills else ''
@@ -754,7 +751,6 @@ def run_planning(schedule_id):
         for pt in planning_tasks:
             pt.status = 'Unplanned'
             pt.assigned_user_id = None
-            pt.assigned_users = []
             pt.planned_start_time = None
             pt.planned_end_time = None
             pt.actual_duration_minutes = None
@@ -772,14 +768,9 @@ def run_planning(schedule_id):
                 planning_task.planned_end_time = assignment.planned_end_time
                 planning_task.actual_duration_minutes = assignment.actual_duration_minutes
 
-                # Assign technicians
-                if len(assignment.assigned_technician_ids) == 1:
-                    # Single technician assignment
+                # Assign technician (single assignment, M2M disabled for cross-DB compatibility)
+                if assignment.assigned_technician_ids:
                     planning_task.assigned_user_id = assignment.assigned_technician_ids[0]
-                else:
-                    # Multi-technician assignment - use already imported User
-                    techs = User.query.filter(User.id.in_(assignment.assigned_technician_ids)).all()
-                    planning_task.assigned_users = techs
 
         # Mark unassigned tasks
         for unassigned in result.unassigned_tasks:
@@ -839,13 +830,8 @@ def gantt_data(schedule_id):
                 assigned_tech_names = []
                 assigned_tech_ids = []
 
-                if pt.assigned_users:
-                    # Multi-technician assignment
-                    for user in pt.assigned_users:
-                        assigned_tech_names.append(user.username)
-                        assigned_tech_ids.append(user.id)
-                elif pt.assigned_user:
-                    # Single technician (deprecated)
+                # Single technician assignment (M2M disabled for cross-DB compatibility)
+                if pt.assigned_user:
                     assigned_tech_names.append(pt.assigned_user.username)
                     assigned_tech_ids.append(pt.assigned_user.id)
 

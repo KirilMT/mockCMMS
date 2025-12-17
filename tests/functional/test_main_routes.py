@@ -4,7 +4,8 @@ Tests for web page routes and form handling.
 This module tests all Flask web routes for correct HTML rendering,
 form submissions, redirects, and page content validation.
 """
-from src.services.db_utils import db, Asset, MaintenanceOrder, SparePart, User
+from src.services.db_utils import db, Asset, MaintenanceOrder, SparePart, User, Team, Role
+import pytest
 
 
 class TestGeneralPages:
@@ -469,4 +470,109 @@ class TestEnhancedMainRoutes:
         response = auth_client.get(f'/assets/{sample_asset.id}')
         assert response.status_code == 200
         assert b'Related MO' in response.data or b'maintenance' in response.data.lower()
+
+
+class TestTechnicianFlows:
+    """Test suite for Technician role workflows."""
+
+    @pytest.fixture
+    def teams(self, app):
+        """Ensure teams exist for testing."""
+        with app.app_context():
+            team_a = Team.query.filter_by(name='Team A').first()
+            if not team_a:
+                team_a = Team(name='Team A')
+                db.session.add(team_a)
+            
+            team_b = Team.query.filter_by(name='Team B').first()
+            if not team_b:
+                team_b = Team(name='Team B')
+                db.session.add(team_b)
+            
+            db.session.commit()
+            return [team_a, team_b]
+
+    def test_register_technician_assigns_team(self, client, app, teams):
+        """Test that registering a Technician with a team_id correctly assigns the team."""
+        with app.app_context():
+            # Ensure Technician role exists
+            from src.services.db_utils import Role
+            if not Role.query.filter_by(name='Technician').first():
+                db.session.add(Role(name='Technician'))
+                db.session.commit()
+
+            team_a = Team.query.filter_by(name='Team A').first()
+            team_id = team_a.id
+
+        user_data = {
+            'username': 'tech_with_team',
+            'email': 'techteam@example.com',
+            'password': 'password123',
+            'confirm_password': 'password123',
+            'roles': ['Technician'],
+            'team_id': str(team_id)
+        }
+        
+        response = client.post('/register', data=user_data, follow_redirects=True)
+        assert response.status_code == 200
+
+        with app.app_context():
+            # Verify using scalar query to avoid DetachedInstanceError
+            # Note: Team is imported globally
+            result = db.session.query(User.team_id, Team.name)\
+                .join(Team)\
+                .filter(User.username == 'tech_with_team')\
+                .first()
+            
+            assert result is not None
+            assert result.team_id == team_id
+            assert result.name == 'Team A'
+
+            # Verify Role separately using scalar query
+            role_names = [r[0] for r in db.session.query(Role.name).join(User.roles).filter(User.username == 'tech_with_team').all()]
+            assert 'Technician' in role_names
+
+    def test_edit_technician_updates_team(self, auth_client, app, teams):
+        """Test that editing a Technician to change their team works correctly."""
+        # 1. Create a technician in Team A
+        with app.app_context():
+            # Get Technician role
+            tech_role = Role.query.filter_by(name='Technician').first()
+            if not tech_role:
+                tech_role = Role(name='Technician')
+                db.session.add(tech_role)
+
+            # Re-query teams to ensure they are attached to current session
+            team_a = Team.query.filter_by(name='Team A').first()
+            team_b = Team.query.filter_by(name='Team B').first()
+            
+            user = User(username='edit_tech_team', email='edittech@example.com')
+            user.set_password('password123')
+            user.roles.append(tech_role)
+            user.team_id = team_a.id
+            db.session.add(user)
+            db.session.commit()
+            user_id = user.id
+            team_b_id = team_b.id
+
+        # 2. Submit edit form changing to Team B
+        edit_data = {
+            'username': 'edit_tech_team',
+            'email': 'edittech@example.com',
+            'roles': ['Technician'],
+            'team_id': str(team_b_id)
+        }
+        response = auth_client.post(f'/users/{user_id}/edit', data=edit_data, follow_redirects=True)
+        assert response.status_code == 200
+
+        # 3. Verify change
+        with app.app_context():
+            result = db.session.query(User.team_id, Team.name)\
+                .join(Team)\
+                .filter(User.id == user_id)\
+                .first()
+            
+            assert result is not None
+            assert result.team_id == team_b_id
+            assert result.name == 'Team B'
 

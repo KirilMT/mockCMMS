@@ -2,7 +2,7 @@
 import sqlite3
 import traceback
 import os
-from .db_utils import get_db_connection, get_technician_lines_via_satellite_point
+from .planning_db_utils import get_db_connection, get_technician_lines_via_satellite_point
 
 # --- Configuration Store ---
 TECHNICIAN_TASKS = {}

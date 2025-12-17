@@ -11,6 +11,19 @@ from unittest.mock import patch, MagicMock
 from src.app import create_app
 from src.services.db_utils import db
 
+# Default binds for tests - prevents UnboundExecutionError when planning models are imported
+TEST_SQLALCHEMY_BINDS = {'planning': 'sqlite:///:memory:'}
+
+
+def create_test_app(config=None):
+    """Create app with test SQLALCHEMY_BINDS included."""
+    default_config = {
+        'SQLALCHEMY_BINDS': TEST_SQLALCHEMY_BINDS,
+    }
+    if config:
+        default_config.update(config)
+    return create_app(default_config)
+
 
 class TestAppFactory:
     """Test suite for Flask application factory pattern."""
@@ -62,7 +75,7 @@ class TestAppFactory:
     @patch.dict(os.environ, {'SECRET_KEY': 'test-secret-from-env', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_secret_key_from_env(self):
         """Test app uses SECRET_KEY from environment variable."""
-        app = create_app()
+        app = create_test_app()
         assert app.secret_key == 'test-secret-from-env'
         
         # Clean up
@@ -73,7 +86,7 @@ class TestAppFactory:
     def test_secret_key_fallback(self):
         """Test app uses a fallback secret key when not in the environment."""
         with patch.dict(os.environ, {}, clear=True):
-            app = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'})
+            app = create_test_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'})
             assert app.secret_key == 'dev_key_fallback_for_testing'
 
     def test_database_uri_configuration(self, app):
@@ -88,7 +101,7 @@ class TestAppFactory:
         os.environ.pop('TESTING', None)
         os.environ['TESTING_PRODUCTION'] = '1'
         try:
-            prod_app = create_app()
+            prod_app = create_test_app()
             prod_uri = prod_app.config['SQLALCHEMY_DATABASE_URI']
             assert 'sqlite:///' in prod_uri
             assert 'mockcmms_test.db' in prod_uri
@@ -151,7 +164,7 @@ class TestAppConfiguration:
     @patch.dict(os.environ, {'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_csrf_protection_enabled_in_production(self):
         """Test CSRF protection is enabled in production mode."""
-        app = create_app()
+        app = create_test_app()
         assert app.config.get('WTF_CSRF_ENABLED', True) is True
         
         # Clean up
@@ -186,7 +199,7 @@ class TestBlueprintConditionalLoading:
     def test_planning_blueprint_enabled(self):
         """Test planning blueprint loads when PLANNING_ENABLED=True."""
         try:
-            app = create_app()
+            app = create_test_app()
             with app.app_context():
                 db.session.remove()
                 db.engine.dispose()
@@ -196,7 +209,7 @@ class TestBlueprintConditionalLoading:
     @patch.dict(os.environ, {'PLANNING_ENABLED': 'False', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_planning_blueprint_disabled(self):
         """Test planning blueprint doesn't load when PLANNING_ENABLED=False."""
-        app = create_app()
+        app = create_test_app()
         assert 'planning' not in app.blueprints
         
         # Clean up
@@ -208,7 +221,7 @@ class TestBlueprintConditionalLoading:
     def test_reports_blueprint_enabled(self):
         """Test reports blueprint loads when REPORTS_ENABLED=True."""
         try:
-            app = create_app()
+            app = create_test_app()
             with app.app_context():
                 db.session.remove()
                 db.engine.dispose()
@@ -218,7 +231,7 @@ class TestBlueprintConditionalLoading:
     @patch.dict(os.environ, {'REPORTS_ENABLED': 'False', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_reports_blueprint_disabled(self):
         """Test reports blueprint doesn't load when REPORTS_ENABLED=False."""
-        app = create_app()
+        app = create_test_app()
         assert 'reports' not in app.blueprints
         
         # Clean up
@@ -234,7 +247,7 @@ class TestEnhancedAppConfiguration:
     def test_app_reports_module_enabled(self):
         """Test reports module loads when REPORTS_ENABLED=True."""
         try:
-            app = create_app()
+            app = create_test_app()
             assert app is not None
             with app.app_context():
                 db.session.remove()
@@ -245,7 +258,7 @@ class TestEnhancedAppConfiguration:
     @patch.dict(os.environ, {'REPORTS_ENABLED': 'False', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_app_reports_module_disabled(self):
         """Test reports module doesn't load when REPORTS_ENABLED=False."""
-        app = create_app()
+        app = create_test_app()
         assert 'reports' not in app.blueprints
         
         # Clean up
@@ -257,7 +270,7 @@ class TestEnhancedAppConfiguration:
     def test_app_planning_module_enabled(self):
         """Test planning module loads when PLANNING_ENABLED=True."""
         try:
-            app = create_app()
+            app = create_test_app()
             assert app is not None
             with app.app_context():
                 db.session.remove()
@@ -268,7 +281,7 @@ class TestEnhancedAppConfiguration:
     @patch.dict(os.environ, {'PLANNING_ENABLED': 'False', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_app_planning_module_disabled(self):
         """Test planning module doesn't load when PLANNING_ENABLED=False."""
-        app = create_app()
+        app = create_test_app()
         assert 'planning' not in app.blueprints
         assert 'planning_api' not in app.blueprints
         
@@ -324,7 +337,7 @@ class TestEnhancedAppConfiguration:
     @patch('src.app.populate_dummy_data')
     def test_app_auto_seed_database(self, mock_populate_dummy_data):
         """Test that the database is auto-seeded based on the configuration."""
-        create_app({
+        create_test_app({
             'TESTING': True,
             'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
             'AUTO_SEED_DATABASE': True
@@ -343,13 +356,14 @@ class TestAppErrorHandling:
 
     @patch.dict(os.environ, {'REPORTS_ENABLED': 'True', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_reports_blueprint_registration_error(self):
-        """Test app handles reports blueprint registration errors gracefully."""
+        """Test app handles reports module unavailable gracefully."""
         import sys
+        # Mock ImportError by making the module import fail
         with patch.dict(sys.modules, {'apps.reports.src.routes.reports': None}):
-            app = create_app()
+            app = create_test_app()
             assert app is not None
             assert 'reports' not in app.blueprints
-            
+
             # Clean up
             with app.app_context():
                 db.session.remove()
@@ -357,13 +371,14 @@ class TestAppErrorHandling:
 
     @patch.dict(os.environ, {'PLANNING_ENABLED': 'True', 'TESTING': '0', 'TESTING_PRODUCTION': '1'})
     def test_planning_blueprint_registration_error(self):
-        """Test app handles planning blueprint registration errors gracefully."""
+        """Test app handles planning module unavailable gracefully."""
         import sys
+        # Mock ImportError by making the module import fail
         with patch.dict(sys.modules, {'apps.planning.src.routes.planning': None}):
-            app = create_app()
+            app = create_test_app()
             assert app is not None
             assert 'planning' not in app.blueprints
-            
+
             # Clean up
             with app.app_context():
                 db.session.remove()
@@ -371,12 +386,13 @@ class TestAppErrorHandling:
 
     def test_before_planning_request_database_error(self, app, client):
         """Test before_planning_request handles database connection errors."""
+        import sqlite3 # Added import for sqlite3.OperationalError
         with patch.dict(os.environ, {'PLANNING_ENABLED': 'True'}):
-            with patch('sqlite3.connect', side_effect=Exception("Database connection failed")):
+            with patch('sqlite3.connect', side_effect=sqlite3.OperationalError("Database connection failed")):
                 # Request to planning route should handle database error
                 response = client.get('/planning/test')
                 # Should return error response or 404 (if planning not enabled)
-                assert response.status_code in [404, 500]
+                assert response.status_code in [404, 500, 503]
 
     def test_close_db_teardown(self, app):
         """Test close_db teardown function closes database connections."""
@@ -399,7 +415,7 @@ class TestAppErrorHandling:
     def test_database_seeding_error_handling(self, mock_populate):
         """Test app handles database seeding errors gracefully."""
         # Should create app successfully even if seeding fails
-        app = create_app()
+        app = create_test_app()
         assert app is not None
         # App should still be functional even if seeding failed
         

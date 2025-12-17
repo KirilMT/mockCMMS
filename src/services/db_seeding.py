@@ -5,16 +5,26 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 from .db_utils import (
-    db, Role, Team, User, Skill, UserSkill, Asset,
-    MaintenanceOrder, SparePart
+    db,
+    Role,
+    Team,
+    User,
+    Skill,
+    UserSkill,
+    Asset,
+    MaintenanceOrder,
+    SparePart,
 )
+
 
 def _load_dummy_data(logger):
     """Load and parse the dummy data JSON file."""
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        dummy_data_path = os.path.join(current_dir, '..', '..', 'test_data', 'dummy_data.json')
-        with open(dummy_data_path, 'r', encoding='utf-8') as f:
+        dummy_data_path = os.path.join(
+            current_dir, "..", "..", "test_data", "dummy_data.json"
+        )
+        with open(dummy_data_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         logger.error(f"Dummy data file not found at {dummy_data_path}")
@@ -22,15 +32,16 @@ def _load_dummy_data(logger):
         logger.error(f"Error decoding JSON from {dummy_data_path}")
     return None
 
+
 def _get_or_create(model, **kwargs):
     """Fetches a database object or creates it if it doesn't exist."""
     instance = db.session.query(model).filter_by(**kwargs).first()
     if instance:
         return instance, False
-    else:
-        instance = model(**kwargs)
-        db.session.add(instance)
-        return instance, True
+    instance = model(**kwargs)
+    db.session.add(instance)
+    return instance, True
+
 
 def _create_roles(roles_data, logger):
     """Create roles from data, ensuring no duplicates."""
@@ -43,6 +54,7 @@ def _create_roles(roles_data, logger):
     logger.info(f"Loaded {len(roles)} roles.")
     return roles
 
+
 def _create_teams(teams_data, logger):
     """Create shift teams."""
     teams = {}
@@ -51,6 +63,7 @@ def _create_teams(teams_data, logger):
         teams[team.name] = team
     logger.info(f"Loaded {len(teams)} teams.")
     return teams
+
 
 def _create_users(users_data, roles, teams, logger):
     """Create users and assign roles and teams."""
@@ -64,6 +77,46 @@ def _create_users(users_data, roles, teams, logger):
                 if role_name in roles and roles[role_name] not in user.roles:
                     user.roles.append(roles[role_name])
     logger.info(f"Processed {len(users_data)} users.")
+    return users_data  # Return users_data to access 'team' info later if needed
+
+
+def _assign_technician_teams(technicians_data, logger):
+    """Assign teams and skills to technicians based on extended technician data."""
+    team_count = 0
+    skill_count = 0
+    for tech_info in technicians_data:
+        user = User.query.filter_by(username=tech_info["name"]).first()
+        if not user:
+            continue
+
+        # Assign Team
+        if tech_info.get("shift_team"):
+            team = Team.query.filter_by(name=tech_info["shift_team"]).first()
+            if team:
+                user.team = team
+                team_count += 1
+
+        # Assign Skills
+        skills_list = tech_info.get("skills", [])
+        if skills_list:
+            for skill_data in skills_list:
+                skill_name = skill_data.get("skill")
+                skill_level = skill_data.get("level", 1)
+
+                if skill_name:
+                    skill, _ = _get_or_create(Skill, name=skill_name)
+                    user_skill, created = _get_or_create(
+                        UserSkill, user=user, skill=skill
+                    )
+                    user_skill.skill_level = skill_level
+                    if created:
+                        skill_count += 1
+
+    logger.info(
+        f"Assigned teams to {team_count} technicians and processed "
+        f"{skill_count} new skill associations."
+    )
+
 
 def _create_skills(skills_data, logger):
     """Create skills and associate them with users."""
@@ -80,6 +133,7 @@ def _create_skills(skills_data, logger):
     logger.info(f"Loaded {len(skills)} skills and their user associations.")
     return skills
 
+
 def _create_assets(assets_data, logger):
     """Create assets."""
     assets = {}
@@ -94,6 +148,7 @@ def _create_assets(assets_data, logger):
     logger.info(f"Processed {len(assets_data)} assets.")
     return assets
 
+
 def _create_maintenance_orders(orders_data, assets, skills, logger):
     """Create maintenance orders."""
     for mo_info in orders_data:
@@ -101,9 +156,13 @@ def _create_maintenance_orders(orders_data, assets, skills, logger):
         if asset:
             due_date = None
             if mo_info.get("due_days_from_now") is not None:
-                due_date = datetime.now(timezone.utc) + timedelta(days=mo_info["due_days_from_now"])
+                due_date = datetime.now(timezone.utc) + timedelta(
+                    days=mo_info["due_days_from_now"]
+                )
 
-            mo, _ = _get_or_create(MaintenanceOrder, description=mo_info["description"], asset=asset)
+            mo, _ = _get_or_create(
+                MaintenanceOrder, description=mo_info["description"], asset=asset
+            )
             mo.order_type = mo_info.get("order_type", "PM")
             mo.status = mo_info.get("status", "Open")
             mo.due_date = due_date
@@ -113,9 +172,13 @@ def _create_maintenance_orders(orders_data, assets, skills, logger):
             mo.estimated_completion_time = mo_info.get("estimated_completion_time", 60)
 
             for skill_name in mo_info.get("required_skills", []):
-                if skill_name in skills and skills[skill_name] not in mo.required_skills:
+                if (
+                    skill_name in skills
+                    and skills[skill_name] not in mo.required_skills
+                ):
                     mo.required_skills.append(skills[skill_name])
     logger.info(f"Processed {len(orders_data)} maintenance orders.")
+
 
 def _create_spare_parts(parts_data, logger):
     """Create spare parts."""
@@ -128,11 +191,13 @@ def _create_spare_parts(parts_data, logger):
         part.min_quantity = part_info.get("min_quantity", 0)
     logger.info(f"Processed {len(parts_data)} spare parts.")
 
+
 def populate_dummy_data(logger):
     """Populates the database with initial dummy data."""
     logger.info("Checking if database needs to be populated.")
-    if Role.query.first() or User.query.first():
-        logger.info("Database already contains data. Skipping population.")
+    first_role = Role.query.first()
+    if first_role or User.query.first():
+        logger.info("Database already contains data. Skipping main population.")
         return
 
     logger.info("Populating database with dummy data.")
@@ -141,13 +206,16 @@ def populate_dummy_data(logger):
         return
 
     with db.session.begin_nested():
-        roles = _create_roles(data.get('roles', []), logger)
-        teams = _create_teams(data.get('teams', []), logger)
-        _create_users(data.get('users', []), roles, teams, logger)
-        skills = _create_skills(data.get('skills', []), logger)
-        assets = _create_assets(data.get('assets', []), logger)
-        _create_maintenance_orders(data.get('maintenance_orders', []), assets, skills, logger)
-        _create_spare_parts(data.get('spare_parts', []), logger)
+        roles = _create_roles(data.get("roles", []), logger)
+        teams = _create_teams(data.get("teams", []), logger)
+        _create_users(data.get("users", []), roles, teams, logger)
+        _assign_technician_teams(data.get("technicians", []), logger)
+        skills = _create_skills(data.get("skills", []), logger)
+        assets = _create_assets(data.get("assets", []), logger)
+        _create_maintenance_orders(
+            data.get("maintenance_orders", []), assets, skills, logger
+        )
+        _create_spare_parts(data.get("spare_parts", []), logger)
 
     db.session.commit()
     logger.info("Dummy data population complete.")

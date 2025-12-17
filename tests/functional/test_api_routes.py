@@ -7,7 +7,19 @@ status codes, error responses, and data validation.
 import pytest
 import json
 from datetime import datetime, timedelta, timezone
-from src.services.db_utils import db, Asset, MaintenanceOrder, SparePart, User, Role, Skill
+from flask import session
+from src.services.db_utils import (
+    db,
+    Asset,
+    MaintenanceOrder,
+    SparePart,
+    User,
+    Role,
+    Skill,
+    Team,
+    UserSkill,
+    TableConfiguration,
+)
 
 
 class TestAssetsAPI:
@@ -981,4 +993,151 @@ class TestAPIEdgeCasesAndErrorPaths:
             # Try to remove default
             response = client.post(f'/api/table-config/assets/{config_id}/remove-default')
             assert response.status_code == 403
+
+
+class TestAPITableConfig:
+    """Test suite for Table Configuration API endpoints."""
+
+    def test_get_table_configs_empty(self, client, logged_in_user):
+        """Test GET /api/table-config/<page> returns empty list initially."""
+        response = client.get('/api/table-config/assets')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert isinstance(data, list)
+        assert len(data) == 0
+
+    def test_save_table_config_success(self, client, logged_in_user):
+        """Test POST /api/table-config/<page> saves configuration."""
+        config_data = {
+            'config_name': 'My View',
+            'column_order': json.dumps(['name', 'status']),
+            'hidden_columns': json.dumps([]),
+            'filters': json.dumps({'status': 'Operational'}),
+            'sort_config': json.dumps({'column': 'name', 'direction': 'asc'}),
+            'is_default': True
+        }
+        response = client.post('/api/table-config/assets',
+                               data=json.dumps(config_data),
+                               content_type='application/json')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['success'] is True
+        assert 'id' in data
+
+    def test_update_table_config_success(self, client, logged_in_user, app):
+        """Test PUT /api/table-config/<id> updates configuration."""
+        # Create config first
+        with app.app_context():
+            config = TableConfiguration(
+                user_id=logged_in_user.id,
+                page_name='assets',
+                config_name='Original',
+                is_default=False
+            )
+            db.session.add(config)
+            db.session.commit()
+            config_id = config.id
+
+        update_data = {
+            'column_order': json.dumps(['name', 'asset_code']),
+            'hidden_columns': json.dumps(['description'])
+        }
+        response = client.put(f'/api/table-config/{config_id}',
+                              data=json.dumps(update_data),
+                              content_type='application/json')
+        assert response.status_code == 200
+        
+        # Verify update
+        with app.app_context():
+            updated = db.session.get(TableConfiguration, config_id)
+            assert updated.column_order == update_data['column_order']
+            assert updated.hidden_columns == update_data['hidden_columns']
+
+    def test_set_default_config(self, client, logged_in_user, app):
+        """Test POST /api/table-config/<page>/<id>/set-default."""
+        with app.app_context():
+            config = TableConfiguration(user_id=logged_in_user.id, page_name='assets', config_name='View 1', is_default=False)
+            db.session.add(config)
+            db.session.commit()
+            config_id = config.id
+
+        response = client.post(f'/api/table-config/assets/{config_id}/set-default')
+        assert response.status_code == 200
+        
+        with app.app_context():
+            updated = db.session.get(TableConfiguration, config_id)
+            assert updated.is_default is True
+
+    def test_remove_default_config(self, client, logged_in_user, app):
+        """Test POST /api/table-config/<page>/<id>/remove-default."""
+        with app.app_context():
+            config = TableConfiguration(user_id=logged_in_user.id, page_name='assets', config_name='View 1', is_default=True)
+            db.session.add(config)
+            db.session.commit()
+            config_id = config.id
+
+        response = client.post(f'/api/table-config/assets/{config_id}/remove-default')
+        assert response.status_code == 200
+        
+        with app.app_context():
+            updated = db.session.get(TableConfiguration, config_id)
+            assert updated.is_default is False
+
+    def test_delete_table_config_success(self, client, logged_in_user, app):
+        """Test DELETE /api/table-config/<id>."""
+        with app.app_context():
+            config = TableConfiguration(user_id=logged_in_user.id, page_name='assets', config_name='To Delete')
+            db.session.add(config)
+            db.session.commit()
+            config_id = config.id
+
+        response = client.delete(f'/api/table-config/{config_id}')
+        assert response.status_code == 200
+        
+        with app.app_context():
+            assert db.session.get(TableConfiguration, config_id) is None
+
+
+class TestAPIFilteredData:
+    """Test suite for Filtered Data API endpoints (/<entity>/filtered)."""
+
+    def test_get_filtered_assets_exact_match(self, client, multiple_assets):
+        """Test filtered assets with exact match."""
+        filter_config = json.dumps({
+            'status': {'value': 'Operational', 'operator': 'equals'}
+        })
+        response = client.get(f'/api/assets/filtered?filters={filter_config}')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data) >= 1
+        for asset in data:
+            assert asset['status'] == 'Operational'
+
+    def test_get_filtered_assets_contains(self, client, multiple_assets):
+        """Test filtered assets with contains operator."""
+        filter_config = json.dumps({
+            'name': {'value': 'Robot', 'operator': 'contains'}
+        })
+        response = client.get('/api/assets/filtered', query_string={'filters': filter_config})
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data) >= 2
+
+    def test_get_filtered_assets_sorting(self, client, multiple_assets):
+        """Test filtered assets with sorting."""
+        response = client.get('/api/assets/filtered?sort_column=name&sort_direction=desc')
+        assert response.status_code == 200
+        data = response.get_json()
+        names = [asset['name'] for asset in data]
+        assert names == sorted(names, reverse=True)
+
+    def test_get_filtered_invalid_entity(self, client):
+        """Test 400 for invalid entity type."""
+        response = client.get('/api/invalid_entity/filtered')
+        assert response.status_code == 400
+
+    def test_get_filtered_invalid_filter_json(self, client):
+        """Test 400 for invalid filter JSON."""
+        response = client.get('/api/assets/filtered?filters={invalid_json}')
+        assert response.status_code == 400
 

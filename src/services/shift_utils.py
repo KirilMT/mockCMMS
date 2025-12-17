@@ -2,6 +2,7 @@
 
 """Shift calculation utilities for the Pitman schedule."""
 
+
 def get_shift_teams(date_obj, teams):
     """
     Determines the Early and Late shift teams for a given date based on a 2-2-3

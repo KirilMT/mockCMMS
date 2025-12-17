@@ -3,10 +3,10 @@ import json
 import sys
 from datetime import datetime, timedelta
 
-# Add the main src directory to the path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'src'))
+# sys.path hack removed
+# Add the main src directory to the path handled by run.py
 
-from services.db_utils import MaintenanceOrder, Asset, User
+from src.services.db_utils import MaintenanceOrder, Asset, User
 
 class ReportGenerator:
     def __init__(self):
