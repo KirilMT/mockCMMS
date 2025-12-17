@@ -2,6 +2,7 @@
 import sqlite3
 import traceback
 import os
+import json
 from .planning_db_utils import get_db_connection, get_technician_lines_via_satellite_point
 
 # --- Configuration Store ---
@@ -114,3 +115,50 @@ def load_app_config(database_path, logger=None): # Added logger argument
             conn.close()
         else:
             _log("  No active database connection to close in config_manager.", 'warning')
+
+
+def load_shift_config():
+    """Loads shift duration configuration from config.json or config.example.json."""
+    # current file is apps/planning/src/services/config_manager.py
+    # config files are in apps/planning/config/
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_dir = os.path.abspath(os.path.join(current_dir, '..', '..', 'config'))
+
+    config_path = os.path.join(config_dir, 'config.json')
+    example_config_path = os.path.join(config_dir, 'config.example.json')
+
+    default_config = {
+        "shift_durations": {
+            "shift_break": 30,
+            "weekend": 720
+        }
+    }
+
+    loaded_config = {}
+
+    try:
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as f:
+                loaded_config = json.load(f)
+        elif os.path.exists(example_config_path):
+            with open(example_config_path, 'r') as f:
+                loaded_config = json.load(f)
+        else:
+            return default_config
+
+        # Merge with defaults to ensure keys exist
+        if "shift_durations" not in loaded_config:
+            loaded_config["shift_durations"] = default_config["shift_durations"]
+        else:
+             # Ensure both keys exist in sub-dictionary
+            if "shift_break" not in loaded_config["shift_durations"]:
+                loaded_config["shift_durations"]["shift_break"] = default_config["shift_durations"]["shift_break"]
+            if "weekend" not in loaded_config["shift_durations"]:
+                loaded_config["shift_durations"]["weekend"] = default_config["shift_durations"]["weekend"]
+
+        return loaded_config
+
+    except Exception as e:
+        print(f"Error loading config: {e}")
+        return default_config
