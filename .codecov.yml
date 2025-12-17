@@ -1,0 +1,9 @@
+codecov:
+  require_ci_to_pass: no
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  ignore_authors:
+    - "google-labs-jules"
+    - "google-labs-jules[bot]"
