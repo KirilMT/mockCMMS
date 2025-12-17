@@ -1,9 +1,9 @@
 """
 Test run.py application entry point.
 """
+
 import sys
 from unittest.mock import patch
-import pytest
 
 
 class TestRunEntry:
@@ -24,9 +24,11 @@ class TestRunEntry:
         # Patch db.create_all to prevent database creation side effects
         # Patch populate_dummy_data to prevent DB access when tables don't exist
         # Patch load_dotenv to prevent environment side effects
-        with patch("src.app.db.create_all"), \
-             patch("src.app.populate_dummy_data"), \
-             patch("dotenv.load_dotenv"):
+        with (
+            patch("src.app.db.create_all"),
+            patch("src.app.populate_dummy_data"),
+            patch("dotenv.load_dotenv"),
+        ):
             import run
 
             assert run.app is not None
@@ -34,9 +36,11 @@ class TestRunEntry:
 
     def test_run_app_config(self):
         """Test that the app from run.py has expected configuration."""
-        with patch("src.app.db.create_all"), \
-             patch("src.app.populate_dummy_data"), \
-             patch("dotenv.load_dotenv"):
+        with (
+            patch("src.app.db.create_all"),
+            patch("src.app.populate_dummy_data"),
+            patch("dotenv.load_dotenv"),
+        ):
             import run
 
             assert run.app.config is not None
