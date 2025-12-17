@@ -5,31 +5,38 @@ This module provides comprehensive pytest fixtures for testing the main
 mockCMMS application, including Flask app setup, test client, database
 session management, and sample data fixtures.
 """
+
 import sys
 import os
 import pytest
 from datetime import datetime, timedelta, timezone
 
 # Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from src.app import create_app
 from src.services.db_utils import (
-    db, User, Role, Asset, MaintenanceOrder, SparePart,
-    Skill, Team
+    db,
+    User,
+    Role,
+    Asset,
+    MaintenanceOrder,
+    SparePart,
+    Skill,
+    Team,
 )
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def app():
     """
     Create and configure a Flask app instance for testing.
 
     Uses an in-memory SQLite database that is created fresh for each test
     and destroyed after the test completes.
-    
+
     Properly manages database connections to prevent ResourceWarning about
     unclosed database connections during garbage collection.
 
@@ -37,43 +44,43 @@ def app():
         Flask: Configured Flask application in testing mode.
     """
     config_overrides = {
-        'TESTING': True,
-        'WTF_CSRF_ENABLED': False,
-        'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
-        'SQLALCHEMY_BINDS': {
-            'planning': 'sqlite:///:memory:'  # In-memory for planning models
+        "TESTING": True,
+        "WTF_CSRF_ENABLED": False,
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        "SQLALCHEMY_BINDS": {
+            "planning": "sqlite:///:memory:"  # In-memory for planning models
         },
-        'AUTO_SEED_DATABASE': False,  # Prevent seeding in tests
-        'SERVER_NAME': 'localhost.localdomain',  # Required for url_for to work
+        "AUTO_SEED_DATABASE": False,  # Prevent seeding in tests
+        "SERVER_NAME": "localhost.localdomain",  # Required for url_for to work
         # Ensure connections are properly recycled
-        'SQLALCHEMY_ENGINE_OPTIONS': {
-            'pool_pre_ping': True,
-            'pool_recycle': 300,
-        }
+        "SQLALCHEMY_ENGINE_OPTIONS": {
+            "pool_pre_ping": True,
+            "pool_recycle": 300,
+        },
     }
-    
+
     test_app = create_app(config_overrides)
 
     with test_app.app_context():
         # db.create_all() is now called within create_app
         yield test_app
-        
+
         # Proper cleanup sequence to prevent ResourceWarnings:
         # 1. Remove all scoped sessions (returns connections to pool)
         db.session.remove()
-        
+
         # 2. Close all checked-out connections
-        if hasattr(db.engine, 'pool'):
+        if hasattr(db.engine, "pool"):
             db.engine.pool.dispose()
-        
+
         # 3. Dispose of the engine (closes all connections)
         db.engine.dispose()
-        
+
         # 4. Drop all tables (cleanup)
         db.drop_all()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def client(app):
     """
     Provide a test client for making HTTP requests.
@@ -87,7 +94,7 @@ def client(app):
     return app.test_client()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def runner(app):
     """
     Provide a test CLI runner for Click commands.
@@ -101,7 +108,7 @@ def runner(app):
     return app.test_cli_runner()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def db_session(app):
     """
     Provide a database session with automatic rollback.
@@ -121,9 +128,7 @@ def db_session(app):
         transaction = connection.begin()
 
         # Bind session to the connection
-        session = db.create_scoped_session(
-            options={"bind": connection, "binds": {}}
-        )
+        session = db.create_scoped_session(options={"bind": connection, "binds": {}})
         db.session = session
 
         yield session
@@ -134,7 +139,7 @@ def db_session(app):
         session.remove()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def sample_role(app):
     """
     Create a sample role for testing.
@@ -146,16 +151,13 @@ def sample_role(app):
         Role: A test role with name 'Technician'
     """
     with app.app_context():
-        role = Role(
-            name='Technician',
-            description='Maintenance technician role'
-        )
+        role = Role(name="Technician", description="Maintenance technician role")
         db.session.add(role)
         db.session.commit()
         return role
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def sample_user(app, sample_role):
     """
     Create a sample user for testing.
@@ -169,12 +171,12 @@ def sample_user(app, sample_role):
     """
     with app.app_context():
         user = User(
-            username='testuser',
-            email='testuser@example.com',
+            username="testuser",
+            email="testuser@example.com",
             is_active=True,
-            availability_status='Available'
+            availability_status="Available",
         )
-        user.set_password('testpass123')
+        user.set_password("testpass123")
         user.roles.append(sample_role)
         db.session.add(user)
         db.session.commit()
@@ -184,7 +186,7 @@ def sample_user(app, sample_role):
         return user
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def sample_admin_user(app):
     """
     Create a sample admin user for testing.
@@ -196,15 +198,11 @@ def sample_admin_user(app):
         User: A test admin user (username: admin, password: admin123)
     """
     with app.app_context():
-        admin_role = Role(name='Admin', description='Administrator role')
+        admin_role = Role(name="Admin", description="Administrator role")
         db.session.add(admin_role)
 
-        admin = User(
-            username='admin',
-            email='admin@example.com',
-            is_active=True
-        )
-        admin.set_password('admin123')
+        admin = User(username="admin", email="admin@example.com", is_active=True)
+        admin.set_password("admin123")
         admin.roles.append(admin_role)
         db.session.add(admin)
         db.session.commit()
@@ -213,7 +211,7 @@ def sample_admin_user(app):
         return admin
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def sample_team(app):
     """
     Create a sample team for testing.
@@ -225,11 +223,7 @@ def sample_team(app):
         Team: A test team with shift information
     """
     with app.app_context():
-        team = Team(
-            name='Alpha Team',
-            shift_type='Early',
-            rotation_pattern='Pattern 1'
-        )
+        team = Team(name="Alpha Team", shift_type="Early", rotation_pattern="Pattern 1")
         db.session.add(team)
         db.session.commit()
 
@@ -237,7 +231,7 @@ def sample_team(app):
         return team
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def sample_skill(app):
     """
     Create a sample skill for testing.
@@ -249,7 +243,7 @@ def sample_skill(app):
         Skill: A test skill (e.g., 'Welding')
     """
     with app.app_context():
-        skill = Skill(name='Welding')
+        skill = Skill(name="Welding")
         db.session.add(skill)
         db.session.commit()
 
@@ -257,7 +251,7 @@ def sample_skill(app):
         return skill
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def sample_asset(app):
     """
     Create a sample asset for testing.
@@ -270,12 +264,12 @@ def sample_asset(app):
     """
     with app.app_context():
         asset = Asset(
-            asset_code='TEST-001',
-            name='Test Robot Arm',
-            description='Robotic welding arm for testing',
-            asset_type='robot',
-            cost_center='assembly',
-            status='Operational'
+            asset_code="TEST-001",
+            name="Test Robot Arm",
+            description="Robotic welding arm for testing",
+            asset_type="robot",
+            cost_center="assembly",
+            status="Operational",
         )
         db.session.add(asset)
         db.session.commit()
@@ -284,7 +278,7 @@ def sample_asset(app):
         return asset
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def sample_spare_part(app):
     """
     Create a sample spare part for testing.
@@ -297,12 +291,12 @@ def sample_spare_part(app):
     """
     with app.app_context():
         spare_part = SparePart(
-            description='Hydraulic Pump Model X500',
-            manufacturer='ACME Corp',
-            manufacturer_part_id='PUMP-X500',
+            description="Hydraulic Pump Model X500",
+            manufacturer="ACME Corp",
+            manufacturer_part_id="PUMP-X500",
             stock_quantity=10,
-            location='Warehouse A, Shelf 3',
-            min_quantity=2
+            location="Warehouse A, Shelf 3",
+            min_quantity=2,
         )
         db.session.add(spare_part)
         db.session.commit()
@@ -311,7 +305,7 @@ def sample_spare_part(app):
         return spare_part
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def sample_mo(app, sample_asset, sample_user):
     """
     Create a sample maintenance order for testing.
@@ -327,14 +321,14 @@ def sample_mo(app, sample_asset, sample_user):
     with app.app_context():
         mo = MaintenanceOrder(
             asset_id=sample_asset.id,
-            description='Routine maintenance check',
-            order_type='PM',
-            status='Open',
-            priority='Medium',
+            description="Routine maintenance check",
+            order_type="PM",
+            status="Open",
+            priority="Medium",
             due_date=datetime.now(timezone.utc) + timedelta(days=7),
             estimated_completion_time=120,  # 2 hours
             labour_count=1,
-            created_by=sample_user.id
+            created_by=sample_user.id,
         )
         db.session.add(mo)
         db.session.commit()
@@ -343,7 +337,7 @@ def sample_mo(app, sample_asset, sample_user):
         return mo
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def auth_client(client, sample_user, app):
     """
     Provide an authenticated test client.
@@ -362,13 +356,13 @@ def auth_client(client, sample_user, app):
     with app.app_context():
         # Simulate login by setting session
         with client.session_transaction() as session:
-            session['user_id'] = sample_user.id
-            session['username'] = sample_user.username
+            session["user_id"] = sample_user.id
+            session["username"] = sample_user.username
 
     return client
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def multiple_assets(app):
     """
     Create multiple assets for testing list operations.
@@ -382,26 +376,26 @@ def multiple_assets(app):
     with app.app_context():
         assets = [
             Asset(
-                asset_code='ROBOT-001',
-                name='Welding Robot 1',
-                asset_type='robot',
-                cost_center='assembly',
-                status='Operational'
+                asset_code="ROBOT-001",
+                name="Welding Robot 1",
+                asset_type="robot",
+                cost_center="assembly",
+                status="Operational",
             ),
             Asset(
-                asset_code='ROBOT-002',
-                name='Welding Robot 2',
-                asset_type='robot',
-                cost_center='assembly',
-                status='Down'
+                asset_code="ROBOT-002",
+                name="Welding Robot 2",
+                asset_type="robot",
+                cost_center="assembly",
+                status="Down",
             ),
             Asset(
-                asset_code='PRESS-001',
-                name='Hydraulic Press',
-                asset_type='tooling',
-                cost_center='biw',
-                status='Operational'
-            )
+                asset_code="PRESS-001",
+                name="Hydraulic Press",
+                asset_type="tooling",
+                cost_center="biw",
+                status="Operational",
+            ),
         ]
         for asset in assets:
             db.session.add(asset)
@@ -412,7 +406,7 @@ def multiple_assets(app):
         return assets
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def multiple_mos(app, multiple_assets, sample_user):
     """
     Create multiple maintenance orders for testing list operations.
@@ -429,28 +423,28 @@ def multiple_mos(app, multiple_assets, sample_user):
         mos = [
             MaintenanceOrder(
                 asset_id=multiple_assets[0].id,
-                description='Daily inspection',
-                order_type='PM',
-                status='Open',
-                priority='Low',
-                created_by=sample_user.id
+                description="Daily inspection",
+                order_type="PM",
+                status="Open",
+                priority="Low",
+                created_by=sample_user.id,
             ),
             MaintenanceOrder(
                 asset_id=multiple_assets[1].id,
-                description='Emergency repair',
-                order_type='reactive',
-                status='In Progress',
-                priority='Critical',
-                created_by=sample_user.id
+                description="Emergency repair",
+                order_type="reactive",
+                status="In Progress",
+                priority="Critical",
+                created_by=sample_user.id,
             ),
             MaintenanceOrder(
                 asset_id=multiple_assets[2].id,
-                description='Scheduled replacement',
-                order_type='corrective',
-                status='Completed',
-                priority='Medium',
-                created_by=sample_user.id
-            )
+                description="Scheduled replacement",
+                order_type="corrective",
+                status="Completed",
+                priority="Medium",
+                created_by=sample_user.id,
+            ),
         ]
         for mo in mos:
             db.session.add(mo)
@@ -461,7 +455,7 @@ def multiple_mos(app, multiple_assets, sample_user):
         return mos
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def logged_in_user(client, sample_user):
     """
     Create a logged-in user session for testing authenticated endpoints.
@@ -474,43 +468,44 @@ def logged_in_user(client, sample_user):
         User: The logged-in user
     """
     with client.session_transaction() as sess:
-        sess['user_id'] = sample_user.id
-        sess['username'] = sample_user.username
+        sess["user_id"] = sample_user.id
+        sess["username"] = sample_user.username
     return sample_user
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def cleanup_test_artifacts():
     """Clean up test database files after entire test session completes.
-    
+
     IMPORTANT: Only clean up TEST database files, never production data.
     The mockcmms.db is the production database and must NEVER be deleted by tests.
-    
+
     Also runs explicit garbage collection to ensure all SQLite connections
     are properly closed before pytest checks for resource leaks.
     """
     yield
-    
+
     # Force garbage collection to clean up any remaining SQLite connections
     # This prevents ResourceWarning about unclosed database connections
     import gc
+
     gc.collect()
-    
+
     # Only clean up TEST database files - NEVER touch production mockcmms.db
-    test_db = os.path.join('instance', 'mockcmms_test.db')
-    
+    test_db = os.path.join("instance", "mockcmms_test.db")
+
     if os.path.exists(test_db):
         try:
             os.remove(test_db)
         except PermissionError:
             pass
-    
+
     # Remove instance directory ONLY if it's empty
     # This ensures we never delete the directory if mockcmms.db exists
-    if os.path.exists('instance'):
+    if os.path.exists("instance"):
         try:
             # os.rmdir only succeeds if directory is empty - safe operation
-            if not os.listdir('instance'):
-                os.rmdir('instance')
+            if not os.listdir("instance"):
+                os.rmdir("instance")
         except (OSError, PermissionError):
             pass

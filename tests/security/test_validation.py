@@ -4,6 +4,7 @@ Tests for data validation and security.
 This module tests input validation, SQL injection prevention, XSS prevention,
 and data integrity to ensure production-level security and data quality.
 """
+
 import pytest
 from src.services.db_utils import db, Asset, MaintenanceOrder, User, Role
 
@@ -16,18 +17,20 @@ class TestDataValidation:
         """Create an admin user for testing."""
         with app.app_context():
             # Create Admin role if it doesn't exist
-            admin_role = Role.query.filter_by(name='Admin').first()
+            admin_role = Role.query.filter_by(name="Admin").first()
             if not admin_role:
-                admin_role = Role(name='Admin', description='Administrator with full access')
+                admin_role = Role(
+                    name="Admin", description="Administrator with full access"
+                )
                 db.session.add(admin_role)
                 db.session.flush()
 
             # Check if admin user already exists
-            user = User.query.filter_by(username='admin').first()
+            user = User.query.filter_by(username="admin").first()
             if not user:
                 # Create admin user
-                user = User(username='admin', email='admin@test.com')
-                user.set_password('admin123')
+                user = User(username="admin", email="admin@test.com")
+                user.set_password("admin123")
                 user.roles.append(admin_role)
                 db.session.add(user)
                 db.session.commit()
@@ -44,21 +47,19 @@ class TestDataValidation:
         - No database errors or corruption occurs
         """
         # Login first
-        client.post('/login', data={
-            'username': 'admin',
-            'password': 'admin123'
-        })
+        client.post("/login", data={"username": "admin", "password": "admin123"})
 
         # SQL injection payload in asset name
         sql_payload = "'; DROP TABLE assets; --"
 
-        response = client.post('/api/v1/assets',
+        response = client.post(
+            "/api/v1/assets",
             json={
-                'asset_code': 'SQL-TEST-001',
-                'name': sql_payload,
-                'description': 'Test SQL injection prevention'
+                "asset_code": "SQL-TEST-001",
+                "name": sql_payload,
+                "description": "Test SQL injection prevention",
             },
-            follow_redirects=True
+            follow_redirects=True,
         )
 
         # Verify the asset was created (200 or 201 status)
@@ -70,11 +71,13 @@ class TestDataValidation:
             assert len(assets) >= 1, "Asset table should still exist and contain data"
 
             # Find the test asset
-            test_asset = Asset.query.filter_by(asset_code='SQL-TEST-001').first()
+            test_asset = Asset.query.filter_by(asset_code="SQL-TEST-001").first()
             assert test_asset is not None, "Test asset should exist"
 
             # Verify payload was stored as harmless string data
-            assert test_asset.name == sql_payload, "SQL payload should be stored as string"
+            assert (
+                test_asset.name == sql_payload
+            ), "SQL payload should be stored as string"
 
     def test_xss_prevention(self, client, admin_user):
         """
@@ -86,21 +89,19 @@ class TestDataValidation:
         - Data is safely rendered in HTML
         """
         # Login first
-        client.post('/login', data={
-            'username': 'admin',
-            'password': 'admin123'
-        })
+        client.post("/login", data={"username": "admin", "password": "admin123"})
 
         # XSS payload in asset description
         xss_payload = "<script>alert('XSS')</script>"
 
-        response = client.post('/api/v1/assets',
+        response = client.post(
+            "/api/v1/assets",
             json={
-                'asset_code': 'XSS-TEST-001',
-                'name': 'XSS Test Asset',
-                'description': xss_payload
+                "asset_code": "XSS-TEST-001",
+                "name": "XSS Test Asset",
+                "description": xss_payload,
             },
-            follow_redirects=True
+            follow_redirects=True,
         )
 
         # Verify the asset was created
@@ -108,22 +109,25 @@ class TestDataValidation:
 
         # Verify data is stored safely
         with client.application.app_context():
-            test_asset = Asset.query.filter_by(asset_code='XSS-TEST-001').first()
+            test_asset = Asset.query.filter_by(asset_code="XSS-TEST-001").first()
             assert test_asset is not None, "Test asset should exist"
-            assert test_asset.description == xss_payload, "XSS payload should be stored as string"
+            assert (
+                test_asset.description == xss_payload
+            ), "XSS payload should be stored as string"
 
         # Verify the asset detail page escapes the script
         with client.application.app_context():
-            asset = Asset.query.filter_by(asset_code='XSS-TEST-001').first()
+            asset = Asset.query.filter_by(asset_code="XSS-TEST-001").first()
             asset_id = asset.id
 
-        response = client.get(f'/assets/{asset_id}')
+        response = client.get(f"/assets/{asset_id}")
         assert response.status_code == 200, "Asset detail page should load"
 
         # Check that script is escaped (rendered as text, not executed)
         # Flask/Jinja2 auto-escapes by default, so we should see &lt;script&gt; or similar
-        assert b'<script>alert' not in response.data or b'&lt;script&gt;' in response.data, \
-            "Script tags should be escaped in HTML output"
+        assert (
+            b"<script>alert" not in response.data or b"&lt;script&gt;" in response.data
+        ), "Script tags should be escaped in HTML output"
 
     def test_required_fields_validation(self, client, admin_user):
         """
@@ -135,34 +139,36 @@ class TestDataValidation:
         - Database record is NOT created
         """
         # Login first
-        client.post('/login', data={
-            'username': 'admin',
-            'password': 'admin123'
-        })
+        client.post("/login", data={"username": "admin", "password": "admin123"})
 
         # Count assets before
         with client.application.app_context():
             initial_count = Asset.query.count()
 
         # Try to create asset without required 'name' field
-        response = client.post('/api/v1/assets',
+        response = client.post(
+            "/api/v1/assets",
             json={
-                'asset_code': 'INVALID-001',
+                "asset_code": "INVALID-001",
                 # Missing 'name' field
-                'description': 'This should fail'
+                "description": "This should fail",
             },
-            follow_redirects=True
+            follow_redirects=True,
         )
 
         # Verify validation error
-        assert response.status_code == 400, "Should return 400 for missing required field"
+        assert (
+            response.status_code == 400
+        ), "Should return 400 for missing required field"
 
         # Verify error message
         json_data = response.get_json()
         assert json_data is not None, "Should return JSON error"
-        assert 'error' in json_data, "Should contain error message"
-        assert 'name' in json_data['error'].lower() or 'required' in json_data['error'].lower(), \
-            "Error message should indicate missing field"
+        assert "error" in json_data, "Should contain error message"
+        assert (
+            "name" in json_data["error"].lower()
+            or "required" in json_data["error"].lower()
+        ), "Error message should indicate missing field"
 
         # Verify no record was created
         with client.application.app_context():
@@ -179,19 +185,17 @@ class TestDataValidation:
         - Only one record exists
         """
         # Login first
-        client.post('/login', data={
-            'username': 'admin',
-            'password': 'admin123'
-        })
+        client.post("/login", data={"username": "admin", "password": "admin123"})
 
         # Create first asset
-        response1 = client.post('/api/v1/assets',
+        response1 = client.post(
+            "/api/v1/assets",
             json={
-                'asset_code': 'UNIQUE-TEST-001',
-                'name': 'First Asset',
-                'description': 'Original asset'
+                "asset_code": "UNIQUE-TEST-001",
+                "name": "First Asset",
+                "description": "Original asset",
             },
-            follow_redirects=True
+            follow_redirects=True,
         )
         assert response1.status_code in [200, 201], "First asset should be created"
 
@@ -199,27 +203,34 @@ class TestDataValidation:
         # Note: The API doesn't have proper error handling for this, so it will raise IntegrityError
         # This is actually testing that the database constraint IS working
         try:
-            response2 = client.post('/api/v1/assets',
+            response2 = client.post(
+                "/api/v1/assets",
                 json={
-                    'asset_code': 'UNIQUE-TEST-001',  # Duplicate!
-                    'name': 'Second Asset',
-                    'description': 'This should fail'
+                    "asset_code": "UNIQUE-TEST-001",  # Duplicate!
+                    "name": "Second Asset",
+                    "description": "This should fail",
                 },
-                follow_redirects=True
+                follow_redirects=True,
             )
             # If we get here without exception, check the response
-            assert response2.status_code in [400, 409, 500], \
-                "Should return error for duplicate asset_code"
+            assert response2.status_code in [
+                400,
+                409,
+                500,
+            ], "Should return error for duplicate asset_code"
         except Exception as e:
             # IntegrityError is expected - this proves constraint is working
-            assert 'UNIQUE constraint failed' in str(e) or 'IntegrityError' in str(type(e)), \
-                "Should raise IntegrityError for duplicate"
+            assert "UNIQUE constraint failed" in str(e) or "IntegrityError" in str(
+                type(e)
+            ), "Should raise IntegrityError for duplicate"
 
         # Verify only one record exists
         with client.application.app_context():
-            duplicates = Asset.query.filter_by(asset_code='UNIQUE-TEST-001').all()
+            duplicates = Asset.query.filter_by(asset_code="UNIQUE-TEST-001").all()
             assert len(duplicates) == 1, "Only one asset should exist with this code"
-            assert duplicates[0].name == 'First Asset', "Original asset should be preserved"
+            assert (
+                duplicates[0].name == "First Asset"
+            ), "Original asset should be preserved"
 
     def test_data_type_validation(self, client, admin_user):
         """
@@ -230,30 +241,25 @@ class TestDataValidation:
         - Database maintains integrity
         """
         # Login first
-        client.post('/login', data={
-            'username': 'admin',
-            'password': 'admin123'
-        })
+        client.post("/login", data={"username": "admin", "password": "admin123"})
 
         # Create an asset first
         with client.application.app_context():
-            test_asset = Asset(
-                asset_code='TYPE-TEST-001',
-                name='Type Test Asset'
-            )
+            test_asset = Asset(asset_code="TYPE-TEST-001", name="Type Test Asset")
             db.session.add(test_asset)
             db.session.commit()
             asset_id = test_asset.id
 
         # Try to create MO with invalid asset_id type (string instead of integer)
         # Note: Flask/SQLAlchemy may auto-convert or handle this gracefully
-        response = client.post('/api/v1/mos',
+        response = client.post(
+            "/api/v1/mos",
             json={
-                'asset_id': 'not_a_number',  # Invalid type!
-                'description': 'Test MO',
-                'order_type': 'reactive'
+                "asset_id": "not_a_number",  # Invalid type!
+                "description": "Test MO",
+                "order_type": "reactive",
             },
-            follow_redirects=True
+            follow_redirects=True,
         )
 
         # The API may handle this in different ways:
@@ -270,8 +276,12 @@ class TestDataValidation:
             pass
         else:
             # If it failed, that's proper validation
-            assert response.status_code in [400, 404, 422, 500], \
-                "Should return error for invalid data type"
+            assert response.status_code in [
+                400,
+                404,
+                422,
+                500,
+            ], "Should return error for invalid data type"
 
         # The important test is that database integrity is maintained
         with client.application.app_context():
@@ -292,31 +302,34 @@ class TestDataValidation:
         that proper validation should be added in the API layer.
         """
         # Login first
-        client.post('/login', data={
-            'username': 'admin',
-            'password': 'admin123'
-        })
+        client.post("/login", data={"username": "admin", "password": "admin123"})
 
         # Create asset with name exceeding typical max length (255 chars)
-        long_name = 'A' * 300  # Exceeds typical 255 char limit
+        long_name = "A" * 300  # Exceeds typical 255 char limit
 
-        response = client.post('/api/v1/assets',
+        response = client.post(
+            "/api/v1/assets",
             json={
-                'asset_code': 'LENGTH-TEST-001',
-                'name': long_name,
-                'description': 'Test max length validation'
+                "asset_code": "LENGTH-TEST-001",
+                "name": long_name,
+                "description": "Test max length validation",
             },
-            follow_redirects=True
+            follow_redirects=True,
         )
 
         # SQLite doesn't enforce VARCHAR length, so this will likely succeed
         # This test documents current behavior and verifies data integrity
-        assert response.status_code in [200, 201, 400, 422, 500], \
-            "Should either succeed or fail gracefully"
+        assert response.status_code in [
+            200,
+            201,
+            400,
+            422,
+            500,
+        ], "Should either succeed or fail gracefully"
 
         # Verify database state
         with client.application.app_context():
-            asset = Asset.query.filter_by(asset_code='LENGTH-TEST-001').first()
+            asset = Asset.query.filter_by(asset_code="LENGTH-TEST-001").first()
 
             if asset:
                 # If created, document that SQLite doesn't enforce length
@@ -331,4 +344,3 @@ class TestDataValidation:
                 # If not created, validation worked somewhere
                 # This would be the ideal behavior
                 assert True, "Proper validation prevented overly long input"
-

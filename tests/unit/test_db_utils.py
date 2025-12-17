@@ -4,11 +4,18 @@ Tests for database utility functions (db_utils.py).
 This module tests the database population functions and model relationships
 to ensure data integrity and proper ORM behavior.
 """
+
 import logging
 import pytest
 from src.services.db_utils import (
-    db, populate_dummy_data,
-    User, Asset, MaintenanceOrder, SparePart, Skill, Role
+    db,
+    populate_dummy_data,
+    User,
+    Asset,
+    MaintenanceOrder,
+    SparePart,
+    Skill,
+    Role,
 )
 
 
@@ -39,14 +46,18 @@ class TestDatabaseUtilities:
 
             # Verify data was populated
             assert Asset.query.count() > 0, "Assets should be populated"
-            assert MaintenanceOrder.query.count() > 0, "Maintenance orders should be populated"
+            assert (
+                MaintenanceOrder.query.count() > 0
+            ), "Maintenance orders should be populated"
             assert User.query.count() > 0, "Users should be populated"
 
             # Verify specific data exists
             assets = Asset.query.all()
             assert len(assets) > 0
             assert all(asset.name for asset in assets), "All assets should have names"
-            assert all(asset.asset_code for asset in assets), "All assets should have asset codes"
+            assert all(
+                asset.asset_code for asset in assets
+            ), "All assets should have asset codes"
 
             mos = MaintenanceOrder.query.all()
             assert len(mos) > 0
@@ -55,7 +66,9 @@ class TestDatabaseUtilities:
 
             users = User.query.all()
             assert len(users) > 0
-            assert all(user.username for user in users), "All users should have usernames"
+            assert all(
+                user.username for user in users
+            ), "All users should have usernames"
 
     def test_populate_dummy_data_idempotent(self, app, client):
         """
@@ -89,12 +102,12 @@ class TestDatabaseUtilities:
         with app.app_context():
             # Create an Asset
             asset = Asset(
-                asset_code='TEST-001',
-                name='Test Asset',
-                description='Test Description',
-                asset_type='Equipment',
-                cost_center='Test Center',
-                status='Operational'
+                asset_code="TEST-001",
+                name="Test Asset",
+                description="Test Description",
+                asset_type="Equipment",
+                cost_center="Test Center",
+                status="Operational",
             )
             db.session.add(asset)
             db.session.commit()
@@ -105,11 +118,11 @@ class TestDatabaseUtilities:
             # Create a MaintenanceOrder linked to the Asset
             mo = MaintenanceOrder(
                 asset_id=asset.id,
-                description='Test Maintenance Order',
-                order_type='PM',
-                status='Open',
-                priority='Medium',
-                labour_count=1
+                description="Test Maintenance Order",
+                order_type="PM",
+                status="Open",
+                priority="Medium",
+                labour_count=1,
             )
             db.session.add(mo)
             db.session.commit()
@@ -121,11 +134,17 @@ class TestDatabaseUtilities:
             # Test relationship navigation (MO -> Asset)
             assert mo.asset is not None, "MO should have asset relationship"
             assert mo.asset.id == asset.id, "MO.asset should point to correct asset"
-            assert mo.asset.name == 'Test Asset', "Relationship should return correct asset"
+            assert (
+                mo.asset.name == "Test Asset"
+            ), "Relationship should return correct asset"
 
             # Test relationship navigation (Asset -> MOs)
-            assert len(asset.maintenance_orders) > 0, "Asset should have maintenance orders"
-            assert asset.maintenance_orders[0].id == mo.id, "Asset.maintenance_orders should include our MO"
+            assert (
+                len(asset.maintenance_orders) > 0
+            ), "Asset should have maintenance orders"
+            assert (
+                asset.maintenance_orders[0].id == mo.id
+            ), "Asset.maintenance_orders should include our MO"
 
             # Test cascade behavior (delete asset should cascade to MOs if configured)
             asset_id = asset.id
@@ -143,82 +162,96 @@ class TestDatabaseUtilities:
             assert deleted_mo is None, "MO should be cascade deleted with asset"
 
 
-
 class TestEnhancedDatabaseUtilities:
     """Enhanced tests for database models, methods, and constraints."""
 
     def test_user_password_hashing(self, app):
         """Test User password hashing methods."""
         with app.app_context():
-            user = User(username='testuser', email='test@example.com')
-            user.set_password('securepassword123')
+            user = User(username="testuser", email="test@example.com")
+            user.set_password("securepassword123")
             db.session.add(user)
             db.session.commit()
 
             assert user.password_hash is not None
-            assert user.password_hash != 'securepassword123'
-            assert user.check_password('securepassword123') is True
-            assert user.check_password('wrongpassword') is False
+            assert user.password_hash != "securepassword123"
+            assert user.check_password("securepassword123") is True
+            assert user.check_password("wrongpassword") is False
 
-            user.set_password('newpassword456')
+            user.set_password("newpassword456")
             db.session.commit()
-            assert user.check_password('newpassword456') is True
-            assert user.check_password('securepassword123') is False
+            assert user.check_password("newpassword456") is True
+            assert user.check_password("securepassword123") is False
 
     def test_user_to_dict_method(self, app, sample_role):
         """Test User to_dict method with and without roles."""
         with app.app_context():
-            user = User(username='dictuser', email='dict@example.com')
-            user.set_password('password')
+            user = User(username="dictuser", email="dict@example.com")
+            user.set_password("password")
             user.roles.append(sample_role)
             db.session.add(user)
             db.session.commit()
 
             data_without_roles = user.to_dict(include_roles=False)
-            assert 'username' in data_without_roles
-            assert 'email' in data_without_roles
-            assert 'roles_display' not in data_without_roles
+            assert "username" in data_without_roles
+            assert "email" in data_without_roles
+            assert "roles_display" not in data_without_roles
 
             data_with_roles = user.to_dict(include_roles=True)
-            assert 'roles_display' in data_with_roles
-            assert 'Technician' in data_with_roles['roles_display']
+            assert "roles_display" in data_with_roles
+            assert "Technician" in data_with_roles["roles_display"]
 
     def test_model_string_representations(self, app):
         """Test __repr__ methods exist and work for all models."""
         with app.app_context():
-            asset = Asset(asset_code='REPR-001', name='Test Asset', asset_type='Equipment', cost_center='Test')
-            skill = Skill(name='TestSkill')
-            role = Role(name='TestRole')
-            
+            asset = Asset(
+                asset_code="REPR-001",
+                name="Test Asset",
+                asset_type="Equipment",
+                cost_center="Test",
+            )
+            skill = Skill(name="TestSkill")
+            role = Role(name="TestRole")
+
             db.session.add_all([asset, skill, role])
             db.session.commit()
 
-            assert 'Asset' in str(type(asset))
-            assert 'Skill' in str(type(skill))
-            assert 'Role' in str(type(role))
+            assert "Asset" in str(type(asset))
+            assert "Skill" in str(type(skill))
+            assert "Role" in str(type(role))
 
     def test_database_constraints(self, app):
         """Test database constraints (unique constraints)."""
         with app.app_context():
             from sqlalchemy.exc import IntegrityError
 
-            asset1 = Asset(asset_code='CONST-001', name='Asset 1', asset_type='Equipment', cost_center='Test')
+            asset1 = Asset(
+                asset_code="CONST-001",
+                name="Asset 1",
+                asset_type="Equipment",
+                cost_center="Test",
+            )
             db.session.add(asset1)
             db.session.commit()
 
-            asset2 = Asset(asset_code='CONST-001', name='Asset 2', asset_type='Equipment', cost_center='Test')
+            asset2 = Asset(
+                asset_code="CONST-001",
+                name="Asset 2",
+                asset_type="Equipment",
+                cost_center="Test",
+            )
             db.session.add(asset2)
             with pytest.raises(IntegrityError):
                 db.session.commit()
             db.session.rollback()
 
-            user1 = User(username='testuser', email='test1@example.com')
-            user1.set_password('password')
+            user1 = User(username="testuser", email="test1@example.com")
+            user1.set_password("password")
             db.session.add(user1)
             db.session.commit()
 
-            user2 = User(username='testuser', email='test2@example.com')
-            user2.set_password('password')
+            user2 = User(username="testuser", email="test2@example.com")
+            user2.set_password("password")
             db.session.add(user2)
             with pytest.raises(IntegrityError):
                 db.session.commit()
@@ -227,11 +260,23 @@ class TestEnhancedDatabaseUtilities:
     def test_cascade_relationships_all_models(self, app, sample_role):
         """Test cascade behavior across all model relationships."""
         with app.app_context():
-            asset = Asset(asset_code='CASCADE-001', name='Cascade Asset', asset_type='Equipment', cost_center='Test')
+            asset = Asset(
+                asset_code="CASCADE-001",
+                name="Cascade Asset",
+                asset_type="Equipment",
+                cost_center="Test",
+            )
             db.session.add(asset)
             db.session.commit()
 
-            mo = MaintenanceOrder(asset_id=asset.id, description='Cascade MO', order_type='PM', status='Open', priority='Medium', labour_count=1)
+            mo = MaintenanceOrder(
+                asset_id=asset.id,
+                description="Cascade MO",
+                order_type="PM",
+                status="Open",
+                priority="Medium",
+                labour_count=1,
+            )
             db.session.add(mo)
             db.session.commit()
 
@@ -244,8 +289,8 @@ class TestEnhancedDatabaseUtilities:
             assert Asset.query.get(asset_id) is None
             assert MaintenanceOrder.query.get(mo_id) is None
 
-            user = User(username='cascadeuser', email='cascade@example.com')
-            user.set_password('password')
+            user = User(username="cascadeuser", email="cascade@example.com")
+            user.set_password("password")
             user.roles.append(sample_role)
             db.session.add(user)
             db.session.commit()
@@ -262,66 +307,95 @@ class TestEnhancedDatabaseUtilities:
     def test_model_default_values(self, app):
         """Test that model default values are applied correctly."""
         with app.app_context():
-            asset = Asset(asset_code='DEFAULT-001', name='Default Asset')
+            asset = Asset(asset_code="DEFAULT-001", name="Default Asset")
             db.session.add(asset)
             db.session.commit()
 
-            assert asset.status == 'Operational'
+            assert asset.status == "Operational"
 
-            mo = MaintenanceOrder(asset_id=asset.id, description='Default MO', order_type='PM')
+            mo = MaintenanceOrder(
+                asset_id=asset.id, description="Default MO", order_type="PM"
+            )
             db.session.add(mo)
             db.session.commit()
 
-            assert mo.status == 'Open'
-            assert mo.priority == 'Undefined'
+            assert mo.status == "Open"
+            assert mo.priority == "Undefined"
             assert mo.labour_count == 1
             assert mo.created_at is not None
 
-            user = User(username='defaultuser', email='default@example.com')
-            user.set_password('password')
+            user = User(username="defaultuser", email="default@example.com")
+            user.set_password("password")
             db.session.add(user)
             db.session.commit()
 
             assert user.is_active is True
-            assert user.availability_status == 'Available'
+            assert user.availability_status == "Available"
             assert user.created_at is not None
 
     def test_query_filter_edge_cases(self, app):
         """Test query filtering with edge cases."""
         with app.app_context():
-            asset1 = Asset(asset_code='FILTER-001', name='Asset One', asset_type='Equipment', cost_center='Test')
-            asset2 = Asset(asset_code='FILTER-002', name='Asset Two', asset_type=None, cost_center='Test')
-            asset3 = Asset(asset_code='FILTER-003', name='', asset_type='Equipment', cost_center='Test')
-            
+            asset1 = Asset(
+                asset_code="FILTER-001",
+                name="Asset One",
+                asset_type="Equipment",
+                cost_center="Test",
+            )
+            asset2 = Asset(
+                asset_code="FILTER-002",
+                name="Asset Two",
+                asset_type=None,
+                cost_center="Test",
+            )
+            asset3 = Asset(
+                asset_code="FILTER-003",
+                name="",
+                asset_type="Equipment",
+                cost_center="Test",
+            )
+
             db.session.add_all([asset1, asset2, asset3])
             db.session.commit()
 
             none_type_assets = Asset.query.filter_by(asset_type=None).all()
             assert len(none_type_assets) == 1
-            assert none_type_assets[0].asset_code == 'FILTER-002'
+            assert none_type_assets[0].asset_code == "FILTER-002"
 
-            empty_name_assets = Asset.query.filter_by(name='').all()
+            empty_name_assets = Asset.query.filter_by(name="").all()
             assert len(empty_name_assets) == 1
 
-            all_assets = Asset.query.filter(Asset.asset_code.like('FILTER-%')).all()
+            all_assets = Asset.query.filter(Asset.asset_code.like("FILTER-%")).all()
             assert len(all_assets) == 3
 
     def test_relationship_back_references(self, app, sample_role):
         """Test bi-directional relationships and backrefs."""
         with app.app_context():
-            asset = Asset(asset_code='BACKREF-001', name='Backref Asset', asset_type='Equipment', cost_center='Test')
+            asset = Asset(
+                asset_code="BACKREF-001",
+                name="Backref Asset",
+                asset_type="Equipment",
+                cost_center="Test",
+            )
             db.session.add(asset)
             db.session.commit()
 
-            mo = MaintenanceOrder(asset_id=asset.id, description='Backref MO', order_type='PM', status='Open', priority='Medium', labour_count=1)
+            mo = MaintenanceOrder(
+                asset_id=asset.id,
+                description="Backref MO",
+                order_type="PM",
+                status="Open",
+                priority="Medium",
+                labour_count=1,
+            )
             db.session.add(mo)
             db.session.commit()
 
             assert mo.asset.id == asset.id
             assert asset.maintenance_orders[0].id == mo.id
 
-            user = User(username='backrefuser', email='backref@example.com')
-            user.set_password('password')
+            user = User(username="backrefuser", email="backref@example.com")
+            user.set_password("password")
             user.roles.append(sample_role)
             db.session.add(user)
             db.session.commit()

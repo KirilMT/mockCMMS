@@ -141,8 +141,18 @@ For all audit tasks, we follow a strict 5-step iterative process to ensure quali
 - [ ] `docs/core_code_quality_plan.md` - This document (self-audit)
 
 ### Test Files (`tests/`)
-- [ ] `tests/conftest.py` - Pytest configuration
-- [ ] `tests/test_api.py` - API endpoint tests
+- [x] `tests/conftest.py` - Pytest configuration ✅ Black formatted (Dec 17, 2025)
+- [ ] `tests/unit/test_app.py` - App unit tests
+- [ ] `tests/unit/test_db_utils.py` - Database utilities tests
+- [ ] `tests/unit/test_shift_utils.py` - Shift utilities tests
+- [ ] `tests/functional/test_api_routes.py` - API endpoint tests
+- [ ] `tests/functional/test_main_routes.py` - Main route tests
+- [ ] `tests/integration/test_integration.py` - Integration tests
+- [ ] `tests/security/test_auth.py` - Authentication tests
+- [ ] `tests/security/test_validation.py` - Validation tests
+- [ ] `tests/security/test_advanced_validation.py` - Advanced validation tests
+- [ ] `tests/performance/test_performance.py` - Performance tests
+- [ ] `tests/reliability/test_errors.py` - Error handling tests
 
 ### Test Data (`test_data/`)
 - [ ] `test_data/dummy_data.json` - Test fixtures
@@ -2280,6 +2290,80 @@ If Step 4 resulted in NO modifications:
 - [ ] Mark Phase 7 COMPLETE ✅
 
 **Deliverable:** Cross-cutting concerns audit report with final consistency verification (4 commits total)
+
+---
+
+## 🧪 Phase 8: Test Files Quality Audit (FUTURE)
+
+> [!NOTE]
+> **Status:** ⏳ **PLANNED** - To be executed after all source file audits are complete.
+> **Prerequisites:** Phases 1-7 complete. All source files audited and stable.
+> **Format Note:** All test files were Black formatted on December 17, 2025.
+
+### Phase 8 Overview
+
+**Objective:** Apply the 5-Step Iterative Loop to all test files in `tests/` to ensure:
+- Consistent code style and formatting
+- Proper test organization and naming
+- No duplicate test logic
+- Comprehensive docstrings
+- Adherence to testing best practices
+
+**Scope:** 13 test files (see "Test Files" section above)
+
+### Phase 8.1: Test Configuration (`tests/conftest.py`)
+
+**Tasks:**
+- [ ] Review fixture organization and naming
+- [ ] Check for proper docstrings on all fixtures
+- [ ] Verify no duplicate fixture logic
+- [ ] Ensure proper scope management (function, class, module, session)
+
+### Phase 8.2: Unit Tests (`tests/unit/`)
+
+**Files:** `test_app.py`, `test_db_utils.py`, `test_shift_utils.py`
+
+**Tasks:**
+- [ ] Verify test isolation (no external dependencies)
+- [ ] Check for proper mocking patterns
+- [ ] Ensure descriptive test names
+- [ ] Review assertion quality
+
+### Phase 8.3: Functional Tests (`tests/functional/`)
+
+**Files:** `test_api_routes.py`, `test_main_routes.py`
+
+**Tasks:**
+- [ ] Verify REST convention testing
+- [ ] Check for proper HTTP status code assertions
+- [ ] Review request/response validation
+
+### Phase 8.4: Integration Tests (`tests/integration/`)
+
+**Files:** `test_integration.py`
+
+**Tasks:**
+- [ ] Verify end-to-end workflow coverage
+- [ ] Check for proper database state management
+- [ ] Review cleanup procedures
+
+### Phase 8.5: Security Tests (`tests/security/`)
+
+**Files:** `test_auth.py`, `test_validation.py`, `test_advanced_validation.py`
+
+**Tasks:**
+- [ ] Verify OWASP coverage
+- [ ] Check for injection prevention tests
+- [ ] Review authentication/authorization tests
+
+### Phase 8.6: Performance & Reliability Tests
+
+**Files:** `test_performance.py`, `test_errors.py`
+
+**Tasks:**
+- [ ] Review performance baseline assertions
+- [ ] Check error handling coverage
+- [ ] Verify timeout and edge case handling
 
 ---
 

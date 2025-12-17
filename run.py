@@ -14,10 +14,9 @@ from src.app import create_app
 
 app = create_app()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Starting mockCMMS application...")
     # Note: In debug mode, Flask's reloader spawns a child process,
     # causing app initialization to run twice. This is normal behavior.
     # Set use_reloader=False to disable if the double output is distracting.
     app.run(debug=True, port=5000)
-
