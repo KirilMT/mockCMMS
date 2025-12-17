@@ -1,8 +1,8 @@
 # Core mockCMMS Code Quality & Architecture Audit Plan
 
 **Created:** December 1, 2025  
-**Last Updated:** December 15, 2025
-**Status:** 🔄 **Phase 3 (Frontend Test Suite Foundation) IN PROGRESS**
+**Last Updated:** December 17, 2025
+**Status:** ⏸️ **On Hold** (Waiting for Frontend Test Suite Foundation)
 **Prerequisites Met:** All 210 tests complete with 82.99% coverage. Phase 1 & 2 (Automated Analysis & Python Backend) complete.
 
 ---
@@ -40,6 +40,16 @@
 This document outlines a comprehensive, systematic approach to auditing and improving the code quality of the core mockCMMS application. The focus is on ensuring the codebase is clean, organized, optimized, follows coding conventions, and contains no duplicates or technical debt.
 
 **Philosophy:** Analyze first, propose solutions, get approval, implement, test, commit.
+
+## 🔄 Standard Workflow: 5-Step Iterative Loop
+
+For all audit tasks, we follow a strict 5-step iterative process to ensure quality:
+
+1.  **Lint**: Run `ruff`, `pylint`, `mypy`, `radon`, `bandit`, `jscpd`. **Fix all errors.**
+2.  **Format**: Run `flake8` and `black`. **Fix all issues.**
+3.  **Test**: Run `pytest` with coverage. **Ensure references pass and coverage is maintained (target 85%+).**
+4.  **Audit Report**: Generate/Update an audit report (e.g., `docs/AUDIT_REPORT_SRC.md`) documenting findings and fixes. **Loop back to Step 1 if code changes.**
+5.  **Final Verification**: Confirm all metrics are met before marking task complete.
 
 ---
 
@@ -100,6 +110,8 @@ This document outlines a comprehensive, systematic approach to auditing and impr
 ## 📁 Scope: Files to Audit
 
 > **Note:** This audit covers the entire mockCMMS repository EXCEPT the `apps/` directory (planning, reports modules are excluded).
+>
+> **Future Phases:** At a later stage, we will perform auditing of **ALL** python files, including `run.py` and the `tests/` directory. For now, focus on `src/`.
 
 ### Root-Level Files
 - [ ] `run.py` - Application entry point
@@ -234,13 +246,13 @@ npm install -g jscpd eslint
 mkdir -p audit_results
 
 # 1. Ruff - Fast linting
-ruff check src/ --output-format=text > audit_results/ruff_report.txt
+ruff check src/ --output-format=concise > audit_results/ruff_report.txt
 
 # 2. Pylint - Comprehensive linting  
 pylint src/ --output-format=text > audit_results/pylint_report.txt
 
 # 3. Mypy - Type checking
-mypy src/ > audit_results/mypy_report.txt
+mypy src/ --follow-imports=silent --exclude "apps/" > audit_results/mypy_report.txt
 
 # 4. Radon - Complexity analysis
 radon cc src/ -a -s > audit_results/radon_complexity.txt
@@ -250,7 +262,7 @@ radon mi src/ -s > audit_results/radon_maintainability.txt
 bandit -r src/ -f txt -o audit_results/bandit_security.txt
 
 # 6. JSCPD - Duplicate detection
-jscpd src/ --output audit_results/duplicates_report.txt
+jscpd src/ --reporters json --output audit_results
 
 # 7. Coverage - Test coverage
 pytest --cov=src --cov-report=term --cov-report=html:audit_results/coverage_html tests/ > audit_results/coverage_report.txt

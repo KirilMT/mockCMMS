@@ -1,7 +1,7 @@
 # mockCMMS Implementation Priority Guide
 
 **Created:** December 11, 2025
-**Last Updated:** December 15, 2025
+**Last Updated:** December 17, 2025
 **Purpose:** Clarify the relationship between the core code quality audit and GitHub best practices implementation.
 **Current Phase:** Phase 3 (Frontend Test Suite Foundation) In Progress
 
@@ -536,7 +536,7 @@ This path is designed to help you get up to speed with the project structure, go
 
 ### Phase 5: HTML Templates Analysis
 
-**Workflow:** Each task follows the 5-step iterative loop: Validate → Format → Test → Audit → Commit.
+**Workflow:** Each task follows the 5-step iterative loop: Lint → Format → Test → Audit → Commit.
 
 **Tasks (16 total):**
 - [ ] Task 5.1: Base Template (`base.html`)
