@@ -27,3 +27,8 @@ function initAdvancedTable(containerId, data, columns, pageSize = 25) {
 }
 
 let advTable;
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { initAdvancedTable };
+}

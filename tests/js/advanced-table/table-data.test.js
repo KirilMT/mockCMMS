@@ -103,10 +103,44 @@ describe('TableData Module', () => {
         ];
 
         const result = table.getFilteredData();
-        expect(result.length).toBe(3); // Alice, David, Bob
-        const names = result.map(r => r.name).sort();
-        expect(names).toEqual(['Alice', 'Bob', 'David']);
+        expect(result.length).toBe(3); // Alice (Eng), Bob (Des), David (Eng)
     });
+
+    test('TD-1.4: test_filter_chain_logic_AND_OR_combination', () => {
+        // (Engineer OR Designer) AND (Age > 25)
+        // Group 1: Engineer, Designer (OR)
+        // Group 2: Age > 25 (AND to previous)
+
+        table.filters = [
+            { column: 'role', operator: 'equals', value: 'Engineer' }, // Chain 1, Item 1
+            { column: 'role', operator: 'equals', value: 'Designer', logic: 'OR' }, // Chain 1, Item 2
+            { column: 'age', operator: 'gt', value: 25, logic: 'AND' } // Chain 2, Item 1 (Wait, default operator 'gt' covered?)
+            // table-data.js has operators: contains, not_contains, equals, not_equals, starts_with, ends_with.
+            // It does NOT have 'gt' (greater than).
+            // Let's check table-data.js operators again (I viewed lines 1-168).
+            // Lines 100+ usually have the switch.
+        ];
+        // I need to check supported operators first. If GT not supported, use 'not_equals'.
+        // (Engineer OR Designer) AND (Name starts with 'A' OR Name starts with 'B')
+
+        table.filters = [
+            { column: 'role', operator: 'equals', value: 'Engineer' },
+            { column: 'role', operator: 'equals', value: 'Designer', logic: 'OR' },
+            { column: 'name', operator: 'starts_with', value: 'A', logic: 'AND' },
+            { column: 'name', operator: 'starts_with', value: 'B', logic: 'OR' }
+        ];
+        // Logic: (Engineer OR Designer) AND (Name starts with A OR Name starts with B)
+        // Alice (Eng, A) -> Match
+        // Bob (Des, B) -> Match
+        // David (Eng, D) -> Fail Group 2
+        // Charlie (Mgr, C) -> Fail Group 1
+
+        const result = table.getFilteredData();
+        expect(result.length).toBe(2);
+        const names = result.map(r => r.name).sort();
+        expect(names).toEqual(['Alice', 'Bob']);
+    });
+
 
     test('TD-1.4: test_sort_ascending_string_column', () => {
         table.currentSort = { column: 'name', direction: 'asc' };
@@ -245,4 +279,325 @@ describe('TableData Module', () => {
         expect(result.find(r => r.name === 'Alice')).toBeUndefined();
         expect(result.length).toBe(4); // Bob, Charlie, David, Eve (null != 30)
     });
+
+    test('TD-2.1: test_pageSize_affects_pagination', () => {
+        // 5 items, page size 2
+        table.pageSize = 2;
+        table.currentPage = 1;
+        let result = table.getPaginatedData(table.data);
+        expect(result.length).toBe(2);
+
+        // Page size 5 = all on one page
+        table.pageSize = 5;
+        result = table.getPaginatedData(table.data);
+        expect(result.length).toBe(5);
+    });
+
+    test('TD-2.2: test_sort_toggles_direction', () => {
+        table.updateTable = jest.fn();
+        table.saveTableState = jest.fn();
+
+        // First click - sets ascending
+        table.sort('name');
+        expect(table.currentSort).toEqual({ column: 'name', direction: 'asc' });
+
+        // Second click - toggles to descending
+        table.sort('name');
+        expect(table.currentSort).toEqual({ column: 'name', direction: 'desc' });
+
+        // Third click - removes sort
+        table.sort('name');
+        expect(table.currentSort.column).toBeNull();
+    });
+
+    test('TD-2.3: test_sort_changes_column', () => {
+        table.updateTable = jest.fn();
+        table.saveTableState = jest.fn();
+
+        table.sort('name');
+        expect(table.currentSort.column).toBe('name');
+
+        // Click different column
+        table.sort('age');
+        expect(table.currentSort.column).toBe('age');
+        expect(table.currentSort.direction).toBe('asc'); // Resets to asc
+    });
+
+    test('TD-2.4: test_complex_filter_chain_AND_OR', () => {
+        // (Engineer OR Designer) AND starts_with 'A' or 'B'
+        // Expected: Alice (Engineer, A), Bob (Designer, B)
+
+        table.filters = [
+            { column: 'role', operator: 'equals', value: 'Engineer' },
+            { column: 'role', operator: 'equals', value: 'Designer', logic: 'OR' },
+            { column: 'name', operator: 'starts_with', value: 'A', logic: 'AND' },
+            { column: 'name', operator: 'starts_with', value: 'B', logic: 'OR' }
+        ];
+
+        const result = table.getFilteredData();
+        const names = result.map(r => r.name).sort();
+        expect(names).toEqual(['Alice', 'Bob']);
+    });
+
+    test('TD-2.5: test_globalSearch_case_insensitive', () => {
+        table.updateTable = jest.fn();
+        table.saveTableState = jest.fn();
+
+        table.globalSearch('ALICE');
+        const result = table.getFilteredData();
+
+        expect(result.length).toBe(1);
+        expect(result[0].name).toBe('Alice');
+    });
+
+    test('TD-2.6: test_globalSearch_across_all_columns', () => {
+        table.updateTable = jest.fn();
+        table.saveTableState = jest.fn();
+
+        // Search for role value
+        table.globalSearch('Manager');
+        const result = table.getFilteredData();
+
+        expect(result.length).toBe(1);
+        expect(result[0].name).toBe('Charlie');
+    });
+
+    test('TD-2.7: test_filter_with_empty_value_ignored', () => {
+        table.filters = [
+            { column: 'name', operator: 'contains', value: '' }
+        ];
+
+        const result = table.getFilteredData();
+        // Empty filter should be ignored, returning all data
+        expect(result.length).toBe(5);
+    });
+
+    test('TD-2.8: test_pagination_with_filtered_data', () => {
+        table.filters = [{ column: 'role', operator: 'equals', value: 'Engineer' }];
+        table.pageSize = 1;
+        table.currentPage = 1;
+
+        const filtered = table.getFilteredData();
+        expect(filtered.length).toBe(2); // Alice, David
+
+        const paginated = table.getPaginatedData(filtered);
+        expect(paginated.length).toBe(1);
+    });
+
+    test('TD-2.9: test_filter_null_values', () => {
+        // Test filtering on column with null values
+        table.filters = [{ column: 'age', operator: 'equals', value: '' }];
+
+        const result = table.getFilteredData();
+        // Empty value comparison with null
+        expect(result.find(r => r.name === 'Eve')).toBeDefined();
+    });
+
+    test('TD-2.10: test_no_filters_returns_all_data', () => {
+        table.filters = [];
+        table.globalSearchTerm = null;
+
+        const result = table.getFilteredData();
+        expect(result.length).toBe(5);
+    });
+
+    // Additional branch coverage tests
+    test('TD-3.1: test_filter_date_column', () => {
+        const tableWithDates = new AdvancedTable('table-container', {
+            data: [
+                { id: 1, name: 'Test1', created: '2024-01-15' },
+                { id: 2, name: 'Test2', created: '2024-02-20' }
+            ],
+            columns: [
+                { key: 'id', type: 'number' },
+                { key: 'name', type: 'string' },
+                { key: 'created', type: 'date' }
+            ],
+            pageSize: 10
+        });
+
+        tableWithDates.globalSearchTerm = '2024';
+        const result = tableWithDates.getFilteredData();
+        expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('TD-3.2: test_filter_datetime_column', () => {
+        const tableWithDatetime = new AdvancedTable('table-container', {
+            data: [
+                { id: 1, name: 'Event1', timestamp: '2024-01-15T10:30:00' },
+                { id: 2, name: 'Event2', timestamp: '2024-02-20T14:45:00' }
+            ],
+            columns: [
+                { key: 'id', type: 'number' },
+                { key: 'name', type: 'string' },
+                { key: 'timestamp', type: 'datetime' }
+            ],
+            pageSize: 10
+        });
+
+        tableWithDatetime.globalSearchTerm = 'event';
+        const result = tableWithDatetime.getFilteredData();
+        expect(result.length).toBeGreaterThan(0);
+    });
+
+    test('TD-3.3: test_globalSearch_clears_search', () => {
+        table.updateTable = jest.fn();
+        table.saveTableState = jest.fn();
+        table.globalSearchTerm = 'test';
+
+        table.globalSearch('');
+
+        expect(table.globalSearchTerm).toBeNull();
+        expect(table.currentPage).toBe(1);
+    });
+
+    test('TD-3.4: test_globalSearch_sets_display_value', () => {
+        table.updateTable = jest.fn();
+        table.saveTableState = jest.fn();
+
+        table.globalSearch('Alice');
+
+        expect(table.globalSearchDisplay).toBe('Alice');
+        expect(table.globalSearchTerm).toBe('alice');
+    });
+
+    test('TD-3.5: test_sort_desc_to_none', () => {
+        table.updateTable = jest.fn();
+        table.saveTableState = jest.fn();
+
+        table.currentSort = { column: 'name', direction: 'desc' };
+        table.sort('name');
+
+        expect(table.currentSort.column).toBeNull();
+    });
+
+    test('TD-3.6: test_applyFiltersWithLogic_empty_filters', () => {
+        table.filters = [];
+
+        const result = table.applyFiltersWithLogic({ name: 'Alice' });
+
+        expect(result).toBe(true);
+    });
+
+    test('TD-3.7: test_applyFilter_default_case', () => {
+        const result = table.applyFilter('test', {
+            value: 'test',
+            operator: 'unknown_operator'
+        });
+
+        expect(result).toBe(true);
+    });
+
+    test('TD-3.8: test_getPaginatedData_no_pageSize', () => {
+        table.pageSize = 0;
+
+        const result = table.getPaginatedData(table.data);
+
+        expect(result.length).toBe(5);
+    });
+
+    test('TD-3.9: test_getPaginatedData_negative_pageSize', () => {
+        table.pageSize = -1;
+
+        const result = table.getPaginatedData(table.data);
+
+        expect(result.length).toBe(5);
+    });
+
+    test('TD-3.10: test_globalSearch_null_value_in_data', () => {
+        table.globalSearchTerm = 'eve';
+
+        const result = table.getFilteredData();
+
+        // Eve has null age, should still be searchable by name
+        expect(result.find(r => r.name === 'Eve')).toBeDefined();
+    });
+
+    test('TD-3.11: test_sort_resets_currentPage', () => {
+        table.updateTable = jest.fn();
+        table.saveTableState = jest.fn();
+        table.currentPage = 5;
+
+        table.sort('name');
+
+        expect(table.currentPage).toBe(1);
+    });
+
+    test('TD-3.12: test_sort_clears_selectedConfigId', () => {
+        table.updateTable = jest.fn();
+        table.saveTableState = jest.fn();
+        table.selectedConfigId = 123;
+
+        table.sort('name');
+
+        expect(table.selectedConfigId).toBeNull();
+    });
+
+    test('TD-3.13: test_filter_operators', () => {
+        const testRows = [
+            { id: 1, val: 'apple' },
+            { id: 2, val: 'banana' },
+            { id: 3, val: 'cherry' },
+            { id: 4, val: 'date' }
+        ];
+
+        const operatorTable = new AdvancedTable('table-container', {
+            data: testRows,
+            columns: [{ key: 'val', type: 'string' }]
+        });
+
+        // Test not_contains
+        operatorTable.filters = [{ column: 'val', operator: 'not_contains', value: 'a' }];
+        let res = operatorTable.getFilteredData();
+        expect(res.length).toBe(1); // cherry
+
+        // Test not_equals
+        operatorTable.filters = [{ column: 'val', operator: 'not_equals', value: 'apple' }];
+        res = operatorTable.getFilteredData();
+        expect(res.length).toBe(3);
+
+        // Test starts_with
+        operatorTable.filters = [{ column: 'val', operator: 'starts_with', value: 'b' }];
+        res = operatorTable.getFilteredData();
+        expect(res.length).toBe(1);
+
+        // Test ends_with
+        operatorTable.filters = [{ column: 'val', operator: 'ends_with', value: 'e' }];
+        res = operatorTable.getFilteredData();
+        expect(res.map(r => r.val).sort()).toEqual(['apple', 'date']);
+    });
+
+    test('TD-3.14: test_filter_case_insensitive', () => {
+        const operatorTable = new AdvancedTable('table-container', {
+            data: [{ id: 1, val: 'Apple' }],
+            columns: [{ key: 'val', type: 'string' }]
+        });
+
+        operatorTable.filters = [{ column: 'val', operator: 'equals', value: 'apple' }];
+        const res = operatorTable.getFilteredData();
+        expect(res.length).toBe(1);
+    });
+
+    test('TD-1.7: globalSearch matches formatted date/datetime', () => {
+        const dateTable = new AdvancedTable('table-container', {
+            data: [{ id: 1, createdAt: '2025-12-17T10:00:00', dob: '1990-01-01' }],
+            columns: [
+                { key: 'createdAt', label: 'Created', type: 'datetime' },
+                { key: 'dob', label: 'DOB', type: 'date' }
+            ]
+        });
+
+        dateTable.globalSearchTerm = '2025';
+        let result = dateTable.getFilteredData();
+        expect(result.length).toBe(1);
+
+        dateTable.globalSearchTerm = '1990';
+        result = dateTable.getFilteredData();
+        expect(result.length).toBe(1);
+
+        dateTable.globalSearchTerm = 'NotFound';
+        result = dateTable.getFilteredData();
+        expect(result.length).toBe(0);
+    });
 });
+

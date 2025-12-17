@@ -60,4 +60,50 @@ describe('FlashMessages', () => {
 
         expect(ToastNotification.show).toHaveBeenCalledWith('Danger maps to error', 'error');
     });
+
+    test('FM-1.4: handles JSON parse error gracefully', () => {
+        // Invalid JSON to trigger catch block (line 58)
+        document.body.innerHTML = `<div id="flash-messages" data-messages='invalid json here'></div>`;
+
+        require('../../src/static/js/flash-messages.js');
+
+        expect(console.error).toHaveBeenCalled();
+    });
+
+    test('FM-1.5: handles empty flash container', () => {
+        // No data-messages attribute
+        document.body.innerHTML = `<div id="flash-messages"></div>`;
+
+        require('../../src/static/js/flash-messages.js');
+
+        expect(ToastNotification.show).not.toHaveBeenCalled();
+    });
+
+    test('FM-1.6: handles missing flash container', () => {
+        document.body.innerHTML = '';
+
+        require('../../src/static/js/flash-messages.js');
+
+        expect(ToastNotification.show).not.toHaveBeenCalled();
+    });
+
+    test('FM-1.7: handles invalid message format (not array)', () => {
+        // Messages that are not arrays
+        const messages = [{ bad: 'format' }, 'just a string'];
+        document.body.innerHTML = `<div id="flash-messages" data-messages='${JSON.stringify(messages)}'></div>`;
+
+        require('../../src/static/js/flash-messages.js');
+
+        expect(ToastNotification.show).not.toHaveBeenCalled();
+    });
+
+    test('FM-1.8: handles array with only one element', () => {
+        // Array with only one element (msg.length < 2)
+        const messages = [['onlyCategory']];
+        document.body.innerHTML = `<div id="flash-messages" data-messages='${JSON.stringify(messages)}'></div>`;
+
+        require('../../src/static/js/flash-messages.js');
+
+        expect(ToastNotification.show).not.toHaveBeenCalled();
+    });
 });

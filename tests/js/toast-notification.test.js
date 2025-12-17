@@ -81,4 +81,39 @@ describe('ToastNotification', () => {
         expect(container.children[0].querySelector('.toast-body').textContent).toBe('Message 1');
         expect(container.children[1].querySelector('.toast-body').textContent).toBe('Message 2');
     });
+
+    test('TN-1.6: test_no_auto_dismiss_when_duration_is_zero', () => {
+        // Duration = 0 should NOT auto-dismiss (covers the else branch)
+        ToastNotification.show('No Auto Dismiss', 'info', 0);
+
+        expect(document.querySelector('.toast')).not.toBeNull();
+
+        // Advance time way past normal duration
+        jest.advanceTimersByTime(10000);
+
+        // Toast should still be there
+        expect(document.querySelector('.toast')).not.toBeNull();
+    });
+
+    test('TN-1.7: test_hide_nonexistent_toast_does_nothing', () => {
+        // Calling hide with a non-existent ID should not throw
+        expect(() => {
+            ToastNotification.hide('nonexistent-id');
+        }).not.toThrow();
+    });
+
+    test('TN-1.8: test_hide_removes_toast_with_animation', () => {
+        ToastNotification.show('To Hide', 'success', 0);
+        const toast = document.querySelector('.toast');
+        const toastId = toast.id;
+
+        ToastNotification.hide(toastId);
+
+        expect(toast.classList.contains('hiding')).toBe(true);
+        expect(toast.classList.contains('show')).toBe(false);
+
+        jest.advanceTimersByTime(300);
+        expect(document.getElementById(toastId)).toBeNull();
+    });
 });
+
