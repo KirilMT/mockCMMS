@@ -44,6 +44,10 @@
       ]
     }
   },
+  "shift_durations": {
+    "shift_break": 30,
+    "weekend": 720
+  },
   "planning_windows": {
     "_comment": "Define when work can be scheduled and which resource pattern applies",
     "weekend_maintenance": {
