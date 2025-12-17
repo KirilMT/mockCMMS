@@ -1,13 +1,4 @@
----
-name: 'Pull Request'
-about: 'Submit a pull request to merge code into the main branch.'
-title: 'feat: [Your feature description]'
-labels: ''
-assignees: ''
-
----
-
-### Description
+## Description
 
 A clear and concise summary of the changes. Please include the motivation and context for this change.
 *List any dependencies that are required for this change.*
