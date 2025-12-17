@@ -36,6 +36,7 @@ extend-exclude = '''
   | build
   | dist
   | migrations
+  | apps
 )/
 '''
 
