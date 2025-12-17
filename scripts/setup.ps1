@@ -13,8 +13,10 @@ Write-Host "========================================`n" -ForegroundColor Cyan
 # Error counter for final summary
 $script:ErrorCount = 0
 
-# 1. Check for Python
-Write-Host "[Step 1/6] Checking for Python..." -ForegroundColor Yellow
+# Step 1: Check Prerequisites
+Write-Host "[Step 1/6] Checking prerequisites..." -ForegroundColor Yellow
+
+# Step 1.1: Check for Python
 try {
     $pythonVersion = python --version 2>&1
     if ($pythonVersion -match "Python (\d+)\.(\d+)") {
@@ -35,7 +37,21 @@ catch {
     exit 1
 }
 
-# 2. Create Virtual Environment
+# Step 1.2: Check for npm (required for jscpd)
+try {
+    $npmVersion = npm --version 2>&1
+    if ($npmVersion -match "(\d+)\.(\d+)") {
+        Write-Host "   Found: " -NoNewline -ForegroundColor White
+        Write-Host "npm $npmVersion" -NoNewline -ForegroundColor White
+        Write-Host " OK" -ForegroundColor Green
+    }
+}
+catch {
+    Write-Warning "   npm not found. Skipping jscpd setup (duplicate code detection will be unavailable)."
+}
+
+
+# Step 2: Create Virtual Environment
 Write-Host "`n[Step 2/6] Setting up virtual environment..." -ForegroundColor Yellow
 if (-not (Test-Path ".venv")) {
     Write-Host "   Creating " -NoNewline -ForegroundColor White
@@ -56,8 +72,36 @@ else {
     Write-Host "OK" -ForegroundColor Green
 }
 
-# 3. Verify pip path and install dependencies
-Write-Host "`n[Step 3/6] Installing dependencies..." -ForegroundColor Yellow
+# Step 3: Install Local Tools (jscpd)
+Write-Host "`n[Step 3/6] Installing local tools..." -ForegroundColor Yellow
+if (Get-Command npm -ErrorAction SilentlyContinue) {
+    if (-not (Test-Path "node_modules/jscpd")) {
+        Write-Host "   Installing " -NoNewline -ForegroundColor White
+        Write-Host "jscpd" -NoNewline -ForegroundColor Magenta
+        Write-Host " (locally)..." -NoNewline -ForegroundColor White
+        
+        # Install locally as dev dependency
+        cmd /c "npm install jscpd --save-dev --quiet"
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host " OK" -ForegroundColor Green
+        }
+        else {
+            Write-Host " FAILED" -ForegroundColor Red
+            Write-Warning "npm install failed. Duplicate code detection may not work."
+        }
+    }
+    else {
+        Write-Host "   Local tools already installed " -NoNewline -ForegroundColor White
+        Write-Host "OK" -ForegroundColor Green
+    }
+}
+else {
+    Write-Host "   npm missing (skipping local tools)" -ForegroundColor Gray
+}
+
+# Step 4: Install Dependencies
+Write-Host "`n[Step 4/6] Installing dependencies..." -ForegroundColor Yellow
 
 # Use correct Windows path
 $pipPath = ".\.venv\Scripts\pip.exe"
@@ -121,8 +165,8 @@ else {
     $script:ErrorCount++
 }
 
-# 4. Install modular apps
-Write-Host "`n[Step 4/6] Installing modular apps..." -ForegroundColor Yellow
+# Step 5: Install Modular Apps
+Write-Host "`n[Step 5/6] Installing modular apps..." -ForegroundColor Yellow
 
 $appsInstalled = 0
 
@@ -229,8 +273,8 @@ else {
 }
 
 
-# 5. Environment Configuration
-Write-Host "`n[Step 5/5] Configuring environment..." -ForegroundColor Yellow
+# Step 6: Environment Configuration
+Write-Host "`n[Step 6/6] Configuring environment..." -ForegroundColor Yellow
 if (-not (Test-Path ".env")) {
     if (Test-Path ".env.example") {
         Copy-Item ".env.example" ".env"

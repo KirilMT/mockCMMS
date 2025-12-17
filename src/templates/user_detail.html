@@ -23,7 +23,8 @@
             </div>
             <div class="card-body">
                 <form method="POST"
-                    action="{% if user %}{{ url_for('main.edit_user', user_id=user.id) }}{% else %}{{ url_for('main.register') }}{% endif %}" id="user-form">
+                    action="{% if user %}{{ url_for('main.edit_user', user_id=user.id) }}{% else %}{{ url_for('main.register') }}{% endif %}"
+                    id="user-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <div class="form-group">
                         <label for="username">Username</label>
@@ -39,6 +40,30 @@
                         <label for="password">Password {% if user %}(Leave blank to keep current){% endif %}</label>
                         <input type="password" class="form-control" id="password" name="password">
                     </div>
+                    <div class="form-group">
+                        <label for="team_id">Shift Team</label>
+                        <select class="form-control" id="team_id" name="team_id">
+                            <option value="">-- Select Team --</option>
+                            {% for team in all_teams %}
+                            <option value="{{ team.id }}" {% if user and user.team_id==team.id %}selected{% endif %}>{{
+                                team.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Required for Technicians to appear on the Shift
+                            Calendar.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="satellite_point_id">Satellite Point</label>
+                        <select class="form-control" id="satellite_point_id" name="satellite_point_id">
+                            <option value="">-- Select Satellite Point --</option>
+                            {% for sp in all_satellite_points %}
+                            <option value="{{ sp.id }}" {% if user and user.satellite_point_id==sp.id %}selected{% endif
+                                %}>{{ sp.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Assign a Satellite Point to this technician.</small>
+                    </div>
+
                     <div class="form-group">
                         <label for="roles">Roles</label>
                         <select multiple class="form-control" id="roles" name="roles">
@@ -62,7 +87,8 @@
                     </button>
                     <a href="{{ url_for('main.users') }}" class="btn btn-secondary">Cancel</a>
                     {% if user %}
-                    <form action="{{ url_for('main.delete_user', user_id=user.id) }}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                    <form action="{{ url_for('main.delete_user', user_id=user.id) }}" method="post" class="d-inline"
+                        onsubmit="return confirm('Are you sure you want to delete this user?');">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                         <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
@@ -78,7 +104,7 @@
         <div class="card">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
-                    <i class="fas fa-wrench"></i> Technician Skills
+                    <i class="fas fa-wrench"></i> Technician Details
                 </h5>
             </div>
             <div class="card-body">
@@ -93,18 +119,13 @@
                     <span class="badge badge-secondary">{{ user.availability_status }}</span>
                     {% endif %}
                 </p>
-                <p><strong>Shift:</strong>
-                    {% if user.team %}
-                    {{ user.team.name }}
-                    <small class="text-muted">({{ user.team.shift_type }})</small>
-                    {% else %}
-                    <em class="text-muted">Not assigned</em>
-                    {% endif %}
+                <p>
+                    <strong>Shift:</strong> {{ user.team.name if user.team else 'Unassigned' }}<br>
+                    <strong>Satellite Point:</strong> {{ user.satellite_point.name if user.satellite_point else
+                    'Unassigned' }}
                 </p>
-
                 <hr>
-
-                <h6><strong>Skills & Proficiency:</strong></h6>
+                <h6><strong>Technician Skills</strong></h6>
                 {% if user.skills %}
                 <table class="table table-sm table-bordered">
                     <thead>

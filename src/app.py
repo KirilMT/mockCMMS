@@ -1,200 +1,223 @@
+# src/app.py
+
 """Flask application factory for mockCMMS."""
+
 import os
-from flask import Flask
-from flask_wtf.csrf import CSRFProtect
+import sqlite3
+import traceback
+from flask import Flask, g, request, redirect, jsonify, session
+from flask_wtf.csrf import CSRFProtect  # type: ignore[import-untyped]
 from dotenv import load_dotenv
 
-# Correctly indented imports
-from .services.db_utils import db
+from .services.db_utils import db, User
+from .services.db_seeding import populate_dummy_data
+
+# Local blueprint imports
+from .routes.api import api_bp
+from .routes.main import main_bp
+
+# NOTE: Modular app imports (reports, planning) MUST stay inside conditional
+# blocks because importing their models registers them with SQLAlchemy, causing
+# UnboundExecutionError when the module is disabled. C0415 is acceptable here.
 
 
-def create_app(config=None):
-    """Create and configure the Flask application.
-    
-    Args:
-        config: Optional configuration object to override defaults
-    """
-    app = Flask(__name__)
-    
-    # Check if running in test mode FIRST (before any file operations)
-    is_testing = os.environ.get('TESTING', '0') == '1'
-    app.config['TESTING'] = is_testing
+def create_app(config_overrides=None):
+    """Create and configure the Flask application."""
+    app = Flask(__name__, instance_relative_config=True)
 
-    # Load environment variables from .env file (skip in testing)
-    if not is_testing:
-        load_dotenv(dotenv_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '.env'))
+    # --- Configuration ---
+    app.config.from_mapping(
+        SECRET_KEY=os.getenv("SECRET_KEY", "dev_key_fallback_for_testing"),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        TESTING=os.environ.get("TESTING", "0") == "1",
+    )
 
-    # Set debug flag for test database
-    app.config['DEBUG_USE_TEST_DB'] = os.getenv(
-        'MOCKCMMS_DEBUG_USE_TEST_DB', '0').lower() in (
-        '1', 'true', 'yes')
+    if not app.testing:
+        load_dotenv(os.path.join(app.root_path, "..", ".env"))
 
-    # Configure the database (use in-memory for testing, separate file for test production mode)
-    if is_testing:
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    else:
-        # Check if running production tests (TESTING_PRODUCTION flag)
-        if os.environ.get('TESTING_PRODUCTION', '0') == '1':
-            db_name = 'mockcmms_test.db'
-        else:
-            db_name = 'mockcmms.db'
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
-            os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'instance', db_name)
-    
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.secret_key = os.getenv('SECRET_KEY', 'dev_key_fallback_do_not_use_in_prod')
-    
-    # Apply custom config if provided (for testing)
-    if config:
-        app.config.from_object(config)
+    db_name = (
+        "mockcmms_test.db" if os.environ.get("TESTING_PRODUCTION") else "mockcmms.db"
+    )
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        f"sqlite:///{os.path.join(app.instance_path, db_name)}"
+    )
 
-    # Initialize SQLAlchemy with the app
+    # Configure Binds for Modular Apps (conditional to prevent db.create_all errors)
+    binds = {}
+    if os.getenv("PLANNING_ENABLED", "False").lower() in ("true", "1", "t"):
+        planning_db_path = os.path.join(
+            app.root_path, "..", "apps", "planning", "instance", "planning.db"
+        )
+        binds["planning"] = f"sqlite:///{planning_db_path}"
+    app.config["SQLALCHEMY_BINDS"] = binds
+
+    if config_overrides:
+        app.config.from_mapping(config_overrides)
+
+    # --- Initializations ---
     db.init_app(app)
-
-    # Initialize CSRF protection to make csrf_token() available in templates
     csrf = CSRFProtect(app)
 
-    # Ensure the instance folder exists (skip in testing mode)
-    if not is_testing:
-        instance_path = os.path.join(app.root_path, '..', 'instance')
-        os.makedirs(instance_path, exist_ok=True)
+    # --- Blueprints ---
+    _register_blueprints(app, csrf)
 
-    # Register mockCMMS blueprints
-    from .routes.api import api_bp
-    app.register_blueprint(api_bp, url_prefix='/api')
+    # --- Instance Folder & Database Setup ---
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except OSError:
+        app.logger.error("Failed to create instance folder.")
 
-    from .routes.main import main_bp
+    with app.app_context():
+        db.create_all()
+        if app.config.get("AUTO_SEED_DATABASE", True):
+            populate_dummy_data(app.logger)
+
+            # Seed Planning App Data (AFTER core tables and data are created)
+            planning_enabled = os.getenv("PLANNING_ENABLED", "False").lower() in (
+                "true",
+                "1",
+                "t",
+            )
+            if planning_enabled:
+                try:
+                    # pylint: disable=import-outside-toplevel
+                    from apps.planning.src.services.seeding import seed_planning_data
+
+                    seed_planning_data(app.logger)
+                except ImportError as e:
+                    app.logger.error("Planning App seeding failed (import): %s", e)
+                except Exception as e:  # pylint: disable=broad-except
+                    app.logger.error("Planning App seeding failed: %s", e)
+
+    # --- Request Hooks & Context Processors ---
+    _register_request_handlers(app)
+    _register_context_processors(app)
+
+    return app
+
+
+def _register_blueprints(app, csrf):
+    """Register all application blueprints."""
+    # Core blueprints (always available)
+    app.register_blueprint(api_bp, url_prefix="/api")
     app.register_blueprint(main_bp)
 
-    # Conditionally register the reports app
-    if os.getenv('REPORTS_ENABLED', 'False').lower() in ('true', '1', 't'):
+    # Conditionally register modular apps
+    reports_enabled = os.getenv("REPORTS_ENABLED", "False").lower() in (
+        "true",
+        "1",
+        "t",
+    )
+    if reports_enabled:
         try:
-            # Ensure database is initialized before importing reports blueprint
-            with app.app_context():
-                from apps.reports.src.routes.reports import reports_bp
-                app.register_blueprint(reports_bp)
-                csrf.exempt(reports_bp)
-                if app.logger:
-                    app.logger.info("Reports Blueprint registered at /reports")
-        except Exception as e:
-            if app.logger:
-                app.logger.error("Failed to register Reports blueprint: %s", e)
-    else:
-        if app.logger:
-            app.logger.info("Reports Blueprint not enabled.")
+            # pylint: disable=import-outside-toplevel
+            from apps.reports.src.routes.reports import reports_bp
 
-    # Conditionally register the planning_bp from the planning package
-    if os.getenv('PLANNING_ENABLED', 'False').lower() in ('true', '1', 't'):
+            app.register_blueprint(reports_bp)
+            csrf.exempt(reports_bp)
+            app.logger.info("Reports Blueprint registered.")
+        except ImportError as e:
+            app.logger.error("Reports enabled but module not available: %s", e)
+    else:
+        app.logger.info("Reports module is disabled.")
+
+    planning_enabled = os.getenv("PLANNING_ENABLED", "False").lower() in (
+        "true",
+        "1",
+        "t",
+    )
+    if planning_enabled:
         try:
-            # Import the blueprint from the planning package (installed in editable mode)
+            # pylint: disable=import-outside-toplevel
             from apps.planning.src.routes.planning import planning_bp
+
             app.register_blueprint(planning_bp)
             csrf.exempt(planning_bp)
+            app.logger.info("Planning Blueprint registered.")
 
-            # Register the same blueprint again with /api prefix
-            app.register_blueprint(planning_bp, url_prefix='/api', name='planning_api')
-
-            if app.logger:
-                app.logger.info("Planning Blueprint registered at /planning and /api")
-        except Exception as e:
-            if app.logger:
-                import traceback
-                app.logger.error("Failed to register Planning blueprint: %s", e)
-                app.logger.error(traceback.format_exc())
+            # Ensure Planning App Instance Directory Exists
+            try:
+                planning_instance_path = os.path.join(
+                    app.root_path, "..", "apps", "planning", "instance"
+                )
+                os.makedirs(planning_instance_path, exist_ok=True)
+            except OSError as e:
+                app.logger.error(
+                    "Failed to create Planning App instance directory: %s", e
+                )
+        except ImportError as e:
+            app.logger.error(
+                "Planning enabled but module not available: %s\n%s",
+                e,
+                traceback.format_exc(),
+            )
     else:
-        if app.logger:
-            app.logger.info("Planning Blueprint not enabled.")
+        app.logger.info("Planning module is disabled.")
+
+
+def _register_request_handlers(app):
+    """Register before_request, after_request, and teardown_appcontext handlers."""
+
+    @app.before_request
+    def load_logged_in_user():
+        """
+        If a user id is in the session, load the user object from the database
+        into g.user.
+        """
+        user_id = session.get("user_id")
+        g.user = User.query.get(user_id) if user_id is not None else None
 
     @app.before_request
     def redirect_legacy_urls():
-        """Redirect legacy /planning-manager URLs to /planning."""
-        from flask import request, redirect
-        if request.path.startswith('/planning-manager'):
-            new_path = request.full_path.replace('/planning-manager', '/planning', 1)
-            return redirect(new_path)
+        if request.path.startswith("/planning-manager"):
+            new_path = request.full_path.replace("/planning-manager", "/planning", 1)
+            return redirect(new_path, code=301)
+        return None
 
-    # Add a before_request handler for planning routes to initialize database
-    @app.before_request
-    def before_planning_request():
-        """Initialize database connection for planning routes"""
-        from flask import g, request
+    if os.getenv("PLANNING_ENABLED", "False").lower() in ("true", "1", "t"):
 
-        # Only initialize for planning routes
-        if request.path.startswith('/planning'):
-            try:
-                import sqlite3
-                db_path = os.path.join(
-                    os.path.dirname(__file__),
-                    '..',
-                    'apps',
-                    'planning',
-                    'instance',
-                    'planning.db')
-                g.db = sqlite3.connect(db_path)
-                g.db.row_factory = sqlite3.Row  # Allow column access by name
-                if app.logger:
-                    app.logger.debug("Database connection established for planning: %s", db_path)
-            except Exception as e:
-                if app.logger:
-                    app.logger.error("Failed to connect to planning database: %s", e)
-                from flask import jsonify
-                return jsonify({"error": "Database connection failed"}), 500
+        @app.before_request
+        def before_planning_request():
+            if request.path.startswith("/planning"):
+                try:
+                    db_path = os.path.join(
+                        app.root_path,
+                        "..",
+                        "apps",
+                        "planning",
+                        "instance",
+                        "planning.db",
+                    )
+                    # No need to manually connect if using SQLAlchemy Binds,
+                    # but keeping for legacy raw SQL access if needed.
+                    g.db = sqlite3.connect(db_path)
+                    g.db.row_factory = sqlite3.Row
+                except sqlite3.Error as e:
+                    app.logger.error(f"Failed to connect to planning database: {e}")
+                    return jsonify({"error": "Database connection failed"}), 503
+            return None
 
     @app.teardown_appcontext
-    def close_db(error):  # pylint: disable=unused-argument
-        """Close database connection at end of request"""
-        from flask import g
-        db = g.pop('db', None)
-        if db is not None:
-            db.close()
-
-    # Only initialize database file in non-testing mode
-    if not is_testing:
-        with app.app_context():
-            # Determine which database file is being used
-            if os.environ.get('TESTING_PRODUCTION', '0') == '1':
-                db_filename = 'mockcmms_test.db'
-            else:
-                db_filename = 'mockcmms.db'
-            
-            # Check if database exists before creating tables
-            db_path = os.path.join(
-                os.path.abspath(
-                    os.path.dirname(__file__)),
-                '..',
-                'instance',
-                db_filename)
-            db_exists = os.path.exists(db_path)
-
-            db.create_all()  # Create database tables for our models
-
-            # Populate with dummy data if the DB was just created and we are in debug mode
-            debug_use_test_db = os.getenv(
-                'MOCKCMMS_DEBUG_USE_TEST_DB', '0').lower() in (
-                '1', 'true', 'yes')
-            if not db_exists and debug_use_test_db:
-                try:
-                    from .services.db_utils import populate_dummy_data
-                    populate_dummy_data(app.logger)
-                    if app.logger:
-                        app.logger.info("Database automatically seeded with test data")
-                except Exception as e:
-                    if app.logger:
-                        app.logger.error("Failed to auto-seed database: %s", e)
+    def close_db(_exception=None):
+        db_conn = g.pop("db", None)
+        if db_conn is not None:
+            db_conn.close()
 
     @app.after_request
     def add_security_headers(response):
-        """Add security headers to prevent extension interference"""
-        response.headers['Permissions-Policy'] = 'unload=()'
-        response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+        response.headers["Permissions-Policy"] = "unload=()"
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
         return response
+
+
+def _register_context_processors(app):
+    """Register context processors to inject variables into templates."""
 
     @app.context_processor
     def inject_config():
-        """Inject configuration variables into templates."""
-        return dict(
-            PLANNING_ENABLED=os.getenv('PLANNING_ENABLED', 'False').lower() in ('true', '1', 't'),
-            REPORTS_ENABLED=os.getenv('REPORTS_ENABLED', 'False').lower() in ('true', '1', 't')
-        )
-
-    return app
+        return {
+            "PLANNING_ENABLED": os.getenv("PLANNING_ENABLED", "False").lower()
+            in ("true", "1", "t"),
+            "REPORTS_ENABLED": os.getenv("REPORTS_ENABLED", "False").lower()
+            in ("true", "1", "t"),
+        }

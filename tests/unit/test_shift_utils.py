@@ -4,6 +4,7 @@ Tests for shift utilities (shift_utils.py).
 This module tests the shift calculation and rotation logic for the
 2-2-3 Rotating Schedule (Pitman Schedule) implementation.
 """
+
 import pytest
 from datetime import datetime
 from src.services.shift_utils import get_shift_teams
@@ -18,10 +19,10 @@ class TestShiftUtilities:
         """Create test teams for shift calculations."""
         with app.app_context():
             # Create 4 teams (A, B, C, D) as required by Pitman schedule
-            team_a = Team(name='Team A', shift_type='Late', rotation_pattern='Pattern 1')
-            team_b = Team(name='Team B', shift_type='Early', rotation_pattern='Pattern 1')
-            team_c = Team(name='Team C', shift_type='Early', rotation_pattern='Pattern 2')
-            team_d = Team(name='Team D', shift_type='Late', rotation_pattern='Pattern 2')
+            team_a = Team(name="Team A")
+            team_b = Team(name="Team B")
+            team_c = Team(name="Team C")
+            team_d = Team(name="Team D")
 
             db.session.add_all([team_a, team_b, team_c, team_d])
             db.session.commit()
@@ -48,8 +49,12 @@ class TestShiftUtilities:
             assert late is not None, "Late shift should be assigned"
 
             # For odd week Monday, rotation_idx=0 (even), so B early, A late
-            assert early.name == 'Team B', f"Expected Team B for early shift, got {early.name}"
-            assert late.name == 'Team A', f"Expected Team A for late shift, got {late.name}"
+            assert (
+                early.name == "Team B"
+            ), f"Expected Team B for early shift, got {early.name}"
+            assert (
+                late.name == "Team A"
+            ), f"Expected Team A for late shift, got {late.name}"
 
     def test_get_shift_teams_shift_b(self, app, teams):
         """
@@ -78,7 +83,9 @@ class TestShiftUtilities:
             # Week 2 (even), Wednesday = Group 1 day
             # rotation_idx = (2-1)//2 = 0 (even)
             # Expected: Early=Team B, Late=Team A
-            assert early.name == 'Team B', f"Expected Team B for early shift, got {early.name}"
+            assert (
+                early.name == "Team B"
+            ), f"Expected Team B for early shift, got {early.name}"
 
     def test_get_shift_teams_shift_c(self, app, teams):
         """
@@ -101,8 +108,12 @@ class TestShiftUtilities:
             # Week 1 (odd), Wednesday = Group 2 day
             # rotation_idx = 1//2 = 0 (even)
             # Expected: Early=Team C, Late=Team D
-            assert early.name == 'Team C', f"Expected Team C for early shift, got {early.name}"
-            assert late.name == 'Team D', f"Expected Team D for late shift, got {late.name}"
+            assert (
+                early.name == "Team C"
+            ), f"Expected Team C for early shift, got {early.name}"
+            assert (
+                late.name == "Team D"
+            ), f"Expected Team D for late shift, got {late.name}"
 
     def test_get_shift_teams_rotation_cycle(self, app, teams):
         """
@@ -118,27 +129,33 @@ class TestShiftUtilities:
             # Week 3: odd, rotation_idx for G1=(3-1)//2=1, for G2=3//2=1
             test_dates = [
                 # Week 1, Mon (odd): Group 1 day, rotation_idx=0 (even) -> B early, A late
-                (datetime(2024, 1, 1), 'Team B', 'Team A'),
+                (datetime(2024, 1, 1), "Team B", "Team A"),
                 # Week 1, Wed (odd): Group 2 day, rotation_idx=0 (even) -> C early, D late
-                (datetime(2024, 1, 3), 'Team C', 'Team D'),
+                (datetime(2024, 1, 3), "Team C", "Team D"),
                 # Week 2, Mon (even): Group 2 day, rotation_idx=1 (odd) -> D early, C late
-                (datetime(2024, 1, 8), 'Team D', 'Team C'),
+                (datetime(2024, 1, 8), "Team D", "Team C"),
                 # Week 2, Wed (even): Group 1 day, rotation_idx=0 (even) -> B early, A late
-                (datetime(2024, 1, 10), 'Team B', 'Team A'),
+                (datetime(2024, 1, 10), "Team B", "Team A"),
                 # Week 3, Mon (odd): Group 1 day, rotation_idx=1 (odd) -> A early, B late
-                (datetime(2024, 1, 15), 'Team A', 'Team B'),
+                (datetime(2024, 1, 15), "Team A", "Team B"),
             ]
 
             for test_date, expected_early, expected_late in test_dates:
                 early, late = get_shift_teams(test_date, teams)
 
-                assert early is not None, f"Early shift should be assigned for {test_date}"
-                assert late is not None, f"Late shift should be assigned for {test_date}"
+                assert (
+                    early is not None
+                ), f"Early shift should be assigned for {test_date}"
+                assert (
+                    late is not None
+                ), f"Late shift should be assigned for {test_date}"
 
-                assert early.name == expected_early, \
-                    f"Date {test_date}: Expected {expected_early} for early, got {early.name}"
-                assert late.name == expected_late, \
-                    f"Date {test_date}: Expected {expected_late} for late, got {late.name}"
+                assert (
+                    early.name == expected_early
+                ), f"Date {test_date}: Expected {expected_early} for early, got {early.name}"
+                assert (
+                    late.name == expected_late
+                ), f"Date {test_date}: Expected {expected_late} for late, got {late.name}"
 
     def test_get_shift_teams_invalid_input(self, app, teams):
         """
@@ -167,4 +184,3 @@ class TestShiftUtilities:
             # Should return None for teams that don't exist in the list
             assert early is None, "Should return None when team not found in list"
             assert late is None, "Should return None when team not found in list"
-

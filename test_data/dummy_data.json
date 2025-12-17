@@ -1,4 +1,18 @@
 {
+  "teams": [
+    {
+      "name": "Team A"
+    },
+    {
+      "name": "Team B"
+    },
+    {
+      "name": "Team C"
+    },
+    {
+      "name": "Team D"
+    }
+  ],
   "roles": [
     {
       "name": "Admin",
@@ -572,7 +586,6 @@
       "name": "grace.tech",
       "availability_status": "Available",
       "shift": null,
-      "shift_team": "Team D",
       "skills": [
         {
           "skill": "Robotics",

@@ -1,5 +1,5 @@
 # mockCMMS Project Roadmap
-_Updated December 15, 2025_
+_Updated December 17, 2025_
 
 ---
 
@@ -78,26 +78,34 @@ _Updated December 15, 2025_
 
 ## 🔥 ACTIVE WORK
 
-**Current Sprint:** Code Quality Analysis
-**Status:** Phase 2 In Progress 🔄
-**Started:** December 13, 2025  
+**Current Sprint:** Frontend Test Suite Foundation
+**Status:** Phase 1 (Planning) in Progress 📝
+**Started:** December 15, 2025
 
-**Progress:** 2/49 tasks complete
-**Workflow:** Lint → Format → Test → Audit → Commit (per task)
+> [!NOTE]
+> The Frontend Code Quality Audit (Phases 3, 4, and 5 of the `core_code_quality_plan.md`) is **postponed** until this test suite is implemented and all tests are passing.
 
 ---
 
 > [!IMPORTANT]
-> **📋 Active Plan:** [Core Code Quality Plan](core_code_quality_plan.md) - 49 tasks  
-> **🤖 AI Guide:** [AI Agent Guide](AI_AGENT_GUIDE.md) - Prompts for all 49 tasks  
-> **📊 Testing:** [Comprehensive Testing Plan](comprehensive_testing_plan.md) - 210 tests ✅
+> **📋 Active Plan:** [Frontend Testing Plan](frontend_testing_plan.md)
+> **📊 Backend Testing:** [Comprehensive Testing Plan](comprehensive_testing_plan.md) - 210 tests ✅
 
 ---
 
 ## ✅ RECENTLY COMPLETED
 
-### Phase 2: Python Backend (Task 2.1 - December 14, 2025)
-- ✅ Audited and improved `src/routes/api.py` for RESTful conventions, validation, and security.
+### Phase 2 Verified: Critical Backend Fixes (December 17, 2025)
+- ✅ **Critical Bug Fix:** Fixed `UnboundExecutionError` during app startup by ensuring modular app models are only registered when enabled.
+- ✅ **Critical Test Fix:** Resolved dangerous test cleanup bug that was deleting production database (`mockcmms.db`).
+- ✅ **Infrastructure:** Implemented proper SQLAlchemy connection scoping in test fixtures to eliminate resource leaks.
+- ✅ **Audit Verified:** Confirmed `src/` directory meets strict quality standards (0 Ruff errors, 9.29/10 Pylint score, 100% test pass rate).
+
+### Phase 2: Python Backend Audit (December 15, 2025)
+- ✅ Audited and improved all Python files in `src/`, including routes, services, and the main application factory.
+- ✅ Refactored `main.py` to improve separation of concerns by moving calendar logic to `shift_utils.py`.
+- ✅ Standardized data models and removed deprecated columns in `db_utils.py`.
+- ✅ Improved the idempotency and robustness of the database seeding logic in `db_seeding.py`.
 
 ### Phase 1: Automated Code Quality Analysis (December 13, 2025)
 - ✅ Ruff: 0 issues, Pylint: 9.15/10, Radon: A(2.0), Bandit: 0
@@ -144,7 +152,7 @@ The core application can be improved with the following features to support the 
     - **Note:** Initial fixes are completed. A comprehensive cleanup is planned (see Core Code Quality Plan).
 
 - **[ ] Core mockCMMS Code Quality Comprehensive Audit & Cleanup** _(Priority: Critical)_
-    - **Status:** 📋 Planning Phase
+    - **Status:** 🔄 **Phase 3 In Progress** (Phase 2 Complete)
     - **Goal:** A systematic, comprehensive audit and cleanup of all core mockCMMS code files.
     - **Detailed Plan:** [core_code_quality_plan.md](core_code_quality_plan.md)
     - **Scope:**

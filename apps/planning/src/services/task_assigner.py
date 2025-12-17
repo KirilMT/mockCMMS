@@ -3,7 +3,7 @@
 from itertools import combinations, permutations # Ensure permutations is imported
 from .data_processing import normalize_string
 from .config_manager import TASK_NAME_MAPPING, TECHNICIAN_TASKS, TECHNICIAN_LINES # Corrected relative import
-from .db_utils import update_technician_skill, log_technician_skill_update
+from .planning_db_utils import update_technician_skill, log_technician_skill_update
 
 # Maximum number of high-priority tasks to consider for permutation-based optimization.
 # 7! = 5040, 8! = 40320. Keep this value mindful of performance.

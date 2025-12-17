@@ -1,26 +1,30 @@
-"""Shift calculation utilities for Pitman schedule."""
+# src/services/shift_utils.py
+
+"""Shift calculation utilities for the Pitman schedule."""
 
 
 def get_shift_teams(date_obj, teams):
     """
-    Determines the Early and Late shift teams for a given date based on the
-    2-2-3 Rotating Schedule (Pitman Schedule).
+    Determines the Early and Late shift teams for a given date based on a 2-2-3
+    Rotating Schedule (Pitman Schedule).
+
+    This schedule uses four teams (A, B, C, D) over a 28-day cycle.
+    - Two teams work the day shift (e.g., A & C).
+    - Two teams work the night shift (e.g., B & D).
+    - Shifts rotate to give teams every other weekend off.
 
     Args:
-        date_obj (datetime): The date to calculate teams for.
-        teams (list): List of Team objects from the database.
+        date_obj (datetime): The date for which to calculate the shift teams.
+        teams (list): A list of Team objects from the database.
 
     Returns:
-        tuple: (early_team, late_team) - The Team objects assigned to Early and Late shifts.
-               Returns (None, None) if no matching teams are found.
+        tuple: A tuple containing (early_team, late_team) Team objects.
+               Returns (None, None) if the required teams are not found.
     """
     week_num = date_obj.isocalendar()[1]
-    day_of_week = date_obj.weekday()  # 0=Mon, 6=Sun
-    is_odd_week = (week_num % 2) != 0
+    day_of_week = date_obj.weekday()  # Monday is 0 and Sunday is 6
 
-    # 1. Determine Active Pattern Group
-    # Group 1 (Teams A & B): Odd Week (Mon,Tue,Fri,Sat,Sun) OR Even Week (Wed,Thu)
-    # Group 2 (Teams C & D): Odd Week (Wed,Thu) OR Even Week (Mon,Tue,Fri,Sat,Sun)
+    is_odd_week = (week_num % 2) != 0
 
     is_group_1_day = False
     if is_odd_week:
@@ -54,14 +58,8 @@ def get_shift_teams(date_obj, teams):
             early_team_name = "Team C"
             late_team_name = "Team D"
 
-    # Find Team objects
-    early_team = None
-    late_team = None
-
-    for team in teams:
-        if team.name == early_team_name:
-            early_team = team
-        elif team.name == late_team_name:
-            late_team = team
+    # Find the corresponding team objects
+    early_team = next((t for t in teams if t.name == early_team_name), None)
+    late_team = next((t for t in teams if t.name == late_team_name), None)
 
     return early_team, late_team

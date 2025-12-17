@@ -35,6 +35,16 @@ These instructions apply to **all** coding tasks unless explicitly overridden by
 -   **Refactoring:** Actively refactor code to improve its structure and remove unused or "dead" code.
 -   **Hardcoding:** Avoid hardcoding values; use configuration files, environment variables, or constants where possible.
 
+#### 1.1.1. The 5-Step Iterative Loop (Mandatory)
+Every code change must follow this strict process for EACH file or module:
+
+1.  **Lint**: Run available linters (`ruff`, `pylint`, `mypy`, `jscpd`) and fix ALL issues.
+2.  **Format**: Run formatters (`flake8`, `black`, `prettier`) and fix ALL issues.
+3.  **Test**: Run `pytest` (Backend) or browser tests (Frontend). Fix ALL errors and ensure coverage > 85%.
+4.  **Audit**: Review logic against project standards (Architecture, patterns). Updates audit report if applicable.
+5.  **Commit**: Only commit if Steps 1-4 are perfect. Use Conventional Commits.
+    *   *If changes are made during Audit, LOOP BACK to Step 1.*
+
 ### 1.2. Reliability, Security & Performance
 -   **Error Handling:** Include robust error handling appropriate for the language (e.g., try-catch, try-except, error callbacks, etc.) to ensure code reliability.
 -   **Security:** For web applications or code handling user input, always follow security best practices (e.g., input validation, output encoding, use of secure libraries, avoiding injection vulnerabilities, etc.).

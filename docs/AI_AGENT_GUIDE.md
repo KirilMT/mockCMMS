@@ -1,7 +1,7 @@
 # AI Agent Guide - Code Quality Audit
 
 **Created:** December 13, 2025  
-**Last Updated:** December 15, 2025
+**Last Updated:** December 17, 2025
 **Purpose:** AI prompts for all 49 tasks in core_code_quality_plan.md
 
 ---
@@ -12,7 +12,8 @@
 - 📋 [core_code_quality_plan.md](core_code_quality_plan.md) - The audit structure (49 tasks, 7 phases)
 - 🗓️ [IMPLEMENTATION_PRIORITY_GUIDE.md](IMPLEMENTATION_PRIORITY_GUIDE.md) - Overall timeline
 - 🗺️ [mockCMMS_roadmap.md](mockCMMS_roadmap.md) - Strategic vision and standards
-- ✅ [comprehensive_testing_plan.md](comprehensive_testing_plan.md) - Testing foundation (210 tests complete)
+- ✅ [comprehensive_testing_plan.md](comprehensive_testing_plan.md) - Backend testing foundation (210 tests)
+- 🧪 [frontend_testing_plan.md](frontend_testing_plan.md) - Frontend testing foundation (Jest, Playwright)
 
 **Update After Each Task:**
 - ✏️ Mark `[x]` in [core_code_quality_plan.md](core_code_quality_plan.md) for completed tasks
@@ -35,6 +36,24 @@ This guide provides ready-to-use prompts for AI assistants working on the mockCM
 - **Phase 7:** Cross-Cutting Concerns (4 tasks)
 
 **Workflow per task:** Lint → Format → Test → Manual Audit → Loop or Commit
+
+## 🔄 Workflow Definition: 5-Step Iterative Loop
+
+When instructed to "Perform auditing using the 5-step iterative loop", follow this strict process for EACH file or module:
+
+1.  **Lint**: Run `ruff check <file>`, `pylint <file>`, `mypy <file>`, `radon cc <file> -a`, `bandit -r <file>`, `jscpd <file>`. Collect and **fix all issues found**.
+2.  **Format**: Run `flake8 <file>` and `black <file>`. **Fix all issues found**.
+3.  **Test**: Run `pytest --cov=src --cov-report=term --cov-report=html:audit_results/coverage_html tests/ > audit_results/coverage_report.txt`.
+    -   **Fix any errors**.
+    -   **Fix any discrepancies**.
+    -   Ensure coverage does not decrease.
+4.  **Generate Audit Report**: Create/Update the audit report (e.g., `docs/AUDIT_REPORT_SRC.md` or `docs/AUDIT_REPORT_APPS.md`). **CRITICAL:** If *any* code modifications were made during steps 1-3 (fixes, formatting, refactoring), you must **LOOP BACK TO STEP 1** and repeat the entire process until the file passes all checks (Linting, Formatting, Testing) without needing further changes. The Audit Report is the *final* artifact of a successful cycle.
+5.  **Final Verification**: Confirm all metrics are met (10/10 score, 0 errors).
+    -   Verify logic, architecture, and "User Rules" compliance.
+6.  **Commit**:
+    -   If changes were made, repeat the loop.
+    -   If perfect, move to the next task.
+    -   (Note: In this environment, "Commit" means marking the task complete and ensuring documentation reflects the final state).
 
 ---
 

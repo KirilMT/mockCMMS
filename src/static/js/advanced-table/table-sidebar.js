@@ -800,7 +800,7 @@ class TableSidebar {
                     const col = this.table.columns.find(c => c.key === key);
                     if (col) {
                         const selected = col.key === currentValue ? 'selected' : '';
-                        options.push(`< option value = "${col.key}" ${selected}> ${col.label}</option > `);
+                        options.push(`<option value="${col.key}" ${selected}>${col.label}</option>`);
                     }
                 }
             });
@@ -980,10 +980,10 @@ class TableSidebar {
                 : config.config_name;
 
             viewItem.innerHTML = `
-                < div class="view-info" style = "cursor: pointer; flex: 1;" >
+                <div class="view-info" style="cursor: pointer; flex: 1;">
                     <span class="view-name" title="${config.config_name}">${displayName}</span>
                     ${config.is_default ? '<span class="badge badge-primary badge-sm">Default</span>' : ''}
-                </div >
+                </div>
                 <div class="view-actions">
                     <button class="btn btn-sm btn-link set-default-btn" title="${config.is_default ? 'Remove default' : 'Set as default'}">
                         <i class="fas fa-star${config.is_default ? ' text-warning' : ''}"></i>
@@ -996,9 +996,11 @@ class TableSidebar {
 
             // Click on view info to load it
             const viewInfo = viewItem.querySelector('.view-info');
-            viewInfo.addEventListener('click', () => {
-                this.loadView(config);
-            });
+            if (viewInfo) {
+                viewInfo.addEventListener('click', () => {
+                    this.loadView(config);
+                });
+            }
 
             // Set/Remove default button
             viewItem.querySelector('.set-default-btn').addEventListener('click', (e) => {
@@ -1029,7 +1031,7 @@ class TableSidebar {
                     const displayName = lastLoadedConfig.config_name.length > 15
                         ? lastLoadedConfig.config_name.substring(0, 14) + '…'
                         : lastLoadedConfig.config_name;
-                    updateBtn.innerHTML = `< i class="fas fa-sync" ></i > Update "${displayName}"`;
+                    updateBtn.innerHTML = `<i class="fas fa-sync"></i> Update "${displayName}"`;
                     updateBtn.title = `Update "${lastLoadedConfig.config_name}" with current settings`;
                 } else {
                     updateBtn.disabled = true;
@@ -1151,7 +1153,7 @@ class TableSidebar {
         const loadingState = this.table.showButtonLoading(updateBtn, 'Updating...');
 
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        this.table.fetchWithRetry(`/ api / table - config / ${this.table.lastLoadedConfigId} `, {
+        this.table.fetchWithRetry(`/api/table-config/${this.table.lastLoadedConfigId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -1209,12 +1211,12 @@ class TableSidebar {
         }
 
         // Find the delete button for this specific view
-        const viewItem = document.querySelector(`.saved - view - item[data - config - id="${config.id}"]`);
+        const viewItem = document.querySelector(`.saved-view-item[data-config-id="${config.id}"]`);
         const deleteBtn = viewItem ? viewItem.querySelector('.delete-view-btn') : null;
         const loadingState = deleteBtn ? this.table.showButtonLoading(deleteBtn, '') : null;
 
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        this.table.fetchWithRetry(`/ api / table - config / ${config.id} `, {
+        this.table.fetchWithRetry(`/api/table-config/${config.id}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -1279,7 +1281,7 @@ class TableSidebar {
      */
     setDefaultView(configId) {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        fetch(`/ api / table - config / ${this.table.pageName} /${configId}/set -default `, {
+        fetch(`/api/table-config/${this.table.pageName}/${configId}/set-default`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
@@ -1315,7 +1317,7 @@ class TableSidebar {
      */
     removeDefaultView(configId) {
         const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        fetch(`/ api / table - config / ${this.table.pageName} /${configId}/remove -default `, {
+        fetch(`/api/table-config/${this.table.pageName}/${configId}/remove-default`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken
