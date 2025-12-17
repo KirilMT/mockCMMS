@@ -201,8 +201,9 @@ coverage.xml
 
 # Node modules (for local jscpd)
 node_modules/
-package-lock.json
-package.jsoncoverage/
+
+# Jest/Playwright artifacts
+coverage/
 test-results/
 playwright-report/
 blob-report/
