@@ -199,3 +199,7 @@ htmlcov/
 coverage.xml
 *.cover
 
+# Node modules (for local jscpd)
+node_modules/
+package-lock.json
+package.json
