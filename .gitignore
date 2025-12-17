@@ -193,7 +193,6 @@ baseline_metrics.md
 *.complexity
 
 # Test artifacts
-.pytest_cache/
 htmlcov/
 .coverage
 coverage.xml
