@@ -112,7 +112,12 @@ AdvancedTable.prototype.applyFilter = function (value, filter) {
 };
 
 AdvancedTable.prototype.getPaginatedData = function (data) {
-    return data;
+    if (!this.pageSize || this.pageSize <= 0) return data;
+
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+
+    return data.slice(startIndex, endIndex);
 };
 
 AdvancedTable.prototype.globalSearch = function (searchTerm) {

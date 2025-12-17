@@ -202,4 +202,4 @@ coverage.xml
 # Node modules (for local jscpd)
 node_modules/
 package-lock.json
-package.json
+package.jsoncoverage/
