@@ -164,59 +164,64 @@ class LoggingConfig:
         # Set log level based on debug mode
         log_level = logging.DEBUG if flask_debug else logging.INFO
 
-        # Create formatters
-        if flask_debug:
-            # Human-readable format for development
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-            )
-        else:
-            # Structured JSON format for production
-            formatter = StructuredFormatter()
-
         # Configure root logger
         root_logger = logging.getLogger()
         root_logger.setLevel(log_level)
 
-        # Remove existing handlers to avoid duplicates
-        for handler in root_logger.handlers[:]:
-            root_logger.removeHandler(handler)
-
-        # Console handler
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(log_level)
-        console_handler.setFormatter(formatter)
-        root_logger.addHandler(console_handler)
-
-        # File handlers
-        log_file = os.path.join(log_dir, "application.log")
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(logging.INFO)
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
-
-        # Error-specific log file
-        error_log_file = os.path.join(log_dir, "errors.log")
-        error_handler = logging.FileHandler(error_log_file)
-        error_handler.setLevel(logging.ERROR)
-        error_handler.setFormatter(formatter)
-        root_logger.addHandler(error_handler)
-
-        # Performance log file for production
+        # In Production: Take full control (Wipe defaults, use JSON Console)
+        # In Debug: Touch NOTHING regarding console (Let Flask/Werkzeug defaults rule)
         if not flask_debug:
-            perf_log_file = os.path.join(log_dir, "performance.log")
-            perf_handler = logging.FileHandler(perf_log_file)
-            perf_handler.setLevel(logging.WARNING)  # For slow operations
-            perf_handler.setFormatter(formatter)
-            root_logger.addHandler(perf_handler)
+            for handler in root_logger.handlers[:]:
+                root_logger.removeHandler(handler)
+            
+            # Add JSON Console for Production to ensure logs are visible
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(StructuredFormatter())
+            root_logger.addHandler(console_handler)
+
+        # File handlers configuration (Always active, Always JSON)
+        file_formatter = StructuredFormatter()
+
+        # Helper to safely add file handler if not exists
+        def add_file_handler(filename, level, formatter):
+            path = os.path.join(log_dir, filename)
+            # Check for existing handler for this file
+            for h in root_logger.handlers:
+                if isinstance(h, logging.FileHandler) and getattr(h, "baseFilename", "") == path:
+                    return # Already exists
+            
+            handler = logging.FileHandler(path)
+            handler.setLevel(level)
+            handler.setFormatter(formatter)
+            root_logger.addHandler(handler)
+
+        add_file_handler("application.log", logging.INFO, file_formatter)
+        add_file_handler("errors.log", logging.ERROR, file_formatter)
+
+        # Performance log file (Production only)
+        if not flask_debug:
+            add_file_handler("performance.log", logging.WARNING, file_formatter)
+
+        # Restore Werkzeug logs to console in Debug mode (lost due to Root FileHandler)
+        if flask_debug:
+            werkzeug_logger = logging.getLogger("werkzeug")
+            # Only add if no handlers exist (avoid duplicates if reloaded)
+            if not werkzeug_logger.handlers:
+                w_handler = logging.StreamHandler()
+                w_handler.setFormatter(logging.Formatter("%(message)s"))
+                werkzeug_logger.addHandler(w_handler)
 
         # Set up request timing middleware if app is provided
         if app:
             LoggingConfig._setup_request_monitoring(app)
-            # Remove Flask's default handler to avoid duplicate logs if using our own
-            app.logger.handlers = []
-            app.logger.propagate = True  # Propagate to root logger
+            
+            # Ensure app logger propagates to root (so FileHandlers catch it)
+            app.logger.propagate = True
+            
+            # Only clear app handlers in Production (where we use Root JSON).
+            # In Debug, KEEP defaults (Standard Flask output).
+            if not flask_debug:
+                app.logger.handlers = []
 
         return root_logger
 
