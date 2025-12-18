@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 from .services.db_utils import db, User
 from .services.db_seeding import populate_dummy_data
+from .services.logging_config import LoggingConfig
 
 # Local blueprint imports
 from .routes.api import api_bp
@@ -55,6 +56,9 @@ def create_app(config_overrides=None):
         app.config.from_mapping(config_overrides)
 
     # --- Initializations ---
+    # Setup Logging
+    LoggingConfig.setup_logging(app)
+
     db.init_app(app)
     csrf = CSRFProtect(app)
 
