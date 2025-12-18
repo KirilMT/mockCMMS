@@ -587,6 +587,47 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
         - Verify README.md for consistency.
     - **Reference:** [GitHub Issue #1](https://github.com/KirilMT/mockCMMS/issues/1)
 
+- **[ ] Improve README Badges** _(Priority: Medium)_
+    - **Goal:** Enhance project visibility and demonstrate code quality, security, and modular coverage.
+    - **Strategy:**
+        > Your current set of badges is a strong start and follows professional standards. Since your project is a **modular Flask monorepo**, you can add a few high-value badges to further demonstrate code quality and security.
+
+        **1. Code Quality & Linting**
+        Adding badges for your linting and formatting tools signals that the project follows strict coding standards.
+        * **Ruff/Black Formatter:** Shows you use modern, automated formatting.
+        * **Static Analysis:** Display `pylint` or `flake8` results using **Shields.io**.
+        ```markdown
+        [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+        [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+        ```
+
+        **2. Dependency & Security Status**
+        * **Dependabot:** Show that Dependabot is active.
+        * **Security (Safety/Bandit):** Create a custom "Security: Passing" badge.
+        ```markdown
+        [![Security: Bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+        ```
+
+        **3. Monorepo-Specific: Component Coverage**
+        Use **Codecov Flags** to show coverage of individual applications (e.g., `planning`, `reports`) to reveal gaps hidden by overall coverage.
+        * **Planning Module Coverage:** `[![coverage: planning](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=planning)](https://codecov.io/gh/KirilMT/mockCMMS)`
+        * **Reports Module Coverage:** `[![coverage: reports](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=reports)](https://codecov.io/gh/KirilMT/mockCMMS)`
+
+        **Recommended Layout:**
+        Group badges by category at the top of `README.md`:
+        ```markdown
+        # mockCMMS
+        [![CI Pipeline](...)](...)
+        [![codecov](...)](...)
+        [![Ruff](...)](...)
+
+        [![Python 3.12+](...)](...)
+        [![License: MIT](...)](...)
+
+        [![Planning Coverage](...)](...)
+        [![Reports Coverage](...)](...)
+        ```
+
 ### `planning` App Enhancements
 This application already handles skill-based task assignment. The next logical steps involve deeper integration and more advanced planning management features.
 
@@ -668,6 +709,7 @@ This application is intended for reporting and analytics. The following features
 - **Fix GitHub Issue Templates:** Resolve template functionality issues.
 
 **Medium Priority:**
+- **Improve README Badges:** Enhance project visibility and demonstrate code quality, security, and modular coverage.
 - **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific filter operators.
 
 **Low Priority:**
