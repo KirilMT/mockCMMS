@@ -1,23 +1,27 @@
 ## Description
 
-A clear and concise summary of the changes. Please include the motivation and context for this change.
-*List any dependencies that are required for this change.*
+A clear and concise summary of the changes. Please include the motivation and
+context for this change. _List any dependencies that are required for this
+change._
 
 ---
 
 ### Related Issue
 
-*If this PR fixes a specific issue, link it here.*
+_If this PR fixes a specific issue, link it here._
+
 - Fixes #[issue_number]
 
 ---
 
 ### Type of Change
 
-*Please check the type of change that this PR introduces:*
+_Please check the type of change that this PR introduces:_
+
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Breaking change (fix or feature that would cause existing functionality to
+      not work as expected)
 - [ ] Documentation update
 - [ ] Chore (e.g., refactoring, adding tests, updating dependencies)
 
@@ -25,16 +29,18 @@ A clear and concise summary of the changes. Please include the motivation and co
 
 ### How Has This Been Tested?
 
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce.
+Please describe the tests that you ran to verify your changes. Provide
+instructions so we can reproduce.
 
 - [ ] Manual testing performed
 - [ ] Automated tests added or updated
 
 **Test Configuration (if applicable):**
-*   Firmware version:
-*   Hardware:
-*   Toolchain:
-*   SDK:
+
+- Firmware version:
+- Hardware:
+- Toolchain:
+- SDK:
 
 ---
 
