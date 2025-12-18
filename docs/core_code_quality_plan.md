@@ -127,7 +127,7 @@ For all audit tasks, we follow a strict 5-step iterative process to ensure quali
 - [x] `.github/CONTRIBUTING.md` - Contribution guidelines ✅ Phase 6
 - [x] `.github/GIT_WORKFLOW.md` - Git workflow documentation ✅ Phase 6
 - [x] `.github/CODEOWNERS` - Code ownership definitions ✅ Phase 6
-- [x] `.github/PULL_REQUEST_TEMPLATE.md` - PR template ✅ Phase 6
+- [x] `.github/pull_request_template.md` - PR template ✅ Phase 6
 - [x] `.github/ISSUE_TEMPLATE/bug_report.md` - Bug report template ✅ Phase 6
 - [x] `.github/ISSUE_TEMPLATE/feature_request.md` - Feature request template ✅ Phase 6
 - [x] `.github/ISSUE_TEMPLATE/custom.md` - Custom issue template ✅ Phase 6

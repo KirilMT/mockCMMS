@@ -278,7 +278,7 @@ This path is designed to help you get up to speed with the project structure, go
 
 #### High-Priority Setup (Completed First)
 1. **[x] Git Workflow Foundation**
-   - Create `.github/PULL_REQUEST_TEMPLATE.md`
+   - Create `.github/pull_request_template.md`
    - Document commit message standards in `CONTRIBUTING.md`
    - Set up basic branch protection on `main` (require PRs)
 
@@ -591,7 +591,7 @@ This path is designed to help you get up to speed with the project structure, go
 
 - [x] Read this entire document
 - [ ] Create a GitHub Project board to track work
-- [x] Create PR template (`.github/PULL_REQUEST_TEMPLATE.md`)
+- [x] Create PR template (`.github/pull_request_template.md`)
 - [ ] Enable branch protection on `main` branch
 - [x] Update CONTRIBUTING.md with code standards
 - [x] Move SECRET_KEY to `.env` if needed
