@@ -55,47 +55,36 @@ This document tracks all identified bugs in the mockCMMS application. Each bug i
 
 ## 🔥 CRITICAL BUGS
 
-### Bug #35: Delete Functionality Regression
+### Bug #35: Delete Functionality Regression (System Popup Issue)
 **Priority:** Critical  
-**Status:** Open  
+**Status:** In Progress
 **Identified:** December 10, 2025
 
 **Description:**  
-Delete buttons are visible but not working on multiple detail pages. This is a regression of the fixes from Bug #R3, #1, and #6.
+Delete functionality is compromised because the application relies on the browser's native `confirm()` system popup, which is unreliable in certain environments (e.g., Incognito mode, IDE embedded browsers). Additionally, the delete forms were improperly nested inside the main edit forms (Invalid HTML).
+
+**Status Update:**
+- **HTML Structure (Fixed):** The nested form issue has been resolved in the templates. Delete forms are now siblings to the main form.
+- **Confirmation UI (Pending):** The native `confirm()` dialog needs to be replaced with a custom modal or inline confirmation to ensure reliability across all environments.
 
 **Current Behavior:**
-- Delete buttons are rendered and visible on all detail pages
-- Clicking the Delete button does NOT trigger the delete action
-- No error message is shown
-- User remains on the same page with no feedback
+- In standard browsers: Delete works (after HTML fix).
+- In IDEs/Incognito: Clicking Delete may show no popup or fail to confirm, effectively blocking the action.
 
 **Expected Behavior:**
-- Clicking Delete should show a confirmation dialog
-- After confirmation, the item should be deleted
-- User should be redirected to the list page with a success message
-- Flash message should say "deleted" (not "updated")
+- User interaction should use a custom modal or inline UI, avoiding system popups.
+- Delete action should be reliable in all browser environments.
 
-**Affected Areas:**
-1. **Asset Detail Page** - Delete button present but action fails
-2. **MO Detail Page** - Delete button present but action fails
-3. **Spare Part Detail Page** - Delete button present but action fails
-4. **User Detail Page** - Delete button present but action fails
-5. **Asset Details → MO Section** - Delete buttons in MO table not working
-
-**Possible Solution:**
-1. Check if delete forms have correct `action` URL
-2. Verify CSRF tokens are present in delete forms
-3. Check if JavaScript is preventing form submission
-4. Verify delete routes exist and are correctly defined in `main.py`
-5. Check browser console for JavaScript errors
-6. Test each delete form individually
+**Required Actions (Blocked by JS restriction):**
+1. Implement a custom confirmation modal (Bootstrap modal) or inline confirmation.
+2. Update all delete buttons to trigger this modal instead of `onsubmit="return confirm(...)"`.
 
 **Affected Files:**
-- `src/templates/asset_detail.html`
-- `src/templates/maintenance_order_detail.html`
-- `src/templates/spare_part_detail.html`
-- `src/templates/user_detail.html`
-- `src/routes/main.py` (delete routes)
+- `src/templates/asset_detail.html` (HTML fixed)
+- `src/templates/maintenance_order_detail.html` (HTML fixed)
+- `src/templates/spare_part_detail.html` (HTML fixed)
+- `src/templates/user_detail.html` (HTML fixed)
+- `src/static/js/` (Needs updates for modal logic - **BLOCKED**)
 
 **Related Bugs:**
 - Bug #R3: Delete Button Placement and Duplicated Forms
