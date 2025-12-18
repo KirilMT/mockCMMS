@@ -13,38 +13,58 @@ Write-Host "========================================`n" -ForegroundColor Cyan
 # Error counter for final summary
 $script:ErrorCount = 0
 
+# Function to refresh environment variables without restart
+function Refresh-EnvPath {
+    Write-Host "   Refreshing environment variables..." -ForegroundColor Gray
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+}
+
 # Step 1: Check Prerequisites
 Write-Host "[Step 1/5] Checking prerequisites..." -ForegroundColor Yellow
 
 # Step 1.1: Check for Python
-try {
-    $pythonVersion = python --version 2>&1
-    if ($pythonVersion -match "Python (\d+)\.(\d+)") {
-        $major = [int]$Matches[1]
-        $minor = [int]$Matches[2]
-        if ($major -ge 3 -and $minor -ge 12) {
-            Write-Host "   Found: " -NoNewline -ForegroundColor White
-            Write-Host "$pythonVersion" -NoNewline -ForegroundColor White
-            Write-Host " OK" -ForegroundColor Green
-        }
-        else {
-            Write-Warning "   Found: $pythonVersion (Python 3.12+ recommended)"
+$pythonValid = $false
+
+function Check-Python {
+    if (Get-Command python -ErrorAction SilentlyContinue) {
+        $v = python --version 2>&1
+        if ($v -match "Python (\d+)\.(\d+)") {
+            $major = [int]$Matches[1]
+            $minor = [int]$Matches[2]
+            if ($major -ge 3 -and $minor -ge 12) {
+                Write-Host "   Found: " -NoNewline -ForegroundColor White
+                Write-Host "$v" -NoNewline -ForegroundColor White
+                Write-Host " OK" -ForegroundColor Green
+                return $true
+            } else {
+                Write-Warning "   Found: $v (Python 3.12+ recommended)"
+                return $true # Warning but proceed
+            }
         }
     }
+    return $false
 }
-catch {
+
+if (-not (Check-Python)) {
     Write-Warning "   Python not found. Attempting to install via winget..."
 
     if (Get-Command winget -ErrorAction SilentlyContinue) {
         try {
-            # Attempt silent install of Python 3.12
+            # Attempt silent install of Python 3.12 (Matches project requirement)
             Write-Host "   Installing Python 3.12..." -ForegroundColor Magenta
             winget install -e --id Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
 
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "   Python installed successfully." -ForegroundColor Green
-                Write-Host "   IMPORTANT: Please restart your terminal/PowerShell session to refresh the PATH, then run this script again." -ForegroundColor Yellow
-                exit 0
+                Refresh-EnvPath
+
+                # Re-check
+                if (Check-Python) {
+                    $pythonValid = $true
+                } else {
+                    Write-Error "   Python installed but not found in PATH. Please restart terminal."
+                    exit 1
+                }
             }
             else {
                 Write-Error "   Failed to install Python via winget."
@@ -57,8 +77,8 @@ catch {
         }
     }
     else {
-        Write-Error "   Python is not installed and winget is not available."
-        Write-Error "   Please install Python 3.12+ from python.org."
+        Write-Error "   Python is not installed and winget (App Installer) is not available."
+        Write-Error "   Please install Python 3.12+ manually from https://python.org"
         exit 1
     }
 }
