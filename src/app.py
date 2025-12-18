@@ -31,15 +31,6 @@ def create_app(config_overrides=None):
         SECRET_KEY=os.getenv("SECRET_KEY", "dev_key_fallback_for_testing"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TESTING=os.environ.get("TESTING", "0") == "1",
-        # Custom Configuration
-        AUTO_SEED_DATABASE=(
-            os.getenv("AUTO_SEED_DATABASE", "True").lower() in ("true", "1", "t")
-        ),
-        # Flask Limits
-        MAX_CONTENT_LENGTH=int(os.getenv("MAX_UPLOAD_SIZE", 16 * 1024 * 1024)),
-        PERMANENT_SESSION_LIFETIME=int(os.getenv("SESSION_LIFETIME", 1800)),
-        # Flask-WTF
-        WTF_CSRF_TIME_LIMIT=int(os.getenv("CSRF_TIME_LIMIT", 3600)),
     )
 
     if not app.testing:

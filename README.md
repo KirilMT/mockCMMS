@@ -91,54 +91,13 @@ mockCMMS/
 
 ## ⚙️ Setup and Installation
 
-### Prerequisites
+For detailed development setup instructions, please refer to the **[Development Setup guide in CONTRIBUTING.md](.github/CONTRIBUTING.md#💻-development-setup)**.
 
-- Python 3.12 or higher
-- pip (Python package installer)
-- Git
+### Quick Start
 
-### Installation Steps
-
-1. **Clone the repository and navigate to it:**
-
-   ```bash
-   git clone <repository-url>
-   cd mockCMMS
-   ```
-
-   > **Note:** If you've already cloned the repository, open your terminal in
-   > the `mockCMMS` project root directory (where `run.py` is located).
-
-2. **Run the setup script:**
-
-   ```powershell
-   .\scripts\setup.ps1
-   ```
-
-   The script will guide you through the installation process with clear
-   feedback at each step.
-
-3. **Activate the virtual environment:**
-
-   ```powershell
-   .\.venv\Scripts\Activate.ps1
-   ```
-
-   > **Note:** If you get an error, make sure you ran the setup script first.
-
-4. **Run the application:**
-
-   ```bash
-   python run.py
-   ```
-
-### Development Setup
-
-To install testing tools and development dependencies (like Playwright, Jest, etc.):
-
-```powershell
-.\scripts\setup-dev.ps1
-```
+1. **Run setup:** `.\scripts\setup.ps1`
+2. **Activate env:** `.\.venv\Scripts\Activate.ps1`
+3. **Run app:** `python run.py`
 
 ## ⚙️ Configuration
 

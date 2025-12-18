@@ -2182,32 +2182,32 @@ If Step 4 resulted in NO modifications:
 
 #### Task 7.2: Environment Configuration Audit
 **Step 1: Automated Consistency Checks**
-- [x] Scan codebase for environment variable usage
-- [x] Check for undocumented variables
-- [x] Proceed to Step 2
+- [ ] Scan codebase for environment variable usage
+- [ ] Check for undocumented variables
+- [ ] Proceed to Step 2
 **Step 2: Generate Consistency Report**
-- [x] List all environment variables used in code
-- [x] Compare with `.env.example`
-- [x] Proceed to Step 3
+- [ ] List all environment variables used in code
+- [ ] Compare with `.env.example`
+- [ ] Proceed to Step 3
 **Step 3: Verify No Regressions**
-- [x] Run all tests (`pytest tests/`)
-- [x] Test application functionality
-- [x] ✅ **Checkpoint:** After this step, all automated checks should pass
+- [ ] Run all tests (`pytest tests/`)
+- [ ] Test application functionality
+- [ ] ✅ **Checkpoint:** After this step, all automated checks should pass
 **Step 4: Manual Audit**
-- [x] Review `.env.example` completeness
-- [x] Check for sensitive data in version control
-- [x] Verify all environment variables are documented
-- [x] Review default values and fallbacks
-- [x] Cross-reference with actual usage in code
+- [ ] Review `.env.example` completeness
+- [ ] Check for sensitive data in version control
+- [ ] Verify all environment variables are documented
+- [ ] Review default values and fallbacks
+- [ ] Cross-reference with actual usage in code
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:
-- [x] Document what was changed and why
-- [x] Update affected files
-- [x] 🔄 **Loop back to Step 1** and repeat until perfect
+- [ ] Document what was changed and why
+- [ ] Update affected files
+- [ ] 🔄 **Loop back to Step 1** and repeat until perfect
 If Step 4 resulted in NO modifications:
-- [x] Mark task as COMPLETE ✅
-- [x] Commit changes with message: `refactor(config): audit and standardize environment configuration [Phase 7.2]`
-- [x] Move to Task 7.3
+- [ ] Mark task as COMPLETE ✅
+- [ ] Commit changes with message: `refactor(config): audit and standardize environment configuration [Phase 7.2]`
+- [ ] Move to Task 7.3
 
 ---
 
