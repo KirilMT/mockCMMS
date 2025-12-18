@@ -23,8 +23,6 @@ function Refresh-EnvPath {
 Write-Host "[Step 1/5] Checking prerequisites..." -ForegroundColor Yellow
 
 # Step 1.1: Check for Python
-$pythonValid = $false
-
 function Check-Python {
     if (Get-Command python -ErrorAction SilentlyContinue) {
         $v = python --version 2>&1
@@ -46,22 +44,20 @@ function Check-Python {
 }
 
 if (-not (Check-Python)) {
-    Write-Warning "   Python not found. Attempting to install via winget..."
+    Write-Warning "   Python not found. Attempting to install latest version via winget..."
 
     if (Get-Command winget -ErrorAction SilentlyContinue) {
         try {
-            # Attempt silent install of Python 3.12 (Matches project requirement)
-            Write-Host "   Installing Python 3.12..." -ForegroundColor Magenta
-            winget install -e --id Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
+            # Attempt silent install of latest Python 3
+            Write-Host "   Installing Python..." -ForegroundColor Magenta
+            winget install -e --id Python.Python.3 --silent --accept-package-agreements --accept-source-agreements
 
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "   Python installed successfully." -ForegroundColor Green
                 Refresh-EnvPath
 
                 # Re-check
-                if (Check-Python) {
-                    $pythonValid = $true
-                } else {
+                if (-not (Check-Python)) {
                     Write-Error "   Python installed but not found in PATH. Please restart terminal."
                     exit 1
                 }

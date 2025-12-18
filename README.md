@@ -127,6 +127,14 @@ mockCMMS/
    python run.py
    ```
 
+### Development Setup
+
+To install testing tools and development dependencies (like Playwright, Jest, etc.):
+
+```powershell
+.\scripts\setup-dev.ps1
+```
+
 ## ⚙️ Configuration
 
 ### Environment Variables
