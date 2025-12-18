@@ -1,7 +1,7 @@
 # mockCMMS (Mock Computerized Maintenance Management System)
 
 [![CI Pipeline](https://github.com/KirilMT/mockCMMS/actions/workflows/ci.yml/badge.svg)](https://github.com/KirilMT/mockCMMS/actions/workflows/ci.yml) 
-[![codecov](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg)](https://codecov.io/gh/KirilMT/mockCMMS) 
+[![codecov](https://codecov.io/gh/KirilMT/mockCMMS/graph/badge.svg?token=PSNIDHV66T)](https://codecov.io/gh/KirilMT/mockCMMS) 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
