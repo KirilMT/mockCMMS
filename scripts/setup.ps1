@@ -117,12 +117,31 @@ if (-not (Test-Path $pipPath)) {
 }
 
 # Upgrade pip (use python -m pip to avoid "cannot modify pip while running" error)
-Write-Host "   Upgrading " -NoNewline -ForegroundColor White
+Write-Host "   Checking " -NoNewline -ForegroundColor White
 Write-Host "pip" -NoNewline -ForegroundColor Magenta
 Write-Host "..." -NoNewline -ForegroundColor White
-& $pythonPath -m pip install --upgrade pip --quiet
-if ($LASTEXITCODE -eq 0) {
-    Write-Host " OK" -ForegroundColor Green
+
+# Capture output to check if upgrade occurred
+$pipOutput = (& $pythonPath -m pip install --upgrade pip 2>&1) -join " "
+$pipExitCode = $LASTEXITCODE
+
+if ($pipExitCode -eq 0) {
+    # Get current pip version
+    $pipVersionOutput = (& $pythonPath -m pip --version 2>&1) -join " "
+    $pipVersion = ""
+    if ($pipVersionOutput -match "pip ([0-9]+\.[0-9]+(\.[0-9]+)?)") {
+        $pipVersion = $Matches[1]
+    }
+
+    # Check if it was already up to date or upgraded
+    if ($pipOutput -match "Requirement already satisfied") {
+        Write-Host " up to date " -NoNewline -ForegroundColor Green
+        if ($pipVersion) { Write-Host "(v$pipVersion)" -ForegroundColor Gray } else { Write-Host "" }
+    }
+    else {
+        Write-Host " upgraded " -NoNewline -ForegroundColor Green
+        if ($pipVersion) { Write-Host "(v$pipVersion)" -ForegroundColor Gray } else { Write-Host "" }
+    }
 }
 else {
     Write-Host " FAILED (non-critical)" -ForegroundColor Yellow
