@@ -10,7 +10,7 @@ from datetime import datetime
 from functools import wraps
 from flask import request, g, current_app
 
-# Calculate ROOT_DIR relative to this file (src/services/logging_config.py -> ../.. -> root)
+# Calculate ROOT_DIR relative to this file -> ../.. -> root
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
@@ -121,7 +121,7 @@ def performance_monitor(operation_name):
             try:
                 result = func(*args, **kwargs)
                 return result
-            except Exception as e:
+            except Exception:
                 success = False
                 raise
             finally:
@@ -138,7 +138,8 @@ def performance_monitor(operation_name):
                 if duration > 1.0:  # Operations taking more than 1 second
                     if current_app:
                         current_app.logger.warning(
-                            f"Slow operation detected: {operation_name} took {duration:.2f}s"
+                            f"Slow operation detected: {operation_name} "
+                            f"took {duration:.2f}s"
                         )
 
         return wrapper
@@ -243,7 +244,8 @@ class LoggingConfig:
                 # Log slow requests
                 if duration > 2.0:  # Requests taking more than 2 seconds
                     app.logger.warning(
-                        f"Slow request: {request.method} {request.path} took {duration:.2f}s"
+                        f"Slow request: {request.method} {request.path} "
+                        f"took {duration:.2f}s"
                     )
 
                 # Add performance headers for debugging (check app.debug)
