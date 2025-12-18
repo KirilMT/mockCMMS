@@ -20,6 +20,11 @@ Run the setup script, then start the server:
 python run.py
 ```
 
+For development (testing, linting), also run:
+```powershell
+.\scripts\setup-dev.ps1
+```
+
 > **🔑 Login Credentials:** `admin` / `admin123`
 > *(Source: `test_data/dummy_data.json`)*
 
