@@ -587,7 +587,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
         - Verify README.md for consistency.
     - **Reference:** [GitHub Issue #1](https://github.com/KirilMT/mockCMMS/issues/1)
 
-- **[ ] Improve README Badges** _(Priority: Medium)_
+- **[x] Improve README Badges** _(Priority: Medium)_
     - **Goal:** Enhance project visibility and demonstrate code quality, security, and modular coverage.
     - **Strategy:**
         > Your current set of badges is a strong start and follows professional standards. Since your project is a **modular Flask monorepo**, you can add a few high-value badges to further demonstrate code quality and security.
@@ -709,7 +709,6 @@ This application is intended for reporting and analytics. The following features
 - **Fix GitHub Issue Templates:** Resolve template functionality issues.
 
 **Medium Priority:**
-- **Improve README Badges:** Enhance project visibility and demonstrate code quality, security, and modular coverage.
 - **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific filter operators.
 
 **Low Priority:**
