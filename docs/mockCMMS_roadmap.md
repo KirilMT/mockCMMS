@@ -558,7 +558,8 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
         - Provide training on the Git workflow and GitHub features.
     - **Reference:** [GitHub Issue #4](https://github.com/KirilMT/mockCMMS/issues/4)
 
-- **[ ] Fix GitHub Issue Templates** _(Priority: Medium)_
+- **[x] Fix GitHub Issue Templates** _(Priority: Medium)_
+    - **Status:** ✅ Completed (December 18, 2025)
     - **Goal:** Resolve the issue where GitHub issue templates are not working properly.
     - **Tasks:**
         - Investigate why the templates in `.github/ISSUE_TEMPLATE/` are not functioning.
