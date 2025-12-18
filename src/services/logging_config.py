@@ -1,6 +1,7 @@
 """
 Enhanced logging configuration for the core mockCMMS application.
 """
+
 import logging
 import os
 import json
@@ -10,7 +11,7 @@ from functools import wraps
 from flask import request, g, current_app
 
 # Calculate ROOT_DIR relative to this file (src/services/logging_config.py -> ../.. -> root)
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class StructuredFormatter(logging.Formatter):
@@ -18,23 +19,23 @@ class StructuredFormatter(logging.Formatter):
 
     def format(self, record):
         log_entry = {
-            'timestamp': self.formatTime(record),
-            'level': record.levelname,
-            'logger': record.name,
-            'message': record.getMessage(),
-            'module': record.module,
-            'function': record.funcName,
-            'line': record.lineno
+            "timestamp": self.formatTime(record),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
+            "line": record.lineno,
         }
 
         # Add request context if available
         try:
             if request:
-                log_entry['request'] = {
-                    'method': request.method,
-                    'path': request.path,
-                    'remote_addr': request.remote_addr,
-                    'user_agent': str(request.user_agent)
+                log_entry["request"] = {
+                    "method": request.method,
+                    "path": request.path,
+                    "remote_addr": request.remote_addr,
+                    "user_agent": str(request.user_agent),
                 }
         except RuntimeError:
             # Outside request context
@@ -42,7 +43,7 @@ class StructuredFormatter(logging.Formatter):
 
         # Add exception info if present
         if record.exc_info:
-            log_entry['exception'] = self.formatException(record.exc_info)
+            log_entry["exception"] = self.formatException(record.exc_info)
 
         return json.dumps(log_entry)
 
@@ -59,49 +60,49 @@ class MetricsCollector:
         key = f"{method}_{endpoint}"
         if key not in self.request_metrics:
             self.request_metrics[key] = {
-                'count': 0,
-                'total_duration': 0,
-                'avg_duration': 0,
-                'status_codes': {}
+                "count": 0,
+                "total_duration": 0,
+                "avg_duration": 0,
+                "status_codes": {},
             }
 
         metrics = self.request_metrics[key]
-        metrics['count'] += 1
-        metrics['total_duration'] += duration
-        metrics['avg_duration'] = metrics['total_duration'] / metrics['count']
+        metrics["count"] += 1
+        metrics["total_duration"] += duration
+        metrics["avg_duration"] = metrics["total_duration"] / metrics["count"]
 
         # Track status codes
-        if status_code not in metrics['status_codes']:
-            metrics['status_codes'][status_code] = 0
-        metrics['status_codes'][status_code] += 1
+        if status_code not in metrics["status_codes"]:
+            metrics["status_codes"][status_code] = 0
+        metrics["status_codes"][status_code] += 1
 
     def record_database_metric(self, operation, duration, success=True):
         """Record database operation metrics."""
         if operation not in self.database_metrics:
             self.database_metrics[operation] = {
-                'count': 0,
-                'total_duration': 0,
-                'avg_duration': 0,
-                'success_count': 0,
-                'error_count': 0
+                "count": 0,
+                "total_duration": 0,
+                "avg_duration": 0,
+                "success_count": 0,
+                "error_count": 0,
             }
 
         metrics = self.database_metrics[operation]
-        metrics['count'] += 1
-        metrics['total_duration'] += duration
-        metrics['avg_duration'] = metrics['total_duration'] / metrics['count']
+        metrics["count"] += 1
+        metrics["total_duration"] += duration
+        metrics["avg_duration"] = metrics["total_duration"] / metrics["count"]
 
         if success:
-            metrics['success_count'] += 1
+            metrics["success_count"] += 1
         else:
-            metrics['error_count'] += 1
+            metrics["error_count"] += 1
 
     def get_all_metrics(self):
         """Get all collected metrics."""
         return {
-            'requests': self.request_metrics,
-            'database': self.database_metrics,
-            'collection_time': datetime.utcnow().isoformat()
+            "requests": self.request_metrics,
+            "database": self.database_metrics,
+            "collection_time": datetime.utcnow().isoformat(),
         }
 
 
@@ -111,6 +112,7 @@ metrics_collector = MetricsCollector()
 
 def performance_monitor(operation_name):
     """Decorator to monitor function performance."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -124,8 +126,13 @@ def performance_monitor(operation_name):
                 raise
             finally:
                 duration = time.time() - start_time
-                if 'db' in operation_name.lower() or 'database' in operation_name.lower():
-                    metrics_collector.record_database_metric(operation_name, duration, success)
+                if (
+                    "db" in operation_name.lower()
+                    or "database" in operation_name.lower()
+                ):
+                    metrics_collector.record_database_metric(
+                        operation_name, duration, success
+                    )
 
                 # Log slow operations
                 if duration > 1.0:  # Operations taking more than 1 second
@@ -133,7 +140,9 @@ def performance_monitor(operation_name):
                         current_app.logger.warning(
                             f"Slow operation detected: {operation_name} took {duration:.2f}s"
                         )
+
         return wrapper
+
     return decorator
 
 
@@ -145,10 +154,10 @@ class LoggingConfig:
         """Configure application logging with appropriate levels and formatting."""
 
         # Determine debug mode (use app.debug if app provided, else env var)
-        flask_debug = app.debug if app else os.getenv('FLASK_DEBUG', '0') == '1'
+        flask_debug = app.debug if app else os.getenv("FLASK_DEBUG", "0") == "1"
 
         # Create logs directory if it doesn't exist
-        log_dir = os.path.join(ROOT_DIR, 'logs')
+        log_dir = os.path.join(ROOT_DIR, "logs")
         os.makedirs(log_dir, exist_ok=True)
 
         # Set log level based on debug mode
@@ -158,8 +167,8 @@ class LoggingConfig:
         if flask_debug:
             # Human-readable format for development
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
             )
         else:
             # Structured JSON format for production
@@ -180,14 +189,14 @@ class LoggingConfig:
         root_logger.addHandler(console_handler)
 
         # File handlers
-        log_file = os.path.join(log_dir, 'application.log')
+        log_file = os.path.join(log_dir, "application.log")
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)
 
         # Error-specific log file
-        error_log_file = os.path.join(log_dir, 'errors.log')
+        error_log_file = os.path.join(log_dir, "errors.log")
         error_handler = logging.FileHandler(error_log_file)
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(formatter)
@@ -195,7 +204,7 @@ class LoggingConfig:
 
         # Performance log file for production
         if not flask_debug:
-            perf_log_file = os.path.join(log_dir, 'performance.log')
+            perf_log_file = os.path.join(log_dir, "performance.log")
             perf_handler = logging.FileHandler(perf_log_file)
             perf_handler.setLevel(logging.WARNING)  # For slow operations
             perf_handler.setFormatter(formatter)
@@ -206,7 +215,7 @@ class LoggingConfig:
             LoggingConfig._setup_request_monitoring(app)
             # Remove Flask's default handler to avoid duplicate logs if using our own
             app.logger.handlers = []
-            app.logger.propagate = True # Propagate to root logger
+            app.logger.propagate = True  # Propagate to root logger
 
         return root_logger
 
@@ -220,15 +229,15 @@ class LoggingConfig:
 
         @app.after_request
         def after_request(response):
-            if hasattr(g, 'start_time'):
+            if hasattr(g, "start_time"):
                 duration = time.time() - g.start_time
 
                 # Record metrics
                 metrics_collector.record_request_metric(
-                    request.endpoint or 'unknown',
+                    request.endpoint or "unknown",
                     request.method,
                     duration,
-                    response.status_code
+                    response.status_code,
                 )
 
                 # Log slow requests
@@ -239,7 +248,7 @@ class LoggingConfig:
 
                 # Add performance headers for debugging (check app.debug)
                 if app.debug:
-                    response.headers['X-Response-Time'] = f"{duration:.3f}s"
+                    response.headers["X-Response-Time"] = f"{duration:.3f}s"
 
             return response
 
