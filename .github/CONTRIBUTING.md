@@ -1,171 +1,401 @@
 # How to Contribute
 
-Welcome to the internal development guide for the **mockCMMS** project.
+We'd love to accept your patches and contributions to this project. There are
+just a few small guidelines you need to follow.
 
-This document is intended for the **private organization team** working on this repository. It outlines our standards, workflows, and best practices for collaborating effectively.
-
-> [!IMPORTANT]
-> **Confidentiality:** This is a private repository. Do not share code, secrets, or internal documentation publicly.
-
----
-
-## 📹 Video Tutorials & Media
-
-> **🚧 Under Construction:** We are currently building a library of video tutorials to help new team members get up to speed.
-
-- **[Coming Soon]** Project Overview & Architecture Walkthrough
-- **[Coming Soon]** Setting Up Your Development Environment
-- **[Coming Soon]** How to Create a New Modular App
-
----
-
-## 🏗️ Architecture Note: Complexity Management
-
-**Guideline:** If a component within the core `src/` directory becomes too complex or isolated in its functionality, it should be migrated to its own modular application in `apps/`.
-
-**Triggers for Migration:**
-- The component requires its own database tables that are loosely coupled to the core.
-- The component has a distinct set of routes and views.
-- The component is becoming a "mini-app" within the main app.
-
-**Process:**
-1. Create a new directory in `apps/<new-app-name>`.
-2. Follow the modular app structure (see `apps/planning` for reference).
-3. Move logic, templates, and static assets.
-4. Register the new app in `src/app.py` behind a feature flag.
-
----
-
-## 💻 Development Setup
-
-### Prerequisites
-
-- **Python 3.12** or higher
-- **Node.js** (for JavaScript tools)
-- **Git**
-
-### Step 1: Initial Setup
-
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd mockCMMS
-   ```
-
-2. **Run the setup script:**
-   ```powershell
-   .\scripts\setup.ps1
-   ```
-   This script creates the virtual environment and installs core dependencies.
-
-3. **Activate the environment:**
-   ```powershell
-   .\.venv\Scripts\Activate.ps1
-   ```
-
-### Step 2: Install Development Tools
-
-To install testing tools (Playwright, Jest) and linters:
-
-```powershell
-.\scripts\setup-dev.ps1
-```
-
-### Step 3: Run the Application
-
-```bash
-python run.py
-```
-Access at `http://127.0.0.1:5000`.
-
----
-
-## 🤝 Community Guidelines (Internal Team)
+## Community Guidelines
 
 ### Our Pledge
 
-We pledge to make participation in our team a harassment-free experience for everyone. We value **collaboration, respect, and constructive feedback**.
+We, as members, contributors, and leaders, pledge to make participation in our
+community a harassment-free experience for everyone, regardless of age, body
+size, visible or invisible disability, ethnicity, sex characteristics, gender
+identity and expression, level of experience, education, socio-economic status,
+nationality, personal appearance, race, religion, or sexual identity and
+orientation.
+
+We pledge to act and interact in ways that contribute to an open, welcoming,
+diverse, inclusive, and healthy community.
 
 ### Our Standards
 
-- **Empathy:** Be kind and patient with team members.
-- **Constructive Code Reviews:** Focus on the code, not the person. explain *why* a change is requested.
-- **Responsibility:** Own your mistakes and learn from them.
-- **Privacy:** Protect internal data and secrets.
+Examples of behavior that contributes to a positive environment for our
+community include:
 
----
+- Demonstrating empathy and kindness toward other people
+- Being respectful of differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Accepting responsibility and apologizing to those affected by our mistakes,
+  and learning from the experience
+- Focusing on what is best not just for us as individuals, but for the overall
+  community
 
-## 📝 Coding Standards
+Examples of unacceptable behavior include:
+
+- The use of sexualized language or imagery, and sexual attention or advances of
+  any kind
+- Trolling, insulting or derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information, such as a physical or email address,
+  without their explicit permission
+- Other conduct which could reasonably be considered inappropriate in a
+  professional setting
+
+### Enforcement Responsibilities
+
+Community leaders are responsible for clarifying and enforcing our standards and
+will take appropriate and fair corrective action in response to any behavior
+that they deem inappropriate, threatening, offensive, or harmful.
+
+Community leaders have the right and responsibility to remove, edit, or reject
+comments, commits, code, wiki edits, issues, and other contributions that are
+not aligned to this Code of Conduct, and will communicate reasons for moderation
+decisions when appropriate.
+
+### Scope
+
+This Code of Conduct applies within all community spaces, and also applies when
+an individual is officially representing the community in public spaces.
+Examples of representing our community include using an official e-mail address,
+posting via an official social media account, or acting as an appointed
+representative at an online or offline event.
+
+### Enforcement
+
+Instances of abusive, harassing, or otherwise unacceptable behavior may be
+reported to the project team. All complaints will be reviewed and investigated
+promptly and fairly.
+
+All community leaders are obligated to respect the privacy and security of the
+reporter of any incident.
+
+## Coding Standards
+
+To maintain a high level of code quality, all contributions must adhere to the
+following standards.
 
 ### 1. Code Style & Formatting
 
-- **Python:** Follow [PEP 8](https://www.python.org/dev/peps/pep-0008/). We use `black` for formatting and `flake8` for linting.
-- **JavaScript:** Follow the [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html).
-- **General:** Code should be clear, concise, and well-documented.
+- **Python:** All Python code must follow the
+  [PEP 8 style guide](https://www.python.org/dev/peps/pep-0008/).
+- **JavaScript:** All JavaScript code should adhere to the
+  [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html).
+- **General:** Code should be clear, concise, and well-formatted.
 
 ### 2. Separation of Concerns
 
-- **No Inline Styles:** Use `.css` files.
-- **No Inline Scripts:** Use `.js` files.
-- **No Inline Event Handlers:** Use `addEventListener`.
+To ensure the project is maintainable, we strictly enforce the separation of
+logic, styling, and structure.
+
+- **No Inline Styles:** Do not use `style="..."` attributes in HTML. Use
+  external CSS classes instead.
+- **No Inline Scripts:** Do not use `<script>` tags within HTML files. All
+  JavaScript must be in external `.js` files.
+- **No Inline Event Handlers:** Do not use `onclick="..."` or other inline event
+  handlers. Use event listeners in your JavaScript files.
 
 ### 3. Comment Standards
 
-- **Explain "Why":** Comments should explain intent, not implementation.
-- **No Issue References:** Do not put `// Fix for #123` in code. Use commit messages.
-- **Professionalism:** Use proper grammar. Remove commented-out code.
+Good comments are crucial for explaining the "why" behind the code.
+
+- **Explain Intent, Not Implementation:** Code should be self-explanatory.
+  Comments should clarify complex business logic, algorithms, or non-obvious
+  decisions.
+- **No Issue References:** Do not reference bug or issue numbers in code
+  comments (e.g., `// Fix for #123`). Use commit messages for this.
+- **Professionalism:** Use proper grammar and punctuation. Avoid commented-out
+  code blocks; remove them instead.
 
 ### 4. Testing Standards
 
-**Core Principle: Tests are the safety net.**
+**As of December 2025, this project follows a strict test-first approach with
+comprehensive test coverage.**
 
-1. **Run Tests Locally:** Always run `pytest tests/` before pushing.
-2. **Write Tests First:** Create tests for new features before implementing them.
-3. **Maintain Coverage:** Aim for >85% coverage.
+#### Testing Philosophy
 
----
+**Core Principle: Tests are the safety net for all code changes.**
 
-## 🔄 Contribution Process
+#### When Adding New Code
 
-### 1. Issue Tracking
-All work starts with a GitHub Issue.
-- **Bug Reports:** Use the Bug Report template.
-- **Feature Requests:** Use the Feature Request template.
+1. **Check for existing tests** - Search `tests/` directory for related test
+   files
+2. **Run existing tests** - Verify current tests pass: `pytest tests/`
+3. **Create/Update tests FIRST** - Write tests for new functionality before
+   implementing
+4. **Implement code** - Write the actual feature/fix
+5. **Verify tests pass** - All tests (old + new) must pass
+6. **Check coverage** - Run `pytest --cov=src tests/` to ensure new code paths
+   are tested
 
-### 2. Branching Strategy
-- **Main Branch:** `main` (Protected, production-ready).
-- **Feature Branches:** `feature/<name>` or `bugfix/<issue-id>`.
-- **Never push directly to `main`.**
+#### When Modifying Existing Code
 
-### 3. Pull Requests (PRs)
-- Open a PR for every change.
-- Fill out the PR template completely.
-- Request a review from a team member.
-- Ensure all CI checks pass.
+1. **Identify affected tests** - Find tests that cover the code being modified
+2. **Run tests BEFORE changes** - Establish baseline (all should pass)
+3. **Make code changes** - Implement modifications
+4. **Run tests AFTER changes** - Verify nothing broke
+5. **If tests fail** - CRITICAL DECISION POINT:
+   - **Option A**: Code is wrong → Fix the code to match test expectations
+   - **Option B**: Test is wrong → Update test to match new correct behavior
+   - **Decision criteria**: Prioritize test correctness unless requirements
+     changed
+6. **Update tests if needed** - Adjust tests only if requirements genuinely
+   changed
 
-### 4. Commit Messages
-Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
-`type(scope): description`
+#### Test Organization
 
-Examples:
-- `feat(planning): add shift rotation logic`
-- `fix(core): resolve startup crash in db_utils`
-- `docs(readme): update installation steps`
+Tests are organized in 6 categories:
 
----
+- `tests/unit/` - Fast, isolated component tests
+- `tests/functional/` - API and route endpoint tests
+- `tests/integration/` - End-to-end workflow tests
+- `tests/security/` - Authentication, validation, security
+- `tests/performance/` - Scalability and optimization
+- `tests/reliability/` - Error handling and robustness
 
-## 🔑 Personal Access Tokens (PATs)
+**Separate Test File When:**
 
-To push to this repository, use a PAT with `repo` scope.
-1. Settings > Developer settings > Personal access tokens.
-2. Generate new token (classic).
-3. Select `repo` scope.
-4. Use this token as your password when pushing.
+- Different testing concern (Performance vs Functionality)
+- Different security level (Auth tests need extra scrutiny)
+- Different execution timing (Slow integration tests)
+- Cross-cutting concern (Validation applies to all components)
 
----
+**Combine Tests When:**
 
-## ❓ Getting Help
+- Same component/module (All API tests in test_api_routes.py)
+- Same testing level (Unit tests for db_utils together)
+- Same execution context (Fast unit tests together)
+- Natural cohesion (CRUD operations for same resource)
 
-- **Team Chat:** [Internal Link]
-- **Documentation:** See `docs/` directory.
-- **Issues:** Search existing GitHub issues.
+#### Coverage Philosophy
+
+- Coverage isn't about test count—it's about testing all code paths
+- Test success cases, failure cases, and edge cases
+- **Target**: 80-85% overall coverage (current: 82.99%)
+- **Critical paths**: 90%+ coverage (auth, API, database)
+
+#### Avoiding Test Duplicates
+
+1. **Search before creating** - Use `findstr /S "def test_" tests\*.py`
+   (Windows) or `grep -r "def test_" tests/` (Unix)
+2. **Check test names** - Look for similar test names in the same module
+3. **Review test file** - Read existing tests in the file you're modifying
+4. **Consolidate if needed** - Merge duplicate tests into comprehensive ones
+
+#### Before Submitting a Pull Request
+
+1. Run the full test suite: `pytest tests/`
+2. Ensure all tests pass
+3. Add tests for new functionality
+4. Maintain or improve code coverage: `pytest --cov=src tests/`
+5. Verify coverage meets targets (80-85% overall)
+
+**Reference:** See `tests/README.md` for test suite organization and complete
+testing strategy.
+
+## Contribution Process
+
+### Before contributing code
+
+Before doing any significant work, open an issue to propose your idea and ensure
+alignment. You can either
+[file a new issue](https://github.com/KirilMT/CMMS/issues/new/choose), or
+comment on an [existing one](https://github.com/KirilMT/CMMS/issues). A pull
+request (PR) that does not go through this coordination process may be closed to
+avoid wasted effort.
+
+## Checking the issue tracker
+
+We use GitHub issues to track tasks, bugs, and discussions. All changes, except
+trivial ones, should start with a GitHub issue. This process gives everyone a
+chance to validate the design, helps prevent duplication of effort, and ensures
+that the idea fits inside the goals for the language and tools. It also checks
+that the design is sound before code is written; the code review tool is not the
+place for high-level discussions.
+
+Always include a clear description in the body of the issue. The description
+should provide enough context for any team member to understand the problem or
+request without needing to contact you directly for clarification.
+
+## Sending a pull request
+
+All code changes must go through a pull request. First-time contributors should
+review
+[GitHub flow](https://docs.github.com/en/get-started/using-github/github-flow).
+
+Before sending a pull request, it should include tests if there are logic
+changes, copyright headers in every file, and a commit message following the
+conventions in "Commit messages" section below.
+
+A pull request can be opened from a branch within the repository or from a fork.
+External contributors are only able to open pull requests from forks, but team
+members with write access can choose to open a pull request from a repository
+branch.
+
+If you open a pull request from a personal fork, you should allow repository
+maintainers to make edits to your fork by turning on "Allow edits from
+maintainers". Please see
+[creating a pull request from a fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork)
+in the official GitHub documentation for details.
+
+## Personal Access Tokens (PATs)
+
+To push changes to the repository, you must authenticate using a Personal Access
+Token (PAT) instead of a password. PATs are more secure and are required for
+command-line access to GitHub.
+
+### Creating a PAT
+
+1.  Go to your GitHub **Settings** > **Developer settings** > **Personal access
+    tokens**.
+2.  Click **Generate new token**.
+3.  Give your token a descriptive name (e.g., "mockCMMS-dev").
+4.  Select the desired scopes. For repository access, the `repo` scope is
+    typically sufficient.
+5.  Click **Generate token** and copy the token. **You will not be able to see
+    it again.**
+6.  Store the token securely in a password manager.
+
+### Using a PAT
+
+When prompted for a password while using Git on the command line, paste your
+PAT.
+
+## Commit messages
+
+Commit messages for this repository follow the conventions below. Here is an
+example:
+
+''' feat(reports): add PDF export functionality
+
+A PDF export feature is added to the reports package, which generates
+maintenance reports in PDF format. The feature supports both reactive production
+reports and weekend completion summaries.
+
+Resolves #12345 '''
+
+### First line
+
+The first line of the change description is a short one-line summary of the
+change, following the structure `type(scope): description`:
+
+#### type
+
+A structural element defined by the conventions at
+https://www.conventionalcommits.org/en/v1.0.0/#summary.
+
+#### scope
+
+The name of the package or component affected by the change (e.g., `planning`,
+`reports`, `mockCMMS`, `advanced-table`, `ci`, `docs`), and should be provided
+in parentheses before the colon.
+
+#### description
+
+A short one-line summary of the change, that should be written to complete the
+sentence "This change modifies the codebase to ..." That means it does not start
+with a capital letter, is not a complete sentence, and actually summarizes the
+result of the change. Note that the verb after the colon is lowercase, and there
+is no trailing period
+
+The first line should be kept as short as possible (many git viewing tools
+prefer under ~76 characters). Follow the first line by a blank line.
+
+### Main content
+
+The rest of the commit message should provide context for the change and explain
+what it does. Write in complete sentences with correct punctuation. Don't use
+HTML, Markdown, or any other markup language.
+
+Add any relevant information, such as benchmark data if the change affects
+performance. The benchstat tool is conventionally used to format benchmark data
+for change descriptions.
+
+### Referencing issues
+
+To automatically close an issue when a pull request (PR) is merged on GitHub,
+you need to include a specific keyword followed by the issue number in the PR's
+description or a commit message. For example, `Resolves #12345`.
+
+When this change is eventually applied, the issue tracker will automatically
+mark the issue as fixed. You can use keywords like `Fixes`, `Closes`, or
+`Resolves`.
+
+If the change is a partial step towards the resolution of the issue, write "For
+#12345" instead. This will leave a comment in the issue linking back to the pull
+request, but it will not close the issue when the change is applied.
+
+## The review process
+
+This section explains the review process in detail and how to approach reviews
+after a pull request has been sent for review.
+
+### Getting a code review
+
+Before creating a pull request, make sure that your commit message follows the
+suggested format. Otherwise, it can be common for the pull request to be sent
+back with that request without review.
+
+After creating a pull request, request a specific reviewer if relevant, or leave
+it for the default group.
+
+### Merging a pull request
+
+Pull request titles and descriptions must follow the
+[commit messages](#commit-messages) conventions. This enables approvers to
+review the final commit message.
+
+Once the pull request has been approved and all checks have passed, click the
+[Squash and Merge](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges#squash-and-merge-your-commits)
+button. The resulting commit message will be based on the pull request's title
+and description.
+
+### Reverting a pull request
+
+If a merged pull request needs to be undone, for reasons such as breaking the
+build, the standard process is to
+[revert it through the GitHub interface](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/reverting-a-pull-request).
+To revert a pull request:
+
+1.  Navigate to the merged pull request on GitHub.
+2.  Click the **Revert** button. This action automatically creates a new branch
+    and a pull request containing the revert commit.
+3.  Edit the pull request title and description to comply with the
+    [commit message guidelines](#commit-messages).
+4.  The newly created revert pull request should be reviewed and merged
+    following the same process as any other pull request.
+
+Using the GitHub "Revert" button is the preferred method over manually creating
+a revert commit using `git revert`.
+
+### Keeping the pull request dashboard clean
+
+We aim to keep https://github.com/KirilMT/CMMS/pulls clean so that we can
+quickly notice and review incoming changes that require attention. Given that
+goal, please do not open a pull request unless you are ready for a code review.
+Draft pull requests and ones without author activity for more than one business
+day may be closed (they can always be reopened later). If you're still working
+on something, continue iterating on your branch without creating a pull request
+until it’s ready for review.
+
+### Addressing code review comments
+
+Creating additional commits to address reviewer feedback is generally preferred
+over amending and force-pushing. This makes it easier for reviewers to see what
+has changed since their last review. Pull requests are always squashed and
+merged. Before merging, please review and edit the resulting commit message to
+ensure it clearly describes the change.
+
+After pushing,
+[click the button](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/requesting-a-pull-request-review#requesting-reviews-from-collaborators-and-organization-members)
+to ask a reviewer to re-request your review.
+
+## Leaving a TODO
+
+When adding a TODO to the codebase, always include a link to an issue, no matter
+how small the task. Use the format:
+
+''' // TODO(https://github.com/KirilMT/CMMS/issues/): explain what needs to be
+done '''
+
+This helps provide context for future readers and keeps the TODO relevant and
+actionable as the project evolves.

@@ -1212,6 +1212,90 @@ class TestAPITableConfig:
         with app.app_context():
             assert db.session.get(TableConfiguration, config_id) is None
 
+    def test_save_and_load_config_integrity(self, client, logged_in_user):
+        """Test that saved configuration can be loaded back with exact data integrity."""
+        # Create a complex configuration
+        complex_config = {
+            "config_name": "Integrity Test Config",
+            "column_order": json.dumps(
+                ["id", "name", "asset_code", "status", "location", "cost_center"]
+            ),
+            "hidden_columns": json.dumps(["description", "created_at", "updated_at"]),
+            "filters": json.dumps(
+                {
+                    "status": {"value": "Operational", "operator": "equals"},
+                    "asset_type": {"value": "Robot", "operator": "contains"},
+                    "cost_center": {"value": "Assembly", "operator": "not_equals"},
+                }
+            ),
+            "sort_config": json.dumps({"column": "created_at", "direction": "desc"}),
+            "is_default": False,
+        }
+
+        # Save it
+        response = client.post(
+            "/api/table-config/assets",
+            data=json.dumps(complex_config),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        config_id = data["id"]
+
+        # Load it back
+        response = client.get("/api/table-config/assets")
+        assert response.status_code == 200
+        configs = response.get_json()
+
+        # Find our config
+        loaded_config = next((c for c in configs if c["id"] == config_id), None)
+        assert loaded_config is not None
+
+        # Verify integrity of fields
+        assert loaded_config["config_name"] == complex_config["config_name"]
+        assert loaded_config["column_order"] == complex_config["column_order"]
+        assert loaded_config["hidden_columns"] == complex_config["hidden_columns"]
+        assert loaded_config["filters"] == complex_config["filters"]
+        assert loaded_config["sort_config"] == complex_config["sort_config"]
+        assert loaded_config["is_default"] == complex_config["is_default"]
+
+        # Parse JSON fields to verify structure remains valid JSON
+        assert json.loads(loaded_config["filters"]) == {
+            "status": {"value": "Operational", "operator": "equals"},
+            "asset_type": {"value": "Robot", "operator": "contains"},
+            "cost_center": {"value": "Assembly", "operator": "not_equals"},
+        }
+
+    def test_save_config_with_invalid_json_fields(self, client, logged_in_user):
+        """Test saving configuration with malformed JSON strings in columns."""
+        # The API currently doesn't validate that these fields are valid JSON
+        # It just stores them as strings (Text/String columns).
+        # We verify behavior here to ensure no 500 error occurs.
+
+        malformed_config = {
+            "config_name": "Bad JSON Config",
+            "filters": "{bad_json: true",  # Invalid JSON
+            "sort_config": "not_even_json",
+        }
+
+        response = client.post(
+            "/api/table-config/assets",
+            data=json.dumps(malformed_config),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        config_id = data["id"]
+
+        # Load back
+        response = client.get("/api/table-config/assets")
+        configs = response.get_json()
+        loaded_config = next((c for c in configs if c["id"] == config_id), None)
+
+        assert loaded_config["filters"] == "{bad_json: true"
+        assert loaded_config["sort_config"] == "not_even_json"
+
 
 class TestAPIFilteredData:
     """Test suite for Filtered Data API endpoints (/<entity>/filtered)."""
