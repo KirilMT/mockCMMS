@@ -1,5 +1,5 @@
 from flask import g
-from .services.db_utils import get_db_connection, init_db, ensure_skill_update_log_table
+from .services.planning_db_utils import get_db_connection, init_db, ensure_skill_update_log_table
 from .services.config_manager import load_app_config
 
 class DatabaseManager:
