@@ -14,7 +14,7 @@ Write-Host "========================================`n" -ForegroundColor Cyan
 $script:ErrorCount = 0
 
 # Step 1: Check Prerequisites
-Write-Host "[Step 1/6] Checking prerequisites..." -ForegroundColor Yellow
+Write-Host "[Step 1/5] Checking prerequisites..." -ForegroundColor Yellow
 
 # Step 1.1: Check for Python
 try {
@@ -33,26 +33,39 @@ try {
     }
 }
 catch {
-    Write-Error "Python is not installed or not in PATH. Please install Python 3.12+."
-    exit 1
-}
+    Write-Warning "   Python not found. Attempting to install via winget..."
 
-# Step 1.2: Check for npm (required for jscpd)
-try {
-    $npmVersion = npm --version 2>&1
-    if ($npmVersion -match "(\d+)\.(\d+)") {
-        Write-Host "   Found: " -NoNewline -ForegroundColor White
-        Write-Host "npm $npmVersion" -NoNewline -ForegroundColor White
-        Write-Host " OK" -ForegroundColor Green
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        try {
+            # Attempt silent install of Python 3.12
+            Write-Host "   Installing Python 3.12..." -ForegroundColor Magenta
+            winget install -e --id Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
+
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "   Python installed successfully." -ForegroundColor Green
+                Write-Host "   IMPORTANT: Please restart your terminal/PowerShell session to refresh the PATH, then run this script again." -ForegroundColor Yellow
+                exit 0
+            }
+            else {
+                Write-Error "   Failed to install Python via winget."
+                exit 1
+            }
+        }
+        catch {
+             Write-Error "   An error occurred during Python installation."
+             exit 1
+        }
     }
-}
-catch {
-    Write-Warning "   npm not found. Skipping jscpd setup (duplicate code detection will be unavailable)."
+    else {
+        Write-Error "   Python is not installed and winget is not available."
+        Write-Error "   Please install Python 3.12+ from python.org."
+        exit 1
+    }
 }
 
 
 # Step 2: Create Virtual Environment
-Write-Host "`n[Step 2/6] Setting up virtual environment..." -ForegroundColor Yellow
+Write-Host "`n[Step 2/5] Setting up virtual environment..." -ForegroundColor Yellow
 if (-not (Test-Path ".venv")) {
     Write-Host "   Creating " -NoNewline -ForegroundColor White
     Write-Host ".venv" -NoNewline -ForegroundColor Magenta
@@ -72,36 +85,9 @@ else {
     Write-Host "OK" -ForegroundColor Green
 }
 
-# Step 3: Install Local Tools (jscpd)
-Write-Host "`n[Step 3/6] Installing local tools..." -ForegroundColor Yellow
-if (Get-Command npm -ErrorAction SilentlyContinue) {
-    if (-not (Test-Path "node_modules/jscpd")) {
-        Write-Host "   Installing " -NoNewline -ForegroundColor White
-        Write-Host "jscpd" -NoNewline -ForegroundColor Magenta
-        Write-Host " (locally)..." -NoNewline -ForegroundColor White
-        
-        # Install locally as dev dependency
-        cmd /c "npm install jscpd --save-dev --quiet"
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host " OK" -ForegroundColor Green
-        }
-        else {
-            Write-Host " FAILED" -ForegroundColor Red
-            Write-Warning "npm install failed. Duplicate code detection may not work."
-        }
-    }
-    else {
-        Write-Host "   Local tools already installed " -NoNewline -ForegroundColor White
-        Write-Host "OK" -ForegroundColor Green
-    }
-}
-else {
-    Write-Host "   npm missing (skipping local tools)" -ForegroundColor Gray
-}
 
-# Step 4: Install Dependencies
-Write-Host "`n[Step 4/6] Installing dependencies..." -ForegroundColor Yellow
+# Step 3: Install Dependencies
+Write-Host "`n[Step 3/5] Installing core dependencies..." -ForegroundColor Yellow
 
 # Use correct Windows path
 $pipPath = ".\.venv\Scripts\pip.exe"
@@ -165,8 +151,8 @@ else {
     $script:ErrorCount++
 }
 
-# Step 5: Install Modular Apps
-Write-Host "`n[Step 5/6] Installing modular apps..." -ForegroundColor Yellow
+# Step 4: Install Modular Apps
+Write-Host "`n[Step 4/5] Installing modular apps..." -ForegroundColor Yellow
 
 $appsInstalled = 0
 
@@ -273,8 +259,8 @@ else {
 }
 
 
-# Step 6: Environment Configuration
-Write-Host "`n[Step 6/6] Configuring environment..." -ForegroundColor Yellow
+# Step 5: Environment Configuration
+Write-Host "`n[Step 5/5] Configuring environment..." -ForegroundColor Yellow
 if (-not (Test-Path ".env")) {
     if (Test-Path ".env.example") {
         Copy-Item ".env.example" ".env"
@@ -320,6 +306,8 @@ Write-Host ""
 Write-Host "  2. Run the application:" -ForegroundColor White
 Write-Host "     python run.py" -ForegroundColor Magenta
 Write-Host ""
+Write-Host "  3. (Optional) Setup development environment:" -ForegroundColor White
+Write-Host "     .\scripts\setup-dev.ps1" -ForegroundColor Magenta
+Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
-
