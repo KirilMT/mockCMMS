@@ -22,7 +22,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 black pytest-cov
+          pip install flake8 black pytest-cov bandit
+          # Install modular apps in editable mode
+          pip install -e apps/planning
+          pip install -e apps/reports
 
       - name: Lint with flake8
         run: |
@@ -37,16 +40,35 @@ jobs:
           # --extend-exclude uses regex to skip apps/ directory
           black --check . --extend-exclude "apps"
 
-      - name: Test with pytest and generate coverage
+      - name: Security check with Bandit
         run: |
-          # --ignore=apps/ skips test discovery in modular apps (they have their own tests)
-          pytest --ignore=apps/ --cov=src --cov-report=xml
+          # Check for high-severity security issues in src/
+          bandit -r src/ -ll
 
-      - name: Upload coverage to Codecov
+      - name: Test Core with pytest
+        run: |
+          # --ignore=apps/ skips test discovery in modular apps
+          pytest --ignore=apps/ --cov=src --cov-report=xml:coverage-core.xml
+
+      - name: Test Planning App
+        run: |
+          # Run tests specifically for the Planning app
+          pytest apps/planning/tests --cov=apps/planning/src --cov-report=xml:coverage-planning.xml
+
+      - name: Upload Core coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # Optional: if you use a private repo
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage-core.xml
+          flags: core
+          name: codecov-core
+          fail_ci_if_error: true
+
+      - name: Upload Planning coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage-planning.xml
+          flags: planning
+          name: codecov-planning
           fail_ci_if_error: true
