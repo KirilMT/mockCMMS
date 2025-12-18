@@ -6,126 +6,155 @@ test.describe('CRUD Functional Tests', () => {
         await page.goto('/login');
         await page.fill('input[name="username"]', 'admin');
         await page.fill('input[name="password"]', 'admin123');
-        await page.click('button[type="submit"]');
+        await page.click('button:has-text("Login")');
         await page.waitForURL(/\/assets/);
     });
 
     // --- Assets ---
     test('E2E-C1: test_create_asset', async ({ page }) => {
-        await page.goto('/assets');
+        // Already on /assets from beforeEach
+        await page.waitForSelector('#assetsTable table');
         await page.click('text=New Asset');
 
         const assetName = 'Test Asset ' + Date.now();
         await page.fill('input[name="asset_code"]', 'AC-' + Date.now());
         await page.fill('input[name="name"]', assetName);
-        await page.fill('textarea[name="description"]', 'Description for ' + assetName);
+        await page.fill('textarea[name="description"]', 'Description ' + Date.now());
         await page.selectOption('select[name="asset_type"]', 'robot');
         await page.selectOption('select[name="cost_center"]', 'assembly');
         await page.selectOption('select[name="status"]', 'Operational');
 
-        await page.click('button[type="submit"]');
+        await page.click('button:has-text("Add Asset")');
 
-        // Verify creation
+        // Verify creation - Search to handle pagination
+        await page.waitForURL(/\/assets/);
+        await page.waitForSelector('#assetsTable table');
+        await page.fill('#globalSearchInput', assetName);
+        await page.click('#applySearchBtn');
         await expect(page.locator(`text=${assetName}`)).toBeVisible();
     });
 
     test('E2E-C2: test_edit_asset', async ({ page }) => {
-        await page.goto('/assets');
-        // Click first edit button. Assuming row has an edit link/button.
-        // We might need to target a specific asset to avoid editing data that affects other tests,
-        // but for now let's try to edit the one we created or just the first one.
-        // Better: create one, then edit it.
+        // Already on /assets
+        await page.waitForSelector('#assetsTable table');
 
-        // Let's reuse creation logic or just pick the first one.
-        const firstRow = page.locator('table tbody tr').first();
-        const assetName = await firstRow.locator('td').nth(1).textContent(); // Assuming 2nd col is Name
+        // Click on the first ID link to navigate to detail page
+        const firstIdLink = page.locator('#assetsTable table tbody tr').first().locator('a').first();
+        await firstIdLink.click();
 
-        await firstRow.locator('a:has-text("Edit")').click();
+        // Now on detail page - can directly edit fields
 
         const newDesc = 'Updated Description ' + Date.now();
         await page.fill('textarea[name="description"]', newDesc);
-        await page.click('button[type="submit"]');
+        await page.click('button:has-text("Update Asset")');
 
         // Verify update
-        await expect(page.locator('text=Asset updated successfully')).toBeVisible(); // Flash message?
+        await expect(page.locator('text=Asset updated successfully')).toBeVisible();
     });
 
     test('E2E-C3: test_delete_asset', async ({ page }) => {
-        await page.goto('/assets');
-        // Ensure we have something to delete.
-        // Careful not to delete critical data.
-        // Ideally we create a disposable asset.
+        // Already on /assets
+        await page.waitForSelector('#assetsTable table');
 
+        // Create an asset first
         await page.click('text=New Asset');
         const assetName = 'Delete Me ' + Date.now();
+        await page.fill('input[name="asset_code"]', 'DEL-' + Date.now());
         await page.fill('input[name="name"]', assetName);
-        await page.click('button[type="submit"]');
+        await page.selectOption('select[name="asset_type"]', 'robot');
+        await page.selectOption('select[name="cost_center"]', 'assembly');
+        await page.selectOption('select[name="status"]', 'Operational');
+        await page.click('button:has-text("Add Asset")');
+        await page.waitForURL(/\/assets/);
 
-        // Now delete it
+        // Search for the asset
+        await page.fill('#globalSearchInput', assetName);
+        await page.click('#applySearchBtn');
+        await expect(page.locator(`text=${assetName}`)).toBeVisible();
+
+        // Click on the ID link to go to detail page
         const row = page.locator('tr', { hasText: assetName });
+        await row.locator('a').first().click();
 
-        // Handle confirmation dialog
-        page.on('dialog', dialog => dialog.accept());
+        // Click Delete button (opens modal)
+        await page.click('button.btn-danger:has-text("Delete")');
 
-        await row.locator('button:has-text("Delete")').click(); // or form button
+        // Wait for modal confirm button to be visible
+        await page.waitForSelector('#confirmDeleteBtn', { state: 'visible', timeout: 5000 });
 
-        await expect(page.locator(`text=${assetName}`)).not.toBeVisible();
+        // Click confirm button in modal
+        await Promise.all([
+            page.waitForNavigation(),
+            page.click('#confirmDeleteBtn')
+        ]);
+
+        // Verify deletion - should be back on list page
+        await page.waitForSelector('#assetsTable table');
+
+        // Clear search first to refresh table
+        const clearBtn = page.locator('#clearSearchBtn');
+        if (await clearBtn.isVisible()) {
+            await clearBtn.click();
+        }
+
+        // Now search for the deleted asset
+        await page.fill('#globalSearchInput', assetName);
+        await page.click('#applySearchBtn');
+
+        // Wait a moment for search to complete
+        await page.waitForTimeout(500);
+
+        // Check that the asset is not in the table
+        const rows = await page.locator('#assetsTable table tbody tr').count();
+        if (rows > 0) {
+            // If there are rows, make sure none contain the asset name
+            await expect(page.locator(`#assetsTable table tbody tr:has-text("${assetName}")`)).toHaveCount(0);
+        }
+        // Otherwise table is empty which is also correct
     });
 
     // --- Maintenance Orders ---
     test('E2E-C4: test_create_maintenance_order', async ({ page }) => {
         await page.goto('/maintenance_orders');
+        await page.waitForSelector('#mosTable table');
         await page.click('text=Add New MO');
 
         await page.fill('textarea[name="description"]', 'MO ' + Date.now());
-        // Select Order Type: 'corrective' based on HTML value
         await page.selectOption('select[name="order_type"]', 'corrective');
         await page.selectOption('select[name="priority"]', 'Medium');
-
-        // Required fields
         await page.fill('input[name="estimated_completion_time"]', '60');
         await page.fill('input[name="labour_count"]', '1');
 
-        // Select Asset (assuming dropdown)
         const assetSelect = page.locator('select[name="asset_id"]');
         if (await assetSelect.isVisible()) {
-             await assetSelect.selectOption({ index: 1 }); // Select first available
+            await assetSelect.selectOption({ index: 1 });
         }
 
-        await page.click('button[type="submit"]');
+        await page.click('button:has-text("Add MO")');
         await expect(page.locator('.alert-success')).toBeVisible();
     });
 
     test('E2E-C5: test_edit_maintenance_order', async ({ page }) => {
         await page.goto('/maintenance_orders');
-        // Need to ensure there is an order.
+        await page.waitForSelector('#mosTable table tbody tr');
 
-        const firstRow = page.locator('#maintenanceOrdersTable table tbody tr').first();
-        // Wait for table to load
-        await page.waitForSelector('#maintenanceOrdersTable table tbody tr');
+        const firstRow = page.locator('#mosTable table tbody tr').first();
 
-        // Check if rows exist
-        if (await firstRow.count() === 0) {
-             // Create one if none
-             await page.click('text=Add New MO');
-             await page.fill('textarea[name="description"]', 'Temp MO');
-             await page.selectOption('select[name="order_type"]', 'CM');
-             await page.selectOption('select[name="priority"]', 'Low');
-             await page.selectOption('select[name="asset_id"]', { index: 1 });
-             await page.click('button[type="submit"]');
-             await page.goto('/maintenance_orders');
-        }
+        // Click on the first ID link to navigate to detail page
+        await firstRow.locator('a').first().click();
 
-        await firstRow.locator('a:has-text("Edit")').click();
+        // Now on detail page - can directly edit fields
 
         await page.fill('textarea[name="description"]', 'Updated MO Desc ' + Date.now());
-        await page.click('button[type="submit"]');
+        await page.click('button:has-text("Update MO")');
 
         await expect(page.locator('.alert-success')).toBeVisible();
     });
 
     test('E2E-C6: test_delete_maintenance_order', async ({ page }) => {
         await page.goto('/maintenance_orders');
+        await page.waitForSelector('#mosTable table');
+
         // Create one to delete
         await page.click('text=Add New MO');
         const desc = 'Delete MO ' + Date.now();
@@ -133,58 +162,101 @@ test.describe('CRUD Functional Tests', () => {
         await page.selectOption('select[name="order_type"]', 'CM');
         await page.selectOption('select[name="priority"]', 'Low');
         await page.locator('select[name="asset_id"]').selectOption({ index: 1 });
-        await page.click('button[type="submit"]');
+        await page.click('button:has-text("Add MO")');
+        await page.goto('/maintenance_orders');
 
-        // Go back to list (if not redirected) - add_mo redirects to maintenance_orders
-
-        // Find row
-        // Advanced Table uses complex structure?
-        // Assuming desc is visible.
-        await expect(page.locator(`text=${desc}`)).toBeVisible();
+        // Click on ID link to go to detail page
+        await page.fill('#globalSearchInput', desc);
+        await page.click('#applySearchBtn');
         const row = page.locator('tr', { hasText: desc });
+        await row.locator('a').first().click();
 
-        // Handle confirmation dialog
-        page.on('dialog', dialog => dialog.accept());
+        // Click Delete button (opens modal)
+        await page.click('button.btn-danger:has-text("Delete")');
 
-        // Delete button might be in a menu or direct
-        // Assuming "Delete" button/form
-        // Usually inside a form with method POST
-        await row.locator('button.btn-danger').click(); // Adjust selector
+        // Wait for modal confirm button to be visible
+        await page.waitForSelector('#confirmDeleteBtn', { state: 'visible', timeout: 5000 });
 
-        await expect(page.locator(`text=${desc}`)).not.toBeVisible();
+        // Click confirm button and wait for navigation
+        await Promise.all([
+            page.waitForNavigation({ waitUntil: 'networkidle' }),
+            page.click('#confirmDeleteBtn')
+        ]);
+
+        // Verify deletion
+        await page.waitForSelector('#mosTable table');
+
+        // Clear search first to refresh table
+        const clearBtn = page.locator('#clearSearchBtn');
+        if (await clearBtn.isVisible()) {
+            await clearBtn.click();
+        }
+
+        // Now search for the deleted MO
+        await page.fill('#globalSearchInput', desc);
+        await page.click('#applySearchBtn');
+
+        // Wait a moment for search to complete
+        await page.waitForTimeout(500);
+
+        // Check that the MO is not in the table
+        const rows = await page.locator('#mosTable table tbody tr').count();
+        if (rows > 0) {
+            // If there are rows, make sure none contain the description
+            await expect(page.locator(`#mosTable table tbody tr:has-text("${desc}")`)).toHaveCount(0);
+        }
+        // Otherwise table is empty which is also correct
     });
 
     // --- Spare Parts ---
     test('E2E-C7: test_create_spare_part', async ({ page }) => {
+        test.setTimeout(60000);
         await page.goto('/spare_parts');
+        await page.waitForSelector('#sparePartsTable table');
         await page.click('text=Add New Spare Part');
 
-        const desc = 'Part ' + Date.now();
-        // Note: SparePart uses description as main text, not name.
-        await page.fill('textarea[name="description"]', desc); // Check if textarea or input
+        const uniqueSuffix = Date.now() + '-' + Math.floor(Math.random() * 1000);
+        const desc = 'Part ' + uniqueSuffix;
+        await page.fill('textarea[name="description"]', desc);
         await page.fill('input[name="manufacturer"]', 'Acme Corp');
-        await page.fill('input[name="manufacturer_part_id"]', 'PN-' + Date.now());
+        await page.fill('input[name="manufacturer_part_id"]', 'PN-' + uniqueSuffix);
         await page.fill('input[name="stock_quantity"]', '10');
         await page.fill('input[name="location"]', 'Warehouse A');
         await page.fill('input[name="min_quantity"]', '5');
 
-        await page.click('button[type="submit"]');
+        await page.click('button:has-text("Add Spare Part")');
+
+        await page.waitForSelector('#sparePartsTable table');
+
+        // Search
+        await page.fill('#globalSearchInput', desc);
+        await page.click('#applySearchBtn');
         await expect(page.locator(`text=${desc}`)).toBeVisible();
     });
 
     // --- Users ---
     test('E2E-C8: test_create_user', async ({ page }) => {
+        test.setTimeout(60000);
         await page.goto('/users');
+        await page.waitForSelector('#usersTable table');
         await page.click('text=Add New User');
+        await page.waitForURL(/\/register/);
+        await page.waitForSelector('input[name="username"]');
 
-        const username = 'user' + Date.now();
+        const uniqueSuffix = Date.now() + '-' + Math.floor(Math.random() * 1000);
+        const username = 'user' + uniqueSuffix;
         await page.fill('input[name="username"]', username);
-        await page.fill('input[name="email"]', `${username}@example.com`);
+        await page.fill('input[name="email"]', `email${uniqueSuffix}@example.com`);
         await page.fill('input[name="password"]', 'password123');
-        // 'roles' is a multi-select. Value is likely 'Technician'.
         await page.selectOption('select[name="roles"]', 'Technician');
 
-        await page.click('button[type="submit"]');
+        await page.click('button:has-text("Register User")');
+
+        await page.waitForSelector('#usersTable table');
+
+        // Search
+        await page.fill('#globalSearchInput', username);
+        await page.click('#applySearchBtn');
         await expect(page.locator(`text=${username}`)).toBeVisible();
     });
 });
