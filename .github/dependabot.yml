@@ -9,7 +9,7 @@ updates:
     # This prevents most build failures and unnecessary CI runs.
     ignore:
       - dependency-name: "*"
-        update-types: [ "version-update:semver-major" ]
+        update-types: ["version-update:semver-major"]
 
     # 2. Clarity: Group low-risk updates into one PR per week.
     groups:

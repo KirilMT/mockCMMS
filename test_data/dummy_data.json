@@ -44,180 +44,133 @@
       "username": "admin",
       "email": "admin@mockcmms.com",
       "password": "admin123",
-      "roles": [
-        "Admin"
-      ]
+      "roles": ["Admin"]
     },
     {
       "username": "john.manager",
       "email": "john.manager@mockcmms.com",
       "password": "manager123",
-      "roles": [
-        "Manager",
-        "Planner"
-      ]
+      "roles": ["Manager", "Planner"]
     },
     {
       "username": "sarah.supervisor",
       "email": "sarah.supervisor@mockcmms.com",
       "password": "super123",
-      "roles": [
-        "Supervisor",
-        "Technician"
-      ]
+      "roles": ["Supervisor", "Technician"]
     },
     {
       "username": "mike.tech",
       "email": "mike.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "lisa.planner",
       "email": "lisa.planner@mockcmms.com",
       "password": "plan123",
-      "roles": [
-        "Planner",
-        "Viewer"
-      ]
+      "roles": ["Planner", "Viewer"]
     },
     {
       "username": "david.tech",
       "email": "david.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "anna.viewer",
       "email": "anna.viewer@mockcmms.com",
       "password": "view123",
-      "roles": [
-        "Viewer"
-      ]
+      "roles": ["Viewer"]
     },
     {
       "username": "carlos.super",
       "email": "carlos.super@mockcmms.com",
       "password": "super123",
-      "roles": [
-        "Supervisor"
-      ]
+      "roles": ["Supervisor"]
     },
     {
       "username": "emma.tech",
       "email": "emma.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "robert.manager",
       "email": "robert.manager@mockcmms.com",
       "password": "manager123",
-      "roles": [
-        "Manager"
-      ]
+      "roles": ["Manager"]
     },
     {
       "username": "alex.tech",
       "email": "alex.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "maria.tech",
       "email": "maria.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "james.tech",
       "email": "james.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "lisa.tech",
       "email": "lisa.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "tom.tech",
       "email": "tom.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "nina.tech",
       "email": "nina.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "ryan.tech",
       "email": "ryan.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "sophia.tech",
       "email": "sophia.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "kevin.tech",
       "email": "kevin.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "olivia.tech",
       "email": "olivia.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "daniel.tech",
       "email": "daniel.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     },
     {
       "username": "grace.tech",
       "email": "grace.tech@mockcmms.com",
       "password": "tech123",
-      "roles": [
-        "Technician"
-      ]
+      "roles": ["Technician"]
     }
   ],
   "skills": [
@@ -751,10 +704,7 @@
       "estimated_completion_time": 120,
       "labour_count": 2,
       "due_days_from_now": 2,
-      "required_skills": [
-        "Robotics",
-        "Mechanical"
-      ]
+      "required_skills": ["Robotics", "Mechanical"]
     },
     {
       "asset": "Assembly Station B3",
@@ -767,9 +717,7 @@
       "estimated_completion_time": 60,
       "labour_count": 1,
       "due_days_from_now": 5,
-      "required_skills": [
-        "Mechanical"
-      ]
+      "required_skills": ["Mechanical"]
     },
     {
       "asset": "BIW Welding Robot C2",
@@ -781,11 +729,7 @@
       "labour_count": 3,
       "justification": "Production line stopped due to faulty welding tip",
       "due_days_from_now": 0,
-      "required_skills": [
-        "Welding",
-        "Robotics",
-        "Electrical"
-      ]
+      "required_skills": ["Welding", "Robotics", "Electrical"]
     },
     {
       "asset": "Conveyor System D1",
@@ -798,10 +742,7 @@
       "estimated_completion_time": 90,
       "labour_count": 2,
       "due_days_from_now": 10,
-      "required_skills": [
-        "Mechanical",
-        "Electrical"
-      ]
+      "required_skills": ["Mechanical", "Electrical"]
     },
     {
       "asset": "Quality Control Station E1",
@@ -814,10 +755,7 @@
       "estimated_completion_time": 45,
       "labour_count": 1,
       "due_days_from_now": 3,
-      "required_skills": [
-        "Electrical",
-        "Controls"
-      ]
+      "required_skills": ["Electrical", "Controls"]
     },
     {
       "asset": "Paint Booth F2",
@@ -830,9 +768,7 @@
       "estimated_completion_time": 75,
       "labour_count": 1,
       "due_days_from_now": 1,
-      "required_skills": [
-        "Paint Systems"
-      ]
+      "required_skills": ["Paint Systems"]
     },
     {
       "asset": "Stamping Press G1",
@@ -845,10 +781,7 @@
       "estimated_completion_time": 150,
       "labour_count": 2,
       "due_days_from_now": -5,
-      "required_skills": [
-        "Hydraulics",
-        "Mechanical"
-      ]
+      "required_skills": ["Hydraulics", "Mechanical"]
     },
     {
       "asset": "HVAC System H3",
@@ -861,10 +794,7 @@
       "estimated_completion_time": 120,
       "labour_count": 2,
       "due_days_from_now": 15,
-      "required_skills": [
-        "HVAC",
-        "Mechanical"
-      ]
+      "required_skills": ["HVAC", "Mechanical"]
     },
     {
       "asset": "Laser Cutting Machine I1",
@@ -876,10 +806,7 @@
       "labour_count": 2,
       "justification": "Cutting precision out of tolerance",
       "due_days_from_now": 1,
-      "required_skills": [
-        "Laser Systems",
-        "Electrical"
-      ]
+      "required_skills": ["Laser Systems", "Electrical"]
     },
     {
       "asset": "Assembly Robot J4",
@@ -892,10 +819,7 @@
       "estimated_completion_time": 90,
       "labour_count": 1,
       "due_days_from_now": 7,
-      "required_skills": [
-        "Robotics",
-        "Pneumatics"
-      ]
+      "required_skills": ["Robotics", "Pneumatics"]
     },
     {
       "asset": "Paint Mixing Station K1",
@@ -908,10 +832,7 @@
       "estimated_completion_time": 60,
       "labour_count": 1,
       "due_days_from_now": 4,
-      "required_skills": [
-        "Paint Systems",
-        "Mechanical"
-      ]
+      "required_skills": ["Paint Systems", "Mechanical"]
     },
     {
       "asset": "Spot Welding Gun L2",
@@ -924,10 +845,7 @@
       "estimated_completion_time": 30,
       "labour_count": 1,
       "due_days_from_now": -1,
-      "required_skills": [
-        "Welding",
-        "Electrical"
-      ]
+      "required_skills": ["Welding", "Electrical"]
     },
     {
       "asset": "Final Assembly Line M1",
@@ -940,11 +858,7 @@
       "estimated_completion_time": 180,
       "labour_count": 3,
       "due_days_from_now": 6,
-      "required_skills": [
-        "Mechanical",
-        "Electrical",
-        "Controls"
-      ]
+      "required_skills": ["Mechanical", "Electrical", "Controls"]
     },
     {
       "asset": "Paint Oven N1",
@@ -957,11 +871,7 @@
       "estimated_completion_time": 120,
       "labour_count": 2,
       "due_days_from_now": 12,
-      "required_skills": [
-        "HVAC",
-        "Electrical",
-        "Controls"
-      ]
+      "required_skills": ["HVAC", "Electrical", "Controls"]
     },
     {
       "asset": "Material Handling AGV O1",
@@ -973,10 +883,7 @@
       "labour_count": 1,
       "justification": "AGV showing reduced battery life",
       "due_days_from_now": 3,
-      "required_skills": [
-        "Electrical",
-        "Robotics"
-      ]
+      "required_skills": ["Electrical", "Robotics"]
     },
     {
       "asset": "Paint Line Robot A1",
@@ -989,9 +896,7 @@
       "estimated_completion_time": 15,
       "labour_count": 1,
       "due_days_from_now": 0,
-      "required_skills": [
-        "Robotics"
-      ]
+      "required_skills": ["Robotics"]
     },
     {
       "asset": "Conveyor System D1",
@@ -1004,9 +909,7 @@
       "estimated_completion_time": 10,
       "labour_count": 1,
       "due_days_from_now": 0,
-      "required_skills": [
-        "Electrical"
-      ]
+      "required_skills": ["Electrical"]
     },
     {
       "asset": "Paint Booth F2",
@@ -1018,9 +921,7 @@
       "labour_count": 1,
       "justification": "Paint quality issues detected",
       "due_days_from_now": 0,
-      "required_skills": [
-        "Paint Systems"
-      ]
+      "required_skills": ["Paint Systems"]
     },
     {
       "asset": "Assembly Robot J4",
@@ -1032,10 +933,7 @@
       "labour_count": 1,
       "justification": "Part placement slightly off",
       "due_days_from_now": 1,
-      "required_skills": [
-        "Robotics",
-        "Pneumatics"
-      ]
+      "required_skills": ["Robotics", "Pneumatics"]
     },
     {
       "asset": "Laser Cutting Machine I1",
@@ -1047,10 +945,7 @@
       "labour_count": 2,
       "justification": "Safety hazard - immediate attention required",
       "due_days_from_now": 0,
-      "required_skills": [
-        "Laser Systems",
-        "Electrical"
-      ]
+      "required_skills": ["Laser Systems", "Electrical"]
     },
     {
       "asset": "HVAC System H3",
@@ -1062,10 +957,7 @@
       "labour_count": 1,
       "justification": "Sensor reading erratic",
       "due_days_from_now": 2,
-      "required_skills": [
-        "HVAC",
-        "Electrical"
-      ]
+      "required_skills": ["HVAC", "Electrical"]
     }
   ],
   "spare_parts": [
@@ -1202,10 +1094,7 @@
       "task_type": "PM",
       "ticket_mo": "CMMS-101",
       "ticket_url": "http://mockcmms/tickets/CMMS-101",
-      "required_skills": [
-        "Network",
-        "Hardware"
-      ]
+      "required_skills": ["Network", "Hardware"]
     },
     {
       "scheduler_group_task": "API Endpoint Debug",
@@ -1218,10 +1107,7 @@
       "task_type": "Rep",
       "ticket_mo": "CMMS-102",
       "ticket_url": "http://mockcmms/tickets/CMMS-102",
-      "required_skills": [
-        "Python",
-        "Flask"
-      ]
+      "required_skills": ["Python", "Flask"]
     },
     {
       "scheduler_group_task": "Frontend UI Fix",
@@ -1234,9 +1120,7 @@
       "task_type": "Rep",
       "ticket_mo": "CMMS-103",
       "ticket_url": "http://mockcmms/tickets/CMMS-103",
-      "required_skills": [
-        "Frontend"
-      ]
+      "required_skills": ["Frontend"]
     },
     {
       "scheduler_group_task": "Database Optimization",
@@ -1249,9 +1133,7 @@
       "task_type": "PM",
       "ticket_mo": "CMMS-104",
       "ticket_url": "http://mockcmms/tickets/CMMS-104",
-      "required_skills": [
-        "Database"
-      ]
+      "required_skills": ["Database"]
     }
   ],
   "schedules": [
