@@ -11,7 +11,7 @@ ruff==0.14.9
 pylint==3.3.9
 
 # Type Checking (OPTIONAL - Run periodically)
-mypy==1.19.0
+mypy==1.19.1
 
 # Testing (ESSENTIAL - Run always)
 # Note: pytest is also in requirements.txt (needed for app testing)
