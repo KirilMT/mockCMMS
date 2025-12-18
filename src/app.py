@@ -5,6 +5,7 @@
 import os
 import sqlite3
 import traceback
+import click
 from flask import Flask, g, request, redirect, jsonify, session
 from flask_wtf.csrf import CSRFProtect  # type: ignore[import-untyped]
 from dotenv import load_dotenv
@@ -12,6 +13,7 @@ from dotenv import load_dotenv
 from .services.db_utils import db, User
 from .services.db_seeding import populate_dummy_data
 from .services.logging_config import LoggingConfig
+from .services.simulation_service import DataSimulationService
 
 # Local blueprint imports
 from .routes.api import api_bp
@@ -96,8 +98,41 @@ def create_app(config_overrides=None):
     # --- Request Hooks & Context Processors ---
     _register_request_handlers(app)
     _register_context_processors(app)
+    _register_commands(app)
 
     return app
+
+
+def _register_commands(app):
+    """Register custom CLI commands."""
+
+    @app.cli.command("simulate-data")
+    @click.option(
+        "--count", default=10, help="Number of items to generate per type."
+    )
+    @click.option(
+        "--type",
+        type=click.Choice(["all", "assets", "technicians", "orders"]),
+        default="all",
+        help="Type of data to generate.",
+    )
+    def simulate_data_command(count, type):
+        """Generate realistic mock data for stress testing."""
+        app.logger.info(f"Starting simulation: generating {count} items of type {type}")
+
+        if type in ["all", "assets"]:
+            assets = DataSimulationService.generate_random_assets(count)
+            print(f"Generated {len(assets)} assets.")
+
+        if type in ["all", "technicians"]:
+            techs = DataSimulationService.generate_random_technicians(count)
+            print(f"Generated {len(techs)} technicians.")
+
+        if type in ["all", "orders"]:
+            orders = DataSimulationService.generate_random_orders(count)
+            print(f"Generated {len(orders)} maintenance orders.")
+
+        print("Data simulation complete.")
 
 
 def _register_blueprints(app, csrf):
