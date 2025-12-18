@@ -8,7 +8,9 @@ change._
 
 ### Related Issue
 
-_If this PR fixes a specific issue, link it here._
+_If this PR fixes a specific issue, link it here. Use the format `Keyword #ID`
+(e.g., `Fixes #1`)._
+_For multiple issues, repeat the keyword: `Fixes #1, Closes #2`._
 
 - Fixes #[issue_number]
 
