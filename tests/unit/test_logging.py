@@ -1,6 +1,7 @@
 """
 Unit tests for the logging configuration and performance monitoring.
 """
+
 import json
 import logging
 import time
@@ -12,7 +13,7 @@ from src.services.logging_config import (
     StructuredFormatter,
     MetricsCollector,
     performance_monitor,
-    metrics_collector
+    metrics_collector,
 )
 
 
@@ -35,18 +36,18 @@ def test_structured_formatter():
         lineno=10,
         msg="Test message",
         args=(),
-        exc_info=None
+        exc_info=None,
     )
 
     formatted_output = formatter.format(record)
     log_data = json.loads(formatted_output)
 
-    assert log_data['level'] == 'INFO'
-    assert log_data['logger'] == 'test_logger'
-    assert log_data['message'] == 'Test message'
-    assert 'timestamp' in log_data
-    assert 'module' in log_data
-    assert 'function' in log_data
+    assert log_data["level"] == "INFO"
+    assert log_data["logger"] == "test_logger"
+    assert log_data["message"] == "Test message"
+    assert "timestamp" in log_data
+    assert "module" in log_data
+    assert "function" in log_data
 
 
 def test_metrics_collector():
@@ -54,35 +55,34 @@ def test_metrics_collector():
     collector = MetricsCollector()
 
     # Test request metrics
-    collector.record_request_metric('index', 'GET', 0.1, 200)
-    collector.record_request_metric('index', 'GET', 0.2, 200)
-    collector.record_request_metric('index', 'GET', 0.3, 404)
+    collector.record_request_metric("index", "GET", 0.1, 200)
+    collector.record_request_metric("index", "GET", 0.2, 200)
+    collector.record_request_metric("index", "GET", 0.3, 404)
 
     metrics = collector.get_all_metrics()
-    req_metrics = metrics['requests']['GET_index']
+    req_metrics = metrics["requests"]["GET_index"]
 
-    assert req_metrics['count'] == 3
-    assert req_metrics['total_duration'] == pytest.approx(0.6)
-    assert req_metrics['avg_duration'] == pytest.approx(0.2)
-    assert req_metrics['status_codes'][200] == 2
-    assert req_metrics['status_codes'][404] == 1
+    assert req_metrics["count"] == 3
+    assert req_metrics["total_duration"] == pytest.approx(0.6)
+    assert req_metrics["avg_duration"] == pytest.approx(0.2)
+    assert req_metrics["status_codes"][200] == 2
+    assert req_metrics["status_codes"][404] == 1
 
     # Test database metrics
-    collector.record_database_metric('query_users', 0.05, success=True)
-    collector.record_database_metric('query_users', 0.05, success=False)
+    collector.record_database_metric("query_users", 0.05, success=True)
+    collector.record_database_metric("query_users", 0.05, success=False)
 
-    db_metrics = metrics['database']['query_users']
-    assert db_metrics['count'] == 2
-    assert db_metrics['total_duration'] == pytest.approx(0.1)
-    assert db_metrics['success_count'] == 1
-    assert db_metrics['error_count'] == 1
+    db_metrics = metrics["database"]["query_users"]
+    assert db_metrics["count"] == 2
+    assert db_metrics["total_duration"] == pytest.approx(0.1)
+    assert db_metrics["success_count"] == 1
+    assert db_metrics["error_count"] == 1
 
 
 def test_performance_monitor_decorator():
     """Test the performance monitor decorator."""
 
     # Reset metrics collector for this test
-    global metrics_collector
     metrics_collector.database_metrics = {}
 
     @performance_monitor("test_db_op")
@@ -99,22 +99,22 @@ def test_performance_monitor_decorator():
     assert result == "success"
 
     metrics = metrics_collector.get_all_metrics()
-    assert 'test_db_op' in metrics['database']
-    assert metrics['database']['test_db_op']['count'] == 1
-    assert metrics['database']['test_db_op']['success_count'] == 1
+    assert "test_db_op" in metrics["database"]
+    assert metrics["database"]["test_db_op"]["count"] == 1
+    assert metrics["database"]["test_db_op"]["success_count"] == 1
 
     # Test failure
     with pytest.raises(ValueError):
         failing_op()
 
     metrics = metrics_collector.get_all_metrics()
-    assert 'test_db_op_fail' in metrics['database']
-    assert metrics['database']['test_db_op_fail']['error_count'] == 1
+    assert "test_db_op_fail" in metrics["database"]
+    assert metrics["database"]["test_db_op_fail"]["error_count"] == 1
 
 
 def test_logging_setup(app):
     """Test that logging setup configures handlers correctly."""
-    with patch('logging.FileHandler') as mock_file_handler:
+    with patch("logging.FileHandler") as mock_file_handler:
         # Configure the mock to return a NEW mock object each time it's instantiated
         mock_file_handler.side_effect = lambda *args, **kwargs: MagicMock()
 
@@ -133,16 +133,19 @@ def test_request_monitoring(app):
 
     with app.test_client() as client:
         # Mocking the metrics collector to verify call
-        with patch('src.services.logging_config.metrics_collector.record_request_metric') as mock_record:
-            @app.route('/test-log')
+        with patch(
+            "src.services.logging_config.metrics_collector.record_request_metric"
+        ) as mock_record:
+
+            @app.route("/test-log")
             def test_route():
                 return "ok"
 
-            client.get('/test-log')
+            client.get("/test-log")
 
             assert mock_record.called
             args, _ = mock_record.call_args
             # Args: endpoint, method, duration, status_code
-            assert args[0] == 'test_route'
-            assert args[1] == 'GET'
+            assert args[0] == "test_route"
+            assert args[1] == "GET"
             assert args[3] == 200
