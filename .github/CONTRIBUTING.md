@@ -313,16 +313,47 @@ for change descriptions.
 ### Referencing issues
 
 To automatically close an issue when a pull request (PR) is merged on GitHub,
-you need to include a specific keyword followed by the issue number in the PR's
-description or a commit message. For example, `Resolves #12345`.
+you need to include a specific **Closing Keyword** followed immediately by the
+issue number in the PR's description or a commit message.
 
-When this change is eventually applied, the issue tracker will automatically
-mark the issue as fixed. You can use keywords like `Fixes`, `Closes`, or
-`Resolves`.
+**Supported Closing Keywords:**
+
+| Keyword      | Example        |
+| :----------- | :------------- |
+| **Close**    | `Close #12`    |
+| **Closes**   | `Closes #12`   |
+| **Closed**   | `Closed #12`   |
+| **Fix**      | `Fix #12`      |
+| **Fixes**    | `Fixes #12`    |
+| **Fixed**    | `Fixed #12`    |
+| **Resolve**  | `Resolve #12`  |
+| **Resolves** | `Resolves #12` |
+| **Resolved** | `Resolved #12` |
+
+**Important Rules:**
+
+1.  **Strict Syntax:** The keyword must be followed by the issue number (e.g.,
+    `#12`).
+2.  **Multiple Issues:** To close multiple issues, you must repeat the keyword
+    for each one.
+    - ✅ **Correct:** `Closes #1, Closes #2, Fixes #3`
+    - ❌ **Incorrect:** `Closes #1, #2, #3`
+3.  **Real Issue IDs:** Use the integer ID assigned by GitHub (e.g., `#42`),
+    not custom references (e.g., `#R1` or `Bug #42`).
+4.  **No "Fix:" Prefix:** The conventional commit type `fix:` does **not**
+    trigger a close. You must still include `Fixes #12` in the body or footer.
+
+**Common Pitfalls (Why your issue didn't close):**
+
+*   Using `fix: Bug #12` (The `fix:` prefix is for humans/changelogs, not GitHub
+    automation).
+*   Using `#R1` instead of `#1`.
+*   Putting text between the keyword and number: `Fixes critical bug #12` (Will
+    not work).
 
 If the change is a partial step towards the resolution of the issue, write "For
-#12345" instead. This will leave a comment in the issue linking back to the pull
-request, but it will not close the issue when the change is applied.
+`#12345`" instead. This will leave a comment in the issue linking back to the
+pull request, but it will not close the issue when the change is applied.
 
 ## The review process
 
