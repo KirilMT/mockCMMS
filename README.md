@@ -1,22 +1,34 @@
 # mockCMMS (Mock Computerized Maintenance Management System)
 
-A modular Flask-based maintenance management system with a monorepo architecture that supports dynamic loading of specialized applications.
+[![CI Pipeline](https://github.com/KirilMT/mockCMMS/actions/workflows/ci.yml/badge.svg)](https://github.com/KirilMT/mockCMMS/actions/workflows/ci.yml) 
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/) 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
+[![codecov](https://codecov.io/gh/KirilMT/mockCMMS/graph/badge.svg?token=PSNIDHV66T)](https://codecov.io/gh/KirilMT/mockCMMS) 
+[![Linting: Flake8](https://img.shields.io/badge/linting-flake8-blue)](https://github.com/pycqa/flake8) 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) 
+[![Security: Bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+
+A modular Flask-based maintenance management system with a monorepo architecture
+that supports dynamic loading of specialized applications.
 
 ## 🚀 Features
 
 - **Modular Architecture:** Main application with dynamically loadable apps
-- **Advanced Table System:** Excel-like functionality with sorting, filtering, column management, and export
-- **Enhanced Database Models:** Comprehensive asset tracking, maintenance order management, and spare parts inventory
+- **Advanced Table System:** Excel-like functionality with sorting, filtering,
+  column management, and export
+- **Enhanced Database Models:** Comprehensive asset tracking, maintenance order
+  management, and spare parts inventory
 - **Centralized Configuration:** Single `.env` file for all applications
 - **Unified Environment:** One virtual environment and dependency management
 - **Dynamic App Loading:** Enable/disable apps without code changes
-- **Comprehensive Reporting:** PDF and Markdown export capabilities with advanced filtering
+- **Comprehensive Reporting:** PDF and Markdown export capabilities with
+  advanced filtering
 - **Consistent UI/UX:** Shared base templates with responsive design
 - **Scalable Design:** Easy addition of new specialized modules
 
 ## 📁 Project Structure
 
-```
+```text
 mockCMMS/
 ├── .github/                 # GitHub configuration and workflows
 ├── src/                     # Main mockCMMS application
@@ -59,19 +71,26 @@ mockCMMS/
 └── run.py                   # Application entry point
 ```
 
-## � Applications
+## 📦 Applications
 
 ### Main Application
+
 - **Core mockCMMS:** Base maintenance management functionality
 - **Entry Point:** Serves as the foundation for all modular apps
 - **Configuration Hub:** Manages settings for all integrated applications
 
 ### Modular Apps
-- **[Planning](apps/planning/README.md):** Intelligent maintenance planning system with custom Gantt charts, shift-based scheduling, and skill-based task assignment
-- **[Reports](apps/reports/README.md):** Comprehensive reporting and analytics system with PDF/Markdown export capabilities
-- **Future Apps:** Additional modules can be easily integrated following the same pattern
 
-> **Note:** For detailed setup and usage instructions for specific apps, refer to their individual README.md files.
+- **[Planning](apps/planning/README.md):** Intelligent maintenance planning
+  system with custom Gantt charts, shift-based scheduling, and skill-based task
+  assignment
+- **[Reports](apps/reports/README.md):** Comprehensive reporting and analytics
+  system with PDF/Markdown export capabilities
+- **Future Apps:** Additional modules can be easily integrated following the
+  same pattern
+
+> **Note:** For detailed setup and usage instructions for specific apps, refer
+> to their individual README.md files.
 
 ## ⚙️ Setup and Installation
 
@@ -84,40 +103,56 @@ mockCMMS/
 ### Installation Steps
 
 1. **Clone the repository and navigate to it:**
+
    ```bash
    git clone <repository-url>
    cd mockCMMS
    ```
-   
-   > **Note:** If you've already cloned the repository, open your terminal in the `mockCMMS` project root directory (where `run.py` is located).
+
+   > **Note:** If you've already cloned the repository, open your terminal in
+   > the `mockCMMS` project root directory (where `run.py` is located).
 
 2. **Run the setup script:**
+
    ```powershell
    .\scripts\setup.ps1
    ```
-   The script will guide you through the installation process with clear feedback at each step.
+
+   The script will guide you through the installation process with clear
+   feedback at each step.
 
 3. **Activate the virtual environment:**
+
    ```powershell
    .\.venv\Scripts\Activate.ps1
    ```
+
    > **Note:** If you get an error, make sure you ran the setup script first.
 
 4. **Run the application:**
+
    ```bash
    python run.py
    ```
+
+### Development Setup
+
+To install testing tools and development dependencies (like Playwright, Jest, etc.):
+
+```powershell
+.\scripts\setup-dev.ps1
+```
 
 ## ⚙️ Configuration
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|----------|
-| `SECRET_KEY` | Flask secret key for sessions | Auto-generated |
-| `FLASK_DEBUG` | Enable debug mode (1/true/yes) | 0 |
-| `PLANNING_ENABLED` | Enable Planning app | False |
-| `REPORTS_ENABLED` | Enable Reports app | True |
+| Variable           | Description                    | Default        |
+| ------------------ | ------------------------------ | -------------- |
+| `SECRET_KEY`       | Flask secret key for sessions  | Auto-generated |
+| `FLASK_DEBUG`      | Enable debug mode (1/true/yes) | 0              |
+| `PLANNING_ENABLED` | Enable Planning app            | False          |
+| `REPORTS_ENABLED`  | Enable Reports app             | True           |
 
 ### App Management
 
@@ -136,17 +171,20 @@ mockCMMS/
 python run.py
 ```
 
-The application will start in development mode by default. Access it at `http://127.0.0.1:5000`
+The application will start in development mode by default. Access it at
+`http://127.0.0.1:5000`
 
-## � JavaScript Architecture
+## 🏗️ JavaScript Architecture
 
 ### Overview
 
-The application uses a modular JavaScript architecture for maintainability and code organization.
+The application uses a modular JavaScript architecture for maintainability and
+code organization.
 
 ### Core Components
 
 #### Toast Notification System
+
 - **Location:** `src/static/js/toast-notification.js`
 - **Purpose:** Display user feedback messages (success, error, warning, info)
 - **Features:**
@@ -155,14 +193,16 @@ The application uses a modular JavaScript architecture for maintainability and c
   - Manual close button
   - Positioned at top-center of viewport
 - **API:**
+
   ```javascript
-  ToastNotification.success('Operation successful!');
-  ToastNotification.error('Failed to save', 7000);
-  ToastNotification.warning('Please review');
-  ToastNotification.info('New update available');
+  ToastNotification.success("Operation successful!");
+  ToastNotification.error("Failed to save", 7000);
+  ToastNotification.warning("Please review");
+  ToastNotification.info("New update available");
   ```
 
 #### Flash Messages Handler
+
 - **Location:** `src/static/js/flash-messages.js`
 - **Purpose:** Bridge Flask's `flash()` function with ToastNotification UI
 - **Category Mapping:**
@@ -171,6 +211,7 @@ The application uses a modular JavaScript architecture for maintainability and c
   - Flask `'warning'` → Toast `'warning'`
   - Flask `'info'` → Toast `'info'`
 - **Usage:**
+
   ```python
   # In Flask route
   flash('Asset created successfully!', 'success')
@@ -178,6 +219,7 @@ The application uses a modular JavaScript architecture for maintainability and c
   ```
 
 #### Advanced Table System
+
 - **Location:** `src/static/js/advanced-table/` (modular architecture)
 - **Components:**
   - `table-core.js` - Core AdvancedTable class
@@ -204,7 +246,7 @@ The application uses a modular JavaScript architecture for maintainability and c
 
 ### File Organization
 
-```
+```text
 src/static/js/
 ├── advanced-table/              # Modular table system
 │   ├── table-core.js           # Core class and initialization
@@ -227,6 +269,7 @@ src/static/js/
 ### Adding a New App
 
 1. **Create app directory:**
+
    ```bash
    mkdir apps/your-app
    ```
@@ -234,11 +277,13 @@ src/static/js/
 2. **Add setup.py in the app root**
 
 3. **Install in editable mode:**
+
    ```bash
    pip install -e apps/your-app
    ```
 
 4. **Add configuration to `.env`:**
+
    ```env
    # --- Your App ---
    YOUR_APP_ENABLED=True
@@ -254,11 +299,12 @@ src/static/js/
 3. All apps reload automatically
 4. Use `.env` to enable/disable apps for testing
 
-
 ## 🤝 Contributing
 
-Contributions are welcome. Please read the [contributing guidelines](.github/CONTRIBUTING.md) for development process, coding standards, and submission guidelines.
+Contributions are welcome. Please read the
+[contributing guidelines](.github/CONTRIBUTING.md) for development process,
+coding standards, and submission guidelines.
 
 ---
 
-**Version:** 1.2.0 | **Last Updated:** December 13, 2025
+**Version:** 1.2.0 | **Last Updated:** December 17, 2025

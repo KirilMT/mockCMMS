@@ -24,7 +24,9 @@ from flask_limiter.util import get_remote_address
 from apps.planning.src.services.extract_data import extract_data, get_current_day, get_current_week_number
 from apps.planning.src.services.data_processing import sanitize_data, calculate_work_time
 from apps.planning.src.services.dashboard import generate_html_files
-from apps.planning.src.services.config_manager import TECHNICIANS, TECHNICIAN_GROUPS, TECHNICIAN_LINES, load_app_config
+from apps.planning.src.services.config_manager import (
+    TECHNICIANS, TECHNICIAN_GROUPS, TECHNICIAN_LINES, load_app_config, load_shift_config
+)
 from apps.planning.src.services.planning_db_utils import (
     get_db_connection, TaskManager, TechnologyManager, TechnicianGroupManager,
     get_all_technician_skills_by_name, update_technician_skill, get_technician_skills_by_id,
@@ -712,13 +714,17 @@ def view_schedule(schedule_id):
         import json
         planning_tasks_json = json.dumps(task_data_json)
 
+        # Load shift configuration
+        shift_config = load_shift_config()
+
         return render_template(
             'planning/schedule_view.html',
             schedule=schedule,
             planning_mode=planning_mode,
             view_type=view_type,
             task_data=task_data,
-            planning_tasks_json=planning_tasks_json
+            planning_tasks_json=planning_tasks_json,
+            shift_config=shift_config
         )
     except Exception as e:
         current_app.logger.error(f"Error viewing schedule: {e}")

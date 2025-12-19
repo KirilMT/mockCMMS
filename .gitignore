@@ -193,11 +193,11 @@ baseline_metrics.md
 *.complexity
 
 # Test artifacts
-.pytest_cache/
 htmlcov/
 .coverage
 coverage.xml
 *.cover
+.pytest_cache/
 
 # Node modules (for local jscpd)
 node_modules/

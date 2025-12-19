@@ -540,10 +540,11 @@ function renderResourceAllocation(data) {
     const techUtilization = {};
 
     // Mode-specific shift duration
-    // TODO: Load from config.json instead of hardcoding
-    // For now, using defaults: shift_break=30min (configurable in config.json), weekend=12 hours
     const planningMode = '{{ planning_mode }}';
-    const shiftDuration = planningMode === 'shift_break' ? 30 : 12 * 60;  // 30 min for shift-break (from config), 12 hours for weekend (in minutes)
+    const shiftConfig = {{ shift_config|tojson }};
+    const shiftDuration = planningMode === 'shift_break'
+        ? (shiftConfig.shift_durations.shift_break || 30)
+        : (shiftConfig.shift_durations.weekend || 720);
 
     data.technicians.forEach(tech => {
         techUtilization[tech.id] = {

@@ -1,16 +1,10 @@
-import sys
-import os
-from pathlib import Path
+"""Application entry point."""
+
 from dotenv import load_dotenv
+from src.app import create_app
 
 # Load environment variables
 load_dotenv()
-
-# Add the monorepo root to sys.path
-current_dir = Path(__file__).parent
-sys.path.insert(0, str(current_dir))
-
-from src.app import create_app
 
 app = create_app()
 
