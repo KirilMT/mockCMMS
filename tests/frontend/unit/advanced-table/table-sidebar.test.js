@@ -1,7 +1,7 @@
 
 // Setup environment
-const AdvancedTable = require('../../../src/static/js/advanced-table/table-core.js');
-const TableSidebar = require('../../../src/static/js/advanced-table/table-sidebar.js');
+const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core.js');
+const TableSidebar = require('../../../../src/static/js/advanced-table/table-sidebar.js');
 
 // Ensure TableSidebar is available globally because AdvancedTable uses it
 global.TableSidebar = TableSidebar;

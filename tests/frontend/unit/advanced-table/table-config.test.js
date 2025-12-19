@@ -20,9 +20,9 @@ global.fetch = jest.fn();
 global.prompt = jest.fn();
 
 // Setup environment
-const AdvancedTable = require('../../../src/static/js/advanced-table/table-core.js');
+const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core.js');
 global.AdvancedTable = AdvancedTable;
-require('../../../src/static/js/advanced-table/table-config.js');
+require('../../../../src/static/js/advanced-table/table-config.js');
 
 // Helper to mock fetch response
 const mockFetchResponse = (ok, data) => {

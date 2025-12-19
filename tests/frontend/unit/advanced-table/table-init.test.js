@@ -14,13 +14,13 @@ global.TableSidebar = class {
 };
 
 // Load AdvancedTable and make it global
-const AdvancedTable = require('../../../src/static/js/advanced-table/table-core');
+const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core');
 global.AdvancedTable = AdvancedTable;
 
 // Load ALL modules
-require('../../../src/static/js/advanced-table/table-data');
-require('../../../src/static/js/advanced-table/table-render');
-require('../../../src/static/js/advanced-table/table-events');
+require('../../../../src/static/js/advanced-table/table-data');
+require('../../../../src/static/js/advanced-table/table-render');
+require('../../../../src/static/js/advanced-table/table-events');
 
 describe('AdvancedTable initialization patterns', () => {
     let localStorageMock;
@@ -125,7 +125,7 @@ describe('AdvancedTable initialization patterns', () => {
 
     describe('initAdvancedTable Global Function', () => {
         // Require the module directly to ensure coverage instrumentation
-        const { initAdvancedTable } = require('../../../src/static/js/advanced-table/table-init');
+        const { initAdvancedTable } = require('../../../../src/static/js/advanced-table/table-init');
 
         test('should define initAdvancedTable', () => {
             expect(typeof initAdvancedTable).toBe('function');

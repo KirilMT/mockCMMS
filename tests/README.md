@@ -1,284 +1,208 @@
 # Test Suite Organization
 
-**Total Tests:** 200 tests (144 implemented, 56 to be added in Phase 3)  
-**Coverage:** 75.64% (Target: 85-90% after Phase 3)  
-**Last Updated:** December 12, 2025
+**Total Tests:** 574+ tests (223 backend + 293 Jest + 71 E2E = 587 actual)  
+**Coverage:** 82%+ (Backend), 80%+ (Frontend)  
+**Last Updated:** December 19, 2025
 
 ---
 
 ## 📁 Directory Structure
 
-The test suite is organized by **testing concern** into 6 categories:
+The test suite is organized by **backend/frontend** separation and **testing concern**:
 
 ```
 tests/
-├── unit/          # Unit Tests (26 tests) - Fast, isolated component tests
-├── functional/    # Functional Tests (70 tests) - API and route endpoint tests
-├── integration/   # Integration Tests (10 → 18 tests) - End-to-end workflows
-├── security/      # Security Tests (24 tests) - Auth, validation, security
-├── performance/   # Performance Tests (8 tests) - Scalability and optimization
-└── reliability/   # Reliability Tests (6 tests) - Error handling and robustness
+├── README.md                    # This file
+├── backend/                     # Python/pytest tests
+│   ├── conftest.py              # Shared fixtures
+│   ├── unit/                    # Unit tests - isolated component tests
+│   ├── functional/              # API and route endpoint tests
+│   ├── integration/             # End-to-end workflow tests
+│   ├── security/                # Auth, validation, security tests
+│   ├── performance/             # Scalability and optimization tests
+│   └── reliability/             # Error handling and robustness tests
+└── frontend/                    # JavaScript tests
+    ├── unit/                    # Jest unit tests
+    │   ├── advanced-table/      # Advanced table component tests
+    │   ├── toast-notification.test.js
+    │   └── flash-messages.test.js
+    └── e2e/                     # Playwright E2E tests
+        ├── e2e-test-setup.js    # Global setup
+        ├── e2e-test-teardown.js # Global teardown
+        ├── 00_visual.spec.js    # Visual regression tests
+        ├── 01_advanced-table.spec.js
+        ├── 02_crud.spec.js
+        └── 03_smoke.spec.js
 ```
 
 ---
 
 ## 🎯 Test Categories
 
-### 1. Unit Tests (`tests/unit/`) - 26 tests
+### Backend Tests (`tests/backend/`) - pytest
 
+#### 1. Unit Tests (`tests/backend/unit/`)
 **Purpose:** Test individual components in isolation  
-**Speed:** Fast (< 10 seconds)  
-**When to run:** During development, before every commit
+**Speed:** Fast (<10 seconds)  
+**Run:** `pytest tests/backend/unit/`
 
-**Files:**
-- `test_app.py` (18 → 28 tests) - App initialization and configuration
-- `test_db_utils.py` (3 → 11 tests) - Database utilities and models
-- `test_shift_utils.py` (5 tests) - Shift scheduling utilities ✅ 100% coverage
-
-**Run:** `pytest tests/unit/`
-
----
-
-### 2. Functional Tests (`tests/functional/`) - 70 tests
-
+#### 2. Functional Tests (`tests/backend/functional/`)
 **Purpose:** Test API endpoints and web routes  
-**Speed:** Medium (< 20 seconds)  
-**When to run:** Before commits affecting APIs or routes
+**Speed:** Medium (<20 seconds)  
+**Run:** `pytest tests/backend/functional/`
 
-**Files:**
-- `test_api_routes.py` (41 → 51 tests) - REST API endpoints
-- `test_main_routes.py` (29 → 39 tests) - Web application routes
-
-**Run:** `pytest tests/functional/`
-
----
-
-### 3. Integration Tests (`tests/integration/`) - 10 → 18 tests
-
+#### 3. Integration Tests (`tests/backend/integration/`)
 **Purpose:** Test complete workflows end-to-end  
-**Speed:** Medium-Slow (< 15 seconds)  
-**When to run:** Before PRs, after major changes
+**Speed:** Medium-Slow (<15 seconds)  
+**Run:** `pytest tests/backend/integration/`
 
-**Files:**
-- `test_integration.py` (10 → 18 tests) - Complete business workflows
-
-**Run:** `pytest tests/integration/`
-
----
-
-### 4. Security Tests (`tests/security/`) - 24 tests
-
+#### 4. Security Tests (`tests/backend/security/`)
 **Purpose:** Validate security, authentication, and input validation  
-**Speed:** Fast-Medium (< 10 seconds)  
-**When to run:** Before any security-related changes, during security audits
+**Speed:** Fast-Medium (<10 seconds)  
+**Run:** `pytest tests/backend/security/`
 
-**Files:**
-- `test_auth.py` (8 tests) - Authentication and authorization ✅
-- `test_validation.py` (6 tests) - Input validation and XSS/SQL injection ✅
-- `test_advanced_validation.py` (10 tests) - Edge cases and boundary conditions ✅
-
-**Run:** `pytest tests/security/`
-
----
-
-### 5. Performance Tests (`tests/performance/`) - 8 tests
-
+#### 5. Performance Tests (`tests/backend/performance/`)
 **Purpose:** Validate system performance and scalability  
-**Speed:** Slow (< 30 seconds)  
-**When to run:** Before releases, during performance optimization
+**Speed:** Slow (<30 seconds)  
+**Run:** `pytest tests/backend/performance/`
 
-**Files:**
-- `test_performance.py` (8 tests) - Query performance, pagination, concurrency ✅
-
-**Run:** `pytest tests/performance/`
+#### 6. Reliability Tests (`tests/backend/reliability/`)
+**Purpose:** Test error handling and system robustness  
+**Speed:** Fast (<5 seconds)  
+**Run:** `pytest tests/backend/reliability/`
 
 ---
 
-### 6. Reliability Tests (`tests/reliability/`) - 6 tests
+### Frontend Tests (`tests/frontend/`)
 
-**Purpose:** Test error handling and system robustness  
-**Speed:** Fast (< 5 seconds)  
-**When to run:** Before commits affecting error handling
+#### Jest Unit Tests (`tests/frontend/unit/`)
+**Purpose:** Test JavaScript components and logic  
+**Speed:** Fast (~10 seconds for 293 tests)  
+**Run:** `npm test`
 
 **Files:**
-- `test_errors.py` (6 tests) - Error pages, exception handling ✅
+- `advanced-table/` - 12 test files for table component
+- `toast-notification.test.js` - Toast notification tests
+- `flash-messages.test.js` - Flash message tests
 
-**Run:** `pytest tests/reliability/`
+#### Playwright E2E Tests (`tests/frontend/e2e/`)
+**Purpose:** Test full user workflows in browser  
+**Speed:** Slow (~4 minutes for 71 tests)  
+**Run:** `npm run test:e2e` or `npx playwright test`
+
+**Files:**
+- `00_visual.spec.js` - Visual regression tests (19 snapshots)
+- `01_advanced-table.spec.js` - Table feature tests
+- `02_crud.spec.js` - CRUD operation tests
+- `03_smoke.spec.js` - Navigation and auth tests
 
 ---
 
 ## 🚀 Running Tests
 
-### Run All Tests
+### Run All Backend Tests
 ```bash
-pytest tests/
-# 144 passed in ~45 seconds
+pytest tests/backend/
+# 223 passed in ~90 seconds
 ```
 
-### Run by Category (Fast → Slow)
+### Run All Frontend Tests
 ```bash
-# Fastest: Unit + Reliability (< 15 seconds)
-pytest tests/unit/ tests/reliability/
-
-# Medium: Functional + Security (< 30 seconds)
-pytest tests/functional/ tests/security/
-
-# Integration tests (< 15 seconds)
-pytest tests/integration/
-
-# Slowest: Performance (< 30 seconds)
-pytest tests/performance/
+npm test                              # Jest (293 tests, ~10s)
+npm run test:e2e:chromium             # Playwright (71 tests, ~4min)
 ```
 
-### Run for Quick Development Cycle
+### Run Everything
 ```bash
-# Run only fast tests (unit + reliability)
-pytest tests/unit/ tests/reliability/ -q
-# ~32 tests in ~12 seconds
+npm run test:all                      # Jest + Playwright
+pytest tests/backend/                 # Backend tests
 ```
 
-### Run for Security Audit
+### Quick Development Cycle
 ```bash
-# Run all security-related tests
-pytest tests/security/ -v
-# 24 tests covering auth, validation, edge cases
+# Fast backend tests only
+pytest tests/backend/unit/ tests/backend/reliability/ -q
+
+# Fast frontend tests only
+npm test
 ```
 
-### Run Before Commit
+### Before Commit
 ```bash
-# Unit + Functional + Security (most common changes)
-pytest tests/unit/ tests/functional/ tests/security/
-# ~120 tests in ~30 seconds
+pytest tests/backend/unit/ tests/backend/functional/ tests/backend/security/
+npm test
 ```
 
-### Run Before Release
+### Before Release
 ```bash
-# Everything including slow performance tests
-pytest tests/
-# All 144 tests in ~45 seconds
+pytest tests/backend/
+npm test
+npm run test:e2e
 ```
 
 ---
 
-## 📊 Test Count by Category
+## 📊 Test Summary
 
-| Category | Current | Phase 3 Target | Total |
-|----------|---------|----------------|-------|
-| Unit | 26 | +18 | 44 |
-| Functional | 70 | +20 | 90 |
-| Integration | 10 | +8 | 18 |
-| Security | 24 | +0 | 24 |
-| Performance | 8 | +0 | 8 |
-| Reliability | 6 | +0 | 6 |
-| **TOTAL** | **144** | **+56** | **200** |
-
----
-
-## 🎯 Coverage Goals
-
-**Current:** 75.64%  
-**Minimum:** 70% ✅  
-**Phase 3 Target:** 85-90%  
-**Stretch Goal:** 95%+
-
-**Coverage by File:**
-- ✅ shift_utils.py: 100% (Perfect!)
-- ✅ db_utils.py: 85.66% (Target: 95%+)
-- ✅ main.py: 80.05% (Target: 90%+)
-- 🟡 app.py: 67.68% (Target: 85%+)
-- 🔴 api.py: 62.50% (Target: 85%+)
+| Category | Tests | Tool |
+|----------|-------|------|
+| Backend Unit | ~26 | pytest |
+| Backend Functional | ~70 | pytest |
+| Backend Integration | ~18 | pytest |
+| Backend Security | ~24 | pytest |
+| Backend Performance | ~8 | pytest |
+| Backend Reliability | ~6 | pytest |
+| **Backend Total** | **~223** | **pytest** |
+| Frontend Unit | 293 | Jest |
+| Frontend E2E | 71 | Playwright |
+| **Frontend Total** | **364** | **npm** |
+| **GRAND TOTAL** | **~587** | - |
 
 ---
 
-## 🔧 CI/CD Integration
+## 🔧 Configuration Files
 
-Tests can be run in stages for optimized CI/CD:
-
-**Stage 1: Fast Checks (< 15s)**
-```yaml
-- name: Unit Tests
-  run: pytest tests/unit/
-  
-- name: Reliability Tests  
-  run: pytest tests/reliability/
-```
-
-**Stage 2: Functional Validation (< 35s)**
-```yaml
-- name: Functional Tests
-  run: pytest tests/functional/
-  
-- name: Security Tests
-  run: pytest tests/security/
-```
-
-**Stage 3: Integration (< 15s)**
-```yaml
-- name: Integration Tests
-  run: pytest tests/integration/
-```
-
-**Stage 4: Performance (Nightly)**
-```yaml
-- name: Performance Tests
-  run: pytest tests/performance/
-  schedule: nightly
-```
+| Config | Tool | Location |
+|--------|------|----------|
+| pytest | pytest | `pyproject.toml` [tool.pytest.ini_options] |
+| coverage | pytest-cov | `pyproject.toml` [tool.coverage.*] |
+| jest | Jest | `package.json` "jest" section |
+| babel | babel-jest | `package.json` "babel" section |
+| playwright | Playwright | `playwright.config.js` |
+| flake8 | flake8 | `.flake8` |
+| ruff | ruff | `pyproject.toml` [tool.ruff] |
+| black | black | `pyproject.toml` [tool.black] |
 
 ---
 
 ## 📝 Adding New Tests
 
-**Rule:** Add tests to the appropriate category directory based on **what you're testing**, not **when you're adding it**.
+### Backend Tests
+Add to appropriate category in `tests/backend/`:
+- **Isolated component test?** → `unit/`
+- **API or route test?** → `functional/`
+- **Multi-step workflow?** → `integration/`
+- **Auth or validation?** → `security/`
+- **Query performance?** → `performance/`
+- **Error handling?** → `reliability/`
 
-### Decision Tree:
-
-**Testing a single component/function in isolation?**
-→ Add to `tests/unit/`
-
-**Testing an API endpoint or web route?**
-→ Add to `tests/functional/`
-
-**Testing a complete workflow (multiple steps)?**
-→ Add to `tests/integration/`
-
-**Testing authentication, authorization, or validation?**
-→ Add to `tests/security/`
-
-**Testing performance, scalability, or query optimization?**
-→ Add to `tests/performance/`
-
-**Testing error handling or error pages?**
-→ Add to `tests/reliability/`
+### Frontend Tests
+Add to appropriate category in `tests/frontend/`:
+- **JavaScript logic test?** → `unit/*.test.js`
+- **Browser workflow test?** → `e2e/*.spec.js`
 
 ---
 
 ## 🏆 Best Practices
 
-1. **Keep unit tests fast** - No database, no network, no file I/O
+1. **Keep unit tests fast** - No database, network, or file I/O
 2. **Make functional tests focused** - One endpoint/route per test class
 3. **Make integration tests comprehensive** - Test real user workflows
 4. **Keep security tests isolated** - Easy to run for security audits
-5. **Keep performance tests separate** - Don't slow down regular test runs
-6. **Document edge cases** - Explain why advanced validation tests exist
-
----
-
-## ✅ Phase 3 Plan
-
-**Goal:** Add 56 tests to existing files to reach 85-90% coverage
-
-**Additions:**
-- `unit/test_app.py`: +10 tests (module loading, configuration)
-- `functional/test_api_routes.py`: +10 tests (error handling, complex queries)
-- `functional/test_main_routes.py`: +10 tests (DELETE operations)
-- `unit/test_db_utils.py`: +8 tests (model methods, constraints)
-- `integration/test_integration.py`: +8 tests (critical path workflows)
-
-**Timeline:** Days 13-15  
-**After Phase 3:** 200 tests, 85-90% coverage, ready for code formatting (black)
+5. **Keep performance tests separate** - Don't slow down regular runs
+6. **Run tests before commits** - Both backend and frontend
+7. **Update snapshots intentionally** - Review visual changes
 
 ---
 
 **For detailed test specifications, see:** `docs/comprehensive_testing_plan.md`
-

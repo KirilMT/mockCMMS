@@ -7,7 +7,7 @@ global.TableSidebar = class {
 };
 
 // Load the class under test
-const AdvancedTable = require('../../../src/static/js/advanced-table/table-core.js');
+const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core.js');
 
 describe('AdvancedTable', () => {
     let tableContainer;

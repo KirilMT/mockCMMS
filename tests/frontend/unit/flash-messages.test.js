@@ -1,6 +1,6 @@
 
 // Setup environment
-require('../../src/static/js/toast-notification.js');
+require('../../../src/static/js/toast-notification.js');
 
 // Mock console.error
 console.error = jest.fn();
@@ -28,7 +28,7 @@ describe('FlashMessages', () => {
         const messages = [['success', 'Operation successful!']];
         document.body.innerHTML = `<div id="flash-messages" data-messages='${JSON.stringify(messages)}'></div>`;
 
-        require('../../src/static/js/flash-messages.js');
+        require('../../../src/static/js/flash-messages.js');
 
         // Since we are requiring, it might run immediately if readyState != loading.
         // In JSDOM, readyState is usually 'complete' initially or requires config.
@@ -43,7 +43,7 @@ describe('FlashMessages', () => {
         ];
         document.body.innerHTML = `<div id="flash-messages" data-messages='${JSON.stringify(messages)}'></div>`;
 
-        require('../../src/static/js/flash-messages.js');
+        require('../../../src/static/js/flash-messages.js');
 
         expect(ToastNotification.show).toHaveBeenCalledTimes(2);
         expect(ToastNotification.show).toHaveBeenCalledWith('Success 1', 'success');
@@ -56,7 +56,7 @@ describe('FlashMessages', () => {
         ];
         document.body.innerHTML = `<div id="flash-messages" data-messages='${JSON.stringify(messages)}'></div>`;
 
-        require('../../src/static/js/flash-messages.js');
+        require('../../../src/static/js/flash-messages.js');
 
         expect(ToastNotification.show).toHaveBeenCalledWith('Danger maps to error', 'error');
     });
@@ -65,7 +65,7 @@ describe('FlashMessages', () => {
         // Invalid JSON to trigger catch block (line 58)
         document.body.innerHTML = `<div id="flash-messages" data-messages='invalid json here'></div>`;
 
-        require('../../src/static/js/flash-messages.js');
+        require('../../../src/static/js/flash-messages.js');
 
         expect(console.error).toHaveBeenCalled();
     });
@@ -74,7 +74,7 @@ describe('FlashMessages', () => {
         // No data-messages attribute
         document.body.innerHTML = `<div id="flash-messages"></div>`;
 
-        require('../../src/static/js/flash-messages.js');
+        require('../../../src/static/js/flash-messages.js');
 
         expect(ToastNotification.show).not.toHaveBeenCalled();
     });
@@ -82,7 +82,7 @@ describe('FlashMessages', () => {
     test('FM-1.6: handles missing flash container', () => {
         document.body.innerHTML = '';
 
-        require('../../src/static/js/flash-messages.js');
+        require('../../../src/static/js/flash-messages.js');
 
         expect(ToastNotification.show).not.toHaveBeenCalled();
     });
@@ -92,7 +92,7 @@ describe('FlashMessages', () => {
         const messages = [{ bad: 'format' }, 'just a string'];
         document.body.innerHTML = `<div id="flash-messages" data-messages='${JSON.stringify(messages)}'></div>`;
 
-        require('../../src/static/js/flash-messages.js');
+        require('../../../src/static/js/flash-messages.js');
 
         expect(ToastNotification.show).not.toHaveBeenCalled();
     });
@@ -102,7 +102,7 @@ describe('FlashMessages', () => {
         const messages = [['onlyCategory']];
         document.body.innerHTML = `<div id="flash-messages" data-messages='${JSON.stringify(messages)}'></div>`;
 
-        require('../../src/static/js/flash-messages.js');
+        require('../../../src/static/js/flash-messages.js');
 
         expect(ToastNotification.show).not.toHaveBeenCalled();
     });

@@ -18,14 +18,14 @@ global.TableSidebar = class {
 };
 
 // Load modules in correct order (same as table-sidebar.test.js)
-const AdvancedTable = require('../../../src/static/js/advanced-table/table-core');
+const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core');
 global.AdvancedTable = AdvancedTable; // Required for other modules
-require('../../../src/static/js/advanced-table/table-render');
-require('../../../src/static/js/advanced-table/table-events');
-require('../../../src/static/js/advanced-table/table-data');
-require('../../../src/static/js/advanced-table/table-loading');
-require('../../../src/static/js/advanced-table/table-config');
-const TableSidebar = require('../../../src/static/js/advanced-table/table-sidebar');
+require('../../../../src/static/js/advanced-table/table-render');
+require('../../../../src/static/js/advanced-table/table-events');
+require('../../../../src/static/js/advanced-table/table-data');
+require('../../../../src/static/js/advanced-table/table-loading');
+require('../../../../src/static/js/advanced-table/table-config');
+const TableSidebar = require('../../../../src/static/js/advanced-table/table-sidebar');
 
 // Mock loadConfiguration BEFORE any tests run to prevent async init
 AdvancedTable.prototype.loadConfiguration = jest.fn();

@@ -11,13 +11,13 @@ const { defineConfig, devices } = require('@playwright/test');
  */
 
 module.exports = defineConfig({
-  testDir: './tests/e2e',
+  testDir: './tests/frontend/e2e',
 
   // Global setup runs before all tests
-  globalSetup: require.resolve('./tests/e2e/e2e-test-setup.js'),
+  globalSetup: require.resolve('./tests/frontend/e2e/e2e-test-setup.js'),
 
   // Global teardown runs after all tests (cleanup like pytest)
-  globalTeardown: require.resolve('./tests/e2e/e2e-test-teardown.js'),
+  globalTeardown: require.resolve('./tests/frontend/e2e/e2e-test-teardown.js'),
 
   // Test execution settings
   timeout: 30000,

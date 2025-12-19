@@ -7,9 +7,9 @@ global.TableSidebar = class {
 };
 
 // Setup environment
-const AdvancedTable = require('../../../src/static/js/advanced-table/table-core.js');
+const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core.js');
 global.AdvancedTable = AdvancedTable;
-require('../../../src/static/js/advanced-table/table-data.js');
+require('../../../../src/static/js/advanced-table/table-data.js');
 
 describe('TableData Module', () => {
     let table;

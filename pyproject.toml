@@ -1,5 +1,6 @@
 # pyproject.toml
 # Created: December 11, 2025
+# Updated: December 19, 2025 - Consolidated pytest.ini and .flake8 settings
 # Purpose: Modern Python project configuration for mockCMMS
 
 [build-system]
@@ -17,13 +18,58 @@ authors = [
     {name = "mockCMMS Team"}
 ]
 
+# =============================================================================
+# PYTEST CONFIGURATION (consolidated from pytest.ini)
+# =============================================================================
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q"
-testpaths = [
-    "tests",
+testpaths = ["tests/backend"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Output and Behavior
+addopts = """
+    -v
+    --tb=short
+    --strict-markers
+    --cov=src
+    --cov-report=term-missing
+    --cov-report=html
+    --cov-fail-under=85
+    -W ignore::ResourceWarning
+    -W ignore::pytest.PytestUnraisableExceptionWarning
+"""
+
+# Warning filters (silence SQLite GC edge cases)
+filterwarnings = [
+    "ignore::ResourceWarning",
+    "ignore::pytest.PytestUnraisableExceptionWarning"
 ]
 
+# Test Markers - Organized by test category directories
+markers = [
+    "unit: Unit tests - fast, isolated tests of individual components",
+    "functional: Functional tests - API and route endpoint tests",
+    "integration: Integration tests - end-to-end workflow tests",
+    "security: Security tests - auth, validation, and security concerns",
+    "performance: Performance tests - scalability and optimization",
+    "reliability: Reliability tests - error handling and robustness",
+    "slow: Marks tests as slow (deselect with '-m \"not slow\"')",
+    "api: Marks tests for API endpoints",
+    "routes: Marks tests for web routes",
+    "database: Marks tests requiring database access"
+]
+
+# Logging
+log_cli = false
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+# =============================================================================
+# BLACK FORMATTER CONFIGURATION
+# =============================================================================
 [tool.black]
 line-length = 88
 target-version = ['py39', 'py310', 'py311', 'py312']
@@ -40,6 +86,45 @@ extend-exclude = '''
 )/
 '''
 
+# =============================================================================
+# FLAKE8 CONFIGURATION (consolidated from .flake8)
+# Note: flake8 doesn't natively support pyproject.toml, but many tools
+# (like pflake8) do. For native flake8, use .flake8 or setup.cfg.
+# This section documents the settings for reference.
+# =============================================================================
+# [tool.flake8]  # Not natively supported - keeping .flake8 for now
+# max-line-length = 88
+# extend-ignore = ["E203", "W503"]
+# exclude = [".git", "__pycache__", ".venv", "venv", "build", "dist", "*.egg-info", ".pytest_cache", "htmlcov", "instance", "apps"]
+
+# =============================================================================
+# RUFF CONFIGURATION (modern alternative to flake8)
+# =============================================================================
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".pytest_cache",
+    "htmlcov",
+    "instance",
+    "apps"
+]
+
+[tool.ruff.lint]
+# Rules that align with Black formatter
+extend-ignore = ["E203", "W503"]
+select = ["E", "F", "W"]
+
+# =============================================================================
+# COVERAGE CONFIGURATION
+# =============================================================================
 [tool.coverage.run]
 source = ["src"]
 omit = [
@@ -54,3 +139,15 @@ precision = 2
 show_missing = true
 skip_covered = false
 
+[tool.coverage.html]
+directory = "htmlcov"
+
+# =============================================================================
+# MYPY CONFIGURATION
+# =============================================================================
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = ["apps/", "tests/", ".venv/"]

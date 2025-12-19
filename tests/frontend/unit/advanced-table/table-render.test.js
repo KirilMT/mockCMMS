@@ -14,13 +14,13 @@ global.TableSidebar = class {
 };
 
 // Load AdvancedTable and make it global BEFORE loading other modules
-const AdvancedTable = require('../../../src/static/js/advanced-table/table-core');
+const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core');
 global.AdvancedTable = AdvancedTable;
 
 // Load ALL modules that extend AdvancedTable.prototype
-require('../../../src/static/js/advanced-table/table-data');
-require('../../../src/static/js/advanced-table/table-render');
-require('../../../src/static/js/advanced-table/table-events');
+require('../../../../src/static/js/advanced-table/table-data');
+require('../../../../src/static/js/advanced-table/table-render');
+require('../../../../src/static/js/advanced-table/table-events');
 
 describe('AdvancedTable Render Methods', () => {
     let table;

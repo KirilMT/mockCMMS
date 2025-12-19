@@ -19,14 +19,14 @@ global.ToastNotification = {
 };
 
 // Load AdvancedTable and make it global
-const AdvancedTable = require('../../../src/static/js/advanced-table/table-core');
+const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core');
 global.AdvancedTable = AdvancedTable;
 
 // Load ALL modules
-require('../../../src/static/js/advanced-table/table-data');
-require('../../../src/static/js/advanced-table/table-render');
-require('../../../src/static/js/advanced-table/table-events');
-require('../../../src/static/js/advanced-table/table-retry');
+require('../../../../src/static/js/advanced-table/table-data');
+require('../../../../src/static/js/advanced-table/table-render');
+require('../../../../src/static/js/advanced-table/table-events');
+require('../../../../src/static/js/advanced-table/table-retry');
 
 describe('AdvancedTable Retry Methods', () => {
     let table;

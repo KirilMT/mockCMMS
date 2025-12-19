@@ -1,6 +1,6 @@
 
 // Setup environment
-require('../../src/static/js/toast-notification.js');
+require('../../../src/static/js/toast-notification.js');
 
 describe('ToastNotification', () => {
     beforeEach(() => {

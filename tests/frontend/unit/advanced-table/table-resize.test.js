@@ -14,14 +14,14 @@ global.TableSidebar = class {
 };
 
 // Load AdvancedTable and make it global
-const AdvancedTable = require('../../../src/static/js/advanced-table/table-core');
+const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core');
 global.AdvancedTable = AdvancedTable;
 
 // Load ALL modules
-require('../../../src/static/js/advanced-table/table-data');
-require('../../../src/static/js/advanced-table/table-render');
-require('../../../src/static/js/advanced-table/table-events');
-require('../../../src/static/js/advanced-table/table-resize');
+require('../../../../src/static/js/advanced-table/table-data');
+require('../../../../src/static/js/advanced-table/table-render');
+require('../../../../src/static/js/advanced-table/table-events');
+require('../../../../src/static/js/advanced-table/table-resize');
 
 describe('AdvancedTable Resize Methods', () => {
     let table;
