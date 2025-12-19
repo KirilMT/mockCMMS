@@ -14,6 +14,8 @@ module.exports = [
         TableSidebar: "readonly",
         AdvancedTable: "writable",
         ToastNotification: "readonly",
+        showConfirmModal: "readonly",
+        showDeleteConfirm: "readonly",
       },
     },
     rules: {
