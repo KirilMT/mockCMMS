@@ -21,7 +21,12 @@ class TestDataSimulationService:
                 assert asset.asset_code.startswith(
                     ("PUMP", "MOTOR", "CONV", "ROBOT", "PRESS", "DRILL")
                 )
-                assert asset.status in ["Operational", "Under Maintenance", "Offline", "Retired"]
+                assert asset.status in [
+                    "Operational",
+                    "Under Maintenance",
+                    "Offline",
+                    "Retired",
+                ]
 
     def test_generate_random_users(self, app):
         """Test generation of random users with dynamic roles."""
@@ -52,7 +57,7 @@ class TestDataSimulationService:
             assert MaintenanceOrder.query.count() == initial_count + 5
 
             allowed_types = ["PM", "Reactive", "Corrective"]
-            
+
             for mo in generated:
                 assert mo.id is not None
                 assert mo.order_type in allowed_types
@@ -61,17 +66,18 @@ class TestDataSimulationService:
                 # Check for populated fields
                 if mo.order_type == "PM":
                     assert mo.schedule_name is not None
-                    
+
     def test_generate_random_spare_parts(self, app):
         """Test generation of random spare parts."""
         with app.app_context():
             from src.services.db_utils import SparePart
+
             initial_count = SparePart.query.count()
             generated = DataSimulationService.generate_random_spare_parts(count=5)
-            
+
             assert len(generated) == 5
             assert SparePart.query.count() == initial_count + 5
-            
+
             for part in generated:
                 assert part.id is not None
                 assert part.description.startswith("Simulated Spare Part")

@@ -173,7 +173,7 @@ class LoggingConfig:
         if not flask_debug:
             for handler in root_logger.handlers[:]:
                 root_logger.removeHandler(handler)
-            
+
             # Add JSON Console for Production to ensure logs are visible
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(StructuredFormatter())
@@ -187,9 +187,12 @@ class LoggingConfig:
             path = os.path.join(log_dir, filename)
             # Check for existing handler for this file
             for h in root_logger.handlers:
-                if isinstance(h, logging.FileHandler) and getattr(h, "baseFilename", "") == path:
-                    return # Already exists
-            
+                if (
+                    isinstance(h, logging.FileHandler)
+                    and getattr(h, "baseFilename", "") == path
+                ):
+                    return  # Already exists
+
             handler = logging.FileHandler(path)
             handler.setLevel(level)
             handler.setFormatter(formatter)
@@ -214,10 +217,10 @@ class LoggingConfig:
         # Set up request timing middleware if app is provided
         if app:
             LoggingConfig._setup_request_monitoring(app)
-            
+
             # Ensure app logger propagates to root (so FileHandlers catch it)
             app.logger.propagate = True
-            
+
             # Only clear app handlers in Production (where we use Root JSON).
             # In Debug, KEEP defaults (Standard Flask output).
             if not flask_debug:
