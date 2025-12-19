@@ -201,5 +201,24 @@ coverage.xml
 
 # Node modules (for local jscpd)
 node_modules/
-package-lock.json
-package.json
+
+# Jest/Playwright artifacts
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright-artifacts/
+
+# Ruff linter cache
+.ruff_cache/
+
+# Temporary test output files
+jest_output.txt
+jest_*.txt
+
+# Bandit security scanner
+.bandit_cache/
+
+# JSCPD duplicate detector
+jscpd-report/
+.jscpd/

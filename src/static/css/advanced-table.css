@@ -162,12 +162,23 @@
 }
 
 .advanced-table tbody tr {
-    cursor: pointer;
     transition: background-color 0.15s ease-in-out;
 }
 
 .advanced-table tbody tr:hover {
     background-color: rgba(0, 123, 255, 0.08);
+}
+
+/* ID column links - make them clearly clickable */
+.advanced-table tbody td:first-child a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.advanced-table tbody td:first-child a:hover {
+    color: #0056b3;
+    text-decoration: underline;
 }
 
 /* Badge styling in table cells */

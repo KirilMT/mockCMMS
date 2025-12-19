@@ -1,9 +1,9 @@
 # Core mockCMMS Code Quality & Architecture Audit Plan
 
 **Created:** December 1, 2025  
-**Last Updated:** December 17, 2025
-**Status:** ⏸️ **On Hold** (Waiting for Frontend Test Suite Foundation)
-**Prerequisites Met:** All 210 tests complete with 82.99% coverage. Phase 1 & 2 (Automated Analysis & Python Backend) complete.
+**Last Updated:** December 19, 2025
+**Status:** 🔄 **IN PROGRESS** - Phase 3 (JavaScript) Ready to Start
+**Prerequisites Met:** All 587 tests complete with 82%+ coverage. Phase 1 & 2 (Automated Analysis & Python Backend) complete. Frontend test infrastructure ready.
 
 ---
 
@@ -16,14 +16,14 @@
 > - **[mockCMMS Roadmap](mockCMMS_roadmap.md)** - Strategic context
 > 
 > **Prerequisites Before Starting This Plan:**
-> 1. ✅ All 210 tests from `comprehensive_testing_plan.md` must be implemented (210/210 complete - 100%)
-> 2. ✅ All tests must pass (100% pass rate) (210/210 passing)
-> 3. ✅ Code coverage must reach 80-85% overall (Current: 82.99%, Target: 80-85%) ✅
-> 4. ✅ Critical coverage gaps closed (api.py: 78.78%, app.py: 88.89%, main.py: 81.42%)
-> 5. ✅ CI configured with pytest + coverage in .github/workflows/ci.yml
+> 1. ✅ All backend tests implemented (223/223 pytest tests passing)
+> 2. ✅ All frontend tests implemented (293 Jest + 71 Playwright = 364 tests passing)
+> 3. ✅ Code coverage 80-85% overall (Backend: 82%+, Frontend: 80%+)
+> 4. ✅ Critical coverage gaps closed (api.py: 78%, app.py: 88%, main.py: 81%)
+> 5. ✅ CI configured with pytest + Jest + Playwright in .github/workflows/
 > 
-> **Status:** ✅ **READY TO START** (210/210 tests, 82.99% coverage)
-> **Current Progress:** Phase 2 Complete. Phase 3 In Progress.
+> **Status:** ✅ **READY FOR PHASE 3** (587 total tests passing)
+> **Current Progress:** Phase 1 & 2 Complete. **Phase 3 (JavaScript) Ready to Start.**
 
 ---  
 **Scope:** Entire mockCMMS repository (excluding `apps/` directory)
@@ -45,11 +45,42 @@ This document outlines a comprehensive, systematic approach to auditing and impr
 
 For all audit tasks, we follow a strict 5-step iterative process to ensure quality:
 
-1.  **Lint**: Run `ruff`, `pylint`, `mypy`, `radon`, `bandit`, `jscpd`. **Fix all errors.**
-2.  **Format**: Run `flake8` and `black`. **Fix all issues.**
-3.  **Test**: Run `pytest` with coverage. **Ensure references pass and coverage is maintained (target 85%+).**
-4.  **Audit Report**: Generate/Update an audit report (e.g., `docs/AUDIT_REPORT_SRC.md`) documenting findings and fixes. **Loop back to Step 1 if code changes.**
+### Python Backend (Phase 2)
+1.  **Lint**: Run `ruff check src/`, `pylint src/`, `mypy src/`, `radon cc src/ -a`, `bandit -r src/`. **Fix all errors.**
+2.  **Format**: Run `flake8 src/` and `black src/`. **Fix all issues.**
+3.  **Test**: Run `pytest --cov=src tests/`. **Ensure all tests pass and coverage ≥82%.**
+4.  **Audit Report**: Generate/Update audit report (e.g., `docs/AUDIT_REPORT_SRC.md`). **Loop back to Step 1 if code changes.**
 5.  **Final Verification**: Confirm all metrics are met before marking task complete.
+
+### JavaScript/CSS/HTML Frontend (Phase 3-5)
+
+> [!IMPORTANT]
+> **ALWAYS run tests BEFORE and AFTER any frontend code changes to detect regressions.**
+
+1.  **Pre-Linting Test Baseline**: Ensure tests pass first (establishes working state)
+    ```bash
+    npm test                             # Jest unit tests (293 tests)
+    npx playwright test --project=chromium  # E2E tests (71 tests)
+    ```
+
+2.  **Lint**: Run ESLint to identify code quality issues (report only first)
+    ```bash
+    npx eslint src/static/js --report-unused-disable-directives
+    ```
+
+3.  **Format & Fix**: Apply auto-fixes carefully
+    ```bash
+    npx eslint src/static/js --fix
+    npx prettier --write src/static/js
+    ```
+
+4.  **Post-Fix Test Verification**: Re-run tests to confirm no regressions
+    ```bash
+    npm test                             # Must still pass
+    npx playwright test --project=chromium  # Must still pass
+    ```
+
+5.  **Audit Report**: Document findings. **Loop back to Step 1 if tests fail.**
 
 ---
 
@@ -415,7 +446,7 @@ cat audit_results/*.txt > audit_results/audit_results_full.txt
 - [x] Proceed to Step 3
 
 **Step 3: Test Verification**
-- [x] Run `pytest tests/` (verify all 210 tests pass)
+- [x] Run `pytest tests/backend/` (verify all tests pass)
 - [x] Fix any broken tests
 - [x] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
@@ -456,7 +487,7 @@ If Step 4 resulted in NO modifications:
 - [x] Proceed to Step 3
 
 **Step 3: Test Verification**
-- [x] Run `pytest tests/` (verify all 210 tests pass)
+- [x] Run `pytest tests/backend/` (verify all tests pass)
 - [x] Fix any broken tests
 - [x] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
@@ -495,7 +526,7 @@ If Step 4 resulted in NO modifications:
 - [x] Proceed to Step 3
 
 **Step 3: Test Verification**
-- [x] Run `pytest tests/` (verify all 210 tests pass)
+- [x] Run `pytest tests/backend/` (verify all tests pass)
 - [x] Fix any broken tests
 - [x] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
@@ -534,7 +565,7 @@ If Step 4 resulted in NO modifications:
 - [x] Proceed to Step 3
 
 **Step 3: Test Verification**
-- [x] Run `pytest tests/` (verify all 210 tests pass)
+- [x] Run `pytest tests/backend/` (verify all tests pass)
 - [x] Fix any broken tests
 - [x] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
@@ -572,7 +603,7 @@ If Step 4 resulted in NO modifications:
 - [x] Proceed to Step 3
 
 **Step 3: Test Verification**
-- [x] Run `pytest tests/` (verify all 210 tests pass)
+- [x] Run `pytest tests/backend/` (verify all tests pass)
 - [x] Fix any broken tests
 - [x] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
@@ -608,7 +639,7 @@ If Step 4 resulted in NO modifications:
 - [x] Proceed to Step 3
 
 **Step 3: Test Verification**
-- [x] Run `pytest tests/` (verify all 210 tests pass)
+- [x] Run `pytest tests/backend/` (verify all tests pass)
 - [x] Fix any broken tests
 - [x] ✅ **Checkpoint:** After this step, flake8/black/tests should all pass
 
@@ -2282,7 +2313,7 @@ If Step 4 resulted in NO modifications:
   - [ ] `stylelint src/static/css/`
   - [ ] `jscpd src/`
 - [ ] Run full test suite (`pytest --cov=src tests/`)
-- [ ] Verify all 210 tests pass
+- [ ] Verify all tests pass
 - [ ] Verify coverage remains 82.99%+
 - [ ] Test full application functionality
 - [ ] Document all findings in final audit report

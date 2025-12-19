@@ -39,6 +39,9 @@ def create_app(config_overrides=None):
     db_name = (
         "mockcmms_test.db" if os.environ.get("TESTING_PRODUCTION") else "mockcmms.db"
     )
+    # E2E tests use dedicated database for isolation and consistent seeding
+    if os.environ.get("E2E_TEST"):
+        db_name = "mockcmms_e2e.db"
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"sqlite:///{os.path.join(app.instance_path, db_name)}"
     )
@@ -211,6 +214,10 @@ def _register_request_handlers(app):
     def add_security_headers(response):
         response.headers["Permissions-Policy"] = "unload=()"
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        # Prevent caching to ensure E2E tests see up-to-date data
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
         return response
 
 

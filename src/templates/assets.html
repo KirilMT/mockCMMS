@@ -3,31 +3,39 @@
 {% block title %}Assets{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Assets</h1>
-        <a href="{{ url_for('main.add_asset') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Asset
-        </a>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Assets</h1>
+    <a href="{{ url_for('main.add_asset') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add New Asset
+    </a>
+</div>
 
-    <div id="assetsTable" class="page-full-height"></div>
+<div id="assetsTable" class="page-full-height"></div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const columns = [
-                { key: 'id', label: 'ID', type: 'number' },
-                { key: 'asset_code', label: 'Asset Code', type: 'text' },
-                { key: 'name', label: 'Name', type: 'text' },
-                { key: 'description', label: 'Description', type: 'text' },
-                { key: 'asset_type', label: 'Type', type: 'text' },
-                { key: 'cost_center', label: 'Cost Center', type: 'text' },
-                { key: 'status', label: 'Status', type: 'text' }
-            ];
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const columns = [
+            {
+                key: 'id',
+                label: 'ID',
+                type: 'number',
+                render: function (val, row) {
+                    return `<a href="/assets/${row.id}">${val}</a>`;
+                }
+            },
+            { key: 'asset_code', label: 'Asset Code', type: 'text' },
+            { key: 'name', label: 'Name', type: 'text' },
+            { key: 'description', label: 'Description', type: 'text' },
+            { key: 'asset_type', label: 'Type', type: 'text' },
+            { key: 'cost_center', label: 'Cost Center', type: 'text' },
+            { key: 'status', label: 'Status', type: 'text' }
+        ];
 
-            const assetsData = {{ assets | tojson }};
+        const assetsData = {{ assets | tojson
+    }};
 
-            // Use initAdvancedTable instead of direct instantiation
-            initAdvancedTable('assetsTable', assetsData, columns, 25);
+    // Use initAdvancedTable instead of direct instantiation
+    initAdvancedTable('assetsTable', assetsData, columns, 25);
         });
-    </script>
+</script>
 {% endblock %}

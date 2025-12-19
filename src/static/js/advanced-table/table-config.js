@@ -117,3 +117,60 @@ AdvancedTable.prototype.applyConfiguration = function (config) {
 
     this.render();
 };
+
+AdvancedTable.prototype.deleteConfiguration = function (configId) {
+    if (!confirm('Are you sure you want to delete this view?')) return;
+
+    const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+    fetch(`/api/table-config/${this.pageName}/${configId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                if (this.selectedConfigId === configId) {
+                    this.selectedConfigId = null;
+                }
+                this.loadConfiguration();
+                ToastNotification.success('View deleted successfully');
+            } else {
+                ToastNotification.error('Failed to delete view');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting configuration:', error);
+            ToastNotification.error('Error deleting configuration');
+        });
+};
+
+AdvancedTable.prototype.setDefaultView = function (configId) {
+    const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+    fetch(`/api/table-config/${this.pageName}/${configId}/default`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                this.loadConfiguration();
+                ToastNotification.success('Default view updated');
+            } else {
+                ToastNotification.error('Failed to update default view');
+            }
+        })
+        .catch(error => {
+            console.error('Error setting default view:', error);
+            ToastNotification.error('Error setting default view');
+        });
+};

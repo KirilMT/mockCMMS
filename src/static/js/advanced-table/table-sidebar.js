@@ -1050,8 +1050,14 @@ class TableSidebar {
      * Save current view configuration
      */
     saveView() {
-        const name = prompt('Enter configuration name:');
-        if (!name || !name.trim()) return;
+        // Use showInputModal instead of prompt
+        this.showInputModal('Enter configuration name:', (name) => {
+            if (!name || !name.trim()) return;
+            this.saveViewWithName(name.trim());
+        });
+    }
+
+    saveViewWithName(name) {
 
         const duplicate = this.table.savedConfigs.find(c => c.config_name.toLowerCase() === name.trim().toLowerCase());
         if (duplicate) {
@@ -1137,9 +1143,13 @@ class TableSidebar {
             return;
         }
 
-        if (!confirm(`Update view "${currentConfig.config_name}" with current settings ? `)) {
-            return;
-        }
+        // Use generic confirm modal instead of delete modal
+        showConfirmModal(`Update view "${currentConfig.config_name}" with current settings?`, () => {
+            this.performViewUpdate(currentConfig);
+        });
+    }
+
+    performViewUpdate(currentConfig) {
 
         const config = {
             column_order: JSON.stringify(this.table.columnOrder),
@@ -1206,9 +1216,13 @@ class TableSidebar {
     deleteView(config) {
         if (!config) return;
 
-        if (!confirm(`Are you sure you want to delete the view "${config.config_name}" ? `)) {
-            return;
-        }
+        // Use showDeleteConfirm modal instead of confirm
+        showDeleteConfirm(null, `Are you sure you want to delete the view "${config.config_name}"?`, () => {
+            this.performViewDelete(config);
+        });
+    }
+
+    performViewDelete(config) {
 
         // Find the delete button for this specific view
         const viewItem = document.querySelector(`.saved-view-item[data-config-id="${config.id}"]`);
@@ -1379,6 +1393,15 @@ class TableSidebar {
 
         // Update filter badge
         this.updateFilterBadge(this.table.filters.length);
+    }
+
+    /**
+     * Show input modal helper (Bug #35 - replacement for prompt)
+     */
+    showInputModal(message, callback) {
+        if (typeof window.showInputModal === 'function') {
+            window.showInputModal(message, callback);
+        }
     }
 }
 

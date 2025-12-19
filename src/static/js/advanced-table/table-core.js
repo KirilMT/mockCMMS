@@ -121,3 +121,9 @@ class AdvancedTable {
         }
     }
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = AdvancedTable;
+} else {
+    window.AdvancedTable = AdvancedTable;
+}
