@@ -1,29 +1,28 @@
 {
     "Asset": {
         "asset_type": [
-            "Equipment",
-            "Vehicle",
-            "Facility",
-            "Tool",
-            "Electronics"
+            "Department",
+            "Location",
+            "Line",
+            "Station",
+            "Tooling",
+            "Robot"
         ],
         "status": [
             "Operational",
-            "Offline",
+            "Down",
             "Under Maintenance",
             "Retired"
         ],
         "cost_center": [
-            "CC-Maintenance",
-            "CC-Operations",
-            "CC-Facility",
-            "CC-IT",
-            "CC-Logistics"
+            "Paint",
+            "Assembly",
+            "BiW"
         ]
     },
     "MaintenanceOrder": {
         "order_type": [
-            "PM",
+            "PM (Preventive Maintenance)",
             "Reactive",
             "Corrective"
         ],
@@ -36,8 +35,8 @@
         "status": [
             "Open",
             "In Progress",
-            "Pending",
-            "Closed",
+            "Scheduled",
+            "Completed",
             "Cancelled"
         ],
         "frequency": [
@@ -45,8 +44,8 @@
             "Weekly",
             "Monthly",
             "Quarterly",
-            "Annually",
-            "Ad-hoc"
+            "Yearly",
+            "One-time"
         ],
         "justification": [
             "Routine Schedule",
@@ -67,10 +66,13 @@
             "On Call"
         ],
         "roles": [
-            "Technician",
+            "Admin",
+            "Manager",
             "Supervisor",
-            "Operator",
-            "Manager"
+            "Technician",
+            "Planner",
+            "Viewer",
+            "Operator"
         ]
     },
     "SparePart": {
@@ -92,10 +94,10 @@
     },
     "Team": {
         "names": [
-            "Team Alpha",
-            "Team Beta",
-            "Team Gamma",
-            "Team Delta"
+            "Team A",
+            "Team B",
+            "Team C",
+            "Team D"
         ]
     }
 }
