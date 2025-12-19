@@ -1,0 +1,101 @@
+{
+    "Asset": {
+        "asset_type": [
+            "Equipment",
+            "Vehicle",
+            "Facility",
+            "Tool",
+            "Electronics"
+        ],
+        "status": [
+            "Operational",
+            "Offline",
+            "Under Maintenance",
+            "Retired"
+        ],
+        "cost_center": [
+            "CC-Maintenance",
+            "CC-Operations",
+            "CC-Facility",
+            "CC-IT",
+            "CC-Logistics"
+        ]
+    },
+    "MaintenanceOrder": {
+        "order_type": [
+            "PM",
+            "Reactive",
+            "Corrective"
+        ],
+        "priority": [
+            "Low",
+            "Medium",
+            "High",
+            "Critical"
+        ],
+        "status": [
+            "Open",
+            "In Progress",
+            "Pending",
+            "Closed",
+            "Cancelled"
+        ],
+        "frequency": [
+            "Daily",
+            "Weekly",
+            "Monthly",
+            "Quarterly",
+            "Annually",
+            "Ad-hoc"
+        ],
+        "justification": [
+            "Routine Schedule",
+            "Operator Report",
+            "Safety Inspection",
+            "Efficiency Upgrade",
+            "Breakdown Response",
+            "Condition Monitoring"
+        ]
+    },
+    "User": {
+        "availability_status": [
+            "Available",
+            "Busy",
+            "Sick",
+            "Vacation",
+            "Training",
+            "On Call"
+        ],
+        "roles": [
+            "Technician",
+            "Supervisor",
+            "Operator",
+            "Manager"
+        ]
+    },
+    "SparePart": {
+        "location": [
+            "Warehouse A",
+            "Warehouse B",
+            "Shelf 1",
+            "Shelf 2",
+            "Bin 101",
+            "Bin 202"
+        ],
+        "manufacturer": [
+            "Industrial Parts Co.",
+            "Global Spares",
+            "Tech Components Ltd.",
+            "Precision Engineering",
+            "Reliable Motors Inc."
+        ]
+    },
+    "Team": {
+        "names": [
+            "Team Alpha",
+            "Team Beta",
+            "Team Gamma",
+            "Team Delta"
+        ]
+    }
+}

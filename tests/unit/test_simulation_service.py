@@ -1,8 +1,8 @@
 """Unit tests for Data Simulation Service."""
 
-import pytest
 from src.services.simulation_service import DataSimulationService
-from src.services.db_utils import Asset, User, MaintenanceOrder, Role, Team, db
+from src.services.db_utils import Asset, User, MaintenanceOrder, Role, db
+
 
 class TestDataSimulationService:
     """Test suite for DataSimulationService."""
@@ -18,26 +18,26 @@ class TestDataSimulationService:
 
             for asset in generated:
                 assert asset.id is not None
-                assert asset.asset_code.startswith(("PUMP", "MOTOR", "CONV", "ROBOT", "PRESS", "DRILL"))
-                assert asset.status in ["Operational", "Under Maintenance", "Offline"]
+                assert asset.asset_code.startswith(
+                    ("PUMP", "MOTOR", "CONV", "ROBOT", "PRESS", "DRILL")
+                )
+                assert asset.status in ["Operational", "Under Maintenance", "Offline", "Retired"]
 
-    def test_generate_random_technicians(self, app):
-        """Test generation of random technicians."""
+    def test_generate_random_users(self, app):
+        """Test generation of random users with dynamic roles."""
         with app.app_context():
             initial_count = User.query.count()
-            generated = DataSimulationService.generate_random_technicians(count=3)
+            generated = DataSimulationService.generate_random_users(count=3)
 
             assert len(generated) == 3
             assert User.query.count() == initial_count + 3
 
-            tech_role = Role.query.filter_by(name="Technician").first()
-            assert tech_role is not None
-
             for user in generated:
                 assert user.id is not None
-                assert user.username.startswith("tech_")
-                assert tech_role in user.roles
+                assert user.username.startswith("user_")
+                assert len(user.roles) >= 1
                 assert user.team is not None
+                assert user.availability_status is not None
 
     def test_generate_random_orders(self, app):
         """Test generation of random maintenance orders."""
@@ -51,11 +51,32 @@ class TestDataSimulationService:
             assert len(generated) == 5
             assert MaintenanceOrder.query.count() == initial_count + 5
 
+            allowed_types = ["PM", "Reactive", "Corrective"]
+            
             for mo in generated:
                 assert mo.id is not None
-                assert mo.order_type in DataSimulationService.MO_TYPES
-                assert mo.priority in DataSimulationService.MO_PRIORITIES
+                assert mo.order_type in allowed_types
                 assert mo.asset_id is not None
+                assert mo.justification is not None
+                # Check for populated fields
+                if mo.order_type == "PM":
+                    assert mo.schedule_name is not None
+                    
+    def test_generate_random_spare_parts(self, app):
+        """Test generation of random spare parts."""
+        with app.app_context():
+            from src.services.db_utils import SparePart
+            initial_count = SparePart.query.count()
+            generated = DataSimulationService.generate_random_spare_parts(count=5)
+            
+            assert len(generated) == 5
+            assert SparePart.query.count() == initial_count + 5
+            
+            for part in generated:
+                assert part.id is not None
+                assert part.description.startswith("Simulated Spare Part")
+                assert part.manufacturer is not None
+                assert part.location is not None
 
     def test_generate_random_orders_no_assets(self, app):
         """Test generation of orders when no assets exist."""

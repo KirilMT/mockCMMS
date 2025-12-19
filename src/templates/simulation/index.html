@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Simulation Tools - Mock CMMS{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-10">
+        <h1>🛠️ Simulation & Testing Tools</h1>
+        <p class="text-muted">Generate realistic data and simulate operational events to test system response.</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-header bg-info text-white">Total Assets</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ total_assets }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-header bg-warning text-white">Maintenance Orders</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ total_mos }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header bg-primary text-white">Total Users</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ total_users }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header bg-success text-white">Spare Parts</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ total_parts }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Breakdown Simulation -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Breakdown Simulation</h5>
+            </div>
+            <div class="card-body">
+                <p>Simulate a sudden machine breakdown. This will:</p>
+                <ul>
+                    <li>Select a random "Operational" asset.</li>
+                    <li>Set its status to "Offline".</li>
+                    <li>Create a Critical Reactive Work Order.</li>
+                </ul>
+                <form action="{{ url_for('simulation.trigger_breakdown') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger btn-lg btn-block">
+                        💥 TRIGGER BREAKDOWN
+                    </button>
+                </form>
+
+                <hr>
+                <h6>Recent Breakdowns:</h6>
+                {% if recent_breakdowns %}
+                <ul class="list-group list-group-flush">
+                    {% for mo in recent_breakdowns %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">{{ mo.created_at.strftime('%Y-%m-%d %H:%M') }}</small><br>
+                            <strong>{{ mo.asset.asset_code }}</strong>
+                        </div>
+                        <span class="badge badge-danger">Critical</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center">No recent breakdowns.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Generation -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-database"></i> Bulk Data Generator</h5>
+            </div>
+            <div class="card-body">
+                <p>Generate high volumes of consistent data for stress testing.</p>
+                <form action="{{ url_for('simulation.generate_data') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="form-group">
+                        <label for="dataType">Data Type</label>
+                        <select class="form-control" id="dataType" name="type">
+                            <option value="assets">Assets</option>
+                            <option value="users">Users (All Roles)</option>
+                            <option value="orders">Maintenance Orders</option>
+                            <option value="spare_parts">Spare Parts</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="count">Quantity</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="count" name="count" value="10" min="1"
+                                max="1000">
+                            <div class="input-group-append">
+                                <span class="input-group-text">items</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-block">
+                        <i class="fas fa-plus-circle"></i> Generate Data
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- User Availability Simulation -->
+    <div class="col-md-12 mb-4">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-user-clock"></i> Technician Availability Simulation</h5>
+            </div>
+            <div class="card-body">
+                <p>Simulate technician availability updates (e.g., Sick Leave, On Call).</p>
+
+                <form action="{{ url_for('simulation.set_availability') }}" method="POST"
+                    class="form-inline justify-content-center">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <label class="my-1 mr-2" for="techSelect">Technician:</label>
+                    <select class="custom-select my-1 mr-sm-2" id="techSelect" name="user_id" style="width: 300px;">
+                        {% for tech in technicians %}
+                        <option value="{{ tech.id }}">
+                            {{ tech.username }} ({{ tech.availability_status }})
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <label class="my-1 mr-2" for="statusSelect">New Status:</label>
+                    <select class="custom-select my-1 mr-sm-2" id="statusSelect" name="status">
+                        <option value="Available">Available</option>
+                        <option value="Busy">Busy</option>
+                        <option value="Sick">Sick</option>
+                        <option value="Vacation">Vacation</option>
+                        <option value="Training">Training</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-info my-1">Update Status</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
