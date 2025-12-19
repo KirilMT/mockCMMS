@@ -30,6 +30,10 @@ module.exports = defineConfig({
     },
   },
 
+  // Unify snapshots across platforms (Windows/Linux) to avoid "missing snapshot" errors on CI
+  // coupled with maxDiffPixelRatio above, this allows single-source-of-truth visual testing
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
+
   // Retry failed tests for resilience
   retries: process.env.CI ? 2 : 1,
 
