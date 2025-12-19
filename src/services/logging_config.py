@@ -187,8 +187,13 @@ class LoggingConfig:
             path = os.path.join(log_dir, filename)
             # Check for existing handler for this file
             for h in root_logger.handlers:
+                # Use getattr to safely check handler type (handles mocked objects)
+                handler_class = getattr(h, "__class__", None)
+                handler_name = (
+                    getattr(handler_class, "__name__", "") if handler_class else ""
+                )
                 if (
-                    isinstance(h, logging.FileHandler)
+                    handler_name == "FileHandler"
                     and getattr(h, "baseFilename", "") == path
                 ):
                     return  # Already exists
