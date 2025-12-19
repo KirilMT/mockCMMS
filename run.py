@@ -1,5 +1,7 @@
 """Application entry point."""
 
+import os
+
 from dotenv import load_dotenv
 from src.app import create_app
 
