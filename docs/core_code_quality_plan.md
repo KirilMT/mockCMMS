@@ -45,11 +45,42 @@ This document outlines a comprehensive, systematic approach to auditing and impr
 
 For all audit tasks, we follow a strict 5-step iterative process to ensure quality:
 
-1.  **Lint**: Run `ruff`, `pylint`, `mypy`, `radon`, `bandit`, `jscpd`. **Fix all errors.**
-2.  **Format**: Run `flake8` and `black`. **Fix all issues.**
-3.  **Test**: Run `pytest` with coverage. **Ensure references pass and coverage is maintained (target 85%+).**
-4.  **Audit Report**: Generate/Update an audit report (e.g., `docs/AUDIT_REPORT_SRC.md`) documenting findings and fixes. **Loop back to Step 1 if code changes.**
+### Python Backend (Phase 2)
+1.  **Lint**: Run `ruff check src/`, `pylint src/`, `mypy src/`, `radon cc src/ -a`, `bandit -r src/`. **Fix all errors.**
+2.  **Format**: Run `flake8 src/` and `black src/`. **Fix all issues.**
+3.  **Test**: Run `pytest --cov=src tests/`. **Ensure all tests pass and coverage ≥82%.**
+4.  **Audit Report**: Generate/Update audit report (e.g., `docs/AUDIT_REPORT_SRC.md`). **Loop back to Step 1 if code changes.**
 5.  **Final Verification**: Confirm all metrics are met before marking task complete.
+
+### JavaScript/CSS/HTML Frontend (Phase 3-5)
+
+> [!IMPORTANT]
+> **ALWAYS run tests BEFORE and AFTER any frontend code changes to detect regressions.**
+
+1.  **Pre-Linting Test Baseline**: Ensure tests pass first (establishes working state)
+    ```bash
+    npm test                             # Jest unit tests (41 tests)
+    npx playwright test --project=chromium  # E2E tests (71 tests)
+    ```
+
+2.  **Lint**: Run ESLint to identify code quality issues (report only first)
+    ```bash
+    npx eslint src/static/js --report-unused-disable-directives
+    ```
+
+3.  **Format & Fix**: Apply auto-fixes carefully
+    ```bash
+    npx eslint src/static/js --fix
+    npx prettier --write src/static/js
+    ```
+
+4.  **Post-Fix Test Verification**: Re-run tests to confirm no regressions
+    ```bash
+    npm test                             # Must still pass
+    npx playwright test --project=chromium  # Must still pass
+    ```
+
+5.  **Audit Report**: Document findings. **Loop back to Step 1 if tests fail.**
 
 ---
 

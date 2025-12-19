@@ -310,9 +310,13 @@ def edit_mo(mo_id):
 def delete_mo(mo_id):
     mo = MaintenanceOrder.query.get_or_404(mo_id)
     asset_id = mo.asset_id
-    db.session.delete(mo)
-    db.session.commit()
-    flash("Maintenance Order deleted successfully!", "success")
+    try:
+        db.session.delete(mo)
+        db.session.commit()
+        flash("Maintenance Order deleted successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error deleting Maintenance Order: {e}", "danger")
 
     if request.referrer and f"/assets/{asset_id}" in request.referrer:
         return redirect(url_for("main.asset_detail", asset_id=asset_id))

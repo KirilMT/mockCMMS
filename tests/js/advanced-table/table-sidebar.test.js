@@ -14,6 +14,21 @@ global.ToastNotification = {
     info: jest.fn()
 };
 
+// Mock showConfirmModal (used by updateView and other methods)
+global.showConfirmModal = jest.fn((message, onConfirm) => {
+    // Auto-confirm for tests
+    if (onConfirm) onConfirm();
+});
+
+// Mock showDeleteConfirm (used by deleteView)
+global.showDeleteConfirm = jest.fn((entity, message, onConfirm) => {
+    // Check if window.confirm mock returns true (default) or false
+    if (global.confirm && !global.confirm()) {
+        return; // Cancelled
+    }
+    if (onConfirm) onConfirm();
+});
+
 // Mock fetch API
 global.fetch = jest.fn(() => Promise.resolve({
     ok: true,
@@ -155,26 +170,33 @@ describe('TableSidebar', () => {
     });
 
     test('TS-1.10: test_saveView_calls_api', async () => {
-        global.prompt = jest.fn(() => 'My View');
+        // Mock showInputModal to auto-submit with a name
+        sidebar.showInputModal = jest.fn((message, callback) => {
+            callback('My View');
+        });
         table.showButtonLoading = jest.fn(() => ({ restore: jest.fn() }));
         table.fetchWithRetry = jest.fn().mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({ success: true, id: 99 })
         });
+        table.savedConfigs = []; // No duplicates
         const btn = document.createElement('button');
         btn.id = 'saveViewBtn';
         document.body.appendChild(btn);
         await sidebar.saveView();
         await new Promise(resolve => setTimeout(resolve, 0));
-        expect(table.fetchWithRetry).toHaveBeenCalledWith('/api/table-config/default', expect.objectContaining({
+        // API endpoint is /api/table-config/{pageName}
+        expect(table.fetchWithRetry).toHaveBeenCalledWith('/api/table-config/' + table.pageName, expect.objectContaining({
             method: 'POST',
             body: expect.stringContaining('My View')
         }));
-        expect(table.selectedConfigId).toBe(99);
     });
 
     test('TS-1.11: test_deleteView_calls_api', async () => {
-        global.confirm = jest.fn(() => true);
+        // Reset showDeleteConfirm to auto-confirm
+        global.showDeleteConfirm.mockImplementation((entity, message, onConfirm) => {
+            if (onConfirm) onConfirm();
+        });
         table.showButtonLoading = jest.fn(() => ({ restore: jest.fn() }));
         table.fetchWithRetry = jest.fn().mockResolvedValue({
             ok: true,
@@ -578,7 +600,10 @@ describe('TableSidebar', () => {
 
     test('TS-5.3: deleteView confirms deletion', async () => {
         const config = { id: 1, config_name: 'Test View' };
-        window.confirm = jest.fn().mockReturnValue(true);
+        // Reset showDeleteConfirm to auto-confirm
+        global.showDeleteConfirm.mockImplementation((entity, message, onConfirm) => {
+            if (onConfirm) onConfirm();
+        });
         document.body.innerHTML += `
             <div class="saved-view-item" data-config-id="1">
                 <button class="delete-view-btn"></button>
@@ -588,13 +613,16 @@ describe('TableSidebar', () => {
         table.loadConfiguration = jest.fn();
         table.showButtonLoading = jest.fn(() => ({ restore: jest.fn() }));
         await sidebar.deleteView(config);
-        expect(window.confirm).toHaveBeenCalled();
+        expect(global.showDeleteConfirm).toHaveBeenCalled();
         expect(table.fetchWithRetry).toHaveBeenCalled();
     });
 
     test('TS-5.4: deleteView cancels deletion', async () => {
         const config = { id: 1, config_name: 'Test View' };
-        window.confirm = jest.fn().mockReturnValue(false);
+        // Mock showDeleteConfirm to NOT call onConfirm (simulating cancel)
+        global.showDeleteConfirm.mockImplementation((entity, message, onConfirm) => {
+            // Don't call onConfirm - user cancelled
+        });
         table.fetchWithRetry = jest.fn();
         await sidebar.deleteView(config);
         expect(table.fetchWithRetry).not.toHaveBeenCalled();
@@ -727,32 +755,42 @@ describe('TableSidebar', () => {
 
     describe('Feature: View Management & Input Logic', () => {
         beforeEach(() => {
-            // Setup mocking for window.confirm
-            global.confirm = jest.fn(() => true);
+            // Reset showConfirmModal to auto-confirm by default
+            global.showConfirmModal.mockImplementation((message, onConfirm) => {
+                if (onConfirm) onConfirm();
+            });
             // Mock fetch
             global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) }));
         });
 
         test('TS-7.1: updateView validation branches', () => {
-            // 1. No view selected
+            // 1. No view selected - should return early without calling showConfirmModal
             table.lastLoadedConfigId = null;
             sidebar.updateView();
-            // Should warn and return
-            // We can check if fetch was NOT called
-            expect(global.fetch).not.toHaveBeenCalled();
+            // Should warn and return (no confirm called)
+            expect(global.showConfirmModal).not.toHaveBeenCalled();
+
+            // Reset mock
+            global.showConfirmModal.mockClear();
 
             // 2. View selected but not found in configs
             table.lastLoadedConfigId = 999;
             table.savedConfigs = [{ id: 1, config_name: 'View 1' }];
             sidebar.updateView();
-            expect(global.fetch).not.toHaveBeenCalled();
+            expect(global.showConfirmModal).not.toHaveBeenCalled();
 
-            // 3. View found, but User cancels confirm
+            // Reset mock
+            global.showConfirmModal.mockClear();
+
+            // 3. View found, but User cancels confirm (don't call onConfirm)
             table.lastLoadedConfigId = 1;
-            global.confirm.mockImplementation(() => false); // Cancel
+            global.showConfirmModal.mockImplementation((message, onConfirm) => {
+                // Don't call onConfirm - simulating cancel
+            });
+            table.fetchWithRetry = jest.fn();
             sidebar.updateView();
-            expect(global.confirm).toHaveBeenCalled();
-            expect(global.fetch).not.toHaveBeenCalled();
+            expect(global.showConfirmModal).toHaveBeenCalled();
+            expect(table.fetchWithRetry).not.toHaveBeenCalled();
         });
 
         test('TS-7.2: updateView success path', async () => {

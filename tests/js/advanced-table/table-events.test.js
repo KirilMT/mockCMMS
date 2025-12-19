@@ -270,50 +270,6 @@ describe('AdvancedTable Event Methods', () => {
 
 
 
-    describe('Branch Coverage Improvements', () => {
-        test('TE-3.1: Row click ignored on interactive elements', () => {
-            // Setup table with specific HTML structure
-            document.body.innerHTML = `
-                <div class="advanced-table">
-                    <table>
-                        <tbody>
-                            <tr data-id="1">
-                                <td><button class="btn-edit">Edit</button></td>
-                                <td><a href="#">Link</a></td>
-                                <td>Content</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            // Re-bind container
-            table.container = document.querySelector('.advanced-table').parentNode;
-
-            // Mock data methods required by click handler
-            table.getFilteredData = jest.fn(() => [{ id: 1 }]);
-            table.getPaginatedData = jest.fn(() => [{ id: 1 }]);
-            table.rowClick = jest.fn();
-
-            // Re-attach listeners to the NEW body
-            table.attachEventListeners();
-
-            const btn = document.querySelector('button');
-            const link = document.querySelector('a');
-            const content = document.querySelector('td:last-child');
-
-            // Click button -> Should NOT trigger rowClick
-            btn.click();
-            expect(table.rowClick).not.toHaveBeenCalled();
-
-            // Click link -> Should NOT trigger rowClick
-            link.click();
-            expect(table.rowClick).not.toHaveBeenCalled();
-
-            // Click content -> Should trigger rowClick
-            content.click();
-            expect(table.rowClick).toHaveBeenCalledWith(1);
-        });
-
-
-    });
+    // Note: TE-3.1 row click test removed - row click behavior was intentionally removed
+    // from table-events.js. Users should click ID links to navigate to detail pages.
 });

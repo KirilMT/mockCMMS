@@ -3,53 +3,61 @@
 {% block title %}Maintenance Orders{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Maintenance Orders</h1>
-        <a href="{{ url_for('main.add_mo') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New MO
-        </a>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Maintenance Orders</h1>
+    <a href="{{ url_for('main.add_mo') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add New MO
+    </a>
+</div>
 
-    <div id="mosTable" class="page-full-height"></div>
+<div id="mosTable" class="page-full-height"></div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Bug #29: Clear localStorage if 'assignees' column is missing
-            const tableStateKey = 'tableState_mosTable';
-            try {
-                const savedStateJSON = localStorage.getItem(tableStateKey);
-                if (savedStateJSON) {
-                    const savedState = JSON.parse(savedStateJSON);
-                    // Check if columnOrder exists and if 'assignees' is missing from it
-                    if (savedState.columnOrder && !savedState.columnOrder.includes('assignees')) {
-                        localStorage.removeItem(tableStateKey);
-                        console.log("Cleared outdated table state for 'mosTable' to show new 'Assignees' column.");
-                    }
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Bug #29: Clear localStorage if 'assignees' column is missing
+        const tableStateKey = 'tableState_mosTable';
+        try {
+            const savedStateJSON = localStorage.getItem(tableStateKey);
+            if (savedStateJSON) {
+                const savedState = JSON.parse(savedStateJSON);
+                // Check if columnOrder exists and if 'assignees' is missing from it
+                if (savedState.columnOrder && !savedState.columnOrder.includes('assignees')) {
+                    localStorage.removeItem(tableStateKey);
+                    console.log("Cleared outdated table state for 'mosTable' to show new 'Assignees' column.");
                 }
-            } catch (e) {
-                console.error("Error processing table state from localStorage:", e);
-                localStorage.removeItem(tableStateKey); // Clear corrupted state
             }
+        } catch (e) {
+            console.error("Error processing table state from localStorage:", e);
+            localStorage.removeItem(tableStateKey); // Clear corrupted state
+        }
 
-            const columns = [
-                { key: 'id', label: 'ID', type: 'number' },
-                { key: 'asset_name', label: 'Asset', type: 'text' },
-                { key: 'description', label: 'Description', type: 'text' },
-                { key: 'order_type', label: 'Type', type: 'text' },
-                { key: 'status', label: 'Status', type: 'text' },
-                { key: 'priority', label: 'Priority', type: 'text' },
-                { key: 'due_date', label: 'Due Date', type: 'date' },
-                { key: 'assignees', label: 'Assignees', type: 'text' },
-                { key: 'schedule_name', label: 'Schedule', type: 'text' },
-                { key: 'frequency', label: 'Frequency', type: 'text' },
-                { key: 'estimated_completion_time', label: 'Est. Time (min)', type: 'number' },
-                { key: 'labour_count', label: 'Labour Count', type: 'number' }
-            ];
+        const columns = [
+            {
+                key: 'id',
+                label: 'ID',
+                type: 'number',
+                render: function (val, row) {
+                    return `<a href="/maintenance_orders/${row.id}">${val}</a>`;
+                }
+            },
+            { key: 'asset_name', label: 'Asset', type: 'text' },
+            { key: 'description', label: 'Description', type: 'text' },
+            { key: 'order_type', label: 'Type', type: 'text' },
+            { key: 'status', label: 'Status', type: 'text' },
+            { key: 'priority', label: 'Priority', type: 'text' },
+            { key: 'due_date', label: 'Due Date', type: 'date' },
+            { key: 'assignees', label: 'Assignees', type: 'text' },
+            { key: 'schedule_name', label: 'Schedule', type: 'text' },
+            { key: 'frequency', label: 'Frequency', type: 'text' },
+            { key: 'estimated_completion_time', label: 'Est. Time (min)', type: 'number' },
+            { key: 'labour_count', label: 'Labour Count', type: 'number' }
+        ];
 
-            const mosData = {{ mos | tojson }};
+        const mosData = {{ mos | tojson
+    }};
 
-            // Use initAdvancedTable instead of direct instantiation
-            initAdvancedTable('mosTable', mosData, columns, 25);
+    // Use initAdvancedTable instead of direct instantiation
+    initAdvancedTable('mosTable', mosData, columns, 25);
         });
-    </script>
+</script>
 {% endblock %}

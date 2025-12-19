@@ -15,7 +15,14 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const columns = [
-            { key: 'id', label: 'ID', type: 'number' },
+            {
+                key: 'id',
+                label: 'ID',
+                type: 'number',
+                render: function (val, row) {
+                    return `<a href="/users/${row.id}">${val}</a>`;
+                }
+            },
             {
                 key: 'username', label: 'Username', type: 'text', render: function (val, row) {
                     // Add warning icon if technician without team assignment

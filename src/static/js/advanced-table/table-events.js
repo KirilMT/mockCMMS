@@ -84,46 +84,5 @@ AdvancedTable.prototype.attachEventListeners = function () {
         });
     });
 
-    // Bug #14 Fix: Use event delegation instead of attaching to individual rows
-    // This ensures clicks work even after table re-renders (sorting, column changes)
-    const tbody = this.container.querySelector('.advanced-table tbody');
-    if (tbody) {
-        tbody.addEventListener('click', (e) => {
-            // Find the clicked row (handle clicks on td or nested elements)
-            const row = e.target.closest('tr');
-            if (!row || !tbody.contains(row)) return;
-
-            // Ignore clicks on buttons or links (Edit/Delete actions)
-            if (e.target.closest('button, a, .btn, .inline-form')) {
-                return;
-            }
-
-            // Get the row index within the current page
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            const rowIndex = rows.indexOf(row);
-
-            if (rowIndex === -1) return;
-
-            // Get the data for this row
-            const filteredData = this.getFilteredData();
-            const paginatedData = this.getPaginatedData(filteredData);
-            const rowData = paginatedData[rowIndex];
-
-            if (rowData && rowData.id) {
-                this.rowClick(rowData.id);
-            }
-        });
-    }
-};
-
-AdvancedTable.prototype.rowClick = function (id) {
-    let pagePath = this.pageName.replace('Table', '');
-
-    if (pagePath === 'mos') {
-        pagePath = 'maintenance_orders';
-    } else if (pagePath === 'spareParts') {
-        pagePath = 'spare_parts';
-    }
-
-    window.location.href = `/${pagePath}/${id}`;
+    // Row click behavior REMOVED - users should click ID links to navigate to detail pages
 };
