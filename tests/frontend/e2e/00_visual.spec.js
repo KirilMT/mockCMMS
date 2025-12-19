@@ -45,9 +45,13 @@ async function waitForTable(page, tableId, options = {}) {
 test.beforeEach(async ({ page }) => {
     // Force a consistent minimum height on body to avoid "Expected image size X, received Y" errors
     // across platforms (Windows often renders taller than Linux).
-    // This ensures both platforms produce a 1280x3000px screenshot (via fullPage: true),
-    // eliminating dimension mismatch errors.
-    await page.addStyleTag({ content: 'body { min-height: 3000px !important; }' });
+    // Using addInitScript ensures the CSS is injected on EVERY page load (including after navigation).
+    // This creates a 1280x3000px canvas for fullPage screenshots, eliminating dimension mismatches.
+    await page.addInitScript(() => {
+        const style = document.createElement('style');
+        style.textContent = 'body { min-height: 3000px !important; }';
+        document.head.appendChild(style);
+    });
 });
 
 // ============================================================================
