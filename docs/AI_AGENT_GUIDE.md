@@ -1,7 +1,7 @@
 # AI Agent Guide - Code Quality Audit
 
 **Created:** December 13, 2025  
-**Last Updated:** December 17, 2025
+**Last Updated:** December 19, 2025
 **Purpose:** AI prompts for all 49 tasks in core_code_quality_plan.md
 
 ---
@@ -12,8 +12,8 @@
 - 📋 [core_code_quality_plan.md](core_code_quality_plan.md) - The audit structure (49 tasks, 7 phases)
 - 🗓️ [IMPLEMENTATION_PRIORITY_GUIDE.md](IMPLEMENTATION_PRIORITY_GUIDE.md) - Overall timeline
 - 🗺️ [mockCMMS_roadmap.md](mockCMMS_roadmap.md) - Strategic vision and standards
-- ✅ [comprehensive_testing_plan.md](comprehensive_testing_plan.md) - Backend testing foundation (210 tests)
-- 🧪 [frontend_testing_plan.md](frontend_testing_plan.md) - Frontend testing foundation (Jest, Playwright)
+- ✅ [comprehensive_testing_plan.md](comprehensive_testing_plan.md) - Backend testing foundation (223 pytest tests)
+- 🧪 [frontend_testing_plan.md](frontend_testing_plan.md) - Frontend testing (293 Jest + 71 Playwright tests)
 
 **Update After Each Task:**
 - ✏️ Mark `[x]` in [core_code_quality_plan.md](core_code_quality_plan.md) for completed tasks
@@ -80,7 +80,7 @@ Please:
 
 **Step 3: Functional Testing**
 - Run: pytest tests/
-- Verify all 210 tests pass
+- Verify all tests pass
 - ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
 
 **Step 4: Manual Audit**
@@ -131,7 +131,7 @@ Please:
 
 **Step 3: Functional Testing**
 - Run: pytest tests/
-- Verify all 210 tests pass
+- Verify all tests pass
 - ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
 
 **Step 4: Manual Audit**
@@ -181,7 +181,7 @@ Please:
 
 **Step 3: Functional Testing**
 - Run: pytest tests/
-- Verify all 210 tests pass
+- Verify all tests pass
 - ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
 
 **Step 4: Manual Audit**
@@ -231,7 +231,7 @@ Please:
 
 **Step 3: Functional Testing**
 - Run: pytest tests/
-- Verify all 210 tests pass
+- Verify all tests pass
 - ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
 
 **Step 4: Manual Audit**
@@ -281,7 +281,7 @@ Please:
 
 **Step 3: Functional Testing**
 - Run: pytest tests/
-- Verify all 210 tests pass
+- Verify all tests pass
 - ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
 
 **Step 4: Manual Audit**
@@ -331,7 +331,7 @@ Please:
 
 **Step 3: Functional Testing**
 - Run: pytest tests/
-- Verify all 210 tests pass
+- Verify all tests pass
 - ✅ Checkpoint: After this step, linting/formatting/functionality should all pass
 
 **Step 4: Manual Audit**
@@ -363,7 +363,7 @@ Show me your findings and proposed changes before implementing.
 ## Phase 2 Final Verification
 
 After all 6 tasks complete:
-- [ ] Run full test suite: `pytest tests/` (all 210 tests must pass)
+- [ ] Run full test suite: `pytest tests/backend/` (all backend tests must pass)
 - [ ] Check coverage: `pytest --cov=src tests/` (maintain 82.99%+)
 - [ ] Run pylint: `pylint src/` (maintain 9.15/10+)
 - [ ] Verify application starts: `python run.py`
@@ -964,7 +964,7 @@ I'm on Phase 6, Task 6.1 of the mockCMMS code quality audit.
 
 Task: Audit run.py using the 5-step iterative loop
 
-**Step 1-3:** flake8 → black → pytest (all 210 tests pass)
+**Step 1-3:** flake8 → black → pytest (all tests pass)
 
 **Step 4: Manual Audit**
 - [ ] Review application startup logic
@@ -1177,7 +1177,7 @@ Task: Audit naming conventions across entire codebase
 - Categorize by severity
 
 **Step 3: Verify No Regressions**
-- Run all tests (210 must pass)
+- Run all tests (must pass)
 
 **Step 4: Manual Audit**
 - [ ] Files & Directories (Python: snake_case, JS: kebab-case)
@@ -1277,7 +1277,7 @@ Task: Final consistency check across all code
 - List remaining issues
 
 **Step 3: Verify No Regressions**
-- Run all 210 tests
+- Run all tests
 - Verify all pass
 
 **Step 4: Manual Audit**
@@ -1301,7 +1301,7 @@ Show me your findings before implementing.
 
 After all 4 tasks complete:
 - [ ] Run all linters one final time
-- [ ] Run all 210 tests (100% pass)
+- [ ] Run all tests (100% pass)
 - [ ] Verify 82.99%+ coverage maintained
 - [ ] Test application end-to-end
 - [ ] Create final audit report
@@ -1464,7 +1464,7 @@ You review and either:
 ```
 After AI completes:
 - Check the changes
-- Run tests (210 must pass)
+- Run tests (must pass)
 - Verify progress updated in core_code_quality_plan.md
 - Commit with proper message
 ```
@@ -1586,16 +1586,17 @@ Tell me:
 
 ---
 
-## 📊 Current Status (December 13, 2025)
+## 📊 Current Status (December 19, 2025)
 
 | Document | Status | Progress |
 |----------|--------|----------|
 | **AI_AGENT_GUIDE.md** | ✅ Complete | All 49 prompts ready |
-| **core_code_quality_plan.md** | 🔄 In Progress | Phase 1 ✅, Phase 2 started |
-| **comprehensive_testing_plan.md** | ✅ Complete | 210/210 tests ✅ |
+| **core_code_quality_plan.md** | 🔄 In Progress | Phase 1-2 ✅, Phase 3 Ready |
+| **comprehensive_testing_plan.md** | ✅ Complete | 223 pytest tests ✅ |
+| **frontend_testing_plan.md** | ✅ Complete | 293 Jest + 71 Playwright tests ✅ |
 | **mockCMMS_roadmap.md** | 📚 Reference | Strategic context |
 
-**Current Task:** Phase 2, Task 2.2 (Web Routes)
+**Current Task:** Phase 3 (JavaScript Frontend Analysis) Ready to Start
 
 ---
 
@@ -1639,7 +1640,7 @@ Please update core_code_quality_plan.md and suggest the next task."
 - ✅ Use the prompts from this guide (copy-paste ready)
 - ✅ One task at a time
 - ✅ Review findings before approving fixes
-- ✅ Verify all 210 tests pass after each task
+- ✅ Verify all tests pass after each task
 - ✅ Update progress tracking
 
 ### Don'ts ❌
@@ -1654,5 +1655,5 @@ Please update core_code_quality_plan.md and suggest the next task."
 
 ---
 
-**Last Updated:** December 13, 2025  
-**Next Review:** After Phase 2 completion
+**Last Updated:** December 19, 2025  
+**Next Review:** During Phase 3 (JavaScript Audit)
