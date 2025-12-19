@@ -45,12 +45,22 @@ async function waitForTable(page, tableId, options = {}) {
 test.beforeEach(async ({ page }) => {
     // Force a consistent minimum height on body to avoid "Expected image size X, received Y" errors
     // across platforms (Windows often renders taller than Linux).
-    // Using addInitScript ensures the CSS is injected on EVERY page load (including after navigation).
-    // This creates a 1280x3000px canvas for fullPage screenshots, eliminating dimension mismatches.
+    // Using addInitScript with DOMContentLoaded ensures the CSS is injected after DOM is ready,
+    // on EVERY page load (including after navigation).
     await page.addInitScript(() => {
-        const style = document.createElement('style');
-        style.textContent = 'body { min-height: 3000px !important; }';
-        document.head.appendChild(style);
+        // Wait for DOM to be ready before injecting CSS
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', injectStyle);
+        } else {
+            injectStyle();
+        }
+
+        function injectStyle() {
+            const style = document.createElement('style');
+            style.id = 'playwright-visual-test-height';
+            style.textContent = 'body { min-height: 3000px !important; }';
+            document.head.appendChild(style);
+        }
     });
 });
 
