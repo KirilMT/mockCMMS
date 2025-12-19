@@ -1,16 +1,12 @@
 # mockCMMS (Mock Computerized Maintenance Management System)
 
-[![CI Pipeline](https://github.com/KirilMT/mockCMMS/actions/workflows/ci.yml/badge.svg)](https://github.com/KirilMT/mockCMMS/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/KirilMT/mockCMMS/graph/badge.svg?token=PSNIDHV66T)](https://codecov.io/gh/KirilMT/mockCMMS)
-[![Linting: Flake8](https://img.shields.io/badge/linting-flake8-blue)](https://github.com/pycqa/flake8)
-
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![CI Pipeline](https://github.com/KirilMT/mockCMMS/actions/workflows/ci.yml/badge.svg)](https://github.com/KirilMT/mockCMMS/actions/workflows/ci.yml) 
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/) 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
+[![codecov](https://codecov.io/gh/KirilMT/mockCMMS/graph/badge.svg?token=PSNIDHV66T)](https://codecov.io/gh/KirilMT/mockCMMS) 
+[![Linting: Flake8](https://img.shields.io/badge/linting-flake8-blue)](https://github.com/pycqa/flake8) 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) 
 [![Security: Bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
-
-[![Planning Coverage](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=PSNIDHV66T&flag=planning)](https://codecov.io/gh/KirilMT/mockCMMS)
-[![Reports Coverage](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=PSNIDHV66T&flag=reports)](https://codecov.io/gh/KirilMT/mockCMMS)
 
 A modular Flask-based maintenance management system with a monorepo architecture
 that supports dynamic loading of specialized applications.
