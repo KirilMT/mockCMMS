@@ -683,141 +683,141 @@ If Step 4 resulted in NO modifications:
 #### Task 3.1: Advanced Table Core (`src/static/js/advanced-table/table-core.js`)
 
 **Step 1: ESLint Linting**
-- [ ] Run `eslint src/static/js/advanced-table/table-core.js` to identify code quality issues
-- [ ] Fix any problems found (style, unused vars, etc.)
-- [ ] Proceed to Step 2
+- [x] Run `eslint src/static/js/advanced-table/table-core.js` to identify code quality issues
+- [x] Fix any problems found (style, unused vars, etc.)
+- [x] Proceed to Step 2
 
 **Step 2: Prettier Formatting**
-- [ ] Run `prettier --write src/static/js/advanced-table/table-core.js` to auto-format code
-- [ ] Review changes for consistency
-- [ ] Proceed to Step 3
+- [x] Run `prettier --write src/static/js/advanced-table/table-core.js` to auto-format code
+- [x] Review changes for consistency
+- [x] Proceed to Step 3
 
 **Step 3: Browser Testing**
-- [ ] Load application in browser
-- [ ] Test Advanced Table functionality
-- [ ] Check browser console for errors
-- [ ] Verify no JavaScript exceptions
-- [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
+- [x] Load application in browser
+- [x] Test Advanced Table functionality
+- [x] Check browser console for errors
+- [x] Verify no JavaScript exceptions
+- [x] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
 Focus on architecture, logic, and patterns that tools can't catch:
-- [ ] Review module organization and dependencies
-- [ ] Check for circular dependencies
-- [ ] Verify proper encapsulation and class structure
-- [ ] Review initialization patterns
-- [ ] Check for memory leaks (event listener cleanup)
-- [ ] Consistent naming conventions (camelCase)
-- [ ] Proper use of `const`, `let` (no `var`)
-- [ ] Arrow functions vs regular functions consistency
-- [ ] Remove `console.log()` statements
-- [ ] Remove bug reference comments (e.g., `// Bug #5`)
-- [ ] Add JSDoc comments for public methods
-- [ ] Remove commented-out code blocks
+- [x] Review module organization and dependencies
+- [x] Check for circular dependencies
+- [x] Verify proper encapsulation and class structure
+- [x] Review initialization patterns
+- [x] Check for memory leaks (event listener cleanup)
+- [x] Consistent naming conventions (camelCase)
+- [x] Proper use of `const`, `let` (no `var`)
+- [x] Arrow functions vs regular functions consistency
+- [x] Remove `console.log()` statements
+- [x] Remove bug reference comments (e.g., `// Bug #5`)
+- [x] Add JSDoc comments for public methods
+- [x] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:
-- [ ] Document what was changed and why
-- [ ] Update any affected browser tests
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [x] Document what was changed and why
+- [x] Update any affected browser tests
+- [x] 🔄 **Loop back to Step 1** and repeat until file is perfect
 
 If Step 4 resulted in NO modifications:
-- [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-core.js [Phase 3.1]`
-- [ ] Move to Task 3.2
+- [x] Mark task as COMPLETE ✅
+- [x] Commit changes with message: `refactor(table): audit and improve table-core.js [Phase 3.1]`
+- [x] Move to Task 3.2
 
 ---
 
 #### Task 3.2: Advanced Table Init (`src/static/js/advanced-table/table-init.js`)
 
 **Step 1: ESLint Linting**
-- [ ] Run `eslint src/static/js/advanced-table/table-init.js` to identify code quality issues
-- [ ] Fix any problems found (style, unused vars, etc.)
-- [ ] Proceed to Step 2
+- [x] Run `eslint src/static/js/advanced-table/table-init.js` to identify code quality issues
+- [x] Fix any problems found (style, unused vars, etc.)
+- [x] Proceed to Step 2
 
 **Step 2: Prettier Formatting**
-- [ ] Run `prettier --write src/static/js/advanced-table/table-init.js` to auto-format code
-- [ ] Review changes for consistency
-- [ ] Proceed to Step 3
+- [x] Run `prettier --write src/static/js/advanced-table/table-init.js` to auto-format code
+- [x] Review changes for consistency
+- [x] Proceed to Step 3
 
 **Step 3: Browser Testing**
-- [ ] Load application in browser
-- [ ] Test Advanced Table initialization
-- [ ] Check browser console for errors
-- [ ] Verify no JavaScript exceptions
-- [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
+- [x] Load application in browser
+- [x] Test Advanced Table initialization
+- [x] Check browser console for errors
+- [x] Verify no JavaScript exceptions
+- [x] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
 Focus on architecture, logic, and patterns that tools can't catch:
-- [ ] Review module organization and dependencies
-- [ ] Check for circular dependencies
-- [ ] Verify proper encapsulation and class structure
-- [ ] Review initialization patterns
-- [ ] Check for memory leaks (event listener cleanup)
-- [ ] Consistent naming conventions (camelCase)
-- [ ] Proper use of `const`, `let` (no `var`)
-- [ ] Arrow functions vs regular functions consistency
-- [ ] Remove `console.log()` statements
-- [ ] Remove bug reference comments (e.g., `// Bug #5`)
-- [ ] Add JSDoc comments for public methods
-- [ ] Remove commented-out code blocks
+- [x] Review module organization and dependencies
+- [x] Check for circular dependencies
+- [x] Verify proper encapsulation and class structure
+- [x] Review initialization patterns
+- [x] Check for memory leaks (event listener cleanup)
+- [x] Consistent naming conventions (camelCase)
+- [x] Proper use of `const`, `let` (no `var`)
+- [x] Arrow functions vs regular functions consistency
+- [x] Remove `console.log()` statements
+- [x] Remove bug reference comments (e.g., `// Bug #5`)
+- [x] Add JSDoc comments for public methods
+- [x] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:
-- [ ] Document what was changed and why
-- [ ] Update any affected browser tests
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [x] Document what was changed and why
+- [x] Update any affected browser tests
+- [x] 🔄 **Loop back to Step 1** and repeat until file is perfect
 
 If Step 4 resulted in NO modifications:
-- [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-init.js [Phase 3.2]`
-- [ ] Move to Task 3.3
+- [x] Mark task as COMPLETE ✅
+- [x] Commit changes with message: `refactor(table): audit and improve table-init.js [Phase 3.2]`
+- [x] Move to Task 3.3
 
 ---
 
 #### Task 3.3: Table Rendering (`src/static/js/advanced-table/table-render.js`)
 
 **Step 1: ESLint Linting**
-- [ ] Run `eslint src/static/js/advanced-table/table-render.js` to identify code quality issues
-- [ ] Fix any problems found (style, unused vars, etc.)
-- [ ] Proceed to Step 2
+- [x] Run `eslint src/static/js/advanced-table/table-render.js` to identify code quality issues
+- [x] Fix any problems found (style, unused vars, etc.)
+- [x] Proceed to Step 2
 
 **Step 2: Prettier Formatting**
-- [ ] Run `prettier --write src/static/js/advanced-table/table-render.js` to auto-format code
-- [ ] Review changes for consistency
-- [ ] Proceed to Step 3
+- [x] Run `prettier --write src/static/js/advanced-table/table-render.js` to auto-format code
+- [x] Review changes for consistency
+- [x] Proceed to Step 3
 
 **Step 3: Browser Testing**
-- [ ] Load application in browser
-- [ ] Test table rendering functionality
-- [ ] Check browser console for errors
-- [ ] Verify no JavaScript exceptions
-- [ ] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
+- [x] Load application in browser
+- [x] Test table rendering functionality
+- [x] Check browser console for errors
+- [x] Verify no JavaScript exceptions
+- [x] ✅ **Checkpoint:** After this step, ESLint/Prettier/browser tests should all pass
 
 **Step 4: Manual Audit**
 Focus on architecture, logic, and patterns that tools can't catch:
-- [ ] Review DOM manipulation efficiency
-- [ ] Check for unnecessary re-renders
-- [ ] Verify proper use of event delegation
-- [ ] Review template string usage
-- [ ] Check for duplicate rendering logic
-- [ ] Consistent naming conventions (camelCase)
-- [ ] Proper use of `const`, `let` (no `var`)
-- [ ] Arrow functions vs regular functions consistency
-- [ ] Remove `console.log()` statements
-- [ ] Remove bug reference comments (e.g., `// Bug #5`)
-- [ ] Add JSDoc comments for public methods
-- [ ] Remove commented-out code blocks
+- [x] Review DOM manipulation efficiency
+- [x] Check for unnecessary re-renders
+- [x] Verify proper use of event delegation
+- [x] Review template string usage
+- [x] Check for duplicate rendering logic
+- [x] Consistent naming conventions (camelCase)
+- [x] Proper use of `const`, `let` (no `var`)
+- [x] Arrow functions vs regular functions consistency
+- [x] Remove `console.log()` statements
+- [x] Remove bug reference comments (e.g., `// Bug #5`)
+- [x] Add JSDoc comments for public methods
+- [x] Remove commented-out code blocks
 
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:
-- [ ] Document what was changed and why
-- [ ] Update any affected browser tests
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [x] Document what was changed and why
+- [x] Update any affected browser tests
+- [x] 🔄 **Loop back to Step 1** and repeat until file is perfect
 
 If Step 4 resulted in NO modifications:
-- [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(table): audit and improve table-render.js [Phase 3.3]`
-- [ ] Move to Task 3.4
+- [x] Mark task as COMPLETE ✅
+- [x] Commit changes with message: `refactor(table): audit and improve table-render.js [Phase 3.3]`
+- [x] Move to Task 3.4
 
 ---
 

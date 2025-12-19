@@ -1,11 +1,14 @@
-// Table rendering methods
+/**
+ * Render the table, including the sidebar, controls, header, and body.
+ */
 AdvancedTable.prototype.render = function () {
-    const currentSearchValue = this.globalSearchDisplay || '';
+  const currentSearchValue = this.globalSearchDisplay || "";
+  const sidebarHTML = this.sidebar ? this.sidebar.generateHTML() : '';
 
-    this.container.innerHTML = `
+  this.container.innerHTML = `
         <div class="advanced-table-wrapper">
             <div class="table-layout">
-                ${this.sidebar.generateHTML()}
+                ${sidebarHTML}
                 
                 <div class="table-main">
                     <div class="table-controls">
@@ -16,7 +19,7 @@ AdvancedTable.prototype.render = function () {
                             <div class="table-search">
                                 <input type="text" class="form-control form-control-sm" placeholder="Search all columns..."
                                        id="globalSearchInput" value="${currentSearchValue}">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" id="clearSearchBtn" style="display: ${currentSearchValue ? 'inline-block' : 'none'};" title="Clear search">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" id="clearSearchBtn" style="display: ${currentSearchValue ? "inline-block" : "none"};" title="Clear search">
                                     <i class="fas fa-times"></i>
                                 </button>
                                 <button class="btn btn-sm btn-primary" type="button" id="applySearchBtn" title="Apply search">
@@ -48,56 +51,73 @@ AdvancedTable.prototype.render = function () {
         </div>
     `;
 
-    this.attachEventListeners();
+  this.attachEventListeners();
+
+  if (this.sidebar) {
     this.sidebar.attachEventListeners();
 
     // Populate sidebar sections
     this.sidebar.populateColumns();
     this.sidebar.populateSavedViews();
 
-    // Bug #4: Restore UI state after render
-    this.restoreSearchUI();
     this.sidebar.restoreFilterUI();
+  }
 
-    // Initialize column resizing
-    if (typeof this.initColumnResize === 'function') {
-        this.initColumnResize();
-    }
+  // Restore UI state after render
+  this.restoreSearchUI();
 
-    // Initialize window resize listener
-    if (typeof this.initResizeListener === 'function') {
-        this.initResizeListener();
-    }
+  // Initialize column resizing
+  if (typeof this.initColumnResize === "function") {
+    this.initColumnResize();
+  }
+
+  // Initialize window resize listener
+  if (typeof this.initResizeListener === "function") {
+    this.initResizeListener();
+  }
 };
 
+/**
+ * Render the table header HTML.
+ * @returns {string} The HTML string for the table header row.
+ */
 AdvancedTable.prototype.renderHeader = function () {
-    const visibleColumns = this.columnOrder.filter(key => !this.hiddenColumns.has(key));
+  const visibleColumns = this.columnOrder.filter(
+    (key) => !this.hiddenColumns.has(key),
+  );
 
-    // Handle all columns hidden
-    if (visibleColumns.length === 0) {
-        return `<tr><th class="text-center">
+  // Handle all columns hidden
+  if (visibleColumns.length === 0) {
+    return `<tr><th class="text-center">
             <i class="fas fa-eye-slash"></i> All columns are hidden. Please show at least one column from the sidebar.
         </th></tr>`;
-    }
+  }
 
-    return `<tr>${visibleColumns
-        .map(key => {
-            const col = this.columns.find(c => c.key === key);
-            const sortIcon = this.getSortIcon(key);
-            return `
+  return `<tr>${visibleColumns
+    .map((key) => {
+      const col = this.columns.find((c) => c.key === key);
+      const sortIcon = this.getSortIcon(key);
+      return `
                 <th class="sortable" data-column="${key}">
                     ${col.label} ${sortIcon}
                 </th>
             `;
-        }).join('')}</tr>`;
+    })
+    .join("")}</tr>`;
 };
 
+/**
+ * Render the table body HTML.
+ * @returns {string} The HTML string for the table body rows.
+ */
 AdvancedTable.prototype.renderBody = function () {
-    const visibleColumns = this.columnOrder.filter(key => !this.hiddenColumns.has(key));
+  const visibleColumns = this.columnOrder.filter(
+    (key) => !this.hiddenColumns.has(key),
+  );
 
-    // Handle all columns hidden
-    if (visibleColumns.length === 0) {
-        return `
+  // Handle all columns hidden
+  if (visibleColumns.length === 0) {
+    return `
             <tr>
                 <td class="table-empty">
                     <i class="fas fa-columns fa-3x mb-3"></i>
@@ -106,31 +126,31 @@ AdvancedTable.prototype.renderBody = function () {
                 </td>
             </tr>
         `;
+  }
+
+  const filteredData = this.getFilteredData();
+  const paginatedData = this.getPaginatedData(filteredData);
+
+  // Handle empty states
+  if (paginatedData.length === 0) {
+    const colSpan = visibleColumns.length;
+    let emptyMessage = "";
+
+    if (this.data.length === 0) {
+      // No data at all
+      emptyMessage = "No data available";
+    } else if (this.globalSearchTerm) {
+      // Search returned no results
+      emptyMessage = `No results found for "${this.globalSearchDisplay}"`;
+    } else if (Array.isArray(this.filters) && this.filters.length > 0) {
+      // Filters returned no results
+      emptyMessage = "No results match the applied filters";
+    } else {
+      // Other empty state
+      emptyMessage = "No data to display";
     }
 
-    const filteredData = this.getFilteredData();
-    const paginatedData = this.getPaginatedData(filteredData);
-
-    // Handle empty states
-    if (paginatedData.length === 0) {
-        const colSpan = visibleColumns.length;
-        let emptyMessage = '';
-
-        if (this.data.length === 0) {
-            // No data at all
-            emptyMessage = 'No data available';
-        } else if (this.globalSearchTerm) {
-            // Search returned no results
-            emptyMessage = `No results found for "${this.globalSearchDisplay}"`;
-        } else if (Array.isArray(this.filters) && this.filters.length > 0) {
-            // Filters returned no results
-            emptyMessage = 'No results match the applied filters';
-        } else {
-            // Other empty state
-            emptyMessage = 'No data to display';
-        }
-
-        return `
+    return `
             <tr>
                 <td colspan="${colSpan}" class="table-empty">
                     <i class="fas fa-inbox fa-3x mb-3"></i>
@@ -138,71 +158,93 @@ AdvancedTable.prototype.renderBody = function () {
                 </td>
             </tr>
         `;
-    }
+  }
 
-    return paginatedData.map(row => `
+  return paginatedData
+    .map(
+      (row) => `
         <tr>
             ${visibleColumns
-            .map(key => `<td>${this.formatCellValue(row[key], key, row)}</td>`)
-            .join('')}
+              .map(
+                (key) => `<td>${this.formatCellValue(row[key], key, row)}</td>`,
+              )
+              .join("")}
         </tr>
-    `).join('');
+    `,
+    )
+    .join("");
 };
 
+/**
+ * Get the HTML for the sort icon of a column.
+ * @param {string} column - The column key.
+ * @returns {string} The HTML string for the sort icon.
+ */
 AdvancedTable.prototype.getSortIcon = function (column) {
-    if (this.currentSort.column !== column) return '<i class="fas fa-sort text-muted"></i>';
-    return this.currentSort.direction === 'asc'
-        ? '<i class="fas fa-sort-up text-primary"></i>'
-        : '<i class="fas fa-sort-down text-primary"></i>';
+  if (this.currentSort.column !== column)
+    return '<i class="fas fa-sort text-muted"></i>';
+  return this.currentSort.direction === "asc"
+    ? '<i class="fas fa-sort-up text-primary"></i>'
+    : '<i class="fas fa-sort-down text-primary"></i>';
 };
 
+/**
+ * Format a cell value based on column definition.
+ * @param {*} value - The raw value.
+ * @param {string} column - The column key.
+ * @param {Object} row - The entire row object.
+ * @returns {string} The formatted value.
+ */
 AdvancedTable.prototype.formatCellValue = function (value, column, row) {
-    if (value === null || value === undefined) value = '';
+  if (value === null || value === undefined) value = "";
 
-    const col = this.columns.find(c => c.key === column);
+  const col = this.columns.find((c) => c.key === column);
 
-    if (col && col.render && typeof col.render === 'function') {
-        return col.render(value, row);
-    }
+  if (col && col.render && typeof col.render === "function") {
+    return col.render(value, row);
+  }
 
-    if (col && col.type === 'date' && value) {
-        return new Date(value).toLocaleDateString();
-    }
-    if (col && col.type === 'datetime' && value) {
-        return new Date(value).toLocaleString();
-    }
-    return value;
+  if (col && col.type === "date" && value) {
+    return new Date(value).toLocaleDateString();
+  }
+  if (col && col.type === "datetime" && value) {
+    return new Date(value).toLocaleString();
+  }
+  return value;
 };
 
-// Update table data without recreating the entire HTML (preserves sidebar state)
+/**
+ * Update the table body and other dynamic elements without a full re-render.
+ * Preserves sidebar state and event listeners where possible.
+ */
 AdvancedTable.prototype.updateTable = function () {
-    // Update table body
-    const tbody = this.container.querySelector('.advanced-table tbody');
-    if (tbody) {
-        tbody.innerHTML = this.renderBody();
-    }
+  // Update table body
+  const tbody = this.container.querySelector(".advanced-table tbody");
+  if (tbody) {
+    tbody.innerHTML = this.renderBody();
+  }
 
-    // Update row count
-    const rowCount = this.container.querySelector('.row-count');
-    if (rowCount) {
-        rowCount.innerHTML = `Showing <strong>${this.getFilteredData().length}</strong> of <strong>${this.data.length}</strong> rows`;
-    }
+  // Update row count
+  const rowCount = this.container.querySelector(".row-count");
+  if (rowCount) {
+    rowCount.innerHTML = `Showing <strong>${this.getFilteredData().length}</strong> of <strong>${this.data.length}</strong> rows`;
+  }
 
-    // Update header sort icons
-    const thead = this.container.querySelector('.advanced-table thead');
-    if (thead) {
-        thead.innerHTML = this.renderHeader();
-        // Re-attach sort listeners
-        thead.querySelectorAll('.sortable').forEach(th => {
-            th.addEventListener('click', () => {
-                const column = th.dataset.column;
-                this.sort(column);
-            });
-        });
+  // Update header sort icons
+  const thead = this.container.querySelector(".advanced-table thead");
+  if (thead) {
+    thead.innerHTML = this.renderHeader();
+    // Re-attach sort listeners
+    thead.querySelectorAll(".sortable").forEach((th) => {
+      th.addEventListener("click", () => {
+        const column = th.dataset.column;
+        this.sort(column);
+      });
+    });
 
-        // Re-initialize column resizing
-        if (typeof this.initColumnResize === 'function') {
-            this.initColumnResize();
-        }
+    // Re-initialize column resizing
+    if (typeof this.initColumnResize === "function") {
+      this.initColumnResize();
     }
+  }
 };
