@@ -23,6 +23,11 @@ module.exports = defineConfig({
   timeout: 30000,
   expect: {
     timeout: 10000, // Timeout for expect() assertions
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.05, // Allow 5% diff for cross-platform (Win/Linux) rendering differences
+      threshold: 0.2, // Color difference threshold
+      animations: 'disabled',
+    },
   },
 
   // Retry failed tests for resilience
