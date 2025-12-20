@@ -3,380 +3,408 @@
    ========================================= */
 
 /* 1. Target with MAXIMUM specificity: 5 layers including HTML/BODY */
-html body .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__clear {
-    position: sticky !important;
-    float: right !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    right: 5px !important;
+html
+  body
+  .select2-container--bootstrap-5
+  .select2-selection--multiple
+  .select2-selection__clear {
+  position: sticky !important;
+  float: right !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  right: 5px !important;
 
-    /* Reset all native button styles */
-    width: auto !important;
-    height: auto !important;
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    padding: 0 5px !important;
-    margin: 0 !important;
-    cursor: pointer !important;
+  /* Reset all native button styles */
+  width: auto !important;
+  height: auto !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 5px !important;
+  margin: 0 !important;
+  cursor: pointer !important;
 
-    /* Hide native stuff */
-    font-size: 0 !important;
-    text-indent: 0 !important;
-    z-index: 9999 !important;
+  /* Hide native stuff */
+  font-size: 0 !important;
+  text-indent: 0 !important;
+  z-index: 9999 !important;
 }
 
 /* 2. NUCLEAR OPTION: Hide ALL children */
-html body .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__clear * {
-    display: none !important;
+html
+  body
+  .select2-container--bootstrap-5
+  .select2-selection--multiple
+  .select2-selection__clear
+  * {
+  display: none !important;
 }
 
 /* 3. Rebuild the icon using ::after */
-html body .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__clear::after {
-    content: '×' !important;
-    display: block !important;
-    font-family: Arial, sans-serif !important;
-    font-size: 28px !important;
-    font-weight: bold !important;
-    color: #666 !important;
-    line-height: 1 !important;
-    transition: all 0.2s ease !important;
+html
+  body
+  .select2-container--bootstrap-5
+  .select2-selection--multiple
+  .select2-selection__clear::after {
+  content: "×" !important;
+  display: block !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 28px !important;
+  font-weight: bold !important;
+  color: #666 !important;
+  line-height: 1 !important;
+  transition: all 0.2s ease !important;
 }
 
 /* 4. Hover State */
-html body .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__clear:hover::after {
-    color: #333 !important;
-    font-size: 30px !important;
+html
+  body
+  .select2-container--bootstrap-5
+  .select2-selection--multiple
+  .select2-selection__clear:hover::after {
+  color: #333 !important;
+  font-size: 30px !important;
 }
-
 
 /* Color scheme and typography */
 :root {
-    --primary-color: #007bff;
-    --secondary-color: #6c757d;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #17a2b8;
-    --light-color: #f8f9fa;
-    --dark-color: #343a40;
-    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  --font-family: "Segoe UI", tahoma, geneva, verdana, sans-serif;
 }
 
 body {
-    font-family: var(--font-family);
-    background-color: #f5f5f5;
+  font-family: var(--font-family);
+  background-color: #f5f5f5;
 }
 
 /* Consistent card styling */
 .card {
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1.5rem;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  margin-bottom: 1.5rem;
 }
 
 .card-header {
-    background-color: var(--light-color);
-    border-bottom: 1px solid #dee2e6;
-    font-weight: 600;
+  background-color: var(--light-color);
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
 }
 
 /* Button consistency */
 .btn {
-    border-radius: 6px;
-    font-weight: 500;
-    transition: all 0.2s ease;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
 }
 
 /* Form styling */
 .form-control,
 .form-select {
-    border-radius: 6px;
-    border: 1px solid #ced4da;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 .form-control:focus,
 .form-select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 25%);
 }
 
 /* Loading states */
 .loading {
-    opacity: 0.6;
-    pointer-events: none;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .spinner-border-sm {
-    width: 1rem;
-    height: 1rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 /* Success/Error states */
 .alert {
-    border: none;
-    border-radius: 6px;
-    font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
 }
 
 .alert-success {
-    background-color: #d4edda;
-    color: #155724;
+  background-color: #d4edda;
+  color: #155724;
 }
 
 .alert-danger {
-    background-color: #f8d7da;
-    color: #721c24;
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 .alert-warning {
-    background-color: #fff3cd;
-    color: #856404;
+  background-color: #fff3cd;
+  color: #856404;
 }
 
 .alert-info {
-    background-color: #d1ecf1;
-    color: #0c5460;
+  background-color: #d1ecf1;
+  color: #0c5460;
 }
 
 /* Table improvements */
 .table {
-    background-color: white;
-    border-radius: 8px;
-    overflow: hidden;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .table thead th {
-    border-top: none;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.875rem;
-    letter-spacing: 0.5px;
+  border-top: none;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
 }
 
 /* Navigation improvements */
 .navbar-brand {
-    font-weight: 700;
-    font-size: 1.5rem;
+  font-weight: 700;
+  font-size: 1.5rem;
 }
 
 .list-group-item {
-    transition: all 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .list-group-item:hover {
-    transform: translateX(5px);
+  transform: translateX(5px);
 }
 
 /* Responsive improvements */
-@media (max-width: 768px) {
-    .card {
-        margin-bottom: 1rem;
-    }
+@media (width <= 768px) {
+  .card {
+    margin-bottom: 1rem;
+  }
 
-    .btn {
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
-    }
+  .btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
 
-    .table-responsive {
-        font-size: 0.875rem;
-    }
+  .table-responsive {
+    font-size: 0.875rem;
+  }
 }
 
 /* Progress indicators */
 .progress {
-    height: 8px;
-    border-radius: 4px;
-    background-color: #e9ecef;
+  height: 8px;
+  border-radius: 4px;
+  background-color: #e9ecef;
 }
 
 .progress-bar {
-    border-radius: 4px;
+  border-radius: 4px;
 }
 
 /* Status badges */
 .badge {
-    font-weight: 500;
-    padding: 0.5em 0.75em;
+  font-weight: 500;
+  padding: 0.5em 0.75em;
 }
 
 .status-operational {
-    background-color: var(--success-color);
+  background-color: var(--success-color);
 }
 
 .status-maintenance {
-    background-color: var(--warning-color);
+  background-color: var(--warning-color);
 }
 
 .status-offline {
-    background-color: var(--danger-color);
+  background-color: var(--danger-color);
 }
 
 .status-open {
-    background-color: var(--info-color);
+  background-color: var(--info-color);
 }
 
 .status-in-progress {
-    background-color: var(--warning-color);
+  background-color: var(--warning-color);
 }
 
 .status-completed {
-    background-color: var(--success-color);
+  background-color: var(--success-color);
 }
 
 .priority-critical {
-    background-color: var(--danger-color);
+  background-color: var(--danger-color);
 }
 
 .priority-high {
-    background-color: #fd7e14;
+  background-color: #fd7e14;
 }
 
 .priority-medium {
-    background-color: var(--warning-color);
+  background-color: var(--warning-color);
 }
 
 .priority-low {
-    background-color: var(--info-color);
+  background-color: var(--info-color);
 }
 
 /* Animation utilities */
 .fade-in {
-    animation: fadeIn 0.3s ease-in;
+  animation: fade-in 0.3s ease-in;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .slide-in {
-    animation: slideIn 0.3s ease-out;
+  animation: slide-in 0.3s ease-out;
 }
 
-@keyframes slideIn {
-    from {
-        transform: translateX(-100%);
-    }
+@keyframes slide-in {
+  from {
+    transform: translateX(-100%);
+  }
 
-    to {
-        transform: translateX(0);
-    }
+  to {
+    transform: translateX(0);
+  }
 }
 
 /* Utility classes for inline style replacement */
 .inline-form {
-    display: inline;
+  display: inline;
 }
 
 .text-warning-custom {
-    color: orange;
+  color: orange;
 }
 
 .iframe-full {
-    width: 100%;
-    height: 800px;
-    border: none;
+  width: 100%;
+  height: 800px;
+  border: none;
 }
 
 .flash-hidden {
-    display: none;
+  display: none;
 }
 
-/* Custom styles for Select2 to fix cursor issues and prevent layout shifts (Bug #30) */
+/* Custom styles for Select2 to fix cursor issues and prevent layout shifts */
 
-/* 
- * Bug #30 FIX: Use a fixed height for the Assignees container.
+/*
+ * Use a fixed height for the Assignees container.
  * This prevents ANY layout shift when adding/removing assignees.
  * The field maintains a constant height with internal scrolling.
  */
 
 /* Wrapper for the assignees form-group to enforce fixed layout */
-#assignees+.select2-container {
-    display: block !important;
+#assignees + .select2-container {
+  display: block !important;
 }
 
 /* Fixed height container - always the same size */
 .select2-container--bootstrap-5 .select2-selection--multiple {
-    height: 100px !important;
-    /* Fixed height, not max-height */
-    min-height: 100px !important;
-    /* Prevent shrinking */
-    max-height: 100px !important;
-    /* Prevent growing */
-    overflow-y: auto !important;
-    /* Always show scrollbar area */
-    overflow-x: hidden !important;
-    /* No horizontal scroll */
-    cursor: text !important;
-    padding-bottom: 5px !important;
-    /* Space for last row */
+  height: 100px !important;
+
+  /* Fixed height, not max-height */
+  min-height: 100px !important;
+
+  /* Prevent shrinking */
+  max-height: 100px !important;
+
+  /* Prevent growing */
+  overflow: hidden auto !important;
+
+  /* Always show scrollbar area */
+
+  /* No horizontal scroll */
+  cursor: text !important;
+  padding-bottom: 5px !important;
+
+  /* Space for last row */
 }
 
 /* Ensure the selection area uses flexbox for proper wrapping */
-.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-content: flex-start !important;
-    gap: 3px !important;
-    padding: 5px !important;
+.select2-container--bootstrap-5
+  .select2-selection--multiple
+  .select2-selection__rendered {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-content: flex-start !important;
+  gap: 3px !important;
+  padding: 5px !important;
 }
 
 /* Style for selected choice tags */
 .select2-container--bootstrap-5 .select2-selection__choice {
-    cursor: default !important;
-    margin: 2px !important;
-    flex-shrink: 0 !important;
+  cursor: default !important;
+  margin: 2px !important;
+  flex-shrink: 0 !important;
+  max-width: calc(100% - 20px) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 /* Search field styling within the fixed container */
 .select2-container--bootstrap-5 .select2-search__field {
-    cursor: text !important;
-    margin: 2px !important;
+  cursor: text !important;
+  margin: 2px !important;
 }
 
 /* Remove any problematic min-height overrides */
-.select2-container--bootstrap-5.select2-container--focus .select2-selection--multiple,
-.select2-container--bootstrap-5.select2-container--open .select2-selection--multiple {
-    height: 100px !important;
-    min-height: 100px !important;
-    max-height: 100px !important;
+.select2-container--bootstrap-5.select2-container--focus
+  .select2-selection--multiple,
+.select2-container--bootstrap-5.select2-container--open
+  .select2-selection--multiple {
+  height: 100px !important;
+  min-height: 100px !important;
+  max-height: 100px !important;
 }
 
 /* Clear button positioning - minimal padding */
 body .select2-container--bootstrap-5 .select2-selection--multiple {
-    padding-right: 0;
-    position: relative;
+  padding-right: 0;
+  position: relative;
 }
 
 /* Style clear button - simple × like Global Search */
+
 /* Increased specificity (body prefix) to override theme without !important */
-
-
-
 
 /* Ensure EXPLICITLY no ::before content to prevent double icons */
 .select2-container--bootstrap-5 .select2-selection__clear::before {
-    content: none !important;
-    display: none !important;
+  content: none !important;
+  display: none !important;
 }
-
 
 /* ============================================
    SELECT2 RESPONSIVENESS FIX
@@ -384,16 +412,8 @@ body .select2-container--bootstrap-5 .select2-selection--multiple {
 
 /* Ensure Select2 container is always 100% width */
 .select2-container--bootstrap-5 {
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-/* Ensure selected items don't overflow horizontally */
-.select2-container--bootstrap-5 .select2-selection__choice {
-    max-width: calc(100% - 20px) !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* ============================================
@@ -402,50 +422,51 @@ body .select2-container--bootstrap-5 .select2-selection--multiple {
 
 /* Form container with balanced columns */
 .form-container {
-    background: #fff;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-    margin-bottom: 1rem;
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 8%);
+  margin-bottom: 1rem;
 }
 
 /* Form actions - column layout with note above buttons */
 .form-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    padding-top: 1rem;
-    border-top: 1px solid #dee2e6;
-    margin-top: 1rem;
-    /* Reduced back to 1rem */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+  margin-top: 1rem;
+
+  /* Reduced back to 1rem */
 }
 
 /* Required fields note - above buttons */
 .form-actions .required-note {
-    color: #6c757d;
-    font-size: 0.875rem;
+  color: #6c757d;
+  font-size: 0.875rem;
 }
 
 /* Buttons row */
 .form-actions .buttons-row {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 /* Ensure form groups have consistent spacing */
 .form-container .form-group {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 /* Ensure the last form-group before form-actions has extra bottom margin */
-.form-container .row+.form-actions,
-.form-container>.row:last-of-type {
-    margin-bottom: 0;
+.form-container .row + .form-actions,
+.form-container > .row:last-of-type {
+  margin-bottom: 0;
 }
 
 /* Add min-height to textareas to prevent them from being too small */
 .form-container textarea {
-    min-height: 80px;
+  min-height: 80px;
 }
