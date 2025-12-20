@@ -128,7 +128,6 @@ class AdvancedTable {
     }
   }
 
-  // Bug #4 Fix: Restore search UI after render
   /**
    * Restore the state of the search UI elements.
    */

@@ -159,7 +159,7 @@ AdvancedTable.prototype.globalSearch = function (searchTerm) {
       this.globalSearchDisplay = "";
       this.currentPage = 1;
       this.updateTable();
-      this.saveTableState(); // Bug #4: Persist state after clearing search
+      this.saveTableState();
       return;
     }
 
@@ -168,13 +168,13 @@ AdvancedTable.prototype.globalSearch = function (searchTerm) {
 
     this.currentPage = 1;
     this.updateTable();
-    this.saveTableState(); // Bug #4: Persist state after search
+    this.saveTableState();
   } catch (error) {
     console.error("Global search error:", error);
     this.globalSearchTerm = null;
     this.globalSearchDisplay = "";
     this.updateTable();
-    this.saveTableState(); // Bug #4: Persist state after error
+    this.saveTableState();
   }
 };
 
@@ -200,5 +200,5 @@ AdvancedTable.prototype.sort = function (column) {
   this.selectedConfigId = null;
   this.currentPage = 1;
   this.updateTable();
-  this.saveTableState(); // Bug #4: Persist state after sorting
+  this.saveTableState();
 };

@@ -30,7 +30,7 @@ AdvancedTable.prototype.initColumnResize = function () {
   // Initialize all columns with explicit pixel widths
   headers.forEach((th) => {
     if (!th.style.width) {
-      // Bug #8: Apply smart default widths based on column content
+      // Apply smart default widths based on column content
       const columnKey = th.dataset.column;
       let defaultWidth = 0;
 

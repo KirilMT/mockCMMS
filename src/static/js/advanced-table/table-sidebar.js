@@ -204,7 +204,7 @@ class TableSidebar {
     // Save state
     localStorage.setItem("tableSidebarCollapsed", this.sidebarCollapsed);
 
-    // Bug #10: Trigger resize to adjust table width
+    // Trigger resize to adjust table width after sidebar toggle
     setTimeout(() => {
       window.dispatchEvent(new Event("resize"));
     }, 300); // Wait for transition
@@ -337,15 +337,15 @@ class TableSidebar {
                 <select class="form-select form-select-sm filter-column">
                     <option value="">Select Column</option>
                     ${this.table.columnOrder
-                      .filter((key) => !this.table.hiddenColumns.has(key))
-                      .map((key) => {
-                        const col = this.table.columns.find(
-                          (c) => c.key === key,
-                        );
-                        if (!col) return "";
-                        return `<option value="${col.key}" ${col.key === column ? "selected" : ""}>${col.label}</option>`;
-                      })
-                      .join("")}
+        .filter((key) => !this.table.hiddenColumns.has(key))
+        .map((key) => {
+          const col = this.table.columns.find(
+            (c) => c.key === key,
+          );
+          if (!col) return "";
+          return `<option value="${col.key}" ${col.key === column ? "selected" : ""}>${col.label}</option>`;
+        })
+        .join("")}
                 </select>
                 <select class="form-select form-select-sm filter-operator" ${!column ? "disabled" : ""}>
                     <option value="contains" ${operator === "contains" ? "selected" : ""}>Contains</option>
@@ -540,11 +540,10 @@ class TableSidebar {
     // Logic change
     logicRadios.forEach((radio) => {
       radio.addEventListener("change", () => {
-        // Bug #17: User requested "mute" logic instead of clearing.
-        // We just triggering validation/application here.
+        // Mute logic: trigger validation/application.
         // The actual muting happens in applyAllFilters().
         this.validateAllFilters();
-        // We might want to auto-apply to immediately show the "muted" effect
+        // Auto-apply to immediately show the "muted" effect
         this.applyAllFilters();
       });
     });
@@ -680,7 +679,7 @@ class TableSidebar {
       }
     });
 
-    // Bug #32: Add Button
+    // Add Button state
     const addFilterBtn = document.getElementById("addFilterBtn");
     if (addFilterBtn) {
       if (filterRows.length === 0) {
@@ -736,9 +735,9 @@ class TableSidebar {
         }
       }
 
-      // Bug #17: Edit Mute - If row is being edited, treat it as incomplete (skip it)
+      // Edit Mute: If row is being edited, treat it as incomplete (skip it)
       if (column && value && !isEditing) {
-        // Bug #17 Refined: Chained Mute Logic
+        // Chained Mute Logic:
         // We must check if THIS row is part of a consecutive OR chain that ends in an incomplete row.
         // If so, we mute this row.
         // Logic: Look ahead. If we find an OR connector leading to an incomplete row before the chain breaks (changes to AND or ends), mute.
@@ -812,7 +811,7 @@ class TableSidebar {
 
     // Use updateTable instead of render to preserve sidebar state (filter rows)
     this.table.updateTable();
-    this.table.saveTableState(); // Bug #4: Persist state after applying filters
+    this.table.saveTableState();
 
     // Update badge to show applied filters count
     this.updateFilterBadge(filters.length);
@@ -837,7 +836,7 @@ class TableSidebar {
     this.table.selectedConfigId = null; // Clear active view (config changed)
     // Keep lastLoadedConfigId so Update button stays enabled
     this.table.updateTable(); // Use updateTable instead of render
-    this.table.saveTableState(); // Bug #4: Persist state after clearing filters
+    this.table.saveTableState();
     this.updateFilterBadge(0);
     this.validateAllFilters(); // Update button states
 
@@ -1006,7 +1005,7 @@ class TableSidebar {
 
     // Update table
     this.table.updateTable();
-    this.table.saveTableState(); // Bug #4: Persist state after column changes
+    this.table.saveTableState();
 
     // Refresh filter dropdowns to reflect new column order/visibility
     this.refreshFilterDropdowns();
@@ -1030,7 +1029,7 @@ class TableSidebar {
 
     // Update table
     this.table.updateTable();
-    this.table.saveTableState(); // Bug #4: Persist state after reset
+    this.table.saveTableState();
 
     // Refresh filter dropdowns to reflect reset columns
     this.refreshFilterDropdowns();
@@ -1335,7 +1334,7 @@ class TableSidebar {
         } else {
           ToastNotification.error(
             "Failed to update configuration: " +
-              (data.error || "Unknown error"),
+            (data.error || "Unknown error"),
           );
         }
       })
@@ -1428,7 +1427,7 @@ class TableSidebar {
         } else {
           ToastNotification.error(
             "Failed to delete configuration: " +
-              (data.error || "Unknown error"),
+            (data.error || "Unknown error"),
           );
         }
       })
@@ -1503,7 +1502,7 @@ class TableSidebar {
         } else {
           ToastNotification.error(
             "Failed to set default configuration: " +
-              (data.error || "Unknown error"),
+            (data.error || "Unknown error"),
           );
         }
       })
@@ -1550,7 +1549,7 @@ class TableSidebar {
         } else {
           ToastNotification.error(
             "Failed to remove default configuration: " +
-              (data.error || "Unknown error"),
+            (data.error || "Unknown error"),
           );
         }
       })
@@ -1562,7 +1561,9 @@ class TableSidebar {
       });
   }
 
-  // Bug #4 Fix: Restore filter UI from saved state
+  /**
+   * Restore filter UI from saved state.
+   */
   restoreFilterUI() {
     if (!this.table.filters || this.table.filters.length === 0) {
       return;
@@ -1601,7 +1602,7 @@ class TableSidebar {
   }
 
   /**
-   * Show input modal helper (Bug #35 - replacement for prompt).
+   * Show input modal helper (replacement for prompt).
    * @param {string} message - The modal message/label.
    * @param {Function} callback - The callback function to run with the input value.
    */
