@@ -82,6 +82,28 @@ if (-not (Check-Python)) {
 
 # Step 1.2: Check for Node.js
 function Check-Node {
+    # First, check if Node.js is installed in common locations
+    $nodeLocations = @(
+        "C:\Program Files\nodejs",
+        "C:\Program Files (x86)\nodejs",
+        "${env:ProgramFiles}\nodejs",
+        "${env:ProgramFiles(x86)}\nodejs",
+        "${env:LOCALAPPDATA}\Programs\nodejs"
+    )
+
+    $nodeInstalled = $false
+    foreach ($location in $nodeLocations) {
+        if (Test-Path "$location\node.exe") {
+            $nodeInstalled = $true
+            # Add to current session PATH if not already there
+            if ($env:Path -notlike "*$location*") {
+                $env:Path = "$location;$env:Path"
+            }
+            break
+        }
+    }
+
+    # Now check if npm command works
     if (Get-Command npm -ErrorAction SilentlyContinue) {
         $v = npm --version 2>&1
         if ($v -match "(\d+)\.(\d+)") {
@@ -91,6 +113,16 @@ function Check-Node {
             return $true
         }
     }
+
+    # If node.exe exists but npm doesn't work, it's a PATH issue
+    if ($nodeInstalled) {
+        Write-Host "   Found: " -NoNewline -ForegroundColor White
+        Write-Host "Node.js" -NoNewline -ForegroundColor White
+        Write-Host " (PATH refreshed) " -NoNewline -ForegroundColor Green
+        Write-Host "OK" -ForegroundColor Green
+        return $true
+    }
+
     return $false
 }
 
@@ -310,9 +342,11 @@ else {
     Write-Host "..." -ForegroundColor White
     Write-Host ""
 
-    # Install packages with warnings suppressed
+    # Install packages with warnings and notices suppressed
     $env:npm_config_loglevel = "error"
-    npm install jscpd jest jest-environment-jsdom @playwright/test --save-dev 2>&1 | Where-Object { $_ -notmatch "^npm warn" }
+    npm install jscpd jest jest-environment-jsdom @playwright/test --save-dev 2>&1 |
+        Where-Object { $_ -notmatch "^npm warn" -and $_ -notmatch "^npm notice" } |
+        Out-Null
     $env:npm_config_loglevel = $null
 
     if ($LASTEXITCODE -eq 0) {
@@ -347,7 +381,10 @@ else {
     Write-Host "Playwright browsers" -NoNewline -ForegroundColor Magenta
     Write-Host "..." -ForegroundColor White
 
-    npx playwright install 2>&1 | Out-Null
+    # Suppress npm notices during Playwright install
+    npx playwright install 2>&1 |
+        Where-Object { $_ -notmatch "^npm notice" } |
+        Out-Null
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "   Browsers installed " -NoNewline -ForegroundColor White
