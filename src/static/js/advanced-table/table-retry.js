@@ -11,58 +11,64 @@
  * @param {number} [baseDelay=1000] - Base delay in milliseconds for exponential backoff
  * @returns {Promise<Response>} Fetch response
  */
-AdvancedTable.prototype.fetchWithRetry = async function (url, options = {}, maxRetries = 3, baseDelay = 1000) {
-    let lastError;
+AdvancedTable.prototype.fetchWithRetry = async function (
+  url,
+  options = {},
+  maxRetries = 3,
+  baseDelay = 1000
+) {
+  let lastError;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-            const response = await fetch(url, options);
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
 
-            // If response is OK, return it
-            if (response.ok) {
-                return response;
-            }
+      // If response is OK, return it
+      if (response.ok) {
+        return response;
+      }
 
-            // For client errors (4xx), don't retry
-            if (response.status >= 400 && response.status < 500) {
-                return response;
-            }
+      // For client errors (4xx), don't retry
+      if (response.status >= 400 && response.status < 500) {
+        return response;
+      }
 
-            // For server errors (5xx), retry
-            if (response.status >= 500 && attempt < maxRetries) {
-                const delay = baseDelay * Math.pow(2, attempt);
+      // For server errors (5xx), retry
+      if (response.status >= 500 && attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt);
 
-                await this.sleep(delay);
-                continue;
-            }
+        await this.sleep(delay);
+        continue;
+      }
 
-            return response;
-        } catch (error) {
-            lastError = error;
+      return response;
+    } catch (error) {
+      lastError = error;
 
-            // Check if it's a network error
-            if (error instanceof TypeError && error.message.includes('fetch')) {
-                if (attempt < maxRetries) {
-                    const delay = baseDelay * Math.pow(2, attempt);
+      // Check if it's a network error
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        if (attempt < maxRetries) {
+          const delay = baseDelay * Math.pow(2, attempt);
 
+          // Show user-friendly message on last retry
+          if (attempt === maxRetries - 1) {
+            ToastNotification.warning(
+              'Connection issues detected. Retrying...'
+            );
+          }
 
-                    // Show user-friendly message on last retry
-                    if (attempt === maxRetries - 1) {
-                        ToastNotification.warning('Connection issues detected. Retrying...');
-                    }
-
-                    await this.sleep(delay);
-                    continue;
-                }
-            }
-
-            // If not a network error or out of retries, throw
-            throw error;
+          await this.sleep(delay);
+          continue;
         }
-    }
+      }
 
-    // If we exhausted all retries, throw the last error
-    throw lastError || new Error('Max retries exceeded');
+      // If not a network error or out of retries, throw
+      throw error;
+    }
+  }
+
+  // If we exhausted all retries, throw the last error
+  throw lastError || new Error('Max retries exceeded');
 };
 
 /**
@@ -71,7 +77,7 @@ AdvancedTable.prototype.fetchWithRetry = async function (url, options = {}, maxR
  * @returns {Promise} Promise that resolves after delay
  */
 AdvancedTable.prototype.sleep = function (ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 /**
@@ -79,7 +85,7 @@ AdvancedTable.prototype.sleep = function (ms) {
  * @returns {boolean} True if online
  */
 AdvancedTable.prototype.isOnline = function () {
-    return navigator.onLine;
+  return navigator.onLine;
 };
 
 /**
@@ -88,12 +94,14 @@ AdvancedTable.prototype.isOnline = function () {
  * @param {string} [offlineMessage] - Custom message to show when offline
  * @returns {Promise} Result of the operation
  */
-AdvancedTable.prototype.withNetworkCheck = async function (operation, offlineMessage = 'You are offline. Please check your connection.') {
-    if (!this.isOnline()) {
-        ToastNotification.error(offlineMessage);
-        throw new Error('OFFLINE');
-    }
+AdvancedTable.prototype.withNetworkCheck = async function (
+  operation,
+  offlineMessage = 'You are offline. Please check your connection.'
+) {
+  if (!this.isOnline()) {
+    ToastNotification.error(offlineMessage);
+    throw new Error('OFFLINE');
+  }
 
-    return await operation();
+  return await operation();
 };
-
