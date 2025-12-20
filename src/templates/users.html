@@ -1,65 +1,19 @@
-{% extends "base.html" %}
-
-{% block title %}Users{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Users{% endblock %} {% block content
+%}
 <div class="d-flex justify-content-between align-items-center mb-2">
-    <h1>Users</h1>
-    <a href="{{ url_for('main.register') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add New User
-    </a>
+  <h1>Users</h1>
+  <a href="{{ url_for('main.register') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Add New User
+  </a>
 </div>
 
 <div id="usersTable" class="page-full-height"></div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const columns = [
-            {
-                key: 'id',
-                label: 'ID',
-                type: 'number',
-                render: function (val, row) {
-                    return `<a href="/users/${row.id}">${val}</a>`;
-                }
-            },
-            {
-                key: 'username', label: 'Username', type: 'text', render: function (val, row) {
-                    // Add warning icon if technician without team assignment
-                    if (row.is_technician && !row.team_id) {
-                        return val + ' <span title="Technician not assigned to a shift team. Cannot be assigned weekend tasks." class="text-warning-custom">⚠️</span>';
-                    }
-                    return val;
-                }
-            },
-            { key: 'email', label: 'Email', type: 'text' },
-            { key: 'roles_display', label: 'Roles', type: 'text' },
-            {
-                key: 'team_name', label: 'Team', type: 'text', render: function (val, row) {
-                    // Show team for any user, not just technicians
-                    return val || '<span class="text-muted">Unassigned</span>';
-                }
-            },
-            { key: 'is_active', label: 'Active', type: 'text' },
-            {
-                key: 'availability_status', label: 'Availability', type: 'text', render: function (val, row) {
-                    // Only show if user has Technician role
-                    if (!row.is_technician) return '-';
-                    if (val === 'Available') return '<span class="badge badge-success">Available</span>';
-                    if (val === 'On Leave') return '<span class="badge badge-warning">On Leave</span>';
-                    if (val === 'Sick') return '<span class="badge badge-danger">Sick</span>';
-                    return val || '-';
-                }
-            },
-            { key: 'created_at', label: 'Created', type: 'datetime' }
-        ];
-
-
-        const usersData = {{ users | tojson
-    }};
-
-    // Use initAdvancedTable instead of direct instantiation
-    initAdvancedTable('usersTable', usersData, columns, 25);
-    });
+<!-- Data container for JS -->
+<script type="application/json" id="users-data">
+  {{ users | tojson | safe }}
 </script>
+
+<!-- Load page specific JS -->
+<script src="{{ url_for('static', filename='js/pages/users.js') }}"></script>
 {% endblock %}
