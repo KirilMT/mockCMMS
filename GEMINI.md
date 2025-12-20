@@ -62,8 +62,12 @@ Every code change must follow this strict process for EACH file or module:
 
 1.  **Lint**: Run available linters (`ruff`, `pylint`, `mypy`, `jscpd`) and fix
     ALL issues.
-2.  **Format**: Run formatters (`flake8`, `black`, `prettier`) and fix ALL
-    issues.
+2.  **Format**: Run formatters and fix ALL issues.
+    - **Python (STRICT ORDER):** `isort` → `black` → `docformatter`
+      1. `isort src/` - Sort imports (PEP 8)
+      2. `black src/` - Format code structure
+      3. `docformatter --in-place -r src/` - Format docstrings (PEP 257)
+    - **JavaScript/CSS:** `prettier`
 3.  **Test**: Run `pytest` (Backend) or browser tests (Frontend). Fix ALL errors
     and ensure coverage > 85%.
 4.  **Audit**: Review logic against project standards (Architecture, patterns).

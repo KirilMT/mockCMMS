@@ -1,6 +1,6 @@
 # pyproject.toml
 # Created: December 11, 2025
-# Updated: December 19, 2025 - Consolidated pytest.ini and .flake8 settings
+# Updated: December 20, 2025 - Added isort and docformatter configurations
 # Purpose: Modern Python project configuration for mockCMMS
 
 [build-system]
@@ -68,6 +68,14 @@ log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 
 # =============================================================================
+# CODE FORMATTING TOOLS
+# RECOMMENDED EXECUTION ORDER: isort → black → docformatter
+# 1. isort: Sort and organize imports (PEP 8)
+# 2. black: Format code structure and style
+# 3. docformatter: Format docstrings (PEP 257)
+# =============================================================================
+
+# =============================================================================
 # BLACK FORMATTER CONFIGURATION
 # =============================================================================
 [tool.black]
@@ -85,6 +93,34 @@ extend-exclude = '''
   | apps
 )/
 '''
+
+# =============================================================================
+# ISORT CONFIGURATION (Import Sorting - PEP 8 Compliant)
+# =============================================================================
+[tool.isort]
+profile = "black"  # Compatible with Black formatter
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+skip = [".git", "__pycache__", ".venv", "venv", "build", "dist", "apps", "migrations"]
+known_first_party = ["src"]
+known_third_party = ["flask", "sqlalchemy", "werkzeug", "jinja2", "wtforms"]
+
+# =============================================================================
+# DOCFORMATTER CONFIGURATION (Docstring Formatting - PEP 257 Compliant)
+# =============================================================================
+[tool.docformatter]
+recursive = true
+wrap-summaries = 88
+wrap-descriptions = 88
+make-summary-multi-line = false
+close-quotes-on-newline = false
+pre-summary-newline = false
+force-wrap = false
+exclude = [".git", "__pycache__", ".venv", "venv", "build", "dist", "apps"]
 
 # =============================================================================
 # FLAKE8 CONFIGURATION (consolidated from .flake8)

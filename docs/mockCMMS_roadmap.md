@@ -499,6 +499,21 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
         - Code Quality: [code-quality.yml](https://github.com/KirilMT/Troubleshooting-Wizard/blob/main/.github/workflows/code-quality.yml)
         - Release: [release.yml](https://github.com/KirilMT/Troubleshooting-Wizard/blob/main/.github/workflows/release.yml)
 
+- **[ ] Implement Local Development Scripts** _(Priority: High)_
+    - **Note:** Need to think if this would really be necessary, if would really help the development process or not (we haveve already CI and want to implement pre-commit hooks).
+    - **Goal:** Create utility scripts for local development workflow, adapted from Troubleshooting-Wizard.
+    - **Reference:** [Troubleshooting-Wizard scripts/](https://github.com/KirilMT/Troubleshooting-Wizard/tree/main/scripts)
+    - **Scripts to Implement:**
+        - **`format_code.py`:** Actively format Python code (not just check). Should apply Black, isort, and other formatters. Quick script for daily use.
+        - **`test_workflow.py`:** Simulate CI Pipeline, Release, and Code Quality workflows locally before pushing. More complex/slow script for pre-push validation.
+        - **`release_manager.py`:** Handle version bumping, changelog updates, and git tagging for releases.
+        - **`setup_environment.py`:** Automate project environment setup (evaluate if needed for mockCMMS).
+    - **Key Requirements:**
+        - Scripts must be modular and reusable across the mockCMMS ecosystem.
+        - `format_code.py` should perform actual formatting, not just linting/checking.
+        - `test_workflow.py` should mirror the CI pipeline as closely as possible.
+    - **Location:** Create a `scripts/` directory at the repository root.
+
 - **[ ] Implement Repository Standards & Configuration** _(Priority: Medium)_
     - **Goal:** Standardize repository structure, naming, and configuration.
     - **Naming Conventions:**

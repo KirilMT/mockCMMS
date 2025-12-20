@@ -55,6 +55,11 @@ workspace-specific rules.
   unused or "dead" code.
 - **Hardcoding:** Avoid hardcoding values; use configuration files, environment
   variables, or constants where possible.
+- **Python Formatting Order (STRICT):** When formatting Python code, always run
+  tools in this order:
+  1. `isort src/` - Sort imports (PEP 8)
+  2. `black src/` - Format code structure
+  3. `docformatter --in-place -r src/` - Format docstrings (PEP 257)
 
 ### 1.2. Reliability, Security & Performance
 
