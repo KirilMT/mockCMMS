@@ -52,7 +52,7 @@
                     <select multiple class="form-control" id="roles" name="roles" required>
                         {% for role in all_roles %}
                         <!-- prettier-ignore -->
-                        <option value="{{ role.name }}" {% if user_obj and role in user_obj.roles %}selected{% endif %}>{{ role.name }}</option>
+                        <option value="{{ role.name }}" {% if user_obj %}{% for user_role in user_obj.roles %}{% if user_role.id == role.id %}selected{% endif %}{% endfor %}{% endif %}>{{ role.name }}</option>
                         {% endfor %}
                     </select>
                     <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple roles.</small>

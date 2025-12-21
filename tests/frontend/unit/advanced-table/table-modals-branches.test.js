@@ -22,7 +22,7 @@ describe('Table Modals Branch Coverage', () => {
             columnOrder: [],
             hiddenColumns: new Set(),
             savedConfigs: [],
-            columns: [{key: 'id', label: 'ID'}] // Fix: Define columns
+            columns: [{key: 'id', label: 'ID'}]
         };
 
         global.ToastNotification = {

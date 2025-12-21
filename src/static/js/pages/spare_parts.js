@@ -20,6 +20,13 @@ document.addEventListener("DOMContentLoaded", function () {
       { key: "stock_quantity", label: "Stock Qty", type: "number" },
       { key: "location", label: "Location", type: "text" },
       { key: "min_quantity", label: "Min Qty", type: "number" },
+      {
+        key: "actions",
+        label: "Actions",
+        render: function (val, row) {
+          return `<a href="/spare_parts/${row.id}" class="btn btn-sm btn-info">Edit</a>`;
+        },
+      },
     ];
 
     // Use initAdvancedTable instead of direct instantiation

@@ -139,7 +139,7 @@
         messages %}
         <div
           id="flash-messages"
-          data-messages='{{ messages | tojson | safe }}'
+          data-messages="{{ messages | tojson | forceescape }}"
           class="flash-hidden"
         ></div>
         {% endif %} {% endwith %} {% block content %}{% endblock %}

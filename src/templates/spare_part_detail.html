@@ -1,10 +1,10 @@
 {% extends "base.html" %} {% block title %}{% if part %}Edit Spare Part: {{
-part.name }}{% else %}Add New Spare Part{% endif %}{% endblock %} {% block
+part.description }}{% else %}Add New Spare Part{% endif %}{% endblock %} {% block
 content %}
 <div class="row mb-4">
   <div class="col-md-8">
     <h1>
-      {% if part %}Edit Spare Part: {{ part.name }}{% else %}Add New Spare
+      {% if part %}Edit Spare Part: {{ part.description }}{% else %}Add New Spare
       Part{% endif %}
     </h1>
   </div>
@@ -25,62 +25,62 @@ content %}
     <div class="row">
       <div class="col-md-6">
         <div class="form-group">
-          <label for="name" class="required-field">Name</label>
+          <label for="manufacturer_part_id" class="required-field">Part ID</label>
           <input
             type="text"
             class="form-control"
-            id="name"
-            name="name"
-            value="{{ part.name if part else '' }}"
+            id="manufacturer_part_id"
+            name="manufacturer_part_id"
+            value="{{ part.manufacturer_part_id if part else '' }}"
             required
           />
         </div>
         <div class="form-group">
-          <label for="part_number" class="required-field">Part Number</label>
-          <input
-            type="text"
-            class="form-control"
-            id="part_number"
-            name="part_number"
-            value="{{ part.part_number if part else '' }}"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="description">Description</label>
+          <label for="description" class="required-field">Description</label>
           <textarea
             class="form-control"
             id="description"
             name="description"
             rows="3"
+            required
           >
 {{ part.description if part else '' }}</textarea
           >
         </div>
+        <div class="form-group">
+            <label for="manufacturer">Manufacturer</label>
+            <input
+              type="text"
+              class="form-control"
+              id="manufacturer"
+              name="manufacturer"
+              value="{{ part.manufacturer if part else '' }}"
+            />
+          </div>
       </div>
       <div class="col-md-6">
         <div class="form-group">
-          <label for="manufacturer">Manufacturer</label>
-          <input
-            type="text"
-            class="form-control"
-            id="manufacturer"
-            name="manufacturer"
-            value="{{ part.manufacturer if part else '' }}"
-          />
-        </div>
-        <div class="form-group">
-          <label for="quantity" class="required-field">Quantity</label>
+          <label for="stock_quantity" class="required-field">Stock Quantity</label>
           <input
             type="number"
             class="form-control"
-            id="quantity"
-            name="quantity"
-            value="{{ part.quantity if part else 0 }}"
+            id="stock_quantity"
+            name="stock_quantity"
+            value="{{ part.stock_quantity if part else 0 }}"
             min="0"
             required
           />
         </div>
+        <div class="form-group">
+            <label for="location">Location</label>
+            <input
+              type="text"
+              class="form-control"
+              id="location"
+              name="location"
+              value="{{ part.location if part else '' }}"
+            />
+          </div>
         <div class="form-group">
           <label for="min_quantity">Minimum Quantity</label>
           <input
@@ -92,18 +92,6 @@ content %}
             min="0"
           />
         </div>
-        <div class="form-group">
-          <label for="cost">Cost</label>
-          <input
-            type="number"
-            class="form-control"
-            id="cost"
-            name="cost"
-            value="{{ part.cost if part else 0.0 }}"
-            min="0"
-            step="0.01"
-          />
-        </div>
       </div>
     </div>
   </form>
@@ -113,7 +101,7 @@ content %}
     <span class="required-note">* Required fields</span>
     <div class="buttons-row">
       <button type="submit" form="part-form" class="btn btn-primary">
-        {% if part %}Update Part{% else %}Add Part{% endif %}
+        {% if part %}Update Spare Part{% else %}Add Spare Part{% endif %}
       </button>
       <a href="{{ url_for('main.spare_parts') }}" class="btn btn-secondary"
         >Cancel</a
