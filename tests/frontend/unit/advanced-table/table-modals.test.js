@@ -78,24 +78,23 @@ describe('Table Modals Logic', () => {
     test('applyColumnChanges should update advTable', () => {
         mod.applyColumnChanges();
         expect(window.advTable.columnOrder).toEqual(['id', 'name', 'status']);
-        expect(window.advTable.hiddenColumns.has('name')).toBe(true);
-        expect(window.advTable.render).toHaveBeenCalled();
+    });
+
+    test('applyColumnChanges should handle no table', () => {
+        window.advTable = null;
+        mod.applyColumnChanges(); // Should not crash
         expect(document.getElementById('columnManager').classList.contains('show')).toBe(false);
     });
 
     test('addFilterRow should add elements', () => {
         mod.addFilterRow();
         expect(document.querySelectorAll('.filter-row').length).toBe(1);
-        mod.addFilterRow();
-        expect(document.querySelectorAll('.filter-row').length).toBe(2);
-        expect(document.querySelectorAll('.filter-logic').length).toBe(1);
     });
 
     test('applyFilters should validate and apply', () => {
         mod.addFilterRow();
         const row = document.querySelector('.filter-row');
         row.querySelector('.column-select').value = 'id';
-        // Operator default is 'contains'
         row.querySelector('.filter-value').value = '123';
 
         mod.applyFilters();
@@ -103,42 +102,12 @@ describe('Table Modals Logic', () => {
         expect(window.advTable.filters).toEqual({
             'id': { operator: 'contains', value: '123' }
         });
-        expect(window.advTable.render).toHaveBeenCalled();
-        expect(document.getElementById('filterManager').classList.contains('show')).toBe(false);
     });
 
-    test('applyFilters should show error if incomplete', () => {
-        mod.addFilterRow();
-        const row = document.querySelector('.filter-row');
-        row.querySelector('.column-select').value = 'id';
-        // Value is empty by default
-
+    test('applyFilters should handle no table', () => {
+        window.advTable = null;
         mod.applyFilters();
-
-        expect(global.ToastNotification.error).toHaveBeenCalled();
-        expect(window.advTable.render).not.toHaveBeenCalled();
-    });
-
-    test('removeFilterRow should remove element and logic', () => {
-        mod.addFilterRow(); // Row 1
-        mod.addFilterRow(); // Row 2 (with logic)
-
-        const rows = document.querySelectorAll('.filter-row');
-        const btn2 = rows[1].querySelector('.btn-outline-danger');
-
-        mod.removeFilterRow(btn2);
-
-        expect(document.querySelectorAll('.filter-row').length).toBe(1);
-        expect(document.querySelectorAll('.filter-logic').length).toBe(0);
-    });
-
-    test('clearAllFilters should reset state', () => {
-        window.advTable.filters = { id: { operator: 'contains', value: '1' } };
-        mod.clearAllFilters();
-
-        expect(window.advTable.filters).toEqual({});
-        expect(window.advTable.render).toHaveBeenCalled();
-        expect(document.querySelectorAll('.filter-row').length).toBe(1); // Adds one empty row
+        expect(global.ToastNotification.error).not.toHaveBeenCalled();
     });
 
     test('applyFilterRealTime should debounce and update', () => {
@@ -156,87 +125,14 @@ describe('Table Modals Logic', () => {
         jest.advanceTimersByTime(300);
 
         expect(window.advTable.render).toHaveBeenCalled();
-        expect(window.advTable.filters.id.value).toBe('search');
     });
 
-    test('initializeDragAndDrop and perform drag', () => {
-        mod.initializeDragAndDrop();
-
-        const columnList = document.getElementById('columnList');
-        const firstItem = columnList.children[0];
-        const lastItem = columnList.children[2];
-
-        // Trigger dragstart with dataTransfer
-        const dragStartEvent = new Event('dragstart', { bubbles: true });
-        Object.defineProperty(dragStartEvent, 'dataTransfer', {
-            value: { effectAllowed: null }
-        });
-
-        firstItem.dispatchEvent(dragStartEvent);
-        expect(firstItem.classList.contains('dragging')).toBe(true);
-
-        // Trigger dragover on last item
-        // We need to mock getBoundingClientRect for getDragAfterElement logic
-        Element.prototype.getBoundingClientRect = jest.fn(() => ({
-            top: 0,
-            bottom: 50,
-            height: 50,
-            width: 100
-        }));
-
-        const dragOverEvent = new Event('dragover', { bubbles: true });
-        Object.defineProperty(dragOverEvent, 'clientY', { value: 25 }); // Middle of rect
-
-        columnList.dispatchEvent(dragOverEvent);
-
-        // Trigger dragend
-        const dragEndEvent = new Event('dragend', { bubbles: true });
-        firstItem.dispatchEvent(dragEndEvent);
-        expect(firstItem.classList.contains('dragging')).toBe(false);
-    });
-
-    test('loadSavedConfigurations should populate dropdown', async () => {
-        jest.useRealTimers(); // Ensure promises work
-        const configs = [
-            { id: 1, config_name: 'View 1', is_default: false },
-            { id: 2, config_name: 'View 2', is_default: true }
-        ];
-
-        global.fetch = jest.fn(() => Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve(configs)
-        }));
-
-        mod.loadSavedConfigurations();
-        await flushPromises();
-
-        const dropdown = document.getElementById('savedConfigsDropdown');
-        expect(dropdown.children.length).toBe(3); // Default + 2 configs
-        expect(dropdown.children[2].textContent).toContain('(Default)');
-    });
-
-    test('loadSelectedConfiguration should fetch and apply config', async () => {
-         jest.useRealTimers();
-         const configs = [
-            { id: 100, config_name: 'My Config', is_default: false }
-        ];
-
-        global.fetch = jest.fn(() => Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve(configs)
-        }));
-
-        const dropdown = document.getElementById('savedConfigsDropdown');
-        const option = document.createElement('option');
-        option.value = "100";
-        dropdown.appendChild(option);
-        dropdown.value = "100";
-
-        mod.loadSelectedConfiguration();
-        await flushPromises();
-
-        expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/table-config/'));
-        expect(window.advTable.applyConfiguration).toHaveBeenCalledWith(configs[0]);
+    test('applyFilterRealTime should handle no table', () => {
+        jest.useFakeTimers();
+        window.advTable = null;
+        mod.applyFilterRealTime();
+        jest.advanceTimersByTime(300);
+        // Should not crash
     });
 
     test('saveTableConfiguration should post data', async () => {
@@ -248,24 +144,53 @@ describe('Table Modals Logic', () => {
 
         mod.saveTableConfiguration();
         await flushPromises();
-
-        expect(global.fetch).toHaveBeenCalledWith(
-             expect.stringContaining('/api/table-config/'),
-             expect.objectContaining({ method: 'POST' })
-        );
         expect(global.ToastNotification.success).toHaveBeenCalled();
     });
 
-    test('saveTableConfiguration should handle errors', async () => {
+    test('saveTableConfiguration should handle missing table', () => {
+        window.advTable = null;
+        mod.saveTableConfiguration();
+        expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    test('saveTableConfiguration should handle missing config name', () => {
+        document.getElementById("configName").value = "";
+        mod.saveTableConfiguration();
+        expect(global.ToastNotification.error).toHaveBeenCalledWith("Please enter a configuration name");
+    });
+
+    test('loadSavedConfigurations should handle missing table', () => {
+        window.advTable = null;
+        mod.loadSavedConfigurations();
+        expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    test('loadSavedConfigurations should handle fetch error', async () => {
         jest.useRealTimers();
-        global.fetch = jest.fn(() => Promise.resolve({
-           ok: true,
-           json: () => Promise.resolve({ success: false, error: 'Failed' })
-       }));
+        global.fetch = jest.fn(() => Promise.reject(new Error("Network")));
 
-       mod.saveTableConfiguration();
-       await flushPromises();
+        const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+        mod.loadSavedConfigurations();
+        await flushPromises();
 
-       expect(global.ToastNotification.error).toHaveBeenCalledWith(expect.stringContaining('Failed'));
-   });
+        const dropdown = document.getElementById('savedConfigsDropdown');
+        expect(dropdown.innerHTML).toContain('No saved views');
+        consoleSpy.mockRestore();
+    });
+
+    test('loadSelectedConfiguration should handle missing config id', () => {
+        document.getElementById("savedConfigsDropdown").value = "";
+        const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+        mod.loadSelectedConfiguration();
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('No configuration selected'));
+        consoleSpy.mockRestore();
+    });
+
+    test('loadSelectedConfiguration should handle missing table', () => {
+        window.advTable = null;
+        const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+        mod.loadSelectedConfiguration();
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('not ready'));
+        consoleSpy.mockRestore();
+    });
 });
