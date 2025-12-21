@@ -197,6 +197,7 @@ function applyFilters() {
   const filterRows = document.querySelectorAll("#filterRows .filter-row");
   const newFilters = {};
   let hasValidFilter = false;
+  let hasIncompleteFilter = false;
 
   filterRows.forEach((row) => {
     const columnSelect = row.querySelector(".column-select");
@@ -211,13 +212,18 @@ function applyFilters() {
       newFilters[column] = { operator, value };
       hasValidFilter = true;
     } else if (column && !value) {
+      hasIncompleteFilter = true;
       // Highlight incomplete filter
       valueInput.classList.add("is-invalid");
       setTimeout(() => valueInput.classList.remove("is-invalid"), 3000);
     }
   });
 
-  if (hasValidFilter || Object.keys(newFilters).length === 0) {
+  // Proceed only if we have valid filters OR (empty set AND no incomplete attempts)
+  if (
+    hasValidFilter ||
+    (Object.keys(newFilters).length === 0 && !hasIncompleteFilter)
+  ) {
     window.advTable.filters = newFilters;
     window.advTable.currentPage = 1;
     window.advTable.render();
@@ -399,6 +405,11 @@ if (typeof module !== "undefined" && module.exports) {
     saveTableConfiguration,
     loadSavedConfigurations,
     loadSelectedConfiguration,
+    addFilterRow,
+    clearAllFilters,
+    removeFilterRow,
+    toggleFilterValue,
+    applyFilterRealTime
   };
 } else {
   // Expose to window for inline HTML handlers

@@ -35,29 +35,30 @@
                     <label for="asset_type" class="required-field">Asset Type</label>
                     <select class="form-control" id="asset_type" name="asset_type" required>
                         <option value="">Select Type</option>
-                        <option value="department" {% if asset and asset.asset_type=='department' %}selected{% endif %}>
-                            Department</option>
-                        <option value="location" {% if asset and asset.asset_type=='location' %}selected{% endif %}>
-                            Location</option>
-                        <option value="line" {% if asset and asset.asset_type=='line' %}selected{% endif %}>Line
-                        </option>
-                        <option value="station" {% if asset and asset.asset_type=='station' %}selected{% endif %}>
-                            Station</option>
-                        <option value="tooling" {% if asset and asset.asset_type=='tooling' %}selected{% endif %}>
-                            Tooling</option>
-                        <option value="robot" {% if asset and asset.asset_type=='robot' %}selected{% endif %}>Robot
-                        </option>
+                        <!-- prettier-ignore -->
+                        <option value="department" {% if asset and asset.asset_type == 'department' %}selected{% endif %}>Department</option>
+                        <!-- prettier-ignore -->
+                        <option value="location" {% if asset and asset.asset_type == 'location' %}selected{% endif %}>Location</option>
+                        <!-- prettier-ignore -->
+                        <option value="line" {% if asset and asset.asset_type == 'line' %}selected{% endif %}>Line</option>
+                        <!-- prettier-ignore -->
+                        <option value="station" {% if asset and asset.asset_type == 'station' %}selected{% endif %}>Station</option>
+                        <!-- prettier-ignore -->
+                        <option value="tooling" {% if asset and asset.asset_type == 'tooling' %}selected{% endif %}>Tooling</option>
+                        <!-- prettier-ignore -->
+                        <option value="robot" {% if asset and asset.asset_type == 'robot' %}selected{% endif %}>Robot</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="cost_center" class="required-field">Cost Center</label>
                     <select class="form-control" id="cost_center" name="cost_center" required>
                         <option value="">Select Cost Center</option>
-                        <option value="paint" {% if asset and asset.cost_center=='paint' %}selected{% endif %}>Paint
-                        </option>
-                        <option value="assembly" {% if asset and asset.cost_center=='assembly' %}selected{% endif %}>
-                            Assembly</option>
-                        <option value="biw" {% if asset and asset.cost_center=='biw' %}selected{% endif %}>BIW</option>
+                        <!-- prettier-ignore -->
+                        <option value="paint" {% if asset and asset.cost_center == 'paint' %}selected{% endif %}>Paint</option>
+                        <!-- prettier-ignore -->
+                        <option value="assembly" {% if asset and asset.cost_center == 'assembly' %}selected{% endif %}>Assembly</option>
+                        <!-- prettier-ignore -->
+                        <option value="biw" {% if asset and asset.cost_center == 'biw' %}selected{% endif %}>BIW</option>
                     </select>
                 </div>
             </div>
@@ -70,12 +71,14 @@
                 <div class="form-group">
                     <label for="status" class="required-field">Status</label>
                     <select class="form-control" id="status" name="status" required>
-                        <option value="Operational" {% if asset and asset.status=='Operational' %}selected{% endif %}>
-                            Operational</option>
-                        <option value="Under Maintenance" {% if asset and asset.status=='Under Maintenance' %}selected{% endif %}>Under Maintenance</option>
-                        <option value="Down" {% if asset and asset.status=='Down' %}selected{% endif %}>Down</option>
-                        <option value="Retired" {% if asset and asset.status=='Retired' %}selected{% endif %}>Retired
-                        </option>
+                        <!-- prettier-ignore -->
+                        <option value="Operational" {% if asset and asset.status == 'Operational' %}selected{% endif %}>Operational</option>
+                        <!-- prettier-ignore -->
+                        <option value="Under Maintenance" {% if asset and asset.status == 'Under Maintenance' %}selected{% endif %}>Under Maintenance</option>
+                        <!-- prettier-ignore -->
+                        <option value="Down" {% if asset and asset.status == 'Down' %}selected{% endif %}>Down</option>
+                        <!-- prettier-ignore -->
+                        <option value="Retired" {% if asset and asset.status == 'Retired' %}selected{% endif %}>Retired</option>
                     </select>
                 </div>
             </div>

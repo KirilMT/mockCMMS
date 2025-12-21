@@ -48,6 +48,9 @@
   },
   "jest": {
     "testEnvironment": "jsdom",
+    "setupFiles": [
+      "<rootDir>/tests/frontend/setup.js"
+    ],
     "roots": [
       "<rootDir>/src/static/js/",
       "<rootDir>/tests/frontend/unit/"
