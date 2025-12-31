@@ -1,18 +1,18 @@
-"""
-Tests for Flask application factory and configuration.
+"""Tests for Flask application factory and configuration.
 
-This module tests the core Flask app creation, configuration management,
-blueprint registration, database initialization, and context handling.
+This module tests the core Flask app creation, configuration management, blueprint
+registration, database initialization, and context handling.
 """
 
 import os
-import shutil
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from src.app import create_app
 from src.services.db_utils import db
 
-# Default binds for tests - prevents UnboundExecutionError when planning models are imported
+# Default binds - prevents UnboundExecutionError for planning models
 TEST_SQLALCHEMY_BINDS = {"planning": "sqlite:///:memory:"}
 
 
@@ -195,7 +195,7 @@ class TestAppConfiguration:
     def test_instance_folder_created(self, app):
         """Test instance folder is created during app initialization."""
         # The app factory should create the instance folder
-        instance_path = os.path.join(app.root_path, "..", "instance")
+        os.path.join(app.root_path, "..", "instance")
 
         # In test mode with in-memory DB, this might not exist
         # but in production it should be created

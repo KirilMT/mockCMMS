@@ -1,21 +1,23 @@
 # src/routes/main.py
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from src.services.db_utils import (
-    db,
-    Asset,
-    MaintenanceOrder,
-    SparePart,
-    User,
-    Role,
-    Team,
-    SatellitePoint,
-)
-from src.services.shift_utils import get_shift_teams
+import calendar
 import json
 from datetime import datetime, timezone
 from functools import wraps
-import calendar
+
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+
+from src.services.db_utils import (
+    Asset,
+    MaintenanceOrder,
+    Role,
+    SatellitePoint,
+    SparePart,
+    Team,
+    User,
+    db,
+)
+from src.services.shift_utils import get_shift_teams
 
 main_bp = Blueprint("main", __name__)
 

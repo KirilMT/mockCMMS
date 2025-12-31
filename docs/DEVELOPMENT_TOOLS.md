@@ -1,5 +1,80 @@
 # Development Tools Guide
 
+## 🚀 Automated Validation Scripts
+
+Before committing code, use these comprehensive scripts:
+
+### `scripts/validate_code.py` ✅
+**Comprehensive validation (simulates CI pipeline)**
+
+```bash
+# Run all validations (recommended before commit)
+python scripts/validate_code.py
+
+# Run only backend validation
+python scripts/validate_code.py --backend
+
+# Run only frontend validation
+python scripts/validate_code.py --frontend
+
+# Quick mode (skip slow E2E/visual tests)
+python scripts/validate_code.py --quick
+```
+
+**Validates:** isort, black, docformatter, ruff, flake8, mypy, bandit, pytest, eslint, jest, playwright
+
+### `scripts/format_code.py` ✅
+**Actively formats code (applies changes)**
+
+```bash
+# Format all code
+python scripts/format_code.py
+
+# Format only backend (Python)
+python scripts/format_code.py --backend
+
+# Format only frontend (JavaScript)
+python scripts/format_code.py --frontend
+
+# Check without applying changes
+python scripts/format_code.py --check
+```
+
+**Formats:** Python (isort → black → docformatter), JavaScript (prettier)
+
+### `scripts/test_workflow.py` ✅
+**Full CI simulation with detailed reports**
+
+```bash
+# Run complete CI simulation
+python scripts/test_workflow.py
+
+# Skip slow tests
+python scripts/test_workflow.py --fast
+
+# Generate detailed coverage report
+python scripts/test_workflow.py --coverage
+```
+
+### `scripts/release_manager.py` ✅
+**Automates version bumping and releases**
+
+```bash
+# Bump patch version (1.0.0 -> 1.0.1)
+python scripts/release_manager.py patch
+
+# Bump minor version (1.0.0 -> 1.1.0)
+python scripts/release_manager.py minor
+
+# Bump major version (1.0.0 -> 2.0.0)
+python scripts/release_manager.py major
+
+# Preview changes without applying
+python scripts/release_manager.py --dry-run
+```
+
+---
+
 ## 📦 Tool Categories
 
 ### ESSENTIAL (Install Always)

@@ -1,7 +1,9 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from flask import Flask
-from apps.planning.src.routes.planning import view_schedule, planning_bp
+
+from apps.planning.src.routes.planning import view_schedule
 
 
 @pytest.fixture
@@ -27,7 +29,7 @@ def test_view_schedule_passes_config(app):
                     ) as MockPlanningTask:
                         with patch(
                             "apps.planning.src.routes.planning.MaintenanceOrder"
-                        ) as MockMO:
+                        ):
 
                             # Setup mocks
                             mock_schedule = MagicMock()
@@ -38,9 +40,8 @@ def test_view_schedule_passes_config(app):
                             }
                             mock_load_config.return_value = mock_config
 
-                            MockPlanningTask.query.filter_by.return_value.all.return_value = (
-                                []
-                            )
+                            task_query = MockPlanningTask.query.filter_by.return_value
+                            task_query.all.return_value = []
 
                             # Call the view function directly
                             # We need to mock request args

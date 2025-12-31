@@ -13,7 +13,15 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:chromium": "playwright test --project=chromium",
-    "test:all": "npm test && npm run test:e2e:chromium"
+    "test:all": "npm test && npm run test:e2e:chromium",
+    "lint": "eslint src/static/js --report-unused-disable-directives",
+    "lint:fix": "eslint src/static/js --fix",
+    "validate": "python scripts/validate_code.py",
+    "validate:quick": "python scripts/validate_code.py --quick",
+    "validate:backend": "python scripts/validate_code.py --backend",
+    "validate:frontend": "python scripts/validate_code.py --frontend",
+    "format": "python scripts/format_code.py",
+    "format:check": "python scripts/format_code.py --check"
   },
   "repository": {
     "type": "git",
@@ -82,5 +90,16 @@
         }
       ]
     ]
+  },
+  "stylelint": {
+    "extends": "stylelint-config-standard",
+    "rules": {
+      "selector-class-pattern": null,
+      "selector-id-pattern": null,
+      "no-descending-specificity": null,
+      "import-notation": "string",
+      "declaration-block-no-duplicate-properties": true,
+      "block-no-empty": true
+    }
   }
 }

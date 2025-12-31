@@ -1,7 +1,6 @@
-import os
 import json
-import pytest
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
+
 from apps.planning.src.services.config_manager import load_shift_config
 
 
@@ -17,7 +16,7 @@ def test_load_shift_config_from_actual_file():
     # Test that values are loaded from config.json
     mock_config = {"shift_durations": {"shift_break": 45, "weekend": 600}}
 
-    # We mock os.path.exists. It is called twice: for config.json and config.example.json
+    # Mock os.path.exists - called twice for config files
     # We want first call (config.json) to return True
     def side_effect(path):
         if "config.json" in path and "example" not in path:

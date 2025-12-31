@@ -1,14 +1,15 @@
-"""
-Tests for shift utilities (shift_utils.py).
+"""Tests for shift utilities (shift_utils.py).
 
-This module tests the shift calculation and rotation logic for the
-2-2-3 Rotating Schedule (Pitman Schedule) implementation.
+This module tests the shift calculation and rotation logic for the 2-2-3 Rotating
+Schedule (Pitman Schedule) implementation.
 """
+
+from datetime import datetime
 
 import pytest
-from datetime import datetime
+
+from src.services.db_utils import Team, db
 from src.services.shift_utils import get_shift_teams
-from src.services.db_utils import db, Team
 
 
 class TestShiftUtilities:
@@ -30,11 +31,10 @@ class TestShiftUtilities:
             yield [team_a, team_b, team_c, team_d]
 
     def test_get_shift_teams_shift_a(self, app, teams):
-        """
-        Test that Team A is correctly assigned on a day when Team A should work.
+        """Test that Team A is correctly assigned on a day when Team A should work.
 
-        Uses a specific date known to be Team A's day based on the Pitman schedule.
-        Week 1 (Odd), Monday should have Group 1 (Teams A & B).
+        Uses a specific date known to be Team A's day based on the Pitman schedule. Week
+        1 (Odd), Monday should have Group 1 (Teams A & B).
         """
         with app.app_context():
             # January 1, 2024 is Monday, Week 1 (Odd week)
@@ -57,8 +57,7 @@ class TestShiftUtilities:
             ), f"Expected Team A for late shift, got {late.name}"
 
     def test_get_shift_teams_shift_b(self, app, teams):
-        """
-        Test that Team B is correctly assigned on a day when Team B should work.
+        """Test that Team B is correctly assigned on a day when Team B should work.
 
         Uses a specific date known to be Team B's day based on the Pitman schedule.
         """
@@ -88,8 +87,7 @@ class TestShiftUtilities:
             ), f"Expected Team B for early shift, got {early.name}"
 
     def test_get_shift_teams_shift_c(self, app, teams):
-        """
-        Test that Team C is correctly assigned on a day when Team C should work.
+        """Test that Team C is correctly assigned on a day when Team C should work.
 
         Uses a specific date known to be Team C's day based on the Pitman schedule.
         """
@@ -116,8 +114,7 @@ class TestShiftUtilities:
             ), f"Expected Team D for late shift, got {late.name}"
 
     def test_get_shift_teams_rotation_cycle(self, app, teams):
-        """
-        Test that shift rotation works correctly over multiple consecutive dates.
+        """Test that shift rotation works correctly over multiple consecutive dates.
 
         Verifies the Pitman schedule rotation pattern across different weeks.
         """
@@ -128,15 +125,15 @@ class TestShiftUtilities:
             # Week 2: even, rotation_idx for G1=(2-1)//2=0, for G2=2//2=1
             # Week 3: odd, rotation_idx for G1=(3-1)//2=1, for G2=3//2=1
             test_dates = [
-                # Week 1, Mon (odd): Group 1 day, rotation_idx=0 (even) -> B early, A late
+                # Week 1, Mon (odd): G1 day, idx=0 -> B early, A late
                 (datetime(2024, 1, 1), "Team B", "Team A"),
-                # Week 1, Wed (odd): Group 2 day, rotation_idx=0 (even) -> C early, D late
+                # Week 1, Wed (odd): G2 day, idx=0 -> C early, D late
                 (datetime(2024, 1, 3), "Team C", "Team D"),
-                # Week 2, Mon (even): Group 2 day, rotation_idx=1 (odd) -> D early, C late
+                # Week 2, Mon (even): G2 day, idx=1 -> D early, C late
                 (datetime(2024, 1, 8), "Team D", "Team C"),
-                # Week 2, Wed (even): Group 1 day, rotation_idx=0 (even) -> B early, A late
+                # Week 2, Wed (even): G1 day, idx=0 -> B early, A late
                 (datetime(2024, 1, 10), "Team B", "Team A"),
-                # Week 3, Mon (odd): Group 1 day, rotation_idx=1 (odd) -> A early, B late
+                # Week 3, Mon (odd): G1 day, idx=1 -> A early, B late
                 (datetime(2024, 1, 15), "Team A", "Team B"),
             ]
 
@@ -150,16 +147,17 @@ class TestShiftUtilities:
                     late is not None
                 ), f"Late shift should be assigned for {test_date}"
 
-                assert (
-                    early.name == expected_early
-                ), f"Date {test_date}: Expected {expected_early} for early, got {early.name}"
-                assert (
-                    late.name == expected_late
-                ), f"Date {test_date}: Expected {expected_late} for late, got {late.name}"
+                assert early.name == expected_early, (
+                    f"Date {test_date}: Expected {expected_early} for "
+                    f"early, got {early.name}"
+                )
+                assert late.name == expected_late, (
+                    f"Date {test_date}: Expected {expected_late} for "
+                    f"late, got {late.name}"
+                )
 
     def test_get_shift_teams_invalid_input(self, app, teams):
-        """
-        Test that get_shift_teams handles invalid input gracefully.
+        """Test that get_shift_teams handles invalid input gracefully.
 
         Verifies behavior when given None or invalid data.
         """

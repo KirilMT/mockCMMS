@@ -1,22 +1,20 @@
-"""
-Integration tests for end-to-end workflows.
+"""Integration tests for end-to-end workflows.
 
-This module tests complete user workflows and multi-step processes
-to validate end-to-end functionality, data flow across modules,
-and system integration.
+This module tests complete user workflows and multi-step processes to validate end-to-
+end functionality, data flow across modules, and system integration.
 """
 
 import pytest
-from datetime import datetime, timedelta
+
 from src.services.db_utils import (
-    db,
-    User,
-    Role,
     Asset,
     MaintenanceOrder,
-    SparePart,
+    Role,
     Skill,
+    SparePart,
     Team,
+    User,
+    db,
 )
 
 
@@ -64,8 +62,7 @@ class TestIntegration:
             yield user
 
     def test_complete_maintenance_workflow(self, client, app, admin_user):
-        """
-        Test complete maintenance workflow from asset creation to MO completion.
+        """Test complete maintenance workflow from asset creation to MO completion.
 
         Workflow:
         1. Create asset
@@ -164,8 +161,7 @@ class TestIntegration:
             assert "Completed" in mo.description
 
     def test_user_registration_to_assignment(self, client, app, admin_user):
-        """
-        Test complete user lifecycle from registration to MO assignment.
+        """Test complete user lifecycle from registration to MO assignment.
 
         Workflow:
         1. Register new user as Technician
@@ -238,8 +234,7 @@ class TestIntegration:
         assert response.status_code == 200
 
     def test_asset_lifecycle(self, client, app, admin_user):
-        """
-        Test asset lifecycle from creation through maintenance.
+        """Test asset lifecycle from creation through maintenance.
 
         Workflow:
         1. Create new asset
@@ -340,8 +335,7 @@ class TestIntegration:
             assert mo.status == "Completed"
 
     def test_data_flow_across_modules(self, client, app, admin_user):
-        """
-        Test data flow between spare parts and maintenance orders.
+        """Test data flow between spare parts and maintenance orders.
 
         Workflow:
         1. Create spare part
@@ -413,8 +407,7 @@ class TestIntegration:
             assert part.stock_quantity == initial_quantity
 
     def test_planning_integration(self, client, app, admin_user):
-        """
-        Test planning integration (basic workflow).
+        """Test planning integration (basic workflow).
 
         Workflow:
         1. Create multiple MOs
@@ -479,8 +472,7 @@ class TestIntegration:
         assert response.status_code == 200
 
     def test_shift_team_rotation_workflow(self, client, app, admin_user):
-        """
-        Test shift team and rotation workflow.
+        """Test shift team and rotation workflow.
 
         Workflow:
         1. Create teams
@@ -541,8 +533,7 @@ class TestIntegration:
             assert team_a.name == "Team A"
 
     def test_cascade_relationships(self, client, app, admin_user):
-        """
-        Test cascade delete and relationship handling.
+        """Test cascade delete and relationship handling.
 
         Workflow:
         1. Create asset with multiple MOs
@@ -615,8 +606,7 @@ class TestIntegration:
     def test_multi_user_concurrent_access(
         self, client, app, admin_user, technician_user
     ):
-        """
-        Test multiple users accessing system concurrently.
+        """Test multiple users accessing system concurrently.
 
         Workflow:
         1. Admin user creates asset
@@ -657,8 +647,7 @@ class TestIntegration:
             assert asset.asset_code == "CONCURRENT-001"
 
     def test_reports_integration(self, client, app, admin_user):
-        """
-        Test reports integration with MO data.
+        """Test reports integration with MO data.
 
         Workflow:
         1. Create MOs with different statuses
@@ -713,8 +702,7 @@ class TestIntegration:
             assert "Completed" in statuses_found
 
     def test_search_and_filter_integration(self, client, app, admin_user):
-        """
-        Test search and filter functionality across the system.
+        """Test search and filter functionality across the system.
 
         Workflow:
         1. Create assets with various attributes
@@ -784,8 +772,7 @@ class TestIntegration:
             assert len(alpha_assets) >= 1
 
     def test_complete_asset_lifecycle_enhanced(self, client, app, admin_user):
-        """
-        Test complete asset lifecycle with all operations.
+        """Test complete asset lifecycle with all operations.
 
         Workflow:
         1. Create asset
@@ -851,8 +838,7 @@ class TestIntegration:
             assert db.session.get(Asset, asset_id) is None
 
     def test_complete_user_workflow_enhanced(self, client, app, admin_user):
-        """
-        Test complete user workflow from creation to deletion.
+        """Test complete user workflow from creation to deletion.
 
         Workflow:
         1. Create user
@@ -906,8 +892,7 @@ class TestIntegration:
         assert response.status_code == 200
 
     def test_maintenance_order_workflow_enhanced(self, client, app, admin_user):
-        """
-        Test maintenance order complete workflow.
+        """Test maintenance order complete workflow.
 
         Workflow:
         1. Create reactive MO
@@ -950,8 +935,7 @@ class TestIntegration:
             assert mo.status == "Completed"
 
     def test_search_and_reporting_workflow_enhanced(self, client, app, admin_user):
-        """
-        Test search and reporting workflow.
+        """Test search and reporting workflow.
 
         Workflow:
         1. Create multiple assets
@@ -986,8 +970,7 @@ class TestIntegration:
     def test_concurrent_user_operations_enhanced(
         self, client, app, admin_user, technician_user
     ):
-        """
-        Test concurrent user operations.
+        """Test concurrent user operations.
 
         Workflow:
         1. Two users perform operations
@@ -1019,8 +1002,7 @@ class TestIntegration:
             assert db.session.get(Asset, asset_id) is not None
 
     def test_error_recovery_workflow_enhanced(self, client, app, admin_user):
-        """
-        Test error recovery workflow.
+        """Test error recovery workflow.
 
         Workflow:
         1. Verify no asset exists initially
@@ -1065,8 +1047,7 @@ class TestIntegration:
             assert asset.name == "Error Recovery Test"
 
     def test_session_management_workflow_enhanced(self, client, app, admin_user):
-        """
-        Test session management workflow.
+        """Test session management workflow.
 
         Workflow:
         1. Login
@@ -1100,8 +1081,7 @@ class TestIntegration:
         assert response.status_code in [200, 302]  # May redirect or show public view
 
     def test_table_configuration_workflow_enhanced(self, client, app, admin_user):
-        """
-        Test table configuration workflow.
+        """Test table configuration workflow.
 
         Workflow:
         1. Access table page

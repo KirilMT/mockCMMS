@@ -1,4 +1,4 @@
-from src.services.db_utils import Asset, MaintenanceOrder, User, Role, SparePart, db
+from src.services.db_utils import Asset, MaintenanceOrder, Role, SparePart, User, db
 
 
 class TestSimulationUI:

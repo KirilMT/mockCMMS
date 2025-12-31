@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
-from src.services.db_utils import db, Asset, MaintenanceOrder, User, Role, SparePart
-from src.services.simulation_service import DataSimulationService
 from datetime import datetime, timezone
+
+from flask import Blueprint, flash, redirect, render_template, request, url_for
+
+from src.services.db_utils import Asset, MaintenanceOrder, Role, SparePart, User, db
+from src.services.simulation_service import DataSimulationService
 
 simulation_bp = Blueprint("simulation", __name__, url_prefix="/simulation")
 
@@ -106,7 +108,7 @@ def trigger_breakdown():
         db.session.commit()
 
         flash(
-            f"💥 breakdown triggered on {asset.asset_code}! Reactive Order #{mo.id} created.",
+            f"💥 Breakdown on {asset.asset_code}! MO #{mo.id} created.",
             "error",
         )
 

@@ -1,13 +1,12 @@
-"""
-Advanced validation tests for edge cases and boundary conditions.
+"""Advanced validation tests for edge cases and boundary conditions.
 
-This module tests boundary conditions, edge cases, and advanced validation scenarios
-to ensure the application is robust under unusual or extreme conditions.
+This module tests boundary conditions, edge cases, and advanced validation scenarios to
+ensure the application is robust under unusual or extreme conditions.
 """
 
 import pytest
-from datetime import datetime, timedelta
-from src.services.db_utils import db, User, Role, Asset, MaintenanceOrder, SparePart
+
+from src.services.db_utils import Asset, MaintenanceOrder, Role, User, db
 
 
 class TestAdvancedValidation:
@@ -33,8 +32,7 @@ class TestAdvancedValidation:
             yield user
 
     def test_boundary_conditions(self, client, app, admin_user):
-        """
-        Test boundary conditions for asset creation.
+        """Test boundary conditions for asset creation.
 
         Verifies:
         - Minimum valid values are accepted
@@ -90,8 +88,7 @@ class TestAdvancedValidation:
             assert asset is not None
 
     def test_null_and_none_handling(self, client, app, admin_user):
-        """
-        Test null and None value handling in optional fields.
+        """Test null and None value handling in optional fields.
 
         Verifies:
         - Optional fields can be null/empty
@@ -129,8 +126,7 @@ class TestAdvancedValidation:
         assert response.status_code == 200
 
     def test_empty_string_validation(self, client, app, admin_user):
-        """
-        Test validation of empty and whitespace-only strings.
+        """Test validation of empty and whitespace-only strings.
 
         Verifies:
         - Empty strings in required fields are rejected
@@ -181,8 +177,7 @@ class TestAdvancedValidation:
         assert response.status_code in [200, 400, 302]
 
     def test_concurrent_updates(self, client, app, admin_user):
-        """
-        Test concurrent updates to same resource.
+        """Test concurrent updates to same resource.
 
         Verifies:
         - Application handles concurrent updates
@@ -238,8 +233,7 @@ class TestAdvancedValidation:
             assert asset.description == "Updated by User 1"
 
     def test_transaction_rollbacks(self, client, app, admin_user):
-        """
-        Test transaction rollback on errors.
+        """Test transaction rollback on errors.
 
         Verifies:
         - Failed transactions don't create partial data
@@ -291,8 +285,7 @@ class TestAdvancedValidation:
             assert mo.description == "Test MO"
 
     def test_cascade_delete_prevention(self, client, app, admin_user):
-        """
-        Test cascade delete behavior.
+        """Test cascade delete behavior.
 
         Verifies:
         - Cascade delete works or is prevented as designed
@@ -349,8 +342,7 @@ class TestAdvancedValidation:
             assert mo2 is None
 
     def test_unique_constraint_race_condition(self, client, app, admin_user):
-        """
-        Test unique constraint enforcement under race conditions.
+        """Test unique constraint enforcement under race conditions.
 
         Verifies:
         - Unique constraints are enforced
@@ -409,8 +401,7 @@ class TestAdvancedValidation:
             assert assets[0].name == "First Asset"
 
     def test_foreign_key_constraint_enforcement(self, client, app, admin_user):
-        """
-        Test foreign key constraint enforcement.
+        """Test foreign key constraint enforcement.
 
         Verifies:
         - Foreign key constraints prevent invalid references
@@ -444,14 +435,13 @@ class TestAdvancedValidation:
 
         # Check if orphaned MO was created
         with app.app_context():
-            orphaned = MaintenanceOrder.query.filter_by(asset_id=999999).first()
+            MaintenanceOrder.query.filter_by(asset_id=999999).first()
             # If created, it's an orphaned record
             # This documents current behavior
             # Production should prevent this with FK constraints
 
     def test_date_boundary_validation(self, client, app, admin_user):
-        """
-        Test date boundary validation.
+        """Test date boundary validation.
 
         Verifies:
         - Past dates are handled appropriately
@@ -510,8 +500,7 @@ class TestAdvancedValidation:
             assert len(mos) == 2
 
     def test_pagination_edge_cases(self, client, app, admin_user):
-        """
-        Test pagination edge cases.
+        """Test pagination edge cases.
 
         Verifies:
         - Pages beyond available data are handled

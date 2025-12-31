@@ -5,19 +5,19 @@
 import os
 import sqlite3
 import traceback
-import click
-from flask import Flask, g, request, redirect, jsonify, session
-from flask_wtf.csrf import CSRFProtect  # type: ignore[import-untyped]
-from dotenv import load_dotenv
 
-from .services.db_utils import db, User
-from .services.db_seeding import populate_dummy_data
-from .services.logging_config import LoggingConfig
-from .services.simulation_service import DataSimulationService
+import click
+from dotenv import load_dotenv
+from flask import Flask, g, jsonify, redirect, request, session
+from flask_wtf.csrf import CSRFProtect  # type: ignore[import-untyped]
 
 # Local blueprint imports
 from .routes.api import api_bp
 from .routes.main import main_bp
+from .services.db_seeding import populate_dummy_data
+from .services.db_utils import User, db
+from .services.logging_config import LoggingConfig
+from .services.simulation_service import DataSimulationService
 
 # NOTE: Modular app imports (reports, planning) MUST stay inside conditional
 # blocks because importing their models registers them with SQLAlchemy, causing
@@ -142,9 +142,7 @@ def _register_blueprints(app, csrf):
     app.register_blueprint(api_bp, url_prefix="/api")
     app.register_blueprint(main_bp)
 
-    # Simulation Blueprint (only registered in non-production or if explicitly enabled)
-    # For this task, we'll register it always for visibility, or check TESTING/DEBUG flags
-    # But user asked for it as a feature, so let's register it.
+    # Simulation Blueprint
     from .routes.simulation import simulation_bp
 
     app.register_blueprint(simulation_bp)
@@ -207,10 +205,8 @@ def _register_request_handlers(app):
 
     @app.before_request
     def load_logged_in_user():
-        """
-        If a user id is in the session, load the user object from the database
-        into g.user.
-        """
+        """If a user id is in the session, load the user object from the database into
+        g.user."""
         user_id = session.get("user_id")
         g.user = User.query.get(user_id) if user_id is not None else None
 

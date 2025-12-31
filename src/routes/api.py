@@ -1,18 +1,20 @@
-from flask import Blueprint, jsonify, request, session
-from src.services.db_utils import (
-    db,
-    Skill,
-    Asset,
-    MaintenanceOrder,
-    SparePart,
-    User,
-    Role,
-    TableConfiguration,
-)
 import json
 from datetime import datetime
 from functools import wraps
+
+from flask import Blueprint, jsonify, request, session
 from sqlalchemy.exc import SQLAlchemyError
+
+from src.services.db_utils import (
+    Asset,
+    MaintenanceOrder,
+    Role,
+    Skill,
+    SparePart,
+    TableConfiguration,
+    User,
+    db,
+)
 
 api_bp = Blueprint("api", __name__)
 

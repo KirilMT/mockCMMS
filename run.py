@@ -1,6 +1,12 @@
 """Application entry point."""
 
 import os
+import sys
+
+# Configure UTF-8 encoding for stdout/stderr to handle emojis on Windows
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 from dotenv import load_dotenv
 from src.app import create_app

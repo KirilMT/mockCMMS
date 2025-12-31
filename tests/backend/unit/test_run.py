@@ -1,6 +1,4 @@
-"""
-Test run.py application entry point.
-"""
+"""Test run.py application entry point."""
 
 import sys
 from unittest.mock import patch

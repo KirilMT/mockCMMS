@@ -1,15 +1,13 @@
-"""
-Tests for error handling and exception management.
+"""Tests for error handling and exception management.
 
-This module tests error pages (404, 500), error recovery mechanisms,
-transaction rollbacks, and graceful failure scenarios to ensure
-production-level robustness and good user experience.
+This module tests error pages (404, 500), error recovery mechanisms, transaction
+rollbacks, and graceful failure scenarios to ensure production-level robustness and good
+user experience.
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
-from sqlalchemy.exc import OperationalError, IntegrityError
-from src.services.db_utils import db, Asset, MaintenanceOrder, User, Role
+
+from src.services.db_utils import Asset, MaintenanceOrder, Role, User, db
 
 
 class TestErrorHandling:
@@ -41,8 +39,7 @@ class TestErrorHandling:
             yield user
 
     def test_404_page_renders(self, client):
-        """
-        Test that 404 page renders for non-existent routes.
+        """Test that 404 page renders for non-existent routes.
 
         Verifies:
         - GET to non-existent route returns 404 status
@@ -64,8 +61,7 @@ class TestErrorHandling:
         ), "404 response should indicate error"
 
     def test_500_error_handling(self, client, app, monkeypatch):
-        """
-        Test that 500 errors are handled gracefully.
+        """Test that 500 errors are handled gracefully.
 
         Verifies:
         - Server errors return 500 status
@@ -99,8 +95,7 @@ class TestErrorHandling:
         monkeypatch.setattr(main, "index", original_index)
 
     def test_database_error_recovery(self, client, app, admin_user):
-        """
-        Test graceful handling of database errors.
+        """Test graceful handling of database errors.
 
         Verifies:
         - Database errors don't crash the application
@@ -127,8 +122,7 @@ class TestErrorHandling:
         assert response2.status_code == 200, "App should recover after 404 error"
 
     def test_invalid_id_handling(self, client, admin_user):
-        """
-        Test handling of invalid ID parameters.
+        """Test handling of invalid ID parameters.
 
         Verifies:
         - Non-existent ID returns 404
@@ -152,8 +146,7 @@ class TestErrorHandling:
         ], "Non-integer ID should be rejected with error status"
 
     def test_concurrent_update_conflict(self, client, app, admin_user):
-        """
-        Test handling of concurrent updates to the same resource.
+        """Test handling of concurrent updates to the same resource.
 
         Verifies:
         - Last-write-wins or conflict detection behavior
@@ -216,8 +209,7 @@ class TestErrorHandling:
         # For production, consider adding version/timestamp checking
 
     def test_transaction_rollback_on_error(self, client, app, admin_user):
-        """
-        Test that database integrity is maintained across operations.
+        """Test that database integrity is maintained across operations.
 
         Verifies:
         - Database state remains consistent

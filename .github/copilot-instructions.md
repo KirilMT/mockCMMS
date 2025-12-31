@@ -91,6 +91,34 @@ workspace-specific rules.
 
 ### 1.4. Testing & Deployment
 
+#### 🚨 CRITICAL: Visual Test Screenshots - NEVER UPDATE (MANDATORY)
+
+**NEVER update visual test screenshots unless REAL UI changes were intentionally made!**
+
+- **Location**: `tests/frontend/e2e/__screenshots__/` directory
+- **Purpose**: Visual regression tests that detect UNINTENDED UI changes
+- **Rule**: Screenshots are SACRED BASELINES - they should ONLY be updated when:
+  1. You intentionally modified CSS/HTML/UI components
+  2. The visual change is documented and approved
+  3. The change is part of a UI enhancement task
+  
+**FORBIDDEN Actions:**
+
+- ❌ **NEVER** run `playwright test --update-snapshots` to "fix" failing visual tests
+- ❌ **NEVER** update screenshots to make tests pass
+- ❌ **NEVER** modify screenshots during code audits, refactoring, or non-UI tasks
+- ❌ **NEVER** touch screenshots when working on backend, logic, or documentation
+
+**Correct Approach When Visual Tests Fail:**
+
+1. **Investigate WHY** - Visual test failures indicate UNINTENDED changes
+2. **Identify the root cause** - Find what code change caused the visual difference
+3. **Fix the CODE** - Revert or fix the code that caused the unintended change
+4. **Re-run tests** - Verify visual tests pass with the fixed code
+5. **Only update screenshots** - If the visual change was INTENTIONAL and APPROVED
+
+**Summary**: Failing visual tests = Bug detected. Fix the bug, don't hide it by updating screenshots.
+
 #### 🚨 CRITICAL: Comprehensive Automated Verification (MANDATORY)
 
 **ALL verification steps MUST be performed automatically. DO NOT ask the user to
@@ -133,6 +161,45 @@ verify manually.**
 
 **Verification is NOT optional** - it is a critical step that MUST be completed
 automatically for every change.
+
+#### 🚨 CRITICAL: Test Configuration is IMMUTABLE (MANDATORY)
+
+**NEVER modify test configurations, linting rules, or coverage thresholds to make tests pass!**
+
+**Protected Configuration Files:**
+
+- `pytest.ini` - Test discovery, coverage thresholds, test markers
+- `pyproject.toml` - Ruff, Black, isort, mypy configurations
+- `jest.config.js` - JavaScript test configuration and coverage thresholds
+- `playwright.config.js` - E2E test configuration
+- `.eslintrc.js`, `eslint.config.js` - JavaScript linting rules
+- `.flake8`, `setup.cfg` - Python linting rules
+- Any file in `.github/workflows/` - CI/CD pipeline configuration
+
+**FORBIDDEN Actions:**
+
+- ❌ **NEVER** lower coverage thresholds (e.g., changing `coverageThreshold` from 80% to 70%)
+- ❌ **NEVER** disable linting rules to suppress warnings
+- ❌ **NEVER** add files/patterns to ignore lists to skip tests
+- ❌ **NEVER** modify test timeouts to hide performance issues
+- ❌ **NEVER** change CI/CD workflow steps to skip failing checks
+
+**Correct Approach When Tests or Linting Fail:**
+
+1. **Understand the failure** - Read the error message carefully
+2. **Fix the CODE** - Make the code comply with the rules
+3. **Add tests** - If coverage is low, write more tests
+4. **Refactor** - If complexity is high, simplify the code
+5. **Document exceptions** - Only in RARE cases, document why a rule should be modified (requires user approval)
+
+**Coverage Philosophy:**
+
+- Current coverage: **82.99%** (achieved through hard work)
+- Target: **80-85%** overall coverage
+- Critical paths: **90%+** coverage (auth, API, database)
+- Coverage should INCREASE over time, never decrease
+
+**Summary**: Configuration defines quality standards. Lower the bar = Lower the quality. Fix the code, not the config.
 
 #### 🚨 CRITICAL: Test-Driven Development Philosophy (MANDATORY)
 
@@ -389,7 +456,85 @@ hours of work.
   assume the server is running based on browser subagent errors - always verify
   from metadata first.
 
-### 1.7. Version Control & Commit Standards
+### 1.7. Pre-Commit Validation (MANDATORY)
+
+### 1.7. Pre-Commit Validation (MANDATORY)
+
+#### 🚨 CRITICAL: AI MUST ALWAYS RUN VALIDATION (MANDATORY)
+
+**Validation Workflow for AI:**
+
+1. ✅ **BEFORE making code changes** - Run validation to establish baseline:
+   ```bash
+   python scripts/validate_code.py --quick
+   ```
+
+2. ✅ **Make code changes**
+
+3. ✅ **AFTER making code changes** - Run full validation:
+   ```bash
+   python scripts/validate_code.py
+   ```
+
+**This is MANDATORY for EVERY code change task:**
+- ✅ ALWAYS run validation before completing a task
+- ❌ NEVER skip validation (unless user explicitly says "skip validation")
+- ❌ NEVER commit without passing validation
+- ❌ NEVER assume changes are correct without verification
+
+**Available Validation Options:**
+
+```bash
+# Run complete validation (recommended)
+python scripts/validate_code.py
+
+# Optional: Run only specific validation
+python scripts/validate_code.py --backend    # Python code only
+python scripts/validate_code.py --frontend   # JavaScript code only
+python scripts/validate_code.py --quick      # Skip slow E2E tests
+```
+
+**What the Script Validates:**
+
+The `validate_code.py` script runs ALL checks that CI will run:
+
+**Python Backend:**
+- Import sorting (isort)
+- Code formatting (black, docformatter)
+- Linting (ruff, flake8)
+- Type checking (mypy)
+- Security scanning (bandit)
+- Unit/integration/functional tests (pytest)
+- Coverage validation (must be >= 82%)
+
+**JavaScript Frontend:**
+- ESLint linting
+- Jest unit tests with coverage
+- Playwright E2E tests
+- Visual regression tests (screenshots)
+
+**Configuration Files:**
+- JSON validation
+- YAML validation
+
+**What to Do When Validation Fails:**
+
+1. **READ the error messages** - Understand what failed and why
+2. **FIX the code** - Make code comply with standards
+3. **DO NOT modify configuration** - Fix code, not config
+4. **Re-run validation** - Ensure all checks pass
+5. **Only then commit** - All validation must pass
+
+**Pre-Commit Hooks (Future):**
+
+- Currently **DISABLED** (file: `.pre-commit-config.yaml.DISABLED`)
+- Will be **ENABLED** after Phase 2 (Code Formatting) is complete
+- When enabled, these checks will run AUTOMATICALLY before each commit
+- You will NOT be able to commit if checks fail
+
+**Summary**: Local validation = CI simulation. If it fails locally, it will fail in CI. Save time by catching issues early.
+
+### 1.8. Version Control & Commit Standards
 
 #### 🚨 CRITICAL: Comprehensive Commit Workflow (MANDATORY)
 
@@ -504,7 +649,7 @@ Testing:
 **CRITICAL**: Never commit without reviewing ALL changed files. Hidden changes
 in unexpected files can introduce bugs or break functionality.
 
-### 1.8. AI Workflow Standards
+### 1.9. AI Workflow Standards
 
 - **Efficiency is Key:** Perform all necessary edits for a given task in a
   single, atomic step per file.
@@ -518,7 +663,7 @@ in unexpected files can introduce bugs or break functionality.
   partially complete. If a task has 8 subtasks, implement all 8 before marking
   the task as done.
 
-### 1.9. Advanced PowerShell Operations (Fallback Only)
+### 1.10. Advanced PowerShell Operations (Fallback Only)
 
 #### When to Use
 
@@ -582,7 +727,7 @@ Get-ChildItem <directory>/*.md | Select-Object Name, @{Name="Lines";Expression={
 - **Consistency checks:** Ensure values match across multiple files
 - **Finding duplicates:** Locate redundant information
 
-### 1.10. Tooling & Workspace Standards
+### 1.11. Tooling & Workspace Standards
 
 #### Artifact Management (Antigravity IDE)
 
@@ -646,7 +791,7 @@ directory or ignored local directory. Follow the same "One file per type" and
   3. Verify deletion
   4. Never commit temporary files
 
-### 1.11. Bug Tracking & Discovery
+### 1.12. Bug Tracking & Discovery
 
 #### Bug Fix Workflow
 

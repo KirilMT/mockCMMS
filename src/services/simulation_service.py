@@ -3,14 +3,15 @@ import os
 import random
 import uuid
 from datetime import datetime, timedelta, timezone
+
 from src.services.db_utils import (
-    db,
     Asset,
-    User,
     MaintenanceOrder,
     Role,
-    Team,
     SparePart,
+    Team,
+    User,
+    db,
 )
 
 
@@ -83,9 +84,7 @@ class DataSimulationService:
         team_names = DataSimulationService._constants.get("Team", {}).get(
             "names", ["Team A", "Team B"]
         )
-        role_names = DataSimulationService._constants.get("User", {}).get(
-            "roles", ["Technician"]
-        )
+        DataSimulationService._constants.get("User", {}).get("roles", ["Technician"])
 
         teams = []
         for t_name in team_names:

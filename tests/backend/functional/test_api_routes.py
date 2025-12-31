@@ -1,25 +1,18 @@
-"""
-Tests for API routes and endpoints.
+"""Tests for API routes and endpoints.
 
-This module tests all REST API endpoints for correct data handling,
-status codes, error responses, and data validation.
+This module tests all REST API endpoints for correct data handling, status codes, error
+responses, and data validation.
 """
 
-import pytest
 import json
-from datetime import datetime, timedelta, timezone
-from flask import session
+
 from src.services.db_utils import (
-    db,
     Asset,
     MaintenanceOrder,
     SparePart,
-    User,
-    Role,
-    Skill,
-    Team,
-    UserSkill,
     TableConfiguration,
+    User,
+    db,
 )
 
 
@@ -574,8 +567,8 @@ class TestEnhancedAPIErrorHandling:
             )
             assert response.status_code == 201
 
-            # Now try to create duplicate asset_code (unique constraint violation)
-            # Note: Current implementation doesn't catch this, so we expect 500 or exception
+            # Now try to create duplicate asset_code
+            # Note: Expect 500 or exception
             duplicate_asset = {
                 "name": "Duplicate Asset",
                 "asset_code": "UNIQUE-001",  # Same as first asset
@@ -619,7 +612,7 @@ class TestEnhancedAPIErrorHandling:
             )
             assert response.status_code == 200
             data = response.get_json()
-            assert data["success"] == True
+            assert data["success"]
             assert "id" in data
             config_id = data["id"]
 
@@ -1050,7 +1043,8 @@ class TestAPIEdgeCasesAndErrorPaths:
             assert "error" in data
 
     def test_set_default_table_config_not_owned(self, client, app, logged_in_user):
-        """Test POST /table-config/<page>/<id>/set-default for config not owned returns 403."""
+        """Test POST /table-config/<page>/<id>/set-default for config not owned returns
+        403."""
         with app.app_context():
             # Create config for another user
             from src.services.db_utils import TableConfiguration
@@ -1071,7 +1065,8 @@ class TestAPIEdgeCasesAndErrorPaths:
             assert response.status_code == 403
 
     def test_remove_default_table_config_not_owned(self, client, app, logged_in_user):
-        """Test POST /table-config/<page>/<id>/remove-default for config not owned returns 403."""
+        """Test POST /table-config/<page>/<id>/remove-default for config not owned
+        returns 403."""
         with app.app_context():
             # Create config for another user
             from src.services.db_utils import TableConfiguration

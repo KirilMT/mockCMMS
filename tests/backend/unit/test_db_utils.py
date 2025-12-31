@@ -1,21 +1,21 @@
-"""
-Tests for database utility functions (db_utils.py).
+"""Tests for database utility functions (db_utils.py).
 
-This module tests the database population functions and model relationships
-to ensure data integrity and proper ORM behavior.
+This module tests the database population functions and model relationships to ensure
+data integrity and proper ORM behavior.
 """
 
 import logging
+
 import pytest
+
 from src.services.db_utils import (
-    db,
-    populate_dummy_data,
-    User,
     Asset,
     MaintenanceOrder,
-    SparePart,
-    Skill,
     Role,
+    Skill,
+    User,
+    db,
+    populate_dummy_data,
 )
 
 
@@ -23,8 +23,7 @@ class TestDatabaseUtilities:
     """Test database utility functions."""
 
     def test_populate_dummy_data(self, app, client):
-        """
-        Test that populate_dummy_data successfully populates the database.
+        """Test that populate_dummy_data successfully populates the database.
 
         Verifies:
         - Function executes without errors
@@ -71,10 +70,8 @@ class TestDatabaseUtilities:
             ), "All users should have usernames"
 
     def test_populate_dummy_data_idempotent(self, app, client):
-        """
-        Test that populate_dummy_data is idempotent and does not create
-        duplicate data on multiple calls.
-        """
+        """Test that populate_dummy_data is idempotent and does not create duplicate
+        data on multiple calls."""
         logger = logging.getLogger(__name__)
 
         with app.app_context():
@@ -90,8 +87,7 @@ class TestDatabaseUtilities:
             assert count1 == count2, "Should not create duplicate users"
 
     def test_database_models_relationships(self, app, client):
-        """
-        Test that model relationships work correctly.
+        """Test that model relationships work correctly.
 
         Verifies:
         - Asset can be created and saved

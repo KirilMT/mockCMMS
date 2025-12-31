@@ -1,14 +1,13 @@
-"""
-Enhanced logging configuration for the core mockCMMS application.
-"""
+"""Enhanced logging configuration for the core mockCMMS application."""
 
+import json
 import logging
 import os
-import json
 import time
 from datetime import datetime
 from functools import wraps
-from flask import request, g, current_app
+
+from flask import current_app, g, request
 
 # Calculate ROOT_DIR relative to this file -> ../.. -> root
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))

@@ -155,7 +155,8 @@ exclude = [
 
 [tool.ruff.lint]
 # Rules that align with Black formatter
-extend-ignore = ["E203", "W503"]
+# Note: W503 removed - not valid in newer ruff versions (use flake8 for this rule)
+extend-ignore = ["E203"]
 select = ["E", "F", "W"]
 
 # =============================================================================
@@ -186,4 +187,6 @@ python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
-exclude = ["apps/", "tests/", ".venv/"]
+# Check src directory - add tests later if needed with: ["src", "tests"]
+files = ["src"]
+exclude = ["apps/", ".venv/", "scripts/"]

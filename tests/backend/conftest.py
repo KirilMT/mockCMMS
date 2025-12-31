@@ -1,38 +1,37 @@
-"""
-Test configuration and fixtures for mockCMMS core application.
+"""Test configuration and fixtures for mockCMMS core application.
 
-This module provides comprehensive pytest fixtures for testing the main
-mockCMMS application, including Flask app setup, test client, database
-session management, and sample data fixtures.
+This module provides comprehensive pytest fixtures for testing the main mockCMMS
+application, including Flask app setup, test client, database session management, and
+sample data fixtures.
 """
 
-import sys
 import os
-import pytest
+import sys
 from datetime import datetime, timedelta, timezone
+
+import pytest
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.app import create_app
-from src.services.db_utils import (
-    db,
-    User,
-    Role,
+from src.app import create_app  # noqa: E402
+from src.services.db_utils import (  # noqa: E402
     Asset,
     MaintenanceOrder,
-    SparePart,
+    Role,
     Skill,
+    SparePart,
     Team,
+    User,
+    db,
 )
 
 
 @pytest.fixture(scope="function")
 def app():
-    """
-    Create and configure a Flask app instance for testing.
+    """Create and configure a Flask app instance for testing.
 
     Uses an in-memory SQLite database that is created fresh for each test
     and destroyed after the test completes.
@@ -82,8 +81,7 @@ def app():
 
 @pytest.fixture(scope="function")
 def client(app):
-    """
-    Provide a test client for making HTTP requests.
+    """Provide a test client for making HTTP requests.
 
     Args:
         app: Flask application fixture
@@ -96,8 +94,7 @@ def client(app):
 
 @pytest.fixture(scope="function")
 def runner(app):
-    """
-    Provide a test CLI runner for Click commands.
+    """Provide a test CLI runner for Click commands.
 
     Args:
         app: Flask application fixture
@@ -110,8 +107,7 @@ def runner(app):
 
 @pytest.fixture(scope="function")
 def db_session(app):
-    """
-    Provide a database session with automatic rollback.
+    """Provide a database session with automatic rollback.
 
     This fixture ensures that any database changes made during a test
     are rolled back after the test completes, maintaining test isolation.
@@ -141,8 +137,7 @@ def db_session(app):
 
 @pytest.fixture(scope="function")
 def sample_role(app):
-    """
-    Create a sample role for testing.
+    """Create a sample role for testing.
 
     Args:
         app: Flask application fixture
@@ -159,8 +154,7 @@ def sample_role(app):
 
 @pytest.fixture(scope="function")
 def sample_user(app, sample_role):
-    """
-    Create a sample user for testing.
+    """Create a sample user for testing.
 
     Args:
         app: Flask application fixture
@@ -188,8 +182,7 @@ def sample_user(app, sample_role):
 
 @pytest.fixture(scope="function")
 def sample_admin_user(app):
-    """
-    Create a sample admin user for testing.
+    """Create a sample admin user for testing.
 
     Args:
         app: Flask application fixture
@@ -213,8 +206,7 @@ def sample_admin_user(app):
 
 @pytest.fixture(scope="function")
 def sample_team(app):
-    """
-    Create a sample team for testing.
+    """Create a sample team for testing.
 
     Args:
         app: Flask application fixture
@@ -233,8 +225,7 @@ def sample_team(app):
 
 @pytest.fixture(scope="function")
 def sample_skill(app):
-    """
-    Create a sample skill for testing.
+    """Create a sample skill for testing.
 
     Args:
         app: Flask application fixture
@@ -253,8 +244,7 @@ def sample_skill(app):
 
 @pytest.fixture(scope="function")
 def sample_asset(app):
-    """
-    Create a sample asset for testing.
+    """Create a sample asset for testing.
 
     Args:
         app: Flask application fixture
@@ -280,8 +270,7 @@ def sample_asset(app):
 
 @pytest.fixture(scope="function")
 def sample_spare_part(app):
-    """
-    Create a sample spare part for testing.
+    """Create a sample spare part for testing.
 
     Args:
         app: Flask application fixture
@@ -307,8 +296,7 @@ def sample_spare_part(app):
 
 @pytest.fixture(scope="function")
 def sample_mo(app, sample_asset, sample_user):
-    """
-    Create a sample maintenance order for testing.
+    """Create a sample maintenance order for testing.
 
     Args:
         app: Flask application fixture
@@ -339,8 +327,7 @@ def sample_mo(app, sample_asset, sample_user):
 
 @pytest.fixture(scope="function")
 def auth_client(client, sample_user, app):
-    """
-    Provide an authenticated test client.
+    """Provide an authenticated test client.
 
     This fixture creates a test client that is already logged in with
     the sample_user credentials, allowing tests to bypass authentication.
@@ -364,8 +351,7 @@ def auth_client(client, sample_user, app):
 
 @pytest.fixture(scope="function")
 def multiple_assets(app):
-    """
-    Create multiple assets for testing list operations.
+    """Create multiple assets for testing list operations.
 
     Args:
         app: Flask application fixture
@@ -408,8 +394,7 @@ def multiple_assets(app):
 
 @pytest.fixture(scope="function")
 def multiple_mos(app, multiple_assets, sample_user):
-    """
-    Create multiple maintenance orders for testing list operations.
+    """Create multiple maintenance orders for testing list operations.
 
     Args:
         app: Flask application fixture
@@ -457,8 +442,7 @@ def multiple_mos(app, multiple_assets, sample_user):
 
 @pytest.fixture(scope="function")
 def logged_in_user(client, sample_user):
-    """
-    Create a logged-in user session for testing authenticated endpoints.
+    """Create a logged-in user session for testing authenticated endpoints.
 
     Args:
         client: Flask test client

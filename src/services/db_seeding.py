@@ -4,16 +4,17 @@
 import json
 import os
 from datetime import datetime, timedelta, timezone
+
 from .db_utils import (
-    db,
-    Role,
-    Team,
-    User,
-    Skill,
-    UserSkill,
     Asset,
     MaintenanceOrder,
+    Role,
+    Skill,
     SparePart,
+    Team,
+    User,
+    UserSkill,
+    db,
 )
 
 

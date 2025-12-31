@@ -1,13 +1,12 @@
-"""
-Tests for authentication and security features.
+"""Tests for authentication and security features.
 
-This module tests login, logout, session management, password hashing,
-role-based access control, and CSRF protection to ensure production-level security.
+This module tests login, logout, session management, password hashing, role-based access
+control, and CSRF protection to ensure production-level security.
 """
 
 import pytest
-from flask import session
-from src.services.db_utils import db, User, Role
+
+from src.services.db_utils import Role, User, db
 
 
 class TestAuthentication:
@@ -58,8 +57,7 @@ class TestAuthentication:
             yield user
 
     def test_login_success(self, client, admin_user):
-        """
-        Test successful login with valid credentials.
+        """Test successful login with valid credentials.
 
         Verifies:
         - POST to /login with valid credentials returns success
@@ -87,8 +85,7 @@ class TestAuthentication:
             assert sess["username"] == "admin", "Session should contain username"
 
     def test_login_invalid_credentials(self, client, admin_user):
-        """
-        Test login fails with invalid password.
+        """Test login fails with invalid password.
 
         Verifies:
         - POST with wrong password does not create session
@@ -115,8 +112,7 @@ class TestAuthentication:
             ), "Session should NOT contain user_id after failed login"
 
     def test_logout(self, client, admin_user):
-        """
-        Test logout destroys session and redirects to login.
+        """Test logout destroys session and redirects to login.
 
         Verifies:
         - User can logout successfully
@@ -147,8 +143,7 @@ class TestAuthentication:
             ), "Session should NOT contain username after logout"
 
     def test_protected_route_requires_auth(self, client, admin_user):
-        """
-        Test that protected routes require authentication.
+        """Test that protected routes require authentication.
 
         Verifies:
         - Accessing protected route without login redirects to login
@@ -173,8 +168,7 @@ class TestAuthentication:
     def test_admin_only_route_blocks_technician(
         self, client, admin_user, technician_user
     ):
-        """
-        Test role-based access control.
+        """Test role-based access control.
 
         Note: Current implementation doesn't have explicit admin-only routes.
         This test verifies the CAPABILITY exists via login_required decorator.
@@ -205,8 +199,7 @@ class TestAuthentication:
         # admin-only routes with a role_required decorator (future enhancement)
 
     def test_password_hashing(self, app, admin_user):
-        """
-        Test that passwords are hashed, not stored in plain text.
+        """Test that passwords are hashed, not stored in plain text.
 
         Verifies:
         - Password is hashed in database
@@ -239,8 +232,7 @@ class TestAuthentication:
             assert user.check_password("admin") is False, "Partial password should fail"
 
     def test_session_management(self, client, admin_user):
-        """
-        Test session lifecycle and security.
+        """Test session lifecycle and security.
 
         Verifies:
         - Session created on login
@@ -274,8 +266,7 @@ class TestAuthentication:
         assert "/login" in response.location, "Should require re-authentication"
 
     def test_csrf_protection(self, client, admin_user):
-        """
-        Test CSRF protection on forms.
+        """Test CSRF protection on forms.
 
         Note: Flask-WTF CSRF protection is configured in app but may be
         disabled in testing mode. This test verifies the capability exists.
@@ -294,7 +285,6 @@ class TestAuthentication:
         # Check if CSRF token is in the form
         # Note: In testing mode, CSRF might be disabled (WTF_CSRF_ENABLED=False)
         # This test verifies the form structure exists for CSRF
-        has_csrf_meta = b"csrf_token" in response.data or b"csrf-token" in response.data
 
         # We expect forms to have CSRF capability (even if disabled in testing)
         # The presence of form structure indicates CSRF readiness

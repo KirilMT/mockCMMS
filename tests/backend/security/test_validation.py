@@ -1,12 +1,12 @@
-"""
-Tests for data validation and security.
+"""Tests for data validation and security.
 
-This module tests input validation, SQL injection prevention, XSS prevention,
-and data integrity to ensure production-level security and data quality.
+This module tests input validation, SQL injection prevention, XSS prevention, and data
+integrity to ensure production-level security and data quality.
 """
 
 import pytest
-from src.services.db_utils import db, Asset, MaintenanceOrder, User, Role
+
+from src.services.db_utils import Asset, Role, User, db
 
 
 class TestDataValidation:
@@ -38,8 +38,7 @@ class TestDataValidation:
             yield user
 
     def test_sql_injection_prevention(self, client, admin_user):
-        """
-        Test that SQL injection payloads are properly escaped/sanitized.
+        """Test that SQL injection payloads are properly escaped/sanitized.
 
         Verifies:
         - SQL injection payload does not affect database
@@ -80,8 +79,7 @@ class TestDataValidation:
             ), "SQL payload should be stored as string"
 
     def test_xss_prevention(self, client, admin_user):
-        """
-        Test that XSS payloads are properly escaped in HTML output.
+        """Test that XSS payloads are properly escaped in HTML output.
 
         Verifies:
         - XSS payload is escaped when displayed
@@ -123,15 +121,13 @@ class TestDataValidation:
         response = client.get(f"/assets/{asset_id}")
         assert response.status_code == 200, "Asset detail page should load"
 
-        # Check that script is escaped (rendered as text, not executed)
-        # Flask/Jinja2 auto-escapes by default, so we should see &lt;script&gt; or similar
+        # Check that script is escaped (Flask/Jinja2 auto-escapes)
         assert (
             b"<script>alert" not in response.data or b"&lt;script&gt;" in response.data
         ), "Script tags should be escaped in HTML output"
 
     def test_required_fields_validation(self, client, admin_user):
-        """
-        Test that required fields are validated.
+        """Test that required fields are validated.
 
         Verifies:
         - Missing required field returns 400 error
@@ -176,8 +172,7 @@ class TestDataValidation:
             assert final_count == initial_count, "Asset should NOT be created"
 
     def test_unique_constraint_handling(self, client, admin_user):
-        """
-        Test that unique constraints are enforced.
+        """Test that unique constraints are enforced.
 
         Verifies:
         - Duplicate asset_code returns error
@@ -200,8 +195,8 @@ class TestDataValidation:
         assert response1.status_code in [200, 201], "First asset should be created"
 
         # Try to create duplicate asset with same asset_code
-        # Note: The API doesn't have proper error handling for this, so it will raise IntegrityError
-        # This is actually testing that the database constraint IS working
+        # Note: API doesn't handle this properly, raises IntegrityError
+        # This tests that the database constraint IS working
         try:
             response2 = client.post(
                 "/api/v1/assets",
@@ -233,8 +228,7 @@ class TestDataValidation:
             ), "Original asset should be preserved"
 
     def test_data_type_validation(self, client, admin_user):
-        """
-        Test that data type validation works correctly.
+        """Test that data type validation works correctly.
 
         Verifies:
         - Invalid data type returns error or is properly coerced
@@ -290,8 +284,7 @@ class TestDataValidation:
             assert asset is not None, "Asset should still exist"
 
     def test_max_length_validation(self, client, admin_user):
-        """
-        Test that maximum length constraints are enforced.
+        """Test that maximum length constraints are enforced.
 
         Verifies:
         - Field exceeding max length is handled
@@ -332,9 +325,9 @@ class TestDataValidation:
             asset = Asset.query.filter_by(asset_code="LENGTH-TEST-001").first()
 
             if asset:
-                # If created, document that SQLite doesn't enforce length
-                # In production with PostgreSQL/MySQL, this would be enforced
-                # This is a known limitation that should be addressed with API-level validation
+                # SQLite doesn't enforce length
+                # PostgreSQL/MySQL would enforce this
+                # Known limitation - needs API-level validation
                 assert asset.name == long_name, "SQLite allows exceeding VARCHAR length"
 
                 # Log that this is a validation gap

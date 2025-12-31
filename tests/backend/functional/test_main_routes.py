@@ -1,20 +1,20 @@
-"""
-Tests for web page routes and form handling.
+"""Tests for web page routes and form handling.
 
-This module tests all Flask web routes for correct HTML rendering,
-form submissions, redirects, and page content validation.
+This module tests all Flask web routes for correct HTML rendering, form submissions,
+redirects, and page content validation.
 """
+
+import pytest
 
 from src.services.db_utils import (
-    db,
     Asset,
     MaintenanceOrder,
-    SparePart,
-    User,
-    Team,
     Role,
+    SparePart,
+    Team,
+    User,
+    db,
 )
-import pytest
 
 
 class TestGeneralPages:
@@ -82,7 +82,7 @@ class TestAssetsPages:
         """Test POST /assets/add with invalid data shows errors."""
         asset_data = {
             "description": "Missing required fields"
-            # Missing name and asset_code - will cause KeyError which Flask converts to 400
+            # Missing name and asset_code - causes KeyError -> 400
         }
         # The route accesses form fields without .get(), causing KeyError
         # Flask automatically converts this to 400 Bad Request
@@ -183,7 +183,7 @@ class TestMaintenanceOrdersPages:
             mo_data = {
                 "asset_id": sample_asset.id,
                 "description": "New web MO",
-                "order_type": "reactive",  # Use reactive to avoid PM frequency validation
+                "order_type": "reactive",  # Avoid PM frequency validation
                 "priority": "Medium",
                 "labour_count": 1,
             }
@@ -386,7 +386,8 @@ class TestUsersPages:
 
 
 class TestEnhancedMainRoutes:
-    """Enhanced test suite for main routes - DELETE operations, edge cases, and error handling."""
+    """Enhanced test suite for main routes - DELETE operations, edge cases, and error
+    handling."""
 
     def test_delete_asset_with_maintenance_orders(self, auth_client, sample_asset, app):
         """Test DELETE asset with associated MOs triggers cascade delete."""
@@ -548,7 +549,8 @@ class TestTechnicianFlows:
             return [team_a, team_b]
 
     def test_register_technician_assigns_team(self, client, app, teams):
-        """Test that registering a Technician with a team_id correctly assigns the team."""
+        """Test that registering a Technician with a team_id correctly assigns the
+        team."""
         with app.app_context():
             # Ensure Technician role exists
             from src.services.db_utils import Role

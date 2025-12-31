@@ -1,19 +1,19 @@
-"""
-Unit tests for the logging configuration and performance monitoring.
-"""
+"""Unit tests for the logging configuration and performance monitoring."""
 
 import json
 import logging
 import time
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from flask import Flask
+
 from src.services.logging_config import (
     LoggingConfig,
-    StructuredFormatter,
     MetricsCollector,
-    performance_monitor,
+    StructuredFormatter,
     metrics_collector,
+    performance_monitor,
 )
 
 

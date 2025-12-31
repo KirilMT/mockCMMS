@@ -4,8 +4,7 @@
 
 
 def get_shift_teams(date_obj, teams):
-    """
-    Determines the Early and Late shift teams for a given date based on a 2-2-3
+    """Determines the Early and Late shift teams for a given date based on a 2-2-3
     Rotating Schedule (Pitman Schedule).
 
     This schedule uses four teams (A, B, C, D) over a 28-day cycle.

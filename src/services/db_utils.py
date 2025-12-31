@@ -3,19 +3,20 @@
 """Database models and utilities for mockCMMS."""
 
 from datetime import datetime, timezone
+
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import relationship
 from sqlalchemy import (
-    Table,
+    Boolean,
     Column,
+    DateTime,
+    ForeignKey,
     Integer,
     String,
-    ForeignKey,
+    Table,
     Text,
-    DateTime,
-    Boolean,
 )
-from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import relationship
+from werkzeug.security import check_password_hash, generate_password_hash
 
 db = SQLAlchemy()
 
@@ -337,8 +338,8 @@ class TableConfiguration(db.Model):  # type: ignore
 def populate_dummy_data(logger):
     """Populates the database with initial dummy data.
 
-    This function delegates to db_seeding.populate_dummy_data to avoid
-    code duplication (R0801) and cyclic imports (R0401).
+    This function delegates to db_seeding.populate_dummy_data to avoid code duplication
+    (R0801) and cyclic imports (R0401).
     """
     # pylint: disable=import-outside-toplevel
     from .db_seeding import populate_dummy_data as _populate

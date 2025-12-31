@@ -1,22 +1,14 @@
-"""
-Performance tests for scalability and query optimization.
+"""Performance tests for scalability and query optimization.
 
-This module tests application performance under load, query optimization,
-and resource usage to ensure the system scales appropriately.
+This module tests application performance under load, query optimization, and resource
+usage to ensure the system scales appropriately.
 """
+
+import time
 
 import pytest
-import time
-from datetime import datetime, timedelta
-from src.services.db_utils import (
-    db,
-    User,
-    Role,
-    Asset,
-    MaintenanceOrder,
-    SparePart,
-    Team,
-)
+
+from src.services.db_utils import Asset, MaintenanceOrder, Role, User, db
 
 
 class TestPerformance:
@@ -42,8 +34,7 @@ class TestPerformance:
             yield user
 
     def test_large_dataset_queries(self, client, app, admin_user):
-        """
-        Test query performance with large datasets.
+        """Test query performance with large datasets.
 
         Verifies:
         - Database can handle 1000+ records
@@ -91,8 +82,7 @@ class TestPerformance:
         assert query_time < 5.0, f"Query took {query_time:.2f}s, expected < 5s"
 
     def test_pagination_performance(self, client, app, admin_user):
-        """
-        Test pagination performance across pages.
+        """Test pagination performance across pages.
 
         Verifies:
         - First page loads quickly
@@ -134,8 +124,7 @@ class TestPerformance:
             ), f"Inconsistent performance: {t:.2f}s vs avg {avg_time:.2f}s"
 
     def test_n_plus_one_query_detection(self, client, app, admin_user):
-        """
-        Test for N+1 query problems.
+        """Test for N+1 query problems.
 
         Verifies:
         - Related data is loaded efficiently
@@ -182,8 +171,7 @@ class TestPerformance:
         ), f"Possible N+1 query: took {query_time:.2f}s for 10 assets with 50 MOs"
 
     def test_search_performance(self, client, app, admin_user):
-        """
-        Test search performance on large datasets.
+        """Test search performance on large datasets.
 
         Verifies:
         - Search completes in reasonable time
@@ -222,8 +210,7 @@ class TestPerformance:
         assert search_time < 2.0, f"List took {search_time:.2f}s, expected < 2s"
 
     def test_complex_filter_performance(self, client, app, admin_user):
-        """
-        Test performance with multiple filters.
+        """Test performance with multiple filters.
 
         Verifies:
         - Multiple filters don't cause performance issues
@@ -261,8 +248,7 @@ class TestPerformance:
         assert filter_time < 2.0, f"Filtered query took {filter_time:.2f}s"
 
     def test_concurrent_request_handling(self, client, app, admin_user):
-        """
-        Test concurrent request handling.
+        """Test concurrent request handling.
 
         Verifies:
         - Multiple concurrent requests complete successfully
@@ -306,8 +292,7 @@ class TestPerformance:
         ), f"Avg request time {avg_time:.2f}s, may indicate locking issues"
 
     def test_memory_usage_with_large_results(self, client, app, admin_user):
-        """
-        Test memory usage with large result sets.
+        """Test memory usage with large result sets.
 
         Verifies:
         - Large result sets don't cause memory issues
@@ -350,8 +335,7 @@ class TestPerformance:
         ), f"Large result set took {query_time:.2f}s, possible memory issue"
 
     def test_database_connection_pooling(self, client, app, admin_user):
-        """
-        Test database connection pooling.
+        """Test database connection pooling.
 
         Verifies:
         - Connections are reused across requests

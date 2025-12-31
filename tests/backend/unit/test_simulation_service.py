@@ -1,7 +1,7 @@
 """Unit tests for Data Simulation Service."""
 
+from src.services.db_utils import Asset, MaintenanceOrder, User, db
 from src.services.simulation_service import DataSimulationService
-from src.services.db_utils import Asset, User, MaintenanceOrder, Role, db
 
 
 class TestDataSimulationService:
@@ -26,6 +26,7 @@ class TestDataSimulationService:
                     "Under Maintenance",
                     "Offline",
                     "Retired",
+                    "Down",
                 ]
 
     def test_generate_random_users(self, app):
@@ -56,7 +57,12 @@ class TestDataSimulationService:
             assert len(generated) == 5
             assert MaintenanceOrder.query.count() == initial_count + 5
 
-            allowed_types = ["PM", "Reactive", "Corrective"]
+            allowed_types = [
+                "PM",
+                "PM (Preventive Maintenance)",
+                "Reactive",
+                "Corrective",
+            ]
 
             for mo in generated:
                 assert mo.id is not None

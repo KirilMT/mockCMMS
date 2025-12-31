@@ -271,10 +271,17 @@ The core application can be improved with the following features to support the 
 #### Testing & Quality Assurance
 
 - **[ ] Comprehensive Testing & CI/CD Pipeline** _(Priority: High)_
+    - **Status:** ⚙️ In Progress (December 22, 2025)
+        - ✅ Pre-commit validation documentation added to AI instructions
+        - ✅ Visual test screenshot protection rules documented
+        - ✅ Test configuration immutability rules documented
+        - ✅ Validation script created (`scripts/validate_code.py`)
+        - ⏳ Pre-commit hooks currently DISABLED (will enable after Phase 2)
     - **Objective:** Implement a strict "Local -> Commit -> Push -> CI" workflow to ensure code quality and stability.
     - **Philosophy:** "Verify locally before committing, verify globally on push."
     - **Scope:**
-        - **Pre-Commit Hooks:** Implement `.pre-commit-config.yaml` to run linters (flake8, black), formatters, and basic checks before every commit.
+        - **Pre-Commit Hooks:** `.pre-commit-config.yaml` exists but DISABLED until Phase 2 (Code Formatting) completes
+        - **Local Validation Script:** `scripts/validate_code.py` - Comprehensive validation that simulates CI locally
         - **Local Test Runner:** Configure `pytest.ini` and `pyproject.toml` for easy local execution of core tests.
         - **Expanded Test Suite:** Increase the core app test coverage from ~2 tests to comprehensive unit/integration tests.
         - **GitHub Actions:**
@@ -500,10 +507,15 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
         - Release: [release.yml](https://github.com/KirilMT/Troubleshooting-Wizard/blob/main/.github/workflows/release.yml)
 
 - **[ ] Implement Local Development Scripts** _(Priority: High)_
-    - **Note:** Need to think if this would really be necessary, if would really help the development process or not (we haveve already CI and want to implement pre-commit hooks).
+    - **Status:** ⚙️ In Progress (December 22, 2025)
+        - ✅ `validate_code.py` - Comprehensive pre-commit validation script (simulates CI locally)
+        - ⏳ `format_code.py` - To be implemented (actively format code)
+        - ⏳ `test_workflow.py` - To be implemented (simulate full CI pipeline)
+        - ⏳ `release_manager.py` - To be implemented (version management)
     - **Goal:** Create utility scripts for local development workflow, adapted from Troubleshooting-Wizard.
     - **Reference:** [Troubleshooting-Wizard scripts/](https://github.com/KirilMT/Troubleshooting-Wizard/tree/main/scripts)
     - **Scripts to Implement:**
+        - **`validate_code.py`:** ✅ COMPLETED - Comprehensive validation script that runs all checks (linting, formatting, tests, coverage, security) before committing. Simulates CI pipeline locally.
         - **`format_code.py`:** Actively format Python code (not just check). Should apply Black, isort, and other formatters. Quick script for daily use.
         - **`test_workflow.py`:** Simulate CI Pipeline, Release, and Code Quality workflows locally before pushing. More complex/slow script for pre-push validation.
         - **`release_manager.py`:** Handle version bumping, changelog updates, and git tagging for releases.
