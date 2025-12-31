@@ -1501,55 +1501,55 @@ If Step 4 resulted in NO modifications:
 #### Task 5.1: Base Template (`src/templates/base.html`)
 
 **Step 1: HTML Validation**
-- [ ] Run HTML validator (W3C or `html-validate`) on rendered output
-- [ ] Fix any syntax errors or warnings
-- [ ] Proceed to Step 2
+- [x] Run HTML validator (W3C or `html-validate`) on rendered output
+- [x] Fix any syntax errors or warnings
+- [x] Proceed to Step 2
 
 **Step 2: Prettier Formatting**
-- [ ] Run `prettier --write src/templates/base.html` to auto-format HTML
-- [ ] Review changes for consistency
-- [ ] Proceed to Step 3
+- [x] Run `prettier --write src/templates/base.html` to auto-format HTML
+- [x] Review changes for consistency
+- [x] Proceed to Step 3
 
 **Step 3: Render Testing**
-- [ ] Load page in browser
-- [ ] Verify template renders correctly
-- [ ] Test all dynamic content
-- [ ] Check for template errors in Flask logs
-- [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
+- [x] Load page in browser
+- [x] Verify template renders correctly
+- [x] Test all dynamic content
+- [x] Check for template errors in Flask logs
+- [x] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
 Focus on structure, accessibility, and patterns that tools can't catch:
-- [ ] Review Jinja2 template inheritance structure
-- [ ] Check for proper block definitions
-- [ ] Verify meta tags and SEO elements
-- [ ] Review script/style loading order
+- [x] Review Jinja2 template inheritance structure
+- [x] Check for proper block definitions
+- [x] Verify meta tags and SEO elements
+- [x] Review script/style loading order
 
 **Separation of Concerns:**
-- [ ] Identify inline JavaScript (`<script>` blocks in template)
-- [ ] Identify inline CSS (`<style>` blocks in template)
-- [ ] Identify inline styles (`style="..."` attributes)
-- [ ] Identify inline event handlers (`onclick="..."` attributes)
-- [ ] Create extraction plan for each violation
+- [x] Identify inline JavaScript (`<script>` blocks in template)
+- [x] Identify inline CSS (`<style>` blocks in template)
+- [x] Identify inline styles (`style="..."` attributes)
+- [x] Identify inline event handlers (`onclick="..."` attributes)
+- [x] Create extraction plan for each violation
 
 **HTML Quality & Standards:**
-- [ ] Semantic HTML usage (header, nav, main, section, article)
-- [ ] Proper heading hierarchy (h1, h2, h3...)
-- [ ] Accessibility (ARIA labels, alt text, role attributes)
-- [ ] Form accessibility (labels, fieldsets, error messages)
-- [ ] Remove commented-out HTML blocks
-- [ ] Remove bug reference comments (e.g., `<!-- Bug #5 -->`)
+- [x] Semantic HTML usage (header, nav, main, section, article)
+- [x] Proper heading hierarchy (h1, h2, h3...)
+- [x] Accessibility (ARIA labels, alt text, role attributes)
+- [x] Form accessibility (labels, fieldsets, error messages)
+- [x] Remove commented-out HTML blocks
+- [x] Remove bug reference comments (e.g., `<!-- Bug #5 -->`)
 
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:
-- [ ] Document what was changed and why
-- [ ] Update any affected render tests
-- [ ] Extract inline code to separate files if needed
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [x] Document what was changed and why
+- [x] Update any affected render tests
+- [x] Extract inline code to separate files if needed
+- [x] 🔄 **Loop back to Step 1** and repeat until file is perfect
 
 If Step 4 resulted in NO modifications:
-- [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve base.html [Phase 5.1]`
-- [ ] Move to Task 5.2
+- [x] Mark task as COMPLETE ✅
+- [x] Commit changes with message: `refactor(templates): audit and improve base.html [Phase 5.1]`
+- [x] Move to Task 5.2
 
 ---
 
