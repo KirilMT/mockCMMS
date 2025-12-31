@@ -1,5 +1,4 @@
 # src/services/db_utils.py
-
 """Database models and utilities for mockCMMS."""
 
 from datetime import datetime, timezone

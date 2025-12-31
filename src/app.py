@@ -1,5 +1,4 @@
 # src/app.py
-
 """Flask application factory for mockCMMS."""
 
 import os
