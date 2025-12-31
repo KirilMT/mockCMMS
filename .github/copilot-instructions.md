@@ -1053,6 +1053,35 @@ completion summaries.
     credentials (e.g., admin/admin123).
 
 2.  **VERSION MANAGEMENT**: After completing any significant changes:
+
+    **Automated Approach (Recommended):**
+    Use the release manager script to automate version updates:
+    ```sh
+    # Preview changes without applying (dry-run)
+    python scripts/release_manager.py patch --dry-run
+    python scripts/release_manager.py minor --dry-run
+    python scripts/release_manager.py major --dry-run
+    
+    # Apply version bump
+    python scripts/release_manager.py patch   # For bug fixes
+    python scripts/release_manager.py minor   # For new features
+    python scripts/release_manager.py major   # For breaking changes
+    ```
+    
+    **The script automatically:**
+    - Updates CHANGELOG.md with new version and date
+    - Updates README.md version footer
+    - Creates git commit with conventional message
+    - Creates annotated git tag (e.g., v1.2.0)
+    - Ensures version numbers match everywhere
+    
+    **After running the script:**
+    ```sh
+    # Push commit and tag to remote
+    git push origin main v1.2.0
+    ```
+    
+    **Manual Approach (If Script Cannot Be Used):**
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following
        [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding

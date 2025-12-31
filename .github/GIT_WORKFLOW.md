@@ -113,6 +113,37 @@ information:
 - **MINOR (`x.1.x`):** Increment for new, backward-compatible features.
 - **PATCH (`x.x.1`):** Increment for backward-compatible bug fixes.
 
+#### Automated Version Management (Recommended)
+
+**Use the release manager script to automate version updates:**
+
+```sh
+# Preview changes without applying (dry-run)
+python scripts/release_manager.py patch --dry-run
+python scripts/release_manager.py minor --dry-run
+python scripts/release_manager.py major --dry-run
+
+# Apply version bump
+python scripts/release_manager.py patch   # For bug fixes
+python scripts/release_manager.py minor   # For new features
+python scripts/release_manager.py major   # For breaking changes
+```
+
+**The script automatically:**
+- Updates CHANGELOG.md with new version and date
+- Updates README.md version footer
+- Creates git commit with conventional message
+- Creates annotated git tag (e.g., v1.2.0)
+- Ensures version numbers match everywhere
+
+**After running the script:**
+```sh
+# Push commit and tag to remote
+git push origin main v1.2.0
+```
+
+#### Manual Version Updates (If Not Using Script)
+
 **Required Updates:**
 
 1. **Update CHANGELOG.md** (follow
