@@ -1556,228 +1556,228 @@ If Step 4 resulted in NO modifications:
 #### Task 5.2: Assets List Page (`src/templates/assets.html`)
 
 **Step 1: HTML Validation**
-- [ ] Run HTML validator on rendered output
-- [ ] Fix any syntax errors or warnings
-- [ ] Proceed to Step 2
+- [x] Run HTML validator on rendered output
+- [x] Fix any syntax errors or warnings
+- [x] Proceed to Step 2
 
 **Step 2: Prettier Formatting**
-- [ ] Run `prettier --write src/templates/assets.html` to auto-format HTML
-- [ ] Review changes for consistency
-- [ ] Proceed to Step 3
+- [x] Run `prettier --write src/templates/assets.html` to auto-format HTML
+- [x] Review changes for consistency
+- [x] Proceed to Step 3
 
 **Step 3: Render Testing**
-- [ ] Load assets page in browser
-- [ ] Verify template renders correctly
-- [ ] Test all dynamic content
-- [ ] Check for template errors in Flask logs
-- [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
+- [x] Load assets page in browser
+- [x] Verify template renders correctly
+- [x] Test all dynamic content
+- [x] Check for template errors in Flask logs
+- [x] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
-- [ ] Check for duplicate template blocks
-- [ ] Verify proper use of includes and macros
-- [ ] Review table structure and accessibility
-- [ ] Check for inline JavaScript/CSS violations
-- [ ] Verify proper form structure
+- [x] Check for duplicate template blocks
+- [x] Verify proper use of includes and macros
+- [x] Review table structure and accessibility
+- [x] Check for inline JavaScript/CSS violations
+- [x] Verify proper form structure
 
 **Separation of Concerns:**
-- [ ] Identify inline JavaScript (`<script>` blocks in template)
-- [ ] Identify inline CSS (`<style>` blocks in template)
-- [ ] Identify inline styles (`style="..."` attributes)
-- [ ] Identify inline event handlers (`onclick="..."` attributes)
-- [ ] Create extraction plan for each violation
+- [x] Identify inline JavaScript (`<script>` blocks in template)
+- [x] Identify inline CSS (`<style>` blocks in template)
+- [x] Identify inline styles (`style="..."` attributes)
+- [x] Identify inline event handlers (`onclick="..."` attributes)
+- [x] Create extraction plan for each violation
 
 **HTML Quality & Standards:**
-- [ ] Semantic HTML usage (header, nav, main, section, article)
-- [ ] Proper heading hierarchy (h1, h2, h3...)
-- [ ] Accessibility (ARIA labels, alt text, role attributes)
-- [ ] Form accessibility (labels, fieldsets, error messages)
-- [ ] Remove commented-out HTML blocks
-- [ ] Remove bug reference comments
+- [x] Semantic HTML usage (header, nav, main, section, article)
+- [x] Proper heading hierarchy (h1, h2, h3...)
+- [x] Accessibility (ARIA labels, alt text, role attributes)
+- [x] Form accessibility (labels, fieldsets, error messages)
+- [x] Remove commented-out HTML blocks
+- [x] Remove bug reference comments
 
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:
-- [ ] Document what was changed and why
-- [ ] Extract inline code to separate files if needed
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [x] Document what was changed and why
+- [x] Extract inline code to separate files if needed
+- [x] 🔄 **Loop back to Step 1** and repeat until file is perfect
 
 If Step 4 resulted in NO modifications:
-- [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve assets.html [Phase 5.2]`
-- [ ] Move to Task 5.3
+- [x] Mark task as COMPLETE ✅
+- [x] Commit changes with message: `refactor(templates): audit and improve assets.html [Phase 5.2]`
+- [x] Move to Task 5.3
 
 ---
 
 #### Task 5.3: Maintenance Orders List Page (`src/templates/maintenance_orders.html`)
 
 **Step 1: HTML Validation**
-- [ ] Run HTML validator on rendered output
-- [ ] Fix any syntax errors or warnings
-- [ ] Proceed to Step 2
+- [x] Run HTML validator on rendered output
+- [x] Fix any syntax errors or warnings
+- [x] Proceed to Step 2
 
 **Step 2: Prettier Formatting**
-- [ ] Run `prettier --write src/templates/maintenance_orders.html` to auto-format HTML
-- [ ] Review changes for consistency
-- [ ] Proceed to Step 3
+- [x] Run `prettier --write src/templates/maintenance_orders.html` to auto-format HTML
+- [x] Review changes for consistency
+- [x] Proceed to Step 3
 
 **Step 3: Render Testing**
-- [ ] Load maintenance orders page in browser
-- [ ] Verify template renders correctly
-- [ ] Test all dynamic content
-- [ ] Check for template errors in Flask logs
-- [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
+- [x] Load maintenance orders page in browser
+- [x] Verify template renders correctly
+- [x] Test all dynamic content
+- [x] Check for template errors in Flask logs
+- [x] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
-- [ ] Check for duplicate template blocks
-- [ ] Verify proper use of includes and macros
-- [ ] Review table structure and accessibility
-- [ ] Check for inline JavaScript/CSS violations
-- [ ] Verify proper form structure
+- [x] Check for duplicate template blocks
+- [x] Verify proper use of includes and macros
+- [x] Review table structure and accessibility
+- [x] Check for inline JavaScript/CSS violations
+- [x] Verify proper form structure
 
 **Separation of Concerns:**
-- [ ] Identify inline JavaScript (`<script>` blocks in template)
-- [ ] Identify inline CSS (`<style>` blocks in template)
-- [ ] Identify inline styles (`style="..."` attributes)
-- [ ] Identify inline event handlers (`onclick="..."` attributes)
-- [ ] Create extraction plan for each violation
+- [x] Identify inline JavaScript (`<script>` blocks in template)
+- [x] Identify inline CSS (`<style>` blocks in template)
+- [x] Identify inline styles (`style="..."` attributes)
+- [x] Identify inline event handlers (`onclick="..."` attributes)
+- [x] Create extraction plan for each violation
 
 **HTML Quality & Standards:**
-- [ ] Semantic HTML usage (header, nav, main, section, article)
-- [ ] Proper heading hierarchy (h1, h2, h3...)
-- [ ] Accessibility (ARIA labels, alt text, role attributes)
-- [ ] Form accessibility (labels, fieldsets, error messages)
-- [ ] Remove commented-out HTML blocks
-- [ ] Remove bug reference comments
+- [x] Semantic HTML usage (header, nav, main, section, article)
+- [x] Proper heading hierarchy (h1, h2, h3...)
+- [x] Accessibility (ARIA labels, alt text, role attributes)
+- [x] Form accessibility (labels, fieldsets, error messages)
+- [x] Remove commented-out HTML blocks
+- [x] Remove bug reference comments
 
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:
-- [ ] Document what was changed and why
-- [ ] Extract inline code to separate files if needed
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [x] Document what was changed and why
+- [x] Extract inline code to separate files if needed
+- [x] 🔄 **Loop back to Step 1** and repeat until file is perfect
 
 If Step 4 resulted in NO modifications:
-- [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve maintenance_orders.html [Phase 5.3]`
-- [ ] Move to Task 5.4
+- [x] Mark task as COMPLETE ✅
+- [x] Commit changes with message: `refactor(templates): audit and improve maintenance_orders.html [Phase 5.3]`
+- [x] Move to Task 5.4
 
 ---
 
 #### Task 5.4: Spare Parts List Page (`src/templates/spare_parts.html`)
 
 **Step 1: HTML Validation**
-- [ ] Run HTML validator on rendered output
-- [ ] Fix any syntax errors or warnings
-- [ ] Proceed to Step 2
+- [x] Run HTML validator on rendered output
+- [x] Fix any syntax errors or warnings
+- [x] Proceed to Step 2
 
 **Step 2: Prettier Formatting**
-- [ ] Run `prettier --write src/templates/spare_parts.html` to auto-format HTML
-- [ ] Review changes for consistency
-- [ ] Proceed to Step 3
+- [x] Run `prettier --write src/templates/spare_parts.html` to auto-format HTML
+- [x] Review changes for consistency
+- [x] Proceed to Step 3
 
 **Step 3: Render Testing**
-- [ ] Load spare parts page in browser
-- [ ] Verify template renders correctly
-- [ ] Test all dynamic content
-- [ ] Check for template errors in Flask logs
-- [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
+- [x] Load spare parts page in browser
+- [x] Verify template renders correctly
+- [x] Test all dynamic content
+- [x] Check for template errors in Flask logs
+- [x] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
-- [ ] Check for duplicate template blocks
-- [ ] Verify proper use of includes and macros
-- [ ] Review table structure and accessibility
-- [ ] Check for inline JavaScript/CSS violations
-- [ ] Verify proper form structure
+- [x] Check for duplicate template blocks
+- [x] Verify proper use of includes and macros
+- [x] Review table structure and accessibility
+- [x] Check for inline JavaScript/CSS violations
+- [x] Verify proper form structure
 
 **Separation of Concerns:**
-- [ ] Identify inline JavaScript (`<script>` blocks in template)
-- [ ] Identify inline CSS (`<style>` blocks in template)
-- [ ] Identify inline styles (`style="..."` attributes)
-- [ ] Identify inline event handlers (`onclick="..."` attributes)
-- [ ] Create extraction plan for each violation
+- [x] Identify inline JavaScript (`<script>` blocks in template)
+- [x] Identify inline CSS (`<style>` blocks in template)
+- [x] Identify inline styles (`style="..."` attributes)
+- [x] Identify inline event handlers (`onclick="..."` attributes)
+- [x] Create extraction plan for each violation
 
 **HTML Quality & Standards:**
-- [ ] Semantic HTML usage (header, nav, main, section, article)
-- [ ] Proper heading hierarchy (h1, h2, h3...)
-- [ ] Accessibility (ARIA labels, alt text, role attributes)
-- [ ] Form accessibility (labels, fieldsets, error messages)
-- [ ] Remove commented-out HTML blocks
-- [ ] Remove bug reference comments
+- [x] Semantic HTML usage (header, nav, main, section, article)
+- [x] Proper heading hierarchy (h1, h2, h3...)
+- [x] Accessibility (ARIA labels, alt text, role attributes)
+- [x] Form accessibility (labels, fieldsets, error messages)
+- [x] Remove commented-out HTML blocks
+- [x] Remove bug reference comments
 
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:
-- [ ] Document what was changed and why
-- [ ] Extract inline code to separate files if needed
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [x] Document what was changed and why
+- [x] Extract inline code to separate files if needed
+- [x] 🔄 **Loop back to Step 1** and repeat until file is perfect
 
 If Step 4 resulted in NO modifications:
-- [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve spare_parts.html [Phase 5.4]`
-- [ ] Move to Task 5.5
+- [x] Mark task as COMPLETE ✅
+- [x] Commit changes with message: `refactor(templates): audit and improve spare_parts.html [Phase 5.4]`
+- [x] Move to Task 5.5
 
 ---
 
 #### Task 5.5: Users List Page (`src/templates/users.html`)
 
 **Step 1: HTML Validation**
-- [ ] Run HTML validator on rendered output
-- [ ] Fix any syntax errors or warnings
-- [ ] Proceed to Step 2
+- [x] Run HTML validator on rendered output
+- [x] Fix any syntax errors or warnings
+- [x] Proceed to Step 2
 
 **Step 2: Prettier Formatting**
-- [ ] Run `prettier --write src/templates/users.html` to auto-format HTML
-- [ ] Review changes for consistency
-- [ ] Proceed to Step 3
+- [x] Run `prettier --write src/templates/users.html` to auto-format HTML
+- [x] Review changes for consistency
+- [x] Proceed to Step 3
 
 **Step 3: Render Testing**
-- [ ] Load users page in browser
-- [ ] Verify template renders correctly
-- [ ] Test all dynamic content
-- [ ] Check for template errors in Flask logs
-- [ ] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
+- [x] Load users page in browser
+- [x] Verify template renders correctly
+- [x] Test all dynamic content
+- [x] Check for template errors in Flask logs
+- [x] ✅ **Checkpoint:** After this step, validation/formatting/rendering should all pass
 
 **Step 4: Manual Audit**
-- [ ] Check for duplicate template blocks
-- [ ] Verify proper use of includes and macros
-- [ ] Review table structure and accessibility
-- [ ] Check for inline JavaScript/CSS violations
-- [ ] Verify proper form structure
+- [x] Check for duplicate template blocks
+- [x] Verify proper use of includes and macros
+- [x] Review table structure and accessibility
+- [x] Check for inline JavaScript/CSS violations
+- [x] Verify proper form structure
 
 **Separation of Concerns:**
-- [ ] Identify inline JavaScript (`<script>` blocks in template)
-- [ ] Identify inline CSS (`<style>` blocks in template)
-- [ ] Identify inline styles (`style="..."` attributes)
-- [ ] Identify inline event handlers (`onclick="..."` attributes)
-- [ ] Create extraction plan for each violation
+- [x] Identify inline JavaScript (`<script>` blocks in template)
+- [x] Identify inline CSS (`<style>` blocks in template)
+- [x] Identify inline styles (`style="..."` attributes)
+- [x] Identify inline event handlers (`onclick="..."` attributes)
+- [x] Create extraction plan for each violation
 
 **HTML Quality & Standards:**
-- [ ] Semantic HTML usage (header, nav, main, section, article)
-- [ ] Proper heading hierarchy (h1, h2, h3...)
-- [ ] Accessibility (ARIA labels, alt text, role attributes)
-- [ ] Form accessibility (labels, fieldsets, error messages)
-- [ ] Remove commented-out HTML blocks
-- [ ] Remove bug reference comments
+- [x] Semantic HTML usage (header, nav, main, section, article)
+- [x] Proper heading hierarchy (h1, h2, h3...)
+- [x] Accessibility (ARIA labels, alt text, role attributes)
+- [x] Form accessibility (labels, fieldsets, error messages)
+- [x] Remove commented-out HTML blocks
+- [x] Remove bug reference comments
 
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:
-- [ ] Document what was changed and why
-- [ ] Extract inline code to separate files if needed
-- [ ] 🔄 **Loop back to Step 1** and repeat until file is perfect
+- [x] Document what was changed and why
+- [x] Extract inline code to separate files if needed
+- [x] 🔄 **Loop back to Step 1** and repeat until file is perfect
 
 If Step 4 resulted in NO modifications:
-- [ ] Mark task as COMPLETE ✅
-- [ ] Commit changes with message: `refactor(templates): audit and improve users.html [Phase 5.5]`
-- [ ] Move to Task 5.6
+- [x] Mark task as COMPLETE ✅
+- [x] Commit changes with message: `refactor(templates): audit and improve users.html [Phase 5.5]`
+- [x] Move to Task 5.6
 
 ---
 
 #### Task 5.6: Index/Dashboard Page (`src/templates/index.html`)
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
 **Step 4: Manual Audit**
-- [ ] Review form handling and validation
-- [ ] Check for inline styles/JavaScript/event handlers
-- [ ] Verify proper error message display
-- [ ] Review template variable naming
-- [ ] Check separation of concerns
-- [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
+- [x] Review form handling and validation
+- [x] Check for inline styles/JavaScript/event handlers
+- [x] Verify proper error message display
+- [x] Review template variable naming
+- [x] Check separation of concerns
+- [x] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve index.html [Phase 5.6]`
 
 ---
@@ -1785,12 +1785,19 @@ If Step 4 resulted in NO modifications:
 #### Task 5.7: Login Page (`src/templates/login.html`)
 **Step 1-3:** Follow standard HTML validation, formatting, and render testing
 **Step 4: Manual Audit**
-- [ ] Review form handling and validation
-- [ ] Check for inline styles/JavaScript/event handlers
-- [ ] Verify proper error message display
-- [ ] Review template variable naming
-- [ ] Check separation of concerns
-- [ ] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
+- [x] Review form handling and validation
+- [x] Check for inline styles/JavaScript/event handlers
+- [x] Verify proper error message display
+- [x] Review template variable naming
+- [x] Check separation of concerns
+- [x] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
+**Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve login.html [Phase 5.7]`
+- [x] Review form handling and validation
+- [x] Check for inline styles/JavaScript/event handlers
+- [x] Verify proper error message display
+- [x] Review template variable naming
+- [x] Check separation of concerns
+- [x] Verify HTML quality & standards (semantic HTML, accessibility, etc.)
 **Step 5:** Document & Loop or Commit with message: `refactor(templates): audit and improve login.html [Phase 5.7]`
 
 ---

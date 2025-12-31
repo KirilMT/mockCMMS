@@ -1,3 +1,4 @@
+/* global $ */
 // Global delete confirmation handler
 let deleteFormToSubmit = null;
 let deleteCallback = null;
@@ -9,6 +10,7 @@ let deleteCallback = null;
  * @param {Function} callback - The callback function to execute on confirmation
  * @returns {boolean} - Always returns false to prevent default action
  */
+// eslint-disable-next-line no-unused-vars
 function showDeleteConfirm(form, message, callback) {
   // If form is provided, use form submission (for delete forms)
   // If callback is provided, use callback (for JavaScript operations like view delete)
@@ -28,6 +30,7 @@ let inputCallback = null;
  * @param {string} message - The message to display
  * @param {Function} callback - The callback function to execute on confirmation
  */
+// eslint-disable-next-line no-unused-vars
 function showInputModal(message, callback) {
   inputCallback = callback;
   document.getElementById("inputModalLabel").textContent = message;
@@ -47,6 +50,7 @@ let confirmCallback = null;
  * @param {string} message - The message to display
  * @param {Function} callback - The callback function to execute on confirmation
  */
+// eslint-disable-next-line no-unused-vars
 function showConfirmModal(message, callback) {
   confirmCallback = callback;
   document.getElementById("confirmModalMessage").textContent =
