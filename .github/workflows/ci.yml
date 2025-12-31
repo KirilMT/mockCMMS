@@ -55,7 +55,7 @@ jobs:
 
       - name: Type check with mypy
         run: |
-          # Static type analysis
+          # Static type analysis (uses pyproject.toml config)
           mypy
 
       - name: Security scan with bandit

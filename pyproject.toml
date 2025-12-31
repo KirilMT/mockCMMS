@@ -187,6 +187,12 @@ python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
-# Check src directory - add tests later if needed with: ["src", "tests"]
-files = ["src"]
-exclude = ["apps/", ".venv/", "scripts/"]
+# Check all Python code except apps/ (modular apps have their own CI)
+files = ["src", "tests", "scripts", "run.py"]
+exclude = [
+    "apps/",
+    ".venv/",
+    "node_modules/",
+    "htmlcov/",
+    "playwright-report/",
+]

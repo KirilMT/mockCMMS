@@ -175,7 +175,8 @@ def validate_python_backend(quick: bool = False) -> bool:
     # 6. Type checking (mypy)
     print_section("Step 6/9: Type Checking (mypy)")
     success, _ = run_command(
-        ["mypy"], "Type checking"  # Uses pyproject.toml config (files = ["src"])
+        ["mypy"],  # Uses pyproject.toml: files=["src","tests","scripts","run.py"]
+        "Type checking",
     )
     checks.append(("Type Checking", success))
 

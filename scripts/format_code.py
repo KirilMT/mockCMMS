@@ -19,9 +19,9 @@ from pathlib import Path
 from typing import List
 
 # Configure UTF-8 encoding for stdout/stderr to handle unicode on Windows
-if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
+if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+    sys.stderr.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
 
 
 class CodeFormatter:
