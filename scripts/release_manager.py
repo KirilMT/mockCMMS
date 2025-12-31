@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Release Manager Script
+"""Release Manager Script.
 
 Automates version bumping, changelog updates, and git tagging for releases.
 Follows Semantic Versioning and Keep a Changelog conventions.
@@ -18,15 +17,14 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 
 class ReleaseManager:
     """Manages version bumping and release process."""
 
     def __init__(self, dry_run: bool = False):
-        """
-        Initialize the release manager.
+        """Initialize the release manager.
 
         Args:
             dry_run: If True, preview changes without applying them
@@ -37,8 +35,7 @@ class ReleaseManager:
         self.readme_path = self.root_dir / "README.md"
 
     def get_current_version(self) -> Optional[str]:
-        """
-        Extract current version from CHANGELOG.md.
+        """Extract current version from CHANGELOG.md.
 
         Returns:
             Current version string (e.g., "1.2.3") or None if not found
@@ -58,8 +55,7 @@ class ReleaseManager:
         return None
 
     def bump_version(self, current: str, bump_type: str) -> str:
-        """
-        Bump version according to semantic versioning.
+        """Bump version according to semantic versioning.
 
         Args:
             current: Current version (e.g., "1.2.3")
@@ -80,8 +76,7 @@ class ReleaseManager:
             raise ValueError(f"Invalid bump type: {bump_type}")
 
     def update_changelog(self, new_version: str) -> bool:
-        """
-        Update CHANGELOG.md with new version.
+        """Update CHANGELOG.md with new version.
 
         Args:
             new_version: New version string
@@ -119,15 +114,10 @@ class ReleaseManager:
 
 {new_header}"""
 
-        updated_content = re.sub(
-            unreleased_pattern,
-            new_unreleased,
-            content,
-            count=1
-        )
+        updated_content = re.sub(unreleased_pattern, new_unreleased, content, count=1)
 
         if self.dry_run:
-            print(f"\n[DRY RUN] Would update CHANGELOG.md:")
+            print("\n[DRY RUN] Would update CHANGELOG.md:")
             print(f"  - Add new version: {new_version}")
             print(f"  - Date: {today}")
         else:
@@ -137,8 +127,7 @@ class ReleaseManager:
         return True
 
     def update_readme(self, new_version: str) -> bool:
-        """
-        Update README.md with new version.
+        """Update README.md with new version.
 
         Args:
             new_version: New version string
@@ -160,11 +149,7 @@ class ReleaseManager:
             print("⚠️  Version line not found in README.md - skipping")
             return True
 
-        updated_content = re.sub(
-            version_pattern,
-            rf"\1 {new_version}",
-            content
-        )
+        updated_content = re.sub(version_pattern, rf"\1 {new_version}", content)
 
         if self.dry_run:
             print(f"\n[DRY RUN] Would update README.md version to {new_version}")
@@ -175,8 +160,7 @@ class ReleaseManager:
         return True
 
     def git_commit_and_tag(self, version: str) -> bool:
-        """
-        Create git commit and tag for the release.
+        """Create git commit and tag for the release.
 
         Args:
             version: Version string for the tag
@@ -185,7 +169,7 @@ class ReleaseManager:
             True if successful, False otherwise
         """
         if self.dry_run:
-            print(f"\n[DRY RUN] Would create git commit and tag:")
+            print("\n[DRY RUN] Would create git commit and tag:")
             print(f"  - Commit: 'chore: Release version {version}'")
             print(f"  - Tag: v{version}")
             return True
@@ -195,21 +179,21 @@ class ReleaseManager:
             subprocess.run(
                 ["git", "add", "CHANGELOG.md", "README.md"],
                 cwd=self.root_dir,
-                check=True
+                check=True,
             )
 
             # Commit
             subprocess.run(
                 ["git", "commit", "-m", f"chore: Release version {version}"],
                 cwd=self.root_dir,
-                check=True
+                check=True,
             )
 
             # Create tag
             subprocess.run(
                 ["git", "tag", "-a", f"v{version}", "-m", f"Release version {version}"],
                 cwd=self.root_dir,
-                check=True
+                check=True,
             )
 
             print(f"\n✅ Created git commit and tag v{version}")
@@ -223,8 +207,7 @@ class ReleaseManager:
             return False
 
     def release(self, bump_type: str) -> int:
-        """
-        Execute the release process.
+        """Execute the release process.
 
         Args:
             bump_type: Type of version bump ("major", "minor", or "patch")
@@ -290,12 +273,10 @@ def main() -> int:
         "bump_type",
         choices=["major", "minor", "patch"],
         nargs="?",
-        help="Type of version bump"
+        help="Type of version bump",
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Preview changes without applying them"
+        "--dry-run", action="store_true", help="Preview changes without applying them"
     )
 
     args = parser.parse_args()
@@ -312,4 +293,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

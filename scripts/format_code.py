@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Code Formatting Script
+"""Code Formatting Script.
 
 Actively formats code using configured formatters (Black, isort, docformatter).
 This script APPLIES changes, unlike validate_code.py which only checks.
@@ -13,18 +12,23 @@ Usage:
 """
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
+
+# Configure UTF-8 encoding for stdout/stderr to handle unicode on Windows
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 
 class CodeFormatter:
     """Handles code formatting operations."""
 
     def __init__(self, check_only: bool = False):
-        """
-        Initialize the formatter.
+        """Initialize the formatter.
 
         Args:
             check_only: If True, check formatting without applying changes
@@ -34,8 +38,7 @@ class CodeFormatter:
         self.errors: List[str] = []
 
     def run_command(self, cmd: List[str], description: str) -> bool:
-        """
-        Run a formatting command.
+        """Run a formatting command.
 
         Args:
             cmd: Command to execute
@@ -48,12 +51,19 @@ class CodeFormatter:
         print(f"Command: {' '.join(cmd)}")
 
         try:
+            # Set PYTHONIOENCODING to force UTF-8 for subprocess to avoid cp1252 errors
+            env = os.environ.copy()
+            env["PYTHONIOENCODING"] = "utf-8"
+
             result = subprocess.run(
                 cmd,
                 cwd=self.root_dir,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 check=False,
+                env=env,
             )
 
             if result.returncode == 0:
@@ -88,35 +98,28 @@ class CodeFormatter:
         all_passed = True
 
         # 1. Sort imports (isort)
-        isort_args = ["isort", "src/", "tests/"]
+        isort_args = ["isort", "src", "tests", "scripts", "run.py"]
         if self.check_only:
             isort_args.append("--check-only")
 
-        all_passed &= self.run_command(
-            isort_args,
-            "Import sorting (isort)"
-        )
+        all_passed &= self.run_command(isort_args, "Import sorting (isort)")
 
         # 2. Format code (Black)
-        black_args = ["black", "src/", "tests/"]
+        black_args = ["black", "src", "tests", "scripts", "run.py"]
         if self.check_only:
-            black_args.append("--check")
+            black_args.insert(1, "--check")
 
-        all_passed &= self.run_command(
-            black_args,
-            "Code formatting (black)"
-        )
+        all_passed &= self.run_command(black_args, "Code formatting (black)")
 
         # 3. Format docstrings (docformatter)
-        docformatter_args = ["docformatter", "-r", "src/", "tests/"]
+        docformatter_args = ["docformatter", "-r", "src", "tests", "scripts", "run.py"]
         if self.check_only:
             docformatter_args.insert(1, "--check")
         else:
             docformatter_args.insert(1, "--in-place")
 
         all_passed &= self.run_command(
-            docformatter_args,
-            "Docstring formatting (docformatter)"
+            docformatter_args, "Docstring formatting (docformatter)"
         )
 
         return all_passed
@@ -130,10 +133,12 @@ class CodeFormatter:
         all_passed = True
 
         # Check if Prettier is available
+        use_shell = sys.platform == "win32"
         prettier_check = subprocess.run(
             ["npm", "list", "prettier"],
             cwd=self.root_dir,
             capture_output=True,
+            shell=use_shell,
             check=False,
         )
 
@@ -149,8 +154,7 @@ class CodeFormatter:
             prettier_args.extend(["--write", "src/static/js/**/*.js"])
 
         all_passed &= self.run_command(
-            prettier_args,
-            "JavaScript formatting (prettier)"
+            prettier_args, "JavaScript formatting (prettier)"
         )
 
         return all_passed
@@ -178,19 +182,13 @@ def main() -> int:
         description="Format code using configured formatters"
     )
     parser.add_argument(
-        "--backend",
-        action="store_true",
-        help="Format Python code only"
+        "--backend", action="store_true", help="Format Python code only"
     )
     parser.add_argument(
-        "--frontend",
-        action="store_true",
-        help="Format JavaScript code only"
+        "--frontend", action="store_true", help="Format JavaScript code only"
     )
     parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check formatting without applying changes"
+        "--check", action="store_true", help="Check formatting without applying changes"
     )
 
     args = parser.parse_args()
@@ -219,4 +217,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

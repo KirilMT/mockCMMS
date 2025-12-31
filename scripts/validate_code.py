@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Comprehensive Code Validation Script
+"""Comprehensive Code Validation Script.
 
 This script runs all validation checks that should pass before committing code.
 It simulates the CI pipeline locally to catch issues early.
@@ -13,6 +12,7 @@ Usage:
 """
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -22,15 +22,16 @@ from typing import List, Tuple
 
 class Colors:
     """ANSI color codes for terminal output."""
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKCYAN = "\033[96m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 
 def print_header(message: str) -> None:
@@ -62,9 +63,10 @@ def print_warning(message: str) -> None:
     print(f"{Colors.WARNING}⚠ {message}{Colors.ENDC}")
 
 
-def run_command(command: List[str], description: str, check: bool = True) -> Tuple[bool, str]:
-    """
-    Run a shell command and return success status and output.
+def run_command(
+    command: List[str], description: str, check: bool = True
+) -> Tuple[bool, str]:
+    """Run a shell command and return success status and output.
 
     Args:
         command: Command and arguments as a list
@@ -78,16 +80,21 @@ def run_command(command: List[str], description: str, check: bool = True) -> Tup
         print(f"Running: {' '.join(command)}")
 
         # On Windows, use shell=True for npm/npx to find them in PATH
-        use_shell = sys.platform == 'win32' and command[0] in ('npm', 'npx')
+        use_shell = sys.platform == "win32" and command[0] in ("npm", "npx")
+
+        # Set PYTHONIOENCODING to force UTF-8 for subprocess to avoid cp1252 errors
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
 
         result = subprocess.run(
             command,
             capture_output=True,
             text=True,
-            encoding='utf-8',  # Explicitly use UTF-8 to handle emojis
-            errors='replace',  # Replace undecodable bytes instead of crashing
+            encoding="utf-8",  # Explicitly use UTF-8 to handle emojis
+            errors="replace",  # Replace undecodable bytes instead of crashing
             shell=use_shell,  # Use shell on Windows for npm/npx
-            check=check
+            check=check,
+            env=env,  # Use modified environment
         )
 
         if result.returncode == 0:
@@ -125,57 +132,56 @@ def validate_python_backend(quick: bool = False) -> bool:
     # 1. Import sorting (PEP 8)
     print_section("Step 1/9: Import Sorting (isort)")
     success, _ = run_command(
-        ["isort", "src/", "tests/", "--check-only"],
-        "Import sorting check"
+        ["isort", "src", "tests", "scripts", "run.py", "--check-only"],
+        "Import sorting check",
     )
     checks.append(("Import Sorting", success))
 
     # 2. Code formatting (Black)
     print_section("Step 2/9: Code Formatting (black)")
     success, _ = run_command(
-        ["black", "src/", "tests/", "--check"],
-        "Code formatting check"
+        ["black", "--check", "src", "tests", "scripts", "run.py"],
+        "Code formatting check",
     )
     checks.append(("Code Formatting", success))
 
     # 3. Docstring formatting (PEP 257)
     print_section("Step 3/9: Docstring Formatting (docformatter)")
     success, _ = run_command(
-        ["docformatter", "--check", "-r", "src/", "tests/"],
-        "Docstring formatting check"
+        ["docformatter", "--check", "-r", "src", "tests", "scripts", "run.py"],
+        "Docstring formatting check",
     )
     checks.append(("Docstring Formatting", success))
 
     # 4. Linting (Ruff - fast, comprehensive)
     print_section("Step 4/9: Linting (ruff)")
     success, _ = run_command(
-        ["ruff", "check", "src/", "tests/"],
-        "Ruff linting"
+        ["ruff", "check", "src", "tests", "scripts", "run.py"], "Ruff linting"
     )
     checks.append(("Ruff Linting", success))
 
     # 5. Additional linting (Flake8)
     print_section("Step 5/9: Additional Linting (flake8)")
+    exclude_dirs = (
+        "apps,.venv,node_modules,__pycache__,"
+        ".git,.pytest_cache,htmlcov,playwright-report"
+    )
     success, _ = run_command(
-        ["flake8", "src/", "tests/"],
-        "Flake8 linting"
+        ["flake8", ".", "--exclude", exclude_dirs],
+        "Flake8 linting",
     )
     checks.append(("Flake8 Linting", success))
 
     # 6. Type checking (mypy)
     print_section("Step 6/9: Type Checking (mypy)")
     success, _ = run_command(
-        ["mypy"],  # Uses pyproject.toml config (files = ["src"])
-        "Type checking"
+        ["mypy"], "Type checking"  # Uses pyproject.toml config (files = ["src"])
     )
     checks.append(("Type Checking", success))
 
     # 7. Security scanning (Bandit)
     print_section("Step 7/9: Security Scanning (bandit)")
-    success, _ = run_command(
-        ["bandit", "-r", "src/", "-ll"],
-        "Security scanning"
-    )
+    success, _ = run_command(["bandit", "-r", "src/", "-ll"], "Security scanning")
     checks.append(("Security Scanning", success))
 
     # 8. Run all tests with coverage
@@ -183,14 +189,13 @@ def validate_python_backend(quick: bool = False) -> bool:
     if quick:
         print_warning("Quick mode: Skipping full test suite")
         success, _ = run_command(
-            ["pytest", "tests/", "-x", "--tb=short"],
-            "Quick test run"
+            ["pytest", "tests/", "-x", "--tb=short"], "Quick test run"
         )
         checks.append(("Tests", success))
     else:
         success, _ = run_command(
             ["pytest", "tests/", "--cov=src", "--cov-report=term-missing"],
-            "Full test suite with coverage"
+            "Full test suite with coverage",
         )
         checks.append(("Tests with Coverage", success))
 
@@ -199,7 +204,7 @@ def validate_python_backend(quick: bool = False) -> bool:
         print_section("Step 9/9: Coverage Validation")
         success, _ = run_command(
             ["pytest", "tests/", "--cov=src", "--cov-fail-under=82", "-q"],
-            "Coverage threshold check (>= 82%)"
+            "Coverage threshold check (>= 82%)",
         )
         checks.append(("Coverage Threshold", success))
 
@@ -235,16 +240,22 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
     print_section("Step 1/3: JavaScript Linting (eslint)")
     success, _ = run_command(
         ["npx", "eslint", "src/static/js", "--report-unused-disable-directives"],
-        "ESLint check"
+        "ESLint check",
     )
     checks.append(("ESLint", success))
 
     # 2. JavaScript tests (Jest) with coverage - MATCHES CI
     print_section("Step 2/3: JavaScript Tests (jest)")
     success, _ = run_command(
-        ["npm", "test", "--", "--coverage",
-         "--coverageReporters=text", "--coverageReporters=lcov"],
-        "Jest tests with coverage"
+        [
+            "npm",
+            "test",
+            "--",
+            "--coverage",
+            "--coverageReporters=text",
+            "--coverageReporters=lcov",
+        ],
+        "Jest tests with coverage",
     )
     checks.append(("Jest Tests", success))
 
@@ -253,7 +264,7 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
         print_section("Step 3/3: E2E Tests (playwright)")
         success, _ = run_command(
             ["npx", "playwright", "test", "--project=chromium"],
-            "Playwright E2E tests (chromium)"
+            "Playwright E2E tests (chromium)",
         )
         checks.append(("E2E Tests", success))
     else:
@@ -290,7 +301,7 @@ def validate_configuration() -> bool:
             success, _ = run_command(
                 ["python", "-m", "json.tool", str(json_path)],
                 f"JSON validation: {json_file}",
-                check=False
+                check=False,
             )
             checks.append((f"JSON: {json_file}", success))
         else:
@@ -306,7 +317,7 @@ def validate_configuration() -> bool:
             success, _ = run_command(
                 ["yamllint", str(yaml_file)],
                 f"YAML validation: {yaml_file.name}",
-                check=False
+                check=False,
             )
             if not success:
                 print_warning(f"yamllint not available or failed for {yaml_file.name}")
@@ -335,27 +346,23 @@ Examples:
     python scripts/validate_code.py --backend    # Only backend checks
     python scripts/validate_code.py --frontend   # Only frontend checks
     python scripts/validate_code.py --quick      # Skip slow tests
-        """
+        """,
     )
     parser.add_argument(
-        "--backend",
-        action="store_true",
-        help="Run only Python backend validation"
+        "--backend", action="store_true", help="Run only Python backend validation"
     )
     parser.add_argument(
         "--frontend",
         action="store_true",
-        help="Run only JavaScript frontend validation"
+        help="Run only JavaScript frontend validation",
     )
     parser.add_argument(
         "--quick",
         action="store_true",
-        help="Quick mode: Skip slow tests (E2E, visual regression)"
+        help="Quick mode: Skip slow tests (E2E, visual regression)",
     )
     parser.add_argument(
-        "--no-config",
-        action="store_true",
-        help="Skip configuration validation"
+        "--no-config", action="store_true", help="Skip configuration validation"
     )
 
     args = parser.parse_args()
@@ -407,10 +414,12 @@ Examples:
         print(f"{Colors.WARNING}  1. Fix the CODE, not the configuration{Colors.ENDC}")
         print(f"{Colors.WARNING}  2. Do NOT lower coverage thresholds{Colors.ENDC}")
         print(f"{Colors.WARNING}  3. Do NOT disable linting rules{Colors.ENDC}")
-        print(f"{Colors.WARNING}  4. Do NOT update visual test screenshots (unless UI was intentionally changed){Colors.ENDC}")
+        print(
+            f"{Colors.WARNING}  4. Do NOT update visual test screenshots "
+            f"(unless UI was intentionally changed){Colors.ENDC}"
+        )
         return 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

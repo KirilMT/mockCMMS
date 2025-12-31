@@ -25,26 +25,48 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
+      - name: Check import sorting with isort
+        run: |
+          # Check PEP 8 import organization
+          isort src tests scripts run.py --check-only
+
+      - name: Check code formatting with black
+        run: |
+          # Check Black code formatting
+          black --check src tests scripts run.py
+
+      - name: Check docstring formatting with docformatter
+        run: |
+          # Check PEP 257 docstring standards
+          docformatter --check -r src tests scripts run.py
+
+      - name: Lint with ruff
+        run: |
+          # Fast, modern linting (catches more than flake8)
+          ruff check src tests scripts run.py
+
       - name: Lint with flake8
         run: |
-          # Stop build if Python syntax errors or undefined names
-          # --exclude=apps/ skips modular apps (own CI)
-          flake8 . --count --exclude=apps/ --select=E9,F63,F7,F82 \
+          # Additional linting with flake8
+          flake8 . --count \
+            --exclude=apps,.venv,node_modules,__pycache__, \
+            .git,.pytest_cache,htmlcov,playwright-report \
             --show-source --statistics
-          # Treat all errors as warnings (GH editor is 127 chars)
-          flake8 . --count --exclude=apps/ --exit-zero \
-            --max-complexity=10 --max-line-length=127 --statistics
 
-      - name: Check formatting with black
+      - name: Type check with mypy
         run: |
-          # --extend-exclude uses regex to skip apps/ directory
-          black --check . --extend-exclude "apps"
+          # Static type analysis
+          mypy
+
+      - name: Security scan with bandit
+        run: |
+          # Detect security vulnerabilities
+          bandit -r src/ -ll
 
       - name: Test with pytest and generate coverage
         run: |
-          # Run tests from tests/backend/
-          pytest tests/backend/ --ignore=apps/ --cov=src \
-            --cov-report=xml --cov-fail-under=80
+          # Run ALL tests (not just backend) with stricter coverage requirement
+          pytest tests/ --cov=src --cov-report=xml --cov-fail-under=82
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

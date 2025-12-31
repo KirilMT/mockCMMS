@@ -4,19 +4,19 @@ import os
 import sys
 
 # Configure UTF-8 encoding for stdout/stderr to handle emojis on Windows
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
 from dotenv import load_dotenv
+
 from src.app import create_app
 
 # Load environment variables
-# Load environment variables
 load_dotenv()
 
-# Initialize app with DEBUG=True to ensure development logging (standard terminal output)
-# This overrides any defaults from .env if running via this script
+# Initialize app with DEBUG=True to ensure development logging
+# (standard terminal output). This overrides any defaults from .env.
 app = create_app(config_overrides={"DEBUG": True})
 
 if __name__ == "__main__":
