@@ -196,3 +196,10 @@ exclude = [
     "htmlcov/",
     "playwright-report/",
 ]
+
+# Ignore errors in modular apps (they have their own CI/typing standards)
+[[tool.mypy.overrides]]
+module = "apps.*"
+ignore_errors = true
+follow_imports = "silent"
+
