@@ -49,8 +49,8 @@ jobs:
         run: |
           # Additional linting with flake8
           flake8 . --count \
-            --exclude=apps,.venv,node_modules,__pycache__, \
-            .git,.pytest_cache,htmlcov,playwright-report \
+            --exclude=apps,.venv,node_modules,__pycache__,.git \
+            ,.pytest_cache,htmlcov,playwright-report \
             --show-source --statistics
 
       - name: Type check with mypy
