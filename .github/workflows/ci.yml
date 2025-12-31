@@ -46,12 +46,12 @@ jobs:
           ruff check src tests scripts run.py
 
       - name: Lint with flake8
-        run: |
-          # Additional linting with flake8
-          flake8 . --count \
-            --exclude=apps,.venv,node_modules,__pycache__,.git \
-            ,.pytest_cache,htmlcov,playwright-report \
-            --show-source --statistics
+        run: >-
+          flake8 .
+          --count
+          --exclude=apps,.venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report
+          --show-source
+          --statistics
 
       - name: Type check with mypy
         run: |
