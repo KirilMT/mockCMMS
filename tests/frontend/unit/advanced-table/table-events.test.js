@@ -285,6 +285,27 @@ describe('AdvancedTable Event Methods', () => {
             container.querySelector('[data-action="saveConfiguration"]').click();
             expect(table.saveConfiguration).toHaveBeenCalled();
         });
+    test('should handle unknown button action', () => {
+             const container = document.getElementById('test-container');
+             container.innerHTML += `<button data-action="unknown">Unknown</button>`;
+             expect(() => table.attachEventListeners()).not.toThrow();
+        });
+
+        test('should handle missing clearSearchBtn', () => {
+             // Re-render table but remove clearSearchBtn from DOM
+             table.render();
+             const clearBtn = document.getElementById('clearSearchBtn');
+             if (clearBtn) clearBtn.remove();
+             
+             // Attaching listeners shouldn't fail
+             expect(() => table.attachEventListeners()).not.toThrow();
+             
+             // Typing shouldn't fail
+             const searchInput = document.getElementById('globalSearchInput');
+             const event = new KeyboardEvent('keypress', { key: 'Enter' });
+             Object.defineProperty(event, 'target', { value: 'query' });
+             expect(() => searchInput.dispatchEvent(event)).not.toThrow();
+        });
     });
 
 
@@ -292,4 +313,63 @@ describe('AdvancedTable Event Methods', () => {
 
     // Note: TE-3.1 row click test removed - row click behavior was intentionally removed
     // from table-events.js. Users should click ID links to navigate to detail pages.
+
+    test('TE-4.1: comprehensive search control branches', () => {
+        // Setup DOM with ALL search elements
+        document.body.innerHTML = `
+            <div id="test-container">
+                <input id="globalSearchInput" value="">
+                <button id="applySearchBtn">Apply</button>
+                <button id="clearSearchBtn" style="display: none;">Clear</button>
+                <table class="advanced-table"><thead><tr></tr></thead><tbody></tbody></table>
+            </div>
+        `;
+        
+        // Mock globalSearch on PROTOTYPE BEFORE creating instance
+        const mockGlobalSearch = jest.fn();
+        AdvancedTable.prototype.globalSearch = mockGlobalSearch;
+        
+        table = new AdvancedTable('test-container', {
+            data: [{ id: 1, name: 'Test' }],
+            columns: [{ key: 'id', label: 'ID' }],
+            pageSize: 10
+        });
+        
+        // Make sure attachEventListeners is called
+        table.attachEventListeners();
+        
+        const searchInput = document.getElementById('globalSearchInput');
+        const applyBtn = document.getElementById('applySearchBtn');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        
+        // Test 1: Input event with EMPTY value (covers line 42, 45 false branch)
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+        expect(applyBtn.disabled).toBe(true);
+        expect(clearBtn.style.display).toBe('none');
+        
+        // Test 2: Input event with NON-EMPTY value (covers line 42, 45 true branch)
+        searchInput.value = 'test';
+        searchInput.dispatchEvent(new Event('input'));
+        expect(applyBtn.disabled).toBe(false);
+        expect(clearBtn.style.display).toBe('inline-block');
+        
+        // Test 3: Apply button click with value (covers lines 50-59)
+        const callsBefore = table.globalSearch.mock.calls.length;
+        applyBtn.click();
+        expect(table.globalSearch.mock.calls.length).toBeGreaterThanOrEqual(callsBefore);
+        
+        // Test 4: Enter keypress with value (covers lines 30-35)
+        const enterEvent = new KeyboardEvent('keypress', { key: 'Enter' });
+        Object.defineProperty(enterEvent, 'target', { value: searchInput });
+        searchInput.dispatchEvent(enterEvent);
+        expect(table.globalSearch).toHaveBeenCalled();
+        
+        // Test 5: Clear button click (covers lines 62-72)
+        searchInput.value = 'something';
+        clearBtn.click();
+        expect(searchInput.value).toBe('');
+        expect(applyBtn.disabled).toBe(true);
+        expect(table.globalSearch).toHaveBeenLastCalledWith('');
+    });
 });

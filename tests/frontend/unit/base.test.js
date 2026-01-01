@@ -79,6 +79,33 @@ describe("Base JS", () => {
             expect(document.getElementById("inputModalValue").value).toBe("");
             expect(global.$).toHaveBeenCalledWith("#inputModal");
         });
+
+        test("focuses input after modal shown", () => {
+            // Capture the shown.bs.modal callback
+            let shownCallback = null;
+            global.$ = jest.fn((selector) => ({
+                modal: jest.fn(),
+                on: jest.fn((event, cb) => {
+                    if (event === 'shown.bs.modal') {
+                        shownCallback = cb;
+                    }
+                }),
+                focus: jest.fn(),
+                select2: jest.fn(),
+            }));
+            global.$.fn = { select2: jest.fn() };
+
+            showInputModal("Focus test", jest.fn());
+
+            // Trigger the captured callback
+            expect(shownCallback).not.toBeNull();
+            if (shownCallback) {
+                shownCallback();
+            }
+            
+            // Verify focus was called on inputModalValue
+            expect(global.$).toHaveBeenCalledWith("#inputModalValue");
+        });
     });
 
     describe("showConfirmModal", () => {

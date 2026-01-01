@@ -106,4 +106,44 @@ describe('FlashMessages', () => {
 
         expect(ToastNotification.show).not.toHaveBeenCalled();
     });
+
+    test('FM-1.9: handles DOM loading state', () => {
+        // Mock document.readyState to be 'loading' to cover line 67
+        const messages = [['success', 'Delayed message']];
+        document.body.innerHTML = `<div id="flash-messages" data-messages='${JSON.stringify(messages)}'></div>`;
+        
+        // Store original readyState
+        const originalDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'readyState');
+        
+        // Mock readyState to 'loading'
+        Object.defineProperty(document, 'readyState', {
+            get: () => 'loading',
+            configurable: true
+        });
+        
+        // Store DOMContentLoaded listeners
+        const listeners = [];
+        const originalAddEventListener = document.addEventListener;
+        document.addEventListener = jest.fn((event, handler) => {
+            if (event === 'DOMContentLoaded') {
+                listeners.push(handler);
+            }
+        });
+        
+        require('../../../src/static/js/flash-messages.js');
+        
+        // Should have added DOMContentLoaded listener
+        expect(document.addEventListener).toHaveBeenCalledWith('DOMContentLoaded', expect.any(Function));
+        
+        // Trigger the handler manually
+        if (listeners.length > 0) {
+            listeners.forEach(fn => fn());
+        }
+        
+        // Restore
+        document.addEventListener = originalAddEventListener;
+        if (originalDescriptor) {
+            Object.defineProperty(Document.prototype, 'readyState', originalDescriptor);
+        }
+    });
 });

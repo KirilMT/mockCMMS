@@ -439,5 +439,66 @@ describe('TableConfig Module', () => {
 
         expect(ToastNotification.error).toHaveBeenCalled();
     });
+    test('TG-4.1: test_saveConfiguration_ok_true_success_false', async () => {
+        global.prompt.mockReturnValue('Fail Config');
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({ success: false, error: 'Database error' })
+        });
+        table.savedConfigs = [];
+
+        await table.saveConfiguration();
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(ToastNotification.error).toHaveBeenCalledWith(expect.stringContaining('Database error'));
+    });
+
+    test('TG-4.2: test_loadConfiguration_http_500', async () => {
+        table.fetchWithRetry = jest.fn().mockResolvedValue({
+            ok: false,
+            status: 500
+        });
+
+        await table.loadConfiguration();
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        // Should fall through to "Error loading configurations"
+        expect(ToastNotification.warning).toHaveBeenCalledWith('Could not load saved configurations');
+    });
+
+    test('TG-4.3: test_loadConfiguration_max_retries', async () => {
+        table.fetchWithRetry = jest.fn().mockRejectedValue(new Error('Max retries exceeded'));
+        console.error = jest.fn();
+
+        await table.loadConfiguration();
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(ToastNotification.error).toHaveBeenCalledWith('Unable to load saved views. Please try again later.');
+    });
+
+    test('TG-4.4: test_setDefaultView_http_error', async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            status: 500
+        });
+
+        await table.setDefaultView(10);
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(ToastNotification.error).toHaveBeenCalledWith('Error setting default view');
+    });
+
+    test('TG-4.5: saveConfiguration shows error when data.success is false', async () => {
+        global.prompt.mockReturnValue('TestConfig');
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({ success: false, error: 'Duplicate name' })
+        });
+
+        await table.saveConfiguration();
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(ToastNotification.error).toHaveBeenCalledWith('Failed to save configuration: Duplicate name');
+    });
 });
 
