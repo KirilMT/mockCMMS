@@ -3,29 +3,30 @@
 **Created:** December 11, 2025
 **Last Updated:** December 19, 2025
 **Purpose:** Clarify the relationship between the core code quality audit and GitHub best practices implementation.
-**Current Phase:** Phase 3 (JavaScript Frontend Audit) Ready to Start
+**Current Phase:** Phase 5 (Template Refactoring) In Progress
 
 ---
 
-> [!IMPORTANT]
-> **📚 Document Navigation:** This guide coordinates multiple planning documents:
+> [!IMPORTANT] > **📚 Document Navigation:** This guide coordinates multiple planning documents:
 >
 > **Prerequisites (COMPLETE):**
+>
 > - **[Comprehensive Testing Plan](comprehensive_testing_plan.md)** - 223 pytest tests (100%) ✅
 > - **[Frontend Testing Plan](frontend_testing_plan.md)** - 293 Jest + 71 Playwright tests ✅
 >
 > **Audit Plan (IN PROGRESS):**
+>
 > - **[Core Code Quality Plan](core_code_quality_plan.md)** - Phase 1-2 Complete, Phase 3 Ready
 >
 > **Strategic Context:**
+>
 > - **[mockCMMS Roadmap](mockCMMS_roadmap.md)** - Overall project vision
 >
-> **Current Status:** All 587 tests passing - Phase 3 (JavaScript Frontend Audit) Ready to Start
+> **Current Status:** All 587 tests passing (80.8% Frontend Coverage) - Phase 5 (Templates) In Progress
 
 ---
 
-> [!TIP]
-> **🤖 Working with AI Assistants?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for a comprehensive guide on how to navigate between all planning documents, understand the workflow, and effectively delegate tasks to AI coding assistants.
+> [!TIP] > **🤖 Working with AI Assistants?** See [AI Agent Guide](AI_AGENT_GUIDE.md) for a comprehensive guide on how to navigate between all planning documents, understand the workflow, and effectively delegate tasks to AI coding assistants.
 
 ---
 
@@ -43,20 +44,20 @@ To ensure a smooth and successful implementation, follow these key principles.
 
 ### ✅ Do's
 
-*   **Follow the Plan Sequentially:** Complete the prerequisites (Foundation Setup, Test Suite) before starting the code audit.
-*   **Run Tests Locally:** Before committing any code, run `pytest` to ensure all tests pass. This prevents breaking the build.
-*   **Use Feature Branches:** All work, no matter how small, must be done in a feature branch (e.g., `feature/update-docs`).
-*   **Create Pull Requests:** All changes must be reviewed via a Pull Request (PR) before being merged into `main`.
-*   **Write Clear Commit Messages:** Follow the conventional commit format (`feat:`, `fix:`, `docs:`) to maintain a clean and understandable history.
-*   **Update Documentation:** Keep all planning documents (`.md` files) synchronized with your progress.
+- **Follow the Plan Sequentially:** Complete the prerequisites (Foundation Setup, Test Suite) before starting the code audit.
+- **Run Tests Locally:** Before committing any code, run `pytest` to ensure all tests pass. This prevents breaking the build.
+- **Use Feature Branches:** All work, no matter how small, must be done in a feature branch (e.g., `feature/update-docs`).
+- **Create Pull Requests:** All changes must be reviewed via a Pull Request (PR) before being merged into `main`.
+- **Write Clear Commit Messages:** Follow the conventional commit format (`feat:`, `fix:`, `docs:`) to maintain a clean and understandable history.
+- **Update Documentation:** Keep all planning documents (`.md` files) synchronized with your progress.
 
 ### ❌ Don'ts
 
-*   **Do NOT Work Directly on `main`:** Never commit directly to the `main` branch. All changes must go through a PR.
-*   **Do NOT Merge Failing Tests:** Do not merge a PR if the CI pipeline (GitHub Actions) is failing.
-*   **Do NOT Refactor Without Tests:** Do not clean up or change any code logic without a corresponding test that verifies its behavior.
-*   **Do NOT Skip the Audit:** The code quality audit is not optional. It is a critical step to ensure long-term maintainability.
-*   **Do NOT Ignore the Linter:** Pay attention to `ruff` and `pylint` warnings. They help maintain a consistent and high-quality codebase.
+- **Do NOT Work Directly on `main`:** Never commit directly to the `main` branch. All changes must go through a PR.
+- **Do NOT Merge Failing Tests:** Do not merge a PR if the CI pipeline (GitHub Actions) is failing.
+- **Do NOT Refactor Without Tests:** Do not clean up or change any code logic without a corresponding test that verifies its behavior.
+- **Do NOT Skip the Audit:** The code quality audit is not optional. It is a critical step to ensure long-term maintainability.
+- **Do NOT Ignore the Linter:** Pay attention to `ruff` and `pylint` warnings. They help maintain a consistent and high-quality codebase.
 
 ---
 
@@ -65,47 +66,52 @@ To ensure a smooth and successful implementation, follow these key principles.
 This path is designed to help you get up to speed with the project structure, goals, and workflow.
 
 ### Step 1: Understand the Big Picture (1-2 hours)
+
 - **Goal:** Get a high-level overview of the project's purpose and structure.
 - **Activities:**
-    - Read the [mockCMMS Roadmap](mockCMMS_roadmap.md) to understand the project's vision.
-    - Read this document (`IMPLEMENTATION_PRIORITY_GUIDE.md`) in its entirety to understand the implementation strategy.
-    - Read the [AI Agent Guide](AI_AGENT_GUIDE.md) to understand how to work with AI assistants on this project.
+  - Read the [mockCMMS Roadmap](mockCMMS_roadmap.md) to understand the project's vision.
+  - Read this document (`IMPLEMENTATION_PRIORITY_GUIDE.md`) in its entirety to understand the implementation strategy.
+  - Read the [AI Agent Guide](AI_AGENT_GUIDE.md) to understand how to work with AI assistants on this project.
 
 ### Step 2: Set Up Your Environment (2-3 hours)
+
 - **Goal:** Get the project running locally and understand the development workflow.
 - **Activities:**
-    - Follow the setup instructions in `README.md` and `CONTRIBUTING.md`.
-    - Run the test suite locally with `pytest` and ensure all tests pass.
-    - Familiarize yourself with the Git workflow, including branch protection and PR templates.
+  - Follow the setup instructions in `README.md` and `CONTRIBUTING.md`.
+  - Run the test suite locally with `pytest` and ensure all tests pass.
+  - Familiarize yourself with the Git workflow, including branch protection and PR templates.
 
 ### Step 3: Dive into the Codebase (4-6 hours)
+
 - **Goal:** Understand the core components of the application.
 - **Activities:**
-    - Review the [Core Code Quality Plan](core_code_quality_plan.md) to see the audit plan for each file.
-    - Start with `src/app.py` to understand the Flask application setup.
-    - Explore the routes in `src/routes/api.py` and `src/routes/main.py`.
-    - Understand the database interactions in `src/services/db_utils.py`.
+  - Review the [Core Code Quality Plan](core_code_quality_plan.md) to see the audit plan for each file.
+  - Start with `src/app.py` to understand the Flask application setup.
+  - Explore the routes in `src/routes/api.py` and `src/routes/main.py`.
+  - Understand the database interactions in `src/services/db_utils.py`.
 
 ### Step 4: Contribute to the Project
+
 - **Goal:** Start contributing to the project by following the established workflow.
 - **Activities:**
-    - Pick a task from the [Core Code Quality Plan](core_code_quality_plan.md).
-    - Create a feature branch, make your changes, and run tests.
-    - Create a Pull Request and request a review.
+  - Pick a task from the [Core Code Quality Plan](core_code_quality_plan.md).
+  - Create a feature branch, make your changes, and run tests.
+  - Create a Pull Request and request a review.
 
 ---
 
 ## 🔍 The 4-Layer Code Verification Strategy
 
-> [!IMPORTANT]
-> **Understanding Code Verification:** Tests alone are NOT enough to verify code correctness. Complete verification requires 4 complementary layers. The Test Suite Foundation is now complete!
+> [!IMPORTANT] > **Understanding Code Verification:** Tests alone are NOT enough to verify code correctness. Complete verification requires 4 complementary layers. The Test Suite Foundation is now complete!
 
 ### Prerequisite: Regression Tests ✅ **COMPLETE**
+
 **What it verifies:** Behavior consistency
 **Tools:** pytest, coverage.py
 **Deliverable:** Comprehensive automated test suite with 80%+ coverage ✅
 
 **Purpose:**
+
 - Verify current behavior doesn't break
 - Document what the code currently does
 - Provide a safety net for refactoring
@@ -115,6 +121,7 @@ This path is designed to help you get up to speed with the project structure, go
 **Frontend Tests:** ✅ 293 Jest + 71 Playwright = 364 tests passing
 
 **Limitations:**
+
 - ❌ Does NOT verify if business logic is correct
 - ❌ Does NOT check code quality or style
 - ❌ Does NOT find security vulnerabilities
@@ -125,11 +132,13 @@ This path is designed to help you get up to speed with the project structure, go
 ---
 
 ### Layer 1: Code Quality Analysis ✅ **COMPLETE**
+
 **What it verifies:** Code style, syntax, complexity, security
 **Tools:** ruff, pylint, mypy, radon, bandit, jscpd
 **Deliverable:** Automated analysis reports + fixes
 
 **Purpose:**
+
 - Find style violations and syntax issues
 - Detect type errors and logic flow problems
 - Measure code complexity and maintainability
@@ -137,6 +146,7 @@ This path is designed to help you get up to speed with the project structure, go
 - Scan for security vulnerabilities
 
 **Approach:**
+
 1. **Sub-task 1 (Automated):** Run all tools, collect results
 2. **Sub-task 2 (Manual):** Review flagged issues, prioritize fixes
 3. **Sub-task 3 (Fix):** Address critical and high-priority issues
@@ -147,11 +157,13 @@ This path is designed to help you get up to speed with the project structure, go
 ---
 
 ### Layer 2: Requirements Validation
+
 **What it verifies:** Business logic correctness
 **Tools:** Manual review, requirement documents
 **Deliverable:** Requirements validation report
 
 **Purpose:**
+
 - Review and document business requirements
 - Validate code logic against requirements
 - Add requirement-based test comments (to explain WHY)
@@ -159,6 +171,7 @@ This path is designed to help you get up to speed with the project structure, go
 - Create a traceability matrix (requirements → code → tests)
 
 **Process:**
+
 1. Gather all business requirements
 2. Map requirements to code sections
 3. Verify that the code implements the requirements correctly
@@ -168,17 +181,20 @@ This path is designed to help you get up to speed with the project structure, go
 ---
 
 ### Layer 3: Enhanced Testing
+
 **What it verifies:** Workflows, performance, security, edge cases
 **Tools:** pytest-benchmark, locust, OWASP ZAP
 **Deliverable:** Enhanced test suite
 
 **Purpose:**
+
 - Add integration tests (for complete user workflows)
 - Add performance tests (load, stress testing)
 - Add security tests (penetration, vulnerability)
 - Add edge case and boundary tests
 
 **Test Types:**
+
 - **Integration:** End-to-end user journeys
 - **Performance:** Response times, throughput
 - **Security:** Input validation, injection prevention
@@ -188,14 +204,15 @@ This path is designed to help you get up to speed with the project structure, go
 
 ### Verification Methods Summary
 
-| Layer | What It Verifies | Tools |
-|-------|-----------------|-------|
-| **Prerequisite** | Behavior consistency | pytest, coverage.py |
-| **Layer 1** | Code style & security | ruff, pylint, mypy, bandit |
-| **Layer 2** | Business logic | Manual review |
-| **Layer 3** | Workflows & performance | pytest-benchmark, locust |
+| Layer            | What It Verifies        | Tools                      |
+| ---------------- | ----------------------- | -------------------------- |
+| **Prerequisite** | Behavior consistency    | pytest, coverage.py        |
+| **Layer 1**      | Code style & security   | ruff, pylint, mypy, bandit |
+| **Layer 2**      | Business logic          | Manual review              |
+| **Layer 3**      | Workflows & performance | pytest-benchmark, locust   |
 
 **Bottom Line:**
+
 - **Prerequisite (Tests)** → Prevents regressions
 - **Layer 1 (Tools)** → Ensures quality & security
 - **Layer 2 (Review)** → Validates correctness
@@ -206,9 +223,11 @@ This path is designed to help you get up to speed with the project structure, go
 ## 📚 Understanding the Three Key Documents
 
 ### 1. **Comprehensive Testing Plan** (`comprehensive_testing_plan.md`) - **COMPLETE**
+
 **What it is:** A detailed specification for the backend automated test suite.
 
 **Focus:**
+
 - Create tests for app.py, db_utils.py, api.py, main.py
 - Achieve 80-85% code coverage
 - Enable safe refactoring and code changes
@@ -219,9 +238,11 @@ This path is designed to help you get up to speed with the project structure, go
 ---
 
 ### 2. **Core Code Quality Plan** (`core_code_quality_plan.md`) - **IN PROGRESS**
+
 **What it is:** A systematic code audit and cleanup of **existing code**.
 
 **Focus:**
+
 - Review and fix existing Python, JavaScript, CSS, and HTML files
 - Remove code smells, duplicates, and bad practices
 - Improve code organization and readability
@@ -233,9 +254,11 @@ This path is designed to help you get up to speed with the project structure, go
 ---
 
 ### 3. **GitHub Best Practices** (`mockCMMS_roadmap.md` - Project Infrastructure section)
+
 **What it is:** Setting up **processes, workflows, and infrastructure** for the project.
 
 **Focus:**
+
 - Set up a Git workflow (branch protection, PR templates)
 - Configure security (2FA, PAT tokens, Dependabot)
 - Create CI/CD pipelines (GitHub Actions)
@@ -267,6 +290,7 @@ This path is designed to help you get up to speed with the project structure, go
 ```
 
 **They work together:**
+
 - **Core Code Quality:** Fixes the **present** (cleans up the existing mess)
 - **GitHub Best Practices:** Protects the **future** (prevents new mess)
 
@@ -279,12 +303,15 @@ This path is designed to help you get up to speed with the project structure, go
 **Goal:** Set up the minimum viable infrastructure to support clean development.
 
 #### High-Priority Setup (Completed First)
+
 1. **[x] Git Workflow Foundation**
+
    - Create `.github/pull_request_template.md`
    - Document commit message standards in `CONTRIBUTING.md`
    - Set up basic branch protection on `main` (require PRs)
 
 2. **[x] Security Basics**
+
    - Move `SECRET_KEY` to `.env`
    - Document PAT token policy
    - Enable 2FA for your account
@@ -302,19 +329,22 @@ This path is designed to help you get up to speed with the project structure, go
 ### Prerequisite 2: Test Suite Foundation - ✅ **COMPLETE**
 
 1.  **[x] Primary Focus:** Comprehensive Test Suite Implementation ✅
-    -   [x] Create a detailed testing plan (`docs/comprehensive_testing_plan.md`)
-    -   [x] Develop a robust test suite for the core `mockCMMS` application
-    -   [x] Goal: Achieve 80-85% test coverage ✅ **ACHIEVED: 82.99%**
+
+    - [x] Create a detailed testing plan (`docs/comprehensive_testing_plan.md`)
+    - [x] Develop a robust test suite for the core `mockCMMS` application
+    - [x] Goal: Achieve 80-85% test coverage ✅ **ACHIEVED: 82.99%**
 
 2.  **[x] Secondary Focus:** Foundational CI/CD ✅
-    -   [x] The basic CI workflow is in place
-    -   [x] Enhanced to run the comprehensive test suite
+    - [x] The basic CI workflow is in place
+    - [x] Enhanced to run the comprehensive test suite
 
 ---
 
 ### Phase 1: Automated Code Quality Analysis - ✅ **COMPLETE**
+
 > **See:** `core_code_quality_plan.md` for full details.
-**Workflow:**
+> **Workflow:**
+
 1. ✅ **Sub-task 1:** Automated analysis (ruff, pylint, radon, bandit) - COMPLETE
 
 ---
@@ -325,6 +355,7 @@ This path is designed to help you get up to speed with the project structure, go
 > **See:** `core_code_quality_plan.md` for full details.
 
 **Workflow:**
+
 1. ✅ **Sub-task 1:** Manual audit of Python files (api.py, main.py, db_utils.py, app.py, etc.) - COMPLETE
 2. ✅ **Sub-task 2:** Fix remaining flake8 issues - COMPLETE
 3. ✅ **Sub-task 3:** Apply `black` formatting - COMPLETE
@@ -336,9 +367,11 @@ This path is designed to help you get up to speed with the project structure, go
 ### Phase 3: Frontend Test Suite Foundation - ✅ **COMPLETE**
 
 > **✅ COMPLETE:** 293 Jest + 71 Playwright tests implemented and passing.
+> **✅ COVERAGE:** 80.8% Global Branch Coverage achieved.
 > **See:** `frontend_testing_plan.md` for details.
 
 **Completed:**
+
 - ✅ Created detailed frontend testing plan
 - ✅ Implemented 293 Jest unit tests for JavaScript components
 - ✅ Implemented 71 Playwright E2E tests
@@ -346,34 +379,38 @@ This path is designed to help you get up to speed with the project structure, go
 
 ---
 
-### Phase 4: Frontend Code Audit - 🔄 **READY TO START**
+### Phase 4: Frontend Code Audit - ✅ **COMPLETE**
 
 > **✅ PREREQUISITE MET:** Phase 3 (Frontend Test Suite) is COMPLETE (364 tests passing).
 > **See:** `core_code_quality_plan.md` for full details.
 
 **Primary Focus:** Code Quality Audit
+
 - JavaScript files (Advanced Table component, etc.)
 - CSS files (separation of concerns, optimization)
 - Follow separation of concerns strictly
 
 **Secondary Focus:** Complete CI/CD
+
 - Add JavaScript linting to CI (ESLint)
 - Add CSS linting to CI (Stylelint)
 - Set up code quality checks (security scanning)
 
 ---
 
-### Phase 5: Templates & Documentation
+### Phase 5: Templates & Documentation - 🔄 **IN PROGRESS**
 
 > **⚠️ PREREQUISITE:** Complete Phase 4 (Frontend Audit) first.
 > **See:** `core_code_quality_plan.md` for full details.
 
 **Primary Focus:** Code Quality Audit
+
 - HTML templates (inline code removal)
 - Documentation files
 - Cross-cutting concerns
 
 **Secondary Focus:** Team Collaboration Setup
+
 - Finalize team structure documentation
 - Create onboarding guides
 - Set up GitHub Projects for tracking
@@ -382,9 +419,11 @@ This path is designed to help you get up to speed with the project structure, go
 ---
 
 ### Phase 6: Repository Standards & Polish
+
 > **See:** `core_code_quality_plan.md` for full details.
 
 **Focus:** Final cleanup and standardization
+
 - Naming conventions across the board
 - Dependency cleanup
 - Final documentation polish
@@ -394,9 +433,11 @@ This path is designed to help you get up to speed with the project structure, go
 ---
 
 ### Phase 7: Cross-Cutting Concerns
+
 > **See:** `core_code_quality_plan.md` for full details.
 
 **Focus:** Final cleanup and standardization
+
 - Naming conventions across the board
 - Dependency cleanup
 - Final documentation polish
@@ -406,9 +447,11 @@ This path is designed to help you get up to speed with the project structure, go
 ---
 
 ### Phase 8: Final Review & Release
+
 > **See:** `core_code_quality_plan.md` for full details.
 
 **Focus:** Final cleanup and standardization
+
 - Naming conventions across the board
 - Dependency cleanup
 - Final documentation polish
@@ -420,47 +463,49 @@ This path is designed to help you get up to speed with the project structure, go
 ## 📋 Detailed Phase-by-Phase Breakdown
 
 ### Prerequisite 1: Foundation Setup ✅ COMPLETED
+
 - **Git Workflow:**
-    - [x] Create PR template
-    - [x] Update CONTRIBUTING.md with commit standards
-    - [x] Enable branch protection on `main`
+  - [x] Create PR template
+  - [x] Update CONTRIBUTING.md with commit standards
+  - [x] Enable branch protection on `main`
 - **Security:**
-    - [x] Move SECRET_KEY to environment variables
-    - [x] Enable 2FA on your account
-    - [x] Enable Dependabot
-    - [x] Document security policies
+  - [x] Move SECRET_KEY to environment variables
+  - [x] Enable 2FA on your account
+  - [x] Enable Dependabot
+  - [x] Document security policies
 - **Documentation:**
-    - [x] Update CONTRIBUTING.md with code standards
-    - [x] Document comment standards
-    - [x] Document separation of concerns rules
-    - [x] Review and commit all foundation work
+  - [x] Update CONTRIBUTING.md with code standards
+  - [x] Document comment standards
+  - [x] Document separation of concerns rules
+  - [x] Review and commit all foundation work
 
 ---
 
 ### Prerequisite 2: Test Suite Foundation + Security & Robustness ✅ COMPLETED
+
 - **Planning & Setup:**
-    - [x] Create detailed `comprehensive_testing_plan.md`
-    - [x] Configure `pytest.ini` for test discovery
-    - [x] Enhance `conftest.py` with robust fixtures
-    - [x] Create test infrastructure for in-memory database
+  - [x] Create detailed `comprehensive_testing_plan.md`
+  - [x] Configure `pytest.ini` for test discovery
+  - [x] Enhance `conftest.py` with robust fixtures
+  - [x] Create test infrastructure for in-memory database
 - **Core Application Tests:**
-    - [x] Create `tests/test_app.py` - Flask app configuration tests
-    - [x] Create `tests/test_db_utils.py` - Database utility function tests
-    - [x] Create `tests/test_shift_utils.py` - Shift calculation tests
+  - [x] Create `tests/test_app.py` - Flask app configuration tests
+  - [x] Create `tests/test_db_utils.py` - Database utility function tests
+  - [x] Create `tests/test_shift_utils.py` - Shift calculation tests
 - **API & Route Tests:**
-    - [x] Expand `tests/test_api.py` - Comprehensive API endpoint tests
-    - [x] Create `tests/test_main_routes.py` - Web page route tests
-    - [x] Update CI workflow to run new test suite
+  - [x] Expand `tests/test_api.py` - Comprehensive API endpoint tests
+  - [x] Create `tests/test_main_routes.py` - Web page route tests
+  - [x] Update CI workflow to run new test suite
 - **Security & Validation Tests:**
-    - [x] Create `tests/test_auth.py` - Authentication & authorization tests
-    - [x] Create `tests/test_validation.py` - Input validation & security tests
-    - [x] Create `tests/test_errors.py` - Error handling tests
+  - [x] Create `tests/test_auth.py` - Authentication & authorization tests
+  - [x] Create `tests/test_validation.py` - Input validation & security tests
+  - [x] Create `tests/test_errors.py` - Error handling tests
 - **Integration & Advanced Tests:**
-    - [x] Create `tests/test_integration.py` - Integration workflow tests
-    - [x] Create `tests/test_advanced_validation.py` - Edge case tests
-    - [x] Create `tests/test_performance.py` - Performance & scalability tests
+  - [x] Create `tests/test_integration.py` - Integration workflow tests
+  - [x] Create `tests/test_advanced_validation.py` - Edge case tests
+  - [x] Create `tests/test_performance.py` - Performance & scalability tests
 - **Coverage Goal:**
-    - [x] Achieve 82.99% code coverage
+  - [x] Achieve 82.99% code coverage
 
 ---
 
@@ -469,6 +514,7 @@ This path is designed to help you get up to speed with the project structure, go
 > **Prerequisites:** All backend tests must be passing.
 
 **Automated Analysis:**
+
 - [x] Installed code quality tools (ruff, pylint, mypy, radon, bandit, jscpd).
 - [x] Ran all automated tools and collected results in `audit_results/`.
 - [x] Created baseline metrics and categorized issues by severity.
@@ -476,6 +522,7 @@ This path is designed to help you get up to speed with the project structure, go
 - [x] **Deliverable:** `audit_results_full.txt` with all tool outputs.
 
 **Results Summary:**
+
 - ✅ **Ruff**: 0 issues (perfect)
 - ✅ **Pylint**: 9.15/10 (excellent, improved from 7.10)
 - ✅ **Radon**: Average complexity A (2.0)
@@ -484,6 +531,7 @@ This path is designed to help you get up to speed with the project structure, go
 - ✅ **Tests**: 210/210 passing (100%)
 
 **Major Refactoring:**
+
 - Refactored `populate_dummy_data()` from complexity E (33) to A (2).
 - Created new `db_seeding.py` module with 9 helper functions.
 - Fixed all style violations and import order issues.
@@ -496,6 +544,7 @@ This path is designed to help you get up to speed with the project structure, go
 **Workflow:** Each task follows the 5-step iterative loop: Lint → Format → Test → Audit → Commit.
 
 **Tasks (6 total):**
+
 - [x] **Task 2.1: API Routes (`src/routes/api.py`)** ✅ **COMPLETE (December 14, 2025)**
 - [x] **Task 2.2: Web Routes (`src/routes/main.py`)** ✅ **COMPLETE (December 15, 2025)**
 - [x] **Task 2.3: Database Layer (`src/services/db_utils.py`)** ✅ **COMPLETE (December 15, 2025)**
@@ -510,6 +559,7 @@ This path is designed to help you get up to speed with the project structure, go
 **Workflow:** Each task follows the 5-step iterative loop: Lint → Format → Test → Audit → Commit.
 
 **Tasks (13 total):**
+
 - [ ] Task 3.1: Advanced Table Core (`table-core.js`)
 - [ ] Task 3.2: Advanced Table Init (`table-init.js`)
 - [ ] Task 3.3: Table Rendering (`table-render.js`)
@@ -531,6 +581,7 @@ This path is designed to help you get up to speed with the project structure, go
 **Workflow:** Each task follows the 5-step iterative loop: Lint → Format → Test → Audit → Commit.
 
 **Tasks (3 total):**
+
 - [ ] Task 4.1: Main Styles (`src/static/css/main.css`)
 - [ ] Task 4.2: Advanced Table Styles (`src/static/css/advanced-table.css`)
 - [ ] Task 4.3: Advanced Table Sidebar Styles (`src/static/css/advanced-table-sidebar.css`)
@@ -542,6 +593,7 @@ This path is designed to help you get up to speed with the project structure, go
 **Workflow:** Each task follows the 5-step iterative loop: Lint → Format → Test → Audit → Commit.
 
 **Tasks (16 total):**
+
 - [ ] Task 5.1: Base Template (`base.html`)
 - [ ] Task 5.2: Assets List Page (`assets.html`)
 - [ ] Task 5.3: Maintenance Orders List Page (`maintenance_orders.html`)
@@ -566,6 +618,7 @@ This path is designed to help you get up to speed with the project structure, go
 **Workflow:** Each task follows a quality loop: Check → Format → Test → Audit → Commit.
 
 **Tasks (7 total):**
+
 - [ ] Task 6.1: Application Entry Point (`run.py`)
 - [ ] Task 6.2: Dependency Management (`requirements.txt`, `requirements-dev.txt`)
 - [ ] Task 6.3: Configuration Files (`.env.example`, `.gitignore`)
@@ -581,6 +634,7 @@ This path is designed to help you get up to speed with the project structure, go
 **Workflow:** Each task follows a quality loop: Check → Report → Test → Audit → Commit.
 
 **Tasks (4 total):**
+
 - [ ] Task 7.1: Naming Conventions Audit
 - [ ] Task 7.2: Environment Configuration Audit
 - [ ] Task 7.3: Code Duplication Analysis
@@ -615,7 +669,9 @@ This path is designed to help you get up to speed with the project structure, go
 ## 🤔 Common Questions
 
 ### Q: Why can't I start the code audit right away?
+
 **A:** You need tests FIRST because:
+
 - Code formatting/cleanup might break functionality
 - Without tests, you won't know what broke
 - Tests provide automated safety net
@@ -623,7 +679,9 @@ This path is designed to help you get up to speed with the project structure, go
 - Industry best practice: never refactor without tests
 
 ### Q: Can I skip writing tests and just be careful with changes?
+
 **A:** Not recommended. Without tests:
+
 - You'll waste time manually testing every change
 - Breaking changes will reach production
 - Code confidence will be low
@@ -631,28 +689,36 @@ This path is designed to help you get up to speed with the project structure, go
 - Technical debt will accumulate
 
 ### Q: Can I skip the GitHub best practices and just do testing/cleanup?
+
 **A:** Not recommended. Without proper workflow:
+
 - Your commits might be messy
 - You can't track progress effectively
 - No automated checks to catch problems
 - Hard to review your own work
 
 ### Q: What if I don't have a team? Do I still need team collaboration setup?
+
 **A:** Yes, but simplified:
+
 - You still benefit from PR templates (self-review)
 - Branch protection prevents accidents
 - Documentation helps future contributors
 - Good habits for when the team grows
 
 ### Q: Can I change the order of phases?
+
 **A:** Limited flexibility:
+
 - **Foundation Setup must come first** - Sets up workflow
 - **Testing must come second** - Enables safe changes
 - **Audit can only start after tests pass** - Required safety net
 - Within code audit (Phases 1-7), you can reorder sub-phases
 
 ### Q: How do I know if I'm doing it right?
+
 **A:** Check these indicators:
+
 - ✅ All backend tests pass before starting audit
 - ✅ CI passes on all commits
 - ✅ Following PR template
@@ -667,18 +733,22 @@ This path is designed to help you get up to speed with the project structure, go
 **When you're unsure what to do next:**
 
 1. **Is foundation setup complete?**
+
    - No → Work on foundation setup
    - Yes → Continue to #2
 
 2. **Is CI working for current file types?**
+
    - No → Set up CI for current phase
    - Yes → Continue to #3
 
 3. **Are there open PRs waiting?**
+
    - Yes → Review/merge PRs first
    - No → Continue to #4
 
 4. **What phase are you on in code audit?**
+
    - Follow `core_code_quality_plan.md` for current phase
    - Create PRs following workflow standards
 
@@ -693,6 +763,7 @@ This path is designed to help you get up to speed with the project structure, go
 **After completing all phases, you should have:**
 
 ### Code Quality
+
 - [ ] Zero PEP 8 violations
 - [ ] Zero inline styles in templates
 - [ ] Zero inline scripts in templates
@@ -701,6 +772,7 @@ This path is designed to help you get up to speed with the project structure, go
 - [ ] All functions have docstrings
 
 ### Infrastructure
+
 - [ ] CI/CD pipeline running
 - [ ] All tests passing
 - [ ] Branch protection enabled
@@ -709,6 +781,7 @@ This path is designed to help you get up to speed with the project structure, go
 - [ ] 2FA enforced
 
 ### Documentation
+
 - [ ] CONTRIBUTING.md complete
 - [ ] README.md updated
 - [ ] CHANGELOG.md current
@@ -716,6 +789,7 @@ This path is designed to help you get up to speed with the project structure, go
 - [ ] Onboarding guide created
 
 ### Process
+
 - [ ] All commits follow standards
 - [ ] All PRs use a template
 - [ ] All changes are reviewed (self or team)
@@ -733,11 +807,13 @@ This path is designed to help you get up to speed with the project structure, go
 - **Code Quality** = Cleaning your house with cameras recording
 
 You need **all three** in the right order:
+
 1. Rules first (so you know HOW to clean)
 2. Cameras second (so you can verify nothing breaks)
 3. Cleaning last (with confidence that everything is monitored)
 
 **You're ready for Phase 3! Continue with the frontend test suite foundation from frontend_testing_plan.md** 🚀
+
 - [ ] Celebrate! 🎉
 
 ---
