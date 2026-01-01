@@ -24,7 +24,7 @@ pytest-mock==3.15.1
 # Code Quality Analysis (OPTIONAL - Run periodically)
 bandit==1.8.6
 radon==6.0.1
-yamllint==1.35.1        # YAML file validation
+yamllint==1.37.1        # YAML file validation
 
 # Pre-commit hooks (OPTIONAL - Configure later)
 # Run 'pre-commit install' only when ready to use
