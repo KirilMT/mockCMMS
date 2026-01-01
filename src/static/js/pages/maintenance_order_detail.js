@@ -1,4 +1,4 @@
-/* global showDeleteConfirm, $ */
+/* global $ */
 
 // Enable/disable and require frequency field based on order type (Bug #16 & #26)
 document.addEventListener('DOMContentLoaded', function () {
@@ -195,6 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', () => {
       const form = btn.closest('form');
       const message = btn.dataset.confirmMessage;
+
       showDeleteConfirm(form, message);
     });
   });
