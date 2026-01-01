@@ -51,10 +51,17 @@ test.describe('CRUD Functional Tests', () => {
 
         const newDesc = 'Updated Description ' + Date.now();
         await page.fill('textarea[name="description"]', newDesc);
-        await page.click('button:has-text("Update Asset")');
 
-        // Verify update
-        await expect(page.locator('text=Asset updated successfully')).toBeVisible();
+        // Click the Update button - use button[form] selector for submit buttons outside forms
+        await page.click('button[form="asset-form"]');
+
+        // Wait for redirect/page reload to complete
+        await page.waitForURL(/\/assets/);
+
+        // Verify success toast message appears
+        await expect(page.locator('.toast-body:has-text("Asset updated successfully")')).toBeVisible({ timeout: 10000 });
+
+
     });
 
     test('E2E-C3: test_delete_asset', async ({ page }) => {

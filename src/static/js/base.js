@@ -10,7 +10,6 @@ let deleteCallback = null;
  * @param {Function} callback - The callback function to execute on confirmation
  * @returns {boolean} - Always returns false to prevent default action
  */
-// eslint-disable-next-line no-unused-vars
 function showDeleteConfirm(form, message, callback) {
   // If form is provided, use form submission (for delete forms)
   // If callback is provided, use callback (for JavaScript operations like view delete)
@@ -30,7 +29,6 @@ let inputCallback = null;
  * @param {string} message - The message to display
  * @param {Function} callback - The callback function to execute on confirmation
  */
-// eslint-disable-next-line no-unused-vars
 function showInputModal(message, callback) {
   inputCallback = callback;
   document.getElementById("inputModalLabel").textContent = message;
@@ -50,7 +48,6 @@ let confirmCallback = null;
  * @param {string} message - The message to display
  * @param {Function} callback - The callback function to execute on confirmation
  */
-// eslint-disable-next-line no-unused-vars
 function showConfirmModal(message, callback) {
   confirmCallback = callback;
   document.getElementById("confirmModalMessage").textContent =
@@ -58,7 +55,17 @@ function showConfirmModal(message, callback) {
   $("#confirmModal").modal("show");
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+/**
+ * Initialize base functionality
+ */
+function initBase() {
+  // Initialize Select2 if present (Bootstrap 5 theme)
+  if (typeof $ !== 'undefined' && $.fn.select2) {
+    $('.select2').select2({
+      theme: 'bootstrap-5'
+    });
+  }
+
   // Sidebar toggle functionality
   const sidebarToggle = document.getElementById("sidebarToggle");
   if (sidebarToggle) {
@@ -142,4 +149,19 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
-});
+}
+
+// Initialize on DOM load
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", initBase);
+}
+
+// Update exports to include initBase
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    showDeleteConfirm,
+    showInputModal,
+    showConfirmModal,
+    initBase
+  };
+}
