@@ -167,6 +167,65 @@ describe('AdvancedTable Render Methods', () => {
             const tbody = container.querySelector('tbody');
             expect(tbody.innerHTML).toContain('New Item');
         });
+
+        test('should update row count', () => {
+             table.render();
+             table.data = [];
+             table.updateTable();
+             const rowCount = container.querySelector('.row-count');
+             expect(rowCount.innerHTML).toContain('Showing <strong>0</strong>');
+        });
+
+        test('should re-attach sort listeners', () => {
+             table.render();
+             const th = container.querySelector('th.sortable');
+             table.sort = jest.fn();
+             
+             // Update table (should re-attach listeners)
+             table.updateTable();
+             
+             th.click();
+             expect(table.sort).toHaveBeenCalled();
+        });
+        
+        test('should call initColumnResize if function exists', () => {
+             table.render();
+             table.initColumnResize = jest.fn();
+             table.updateTable();
+             expect(table.initColumnResize).toHaveBeenCalled();
+        });
+    });
+
+    describe('renderBody empty states', () => {
+         test('should show search no results message', () => {
+             table.data = [{}];
+             table.globalSearchTerm = 'xyz';
+             table.globalSearchDisplay = 'xyz';
+             // Mock filter to return empty
+             table.getFilteredData = jest.fn().mockReturnValue([]);
+             
+             const body = table.renderBody();
+             expect(body).toContain('No results found for "xyz"');
+         });
+
+         test('should show filter no results message', () => {
+             table.data = [{}];
+             table.filters = [{ column: 'name', value: 'x' }];
+             // Mock filter to return empty
+             table.getFilteredData = jest.fn().mockReturnValue([]);
+             
+             const body = table.renderBody();
+             expect(body).toContain('No results match the applied filters');
+         });
+         
+         test('should show generic empty message', () => {
+              table.data = [{}];
+              // No search, no filters, but empty filtered data (e.g. logic error/custom filter)
+              table.getFilteredData = jest.fn().mockReturnValue([]);
+              
+              const body = table.renderBody();
+              expect(body).toContain('No data to display');
+         });
     });
 
     // Additional branch coverage tests

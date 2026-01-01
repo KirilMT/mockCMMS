@@ -43,6 +43,40 @@ describe('ToastNotification', () => {
         expect(toast).not.toBeNull();
     });
 
+    test('TN-1.9: test_default_durations', () => {
+        // Test success default duration (5000)
+        ToastNotification.success('Success Defaults');
+        jest.advanceTimersByTime(4999);
+        expect(document.querySelector('.toast-success').closest('.toast')).not.toBeNull();
+        jest.advanceTimersByTime(2); // > 5000
+        jest.advanceTimersByTime(300); // removal
+        expect(document.querySelector('.toast-success')).toBeNull();
+
+        // Test error default duration (7000)
+        ToastNotification.error('Error Defaults');
+        jest.advanceTimersByTime(6999);
+        expect(document.querySelector('.toast-error').closest('.toast')).not.toBeNull();
+        jest.advanceTimersByTime(2);
+        jest.advanceTimersByTime(300);
+        expect(document.querySelector('.toast-error')).toBeNull();
+
+        // Test warning default duration (6000)
+        ToastNotification.warning('Warning Defaults');
+        jest.advanceTimersByTime(5999);
+        expect(document.querySelector('.toast-warning').closest('.toast')).not.toBeNull();
+        jest.advanceTimersByTime(2);
+        jest.advanceTimersByTime(300);
+        expect(document.querySelector('.toast-warning')).toBeNull();
+        
+        // Test info default duration (5000)
+        ToastNotification.info('Info Defaults');
+        jest.advanceTimersByTime(4999);
+        expect(document.querySelector('.toast-info').closest('.toast')).not.toBeNull();
+        jest.advanceTimersByTime(2);
+        jest.advanceTimersByTime(300);
+        expect(document.querySelector('.toast-info')).toBeNull();
+    });
+
     test('TN-1.3: test_auto_dismiss_after_timeout', () => {
         ToastNotification.show('Auto Dismiss', 'info', 1000);
 

@@ -206,6 +206,26 @@ describe('AdvancedTable Event Methods', () => {
             expect(spy).not.toHaveBeenCalled();
         });
 
+        test('should ignore click on element inside resize handle', () => {
+             table.render();
+             const header = document.querySelector('th.sortable');
+             const resizeHandle = document.createElement('div');
+             resizeHandle.className = 'resize-handle';
+             
+             const innerElement = document.createElement('span');
+             resizeHandle.appendChild(innerElement);
+             header.appendChild(resizeHandle);
+             
+             const spy = jest.spyOn(table, 'sort');
+             
+             // Click on inner element - should find closest('.resize-handle')
+             const event = new MouseEvent('click', { bubbles: true });
+             Object.defineProperty(event, 'target', { value: innerElement });
+             
+             innerElement.dispatchEvent(event);
+             expect(spy).not.toHaveBeenCalled();
+        });
+
         test('should handle clear search button click', () => {
             table.render();
             const clearBtn = document.getElementById('clearSearchBtn');

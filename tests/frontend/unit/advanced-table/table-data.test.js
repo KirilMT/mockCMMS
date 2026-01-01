@@ -599,5 +599,88 @@ describe('TableData Module', () => {
         result = dateTable.getFilteredData();
         expect(result.length).toBe(0);
     });
+    test('TD-4.1: test_globalSearch_handles_error', () => {
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        // Mock updateTable to throw ONCE, then succeed (do nothing)
+        table.updateTable = jest.fn()
+            .mockImplementationOnce(() => { throw new Error('Search failed'); })
+            .mockImplementation(() => {}); 
+            
+        table.saveTableState = jest.fn();
+        
+        table.globalSearch('boom');
+        
+        expect(consoleSpy).toHaveBeenCalledWith('Global search error:', expect.any(Error));
+        expect(table.globalSearchTerm).toBeNull();
+        expect(table.globalSearchDisplay).toBe('');
+        
+        consoleSpy.mockRestore();
+    });
+
+    test('TD-4.2: filter_chain_logic_explicit_coverage', () => {
+         // This tests the branch logic inside applyFiltersWithLogic
+         table.filters = [
+             { column: 'name', value: 'A', operator: 'starts_with' },
+             { column: 'name', value: 'B', operator: 'starts_with', logic: 'OR' }
+         ];
+         
+         const spy = jest.spyOn(table, 'applyFilter');
+         table.getFilteredData();
+         
+         // Both rows should be tested against filters
+         expect(spy).toHaveBeenCalled();
+    });
+
+    test('TD-4.3: filter_chain_short_circuit_OR', () => {
+         // Check that if first item in OR chain matches, second isn't checked
+         // Implementation detail: applyWithLogic.js checks all?
+         // for (const filter of chain) { if (applyFilter) { chainResult=true; break; } }
+         // Yes, it shorts circuits.
+         
+         table.filters = [
+             { column: 'name', value: 'Alice', operator: 'equals' },
+             { column: 'name', value: 'Bob', operator: 'equals', logic: 'OR' }
+         ];
+         
+         // For Alice row: First filter matches. Should NOT check Bob filter.
+         const spy = jest.spyOn(table, 'applyFilter');
+         const result = table.applyFiltersWithLogic(testData[0]); // Alice
+         
+         expect(result).toBe(true);
+         // Expect applyFilter to be called X times.
+         // 1st time: Alice equals Alice? True. Break.
+         // Count should be 1.
+         expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    test('TD-4.4: filter_chain_short_circuit_AND', () => {
+         // AND between chains. 
+         // Chain 1: Name = 'Alice'
+         // Chain 2: Role = 'Designer' (Default AND to Chain 1)
+         
+         table.filters = [
+             { column: 'name', value: 'Alice', operator: 'equals' },
+             { column: 'role', value: 'Designer', operator: 'equals', logic: 'AND' }
+         ];
+         
+         // For Alice: Chain 1 passes. Chain 2 fails (Role is Engineer).
+         // Result: False.
+         
+         const result = table.applyFiltersWithLogic(testData[0]); // Alice
+         expect(result).toBe(false);
+         
+         // For Bob: Chain 1 fails. Should short circuit AND and not check Chain 2?
+         // table-data.js: for (const chain of chains) { ... if (!chainResult) return false; }
+         // Yes, if Chain 1 fails, Chain 2 is not checked.
+         
+         const spy = jest.spyOn(table, 'applyFilter');
+         const resultBob = table.applyFiltersWithLogic(testData[1]); // Bob
+         expect(resultBob).toBe(false);
+         // Chain 1: Bob equals Alice? False. 
+         // Chain 1 fail. Return false.
+         // Should not check Chain 2 (Role=Designer).
+         // Spy count: 1.
+         expect(spy).toHaveBeenCalledTimes(1);
+    });
 });
 
