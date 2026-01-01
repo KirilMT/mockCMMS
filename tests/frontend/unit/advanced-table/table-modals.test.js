@@ -43,6 +43,14 @@ describe('Table Modals (Legacy)', () => {
         window.ToastNotification.error.mockClear();
         window.ToastNotification.success.mockClear();
         global.fetch = jest.fn();
+
+        // Reset console spies
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
     test('addFilterRow adds a new row', () => {
@@ -118,29 +126,25 @@ describe('Table Modals (Legacy)', () => {
     });
 
     test('applyFilters handles empty/invalid filters', () => {
+        // 1. Completely empty (should just clear)
         window.addFilterRow();
-        // Don't set values
-
         window.applyFilters();
-
-        // Should show error for completely empty if we wanted to enforce it,
-        // but current logic allows empty if no valid filters found AND object keys is 0?
-        // Wait, logic says: if (hasValidFilter || Object.keys(newFilters).length === 0)
-        // If nothing is filled, newFilters is empty, so it clears filters.
-
         expect(window.advTable.filters).toEqual({});
         expect(window.advTable.render).toHaveBeenCalled();
+        expect(window.ToastNotification.error).not.toHaveBeenCalled();
 
-        // If we partial fill
+        // 2. Partial filled (should error)
+        window.clearAllFilters(); // Reset
+        window.addFilterRow();
         const row = document.querySelector('.filter-row');
         row.querySelector('.column-select').value = 'col1';
-        // Value empty
+        // Value remains empty
 
         window.applyFilters();
         expect(window.ToastNotification.error).toHaveBeenCalled();
     });
 
-    test('saveTableConfiguration calls API', async () => {
+    test('saveTableConfiguration calls API and handles success', async () => {
         document.getElementById('configName').value = 'Test Config';
         document.getElementById('setAsDefault').checked = true;
 
@@ -148,13 +152,53 @@ describe('Table Modals (Legacy)', () => {
             json: () => Promise.resolve({ success: true })
         });
 
+        // Mock loadSavedConfigurations since it's called on success
+        const originalLoadSaved = window.loadSavedConfigurations;
+        window.loadSavedConfigurations = jest.fn();
+
         await window.saveTableConfiguration();
 
         expect(global.fetch).toHaveBeenCalledWith('/api/table-config/testPage', expect.objectContaining({
             method: 'POST',
             body: expect.stringContaining('"config_name":"Test Config"')
         }));
+
+        // Wait for promise chain to resolve
+        await new Promise(process.nextTick);
+
         expect(window.ToastNotification.success).toHaveBeenCalled();
+        expect(window.loadSavedConfigurations).toHaveBeenCalled();
+
+        // Restore
+        window.loadSavedConfigurations = originalLoadSaved;
+    });
+
+    test('saveTableConfiguration handles API error', async () => {
+        document.getElementById('configName').value = 'Test Config';
+        global.fetch.mockResolvedValue({
+            json: () => Promise.resolve({ success: false, error: 'Failed' })
+        });
+
+        await window.saveTableConfiguration();
+        await new Promise(process.nextTick);
+
+        expect(window.ToastNotification.error).toHaveBeenCalledWith(expect.stringContaining('Failed'));
+    });
+
+    test('saveTableConfiguration handles fetch error', async () => {
+        document.getElementById('configName').value = 'Test Config';
+        global.fetch.mockRejectedValue(new Error('Network error'));
+
+        await window.saveTableConfiguration();
+        await new Promise(process.nextTick);
+
+        expect(window.ToastNotification.error).toHaveBeenCalledWith('Error saving configuration');
+    });
+
+    test('saveTableConfiguration validation', () => {
+        document.getElementById('configName').value = '';
+        window.saveTableConfiguration();
+        expect(window.ToastNotification.error).toHaveBeenCalledWith('Please enter a configuration name');
     });
 
     test('loadSavedConfigurations populates dropdown', async () => {
@@ -167,11 +211,21 @@ describe('Table Modals (Legacy)', () => {
         });
 
         await window.loadSavedConfigurations();
+        await new Promise(process.nextTick); // Wait for microtasks
 
         const dropdown = document.getElementById('savedConfigsDropdown');
-        // Wait for promise resolution (microtask) - usually handled by await but fetch is mocked
-        // We might need to wait a tick if the logic wasn't awaited (loadSavedConfigurations is not async in source)
-        // But in test we can await the fetch promise if we returned it, but source doesn't return it.
-        // So we wait a bit.
+        expect(dropdown.children.length).toBe(3); // Default option + 2 configs
+        expect(dropdown.options[1].text).toBe('View 1');
+        expect(dropdown.options[2].text).toBe('View 2 (Default)');
+    });
+
+    test('loadSavedConfigurations handles error', async () => {
+        global.fetch.mockRejectedValue(new Error('Failed'));
+
+        await window.loadSavedConfigurations();
+        await new Promise(process.nextTick);
+
+        const dropdown = document.getElementById('savedConfigsDropdown');
+        expect(dropdown.options[0].text).toBe('No saved views');
     });
 });

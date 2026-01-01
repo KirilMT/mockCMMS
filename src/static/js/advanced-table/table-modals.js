@@ -208,6 +208,7 @@ window.applyFilters = function() {
     const filterRows = document.querySelectorAll('#filterRows .filter-row');
     const newFilters = {};
     let hasValidFilter = false;
+    let hasIncompleteFilter = false;
 
     filterRows.forEach(row => {
         const columnSelect = row.querySelector('.column-select');
@@ -225,10 +226,11 @@ window.applyFilters = function() {
             // Highlight incomplete filter
             valueInput.classList.add('is-invalid');
             setTimeout(() => valueInput.classList.remove('is-invalid'), 3000);
+            hasIncompleteFilter = true;
         }
     });
 
-    if (hasValidFilter || Object.keys(newFilters).length === 0) {
+    if (!hasIncompleteFilter && (hasValidFilter || Object.keys(newFilters).length === 0)) {
         if (window.advTable) {
             window.advTable.filters = newFilters;
             window.advTable.currentPage = 1;
@@ -248,10 +250,10 @@ window.saveTableConfiguration = function() {
 
     if (!configName) {
         if(window.ToastNotification) window.ToastNotification.error('Please enter a configuration name');
-        return;
+        return Promise.resolve(); // Return resolved promise for testing
     }
 
-    if (!window.advTable) return;
+    if (!window.advTable) return Promise.resolve();
 
     const config = {
         config_name: configName,
@@ -262,7 +264,7 @@ window.saveTableConfiguration = function() {
         is_default: setAsDefault
     };
 
-    fetch(`/api/table-config/${window.advTable.pageName}`, {
+    return fetch(`/api/table-config/${window.advTable.pageName}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -276,7 +278,7 @@ window.saveTableConfiguration = function() {
                 if(window.ToastNotification) window.ToastNotification.success('Configuration saved successfully!');
                 document.getElementById('configName').value = '';
                 document.getElementById('setAsDefault').checked = false;
-                window.loadSavedConfigurations();
+                return window.loadSavedConfigurations(); // Return this promise too
             } else {
                 if(window.ToastNotification) window.ToastNotification.error('Error saving configuration: ' + data.error);
             }
@@ -289,10 +291,10 @@ window.saveTableConfiguration = function() {
 
 window.loadSavedConfigurations = function() {
     if (!window.advTable || !window.advTable.pageName) {
-        return;
+        return Promise.resolve();
     }
 
-    fetch(`/api/table-config/${window.advTable.pageName}`)
+    return fetch(`/api/table-config/${window.advTable.pageName}`)
         .then(response => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();
@@ -327,10 +329,10 @@ window.loadSelectedConfiguration = function() {
     const dropdown = document.getElementById('savedConfigsDropdown');
     const configId = dropdown.value;
     if (!configId || !window.advTable) {
-        return;
+        return Promise.resolve();
     }
 
-    fetch(`/api/table-config/${window.advTable.pageName}`)
+    return fetch(`/api/table-config/${window.advTable.pageName}`)
         .then(response => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();
