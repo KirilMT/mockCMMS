@@ -38,7 +38,7 @@ For development (testing, linting), also run:
 | **Backend**      | Python 3.12, Flask, SQLAlchemy, Jinja2             |
 | **Frontend**     | Vanilla JavaScript (ES6+), CSS3                    |
 | **Database**     | SQLite (dev), PostgreSQL (prod-ready)              |
-| **Testing**      | Pytest, 85%+ coverage target                       |
+| **Testing**      | Pytest, 80%+ coverage floor                        |
 | **Linting**      | Ruff, Pylint, Flake8, Black, Mypy                  |
 | **Architecture** | Modular Monorepo (`src/` core, `apps/` extensions) |
 
@@ -63,13 +63,13 @@ Before complex tasks, you MUST:
 ### Test-Driven Development
 
 - Write tests FIRST, then implement code.
-- Maintain > 85% coverage: `pytest --cov=src tests/`
+- Maintain > 80% coverage: `pytest --cov=src tests/`
 - Test edge cases: nulls, empty arrays, boundaries.
 
 ### Commits & Branching
 
 - **Conventional Commits:** `type(scope): description`
-- **Feature Branches:** Never commit to `master`. Use `type/feature-name`.
+- **Feature Branches:** Never commit to `main`. Use `type/feature-name`.
 
 ## 4. Execution Protocol (CRITICAL)
 
@@ -95,6 +95,7 @@ Before complex tasks, you MUST:
 - **No Silent Failures:** Catch, log, and handle errors.
 - **Docstrings:** All public functions/classes.
 - **No Hardcoded Secrets:** Use `.env`.
+- **Python Formatting (STRICT):** `isort` → `black` → `docformatter`. Run in this exact order.
 
 ---
 

@@ -1013,4 +1013,31 @@ describe('TableSidebar', () => {
 
 
     });
+    test('attachEventListeners matches toggle buttons', () => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <button class="btn-toggle-sidebar"></button>
+            <div class="sidebar-section" data-section="filters">
+                <div class="section-header">Header</div>
+            </div>
+        `;
+        document.body.appendChild(div);
+        
+        sidebar.attachEventListeners();
+        
+        const toggleBtn = div.querySelector('.btn-toggle-sidebar');
+        // Spy is already set up in beforeEach? No, sidebar is recreated.
+        // We need to spy on the instance `sidebar`.
+        const spyToggle = jest.spyOn(sidebar, 'toggleSidebar').mockImplementation(() => {});
+        toggleBtn.click();
+        expect(spyToggle).toHaveBeenCalled();
+        
+        const header = div.querySelector('.section-header');
+        const spySection = jest.spyOn(sidebar, 'toggleSection').mockImplementation(() => {});
+        header.click();
+        expect(spySection).toHaveBeenCalledWith('filters');
+        
+        document.body.removeChild(div);
+
+});
 });

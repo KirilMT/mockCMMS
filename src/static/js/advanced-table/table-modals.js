@@ -1,24 +1,17 @@
 // Refactoring Note:
 // This file is a placeholder for the verified refactor of "Task 5.16" which removes inline scripts from advanced_table.html.
-// The actual logic from the inline script in advanced_table.html is partially duplicated in other table-*.js files.
-// However, the specific modal implementations in the template are distinct from the Sidebar implementation.
-// To preserve functionality while refactoring, we move the inline logic here.
 
 /**
  * Manages the legacy modal-based UI for Advanced Table.
- * This is used if the Sidebar UI is not active or for specific modals.
  */
 
-// Global functions exposed for onclick handlers in the template
-// Note: Ideally these should be replaced by event listeners, but to minimize risk of breakage
-// during this refactor phase, we expose them to window.
-
-window.closeColumnManager = function() {
+// Define as local functions first
+const closeColumnManager = function() {
     const el = document.getElementById('columnManager');
     if(el) el.classList.remove('show');
 };
 
-window.applyColumnChanges = function() {
+const applyColumnChanges = function() {
     const columnItems = document.querySelectorAll('#columnList .column-item');
     const newOrder = [];
     const newHidden = new Set();
@@ -36,10 +29,25 @@ window.applyColumnChanges = function() {
         window.advTable.hiddenColumns = newHidden;
         window.advTable.render();
     }
-    window.closeColumnManager();
+    closeColumnManager();
 };
 
-window.initializeDragAndDrop = function() {
+const getDragAfterElement = function(container, y) {
+    const draggableElements = [...container.querySelectorAll('.column-item:not(.dragging)')];
+
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+};
+
+const initializeDragAndDrop = function() {
     const columnList = document.getElementById('columnList');
     if (!columnList) return;
 
@@ -55,7 +63,7 @@ window.initializeDragAndDrop = function() {
 
     columnList.addEventListener('dragover', function (e) {
         e.preventDefault();
-        const afterElement = window.getDragAfterElement(columnList, e.clientY);
+        const afterElement = getDragAfterElement(columnList, e.clientY);
         if (afterElement == null) {
             columnList.appendChild(draggedElement);
         } else {
@@ -70,28 +78,65 @@ window.initializeDragAndDrop = function() {
     });
 };
 
-window.getDragAfterElement = function(container, y) {
-    const draggableElements = [...container.querySelectorAll('.column-item:not(.dragging)')];
-
-    return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-
-        if (offset < 0 && offset > closest.offset) {
-            return { offset: offset, element: child };
-        } else {
-            return closest;
-        }
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
-};
-
-// Filter Manager Functions
-window.closeFilterManager = function() {
+const closeFilterManager = function() {
     const el = document.getElementById('filterManager');
     if(el) el.classList.remove('show');
 };
 
-window.addFilterRow = function() {
+const toggleFilterValue = function(columnSelect) {
+    const filterRow = columnSelect.closest('.filter-row');
+    const filterValue = filterRow.querySelector('.filter-value');
+
+    if (columnSelect.value) {
+        filterValue.disabled = false;
+        filterValue.focus();
+    } else {
+        filterValue.disabled = true;
+        filterValue.value = '';
+    }
+};
+
+const removeFilterRow = function(button) {
+    const filterRow = button.closest('.filter-row');
+    const prevElement = filterRow.previousElementSibling;
+
+    // Remove logic selector if it exists
+    if (prevElement && prevElement.classList.contains('filter-logic')) {
+        prevElement.remove();
+    }
+
+    filterRow.remove();
+};
+
+const applyFilterRealTime = function() {
+    // Apply filters in real-time as user types
+    setTimeout(() => {
+        const filterRows = document.querySelectorAll('#filterRows .filter-row');
+        const newFilters = {};
+
+        filterRows.forEach(row => {
+            const columnSelect = row.querySelector('.column-select');
+            const operatorSelect = row.querySelector('.operator-select');
+            const valueInput = row.querySelector('.filter-value');
+
+            const column = columnSelect.value;
+            const operator = operatorSelect.value;
+            const value = valueInput.value.trim();
+
+            if (column && operator && value) {
+                newFilters[column] = { operator, value };
+            }
+        });
+
+        if (window.advTable) {
+            window.advTable.filters = newFilters;
+            window.advTable.currentPage = 1;
+            window.advTable.render();
+        }
+    }, 300); // Debounce for 300ms
+};
+
+const addFilterRow = function() {
     const filterRows = document.getElementById('filterRows');
     if(!filterRows) return;
 
@@ -140,60 +185,7 @@ window.addFilterRow = function() {
     filterRows.appendChild(filterRow);
 };
 
-window.toggleFilterValue = function(columnSelect) {
-    const filterRow = columnSelect.closest('.filter-row');
-    const filterValue = filterRow.querySelector('.filter-value');
-
-    if (columnSelect.value) {
-        filterValue.disabled = false;
-        filterValue.focus();
-    } else {
-        filterValue.disabled = true;
-        filterValue.value = '';
-    }
-};
-
-window.applyFilterRealTime = function() {
-    // Apply filters in real-time as user types
-    setTimeout(() => {
-        const filterRows = document.querySelectorAll('#filterRows .filter-row');
-        const newFilters = {};
-
-        filterRows.forEach(row => {
-            const columnSelect = row.querySelector('.column-select');
-            const operatorSelect = row.querySelector('.operator-select');
-            const valueInput = row.querySelector('.filter-value');
-
-            const column = columnSelect.value;
-            const operator = operatorSelect.value;
-            const value = valueInput.value.trim();
-
-            if (column && operator && value) {
-                newFilters[column] = { operator, value };
-            }
-        });
-
-        if (window.advTable) {
-            window.advTable.filters = newFilters;
-            window.advTable.currentPage = 1;
-            window.advTable.render();
-        }
-    }, 300); // Debounce for 300ms
-};
-
-window.removeFilterRow = function(button) {
-    const filterRow = button.closest('.filter-row');
-    const prevElement = filterRow.previousElementSibling;
-
-    // Remove logic selector if it exists
-    if (prevElement && prevElement.classList.contains('filter-logic')) {
-        prevElement.remove();
-    }
-
-    filterRow.remove();
-};
-
-window.clearAllFilters = function() {
+const clearAllFilters = function() {
     const fr = document.getElementById('filterRows');
     if(fr) fr.innerHTML = '';
     if (window.advTable) {
@@ -201,10 +193,10 @@ window.clearAllFilters = function() {
         window.advTable.render();
     }
     // Don't close the manager, just clear and add one empty row
-    window.addFilterRow();
+    addFilterRow();
 };
 
-window.applyFilters = function() {
+const applyFilters = function() {
     const filterRows = document.querySelectorAll('#filterRows .filter-row');
     const newFilters = {};
     let hasValidFilter = false;
@@ -236,7 +228,7 @@ window.applyFilters = function() {
             window.advTable.currentPage = 1;
             window.advTable.render();
         }
-        window.closeFilterManager();
+        closeFilterManager();
     } else {
         if(window.ToastNotification) {
             window.ToastNotification.error('Please complete all filter criteria or remove incomplete filters.');
@@ -244,52 +236,7 @@ window.applyFilters = function() {
     }
 };
 
-window.saveTableConfiguration = function() {
-    const configName = document.getElementById('configName').value;
-    const setAsDefault = document.getElementById('setAsDefault').checked;
-
-    if (!configName) {
-        if(window.ToastNotification) window.ToastNotification.error('Please enter a configuration name');
-        return Promise.resolve(); // Return resolved promise for testing
-    }
-
-    if (!window.advTable) return Promise.resolve();
-
-    const config = {
-        config_name: configName,
-        column_order: JSON.stringify(window.advTable.columnOrder),
-        hidden_columns: JSON.stringify(Array.from(window.advTable.hiddenColumns)),
-        filters: JSON.stringify(window.advTable.filters),
-        sort_config: JSON.stringify(window.advTable.currentSort),
-        is_default: setAsDefault
-    };
-
-    return fetch(`/api/table-config/${window.advTable.pageName}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
-        },
-        body: JSON.stringify(config)
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if(window.ToastNotification) window.ToastNotification.success('Configuration saved successfully!');
-                document.getElementById('configName').value = '';
-                document.getElementById('setAsDefault').checked = false;
-                return window.loadSavedConfigurations(); // Return this promise too
-            } else {
-                if(window.ToastNotification) window.ToastNotification.error('Error saving configuration: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if(window.ToastNotification) window.ToastNotification.error('Error saving configuration');
-        });
-};
-
-window.loadSavedConfigurations = function() {
+const loadSavedConfigurations = function() {
     if (!window.advTable || !window.advTable.pageName) {
         return Promise.resolve();
     }
@@ -325,7 +272,52 @@ window.loadSavedConfigurations = function() {
         });
 };
 
-window.loadSelectedConfiguration = function() {
+const saveTableConfiguration = function() {
+    const configName = document.getElementById('configName').value;
+    const setAsDefault = document.getElementById('setAsDefault').checked;
+
+    if (!configName) {
+        if(window.ToastNotification) window.ToastNotification.error('Please enter a configuration name');
+        return Promise.resolve(); // Return resolved promise for testing
+    }
+
+    if (!window.advTable) return Promise.resolve();
+
+    const config = {
+        config_name: configName,
+        column_order: JSON.stringify(window.advTable.columnOrder),
+        hidden_columns: JSON.stringify(Array.from(window.advTable.hiddenColumns)),
+        filters: JSON.stringify(window.advTable.filters),
+        sort_config: JSON.stringify(window.advTable.currentSort),
+        is_default: setAsDefault
+    };
+
+    return fetch(`/api/table-config/${window.advTable.pageName}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+        },
+        body: JSON.stringify(config)
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if(window.ToastNotification) window.ToastNotification.success('Configuration saved successfully!');
+                document.getElementById('configName').value = '';
+                document.getElementById('setAsDefault').checked = false;
+                return loadSavedConfigurations(); // Return this promise too
+            } else {
+                if(window.ToastNotification) window.ToastNotification.error('Error saving configuration: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if(window.ToastNotification) window.ToastNotification.error('Error saving configuration');
+        });
+};
+
+const loadSelectedConfiguration = function() {
     const dropdown = document.getElementById('savedConfigsDropdown');
     const configId = dropdown.value;
     if (!configId || !window.advTable) {
@@ -351,18 +343,58 @@ window.loadSelectedConfiguration = function() {
         });
 };
 
-// Initialize configurations when DOM is ready
-document.addEventListener('DOMContentLoaded', function () {
-    // Wait for advTable to be initialized
-    const checkAdvTable = setInterval(() => {
-        if (window.advTable && window.advTable.pageName) {
-            window.loadSavedConfigurations();
-            clearInterval(checkAdvTable);
-        }
-    }, 100);
+// Assign to window for browser usage
+if (typeof window !== 'undefined') {
+    window.closeColumnManager = closeColumnManager;
+    window.applyColumnChanges = applyColumnChanges;
+    window.initializeDragAndDrop = initializeDragAndDrop;
+    window.getDragAfterElement = getDragAfterElement;
+    window.closeFilterManager = closeFilterManager;
+    window.addFilterRow = addFilterRow;
+    window.toggleFilterValue = toggleFilterValue;
+    window.removeFilterRow = removeFilterRow;
+    window.applyFilterRealTime = applyFilterRealTime;
+    window.clearAllFilters = clearAllFilters;
+    window.applyFilters = applyFilters;
+    window.saveTableConfiguration = saveTableConfiguration;
+    window.loadSavedConfigurations = loadSavedConfigurations;
+    window.loadSelectedConfiguration = loadSelectedConfiguration;
+}
 
-    // Clear interval after 10 seconds to prevent infinite loop
-    setTimeout(() => {
-        clearInterval(checkAdvTable);
-    }, 10000);
-});
+// Initialize configurations when DOM is ready
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function () {
+        // Wait for advTable to be initialized
+        const checkAdvTable = setInterval(() => {
+            if (window.advTable && window.advTable.pageName) {
+                loadSavedConfigurations();
+                clearInterval(checkAdvTable);
+            }
+        }, 100);
+
+        // Clear interval after 10 seconds to prevent infinite loop
+        setTimeout(() => {
+            clearInterval(checkAdvTable);
+        }, 10000);
+    });
+}
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        closeColumnManager,
+        applyColumnChanges,
+        initializeDragAndDrop,
+        getDragAfterElement,
+        closeFilterManager,
+        addFilterRow,
+        toggleFilterValue,
+        removeFilterRow,
+        applyFilterRealTime,
+        clearAllFilters,
+        applyFilters,
+        saveTableConfiguration,
+        loadSavedConfigurations,
+        loadSelectedConfiguration
+    };
+}

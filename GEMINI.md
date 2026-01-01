@@ -55,6 +55,11 @@ workspace-specific rules.
   unused or "dead" code.
 - **Hardcoding:** Avoid hardcoding values; use configuration files, environment
   variables, or constants where possible.
+- **Python Formatting Order (STRICT):** When formatting Python code, always run
+  tools in this order:
+  1. `isort src/` - Sort imports (PEP 8)
+  2. `black src/` - Format code structure
+  3. `docformatter --in-place -r src/` - Format docstrings (PEP 257)
 
 #### 1.1.1. The 5-Step Iterative Loop (Mandatory)
 
@@ -301,6 +306,57 @@ Test fails after code change:
 
 - See `tests/README.md` for test suite organization and complete testing
   strategy
+
+#### 🚨 CRITICAL: Coverage Testing Best Practices (MANDATORY)
+
+**Tests must INCREASE coverage, not just pass. A passing test that doesn't cover new code paths is WORTHLESS for coverage.**
+
+**Understanding Coverage:**
+
+- **Coverage means the CODE is EXECUTED during tests** - If tests don't increase coverage, the code paths aren't being executed
+- **Branch coverage** tracks conditional branches (if/else, ternary operators, short-circuit evaluation)
+- **Line coverage** tracks which lines of code were executed
+- **The coverage threshold is in `jest.config.js` (Frontend) and `pytest.ini` (Backend)**
+
+**How to Write Tests That INCREASE Coverage:**
+
+1. **Identify uncovered lines FIRST** - Run `npm run test:coverage` and check the report for specific line numbers
+2. **Analyze the uncovered code** - View those exact lines to understand what conditions trigger them
+3. **Call functions DIRECTLY with specific inputs** - Don't rely on event dispatching in JSDOM; call the function with parameters that trigger the uncovered branch
+4. **Mock dependencies BEFORE instantiation** - If testing a class method, mock on `ClassName.prototype.methodName` BEFORE creating the instance
+5. **Verify coverage increased** - Run coverage again to confirm the lines are now covered
+
+**Common Coverage Testing Mistakes (AVOID THESE):**
+
+- ❌ **Adding tests that pass but don't execute uncovered code** - The test runs, but coverage stays the same
+- ❌ **Relying on DOM events in JSDOM** - Event handlers may not trigger coverage for inline anonymous functions
+- ❌ **Mocking AFTER instantiation** - Event handlers bind to the original method, not the mock
+- ❌ **Testing the same code paths repeatedly** - Diminishing returns on coverage
+- ❌ **Creating tests without checking which lines are uncovered** - Wasted effort
+
+**Correct Approach for Coverage Gaps:**
+
+```javascript
+// BAD: Event-based test (may not increase coverage)
+element.dispatchEvent(new Event("click"));
+
+// GOOD: Direct function call with specific inputs
+await tableModals.saveTableConfiguration(); // Empty name triggers line 280
+```
+
+**When Coverage Is Stuck:**
+
+1. Check if uncovered lines are inside callbacks, promise chains, or async handlers
+2. Try calling inner functions directly if exported
+3. Mock external dependencies to force specific code paths
+4. Consider if the code is truly testable or needs refactoring
+
+**Verification Workflow:**
+
+1. Run `npm run test:coverage` (Frontend) or `pytest --cov` (Backend)
+2. Check that coverage % is >= threshold in config
+3. If below threshold: identify uncovered lines → write targeted tests → repeat
+4. Only commit when coverage threshold is met
 
 #### 🚨 CRITICAL: Testing Documentation (MANDATORY)
 
