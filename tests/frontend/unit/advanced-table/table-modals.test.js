@@ -5,10 +5,13 @@ const path = require('path');
 document.body.innerHTML = `
     <div id="filterRows"></div>
     <div id="columnList"></div>
-    <div id="savedConfigsDropdown"></div>
+    <select id="savedConfigsDropdown"></select> <!-- Changed to select for options collection -->
     <input id="configName" />
     <input type="checkbox" id="setAsDefault" />
     <meta name="csrf-token" content="mock-token">
+    <!-- Managers -->
+    <div id="columnManager" class="show"></div>
+    <div id="filterManager" class="show"></div>
 `;
 
 // Mock ToastNotification
@@ -38,8 +41,13 @@ describe('Table Modals (Legacy)', () => {
         // Reset DOM
         document.getElementById('filterRows').innerHTML = '';
         document.getElementById('columnList').innerHTML = '';
+        document.getElementById('savedConfigsDropdown').innerHTML = ''; // Reset dropdown
+        if(document.getElementById('columnManager')) document.getElementById('columnManager').className = 'show';
+        if(document.getElementById('filterManager')) document.getElementById('filterManager').className = 'show';
+
         window.advTable.filters = {};
         window.advTable.render.mockClear();
+        window.advTable.applyConfiguration.mockClear();
         window.ToastNotification.error.mockClear();
         window.ToastNotification.success.mockClear();
         global.fetch = jest.fn();
@@ -123,11 +131,12 @@ describe('Table Modals (Legacy)', () => {
             col1: { operator: 'equals', value: 'test' }
         });
         expect(window.advTable.render).toHaveBeenCalled();
+        expect(document.getElementById('filterManager').classList.contains('show')).toBe(false);
     });
 
     test('applyFilters handles empty/invalid filters', () => {
-        // 1. Completely empty (should just clear)
-        window.addFilterRow();
+        // 1. Completely empty (should just clear/close)
+        window.addFilterRow(); // One empty row is essentially "no filter"
         window.applyFilters();
         expect(window.advTable.filters).toEqual({});
         expect(window.advTable.render).toHaveBeenCalled();
@@ -154,7 +163,7 @@ describe('Table Modals (Legacy)', () => {
 
         // Mock loadSavedConfigurations since it's called on success
         const originalLoadSaved = window.loadSavedConfigurations;
-        window.loadSavedConfigurations = jest.fn();
+        window.loadSavedConfigurations = jest.fn(() => Promise.resolve());
 
         await window.saveTableConfiguration();
 
@@ -162,9 +171,6 @@ describe('Table Modals (Legacy)', () => {
             method: 'POST',
             body: expect.stringContaining('"config_name":"Test Config"')
         }));
-
-        // Wait for promise chain to resolve
-        await new Promise(process.nextTick);
 
         expect(window.ToastNotification.success).toHaveBeenCalled();
         expect(window.loadSavedConfigurations).toHaveBeenCalled();
@@ -180,7 +186,6 @@ describe('Table Modals (Legacy)', () => {
         });
 
         await window.saveTableConfiguration();
-        await new Promise(process.nextTick);
 
         expect(window.ToastNotification.error).toHaveBeenCalledWith(expect.stringContaining('Failed'));
     });
@@ -190,14 +195,13 @@ describe('Table Modals (Legacy)', () => {
         global.fetch.mockRejectedValue(new Error('Network error'));
 
         await window.saveTableConfiguration();
-        await new Promise(process.nextTick);
 
         expect(window.ToastNotification.error).toHaveBeenCalledWith('Error saving configuration');
     });
 
-    test('saveTableConfiguration validation', () => {
+    test('saveTableConfiguration validation', async () => {
         document.getElementById('configName').value = '';
-        window.saveTableConfiguration();
+        await window.saveTableConfiguration();
         expect(window.ToastNotification.error).toHaveBeenCalledWith('Please enter a configuration name');
     });
 
@@ -211,21 +215,127 @@ describe('Table Modals (Legacy)', () => {
         });
 
         await window.loadSavedConfigurations();
-        await new Promise(process.nextTick); // Wait for microtasks
 
         const dropdown = document.getElementById('savedConfigsDropdown');
         expect(dropdown.children.length).toBe(3); // Default option + 2 configs
-        expect(dropdown.options[1].text).toBe('View 1');
-        expect(dropdown.options[2].text).toBe('View 2 (Default)');
+        // JSDOM select options collection works correctly
+        expect(dropdown.options[1].textContent).toBe('View 1');
+        expect(dropdown.options[2].textContent).toBe('View 2 (Default)');
     });
 
     test('loadSavedConfigurations handles error', async () => {
         global.fetch.mockRejectedValue(new Error('Failed'));
 
         await window.loadSavedConfigurations();
-        await new Promise(process.nextTick);
 
         const dropdown = document.getElementById('savedConfigsDropdown');
-        expect(dropdown.options[0].text).toBe('No saved views');
+        expect(dropdown.options[0].textContent).toBe('No saved views');
+    });
+
+    // Coverage Tests
+    test('closeColumnManager closes modal', () => {
+        window.closeColumnManager();
+        expect(document.getElementById('columnManager').classList.contains('show')).toBe(false);
+    });
+
+    test('closeFilterManager closes modal', () => {
+        window.closeFilterManager();
+        expect(document.getElementById('filterManager').classList.contains('show')).toBe(false);
+    });
+
+    test('applyColumnChanges updates columns', () => {
+        // Setup column list
+        const list = document.getElementById('columnList');
+        const item1 = document.createElement('li');
+        item1.className = 'column-item';
+        item1.dataset.column = 'col1';
+        item1.innerHTML = '<input type="checkbox" checked>';
+
+        const item2 = document.createElement('li');
+        item2.className = 'column-item';
+        item2.dataset.column = 'col2';
+        item2.innerHTML = '<input type="checkbox">'; // Unchecked
+
+        list.appendChild(item1);
+        list.appendChild(item2);
+
+        window.applyColumnChanges();
+
+        expect(window.advTable.columnOrder).toEqual(['col1', 'col2']);
+        expect(window.advTable.hiddenColumns.has('col2')).toBe(true);
+        expect(window.advTable.render).toHaveBeenCalled();
+        expect(document.getElementById('columnManager').classList.contains('show')).toBe(false);
+    });
+
+    test('initializeDragAndDrop attaches listeners', () => {
+        // Can't easily test drag events in JSDOM, but we can verify it doesn't crash
+        window.initializeDragAndDrop();
+    });
+
+    test('getDragAfterElement calculation', () => {
+        const list = document.getElementById('columnList');
+        const item1 = document.createElement('li');
+        item1.className = 'column-item';
+        item1.getBoundingClientRect = () => ({ top: 10, height: 20 });
+
+        const item2 = document.createElement('li');
+        item2.className = 'column-item';
+        item2.getBoundingClientRect = () => ({ top: 40, height: 20 });
+
+        list.appendChild(item1);
+        list.appendChild(item2);
+
+        const after = window.getDragAfterElement(list, 20); // Between 1 and 2
+        // offset: 20 - 40 - 10 = -30 for item 2.
+        // offset: 20 - 10 - 10 = 0 for item 1.
+        // It returns element with closest negative offset.
+        expect(after).toBe(item2);
+    });
+
+    test('applyFilterRealTime uses debounce', () => {
+        jest.useFakeTimers();
+        window.applyFilterRealTime();
+
+        expect(window.advTable.render).not.toHaveBeenCalled();
+
+        jest.runAllTimers();
+
+        expect(window.advTable.render).toHaveBeenCalled();
+        jest.useRealTimers();
+    });
+
+    test('loadSelectedConfiguration applies config', async () => {
+        const dropdown = document.getElementById('savedConfigsDropdown');
+        const opt = document.createElement('option');
+        opt.value = '1';
+        dropdown.appendChild(opt);
+        dropdown.value = '1';
+
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve([
+                { id: 1, config_name: 'View 1' }
+            ])
+        });
+
+        await window.loadSelectedConfiguration();
+
+        expect(window.advTable.applyConfiguration).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
+    });
+
+    test('loadSelectedConfiguration handles missing config', async () => {
+        const dropdown = document.getElementById('savedConfigsDropdown');
+        dropdown.value = '99';
+
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve([
+                { id: 1, config_name: 'View 1' }
+            ])
+        });
+
+        await window.loadSelectedConfiguration();
+
+        expect(dropdown.value).toBe('');
     });
 });
