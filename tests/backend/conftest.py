@@ -6,15 +6,9 @@ sample data fixtures.
 """
 
 import os
-import sys
 from datetime import datetime, timedelta, timezone
 
 import pytest
-
-# Add the project root to the Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
 
 from src.app import create_app  # noqa: E402
 from src.services.db_utils import (  # noqa: E402
