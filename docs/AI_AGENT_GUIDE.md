@@ -9,6 +9,7 @@
 ## 📚 Quick Links
 
 **Related Documentation:**
+
 - 📋 [core_code_quality_plan.md](core_code_quality_plan.md) - The audit structure (49 tasks, 7 phases)
 - 🗓️ [IMPLEMENTATION_PRIORITY_GUIDE.md](IMPLEMENTATION_PRIORITY_GUIDE.md) - Overall timeline
 - 🗺️ [mockCMMS_roadmap.md](mockCMMS_roadmap.md) - Strategic vision and standards
@@ -16,6 +17,7 @@
 - 🧪 [frontend_testing_plan.md](frontend_testing_plan.md) - Frontend testing (293 Jest + 71 Playwright tests)
 
 **Update After Each Task:**
+
 - ✏️ Mark `[x]` in [core_code_quality_plan.md](core_code_quality_plan.md) for completed tasks
 - 📝 Add completion notes with date and issue count
 - 🔄 Update "ACTIVE WORK" in [mockCMMS_roadmap.md](mockCMMS_roadmap.md) when phases complete
@@ -27,6 +29,7 @@
 This guide provides ready-to-use prompts for AI assistants working on the mockCMMS code quality audit. Each prompt corresponds to a task in `core_code_quality_plan.md`.
 
 **Structure:** 49 tasks across 7 phases
+
 - **Phase 1:** Automated Code Quality Analysis (1 task)
 - **Phase 2:** Python Backend (6 tasks)
 - **Phase 3:** JavaScript Frontend (13 tasks)
@@ -44,16 +47,16 @@ When instructed to "Perform auditing using the 5-step iterative loop", follow th
 1.  **Lint**: Run `ruff check <file>`, `pylint <file>`, `mypy <file>`, `radon cc <file> -a`, `bandit -r <file>`, `jscpd <file>`. Collect and **fix all issues found**.
 2.  **Format**: Run `flake8 <file>` and `black <file>`. **Fix all issues found**.
 3.  **Test**: Run `pytest --cov=src --cov-report=term --cov-report=html:audit_results/coverage_html tests/ > audit_results/coverage_report.txt`.
-    -   **Fix any errors**.
-    -   **Fix any discrepancies**.
-    -   Ensure coverage does not decrease.
-4.  **Generate Audit Report**: Create/Update the audit report (e.g., `docs/AUDIT_REPORT_SRC.md` or `docs/AUDIT_REPORT_APPS.md`). **CRITICAL:** If *any* code modifications were made during steps 1-3 (fixes, formatting, refactoring), you must **LOOP BACK TO STEP 1** and repeat the entire process until the file passes all checks (Linting, Formatting, Testing) without needing further changes. The Audit Report is the *final* artifact of a successful cycle.
+    - **Fix all errors**.
+    - **CRITICAL:** Check coverage % against config. If <80% (or configured threshold), it is a FAILURE.
+    - **STRICT:** You must add tests to meet the threshold. Do not lower the config.
+4.  **Generate Audit Report**: Create/Update the audit report (e.g., `docs/AUDIT_REPORT_SRC.md` or `docs/AUDIT_REPORT_APPS.md`). **CRITICAL:** If _any_ code modifications were made during steps 1-3 (fixes, formatting, refactoring), you must **LOOP BACK TO STEP 1** and repeat the entire process until the file passes all checks (Linting, Formatting, Testing) without needing further changes. The Audit Report is the _final_ artifact of a successful cycle.
 5.  **Final Verification**: Confirm all metrics are met (10/10 score, 0 errors).
-    -   Verify logic, architecture, and "User Rules" compliance.
+    - Verify logic, architecture, and "User Rules" compliance.
 6.  **Commit**:
-    -   If changes were made, repeat the loop.
-    -   If perfect, move to the next task.
-    -   (Note: In this environment, "Commit" means marking the task complete and ensuring documentation reflects the final state).
+    - If changes were made, repeat the loop.
+    - If perfect, move to the next task.
+    - (Note: In this environment, "Commit" means marking the task complete and ensuring documentation reflects the final state).
 
 ---
 
@@ -363,6 +366,7 @@ Show me your findings and proposed changes before implementing.
 ## Phase 2 Final Verification
 
 After all 6 tasks complete:
+
 - [ ] Run full test suite: `pytest tests/backend/` (all backend tests must pass)
 - [ ] Check coverage: `pytest --cov=src tests/` (maintain 82.99%+)
 - [ ] Run pylint: `pylint src/` (maintain 9.15/10+)
@@ -371,7 +375,6 @@ After all 6 tasks complete:
 - [ ] Mark Phase 2 COMPLETE ✅
 
 **Deliverable:** 6 commits, all Python backend files audited and improved
-
 
 ---
 
@@ -742,6 +745,7 @@ Show me your findings and proposed changes before implementing.
 ## Phase 3 Final Verification
 
 After all 13 tasks complete:
+
 - [ ] Load application in browser
 - [ ] Test all Advanced Table features
 - [ ] Check browser console (no errors)
@@ -752,7 +756,6 @@ After all 13 tasks complete:
 - [ ] Mark Phase 3 COMPLETE ✅
 
 **Deliverable:** 13 commits, all JavaScript files audited and improved
-
 
 ---
 
@@ -855,6 +858,7 @@ Show me your findings before implementing.
 ## Phase 4 Final Verification
 
 After all 3 tasks complete:
+
 - [ ] Load all pages in browser
 - [ ] Test responsive design (mobile, tablet, desktop)
 - [ ] Verify color consistency
@@ -942,6 +946,7 @@ Show me your findings before implementing.
 ## Phase 5 Final Verification
 
 After all 16 tasks complete:
+
 - [ ] Load all pages in browser
 - [ ] Test all forms
 - [ ] Verify no inline styles remain
@@ -1149,6 +1154,7 @@ Show me your findings before implementing.
 ## Phase 6 Final Verification
 
 After all 7 tasks complete:
+
 - [ ] Run setup script from scratch
 - [ ] Verify all documentation links
 - [ ] Run pip-audit
@@ -1300,6 +1306,7 @@ Show me your findings before implementing.
 ## Phase 7 Final Verification
 
 After all 4 tasks complete:
+
 - [ ] Run all linters one final time
 - [ ] Run all tests (100% pass)
 - [ ] Verify 82.99%+ coverage maintained
@@ -1345,6 +1352,7 @@ After all 4 tasks complete:
 ```
 
 **AI reads:**
+
 1. **IMPLEMENTATION_PRIORITY_GUIDE.md** → Knows what phase you're in
 2. **AI_AGENT_GUIDE.md** (this file) → Gets exact prompts for each task
 3. **core_code_quality_plan.md** → Understands the audit structure
@@ -1357,12 +1365,15 @@ After all 4 tasks complete:
 ### Built-in Safeguards
 
 #### 1. **Cross-References**
+
 Each document references the others:
+
 - Implementation Guide → points to both other plans
 - Core Quality Plan → references roadmap for standards
 - Roadmap → references core quality plan for audit work
 
 **What to tell AI:**
+
 ```
 Before making changes:
 1. Search all planning documents for related content
@@ -1372,7 +1383,9 @@ Before making changes:
 ```
 
 #### 2. **Progress Tracking**
+
 Each plan has checkboxes `[ ]` and `[x]`:
+
 ```
 AI should:
 - Mark [x] when task complete
@@ -1386,6 +1399,7 @@ AI should:
 ## ✅ Best Practices for AI Delegation
 
 ### 1. **Always Provide Context**
+
 ```
 ❌ Bad: "Fix app.py"
 ✅ Good: "I'm on Phase 2, Task 2.6. Please audit app.py following
@@ -1393,13 +1407,15 @@ AI should:
 ```
 
 ### 2. **Reference Specific Sections**
+
 ```
 ❌ Bad: "Read the roadmap"
-✅ Good: "Read mockCMMS_roadmap.md section 'Implement Git Workflow 
+✅ Good: "Read mockCMMS_roadmap.md section 'Implement Git Workflow
          Standards' under Project Infrastructure & Documentation"
 ```
 
 ### 3. **Request Approval Before Changes**
+
 ```
 Always include:
 "Show me your proposed changes before applying them"
@@ -1408,15 +1424,17 @@ Always include:
 ```
 
 ### 4. **Request Progress Updates**
+
 ```
 Always include:
-"After completing this task, update the progress tracking in 
+"After completing this task, update the progress tracking in
 core_code_quality_plan.md"
 "Mark the checkbox [x] for completed items"
 "Add completion notes with date"
 ```
 
 ### 5. **One Task at a Time**
+
 ```
 ❌ Bad: "Do all of Phase 2"
 ✅ Good: "Do Task 2.1: API Routes"
@@ -1431,6 +1449,7 @@ core_code_quality_plan.md"
 Use this workflow for every task:
 
 ### Step 1: Context Setting
+
 ```
 I'm working on mockCMMS code quality audit.
 Current: Phase [X], Task [X.Y]
@@ -1438,11 +1457,13 @@ Task: [Task name from core_code_quality_plan.md]
 ```
 
 ### Step 2: Get the Prompt
+
 ```
 Please use the prompt from AI_AGENT_GUIDE.md Task [X.Y]
 ```
 
 ### Step 3: AI Executes
+
 ```
 AI will:
 1. Run linters/formatters
@@ -1453,6 +1474,7 @@ AI will:
 ```
 
 ### Step 4: Review & Approve
+
 ```
 You review and either:
 - "Approved, proceed with fixes"
@@ -1461,6 +1483,7 @@ You review and either:
 ```
 
 ### Step 5: Verification
+
 ```
 After AI completes:
 - Check the changes
@@ -1476,6 +1499,7 @@ After AI completes:
 When AI updates planning documents:
 
 ### For core_code_quality_plan.md
+
 ```
 ✅ Mark: [x] for completed tasks
 ✅ Add: Completion dates and issue counts
@@ -1484,6 +1508,7 @@ When AI updates planning documents:
 ```
 
 ### For mockCMMS_roadmap.md
+
 ```
 ✅ Update: "ACTIVE WORK" section status
 ✅ Update: "Last Updated" date at top
@@ -1523,6 +1548,7 @@ Post-Task:
 ## 💡 Advanced AI Delegation Patterns
 
 ### Pattern 1: Iterative Refinement
+
 ```
 Round 1: "Run Step 1-3 of Task 2.1, show me lint/format/test results"
 Round 2: "Now do Step 4 manual audit, list all issues found"
@@ -1536,6 +1562,7 @@ Benefits:
 ```
 
 ### Pattern 2: Batch Similar Tasks
+
 ```
 "Complete all Phase 3 JavaScript table-*.js files (Tasks 3.1-3.11)"
 
@@ -1576,25 +1603,27 @@ Tell me:
 ## 📊 Progress Tracking Example
 
 ### In core_code_quality_plan.md:
+
 ```markdown
 ### Phase 2: Python Backend Analysis
+
 - [x] Task 2.1: API Routes (Completed 2025-12-13, 3 issues fixed)
 - [ ] Task 2.2: Web Routes (In Progress)
 - [ ] Task 2.3: Database Utilities
-...
+      ...
 ```
 
 ---
 
 ## 📊 Current Status (December 19, 2025)
 
-| Document | Status | Progress |
-|----------|--------|----------|
-| **AI_AGENT_GUIDE.md** | ✅ Complete | All 49 prompts ready |
-| **core_code_quality_plan.md** | 🔄 In Progress | Phase 1-2 ✅, Phase 3 Ready |
-| **comprehensive_testing_plan.md** | ✅ Complete | 223 pytest tests ✅ |
-| **frontend_testing_plan.md** | ✅ Complete | 293 Jest + 71 Playwright tests ✅ |
-| **mockCMMS_roadmap.md** | 📚 Reference | Strategic context |
+| Document                          | Status         | Progress                          |
+| --------------------------------- | -------------- | --------------------------------- |
+| **AI_AGENT_GUIDE.md**             | ✅ Complete    | All 49 prompts ready              |
+| **core_code_quality_plan.md**     | 🔄 In Progress | Phase 1-2 ✅, Phase 3 Ready       |
+| **comprehensive_testing_plan.md** | ✅ Complete    | 223 pytest tests ✅               |
+| **frontend_testing_plan.md**      | ✅ Complete    | 293 Jest + 71 Playwright tests ✅ |
+| **mockCMMS_roadmap.md**           | 📚 Reference   | Strategic context                 |
 
 **Current Task:** Phase 3 (JavaScript Frontend Analysis) Ready to Start
 
@@ -1609,24 +1638,27 @@ You know AI understands the project when it:
 ✅ Shows findings before implementing fixes  
 ✅ Updates progress in core_code_quality_plan.md  
 ✅ Writes proper commit messages  
-✅ Suggests next task after completion  
+✅ Suggests next task after completion
 
 ---
 
 ## 🎯 Quick Reference Commands
 
 ### Start a Task
+
 ```
 "Please execute Task [X.Y] from AI_AGENT_GUIDE.md"
 ```
 
 ### Check Status
+
 ```
 "What's the current task status in core_code_quality_plan.md?"
 "What's the next task I should work on?"
 ```
 
 ### Update Progress
+
 ```
 "We just completed Task [X.Y].
 Please update core_code_quality_plan.md and suggest the next task."
@@ -1637,6 +1669,7 @@ Please update core_code_quality_plan.md and suggest the next task."
 ## 🎉 Final Tips
 
 ### Do's ✅
+
 - ✅ Use the prompts from this guide (copy-paste ready)
 - ✅ One task at a time
 - ✅ Review findings before approving fixes
@@ -1644,6 +1677,7 @@ Please update core_code_quality_plan.md and suggest the next task."
 - ✅ Update progress tracking
 
 ### Don'ts ❌
+
 - ❌ Skip the 5-step loop
 - ❌ Let AI make changes without showing findings first
 - ❌ Skip progress tracking updates

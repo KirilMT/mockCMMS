@@ -61,6 +61,27 @@ workspace-specific rules.
   2. `black src/` - Format code structure
   3. `docformatter --in-place -r src/` - Format docstrings (PEP 257)
 
+#### 1.1.1. The 5-Step Iterative Loop (Mandatory)
+
+Every code change must follow this strict process for EACH file or module:
+
+1.  **Lint**: Run available linters (`ruff`, `pylint`, `mypy`, `jscpd`) and fix
+    ALL issues.
+2.  **Format**: Run formatters and fix ALL issues.
+    - **Python (STRICT ORDER):** `isort` → `black` → `docformatter`
+      1. `isort src/` - Sort imports (PEP 8)
+      2. `black src/` - Format code structure
+      3. `docformatter --in-place -r src/` - Format docstrings (PEP 257)
+    - **JavaScript/CSS:** `prettier`
+3.  **Test**: Run `pytest` (Backend) or browser tests (Frontend). Fix ALL errors.
+    - **CRITICAL:** Check coverage % against `pyproject.toml` or `package.json`.
+    - **Strict Coverage:** 80% is the FLOOR, not a suggestion. If coverage is BELOW threshold (e.g., 79.9% vs 80%), it is a FAILURE.
+    - **Action:** Improve current tests (more robust tests) or add more tests. Avoid duplicates or redundancies. Do not lower the config.
+4.  **Audit**: Review logic against project standards (Architecture, patterns).
+    Updates audit report if applicable.
+5.  **Commit**: Only commit if Steps 1-4 are perfect. Use Conventional Commits.
+    - _If changes are made during Audit, LOOP BACK to Step 1._
+
 ### 1.2. Reliability, Security & Performance
 
 - **Error Handling:** Include robust error handling appropriate for the language
@@ -101,7 +122,7 @@ workspace-specific rules.
   1. You intentionally modified CSS/HTML/UI components
   2. The visual change is documented and approved
   3. The change is part of a UI enhancement task
-  
+
 **FORBIDDEN Actions:**
 
 - ❌ **NEVER** run `playwright test --update-snapshots` to "fix" failing visual tests
@@ -198,6 +219,8 @@ automatically for every change.
 - Target: **80-85%** overall coverage
 - Critical paths: **90%+** coverage (auth, API, database)
 - Coverage should INCREASE over time, never decrease
+- **STRICT RULE:** 80% is the FLOOR. If you add code but coverage drops (even to 79.9%), you have FAILED. Improve tests or add new ones. Avoid duplicates.
+- **Verification:** Always verify the _actual_ coverage number against the _configured_ threshold.
 
 **Summary**: Configuration defines quality standards. Lower the bar = Lower the quality. Fix the code, not the config.
 
@@ -465,6 +488,7 @@ hours of work.
 **Validation Workflow for AI:**
 
 1. ✅ **BEFORE making code changes** - Run validation to establish baseline:
+
    ```bash
    python scripts/validate_code.py --quick
    ```
@@ -477,6 +501,7 @@ hours of work.
    ```
 
 **This is MANDATORY for EVERY code change task:**
+
 - ✅ ALWAYS run validation before completing a task
 - ❌ NEVER skip validation (unless user explicitly says "skip validation")
 - ❌ NEVER commit without passing validation
@@ -499,6 +524,7 @@ python scripts/validate_code.py --quick      # Skip slow E2E tests
 The `validate_code.py` script runs ALL checks that CI will run:
 
 **Python Backend:**
+
 - Import sorting (isort)
 - Code formatting (black, docformatter)
 - Linting (ruff, flake8)
@@ -508,12 +534,14 @@ The `validate_code.py` script runs ALL checks that CI will run:
 - Coverage validation (must be >= 82%)
 
 **JavaScript Frontend:**
+
 - ESLint linting
 - Jest unit tests with coverage
 - Playwright E2E tests
 - Visual regression tests (screenshots)
 
 **Configuration Files:**
+
 - JSON validation
 - YAML validation
 
@@ -1056,32 +1084,36 @@ completion summaries.
 
     **Automated Approach (Recommended):**
     Use the release manager script to automate version updates:
+
     ```sh
     # Preview changes without applying (dry-run)
     python scripts/release_manager.py patch --dry-run
     python scripts/release_manager.py minor --dry-run
     python scripts/release_manager.py major --dry-run
-    
+
     # Apply version bump
     python scripts/release_manager.py patch   # For bug fixes
     python scripts/release_manager.py minor   # For new features
     python scripts/release_manager.py major   # For breaking changes
     ```
-    
+
     **The script automatically:**
+
     - Updates CHANGELOG.md with new version and date
     - Updates README.md version footer
     - Creates git commit with conventional message
     - Creates annotated git tag (e.g., v1.2.0)
     - Ensures version numbers match everywhere
-    
+
     **After running the script:**
+
     ```sh
     # Push commit and tag to remote
     git push origin main v1.2.0
     ```
-    
+
     **Manual Approach (If Script Cannot Be Used):**
+
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following
        [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding
@@ -1097,6 +1129,7 @@ completion summaries.
 
     > **Note**: GitHub Copilot does not have access to automated browser testing
     > tools. All testing must be performed manually by the user.
+
     - **Requirement**: For any task involving features that have a corresponding
       test plan in the `docs/` directory (e.g.,
       `docs/table_features_test_plan.md` or any future `docs/*_test_plan.md`),

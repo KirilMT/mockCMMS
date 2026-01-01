@@ -160,16 +160,17 @@ describe('AdvancedTable', () => {
     });
 
     test('TC-1.9: init calls restore, render, and loadConfig', () => {
-        AdvancedTable.prototype.restoreTableState = jest.fn();
-        AdvancedTable.prototype.render = jest.fn();
-        AdvancedTable.prototype.loadConfiguration = jest.fn();
-
+        const restoreSpy = jest.spyOn(AdvancedTable.prototype, 'restoreTableState');
+        // render and loadConfiguration are already mocked in beforeEach
+        
         const table = new AdvancedTable('table-container');
         // init is called in constructor
 
-        expect(table.restoreTableState).toHaveBeenCalled();
+        expect(restoreSpy).toHaveBeenCalled();
         expect(table.render).toHaveBeenCalled();
         expect(table.loadConfiguration).toHaveBeenCalled();
+        
+        restoreSpy.mockRestore();
     });
 
     test('TC-1.10: restoreTableState handles null storage', () => {
@@ -192,7 +193,7 @@ describe('AdvancedTable', () => {
 
         const table = new AdvancedTable('table-container');
         table.restoreTableState();
-        expect(true).toBe(true); // Verify no crash
+        expect(table.filters).toEqual(savedState.filters);
     });
 
     test('TC-1.12: restoreTableState handles hiddenColumns', () => {
@@ -204,7 +205,8 @@ describe('AdvancedTable', () => {
 
         const table = new AdvancedTable('table-container');
         table.restoreTableState();
-        expect(true).toBe(true);
+        expect(table.hiddenColumns.size).toBe(2);
+        expect(table.hiddenColumns.has('col1')).toBe(true);
     });
 
     test('TC-1.13: restoreTableState handles columnOrder', () => {
@@ -216,7 +218,7 @@ describe('AdvancedTable', () => {
 
         const table = new AdvancedTable('table-container');
         table.restoreTableState();
-        expect(true).toBe(true);
+        expect(table.columnOrder).toEqual(savedState.columnOrder);
     });
 
     test('TC-1.14: restoreTableState handles selectedConfigId', () => {
@@ -228,7 +230,7 @@ describe('AdvancedTable', () => {
 
         const table = new AdvancedTable('table-container');
         table.restoreTableState();
-        expect(true).toBe(true);
+        expect(table.selectedConfigId).toBe(42);
     });
 
     test('TC-1.15: restoreSearchUI updates DOM elements', () => {
@@ -243,7 +245,14 @@ describe('AdvancedTable', () => {
         table.globalSearchTerm = 'test search';
         table.globalSearchDisplay = 'Test Search Display';
         table.restoreSearchUI();
-        expect(true).toBe(true);
+        
+        const input = document.getElementById('globalSearchInput');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        const applyBtn = document.getElementById('applySearchBtn');
+        
+        expect(input.value).toBe('Test Search Display');
+        expect(clearBtn.style.display).toBe('inline-block');
+        expect(applyBtn.disabled).toBe(false);
     });
 
     test('TC-1.16: restoreSearchUI does nothing without search term', () => {
@@ -257,7 +266,32 @@ describe('AdvancedTable', () => {
         const table = new AdvancedTable('table-container');
         table.globalSearchTerm = '';
         table.restoreSearchUI();
-        expect(true).toBe(true);
+        
+        const input = document.getElementById('globalSearchInput');
+        expect(input.value).toBe('');
+    });
+    
+    test('TC-1.17: constructor handles missing TableSidebar', () => {
+         // Temporarily hide TableSidebar from global
+         const originalSidebar = global.TableSidebar;
+         delete global.TableSidebar;
+         
+         const table = new AdvancedTable('table-container');
+         expect(table.sidebar).toBeUndefined();
+         
+         // Restore
+         global.TableSidebar = originalSidebar;
+    });
+
+    test('TC-1.18: constructor handles missing options properties', () => {
+       const table = new AdvancedTable('table-container', { 
+           data: null, 
+           columns: null,
+           pageSize: null
+       });
+       expect(table.data).toEqual([]);
+       expect(table.columns).toEqual([]);
+       expect(table.pageSize).toBe(25);
     });
 });
 
