@@ -65,9 +65,27 @@ Before complex tasks, you MUST:
 *   **Conventional Commits:** `type(scope): description`
 *   **Feature Branches:** Never commit to `master`. Use `type/feature-name`.
 
+### Commits & Branching
+*   **Conventional Commits:** `type(scope): description`
+*   **Feature Branches:** Never commit to `master`. Use `type/feature-name`.
+
 ---
 
-## 4. Coding Standards
+## 4. Execution Protocol (CRITICAL)
+
+### Task Completion Integrity
+*   **Complete THE FULL SCOPE:** If a prompt asks for Tasks A, B, and C, do **NOT** stop after A.
+*   **No Partial Submission:** Do not ask for user feedback halfway through a clear list of tasks unless fully blocked.
+*   **Verify Progress:** Check your plan continuously to ensure no steps are skipped.
+
+### Mandatory Validation
+*   **Run Validation Script:** You **MUST** run `python scripts/validate_code.py` before finishing any significant task.
+*   **No Broken Windows:** Do not leave the codebase in a broken state (failing tests) at the end of a turn.
+*   **Self-Correction:** If validation fails, fix it **yourself**. Do not ask the user for permission to fix your own mistakes.
+
+---
+
+## 5. Coding Standards
 
 *   **SOLID, DRY, KISS:** No over-engineering.
 *   **Separation of Concerns:** JS in `.js`, CSS in `.css`, HTML in `.html`.
