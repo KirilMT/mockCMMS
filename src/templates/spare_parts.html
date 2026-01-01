@@ -4,38 +4,21 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Spare Parts</h1>
-    <a href="{{ url_for('main.add_spare_part') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add New Spare Part
-    </a>
+  <h1>Spare Parts</h1>
+  <a href="{{ url_for('main.add_spare_part') }}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Add New Spare Part
+  </a>
 </div>
 
 <div id="sparePartsTable" class="page-full-height"></div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const columns = [
-            {
-                key: 'id',
-                label: 'ID',
-                type: 'number',
-                render: function (val, row) {
-                    return `<a href="/spare_parts/${row.id}">${val}</a>`;
-                }
-            },
-            { key: 'description', label: 'Description', type: 'text' },
-            { key: 'manufacturer', label: 'Manufacturer', type: 'text' },
-            { key: 'manufacturer_part_id', label: 'Part ID', type: 'text' },
-            { key: 'stock_quantity', label: 'Stock Qty', type: 'number' },
-            { key: 'location', label: 'Location', type: 'text' },
-            { key: 'min_quantity', label: 'Min Qty', type: 'number' }
-        ];
-
-        const sparePartsData = {{ spare_parts | tojson
-    }};
-
-    // Use initAdvancedTable instead of direct instantiation
-    initAdvancedTable('sparePartsTable', sparePartsData, columns, 25);
-        });
+{# Pass data to JS via hidden script tag #}
+<script type="application/json" id="spare-parts-data">
+  {{ spare_parts | tojson }}
 </script>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/pages/spare_parts.js') }}"></script>
 {% endblock %}

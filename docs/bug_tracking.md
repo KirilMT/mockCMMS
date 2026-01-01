@@ -263,6 +263,38 @@ The complete table views save/load functionality is not working properly. Users 
 
 ## 📊 MEDIUM PRIORITY BUGS
 
+### Bug #37: Assignees Dropdown Double Initialization (Ghost UI)
+**Priority:** Medium
+**Status:** Open
+**Identified:** January 1, 2026
+
+**Description:**
+The "Assignees" dropdown on the Maintenance Order Add/Edit page is being initialized twice (likely once globally and once locally). This creates a "ghost" single-select dropdown UI overlaying the correct multi-select component.
+
+**Current Behavior:**
+- User sees a dropdown with a down arrow (single select style).
+- Clicking it opens the list, but searching for non-technician users (like "admin") correctly shows "No results".
+- The UI is confusing because of the visual glitch caused by double initialization.
+
+**Expected Behavior:**
+- Only one Select2 container should be visible.
+- It should clearly look like a multi-select field (like the one for Roles on the User page).
+
+**Possible Solution:**
+- Destroy existing Select2 instance before initializing in `maintenance_order_detail.html`:
+  ```javascript
+  if ($('#assignees').hasClass('select2-hidden-accessible')) {
+      $('#assignees').select2('destroy');
+  }
+  ```
+- Or locate and remove the global initialization causing the conflict.
+
+**Affected Files:**
+- `src/templates/maintenance_order_detail.html`
+- `src/static/js/` (potential global source)
+
+---
+
 ### Bug #7: Missing Required Field Indicators
 **Priority:** Medium  
 **Status:** Partially Resolved - Prior to December 2, 2025
@@ -518,9 +550,9 @@ Long descriptions or text content in table cells don't wrap or truncate properly
 |---------- |------  |---------|-------------|---------|----------|
 | Critical  | 0      | 0       | 0           | 2       | 2        |
 | High      | 2      | 0       | 0           | 9       | 11       |
-| Medium    | 0      | 2       | 0           | 11      | 12       |
-| Low       | 0      | 0       | 0           | 3       | 3        |
-| **Total** | **2**  | **2**   | **0**       | **14**  | **16**   |
+| Medium    | 1      | 2       | 0           | 11      | 13       |
+| Low       | 1      | 0       | 0           | 3       | 4        |
+| **Total** | **4**  | **2**   | **0**       | **25**  | **30**   |
 
 > [!WARNING]
 > **Critical Bug:** #35 (Delete Functionality Regression) requires immediate attention.
