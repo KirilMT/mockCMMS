@@ -9,7 +9,7 @@ const {
     renderSparePartId,
     getSparePartsColumns,
     initSparePartsTable,
-} = require("../../../../src/static/js/pages/spare_parts");
+} = require("../../../../src/static/js/pages/spare-parts");
 
 describe("Spare Parts Page - Render Functions", () => {
     beforeEach(() => {

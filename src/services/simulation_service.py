@@ -1,9 +1,9 @@
-"""
-Simulation Service Module.
+"""Simulation Service Module.
 
-This module provides the DataSimulationService class for generating
-randomized mock data for testing and demonstration purposes.
+This module provides the DataSimulationService class for generating randomized mock data
+for testing and demonstration purposes.
 """
+
 import json
 import os
 import random

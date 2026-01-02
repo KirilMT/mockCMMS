@@ -10,7 +10,7 @@ describe('Spare Part Detail Page', () => {
     });
 
     const loadScript = () => {
-        require('../../../../src/static/js/pages/spare_part_detail');
+        require('../../../../src/static/js/pages/spare-part-detail');
         document.dispatchEvent(new Event('DOMContentLoaded'));
     };
 

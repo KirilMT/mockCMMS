@@ -32,6 +32,8 @@ def create_app(config_overrides=None):
         SECRET_KEY=os.getenv("SECRET_KEY", "dev_key_fallback_for_testing"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TESTING=os.environ.get("TESTING", "0") == "1",
+        AUTO_SEED_DATABASE=os.getenv("AUTO_SEED_DATABASE", "True").lower()
+        in ("true", "1", "t"),
     )
 
     if not app.testing:

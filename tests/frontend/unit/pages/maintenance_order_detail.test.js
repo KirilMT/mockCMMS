@@ -104,7 +104,7 @@ describe("Maintenance Order Detail Page", () => {
   });
 
   const loadScript = () => {
-    require("../../../../src/static/js/pages/maintenance_order_detail");
+    require("../../../../src/static/js/pages/maintenance-order-detail");
     document.dispatchEvent(new Event("DOMContentLoaded"));
   };
 

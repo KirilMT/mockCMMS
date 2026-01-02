@@ -10,7 +10,7 @@ describe('User Detail Page', () => {
     });
 
     const loadScript = () => {
-        require('../../../../src/static/js/pages/user_detail');
+        require('../../../../src/static/js/pages/user-detail');
         document.dispatchEvent(new Event('DOMContentLoaded'));
     };
 

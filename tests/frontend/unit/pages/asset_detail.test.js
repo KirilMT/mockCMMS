@@ -10,7 +10,7 @@ describe('Asset Detail Page', () => {
     });
 
     const loadScript = () => {
-        require('../../../../src/static/js/pages/asset_detail');
+        require('../../../../src/static/js/pages/asset-detail');
         document.dispatchEvent(new Event('DOMContentLoaded'));
     };
 

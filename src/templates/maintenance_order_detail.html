@@ -1,25 +1,15 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_header %}
 
 {% block title %}{% if mo %}Edit Maintenance Order: {{ mo.description }}{% else %}Add New Maintenance Order{% endif %}{%
 endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h1>{% if mo %}Edit Maintenance Order: {{ mo.description }}{% else %}Add New Maintenance Order{% endif %}</h1>
-    </div>
-    <div class="col-md-4 text-right">
-        {% if return_to == 'asset' and asset_id %}
-        <a href="{{ url_for('main.asset_detail', asset_id=asset_id) }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Asset Details
-        </a>
-        {% else %}
-        <a href="{{ url_for('main.maintenance_orders') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Maintenance Orders
-        </a>
-        {% endif %}
-    </div>
-</div>
+{% set header_title = 'Edit Maintenance Order: ' + mo.description if mo else 'Add New Maintenance Order' %}
+{% set back_url = url_for('main.asset_detail', asset_id=asset_id) if return_to == 'asset' and asset_id else url_for('main.maintenance_orders') %}
+{% set back_text = 'Back to Asset Details' if return_to == 'asset' and asset_id else 'Back to Maintenance Orders' %}
+
+{{ page_header(header_title, back_url, back_text) }}
 
 <div class="form-container">
     <form method="POST"

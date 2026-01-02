@@ -10,7 +10,7 @@ const {
     getMaintenanceOrdersColumns,
     cleanupTableState,
     initMaintenanceOrdersTable,
-} = require("../../../../src/static/js/pages/maintenance_orders");
+} = require("../../../../src/static/js/pages/maintenance-orders");
 
 describe("Maintenance Orders Page", () => {
     beforeEach(() => {

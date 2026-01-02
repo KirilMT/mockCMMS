@@ -70,6 +70,7 @@ maintenance_order_assignees = Table(
 
 class SatellitePoint(db.Model):  # type: ignore
     """Satellite Point model for technicians."""
+
     # pylint: disable=too-few-public-methods
 
     __tablename__ = "satellite_points"
@@ -136,6 +137,7 @@ class User(db.Model):  # type: ignore
 
 class Role(db.Model):  # type: ignore
     """Role model for user permissions."""
+
     # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
@@ -150,6 +152,7 @@ class Role(db.Model):  # type: ignore
 
 class Team(db.Model):  # type: ignore
     """Team model for shift-based scheduling."""
+
     # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
@@ -162,6 +165,7 @@ class Team(db.Model):  # type: ignore
 
 class Skill(db.Model):  # type: ignore
     """Skill model for technician capabilities."""
+
     # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
@@ -175,6 +179,7 @@ class Skill(db.Model):  # type: ignore
 
 class UserSkill(db.Model):  # type: ignore
     """Association model for the User-Skill many-to-many relationship."""
+
     # pylint: disable=too-few-public-methods
 
     user_id = Column(Integer, ForeignKey("user.id"), primary_key=True)
@@ -196,6 +201,7 @@ class UserSkill(db.Model):  # type: ignore
 
 class Asset(db.Model):  # type: ignore
     """Asset model for equipment and machinery."""
+
     # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
@@ -227,6 +233,7 @@ class Asset(db.Model):  # type: ignore
 
 class MaintenanceOrder(db.Model):  # type: ignore
     """Maintenance order model for work orders."""
+
     # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
@@ -282,6 +289,7 @@ class MaintenanceOrder(db.Model):  # type: ignore
 
 class SparePart(db.Model):  # type: ignore
     """Spare part model for inventory management."""
+
     # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
@@ -314,6 +322,8 @@ class SparePart(db.Model):  # type: ignore
 class TableConfiguration(db.Model):  # type: ignore
     """Table configuration model for user preferences."""
 
+    # pylint: disable=too-few-public-methods
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     page_name = Column(String(50), nullable=False)
@@ -326,9 +336,6 @@ class TableConfiguration(db.Model):  # type: ignore
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", backref="table_configurations")
-
-    def __repr__(self):
-        return f"<TableConfiguration {self.config_name}>"
 
     def to_dict(self):
         """Serialize TableConfiguration to dictionary."""

@@ -150,26 +150,36 @@ AdvancedTable.prototype.applyConfiguration = function (config) {
 };
 
 /**
+ * Helper to make API requests with CSRF token.
+ * @param {string} url - The API endpoint.
+ * @param {string} method - The HTTP method (DELETE, POST, etc.).
+ * @returns {Promise<any>} - The JSON response.
+ */
+AdvancedTable.prototype.apiCall = function(url, method) {
+  const csrfToken = document
+    .querySelector('meta[name=csrf-token]')
+    ?.getAttribute('content');
+
+  return fetch(url, {
+    method: method,
+    headers: {
+      'X-CSRFToken': csrfToken,
+    },
+  }).then((response) => {
+    if (!response.ok)
+      throw new Error(`HTTP error! status: ${response.status}`);
+    return response.json();
+  });
+};
+
+/**
  * Deletes a saved configuration by ID.
  * @param {number|string} configId - The ID of the configuration to delete.
  */
 AdvancedTable.prototype.deleteConfiguration = function (configId) {
   if (!confirm('Are you sure you want to delete this view?')) return;
 
-  const csrfToken = document
-    .querySelector('meta[name=csrf-token]')
-    ?.getAttribute('content');
-  fetch(`/api/table-config/${this.pageName}/${configId}`, {
-    method: 'DELETE',
-    headers: {
-      'X-CSRFToken': csrfToken,
-    },
-  })
-    .then((response) => {
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-      return response.json();
-    })
+  this.apiCall(`/api/table-config/${this.pageName}/${configId}`, 'DELETE')
     .then((data) => {
       if (data.success) {
         if (this.selectedConfigId === configId) {
@@ -192,20 +202,7 @@ AdvancedTable.prototype.deleteConfiguration = function (configId) {
  * @param {number|string} configId - The ID of the configuration to set as default.
  */
 AdvancedTable.prototype.setDefaultView = function (configId) {
-  const csrfToken = document
-    .querySelector('meta[name=csrf-token]')
-    ?.getAttribute('content');
-  fetch(`/api/table-config/${this.pageName}/${configId}/default`, {
-    method: 'POST',
-    headers: {
-      'X-CSRFToken': csrfToken,
-    },
-  })
-    .then((response) => {
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-      return response.json();
-    })
+  this.apiCall(`/api/table-config/${this.pageName}/${configId}/default`, 'POST')
     .then((data) => {
       if (data.success) {
         this.loadConfiguration();

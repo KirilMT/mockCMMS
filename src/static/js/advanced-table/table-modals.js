@@ -236,16 +236,20 @@ const applyFilters = function() {
     }
 };
 
+const fetchTableConfigs = function(pageName) {
+    return fetch(`/api/table-config/${pageName}`)
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        });
+};
+
 const loadSavedConfigurations = function() {
     if (!window.advTable || !window.advTable.pageName) {
         return Promise.resolve();
     }
 
-    return fetch(`/api/table-config/${window.advTable.pageName}`)
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.json();
-        })
+    return fetchTableConfigs(window.advTable.pageName)
         .then(configs => {
             const dropdown = document.getElementById('savedConfigsDropdown');
             if (dropdown && Array.isArray(configs)) {
@@ -324,11 +328,7 @@ const loadSelectedConfiguration = function() {
         return Promise.resolve();
     }
 
-    return fetch(`/api/table-config/${window.advTable.pageName}`)
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.json();
-        })
+    return fetchTableConfigs(window.advTable.pageName)
         .then(configs => {
             const config = configs.find(c => c.id == configId);
             if (config) {
@@ -339,7 +339,6 @@ const loadSelectedConfiguration = function() {
         })
         .catch(error => {
             if(window.ToastNotification) window.ToastNotification.error('Error loading saved view: ' + error.message);
-            dropdown.value = '';
         });
 };
 
