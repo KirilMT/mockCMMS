@@ -108,6 +108,19 @@ const removeFilterRow = function(button) {
     filterRow.remove();
 };
 
+const getFilterDataFromRow = function(row) {
+    const columnSelect = row.querySelector('.column-select');
+    const operatorSelect = row.querySelector('.operator-select');
+    const valueInput = row.querySelector('.filter-value');
+    
+    return {
+        column: columnSelect.value,
+        operator: operatorSelect.value,
+        value: valueInput.value.trim(),
+        valueInput: valueInput 
+    };
+};
+
 const applyFilterRealTime = function() {
     // Apply filters in real-time as user types
     setTimeout(() => {
@@ -115,13 +128,7 @@ const applyFilterRealTime = function() {
         const newFilters = {};
 
         filterRows.forEach(row => {
-            const columnSelect = row.querySelector('.column-select');
-            const operatorSelect = row.querySelector('.operator-select');
-            const valueInput = row.querySelector('.filter-value');
-
-            const column = columnSelect.value;
-            const operator = operatorSelect.value;
-            const value = valueInput.value.trim();
+            const { column, operator, value } = getFilterDataFromRow(row);
 
             if (column && operator && value) {
                 newFilters[column] = { operator, value };
@@ -203,13 +210,7 @@ const applyFilters = function() {
     let hasIncompleteFilter = false;
 
     filterRows.forEach(row => {
-        const columnSelect = row.querySelector('.column-select');
-        const operatorSelect = row.querySelector('.operator-select');
-        const valueInput = row.querySelector('.filter-value');
-
-        const column = columnSelect.value;
-        const operator = operatorSelect.value;
-        const value = valueInput.value.trim();
+        const { column, operator, value, valueInput } = getFilterDataFromRow(row);
 
         if (column && operator && value) {
             newFilters[column] = { operator, value };
@@ -352,6 +353,7 @@ if (typeof window !== 'undefined') {
     window.addFilterRow = addFilterRow;
     window.toggleFilterValue = toggleFilterValue;
     window.removeFilterRow = removeFilterRow;
+    window.getFilterDataFromRow = getFilterDataFromRow;
     window.applyFilterRealTime = applyFilterRealTime;
     window.clearAllFilters = clearAllFilters;
     window.applyFilters = applyFilters;
@@ -389,6 +391,7 @@ if (typeof module !== 'undefined' && module.exports) {
         addFilterRow,
         toggleFilterValue,
         removeFilterRow,
+        getFilterDataFromRow,
         applyFilterRealTime,
         clearAllFilters,
         applyFilters,

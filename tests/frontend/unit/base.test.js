@@ -222,6 +222,30 @@ describe("Base JS", () => {
             // Should not throw
             expect(() => initBase()).not.toThrow();
         });
+
+        test("attaches global click handler to delete confirmation buttons", () => {
+            // Setup DOM with a delete button inside a form
+            document.body.innerHTML = `
+                <div id="deleteConfirmModalMessage"></div>
+                <div id="deleteConfirmModal"></div>
+                <form id="testForm">
+                    <button type="button" class="delete-confirm-btn" data-confirm-message="Global Delete?">Delete</button>
+                </form>
+            `;
+            
+            // Re-mock showDeleteConfirm to verify it gets called
+            // Note: Since showDeleteConfirm is exported and used inside the same module, 
+            // verifying it via spy might be tricky if it's direct reference. 
+            // However, we can verify the side effect (modal showing).
+            
+            initBase();
+            
+            const btn = document.querySelector('.delete-confirm-btn');
+            btn.click();
+            
+            expect(document.getElementById("deleteConfirmModalMessage").textContent).toBe("Global Delete?");
+            expect(global.$).toHaveBeenCalledWith("#deleteConfirmModal");
+        });
     });
 
     describe("Fallback mechanisms (No jQuery/Bootstrap)", () => {
