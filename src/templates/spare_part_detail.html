@@ -1,15 +1,14 @@
-{% extends "base.html" %} {% block title %}{% if part %}Edit Spare Part{% else
-%}Add New Spare Part{% endif %}{% endblock %} {% block content %}
-<div class="row mb-4">
-  <div class="col-md-8">
-    <h1>{% if part %}Edit Spare Part{% else %}Add New Spare Part{% endif %}</h1>
-  </div>
-  <div class="col-md-4 text-right">
-    <a href="{{ url_for('main.spare_parts') }}" class="btn btn-secondary">
-      <i class="bi bi-arrow-left"></i> Back to Spare Parts
-    </a>
-  </div>
-</div>
+{% extends "base.html" %}
+{% from "macros.html" import page_header %}
+
+{% block title %}{% if part %}Edit Spare Part{% else %}Add New Spare Part{% endif %}{% endblock %}
+
+{% block content %}
+{% set header_title = 'Edit Spare Part' if part else 'Add New Spare Part' %}
+{% set back_url = url_for('main.spare_parts') %}
+{% set back_text = 'Back to Spare Parts' %}
+
+{{ page_header(header_title, back_url, back_text) }}
 
 <div class="form-container">
   <form
@@ -120,6 +119,4 @@
     </div>
   </div>
 </div>
-{% endblock %} {% block extra_js %}
-<script src="{{ url_for('static', filename='js/pages/spare_part_detail.js') }}"></script>
-{% endblock %}
+{% endblock %} 

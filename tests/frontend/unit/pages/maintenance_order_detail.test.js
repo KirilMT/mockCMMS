@@ -104,7 +104,7 @@ describe("Maintenance Order Detail Page", () => {
   });
 
   const loadScript = () => {
-    require("../../../../src/static/js/pages/maintenance_order_detail");
+    require("../../../../src/static/js/pages/maintenance-order-detail");
     document.dispatchEvent(new Event("DOMContentLoaded"));
   };
 
@@ -174,26 +174,7 @@ describe("Maintenance Order Detail Page", () => {
     });
   });
 
-  describe("Delete Confirmation", () => {
-    test("attaches click handler to delete buttons", () => {
-      document.body.innerHTML = `
-                <form>
-                    <button type="button" class="delete-confirm-btn" data-confirm-message="Are you sure?">Delete</button>
-                </form>
-            `;
-      loadScript();
 
-      const btn = document.querySelector(".delete-confirm-btn");
-      btn.click();
-
-      expect(global.showDeleteConfirm).toHaveBeenCalled();
-      const form = document.querySelector("form");
-      expect(global.showDeleteConfirm).toHaveBeenCalledWith(
-        form,
-        "Are you sure?"
-      );
-    });
-  });
 
     describe('Select2 Complex Logic', () => {
          beforeEach(() => {

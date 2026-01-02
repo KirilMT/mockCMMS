@@ -9,20 +9,29 @@ const {
     initBase,
 } = require("../../../src/static/js/base");
 
-// Mock jQuery
-global.$ = jest.fn((selector) => ({
-    modal: jest.fn(),
-    on: jest.fn(),
-    select2: jest.fn(),
-}));
-global.$.fn = { select2: jest.fn() };
-
 describe("Base JS", () => {
     beforeEach(() => {
         // Reset mocks
         jest.clearAllMocks();
+
+        // Mock jQuery
+        const mockJQuery = jest.fn((selector) => ({
+            modal: jest.fn(),
+            on: jest.fn(),
+            select2: jest.fn(),
+            focus: jest.fn(),
+        }));
+        mockJQuery.fn = { select2: jest.fn(), modal: jest.fn() };
+
+        global.$ = mockJQuery;
+        global.jQuery = mockJQuery;
+        if (typeof window !== 'undefined') {
+            window.$ = mockJQuery;
+            window.jQuery = mockJQuery;
+        }
+
         document.body.innerHTML = `
-      <div id="deleteConfirmMessage"></div>
+      <div id="deleteConfirmModalMessage"></div>
       <div id="deleteConfirmModal"></div>
       <div id="inputModalLabel"></div>
       <div id="inputModalValue"></div>
@@ -42,14 +51,14 @@ describe("Base JS", () => {
         test("sets message and shows modal", () => {
             const result = showDeleteConfirm(null, "Delete this?", null);
 
-            expect(document.getElementById("deleteConfirmMessage").textContent).toBe("Delete this?");
+            expect(document.getElementById("deleteConfirmModalMessage").textContent).toBe("Delete this?");
             expect(global.$).toHaveBeenCalledWith("#deleteConfirmModal");
             expect(result).toBe(false);
         });
 
         test("uses default message if not provided", () => {
             showDeleteConfirm(null, null, null);
-            expect(document.getElementById("deleteConfirmMessage").textContent).toContain("Are you sure");
+            expect(document.getElementById("deleteConfirmModalMessage").textContent).toContain("Are you sure");
         });
 
         test("handles form submission", () => {
@@ -93,7 +102,13 @@ describe("Base JS", () => {
                 focus: jest.fn(),
                 select2: jest.fn(),
             }));
-            global.$.fn = { select2: jest.fn() };
+            global.$.fn = { select2: jest.fn(), modal: jest.fn() };
+
+            // Also update window.$ since we are overriding it
+            if (typeof window !== 'undefined') {
+                window.$ = global.$;
+                window.jQuery = global.$;
+            }
 
             showInputModal("Focus test", jest.fn());
 
@@ -206,6 +221,132 @@ describe("Base JS", () => {
             document.body.innerHTML = "";
             // Should not throw
             expect(() => initBase()).not.toThrow();
+        });
+
+        test("attaches global click handler to delete confirmation buttons", () => {
+            // Setup DOM with a delete button inside a form
+            document.body.innerHTML = `
+                <div id="deleteConfirmModalMessage"></div>
+                <div id="deleteConfirmModal"></div>
+                <form id="testForm">
+                    <button type="button" class="delete-confirm-btn" data-confirm-message="Global Delete?">Delete</button>
+                </form>
+            `;
+            
+            // Re-mock showDeleteConfirm to verify it gets called
+            // Note: Since showDeleteConfirm is exported and used inside the same module, 
+            // verifying it via spy might be tricky if it's direct reference. 
+            // However, we can verify the side effect (modal showing).
+            
+            initBase();
+            
+            const btn = document.querySelector('.delete-confirm-btn');
+            btn.click();
+            
+            expect(document.getElementById("deleteConfirmModalMessage").textContent).toBe("Global Delete?");
+            expect(global.$).toHaveBeenCalledWith("#deleteConfirmModal");
+        });
+    });
+
+    describe("Fallback mechanisms (No jQuery/Bootstrap)", () => {
+        let originalJQuery;
+        let originalWindowConfirm;
+        let originalWindowPrompt;
+        let consoleWarnSpy;
+
+        beforeEach(() => {
+            // Save original values
+            originalJQuery = global.$;
+            originalWindowConfirm = window.confirm;
+            originalWindowPrompt = window.prompt;
+
+            // Remove jQuery/Bootstrap
+            global.$ = undefined;
+            global.jQuery = undefined;
+            if (typeof window !== 'undefined') {
+                window.$ = undefined;
+                window.jQuery = undefined;
+            }
+
+            // Mock window functions
+            window.confirm = jest.fn(() => true);
+            window.prompt = jest.fn(() => "test value");
+
+            // Mock console.warn to avoid cluttering output
+            consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            // Restore original values
+            global.$ = originalJQuery;
+            global.jQuery = originalJQuery;
+            if (typeof window !== 'undefined') {
+                window.$ = originalJQuery;
+                window.jQuery = originalJQuery;
+            }
+            window.confirm = originalWindowConfirm;
+            window.prompt = originalWindowPrompt;
+            consoleWarnSpy.mockRestore();
+        });
+
+        test("showDeleteConfirm uses native confirm and executes callback", () => {
+            const callback = jest.fn();
+            showDeleteConfirm(null, "Delete?", callback);
+
+            expect(console.warn).toHaveBeenCalled();
+            expect(window.confirm).toHaveBeenCalledWith("Delete?");
+            expect(callback).toHaveBeenCalled();
+        });
+
+        test("showDeleteConfirm uses native confirm and submits form", () => {
+            const mockForm = { submit: jest.fn() };
+            showDeleteConfirm(mockForm, "Delete?", null);
+
+            expect(window.confirm).toHaveBeenCalledWith("Delete?");
+            expect(mockForm.submit).toHaveBeenCalled();
+        });
+
+        test("showDeleteConfirm does nothing if cancelled", () => {
+            window.confirm.mockReturnValue(false);
+            const callback = jest.fn();
+            showDeleteConfirm(null, "Delete?", callback);
+
+            expect(window.confirm).toHaveBeenCalled();
+            expect(callback).not.toHaveBeenCalled();
+        });
+
+        test("showInputModal uses native prompt and executes callback", () => {
+            const callback = jest.fn();
+            showInputModal("Enter value", callback);
+
+            expect(window.prompt).toHaveBeenCalledWith("Enter value");
+            expect(callback).toHaveBeenCalledWith("test value");
+        });
+
+        test("showInputModal does nothing if prompt cancelled", () => {
+            window.prompt.mockReturnValue(null);
+            const callback = jest.fn();
+            showInputModal("Enter value", callback);
+
+            expect(window.prompt).toHaveBeenCalled();
+            expect(callback).not.toHaveBeenCalled();
+        });
+
+        test("showConfirmModal uses native confirm and executes callback", () => {
+            const callback = jest.fn();
+            showConfirmModal("Proceed?", callback);
+
+            expect(window.confirm).toHaveBeenCalledWith("Proceed?");
+            expect(callback).toHaveBeenCalled();
+        });
+
+        test("showConfirmModal does nothing if cancelled", () => {
+            window.confirm.mockReturnValue(false);
+            const callback = jest.fn();
+            showConfirmModal("Proceed?", callback);
+
+            expect(window.confirm).toHaveBeenCalled();
+            expect(callback).not.toHaveBeenCalled();
         });
     });
 });

@@ -36,7 +36,7 @@ This guide provides ready-to-use prompts for AI assistants working on the mockCM
 - **Phase 4:** CSS Styling (3 tasks) ✅ Complete
 - **Phase 5:** HTML Templates (16 tasks) ✅ Complete
 - **Phase 6:** Root-Level Files (7 tasks) ✅ Complete
-- **Phase 7:** Cross-Cutting Concerns (4 tasks) 🔄 Pending
+- **Phase 7:** Cross-Cutting Concerns (4 tasks) ✅ Complete
 
 **Workflow per task:** Lint → Format → Test → Manual Audit → Loop or Commit
 

@@ -1,18 +1,11 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_header %}
 
 {% block title %}{% if user %}Edit User: {{ user.username }}{% else %}Register New User{% endif %}{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h1>{% if user %}Edit User: {{ user.username }}{% else %}Register New User{% endif %}</h1>
-    </div>
-    <div class="col-md-4 text-right">
-        <a href="{{ url_for('main.users') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Users
-        </a>
-    </div>
-</div>
+{% set header_title = 'Edit User: ' + user.username if user else 'Register New User' %}
+{{ page_header(header_title, url_for('main.users'), 'Back to Users') }}
 
 <div class="row">
     <!-- User Form (Left Column) -->
@@ -208,6 +201,4 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script src="{{ url_for('static', filename='js/pages/user_detail.js') }}"></script>
-{% endblock %}
+

@@ -108,6 +108,19 @@ const removeFilterRow = function(button) {
     filterRow.remove();
 };
 
+const getFilterDataFromRow = function(row) {
+    const columnSelect = row.querySelector('.column-select');
+    const operatorSelect = row.querySelector('.operator-select');
+    const valueInput = row.querySelector('.filter-value');
+    
+    return {
+        column: columnSelect.value,
+        operator: operatorSelect.value,
+        value: valueInput.value.trim(),
+        valueInput: valueInput 
+    };
+};
+
 const applyFilterRealTime = function() {
     // Apply filters in real-time as user types
     setTimeout(() => {
@@ -115,13 +128,7 @@ const applyFilterRealTime = function() {
         const newFilters = {};
 
         filterRows.forEach(row => {
-            const columnSelect = row.querySelector('.column-select');
-            const operatorSelect = row.querySelector('.operator-select');
-            const valueInput = row.querySelector('.filter-value');
-
-            const column = columnSelect.value;
-            const operator = operatorSelect.value;
-            const value = valueInput.value.trim();
+            const { column, operator, value } = getFilterDataFromRow(row);
 
             if (column && operator && value) {
                 newFilters[column] = { operator, value };
@@ -203,13 +210,7 @@ const applyFilters = function() {
     let hasIncompleteFilter = false;
 
     filterRows.forEach(row => {
-        const columnSelect = row.querySelector('.column-select');
-        const operatorSelect = row.querySelector('.operator-select');
-        const valueInput = row.querySelector('.filter-value');
-
-        const column = columnSelect.value;
-        const operator = operatorSelect.value;
-        const value = valueInput.value.trim();
+        const { column, operator, value, valueInput } = getFilterDataFromRow(row);
 
         if (column && operator && value) {
             newFilters[column] = { operator, value };
@@ -236,16 +237,20 @@ const applyFilters = function() {
     }
 };
 
+const fetchTableConfigs = function(pageName) {
+    return fetch(`/api/table-config/${pageName}`)
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        });
+};
+
 const loadSavedConfigurations = function() {
     if (!window.advTable || !window.advTable.pageName) {
         return Promise.resolve();
     }
 
-    return fetch(`/api/table-config/${window.advTable.pageName}`)
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.json();
-        })
+    return fetchTableConfigs(window.advTable.pageName)
         .then(configs => {
             const dropdown = document.getElementById('savedConfigsDropdown');
             if (dropdown && Array.isArray(configs)) {
@@ -264,7 +269,7 @@ const loadSavedConfigurations = function() {
             }
         })
         .catch(error => {
-            console.log('Error loading configurations:', error.message);
+            console.error('Error loading configurations:', error.message);
             const dropdown = document.getElementById('savedConfigsDropdown');
             if (dropdown) {
                 dropdown.innerHTML = '<option value="">No saved views</option>';
@@ -324,11 +329,7 @@ const loadSelectedConfiguration = function() {
         return Promise.resolve();
     }
 
-    return fetch(`/api/table-config/${window.advTable.pageName}`)
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.json();
-        })
+    return fetchTableConfigs(window.advTable.pageName)
         .then(configs => {
             const config = configs.find(c => c.id == configId);
             if (config) {
@@ -339,7 +340,6 @@ const loadSelectedConfiguration = function() {
         })
         .catch(error => {
             if(window.ToastNotification) window.ToastNotification.error('Error loading saved view: ' + error.message);
-            dropdown.value = '';
         });
 };
 
@@ -353,6 +353,7 @@ if (typeof window !== 'undefined') {
     window.addFilterRow = addFilterRow;
     window.toggleFilterValue = toggleFilterValue;
     window.removeFilterRow = removeFilterRow;
+    window.getFilterDataFromRow = getFilterDataFromRow;
     window.applyFilterRealTime = applyFilterRealTime;
     window.clearAllFilters = clearAllFilters;
     window.applyFilters = applyFilters;
@@ -390,6 +391,7 @@ if (typeof module !== 'undefined' && module.exports) {
         addFilterRow,
         toggleFilterValue,
         removeFilterRow,
+        getFilterDataFromRow,
         applyFilterRealTime,
         clearAllFilters,
         applyFilters,
