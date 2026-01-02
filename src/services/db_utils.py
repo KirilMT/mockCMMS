@@ -70,7 +70,6 @@ maintenance_order_assignees = Table(
 
 class SatellitePoint(db.Model):  # type: ignore
     """Satellite Point model for technicians."""
-
     # pylint: disable=too-few-public-methods
 
     __tablename__ = "satellite_points"
@@ -84,8 +83,6 @@ class SatellitePoint(db.Model):  # type: ignore
 
 class User(db.Model):  # type: ignore
     """User model with integrated technician capabilities."""
-
-    # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
     username = Column(String(80), unique=True, nullable=False)
@@ -139,7 +136,6 @@ class User(db.Model):  # type: ignore
 
 class Role(db.Model):  # type: ignore
     """Role model for user permissions."""
-
     # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
@@ -154,27 +150,32 @@ class Role(db.Model):  # type: ignore
 
 class Team(db.Model):  # type: ignore
     """Team model for shift-based scheduling."""
+    # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True, nullable=False)
 
     def to_dict(self):
+        """Serialize Team to dictionary."""
         return {"id": self.id, "name": self.name}
 
 
 class Skill(db.Model):  # type: ignore
     """Skill model for technician capabilities."""
+    # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, nullable=False)
     users = relationship("UserSkill", back_populates="skill")
 
     def to_dict(self):
+        """Serialize Skill to dictionary."""
         return {"id": self.id, "name": self.name}
 
 
 class UserSkill(db.Model):  # type: ignore
     """Association model for the User-Skill many-to-many relationship."""
+    # pylint: disable=too-few-public-methods
 
     user_id = Column(Integer, ForeignKey("user.id"), primary_key=True)
     skill_id = Column(Integer, ForeignKey("skill.id"), primary_key=True)
@@ -183,6 +184,7 @@ class UserSkill(db.Model):  # type: ignore
     skill = relationship("Skill", back_populates="users")
 
     def to_dict(self):
+        """Serialize UserSkill to dictionary."""
         return {
             "user_id": self.user_id,
             "skill_id": self.skill_id,
@@ -194,6 +196,7 @@ class UserSkill(db.Model):  # type: ignore
 
 class Asset(db.Model):  # type: ignore
     """Asset model for equipment and machinery."""
+    # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
     asset_code = Column(String(50), unique=True, nullable=False)
@@ -210,6 +213,7 @@ class Asset(db.Model):  # type: ignore
     )
 
     def to_dict(self):
+        """Serialize Asset to dictionary."""
         return {
             "id": self.id,
             "asset_code": self.asset_code,
@@ -223,6 +227,7 @@ class Asset(db.Model):  # type: ignore
 
 class MaintenanceOrder(db.Model):  # type: ignore
     """Maintenance order model for work orders."""
+    # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
     asset_id = Column(Integer, ForeignKey("asset.id"), nullable=False)
@@ -255,6 +260,7 @@ class MaintenanceOrder(db.Model):  # type: ignore
     )
 
     def to_dict(self):
+        """Serialize MaintenanceOrder to dictionary."""
         return {
             "id": self.id,
             "asset_id": self.asset_id,
@@ -276,6 +282,7 @@ class MaintenanceOrder(db.Model):  # type: ignore
 
 class SparePart(db.Model):  # type: ignore
     """Spare part model for inventory management."""
+    # pylint: disable=too-few-public-methods
 
     id = Column(Integer, primary_key=True)
     description = Column(Text, nullable=False)
@@ -292,6 +299,7 @@ class SparePart(db.Model):  # type: ignore
     )
 
     def to_dict(self):
+        """Serialize SparePart to dictionary."""
         return {
             "id": self.id,
             "description": self.description,
@@ -319,7 +327,11 @@ class TableConfiguration(db.Model):  # type: ignore
 
     user = relationship("User", backref="table_configurations")
 
+    def __repr__(self):
+        return f"<TableConfiguration {self.config_name}>"
+
     def to_dict(self):
+        """Serialize TableConfiguration to dictionary."""
         return {
             "id": self.id,
             "user_id": self.user_id,

@@ -125,7 +125,7 @@ def _register_commands(app):
             print(f"Generated {len(assets)} assets.")
 
         if type in ["all", "technicians"]:
-            techs = DataSimulationService.generate_random_technicians(count)
+            techs = DataSimulationService.generate_random_users(count)
             print(f"Generated {len(techs)} technicians.")
 
         if type in ["all", "orders"]:

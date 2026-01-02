@@ -264,7 +264,7 @@ const loadSavedConfigurations = function() {
             }
         })
         .catch(error => {
-            console.log('Error loading configurations:', error.message);
+            console.error('Error loading configurations:', error.message);
             const dropdown = document.getElementById('savedConfigsDropdown');
             if (dropdown) {
                 dropdown.innerHTML = '<option value="">No saved views</option>';

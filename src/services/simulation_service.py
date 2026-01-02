@@ -1,3 +1,9 @@
+"""
+Simulation Service Module.
+
+This module provides the DataSimulationService class for generating
+randomized mock data for testing and demonstration purposes.
+"""
 import json
 import os
 import random
@@ -33,7 +39,7 @@ class DataSimulationService:
             )
             with open(config_path, "r", encoding="utf-8") as f:
                 cls._constants = json.load(f)
-        except Exception as e:
+        except (OSError, json.JSONDecodeError) as e:
             # Fallback if config fails (should verify in tests)
             print(f"Error loading simulation config: {e}")
             cls._constants = {}
