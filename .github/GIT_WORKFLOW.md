@@ -130,6 +130,7 @@ python scripts/release_manager.py major   # For breaking changes
 ```
 
 **The script automatically:**
+
 - Updates CHANGELOG.md with new version and date
 - Updates README.md version footer
 - Creates git commit with conventional message
@@ -137,6 +138,7 @@ python scripts/release_manager.py major   # For breaking changes
 - Ensures version numbers match everywhere
 
 **After running the script:**
+
 ```sh
 # Push commit and tag to remote
 git push origin main v1.2.0

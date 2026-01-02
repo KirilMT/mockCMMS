@@ -1184,7 +1184,6 @@ completion summaries.
     ```
 
     **The script automatically:**
-
     - Updates CHANGELOG.md with new version and date
     - Updates README.md version footer
     - Creates git commit with conventional message
@@ -1199,7 +1198,6 @@ completion summaries.
     ```
 
     **Manual Approach (If Script Cannot Be Used):**
-
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following
        [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding

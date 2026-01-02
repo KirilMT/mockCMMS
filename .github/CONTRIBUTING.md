@@ -345,11 +345,11 @@ issue number in the PR's description or a commit message.
 
 **Common Pitfalls (Why your issue didn't close):**
 
-*   Using `fix: Bug #12` (The `fix:` prefix is for humans/changelogs, not GitHub
-    automation).
-*   Using `#R1` instead of `#1`.
-*   Putting text between the keyword and number: `Fixes critical bug #12` (Will
-    not work).
+- Using `fix: Bug #12` (The `fix:` prefix is for humans/changelogs, not GitHub
+  automation).
+- Using `#R1` instead of `#1`.
+- Putting text between the keyword and number: `Fixes critical bug #12` (Will
+  not work).
 
 If the change is a partial step towards the resolution of the issue, write "For
 `#12345`" instead. This will leave a comment in the issue linking back to the
