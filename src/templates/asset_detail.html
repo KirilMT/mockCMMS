@@ -1,18 +1,11 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_header %}
 
 {% block title %}{% if asset %}Edit Asset: {{ asset.name }}{% else %}Add New Asset{% endif %}{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h1>{% if asset %}Edit Asset: {{ asset.name }}{% else %}Add New Asset{% endif %}</h1>
-    </div>
-    <div class="col-md-4 text-right">
-        <a href="{{ url_for('main.assets') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Assets
-        </a>
-    </div>
-</div>
+{% set header_title = 'Edit Asset: ' + asset.name if asset else 'Add New Asset' %}
+{{ page_header(header_title, url_for('main.assets'), 'Back to Assets') }}
 
 <div class="form-container">
     <form method="POST"
