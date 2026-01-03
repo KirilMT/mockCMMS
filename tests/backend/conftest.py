@@ -326,7 +326,7 @@ def sample_mo(app, sample_asset, sample_user):
 
 
 @pytest.fixture(scope="function")
-def auth_client(client, sample_user, app):
+def auth_client(client, logged_in_user):
     """Provide an authenticated test client.
 
     This fixture creates a test client that is already logged in with
@@ -334,18 +334,11 @@ def auth_client(client, sample_user, app):
 
     Args:
         client: Test client fixture
-        sample_user: User fixture for authentication
-        app: Flask application fixture
+        logged_in_user: User fixture (already logged in)
 
     Returns:
         FlaskClient: Authenticated test client
     """
-    with app.app_context():
-        # Simulate login by setting session
-        with client.session_transaction() as session:
-            session["user_id"] = sample_user.id
-            session["username"] = sample_user.username
-
     return client
 
 
