@@ -1,8 +1,8 @@
 # AI Agent Guide - Code Quality Audit
 
 **Created:** December 13, 2025  
-**Last Updated:** January 2, 2026
-**Purpose:** AI prompts for all 49 tasks in core_code_quality_plan.md
+**Last Updated:** January 3, 2026
+**Purpose:** AI prompts for all tasks in core_code_quality_plan.md
 
 ---
 
@@ -28,7 +28,7 @@
 
 This guide provides ready-to-use prompts for AI assistants working on the mockCMMS code quality audit. Each prompt corresponds to a task in `core_code_quality_plan.md`.
 
-**Structure:** 49 tasks across 7 phases
+**Structure:** 49 tasks across 7 phases + Phase 8
 
 - **Phase 1:** Automated Code Quality Analysis (1 task) ✅ Complete
 - **Phase 2:** Python Backend (6 tasks) ✅ Complete
@@ -37,6 +37,7 @@ This guide provides ready-to-use prompts for AI assistants working on the mockCM
 - **Phase 5:** HTML Templates (16 tasks) ✅ Complete
 - **Phase 6:** Root-Level Files (7 tasks) ✅ Complete
 - **Phase 7:** Cross-Cutting Concerns (4 tasks) ✅ Complete
+- **Phase 8:** Test Files Quality Audit (6 tasks) 🔄 In Progress
 
 **Workflow per task:** Lint → Format → Test → Manual Audit → Loop or Commit
 
