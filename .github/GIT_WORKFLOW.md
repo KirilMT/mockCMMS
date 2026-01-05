@@ -69,7 +69,18 @@ git checkout -b new-feature-name
 
 Now you are on your new branch and can work safely without affecting `master`.
 
-**Step 3.1: Do Your Work and Commit Changes**
+**Step 3.1: The 5-Step Quality Loop (Iterative Process)**
+Before you commit, apply this loop to every file you touch:
+
+1.  **Check:** Run linters `ruff check src/`.
+2.  **Format:** Run formatters `black src/`.
+3.  **Test:** Run `pytest` to ensure no regressions.
+4.  **Audit:** Self-review logic and complexity.
+5.  **Commit:** Only when 1-4 pass.
+
+_Tip: `python scripts/validate_code.py` does 1-3 for you!_
+
+**Step 3.2: Do Your Work and Commit Changes**
 
 Make your code changes, then commit them with clear, descriptive messages. You
 can make as many commits as you need.

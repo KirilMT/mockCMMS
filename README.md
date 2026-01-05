@@ -174,6 +174,19 @@ python run.py
 The application will start in development mode by default. Access it at
 `http://127.0.0.1:5000`
 
+`http://127.0.0.1:5000`
+
+## 🛠️ Development Cheat Sheet
+
+| Command                                   | Description                                        |
+| :---------------------------------------- | :------------------------------------------------- |
+| `python scripts/validate_code.py`         | **Run BEFORE Commit** (Lint + Test + Format Check) |
+| `python scripts/validate_code.py --quick` | Fast validation (skips E2E)                        |
+| `python run.py`                           | Run local dev server                               |
+| `pytest`                                  | Run backend tests manually                         |
+
+_See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for full developer guide and tool usage._
+
 ## 🏗️ JavaScript Architecture
 
 ### Overview
