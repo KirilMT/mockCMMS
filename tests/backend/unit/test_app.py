@@ -94,6 +94,25 @@ class TestAppFactory:
             db.session.remove()
             db.engine.dispose()
 
+    @patch.dict(
+        os.environ,
+        {
+            "E2E_TEST": "True",
+            "TESTING": "0",
+            "TESTING_PRODUCTION": "1",
+        },
+    )
+    def test_e2e_mode_disables_rate_limiting(self):
+        """Test that E2E test mode configures high rate limits to avoid blocking."""
+        app = create_test_app()
+        # When E2E_TEST=True, rate limiting should be disabled
+        assert app.config.get("RATELIMIT_ENABLED") is False
+
+        # Clean up
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
+
     def test_secret_key_fallback(self):
         """Test app uses a fallback secret key when not in the environment."""
         with patch.dict(os.environ, {}, clear=True):

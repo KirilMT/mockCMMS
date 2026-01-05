@@ -88,3 +88,73 @@ class TestSimulationUI:
 
             updated_user = db.session.get(User, user.id)
             assert updated_user.availability_status == "Sick"
+
+    def test_generate_users_data(self, client, app):
+        """Test generating users via simulation UI."""
+        with app.app_context():
+            initial_count = User.query.count()
+
+            response = client.post(
+                "/simulation/generate",
+                data={"type": "users", "count": 3},
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            assert User.query.count() >= initial_count + 3
+
+    def test_generate_orders_data(self, client, app):
+        """Test generating maintenance orders via simulation UI."""
+        with app.app_context():
+            # Create an asset first - orders require assets
+            asset = Asset(
+                asset_code="TEST-ORD", name="Test Asset", status="Operational"
+            )
+            db.session.add(asset)
+            db.session.commit()
+
+            initial_count = MaintenanceOrder.query.count()
+
+            response = client.post(
+                "/simulation/generate",
+                data={"type": "orders", "count": 3},
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            assert MaintenanceOrder.query.count() >= initial_count + 3
+
+    def test_generate_invalid_data_type(self, client, app):
+        """Test generating data with invalid type shows error."""
+        with app.app_context():
+            response = client.post(
+                "/simulation/generate",
+                data={"type": "invalid_type", "count": 5},
+                follow_redirects=True,
+            )
+            assert response.status_code == 200
+            assert b"Invalid data type selected" in response.data
+
+    def test_trigger_breakdown_no_operational_assets(self, client, app):
+        """Test triggering breakdown when no operational assets exist."""
+        with app.app_context():
+            # Remove all operational assets
+            Asset.query.filter_by(status="Operational").delete()
+            db.session.commit()
+
+            response = client.post(
+                "/simulation/trigger-breakdown", follow_redirects=True
+            )
+
+            assert response.status_code == 200
+            assert b"No operational assets available" in response.data
+
+    def test_set_availability_user_not_found(self, client, app):
+        """Test setting availability for non-existent user."""
+        with app.app_context():
+            response = client.post(
+                "/simulation/set-availability",
+                data={"user_id": 99999, "status": "Available"},
+                follow_redirects=True,
+            )
+
+            assert response.status_code == 200
+            assert b"User not found" in response.data

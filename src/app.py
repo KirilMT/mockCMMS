@@ -33,9 +33,6 @@ def create_app(config_overrides=None):
     # Check if running in E2E test mode
     is_e2e = os.environ.get("E2E_TEST", "False").lower() in ("true", "1", "t")
 
-    if is_e2e:
-        print("🧪 E2E TEST MODE DETECTED: Disabling Rate Limiter")
-
     app.config.from_mapping(
         SECRET_KEY=os.getenv("SECRET_KEY", "dev_key_fallback_for_testing"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
