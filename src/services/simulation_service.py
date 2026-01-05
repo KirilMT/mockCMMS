@@ -5,6 +5,7 @@ for testing and demonstration purposes.
 """
 
 import json
+import logging
 import os
 import random
 import uuid
@@ -19,6 +20,8 @@ from src.services.db_utils import (
     User,
     db,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class DataSimulationService:
@@ -41,7 +44,7 @@ class DataSimulationService:
                 cls._constants = json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             # Fallback if config fails (should verify in tests)
-            print(f"Error loading simulation config: {e}")
+            logger.error(f"Error loading simulation config: {e}")
             cls._constants = {}
 
     @classmethod

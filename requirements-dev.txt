@@ -20,6 +20,7 @@ mypy==1.19.1
 pytest==8.4.2
 pytest-cov==6.3.0
 pytest-mock==3.15.1
+diff-cover>=9.0.0
 
 # Code Quality Analysis (OPTIONAL - Run periodically)
 bandit==1.8.6

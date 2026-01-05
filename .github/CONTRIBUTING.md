@@ -3,6 +3,27 @@
 We'd love to accept your patches and contributions to this project. There are
 just a few small guidelines you need to follow.
 
+## 🚀 Getting Started (Onboarding)
+
+New to the project? Follow this learning path to get up to speed:
+
+### Step 1: Understand the Big Picture (1-2 hours)
+
+1.  Read the **[mockCMMS Roadmap](docs/mockCMMS_roadmap.md)** to understand the project's vision.
+2.  Read this **CONTRIBUTING guide** in its entirety.
+
+### Step 2: Set Up Your Environment (2-3 hours)
+
+1.  Follow the setup instructions in **[README.md](README.md)**.
+2.  Run the test suite locally: `python scripts/validate_code.py --backend` (or `pytest`) to ensure everything works.
+3.  Familiarize yourself with the **[Git Workflow](.github/GIT_WORKFLOW.md)**.
+
+### Step 3: Dive into the Codebase (4-6 hours)
+
+1.  Start with `src/app.py` to understand the Flask factory pattern.
+2.  Explore routes in `src/routes/`.
+3.  Review `src/services/db_utils.py` for database interactions.
+
 ## Community Guidelines
 
 ### Our Pledge
@@ -100,11 +121,50 @@ Good comments are crucial for explaining the "why" behind the code.
 
 - **Explain Intent, Not Implementation:** Code should be self-explanatory.
   Comments should clarify complex business logic, algorithms, or non-obvious
+- **Explain Intent, Not Implementation:** Code should be self-explanatory.
+  Comments should clarify complex business logic, algorithms, or non-obvious
   decisions.
 - **No Issue References:** Do not reference bug or issue numbers in code
   comments (e.g., `// Fix for #123`). Use commit messages for this.
 - **Professionalism:** Use proper grammar and punctuation. Avoid commented-out
   code blocks; remove them instead.
+
+## 🛠️ Development Tools & Scripts
+
+We provide automated scripts to make your life easier. Use them!
+
+### 1. `scripts/validate_code.py` (The Validator)
+
+**Simulates the CI pipeline locally.** Runs all linters, formatters, and tests.
+
+```bash
+python scripts/validate_code.py            # Run EVERYTHING
+python scripts/validate_code.py --quick    # Skip slow E2E tests
+python scripts/validate_code.py --backend  # Python only
+python scripts/validate_code.py --frontend # JS/CSS only
+```
+
+### 2. `scripts/release_manager.py` (The Releaser)
+
+**Automates versioning and tags.**
+
+```bash
+python scripts/release_manager.py patch --dry-run  # Preview bump
+```
+
+## 🏆 Critical Best Practices (Do's and Don'ts)
+
+### ✅ Do's
+
+- **Run Validation Locally:** `python scripts/validate_code.py` must pass before you commit.
+- **Use Feature Branches:** Never work directly on `main`.
+- **Write Clear Commits:** Follow the `feat:`, `fix:` conventions.
+
+### ❌ Don'ts
+
+- **Don't Merge Failing Tests:** If CI fails, your PR is not ready.
+- **Don't Refactor Without Tests:** Verification is mandatory.
+- **Don't Ignore Linters:** Warnings are there for a reason.
 
 ### 4. Testing Standards
 

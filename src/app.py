@@ -281,7 +281,6 @@ def _register_request_handlers(app):
 
     @app.after_request
     def add_security_headers(response):
-        # print("DEBUG: Adding security headers")
         response.headers["Permissions-Policy"] = "unload=()"
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
         response.headers["X-Content-Type-Options"] = "nosniff"

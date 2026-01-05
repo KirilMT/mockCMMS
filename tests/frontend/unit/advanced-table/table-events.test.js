@@ -64,65 +64,12 @@ describe('AdvancedTable Event Methods', () => {
     afterEach(() => {
         document.body.innerHTML = '';
         jest.clearAllMocks();
+        jest.restoreAllMocks();
     });
 
-    describe('rowClick', () => {
-        test('should construct correct path for regular entity', () => {
-            // Mock the rowClick method to test path construction logic
-            let pagePath = table.pageName.replace('Table', '');
-            expect(pagePath).toBe('test');
-        });
 
-        test('should handle mos page name transformation', () => {
-            table.pageName = 'mosTable';
-            let pagePath = table.pageName.replace('Table', '');
-            if (pagePath === 'mos') {
-                pagePath = 'maintenance_orders';
-            }
-            expect(pagePath).toBe('maintenance_orders');
-        });
 
-        test('should handle spareParts page name transformation', () => {
-            table.pageName = 'sparePartsTable';
-            let pagePath = table.pageName.replace('Table', '');
-            if (pagePath === 'spareParts') {
-                pagePath = 'spare_parts';
-            }
-            expect(pagePath).toBe('spare_parts');
-        });
-
-        // Tests that actually call rowClick to cover lines 120-128
-        // Use try/catch because JSDOM doesn't support navigation
-        test('rowClick executes for mos page', () => {
-            table.pageName = 'mosTable';
-            try {
-                table.rowClick(123);
-            } catch (e) {
-                // Expected: JSDOM navigation not implemented
-            }
-            expect(true).toBe(true);
-        });
-
-        test('rowClick executes for spareParts page', () => {
-            table.pageName = 'sparePartsTable';
-            try {
-                table.rowClick(456);
-            } catch (e) {
-                // Expected: JSDOM navigation not implemented
-            }
-            expect(true).toBe(true);
-        });
-
-        test('rowClick executes for regular page', () => {
-            table.pageName = 'assetsTable';
-            try {
-                table.rowClick(789);
-            } catch (e) {
-                // Expected: JSDOM navigation not implemented
-            }
-            expect(true).toBe(true);
-        });
-    });
+    // describe('rowClick', () => {}); // Removed as rowClick is deprecated/removed
 
     describe('attachEventListeners', () => {
         test('should attach listeners without errors', () => {

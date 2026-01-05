@@ -6,6 +6,19 @@ are properly managed.
 
 ---
 
+> **⚠️ CRITICAL RULE: NEW BRANCHES REQUIRE A PULL REQUEST**
+>
+> When you create a **new local branch** that does not exist on GitHub yet:
+>
+> - **NEVER** use `git push -u origin <branch>` to push it directly
+> - **ALWAYS** use `gh pr create` to push AND create a PR in one step
+>
+> When you are on a branch that **already tracks a remote branch** (you see `[origin/...]` in `git branch -vv`):
+>
+> - You can use `git push` normally to push additional commits
+>
+> **Why?** Pushing a new branch without a PR leaves orphan branches on GitHub with no review process.
+
 ### 1. Initial Setup (First Time on a New Machine)
 
 If you are starting on a new computer or don't have the project locally, you
@@ -56,7 +69,18 @@ git checkout -b new-feature-name
 
 Now you are on your new branch and can work safely without affecting `master`.
 
-**Step 3.1: Do Your Work and Commit Changes**
+**Step 3.1: The 5-Step Quality Loop (Iterative Process)**
+Before you commit, apply this loop to every file you touch:
+
+1.  **Check:** Run linters `ruff check src/`.
+2.  **Format:** Run formatters `black src/`.
+3.  **Test:** Run `pytest` to ensure no regressions.
+4.  **Audit:** Self-review logic and complexity.
+5.  **Commit:** Only when 1-4 pass.
+
+_Tip: `python scripts/validate_code.py` does 1-3 for you!_
+
+**Step 3.2: Do Your Work and Commit Changes**
 
 Make your code changes, then commit them with clear, descriptive messages. You
 can make as many commits as you need.
@@ -89,34 +113,50 @@ git merge master
 # If there are any conflicts, resolve them now, then commit the merge.
 ```
 
-**Step 3.3: Verify Tracking Status**
+**Step 3.3: Verify Tracking Status Before Pushing**
 
-It is **critical** to ensure your local branch is tracking the remote branch.
+It is **critical** to check whether your branch is already linked to a remote branch.
 
 1.  **Check tracking status:**
+
     ```sh
     git branch -vv
     ```
+
     **How to interpret the output:**
-    -   **Tracked (Good):** You will see the remote branch in brackets next to the branch name.
-        *Example:* `* feature-branch  1234567 [origin/feature-branch] Commit message`
-    -   **Untracked (Needs Action):** You will **NOT** see any `[origin/...]` reference in brackets.
-        *Example:* `* feature-branch  1234567 Commit message`
 
-2.  **Action for Untracked Branches:**
-    If your branch is **untracked**, do NOT use `git push`. You must use `gh pr create` to push the branch and create the PR simultaneously.
+    - **Tracked (Can push directly):** You will see the remote branch in brackets.
+      _Example:_ `* feature-branch  1234567 [origin/feature-branch] Commit message`
+    - **Untracked (Must create PR):** You will **NOT** see any `[origin/...]` reference.
+      _Example:_ `* feature-branch  1234567 Commit message`
 
-    ```sh
-    # Pushes the branch AND creates the PR
-    # Use --draft if you are not ready for review
-    gh pr create --base main --head <your-branch-name> --fill
-    ```
+2.  **Decision Tree:**
 
-**Step 3.4: Push Changes (Tracked Branches Only)**
+    | Branch Status                     | Action Required                            |
+    | --------------------------------- | ------------------------------------------ |
+    | **Untracked** (no `[origin/...]`) | Use `gh pr create` - creates branch AND PR |
+    | **Tracked** (has `[origin/...]`)  | Use `git push` - pushes to existing remote |
 
-If your branch is already tracked (you see `[origin/...]`), you can simply push updates:
+**Step 3.4: Push to GitHub**
+
+**Option A: New Branch (Untracked) → Create PR**
+
+⚠️ **NEVER use `git push -u origin <branch>` for new branches!**
 
 ```sh
+# This pushes the branch AND creates the PR in one step
+gh pr create --base main --head <your-branch-name> --fill
+
+# Or create as draft if not ready for review
+gh pr create --base main --head <your-branch-name> --fill --draft
+```
+
+**Option B: Existing Branch (Tracked) → Push Updates**
+
+If your branch is already tracked (you see `[origin/...]`):
+
+```sh
+# Simply push your new commits
 git push
 ```
 
@@ -171,6 +211,7 @@ git push origin main v1.2.0
 
 1. **Update CHANGELOG.md** (follow
    [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format):
+
    - Main app: `/CHANGELOG.md`
    - planning: `/apps/planning/CHANGELOG.md`
    - Add new version entry with date and categorized changes
@@ -218,6 +259,7 @@ gh pr ready
 **Step 6.1: Automated Checks (CI/CD)**
 
 This repository uses **Branch Protection Rules** to ensure quality.
+
 - **Status Checks:** All GitHub Actions (tests, linting) **must pass** before merging.
 - **Merge Blocked:** If checks fail, the "Merge" button will be disabled.
 - **Fixing Failures:** If checks fail, fix the code locally, commit, and push again. The PR will update and re-run checks automatically.
@@ -231,29 +273,7 @@ This repository uses **Branch Protection Rules** to ensure quality.
 **Step 6.3: Merge**
 
 Once approved and checks pass:
-1.  Click **"Merge pull request"**.
-2.  Confirm the merge.
 
----
-
-### 6. Code Review & Merging
-
-**Step 6.1: Automated Checks (CI/CD)**
-
-This repository uses **Branch Protection Rules** to ensure quality.
-- **Status Checks:** All GitHub Actions (tests, linting) **must pass** before merging.
-- **Merge Blocked:** If checks fail, the "Merge" button will be disabled.
-- **Fixing Failures:** If checks fail, fix the code locally, commit, and push again. The PR will update and re-run checks automatically.
-
-**Step 6.2: Review Process**
-
-1.  **Request Review:** Assign reviewers to your PR.
-2.  **Address Feedback:** Make changes based on comments.
-3.  **Approval:** Wait for approval from code owners.
-
-**Step 6.3: Merge**
-
-Once approved and checks pass:
 1.  Click **"Merge pull request"**.
 2.  Confirm the merge.
 

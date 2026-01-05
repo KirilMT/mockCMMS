@@ -46,7 +46,7 @@ function getMaintenanceOrdersColumns() {
 }
 
 /**
- * Cleanup old table state if 'assignees' column is missing (Bug #29 fix)
+ * Cleanup old table state if 'assignees' column is missing from saved state
  * @param {Storage} storage - The storage object (localStorage)
  * @param {string} tableStateKey - The key for table state
  * @returns {string} 'removed' | 'kept' | 'no_state' | 'error_cleared'
@@ -79,7 +79,7 @@ function cleanupTableState(storage, tableStateKey) {
 function initMaintenanceOrdersTable() {
   const tableStateKey = "tableState_mosTable";
 
-  // Bug #29: Clear localStorage if 'assignees' column is missing
+  // Clear localStorage if saved state is outdated (missing 'assignees' column)
   if (typeof localStorage !== "undefined") {
     cleanupTableState(localStorage, tableStateKey);
   }

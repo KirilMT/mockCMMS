@@ -144,7 +144,7 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <label class="my-1 mr-2" for="techSelect">Technician:</label>
-                    <select class="custom-select my-1 mr-sm-2" id="techSelect" name="user_id" style="width: 300px;">
+                    <select class="custom-select my-1 mr-sm-2 sim-tech-select" id="techSelect" name="user_id">
                         {% for tech in technicians %}
                         <option value="{{ tech.id }}">
                             {{ tech.username }} ({{ tech.availability_status }})
