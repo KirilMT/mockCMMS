@@ -89,14 +89,35 @@ git merge master
 # If there are any conflicts, resolve them now, then commit the merge.
 ```
 
-**Step 3.3: Push Your Branch to the Remote**
+**Step 3.3: Verify Tracking Status**
 
-Push your branch to the remote repository. This is required before you can open
-a Pull Request.
+It is **critical** to ensure your local branch is tracking the remote branch.
+
+1.  **Check tracking status:**
+    ```sh
+    git branch -vv
+    ```
+    **How to interpret the output:**
+    -   **Tracked (Good):** You will see the remote branch in brackets next to the branch name.
+        *Example:* `* feature-branch  1234567 [origin/feature-branch] Commit message`
+    -   **Untracked (Needs Action):** You will **NOT** see any `[origin/...]` reference in brackets.
+        *Example:* `* feature-branch  1234567 Commit message`
+
+2.  **Action for Untracked Branches:**
+    If your branch is **untracked**, do NOT use `git push`. You must use `gh pr create` to push the branch and create the PR simultaneously.
+
+    ```sh
+    # Pushes the branch AND creates the PR
+    # Use --draft if you are not ready for review
+    gh pr create --base main --head <your-branch-name> --fill
+    ```
+
+**Step 3.4: Push Changes (Tracked Branches Only)**
+
+If your branch is already tracked (you see `[origin/...]`), you can simply push updates:
 
 ```sh
-# The -u flag sets the upstream branch, so next time you can just `git push`
-git push -u origin new-feature-name
+git push
 ```
 
 ---
@@ -171,38 +192,74 @@ This version information will be used for creating Git tags and releases.
 
 ---
 
-### 5. Finishing Your Work (Creating a Pull Request)
+### 5. Finishing Your Work (Pull Request)
 
-Once your feature is complete and pushed to GitHub, you will create a Pull
-Request (PR) to merge it into the `master` branch. This is the standard way to
-propose changes and allow for review. For detailed guidelines on contributing,
-including commit message conventions and the review process, please refer to the
-[`CONTRIBUTING.md`](./CONTRIBUTING.md) file.
+If you haven't created a Pull Request yet (e.g., you were working on an existing branch), create one now.
 
-**Step 5.1: Open a Pull Request on GitHub**
+**Step 5.1: Create Pull Request via CLI (Recommended)**
 
-1.  Go to your repository on GitHub in your web browser.
-2.  You will likely see a yellow banner with your recently pushed branch and a
-    button that says **"Compare & pull request"**. Click it.
-3.  If you don't see the banner, go to the **"Pull requests"** tab and click
-    **"New pull request"**.
-4.  Set the `base` branch to `master` and the `compare` branch to your feature
-    branch (`new-feature-name`).
-5.  Give the PR a clear title (e.g., "Fixes #32: Error in REP tasks modal") and
-    a description of the changes.
-6.  Click **"Create pull request"**.
+```sh
+# Create the PR if not already done
+gh pr create --base main --head <your-branch-name> --fill
+```
 
-**Step 5.2: Review and Merge the Pull Request**
+**Step 5.2: Mark as Ready (If Draft)**
 
-On the GitHub PR page, you can see your changes, and others can review them.
-Once it's approved and passes any checks, you can merge it.
+If you created a Draft PR in Step 3.3, mark it as ready for review:
 
-1.  Click the **"Merge pull request"** button on the GitHub PR page.
+```sh
+gh pr ready
+```
+
+---
+
+### 6. Code Review & Merging
+
+**Step 6.1: Automated Checks (CI/CD)**
+
+This repository uses **Branch Protection Rules** to ensure quality.
+- **Status Checks:** All GitHub Actions (tests, linting) **must pass** before merging.
+- **Merge Blocked:** If checks fail, the "Merge" button will be disabled.
+- **Fixing Failures:** If checks fail, fix the code locally, commit, and push again. The PR will update and re-run checks automatically.
+
+**Step 6.2: Review Process**
+
+1.  **Request Review:** Assign reviewers to your PR.
+2.  **Address Feedback:** Make changes based on comments.
+3.  **Approval:** Wait for approval from code owners.
+
+**Step 6.3: Merge**
+
+Once approved and checks pass:
+1.  Click **"Merge pull request"**.
 2.  Confirm the merge.
 
 ---
 
-### 6. Handling Work-in-Progress (Creating a Draft Pull Request)
+### 6. Code Review & Merging
+
+**Step 6.1: Automated Checks (CI/CD)**
+
+This repository uses **Branch Protection Rules** to ensure quality.
+- **Status Checks:** All GitHub Actions (tests, linting) **must pass** before merging.
+- **Merge Blocked:** If checks fail, the "Merge" button will be disabled.
+- **Fixing Failures:** If checks fail, fix the code locally, commit, and push again. The PR will update and re-run checks automatically.
+
+**Step 6.2: Review Process**
+
+1.  **Request Review:** Assign reviewers to your PR.
+2.  **Address Feedback:** Make changes based on comments.
+3.  **Approval:** Wait for approval from code owners.
+
+**Step 6.3: Merge**
+
+Once approved and checks pass:
+1.  Click **"Merge pull request"**.
+2.  Confirm the merge.
+
+---
+
+### 7. Handling Work-in-Progress (Creating a Draft Pull Request)
 
 If your work is not yet finished but you want to get feedback, or simply want to
 see your changes on GitHub, you should create a **Draft Pull Request**. This
@@ -250,17 +307,17 @@ be merged.
 
 ---
 
-### 7. Cleaning Up After Merging
+### 8. Cleaning Up After Merging
 
 After your PR is merged, the final step is to clean up your local and remote
 branches.
 
-**Step 7.1: Delete the Remote Branch**
+**Step 8.1: Delete the Remote Branch**
 
 After merging on GitHub, a **"Delete branch"** button will appear. Click it to
 delete the remote feature branch. This keeps the repository clean.
 
-**Step 7.2: Update Your Local Repository**
+**Step 8.2: Update Your Local Repository**
 
 Now, update your local `master` branch with the changes you just merged on
 GitHub.
@@ -273,7 +330,7 @@ git checkout master
 git pull origin master
 ```
 
-**Step 7.3: Prune Stale Remote Branches**
+**Step 8.3: Prune Stale Remote Branches**
 
 Your local repository might still be tracking the remote branch you just
 deleted. Run the following command to clean up these stale branches.
@@ -283,7 +340,7 @@ deleted. Run the following command to clean up these stale branches.
 git fetch --prune
 ```
 
-**Step 7.4: Delete Your Local Branch**
+**Step 8.4: Delete Your Local Branch**
 
 Finally, delete the local feature branch as it is no longer needed.
 
