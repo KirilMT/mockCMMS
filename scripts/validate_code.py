@@ -240,7 +240,13 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
     # 1. ESLint - JavaScript linting (SHOULD be in CI but currently missing)
     print_section("Step 1/3: JavaScript Linting (eslint)")
     success, _ = run_command(
-        ["npx", "eslint", "src/static/js", "--report-unused-disable-directives"],
+        [
+            "npx",
+            "eslint",
+            "src/static/js",
+            "tests/frontend",
+            "--report-unused-disable-directives",
+        ],
         "ESLint check",
     )
     checks.append(("ESLint", success))

@@ -7,6 +7,7 @@ data integrity and proper ORM behavior.
 import logging
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from src.services.db_utils import (
     Asset,
@@ -22,7 +23,7 @@ from src.services.db_utils import (
 class TestDatabaseUtilities:
     """Test database utility functions."""
 
-    def test_populate_dummy_data(self, app, client):
+    def test_populate_dummy_data(self, app):
         """Test that populate_dummy_data successfully populates the database.
 
         Verifies:
@@ -69,7 +70,7 @@ class TestDatabaseUtilities:
                 user.username for user in users
             ), "All users should have usernames"
 
-    def test_populate_dummy_data_idempotent(self, app, client):
+    def test_populate_dummy_data_idempotent(self, app):
         """Test that populate_dummy_data is idempotent and does not create duplicate
         data on multiple calls."""
         logger = logging.getLogger(__name__)
@@ -86,7 +87,7 @@ class TestDatabaseUtilities:
 
             assert count1 == count2, "Should not create duplicate users"
 
-    def test_database_models_relationships(self, app, client):
+    def test_database_models_relationships(self, app):
         """Test that model relationships work correctly.
 
         Verifies:
@@ -150,11 +151,11 @@ class TestDatabaseUtilities:
             db.session.commit()
 
             # Verify asset is deleted
-            deleted_asset = Asset.query.get(asset_id)
+            deleted_asset = db.session.get(Asset, asset_id)
             assert deleted_asset is None, "Asset should be deleted"
 
             # Verify cascade deletion of MO (if cascade is configured)
-            deleted_mo = MaintenanceOrder.query.get(mo_id)
+            deleted_mo = db.session.get(MaintenanceOrder, mo_id)
             assert deleted_mo is None, "MO should be cascade deleted with asset"
 
 
@@ -219,7 +220,6 @@ class TestEnhancedDatabaseUtilities:
     def test_database_constraints(self, app):
         """Test database constraints (unique constraints)."""
         with app.app_context():
-            from sqlalchemy.exc import IntegrityError
 
             asset1 = Asset(
                 asset_code="CONST-001",
@@ -282,8 +282,8 @@ class TestEnhancedDatabaseUtilities:
             db.session.delete(asset)
             db.session.commit()
 
-            assert Asset.query.get(asset_id) is None
-            assert MaintenanceOrder.query.get(mo_id) is None
+            assert db.session.get(Asset, asset_id) is None
+            assert db.session.get(MaintenanceOrder, mo_id) is None
 
             user = User(username="cascadeuser", email="cascade@example.com")
             user.set_password("password")
@@ -297,8 +297,8 @@ class TestEnhancedDatabaseUtilities:
             db.session.delete(user)
             db.session.commit()
 
-            assert User.query.get(user_id) is None
-            assert Role.query.get(role_id) is not None
+            assert db.session.get(User, user_id) is None
+            assert db.session.get(Role, role_id) is not None
 
     def test_model_default_values(self, app):
         """Test that model default values are applied correctly."""
