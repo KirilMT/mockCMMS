@@ -47,6 +47,8 @@ class TestAssetsPages:
         assert response.status_code == 200
         # Check for assets table or content
         assert b"asset" in response.data.lower() or b"Asset" in response.data
+        # Verify at least one asset name is present
+        assert multiple_assets[0].name.encode() in response.data
 
     def test_assets_add_page_get(self, auth_client):
         """Test GET /assets/add returns add asset form."""
@@ -74,12 +76,16 @@ class TestAssetsPages:
             assert response.status_code in [302, 303]
 
             # Verify asset was created
-            asset = Asset.query.filter_by(asset_code="WEB-001").first()
+            asset = db.session.execute(
+                db.select(Asset).filter_by(asset_code="WEB-001")
+            ).scalar_one_or_none()
             assert asset is not None
             assert asset.name == "New Web Asset"
 
     def test_assets_add_page_post_validation_error(self, auth_client):
         """Test POST /assets/add with invalid data shows errors."""
+        from werkzeug.exceptions import BadRequest
+
         asset_data = {
             "description": "Missing required fields"
             # Missing name and asset_code - causes KeyError -> 400
@@ -92,7 +98,7 @@ class TestAssetsPages:
             )
             # If no exception, should be 400
             assert response.status_code == 400
-        except Exception:
+        except (KeyError, BadRequest):
             # KeyError is expected behavior for missing required fields
             # This is a valid test - the form validation is working
             pass
@@ -235,7 +241,6 @@ class TestMaintenanceOrdersPages:
         with app.app_context():
             mo = db.session.get(MaintenanceOrder, sample_mo.id)
             assert mo.description == "Updated MO description"
-            assert mo.status == "In Progress"
             assert mo.status == "In Progress"
 
     def test_mo_delete_post_success(self, auth_client, sample_mo, app):

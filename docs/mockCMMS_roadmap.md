@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated January 2, 2026_
+_Updated January 4, 2026_
 
 ---
 
@@ -202,7 +202,7 @@ The core application can be improved with the following features to support the 
 
 - **[ ] Core mockCMMS Code Quality Comprehensive Audit & Cleanup** _(Priority: Critical)_
 
-  - **Status:** 🔄 **Phase 7 In Progress** (Phases 1-6 Complete)
+  - **Status:** 🔄 **Phase 8 In Progress** (Phases 1-7 Complete)
   - **Goal:** A systematic, comprehensive audit and cleanup of all core mockCMMS code files.
   - **Detailed Plan:** [core_code_quality_plan.md](core_code_quality_plan.md)
   - **Scope:**
@@ -212,7 +212,8 @@ The core application can be improved with the following features to support the 
     - **Phase 4:** CSS Styling Analysis (main.css, advanced-table.css) ✅
     - **Phase 5:** HTML Templates Analysis (all templates in src/templates/) ✅
     - **Phase 6:** Root-Level & Configuration Files ✅
-    - **Phase 7:** Cross-Cutting Concerns (naming, configuration, documentation) 🔄
+    - **Phase 7:** Cross-Cutting Concerns (naming, configuration, documentation) ✅
+    - **Phase 8:** Test Files Quality Audit 🔄
   - **Approach:**
     - Analyze every single code file in the core mockCMMS.
     - Identify issues: duplicates, bad practices, violations of standards.
@@ -298,6 +299,15 @@ The core application can be improved with the following features to support the 
     - **Slow Operation Warnings:** Automatically log warnings for slow requests (>2s) or DB queries (>1s).
     - **Separated Log Files:** Use distinct files for application, error, and performance logs.
   - **Reference:** `apps/planning/src/services/logging_config.py`
+
+- **[ ] Integration & Cleanup (Maintenance Grid & Tickets)** _(Priority: Medium)_
+  - **Goal:** Review and properly implement or deprecate the integration stub pages (`maintenance_grid.html`, `ticket.html`).
+  - **Scope:**
+    - Review usage in `apps/planning` and `dummy_data.json`.
+    - Refactor `maintenance_grid` to use the actual Maintenance Orders list view with filtering.
+    - Refactor `tickets` to redirect to the actual Maintenance Order detail page.
+    - Update `apps/planning` configuration to point to the new real URLs.
+    - Remove the placeholder templates and routes once replaced.
 
 #### Asset & Data Management
 
@@ -835,3 +845,4 @@ This application is intended for reporting and analytics. The following features
 - **Advanced Table Enhancements:** Bulk operations, collaboration, automation.
 - **CODEOWNERS Update:** Add new team members.
 - **GEMINI.md Restructure:** Improve documentation organization.
+

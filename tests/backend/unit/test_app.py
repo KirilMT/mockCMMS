@@ -5,9 +5,12 @@ registration, database initialization, and context handling.
 """
 
 import os
+import sqlite3
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
+from flask import g, has_app_context, has_request_context, request
 
 from src.app import create_app
 from src.services.db_utils import db
@@ -63,7 +66,7 @@ class TestAppFactory:
     def test_blueprints_registered(self, app):
         """Test that all required blueprints are registered."""
         # Get all registered blueprint names
-        blueprint_names = [bp for bp in app.blueprints.keys()]
+        blueprint_names = list(app.blueprints.keys())
 
         # Verify core blueprints are registered
         assert "api" in blueprint_names, "API blueprint not registered"
@@ -133,7 +136,6 @@ class TestAppFactory:
     def test_app_context(self, app):
         """Test app context can be pushed and popped."""
         # Context should not be active initially
-        from flask import has_app_context
 
         # Push context
         ctx = app.app_context()
@@ -149,7 +151,6 @@ class TestAppFactory:
 
     def test_request_context(self, app):
         """Test request context can be created and is active."""
-        from flask import has_request_context, request
 
         # Create request context
         with app.test_request_context("/"):
@@ -398,7 +399,6 @@ class TestAppErrorHandling:
     )
     def test_reports_blueprint_registration_error(self):
         """Test app handles reports module unavailable gracefully."""
-        import sys
 
         # Mock ImportError by making the module import fail
         with patch.dict(sys.modules, {"apps.reports.src.routes.reports": None}):
@@ -417,7 +417,6 @@ class TestAppErrorHandling:
     )
     def test_planning_blueprint_registration_error(self):
         """Test app handles planning module unavailable gracefully."""
-        import sys
 
         # Mock ImportError by making the module import fail
         with patch.dict(sys.modules, {"apps.planning.src.routes.planning": None}):
@@ -432,7 +431,6 @@ class TestAppErrorHandling:
 
     def test_before_planning_request_database_error(self, app, client):
         """Test before_planning_request handles database connection errors."""
-        import sqlite3  # Added import for sqlite3.OperationalError
 
         with patch.dict(os.environ, {"PLANNING_ENABLED": "True"}):
             with patch(
@@ -446,7 +444,6 @@ class TestAppErrorHandling:
 
     def test_close_db_teardown(self, app):
         """Test close_db teardown function closes database connections."""
-        from flask import g
 
         with app.app_context():
             # Simulate database connection in g

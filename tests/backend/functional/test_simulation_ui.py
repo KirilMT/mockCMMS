@@ -86,5 +86,5 @@ class TestSimulationUI:
             # Check if the UI reflects the new status in the dropdown
             assert b"sim_tech (Sick)" in response.data
 
-            updated_user = User.query.get(user.id)
+            updated_user = db.session.get(User, user.id)
             assert updated_user.availability_status == "Sick"

@@ -1,3 +1,5 @@
+"""Simulation routes for generating test data and simulating events."""
+
 from datetime import datetime, timezone
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
@@ -9,11 +11,9 @@ simulation_bp = Blueprint("simulation", __name__, url_prefix="/simulation")
 
 
 @simulation_bp.route("/")
-@simulation_bp.route("/")
 def index():
     """Render the simulation dashboard."""
     # Get stats for the dashboard
-    total_assets = Asset.query.count()
     total_assets = Asset.query.count()
     total_mos = MaintenanceOrder.query.count()
     # Count all users
@@ -125,7 +125,7 @@ def set_availability():
         user_id = request.form.get("user_id")
         status = request.form.get("status")
 
-        user = User.query.get(user_id)
+        user = db.session.get(User, user_id)
         if user:
             user.availability_status = status
             db.session.commit()

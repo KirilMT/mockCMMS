@@ -8,6 +8,8 @@ import traceback
 import click
 from dotenv import load_dotenv
 from flask import Flask, g, jsonify, redirect, request, session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect  # type: ignore[import-untyped]
 
 # Local blueprint imports
@@ -28,12 +30,21 @@ def create_app(config_overrides=None):
     app = Flask(__name__, instance_relative_config=True)
 
     # --- Configuration ---
+    # Check if running in E2E test mode
+    is_e2e = os.environ.get("E2E_TEST", "False").lower() in ("true", "1", "t")
+
+    if is_e2e:
+        print("🧪 E2E TEST MODE DETECTED: Disabling Rate Limiter")
+
     app.config.from_mapping(
         SECRET_KEY=os.getenv("SECRET_KEY", "dev_key_fallback_for_testing"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TESTING=os.environ.get("TESTING", "0") == "1",
         AUTO_SEED_DATABASE=os.getenv("AUTO_SEED_DATABASE", "True").lower()
         in ("true", "1", "t"),
+        # Disable rate limiting for E2E tests to prevent timeouts/failures
+        RATELIMIT_ENABLED=not is_e2e,
+        RATELIMIT_STORAGE_URI="memory://",
     )
 
     if not app.testing:
@@ -67,6 +78,26 @@ def create_app(config_overrides=None):
 
     db.init_app(app)
     csrf = CSRFProtect(app)
+
+    # Setup Rate Limiting
+    # Use stricter limits for testing to verify rate limiting works
+    # But allow enough for performance tests via configuration
+    test_limit = app.config.get("RATELIMIT_TEST_LIMIT", "5 per minute")
+
+    if is_e2e:
+        # Extremely high limits for E2E tests to ensure no blocking
+        default_limits = ["100000 per day", "10000 per hour"]
+    else:
+        default_limits = (
+            [test_limit] if app.config["TESTING"] else ["200 per day", "50 per hour"]
+        )
+
+    Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=default_limits,
+        storage_uri="memory://",
+    )
 
     # --- Blueprints ---
     _register_blueprints(app, csrf)
@@ -103,6 +134,10 @@ def create_app(config_overrides=None):
     _register_request_handlers(app)
     _register_context_processors(app)
     _register_commands(app)
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return jsonify(error="Rate limit exceeded", message=str(e.description)), 429
 
     return app
 
@@ -249,8 +284,20 @@ def _register_request_handlers(app):
 
     @app.after_request
     def add_security_headers(response):
+        # print("DEBUG: Adding security headers")
         response.headers["Permissions-Policy"] = "unload=()"
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        # CORS Headers (Basic implementation)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = (
+            "GET, POST, PUT, DELETE, OPTIONS"
+        )
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+
         # Prevent caching to ensure E2E tests see up-to-date data
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
