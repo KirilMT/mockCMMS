@@ -195,7 +195,13 @@ def validate_python_backend(quick: bool = False) -> bool:
         checks.append(("Tests", success))
     else:
         success, _ = run_command(
-            ["pytest", "tests/", "--cov=src", "--cov-report=term-missing"],
+            [
+                "pytest",
+                "tests/",
+                "--cov=src",
+                "--cov-report=term-missing",
+                "--cov-report=html",
+            ],
             "Full test suite with coverage",
         )
         checks.append(("Tests with Coverage", success))
