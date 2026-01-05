@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -67,6 +69,13 @@ jobs:
         run: |
           # Run ALL tests (not just backend) with stricter coverage requirement
           pytest tests/ --cov=src --cov-report=xml --cov-fail-under=82
+
+      - name: Check diff coverage (new code)
+        run: |
+          # Enforce 90% coverage on NEW code (matches local script)
+          diff-cover coverage.xml \
+            --compare-branch=origin/main \
+            --fail-under=90
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
