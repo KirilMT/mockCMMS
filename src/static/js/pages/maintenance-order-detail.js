@@ -1,6 +1,6 @@
 /* global $ */
 
-// Enable/disable and require frequency field based on order type (Bug #16 & #26)
+// Enable/disable and require frequency field based on order type
 document.addEventListener('DOMContentLoaded', function () {
   const orderTypeField = document.getElementById('order_type');
   const frequencyField = document.getElementById('frequency');
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Bug #5: Initialize Select2 for assignees dropdown
+  // Initialize Select2 for assignees dropdown with multi-select support
   const assigneesSelect = $('#assignees');
   if (assigneesSelect.length) {
     assigneesSelect.select2({
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
       closeOnSelect: false,
     });
 
-    // Bug #28 refined: keep removal behavior intuitive and caret UX consistent.
+    // Keep removal behavior intuitive and caret UX consistent
     const containerEl = assigneesSelect.next('.select2-container');
     const selectionEl = containerEl.find('.select2-selection--multiple');
     const inlineInput = () => containerEl.find('.select2-search--inline input.select2-search__field');

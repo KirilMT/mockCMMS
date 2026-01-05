@@ -460,4 +460,7 @@ body .select2-container--bootstrap-5 .select2-selection--multiple {
   margin-bottom: 1rem;
 }
 
-
+/* Simulation page styles */
+.sim-tech-select {
+  width: 300px;
+}
