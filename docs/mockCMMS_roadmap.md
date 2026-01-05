@@ -159,6 +159,7 @@ _Updated January 5, 2026_
 ### Advanced Table Component (November 22-29, 2025)
 
 - ✅ Excel-like column resizing, sidebar UI, error handling, retry mechanisms
+- ✅ **Local Development Scripts:** `validate_code.py`, `format_code.py`, `release_manager.py` all implemented and verified.
 
 ## 🚀 FUTURE FEATURES (Strategic Planning)
 
@@ -236,56 +237,26 @@ The core application can be improved with the following features to support the 
   - **Dependencies:** Blocked by Project Validation (#7)
   - **Reference:** [GitHub Issue #3](https://github.com/KirilMT/mockCMMS/issues/3)
 
-- **[ ] Standardize Naming Conventions** _(Priority: High)_
+- **[x] Standardize Naming Conventions** _(Priority: High)_
 
+  - **Status:** ✅ Completed (January 2, 2026)
   - **Goal:** Establish and enforce consistent naming conventions across the codebase.
-  - **Issue:** Inconsistent naming (e.g., `advanced-table` vs `table-` prefixes) leads to confusion and maintenance overhead.
-  - **Scope:**
-    - Files and directories (kebab-case vs snake_case)
-    - Variables and functions (camelCase vs snake_case)
-    - CSS classes and IDs
-    - Database tables and columns
-  - **Action:** Define standards in `CONTRIBUTING.md` and refactor existing inconsistencies.
+  - **Outcome:** Audited all files in Phase 7.1 of Core Code Quality Plan.
+  - **Reference:** [deprecated/core_code_quality_plan.md](deprecated/core_code_quality_plan.md)
 
-- **[ ] Code Comments Cleanup & Standards** _(Priority: High)_
+- **[x] Code Comments Cleanup & Standards** _(Priority: High)_
 
+  - **Status:** ✅ Completed (January 2, 2026)
   - **Goal:** Ensure all code comments are professional, descriptive, and follow coding standards.
-  - **Issues:**
-    - Bug reference comments (e.g., `<!-- Select2 CSS for Bug #5 -->`, `// Bug #5: Initialize Select2`)
-    - Duplicate or redundant comments
-    - Non-descriptive or unclear comments
-    - Inconsistent comment styles across files
-  - **Standards:**
-    - Comments should explain WHY, not WHAT (the code should be self-explanatory).
-    - No bug/issue references in production code.
-    - Use proper grammar and punctuation.
-    - Keep comments concise and relevant.
-    - Remove commented-out code blocks.
-  - **Scope:**
-    - HTML/Jinja2 templates: `<!-- Comment -->`
-    - JavaScript: `// Single line` or `/* Multi-line */`
-    - Python: `# Comment` or `"""Docstring"""`
-    - CSS: `/* Comment */`
-  - **Action:** Audit all files and refactor comments to meet standards.
+  - **Outcome:** Removed bug references and standardized comments in Phase 7.1 and Manual Audits.
+  - **Reference:** [deprecated/core_code_quality_plan.md](deprecated/core_code_quality_plan.md)
 
-- **[ ] Separation of Concerns - Code Organization** _(Priority: High)_
+- **[x] Separation of Concerns - Code Organization** _(Priority: High)_
 
+  - **Status:** ✅ Completed (January 2, 2026)
   - **Goal:** Ensure proper separation of HTML, CSS, and JavaScript code.
-  - **Issues:**
-    - Inline JavaScript in HTML templates
-    - Inline CSS styles in HTML templates
-    - Mixed code types in single files
-  - **Standards:**
-    - JavaScript code belongs in `.js` files only.
-    - CSS code belongs in `.css` files only.
-    - HTML code belongs in `.html` templates only.
-    - Inline styles/scripts should only be used when strictly necessary (e.g., for dynamic values from the backend).
-  - **Scope:**
-    - Extract inline `<script>` blocks to separate `.js` files.
-    - Extract inline `<style>` blocks to separate `.css` files.
-    - Move inline `style="..."` attributes to CSS classes.
-    - Move inline `onclick="..."` attributes to event listeners in JS files.
-  - **Action:** Audit all templates and refactor to ensure proper file separation.
+  - **Outcome:** Extracted inline JS/CSS in Phase 5 (Templates) and Phase 3 (Frontend).
+  - **Reference:** [deprecated/core_code_quality_plan.md](deprecated/core_code_quality_plan.md)
 
 - **[x] Structured Logging & Performance Monitoring** _(Priority: High)_
 
@@ -573,25 +544,24 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Code Quality: [code-quality.yml](https://github.com/KirilMT/Troubleshooting-Wizard/blob/main/.github/workflows/code-quality.yml)
     - Release: [release.yml](https://github.com/KirilMT/Troubleshooting-Wizard/blob/main/.github/workflows/release.yml)
 
-- **[ ] Implement Local Development Scripts** _(Priority: High)_
+- **[x] Implement Local Development Scripts** _(Priority: High)_
 
-  - **Status:** ⚙️ In Progress (December 22, 2025)
+  - **Status:** ✅ Completed (January 5, 2026)
     - ✅ `validate_code.py` - Comprehensive pre-commit validation script (simulates CI locally)
-    - ⏳ `format_code.py` - To be implemented (actively format code)
-    - ⏳ `test_workflow.py` - To be implemented (simulate full CI pipeline)
-    - ⏳ `release_manager.py` - To be implemented (version management)
+    - ✅ `format_code.py` - Actively formats code (Black, isort, Prettier)
+    - ✅ `test_workflow.py` - Deprecated (CI pipeline `ci.yml` is the source of truth)
+    - ✅ `release_manager.py` - Release management script implemented
   - **Goal:** Create utility scripts for local development workflow, adapted from Troubleshooting-Wizard.
   - **Reference:** [Troubleshooting-Wizard scripts/](https://github.com/KirilMT/Troubleshooting-Wizard/tree/main/scripts)
   - **Scripts to Implement:**
     - **`validate_code.py`:** ✅ COMPLETED - Comprehensive validation script that runs all checks (linting, formatting, tests, coverage, security) before committing. Simulates CI pipeline locally.
-    - **`format_code.py`:** Actively format Python code (not just check). Should apply Black, isort, and other formatters. Quick script for daily use.
-    - **`test_workflow.py`:** Simulate CI Pipeline, Release, and Code Quality workflows locally before pushing. More complex/slow script for pre-push validation.
-    - **`release_manager.py`:** Handle version bumping, changelog updates, and git tagging for releases.
-    - **`setup_environment.py`:** Automate project environment setup (evaluate if needed for mockCMMS).
+    - **`format_code.py`:** ✅ COMPLETED - Actively formats Python code (not just check). Applies Black, isort, and other formatters.
+    - **`test_workflow.py`:** 🚫 DEPRECATED - CI/CD pipeline handles full validation.
+    - **`release_manager.py`:** ✅ COMPLETED - Handles version bumping, changelog updates, and git tagging for releases.
+    - **`setup_environment.py`:** Not required for current scope.
   - **Key Requirements:**
     - Scripts must be modular and reusable across the mockCMMS ecosystem.
     - `format_code.py` should perform actual formatting, not just linting/checking.
-    - `test_workflow.py` should mirror the CI pipeline as closely as possible.
   - **Location:** Create a `scripts/` directory at the repository root.
 
 - **[ ] Implement Repository Standards & Configuration** _(Priority: Medium)_
@@ -819,27 +789,26 @@ This application is intended for reporting and analytics. The following features
 
 - **Line Conditions for Planning:** Standardize prerequisites for task execution.
 - **Frontend Architecture Decision:** Evaluate migration to a modern framework (Angular/React).
-- **CI/CD Pipeline:** Automated testing, code quality, and deployment.
+- **CI/CD Pipeline:** Automated testing, code quality, and deployment (In Progress).
 - **Team Collaboration Documentation:** GitHub workflows and setup automation.
-- **Code Comments Cleanup:** Remove bug references and ensure professional, descriptive comments.
-- **Code Separation:** Proper separation of HTML, CSS, and JavaScript.
+- ✅ **Standardize Naming Conventions:** COMPLETE.
+- ✅ **Code Comments Cleanup:** COMPLETE.
+- ✅ **Code Separation:** COMPLETE.
+- ✅ **Structured Logging:** COMPLETE.
+- ✅ **Local Development Scripts:** COMPLETE.
 
 **Medium Priority:**
 
 - **Advanced Technician Tracking:** Availability, workload, and dynamic status.
 - **Automated, Specialized Reports:** Shift, weekend, and technician-submitted reports.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
-- **Data Simulation Engine:** For robust testing and development.
-- **Core Test Suite Enhancement:** Comprehensive testing infrastructure.
-- **UI Regression Automation:** End-to-end UI testing.
-- **Fix GitHub Issue Templates:** Resolve template functionality issues.
-
-**Medium Priority:**
-
 - **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific filter operators.
+- **UI Regression Automation:** End-to-end UI testing.
+- ✅ **Data Simulation Engine:** COMPLETE.
+- ✅ **Fix GitHub Issue Templates:** COMPLETE.
 
 **Low Priority:**
 
-- **Advanced Table Enhancements:** Bulk operations, collaboration, automation.
+- **Advanced Table Enhancements:** Pagination, bulk operations, collaboration, automation.
 - **CODEOWNERS Update:** Add new team members.
-- **GEMINI.md Restructure:** Improve documentation organization.
+- ✅ **GEMINI.md Restructure:** COMPLETE.
