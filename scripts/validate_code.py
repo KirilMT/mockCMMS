@@ -206,14 +206,44 @@ def validate_python_backend(quick: bool = False) -> bool:
         )
         checks.append(("Tests with Coverage", success))
 
-    # 9. Coverage validation (must be >= 82%)
+    # 9. Coverage validation (Total >= 82%)
     if not quick:
-        print_section("Step 9/9: Coverage Validation")
+        print_section("Step 9/10: Total Coverage Validation")
         success, _ = run_command(
             ["pytest", "tests/", "--cov=src", "--cov-fail-under=82", "-q"],
             "Coverage threshold check (>= 82%)",
         )
-        checks.append(("Coverage Threshold", success))
+        checks.append(("Total Coverage Threshold", success))
+
+        # 10. Diff Coverage validation (New Code >= 90%)
+        print_section("Step 10/10: Diff (Patch) Coverage")
+        # Ensure we have coverage.xml
+        if not os.path.exists("coverage.xml"):
+            print_warning("coverage.xml not found, skipping diff-cover")
+            checks.append(("Diff Coverage", True))  # Soft fail if missing
+        else:
+            # Check if diff-cover is installed
+            success, output = run_command(
+                ["diff-cover", "--version"], "Check diff-cover", check=False
+            )
+            if success:
+                success, _ = run_command(
+                    [
+                        "diff-cover",
+                        "coverage.xml",
+                        "--compare-branch=origin/main",
+                        "--fail-under=90",
+                    ],
+                    "Diff Coverage Check (New Code needs 90% coverage)",
+                )
+                checks.append(("Diff Coverage", success))
+            else:
+                print_warning(
+                    "diff-cover not installed. Run 'pip install diff-cover' "
+                    "to enable patch checks."
+                )
+                # Soft fail if tool is missing to allow environment flexibility
+                checks.append(("Diff Coverage", True))
 
     # Print summary
     print_section("Python Backend Validation Summary")

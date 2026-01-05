@@ -1,8 +1,6 @@
 import json
 from unittest.mock import mock_open, patch
 
-import pytest
-
 from src.services.simulation_service import DataSimulationService
 
 
