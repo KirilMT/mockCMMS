@@ -376,7 +376,9 @@ describe('AdvancedTable Resize Methods', () => {
             document.dispatchEvent(new MouseEvent('mouseup'));
 
             // If we got here without errors, the resize workflow completed
-            expect(true).toBe(true);
+            // And width should have changed
+            expect(header.style.width).not.toBe('');
+            // Optional: verify listeners removed? (harder to test without mocking add/remove event listener on document)
         });
 
         test('should not save if no movement during resize', () => {
@@ -403,13 +405,18 @@ describe('AdvancedTable Resize Methods', () => {
         });
 
         test('should handle window resize event', () => {
+            jest.useFakeTimers();
+            const spy = jest.spyOn(table, 'handleWindowResize');
             table.initResizeListener();
 
             // Trigger window resize
             window.dispatchEvent(new Event('resize'));
-
-            // Should not throw
-            expect(true).toBe(true);
+            
+            // Fast-forward time to trigger debounce
+            jest.runAllTimers();
+            
+            expect(spy).toHaveBeenCalled();
+            jest.useRealTimers();
         });
     });
 });
