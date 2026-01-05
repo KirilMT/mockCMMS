@@ -726,7 +726,20 @@ Testing:
 ```
 
 **CRITICAL**: Never commit without reviewing ALL changed files. Hidden changes
-in unexpected files can introduce bugs or break functionality.
+
+### 1.8.1. Git Push vs PR Rules (CRITICAL)
+
+**Adhere to this decision tree to prevent orphan branches:**
+
+| Branch Status                    | Action Required      | Command                                           |
+| -------------------------------- | -------------------- | ------------------------------------------------- |
+| **Untracked** (New local branch) | **Create PR & Push** | `gh pr create --base main --head <branch> --fill` |
+| **Tracked** (Linked to remote)   | **Push Updates**     | `git push`                                        |
+
+**⚠️ NEVER use `git push -u origin <branch>` for new branches.**
+
+- Why? It pushes the branch but creates NO Pull Request.
+- **ALWAYS** use `gh pr create` for new branches.
 
 ### 1.9. AI Workflow Standards
 
@@ -1149,6 +1162,7 @@ completion summaries.
     ```
 
     **The script automatically:**
+
     - Updates CHANGELOG.md with new version and date
     - Updates README.md version footer
     - Creates git commit with conventional message
@@ -1163,6 +1177,7 @@ completion summaries.
     ```
 
     **Manual Approach (If Script Cannot Be Used):**
+
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following
        [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding
@@ -1178,6 +1193,7 @@ completion summaries.
 
     > **Note**: GitHub Copilot does not have access to automated browser testing
     > tools. All testing must be performed manually by the user.
+
     - **Requirement**: For any task involving features that have a corresponding
       test plan in the `docs/` directory (e.g.,
       `docs/table_features_test_plan.md` or any future `docs/*_test_plan.md`),

@@ -70,6 +70,7 @@ Before complex tasks, you MUST:
 
 - **Conventional Commits:** `type(scope): description`
 - **Feature Branches:** Never commit to `main`. Use `type/feature-name`.
+- **New Branches:** ALWAYS use `gh pr create` to push. NEVER use `git push -u`.
 
 ## 4. Execution Protocol (CRITICAL)
 
