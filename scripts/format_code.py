@@ -55,6 +55,9 @@ class CodeFormatter:
             env = os.environ.copy()
             env["PYTHONIOENCODING"] = "utf-8"
 
+            # On Windows, use shell=True for npm/npx to find them in PATH
+            use_shell = sys.platform == "win32" and cmd[0] in ("npm", "npx")
+
             result = subprocess.run(
                 cmd,
                 cwd=self.root_dir,
@@ -64,6 +67,7 @@ class CodeFormatter:
                 errors="replace",
                 check=False,
                 env=env,
+                shell=use_shell,
             )
 
             if result.returncode == 0:
@@ -196,6 +200,28 @@ def main() -> int:
     # Determine what to format
     format_backend = args.backend or not args.frontend
     format_frontend = args.frontend or not args.backend
+
+    # Update pre-commit hooks first (keeps versions in sync)
+    print("\n" + "=" * 80)
+    print("UPDATING PRE-COMMIT HOOKS")
+    print("=" * 80)
+    use_shell = sys.platform == "win32"
+    try:
+        result = subprocess.run(
+            ["pre-commit", "autoupdate"],
+            capture_output=True,
+            text=True,
+            shell=use_shell,
+            check=False,
+        )
+        if result.returncode == 0:
+            print("✅ Pre-commit hooks are up-to-date")
+            if result.stdout.strip():
+                print(result.stdout)
+        else:
+            print("⚠️  Could not update pre-commit hooks (non-critical)")
+    except FileNotFoundError:
+        print("⚠️  pre-commit not installed - skipping hook update")
 
     # Create formatter
     formatter = CodeFormatter(check_only=args.check)
