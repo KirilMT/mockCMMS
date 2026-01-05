@@ -4,10 +4,6 @@ _Updated January 5, 2026_
 
 ---
 
-> [!IMPORTANT] > **🚀 New to the project? Start here:** If you're unsure whether to work on the code quality audit or GitHub best practices first, read the [Implementation Priority Guide](IMPLEMENTATION_PRIORITY_GUIDE.md) for a clear, step-by-step action plan.
-
----
-
 > [!TIP] > **Document Relationship:** This roadmap tracks new features and strategic improvements. For bugs in existing functionality, see `bug_tracking.md`.
 
 ---
@@ -93,7 +89,7 @@ _Updated January 5, 2026_
 
 ---
 
-> [!IMPORTANT] > **📋 Active Plan:** [Core Code Quality Plan](core_code_quality_plan.md) - All 9 Phases Complete ✅
+> [!IMPORTANT] > **📋 Active Plan:** [Core Code Quality Plan](deprecated/core_code_quality_plan.md) - All 9 Phases Complete ✅
 > **🧪 Frontend Tests:** 437 Jest + 82 Playwright tests ✅ (80%+ branch coverage)
 > **📊 Backend Tests:** 261 pytest tests ✅ (88%+ coverage)
 
@@ -178,7 +174,7 @@ The core application can be improved with the following features to support the 
 
 #### Code Quality & Architecture
 
-> **📋 Detailed Plan:** See [Core Code Quality Plan](core_code_quality_plan.md) for the comprehensive audit and cleanup strategy.
+> **📋 Detailed Plan:** See [Core Code Quality Plan](deprecated/core_code_quality_plan.md) for the comprehensive audit and cleanup strategy.
 
 - **[x] Project Validation & Code Quality Audit** _(Priority: Critical)_
 
@@ -204,7 +200,7 @@ The core application can be improved with the following features to support the 
 
   - **Status:** ✅ **All 9 Phases Complete** (January 5, 2026)
   - **Goal:** A systematic, comprehensive audit and cleanup of all core mockCMMS code files.
-  - **Detailed Plan:** [core_code_quality_plan.md](core_code_quality_plan.md)
+  - **Detailed Plan:** [deprecated/core_code_quality_plan.md](deprecated/core_code_quality_plan.md)
   - **Scope:**
     - **Phase 1:** Automated Code Quality Analysis ✅
     - **Phase 2:** Python Backend Analysis (app.py, routes, services) ✅
@@ -817,7 +813,7 @@ This application is intended for reporting and analytics. The following features
 
 **Critical Priority:**
 
-- ✅ **Core mockCMMS Code Quality Comprehensive Audit & Cleanup:** COMPLETE ([Detailed Plan](core_code_quality_plan.md))
+- ✅ **Core mockCMMS Code Quality Comprehensive Audit & Cleanup:** COMPLETE ([Detailed Plan](deprecated/core_code_quality_plan.md))
 
 **High Priority:**
 

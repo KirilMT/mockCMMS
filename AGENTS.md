@@ -127,15 +127,15 @@ Add new tests to the appropriate category. See [tests/README.md](./tests/README.
 
 ## 8. Key Documentation
 
-| Document                                               | Purpose                                                   |
-| :----------------------------------------------------- | :-------------------------------------------------------- |
-| [GEMINI.md](./GEMINI.md)                               | **Master AI standards** - All coding rules and workflows. |
-| [docs/AI_AGENT_GUIDE.md](./docs/AI_AGENT_GUIDE.md)     | 49 detailed prompts for Code Quality Audit tasks.         |
-| [.github/CONTRIBUTING.md](./.github/CONTRIBUTING.md)   | Commit conventions, testing philosophy.                   |
-| [.github/GIT_WORKFLOW.md](./.github/GIT_WORKFLOW.md)   | Branching strategy, PR workflow.                          |
-| [docs/mockCMMS_roadmap.md](./docs/mockCMMS_roadmap.md) | Project status, active sprints.                           |
-| [docs/bug_tracking.md](./docs/bug_tracking.md)         | Bug list (ask before adding).                             |
-| [tests/README.md](./tests/README.md)                   | Test suite organization.                                  |
+| Document                                                                 | Purpose                                                        |
+| :----------------------------------------------------------------------- | :------------------------------------------------------------- |
+| [GEMINI.md](./GEMINI.md)                                                 | **Master AI standards** - All coding rules and workflows.      |
+| [docs/deprecated/AI_AGENT_GUIDE.md](./docs/deprecated/AI_AGENT_GUIDE.md) | (Deprecated) 49 detailed prompts for Code Quality Audit tasks. |
+| [.github/CONTRIBUTING.md](./.github/CONTRIBUTING.md)                     | Commit conventions, testing philosophy.                        |
+| [.github/GIT_WORKFLOW.md](./.github/GIT_WORKFLOW.md)                     | Branching strategy, PR workflow.                               |
+| [docs/mockCMMS_roadmap.md](./docs/mockCMMS_roadmap.md)                   | Project status, active sprints.                                |
+| [docs/bug_tracking.md](./docs/bug_tracking.md)                           | Bug list (ask before adding).                                  |
+| [tests/README.md](./tests/README.md)                                     | Test suite organization.                                       |
 
 ---
 
