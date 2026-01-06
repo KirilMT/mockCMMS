@@ -83,6 +83,11 @@ class TestAuthentication:
                 sess["user_id"] == admin_user.id
             ), "Session user_id should match admin user"
             assert sess["username"] == "admin", "Session should contain username"
+            # Verify new session tracking: last_active timestamp is set
+            assert "last_active" in sess, "Session should contain last_active timestamp"
+            assert isinstance(
+                sess["last_active"], (int, float)
+            ), "last_active should be a timestamp"
 
     def test_login_invalid_credentials(self, client, admin_user):
         """Test login fails with invalid password.
