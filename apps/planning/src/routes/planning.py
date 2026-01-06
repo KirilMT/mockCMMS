@@ -50,6 +50,7 @@ from apps.planning.src.services.planning_db_utils import (
     TaskManager,
     TechnologyManager,
     TechnicianGroupManager,
+    LineConditionManager,
     get_all_technician_skills_by_name,
     update_technician_skill,
     get_technician_skills_by_id,
@@ -756,6 +757,50 @@ def technician_groups_api():
     return jsonify([]), 200
 
 
+@planning_bp.route("/api/conditions", methods=["GET"])
+def get_line_conditions_api():
+    """Get all available line conditions."""
+    try:
+        line_condition_manager = LineConditionManager(g.db)
+        conditions = line_condition_manager.get_all_conditions()
+        return jsonify(conditions), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching line conditions: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@planning_bp.route("/api/tasks/<int:task_id>/conditions", methods=["GET", "POST"])
+def manage_task_conditions_api(task_id):
+    """Get or update conditions for a specific task."""
+    try:
+        line_condition_manager = LineConditionManager(g.db)
+
+        if request.method == "GET":
+            conditions = line_condition_manager.get_conditions_for_task(task_id)
+            return jsonify(conditions), 200
+
+        elif request.method == "POST":
+            data = request.get_json()
+            condition_ids = data.get("condition_ids", [])
+
+            # Clear existing conditions
+            line_condition_manager.remove_conditions_from_task(task_id)
+
+            # Add new conditions
+            for condition_id in condition_ids:
+                line_condition_manager.assign_condition_to_task(
+                    task_id, int(condition_id)
+                )
+
+            return jsonify({"message": "Task conditions updated successfully"}), 200
+
+    except Exception as e:
+        if g.db:
+            g.db.rollback()
+        current_app.logger.error(f"Error managing task conditions: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
 @planning_bp.route("/api/get_technician_mappings", methods=["GET"])
 def get_technician_mappings_api():
     try:
@@ -1000,6 +1045,11 @@ def view_schedule(schedule_id):
         # Get maintenance orders for the tasks
         task_data = []
         task_data_json = []
+
+        # Initialize managers for local DB lookups
+        task_manager = TaskManager(g.db)
+        line_condition_manager = LineConditionManager(g.db)
+
         for pt in planning_tasks:
             mo = MaintenanceOrder.query.get(pt.maintenance_order_id)
             if mo:
@@ -1018,6 +1068,15 @@ def view_schedule(schedule_id):
                         else ""
                     )
 
+                # Fetch Line Conditions
+                # We use the task description as the task name in local DB
+                line_conditions = []
+                if mo.description:
+                    local_task_id = task_manager.get_or_create(mo.description)
+                    line_conditions = line_condition_manager.get_conditions_for_task(
+                        local_task_id
+                    )
+
                 task_data_json.append(
                     {
                         "maintenance_order_id": mo.id,  # Add MO ID for table display
@@ -1034,6 +1093,7 @@ def view_schedule(schedule_id):
                         "team_size": mo.labour_count,
                         "assigned_to": assigned_to,
                         "assigned_to_skills": assigned_to_skills,
+                        "line_conditions": line_conditions,
                     }
                 )
 
