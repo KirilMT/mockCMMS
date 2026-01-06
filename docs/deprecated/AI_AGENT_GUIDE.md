@@ -1,6 +1,6 @@
 # AI Agent Guide - Code Quality Audit
 
-**Created:** December 13, 2025  
+**Created:** December 13, 2025
 **Last Updated:** January 5, 2026
 **Purpose:** AI prompts for all tasks in core_code_quality_plan.md
 
@@ -1636,11 +1636,11 @@ Tell me:
 
 You know AI understands the project when it:
 
-✅ Uses prompts from AI_AGENT_GUIDE.md without being asked  
-✅ Follows the 5-step loop for each task  
-✅ Shows findings before implementing fixes  
-✅ Updates progress in core_code_quality_plan.md  
-✅ Writes proper commit messages  
+✅ Uses prompts from AI_AGENT_GUIDE.md without being asked
+✅ Follows the 5-step loop for each task
+✅ Shows findings before implementing fixes
+✅ Updates progress in core_code_quality_plan.md
+✅ Writes proper commit messages
 ✅ Suggests next task after completion
 
 ---

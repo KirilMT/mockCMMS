@@ -2,42 +2,52 @@ import os
 import secrets
 
 SRC_DIR = os.path.abspath(os.path.dirname(__file__))
-ROOT_DIR = os.path.abspath(os.path.join(SRC_DIR, '..'))
-INSTANCE_DIR = os.path.join(ROOT_DIR, 'instance')
+ROOT_DIR = os.path.abspath(os.path.join(SRC_DIR, ".."))
+INSTANCE_DIR = os.path.join(ROOT_DIR, "instance")
+
 
 class Config:
-    """
-    Application configuration class with environment variable support.
+    """Application configuration class with environment variable support.
 
-    This class centralizes all configuration settings and provides secure defaults
-    for development while requiring proper configuration for production.
+    This class centralizes all configuration settings and provides secure defaults for
+    development while requiring proper configuration for production.
     """
 
     # --- Core Secrets / Flags ---
-    SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+    SECRET_KEY = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
 
     # Data source for task data: 'excel' (default) or 'api'
-    DATA_SOURCE = os.environ.get('DATA_SOURCE', 'excel').lower()
+    DATA_SOURCE = os.environ.get("DATA_SOURCE", "excel").lower()
 
     # Global debug mode toggle (string env values '1', 'true', 'True')
-    FLASK_DEBUG = os.environ.get('FLASK_DEBUG', '0').lower() in ('1', 'true', 'yes')
+    FLASK_DEBUG = os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
 
     # Optional separate flag just to force using test DB without enabling all debug behaviors
-    DEBUG_USE_TEST_DB = os.environ.get('PLANNING_DEBUG_USE_TEST_DB', '0').lower() in ('1', 'true', 'yes')
+    DEBUG_USE_TEST_DB = os.environ.get("PLANNING_DEBUG_USE_TEST_DB", "0").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
 
     # Optional fixed date (ISO formats e.g. '2025-04-19' or '2025-04-19T16:00:00') used by services when FLASK_DEBUG active
-    DEBUG_FIXED_DATE = os.environ.get('DEBUG_FIXED_DATE')  # parsed lazily where needed
+    DEBUG_FIXED_DATE = os.environ.get("DEBUG_FIXED_DATE")  # parsed lazily where needed
 
     # --- Flask-WTF Configuration ---
     WTF_CSRF_ENABLED = True
-    WTF_CSRF_TIME_LIMIT = int(os.environ.get('CSRF_TIME_LIMIT', '3600'))  # 1 hour default
+    WTF_CSRF_TIME_LIMIT = int(
+        os.environ.get("CSRF_TIME_LIMIT", "3600")
+    )  # 1 hour default
     WTF_CSRF_SSL_STRICT = not FLASK_DEBUG  # Disable SSL requirement in debug mode
 
     # --- Security Configuration ---
-    PERMANENT_SESSION_LIFETIME = int(os.environ.get('SESSION_LIFETIME', '1800'))  # 30 minutes default
-    SESSION_COOKIE_SECURE = not FLASK_DEBUG  # Only send cookies over HTTPS in production
+    PERMANENT_SESSION_LIFETIME = int(
+        os.environ.get("SESSION_LIFETIME", "1800")
+    )  # 30 minutes default
+    SESSION_COOKIE_SECURE = (
+        not FLASK_DEBUG
+    )  # Only send cookies over HTTPS in production
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = "Lax"
 
     # --- Database Configuration ---
     # Determine the database filename based on environment settings.
@@ -45,24 +55,26 @@ class Config:
     # 1. DATABASE_FILENAME environment variable (for explicit override).
     # 2. 'testsDB.db' if in debug mode or if test DB is forced.
     # 3. 'weekend_planning.db' as the default production database.
-    if 'DATABASE_FILENAME' in os.environ:
-        _db_filename = os.environ['DATABASE_FILENAME']
+    if "DATABASE_FILENAME" in os.environ:
+        _db_filename = os.environ["DATABASE_FILENAME"]
     elif FLASK_DEBUG or DEBUG_USE_TEST_DB:
-        _db_filename = 'testsDB.db'
+        _db_filename = "testsDB.db"
     else:
-        _db_filename = 'planning.db'
+        _db_filename = "planning.db"
 
     # The database is located in the instance directory.
     DATABASE_PATH = os.path.join(INSTANCE_DIR, _db_filename)
 
     # --- Paths ---
-    OUTPUT_FOLDER = os.path.join(ROOT_DIR, 'output')
-    TEMPLATES_FOLDER = os.path.join(SRC_DIR, 'templates')
-    STATIC_FOLDER = os.path.join(SRC_DIR, 'static')
+    OUTPUT_FOLDER = os.path.join(ROOT_DIR, "output")
+    TEMPLATES_FOLDER = os.path.join(SRC_DIR, "templates")
+    STATIC_FOLDER = os.path.join(SRC_DIR, "static")
 
     # File upload restrictions
-    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_UPLOAD_SIZE', '16777216'))  # 16MB default
-    ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'xlsb', 'csv'}
+    MAX_CONTENT_LENGTH = int(
+        os.environ.get("MAX_UPLOAD_SIZE", "16777216")
+    )  # 16MB default
+    ALLOWED_EXTENSIONS = {"xlsx", "xls", "xlsb", "csv"}
 
     # Ensure these directories exist
     os.makedirs(INSTANCE_DIR, exist_ok=True)
@@ -76,11 +88,14 @@ class Config:
     @classmethod
     def get_fixed_datetime(cls):
         """Return a datetime override if FLASK_DEBUG and a fixed date is set; else None.
-        If DEBUG_FIXED_DATE not set but FLASK_DEBUG is true, returns canonical test date.
+
+        If DEBUG_FIXED_DATE not set but FLASK_DEBUG is true, returns canonical test
+        date.
         """
         if not cls.FLASK_DEBUG:
             return None
         from datetime import datetime
+
         if cls.DEBUG_FIXED_DATE:
             try:
                 return datetime.fromisoformat(cls.DEBUG_FIXED_DATE)
@@ -105,9 +120,13 @@ class Config:
 
         # Check database path accessibility
         import os
+
         db_dir = os.path.dirname(cls.DATABASE_PATH)
         if not os.path.exists(db_dir):
             errors.append(f"Database directory does not exist: {db_dir}")
 
         if errors:
-            raise ValueError("Configuration validation failed:\n" + "\n".join(f"- {error}" for error in errors))
+            raise ValueError(
+                "Configuration validation failed:\n"
+                + "\n".join(f"- {error}" for error in errors)
+            )

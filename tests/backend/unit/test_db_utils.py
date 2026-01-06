@@ -220,7 +220,6 @@ class TestEnhancedDatabaseUtilities:
     def test_database_constraints(self, app):
         """Test database constraints (unique constraints)."""
         with app.app_context():
-
             asset1 = Asset(
                 asset_code="CONST-001",
                 name="Asset 1",

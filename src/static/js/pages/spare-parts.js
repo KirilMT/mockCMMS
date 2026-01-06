@@ -47,7 +47,7 @@ function initSparePartsTable() {
       "sparePartsTable",
       sparePartsData,
       getSparePartsColumns(),
-      25
+      25,
     );
   }
 }

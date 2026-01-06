@@ -46,11 +46,11 @@ This document tracks all identified bugs in the **Planning App** (`apps/planning
 ## 🐛 OPEN BUGS
 
 ### Bug #P1: Dashboard "Due Soon" Count Incorrect
-**Priority:** Medium  
+**Priority:** Medium
 **Status:** Open
 **Source:** Migrated from main app Bug #19 - December 10, 2025
 
-**Description:**  
+**Description:**
 The "Due Soon" counter on the Dashboard includes closed/completed orders, inflating the urgency.
 
 **Expected Behavior:**

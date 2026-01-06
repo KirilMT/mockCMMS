@@ -28,29 +28,29 @@ class ToastNotification {
    * @param {string} [type='info'] - Toast type: 'success', 'error', 'warning', or 'info'
    * @param {number} [duration=5000] - Auto-dismiss duration in milliseconds (0 = no auto-dismiss)
    */
-  static show(message, type = 'info', duration = 5000) {
+  static show(message, type = "info", duration = 5000) {
     const container =
-      document.getElementById('toastContainer') || this.createContainer();
+      document.getElementById("toastContainer") || this.createContainer();
 
     const icons = {
-      success: 'fas fa-check-circle',
-      error: 'fas fa-exclamation-circle',
-      warning: 'fas fa-exclamation-triangle',
-      info: 'fas fa-info-circle',
+      success: "fas fa-check-circle",
+      error: "fas fa-exclamation-circle",
+      warning: "fas fa-exclamation-triangle",
+      info: "fas fa-info-circle",
     };
 
     const titles = {
-      success: 'Success',
-      error: 'Error',
-      warning: 'Warning',
-      info: 'Info',
+      success: "Success",
+      error: "Error",
+      warning: "Warning",
+      info: "Info",
     };
 
-    const toastId = 'toast-' + Date.now();
-    const toast = document.createElement('div');
-    toast.className = 'toast show';
+    const toastId = "toast-" + Date.now();
+    const toast = document.createElement("div");
+    toast.className = "toast show";
     toast.id = toastId;
-    toast.style.opacity = '1';
+    toast.style.opacity = "1";
     toast.innerHTML = `
             <div class="toast-header toast-${type}">
                 <i class="toast-icon ${icons[type]}"></i>
@@ -62,8 +62,8 @@ class ToastNotification {
             <div class="toast-body">${message}</div>
         `;
 
-    const closeBtn = toast.querySelector('.toast-close');
-    closeBtn.addEventListener('click', () => {
+    const closeBtn = toast.querySelector(".toast-close");
+    closeBtn.addEventListener("click", () => {
       ToastNotification.hide(toastId);
     });
 
@@ -84,8 +84,8 @@ class ToastNotification {
   static hide(toastId) {
     const toast = document.getElementById(toastId);
     if (toast) {
-      toast.classList.add('hiding');
-      toast.classList.remove('show');
+      toast.classList.add("hiding");
+      toast.classList.remove("show");
       setTimeout(() => {
         toast.remove();
       }, 300);
@@ -99,11 +99,11 @@ class ToastNotification {
    * @returns {HTMLElement} The created container element
    */
   static createContainer() {
-    const container = document.createElement('div');
-    container.id = 'toastContainer';
-    container.className = 'position-fixed';
+    const container = document.createElement("div");
+    container.id = "toastContainer";
+    container.className = "position-fixed";
     container.style.cssText =
-      'top: 70px; left: 50%; transform: translateX(-50%); z-index: 10000; min-width: 400px; max-width: 600px;';
+      "top: 70px; left: 50%; transform: translateX(-50%); z-index: 10000; min-width: 400px; max-width: 600px;";
     document.body.appendChild(container);
     return container;
   }
@@ -115,7 +115,7 @@ class ToastNotification {
    * @param {number} [duration=5000] - Auto-dismiss duration in milliseconds
    */
   static success(message, duration = 5000) {
-    ToastNotification.show(message, 'success', duration);
+    ToastNotification.show(message, "success", duration);
   }
 
   /**
@@ -125,7 +125,7 @@ class ToastNotification {
    * @param {number} [duration=7000] - Auto-dismiss duration in milliseconds
    */
   static error(message, duration = 7000) {
-    ToastNotification.show(message, 'error', duration);
+    ToastNotification.show(message, "error", duration);
   }
 
   /**
@@ -135,7 +135,7 @@ class ToastNotification {
    * @param {number} [duration=6000] - Auto-dismiss duration in milliseconds
    */
   static warning(message, duration = 6000) {
-    ToastNotification.show(message, 'warning', duration);
+    ToastNotification.show(message, "warning", duration);
   }
 
   /**
@@ -145,16 +145,16 @@ class ToastNotification {
    * @param {number} [duration=5000] - Auto-dismiss duration in milliseconds
    */
   static info(message, duration = 5000) {
-    ToastNotification.show(message, 'info', duration);
+    ToastNotification.show(message, "info", duration);
   }
 }
 
 // Export to global scope
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.ToastNotification = ToastNotification;
 }
 
 // Export for testing
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = ToastNotification;
 }

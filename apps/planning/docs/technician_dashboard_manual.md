@@ -50,7 +50,7 @@ The Gantt chart shows when tasks are scheduled on a timeline:
 
 The table and Gantt chart work together through:
 
-1. **Unique Task Indexing**: 
+1. **Unique Task Indexing**:
    - Each task has the same position (row number) in both the table and Gantt chart
    - When you look at row 3 in the table, the same task appears in position 3 in the Gantt chart
 
@@ -98,7 +98,7 @@ The dashboard provides additional information when you interact with it:
 
 The dashboard connects with other maintenance systems:
 
-1. **Preventive Maintenance System**: 
+1. **Preventive Maintenance System**:
    - Access maintenance records and documentation
    - View maintenance history
    - See manufacturer recommendations
@@ -141,5 +141,5 @@ This manual explains how to use the Technician Dashboard. If you need help, have
 
 ***
 
-Document Version: 1.0  
+Document Version: 1.0
 Last Updated: [Current Date]

@@ -6,274 +6,283 @@
 /* === CUSTOM GANTT CHART STRUCTURE === */
 
 #gantt-container {
-    /* Container for the custom Gantt chart */
-    min-height: 50px;
-    overflow-x: auto; /* Allow horizontal scrolling for wide timelines */
+  /* Container for the custom Gantt chart */
+  min-height: 50px;
+  overflow-x: auto; /* Allow horizontal scrolling for wide timelines */
 }
 
 .custom-gantt-chart {
-    display: flex;
-    width: 100%;
-    /* height is set dynamically in JavaScript based on technician count */
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #fff;
+  display: flex;
+  width: 100%;
+  /* height is set dynamically in JavaScript based on technician count */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
 }
 
 /* Fixed Left Pane - Technician Names */
 .gantt-fixed-left-pane {
-    width: 200px;
-    flex-shrink: 0;
-    border-right: 2px solid #ccc;
-    background: #f9f9f9;
-    display: flex;
-    flex-direction: column;
-    z-index: 20;
+  width: 200px;
+  flex-shrink: 0;
+  border-right: 2px solid #ccc;
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
 }
 
 .gantt-header-spacer {
-    border-bottom: 2px solid #ccc;
-    font-weight: 600;
-    color: #333;
+  border-bottom: 2px solid #ccc;
+  font-weight: 600;
+  color: #333;
 }
 
 .gantt-technician-labels {
-    flex: 1;
-    overflow-y: auto;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .gantt-tech-label {
-    transition: background 0.2s;
+  transition: background 0.2s;
 }
 
 .gantt-tech-label:hover {
-    background: #e9ecef !important;
+  background: #e9ecef !important;
 }
 
 /* Scrollable Right Pane - Timeline */
 .gantt-scrollable-right-pane {
-    flex: 1;
-    overflow-x: auto;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .gantt-time-header {
-    border-bottom: 2px solid #ccc;
-    background: #fff;
+  border-bottom: 2px solid #ccc;
+  background: #fff;
 }
 
 .gantt-time-axis {
-    min-width: 100%;
+  min-width: 100%;
 }
 
 .gantt-time-tick {
-    border-right: 1px solid #eee;
-    font-weight: 500;
+  border-right: 1px solid #eee;
+  font-weight: 500;
 }
 
 /* Gantt Rows */
 .gantt-rows-container {
-    flex: 1;
+  flex: 1;
 }
 
 .gantt-row {
-    transition: background 0.2s;
+  transition: background 0.2s;
 }
 
 .gantt-row:hover {
-    background: #f0f8ff !important;
+  background: #f0f8ff !important;
 }
 
 .gantt-grid-cell {
-    height: 100%;
+  height: 100%;
 }
 
 /* Task Bars */
 .gantt-task-bar {
-    transition: all 0.2s;
+  transition: all 0.2s;
 }
 
 .gantt-task-bar:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
-    z-index: 200;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+  z-index: 200;
 }
 
 /* Gantt View Mode Controls */
 .gantt-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .gantt-view-modes {
-    display: flex;
-    gap: 8px;
+  display: flex;
+  gap: 8px;
 }
 
 .gantt-view-modes button {
-    padding: 6px 12px;
-    border: 1px solid #ddd;
-    background: white;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s;
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
 
 .gantt-view-modes button:hover {
-    background: #f0f0f0;
+  background: #f0f0f0;
 }
 
 .gantt-view-modes button.active {
-    background: #007bff;
-    color: white;
-    border-color: #007bff;
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
 }
 
 /* Gantt Legend */
 .gantt-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-top: 20px;
-    padding: 15px;
-    background: #f9f9f9;
-    border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 6px;
 }
 
 .gantt-legend h6 {
-    width: 100%;
-    margin: 0 0 10px 0;
-    font-weight: 600;
-    color: #333;
+  width: 100%;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+  color: #333;
 }
 
 .gantt-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .gantt-legend-color {
-    width: 24px;
-    height: 16px;
-    border-radius: 3px;
+  width: 24px;
+  height: 16px;
+  border-radius: 3px;
 }
 
-.gantt-legend-color.critical { background: #dc3545; }
-.gantt-legend-color.high { background: #fd7e14; }
-.gantt-legend-color.medium { background: #ffc107; }
-.gantt-legend-color.low { background: #28a745; }
-.gantt-legend-color.unassigned { background: #6c757d; }
+.gantt-legend-color.critical {
+  background: #dc3545;
+}
+.gantt-legend-color.high {
+  background: #fd7e14;
+}
+.gantt-legend-color.medium {
+  background: #ffc107;
+}
+.gantt-legend-color.low {
+  background: #28a745;
+}
+.gantt-legend-color.unassigned {
+  background: #6c757d;
+}
 
 /* Resource Allocation */
 .resource-allocation-summary {
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 6px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 6px;
 }
 
 .resource-allocation-summary h5 {
-    margin-bottom: 15px;
-    font-weight: 600;
+  margin-bottom: 15px;
+  font-weight: 600;
 }
 
 .technician-utilization {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
 }
 
 .technician-card {
-    background: white;
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 4px solid #007bff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: white;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .technician-card h6 {
-    margin: 0 0 10px 0;
-    font-weight: 600;
-    color: #333;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+  color: #333;
 }
 
 .utilization-bar {
-    height: 20px;
-    background: #e9ecef;
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 10px 0;
+  height: 20px;
+  background: #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 10px 0;
 }
 
 .utilization-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
-    transition: width 0.3s ease;
+  height: 100%;
+  background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+  transition: width 0.3s ease;
 }
 
 .utilization-stats {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    color: #666;
-    margin-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 5px;
 }
 
 /* Empty State */
 .gantt-empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #6c757d;
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
 }
 
 .gantt-empty-state i {
-    font-size: 3rem;
-    margin-bottom: 15px;
-    color: #adb5bd;
+  font-size: 3rem;
+  margin-bottom: 15px;
+  color: #adb5bd;
 }
 
 .gantt-empty-state h5 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 10px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .gantt-empty-state p {
-    font-size: 0.95rem;
+  font-size: 0.95rem;
 }
 
 /* Loading State */
 .gantt-loading {
-    text-align: center;
-    padding: 40px 20px;
+  text-align: center;
+  padding: 40px 20px;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .custom-gantt-chart {
-        height: 400px;
-    }
+  .custom-gantt-chart {
+    height: 400px;
+  }
 
-    .gantt-fixed-left-pane {
-        width: 150px;
-    }
+  .gantt-fixed-left-pane {
+    width: 150px;
+  }
 
-    .gantt-controls {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
+  .gantt-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 
-    .technician-utilization {
-        grid-template-columns: 1fr;
-    }
+  .technician-utilization {
+    grid-template-columns: 1fr;
+  }
 }
-

@@ -1,5 +1,4 @@
-"""
-Unit tests for core application functionality.
+"""Unit tests for core application functionality.
 
 ⚠️ DEPRECATED - MARK FOR DELETION IN PHASE 4
 ==============================================
@@ -20,12 +19,15 @@ REPLACEMENT: Core functionality is tested in:
   - test_planning_engine.py (planning logic)
   - test_transformation_layer.py (data transformation)
 """
+
 import pytest
 import json
 from unittest.mock import patch
 
 # Mark all tests in this file for skip with deprecation notice
-pytestmark = pytest.mark.skip(reason="DEPRECATED: Legacy tests for old SQLite architecture. Will be deleted in Phase 4.")
+pytestmark = pytest.mark.skip(
+    reason="DEPRECATED: Legacy tests for old SQLite architecture. Will be deleted in Phase 4."
+)
 
 
 class TestDatabaseOperations:
@@ -36,7 +38,7 @@ class TestDatabaseOperations:
         from src.services.db_utils import get_db_connection
 
         with app.app_context():
-            conn = get_db_connection(app.config['DATABASE_PATH'])
+            conn = get_db_connection(app.config["DATABASE_PATH"])
             cursor = conn.cursor()
 
             # Check critical tables exist
@@ -44,8 +46,11 @@ class TestDatabaseOperations:
             tables = [row[0] for row in cursor.fetchall()]
 
             expected_tables = [
-                'technicians', 'technologies', 'tasks',
-                'technician_technology_skills', 'task_required_skills'
+                "technicians",
+                "technologies",
+                "tasks",
+                "technician_technology_skills",
+                "task_required_skills",
             ]
 
             for table in expected_tables:
@@ -58,18 +63,20 @@ class TestDatabaseOperations:
         from src.services.db_utils import get_db_connection
 
         with app.app_context():
-            conn = get_db_connection(app.config['DATABASE_PATH'])
+            conn = get_db_connection(app.config["DATABASE_PATH"])
             cursor = conn.cursor()
 
             # Create test technician
             cursor.execute(
                 "INSERT INTO technicians (name, satellite_point_id) VALUES (?, ?)",
-                ("Test Tech", 1)
+                ("Test Tech", 1),
             )
             conn.commit()
 
             # Verify creation
-            cursor.execute("SELECT name FROM technicians WHERE name = ?", ("Test Tech",))
+            cursor.execute(
+                "SELECT name FROM technicians WHERE name = ?", ("Test Tech",)
+            )
             result = cursor.fetchone()
             assert result is not None
             assert result[0] == "Test Tech"
@@ -117,7 +124,7 @@ class TestAPIEndpoints:
 
     def test_technicians_api_endpoint(self, client, test_db):
         """Test technicians API endpoint."""
-        response = client.get('/api/technicians')
+        response = client.get("/api/technicians")
         assert response.status_code == 200
 
         data = json.loads(response.data)
@@ -127,7 +134,7 @@ class TestAPIEndpoints:
         """Test API rate limiting is active."""
         # This test would require multiple rapid requests
         # For now, just verify the endpoint exists
-        response = client.get('/api/technicians')
+        response = client.get("/api/technicians")
         assert response.status_code in [200, 429]  # 429 = Rate Limited
 
 
@@ -163,8 +170,8 @@ class TestLoggingAndMetrics:
 
         assert "GET_test_endpoint" in collector.request_metrics
         metrics = collector.request_metrics["GET_test_endpoint"]
-        assert metrics['count'] == 1
-        assert metrics['total_duration'] == 0.5
+        assert metrics["count"] == 1
+        assert metrics["total_duration"] == 0.5
 
 
 class TestConfigurationValidation:
@@ -178,11 +185,11 @@ class TestConfigurationValidation:
             # Should not raise exception
             Config.validate_config()
 
-    @patch('config.Config.FLASK_DEBUG', False)
+    @patch("config.Config.FLASK_DEBUG", False)
     def test_production_config_warnings(self):
         """Test production configuration validation warnings."""
         from src.config import Config
 
         # Test would check for production-specific validations
         # This is a placeholder for more comprehensive production checks
-        assert hasattr(Config, 'validate_config')
+        assert hasattr(Config, "validate_config")

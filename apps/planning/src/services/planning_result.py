@@ -1,11 +1,9 @@
 # apps/planning/src/services/planning_result.py
+"""Planning Result Data Structures.
 
-"""
-Planning Result Data Structures
-
-This module defines the data structures returned by the planning engine.
-It provides a clear, structured format for assignment results, unassigned tasks,
-and metadata about the planning run.
+This module defines the data structures returned by the planning engine. It provides a
+clear, structured format for assignment results, unassigned tasks, and metadata about
+the planning run.
 """
 
 from dataclasses import dataclass, field
@@ -16,6 +14,7 @@ from enum import Enum
 
 class UnassignedReason(Enum):
     """Enumeration of reasons why a task could not be assigned."""
+
     NO_MATCHING_SKILLS = "no_matching_skills"
     INSUFFICIENT_PARTS = "insufficient_parts"
     NO_AVAILABLE_TECHNICIANS = "no_available_technicians"
@@ -45,18 +44,18 @@ class TaskAssignment:
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
         return {
-            'planning_task_id': self.planning_task_id,
-            'maintenance_order_id': self.maintenance_order_id,
-            'task_description': self.task_description,
-            'assigned_technician_ids': self.assigned_technician_ids,
-            'assigned_technician_names': self.assigned_technician_names,
-            'planned_start_time': self.planned_start_time.isoformat(),
-            'planned_end_time': self.planned_end_time.isoformat(),
-            'estimated_duration_minutes': self.estimated_duration_minutes,
-            'actual_duration_minutes': self.actual_duration_minutes,
-            'required_skills': self.required_skills,
-            'priority': self.priority,
-            'task_type': self.task_type
+            "planning_task_id": self.planning_task_id,
+            "maintenance_order_id": self.maintenance_order_id,
+            "task_description": self.task_description,
+            "assigned_technician_ids": self.assigned_technician_ids,
+            "assigned_technician_names": self.assigned_technician_names,
+            "planned_start_time": self.planned_start_time.isoformat(),
+            "planned_end_time": self.planned_end_time.isoformat(),
+            "estimated_duration_minutes": self.estimated_duration_minutes,
+            "actual_duration_minutes": self.actual_duration_minutes,
+            "required_skills": self.required_skills,
+            "priority": self.priority,
+            "task_type": self.task_type,
         }
 
 
@@ -78,16 +77,16 @@ class UnassignedTask:
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
         return {
-            'planning_task_id': self.planning_task_id,
-            'maintenance_order_id': self.maintenance_order_id,
-            'task_description': self.task_description,
-            'reason': self.reason.value,
-            'reason_detail': self.reason_detail,
-            'required_skills': self.required_skills,
-            'priority': self.priority,
-            'task_type': self.task_type,
-            'missing_skills': self.missing_skills,
-            'insufficient_parts': self.insufficient_parts
+            "planning_task_id": self.planning_task_id,
+            "maintenance_order_id": self.maintenance_order_id,
+            "task_description": self.task_description,
+            "reason": self.reason.value,
+            "reason_detail": self.reason_detail,
+            "required_skills": self.required_skills,
+            "priority": self.priority,
+            "task_type": self.task_type,
+            "missing_skills": self.missing_skills,
+            "insufficient_parts": self.insufficient_parts,
         }
 
 
@@ -107,14 +106,14 @@ class TechnicianWorkload:
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
         return {
-            'technician_id': self.technician_id,
-            'technician_name': self.technician_name,
-            'total_assigned_minutes': self.total_assigned_minutes,
-            'total_available_minutes': self.total_available_minutes,
-            'utilization_percentage': round(self.utilization_percentage, 2),
-            'assigned_task_count': self.assigned_task_count,
-            'assigned_task_ids': self.assigned_task_ids,
-            'shift_name': self.shift_name
+            "technician_id": self.technician_id,
+            "technician_name": self.technician_name,
+            "total_assigned_minutes": self.total_assigned_minutes,
+            "total_available_minutes": self.total_available_minutes,
+            "utilization_percentage": round(self.utilization_percentage, 2),
+            "assigned_task_count": self.assigned_task_count,
+            "assigned_task_ids": self.assigned_task_ids,
+            "shift_name": self.shift_name,
         }
 
 
@@ -134,24 +133,23 @@ class PlanningStatistics:
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
         return {
-            'total_tasks': self.total_tasks,
-            'assigned_tasks': self.assigned_tasks,
-            'unassigned_tasks': self.unassigned_tasks,
-            'assignment_success_rate': round(self.assignment_success_rate, 2),
-            'total_technicians': self.total_technicians,
-            'utilized_technicians': self.utilized_technicians,
-            'average_utilization': round(self.average_utilization, 2),
-            'planning_duration_seconds': round(self.planning_duration_seconds, 3)
+            "total_tasks": self.total_tasks,
+            "assigned_tasks": self.assigned_tasks,
+            "unassigned_tasks": self.unassigned_tasks,
+            "assignment_success_rate": round(self.assignment_success_rate, 2),
+            "total_technicians": self.total_technicians,
+            "utilized_technicians": self.utilized_technicians,
+            "average_utilization": round(self.average_utilization, 2),
+            "planning_duration_seconds": round(self.planning_duration_seconds, 3),
         }
 
 
 @dataclass
 class PlanningResult:
-    """
-    Complete result of a planning run.
+    """Complete result of a planning run.
 
-    This is the primary output structure of the planning engine.
-    It contains all assignments, unassigned tasks, workload summaries, and metadata.
+    This is the primary output structure of the planning engine. It contains all
+    assignments, unassigned tasks, workload summaries, and metadata.
     """
 
     schedule_id: int
@@ -172,18 +170,18 @@ class PlanningResult:
     def to_dict(self) -> dict:
         """Convert entire result to dictionary for JSON serialization."""
         return {
-            'schedule_id': self.schedule_id,
-            'schedule_name': self.schedule_name,
-            'planning_mode': self.planning_mode,
-            'start_date': self.start_date.isoformat(),
-            'end_date': self.end_date.isoformat(),
-            'created_at': self.created_at.isoformat(),
-            'assigned_tasks': [task.to_dict() for task in self.assigned_tasks],
-            'unassigned_tasks': [task.to_dict() for task in self.unassigned_tasks],
-            'technician_workloads': [wl.to_dict() for wl in self.technician_workloads],
-            'statistics': self.statistics.to_dict() if self.statistics else None,
-            'warnings': self.warnings,
-            'errors': self.errors
+            "schedule_id": self.schedule_id,
+            "schedule_name": self.schedule_name,
+            "planning_mode": self.planning_mode,
+            "start_date": self.start_date.isoformat(),
+            "end_date": self.end_date.isoformat(),
+            "created_at": self.created_at.isoformat(),
+            "assigned_tasks": [task.to_dict() for task in self.assigned_tasks],
+            "unassigned_tasks": [task.to_dict() for task in self.unassigned_tasks],
+            "technician_workloads": [wl.to_dict() for wl in self.technician_workloads],
+            "statistics": self.statistics.to_dict() if self.statistics else None,
+            "warnings": self.warnings,
+            "errors": self.errors,
         }
 
     def add_assignment(self, assignment: TaskAssignment):
@@ -211,10 +209,14 @@ class PlanningResult:
         success_rate = (assigned_count / total_tasks * 100) if total_tasks > 0 else 0
 
         total_techs = len(self.technician_workloads)
-        utilized_techs = len([wl for wl in self.technician_workloads if wl.assigned_task_count > 0])
+        utilized_techs = len(
+            [wl for wl in self.technician_workloads if wl.assigned_task_count > 0]
+        )
         avg_utilization = (
-            sum(wl.utilization_percentage for wl in self.technician_workloads) / total_techs
-            if total_techs > 0 else 0
+            sum(wl.utilization_percentage for wl in self.technician_workloads)
+            / total_techs
+            if total_techs > 0
+            else 0
         )
 
         self.statistics = PlanningStatistics(
@@ -225,6 +227,5 @@ class PlanningResult:
             total_technicians=total_techs,
             utilized_technicians=utilized_techs,
             average_utilization=avg_utilization,
-            planning_duration_seconds=0  # Will be set by the engine
+            planning_duration_seconds=0,  # Will be set by the engine
         )
-

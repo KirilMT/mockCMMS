@@ -3,296 +3,295 @@
  * Custom styles for Frappe Gantt integration
  */
 
-
 /* Gantt View Mode Controls */
 .gantt-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
 }
 
 .gantt-view-modes {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 .gantt-view-modes .btn {
-    font-size: 0.875rem;
-    padding: 6px 12px;
+  font-size: 0.875rem;
+  padding: 6px 12px;
 }
 
 /* Custom Task Bar Colors by Priority */
 .gantt .bar-critical {
-    fill: #dc3545 !important;  /* Red - Critical */
+  fill: #dc3545 !important; /* Red - Critical */
 }
 
 .gantt .bar-high {
-    fill: #fd7e14 !important;  /* Orange - High */
+  fill: #fd7e14 !important; /* Orange - High */
 }
 
 .gantt .bar-medium {
-    fill: #ffc107 !important;  /* Yellow - Medium */
+  fill: #ffc107 !important; /* Yellow - Medium */
 }
 
 .gantt .bar-low {
-    fill: #28a745 !important;  /* Green - Low */
+  fill: #28a745 !important; /* Green - Low */
 }
 
 .gantt .bar-undefined {
-    fill: #6c757d !important;  /* Gray - Undefined */
+  fill: #6c757d !important; /* Gray - Undefined */
 }
 
 /* Custom Task Bar Colors by Status */
 .gantt .bar-planned {
-    opacity: 0.8;
+  opacity: 0.8;
 }
 
 .gantt .bar-in-progress {
-    opacity: 0.9;
-    stroke: #007bff;
-    stroke-width: 2px;
+  opacity: 0.9;
+  stroke: #007bff;
+  stroke-width: 2px;
 }
 
 .gantt .bar-completed {
-    opacity: 0.5;
-    fill: #6c757d !important;
+  opacity: 0.5;
+  fill: #6c757d !important;
 }
 
 .gantt .bar-unplanned {
-    opacity: 0.3;
-    stroke-dasharray: 5, 5;
+  opacity: 0.3;
+  stroke-dasharray: 5, 5;
 }
 
 /* Gantt Popup Customization */
 .gantt-popup {
-    padding: 10px;
-    min-width: 250px;
+  padding: 10px;
+  min-width: 250px;
 }
 
 .gantt-popup h5 {
-    margin: 0 0 10px 0;
-    font-size: 1rem;
-    font-weight: bold;
-    color: #333;
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #333;
 }
 
 .gantt-popup p {
-    margin: 5px 0;
-    font-size: 0.875rem;
-    color: #666;
+  margin: 5px 0;
+  font-size: 0.875rem;
+  color: #666;
 }
 
 .gantt-popup p strong {
-    color: #333;
-    font-weight: 600;
+  color: #333;
+  font-weight: 600;
 }
 
 /* Gantt Legend */
 .gantt-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-top: 20px;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
 }
 
 .gantt-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
 }
 
 .gantt-legend-color {
-    width: 20px;
-    height: 20px;
-    border-radius: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
 }
 
 .gantt-legend-color.critical {
-    background: #dc3545;
+  background: #dc3545;
 }
 
 .gantt-legend-color.high {
-    background: #fd7e14;
+  background: #fd7e14;
 }
 
 .gantt-legend-color.medium {
-    background: #ffc107;
+  background: #ffc107;
 }
 
 .gantt-legend-color.low {
-    background: #28a745;
+  background: #28a745;
 }
 
 .gantt-legend-color.unassigned {
-    background: #6c757d;
+  background: #6c757d;
 }
 
 /* Resource Allocation Summary */
 .resource-allocation-summary {
-    margin-top: 30px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 6px;
+  margin-top: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 6px;
 }
 
 .resource-allocation-summary h5 {
-    margin-bottom: 15px;
-    font-weight: 600;
+  margin-bottom: 15px;
+  font-weight: 600;
 }
 
 .technician-utilization {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
 }
 
 .technician-card {
-    background: white;
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 4px solid #007bff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: white;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .technician-card h6 {
-    margin: 0 0 10px 0;
-    font-weight: 600;
-    color: #333;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+  color: #333;
 }
 
 .utilization-bar {
-    height: 20px;
-    background: #e9ecef;
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 10px 0;
+  height: 20px;
+  background: #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 10px 0;
 }
 
 .utilization-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
-    transition: width 0.3s ease;
+  height: 100%;
+  background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+  transition: width 0.3s ease;
 }
 
 .utilization-stats {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    color: #666;
-    margin-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 5px;
 }
 
 /* Empty State */
 .gantt-empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #6c757d;
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
 }
 
 .gantt-empty-state i {
-    font-size: 3rem;
-    margin-bottom: 15px;
-    opacity: 0.5;
+  font-size: 3rem;
+  margin-bottom: 15px;
+  opacity: 0.5;
 }
 
 .gantt-empty-state h5 {
-    margin-bottom: 10px;
-    font-weight: 600;
+  margin-bottom: 10px;
+  font-weight: 600;
 }
 
 /* Loading State */
 .gantt-loading {
-    text-align: center;
-    padding: 40px;
+  text-align: center;
+  padding: 40px;
 }
 
 .gantt-loading .spinner-border {
-    width: 3rem;
-    height: 3rem;
+  width: 3rem;
+  height: 3rem;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .gantt-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
+  .gantt-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
 
-    .gantt-view-modes {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
+  .gantt-view-modes {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 
-    .technician-utilization {
-        grid-template-columns: 1fr;
-    }
+  .technician-utilization {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Override Frappe Gantt default styles */
 .gantt .grid-header {
-    fill: #f8f9fa;
-    stroke: #dee2e6;
+  fill: #f8f9fa;
+  stroke: #dee2e6;
 }
 
 .gantt .grid-row {
-    fill: #ffffff;
+  fill: #ffffff;
 }
 
 .gantt .grid-row:nth-child(even) {
-    fill: #f8f9fa;
+  fill: #f8f9fa;
 }
 
 .gantt .today-highlight {
-    fill: #e3f2fd;
-    opacity: 0.5;
+  fill: #e3f2fd;
+  opacity: 0.5;
 }
 
 .gantt .arrow {
-    stroke: #6c757d;
-    stroke-width: 1.5px;
+  stroke: #6c757d;
+  stroke-width: 1.5px;
 }
 
 /* Task bar hover effect */
 .gantt .bar-wrapper:hover .bar {
-    opacity: 1;
-    filter: brightness(0.95);
+  opacity: 1;
+  filter: brightness(0.95);
 }
 
 /* Progress bar within task */
 .gantt .bar-progress {
-    fill: rgba(255, 255, 255, 0.3);
+  fill: rgba(255, 255, 255, 0.3);
 }
 
 /* Task labels */
 .gantt .bar-label {
-    fill: #fff;
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  fill: #fff;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Gantt grid lines */
 .gantt .tick {
-    stroke: #e0e0e0;
-    stroke-width: 0.5px;
+  stroke: #e0e0e0;
+  stroke-width: 0.5px;
 }
 
 .gantt .tick.thick {
-    stroke: #b0b0b0;
-    stroke-width: 1px;
+  stroke: #b0b0b0;
+  stroke-width: 1px;
 }
 
 /* Date headers */
-.gantt .upper-text, .gantt .lower-text {
-    fill: #495057;
-    font-weight: 500;
+.gantt .upper-text,
+.gantt .lower-text {
+  fill: #495057;
+  font-weight: 500;
 }
-

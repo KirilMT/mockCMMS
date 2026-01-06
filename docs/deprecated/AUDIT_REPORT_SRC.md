@@ -1,8 +1,8 @@
 # Audit Report: mockCMMS Source Code (`src/` Directory)
 
-**Date:** December 17, 2025  
-**Scope:** `src/*.py`, `src/routes/`, `src/services/`  
-**Status:** ✅ COMPLETE  
+**Date:** December 17, 2025
+**Scope:** `src/*.py`, `src/routes/`, `src/services/`
+**Status:** ✅ COMPLETE
 **Auditor:** AI Assistant
 
 ---

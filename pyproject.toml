@@ -202,4 +202,3 @@ exclude = [
 module = "apps.*"
 ignore_errors = true
 follow_imports = "silent"
-

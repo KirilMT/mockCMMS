@@ -191,4 +191,3 @@ Create an `archived/` folder in `docs/` and move the completed plan there, or si
 ---
 
 **Remember:** Keep these files updated as you go! They're your source of truth for project progress.
-

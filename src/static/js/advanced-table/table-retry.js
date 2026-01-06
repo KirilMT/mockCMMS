@@ -15,7 +15,7 @@ AdvancedTable.prototype.fetchWithRetry = async function (
   url,
   options = {},
   maxRetries = 3,
-  baseDelay = 1000
+  baseDelay = 1000,
 ) {
   let lastError;
 
@@ -46,14 +46,14 @@ AdvancedTable.prototype.fetchWithRetry = async function (
       lastError = error;
 
       // Check if it's a network error
-      if (error instanceof TypeError && error.message.includes('fetch')) {
+      if (error instanceof TypeError && error.message.includes("fetch")) {
         if (attempt < maxRetries) {
           const delay = baseDelay * Math.pow(2, attempt);
 
           // Show user-friendly message on last retry
           if (attempt === maxRetries - 1) {
             ToastNotification.warning(
-              'Connection issues detected. Retrying...'
+              "Connection issues detected. Retrying...",
             );
           }
 
@@ -68,7 +68,7 @@ AdvancedTable.prototype.fetchWithRetry = async function (
   }
 
   // If we exhausted all retries, throw the last error
-  throw lastError || new Error('Max retries exceeded');
+  throw lastError || new Error("Max retries exceeded");
 };
 
 /**
@@ -96,11 +96,11 @@ AdvancedTable.prototype.isOnline = function () {
  */
 AdvancedTable.prototype.withNetworkCheck = async function (
   operation,
-  offlineMessage = 'You are offline. Please check your connection.'
+  offlineMessage = "You are offline. Please check your connection.",
 ) {
   if (!this.isOnline()) {
     ToastNotification.error(offlineMessage);
-    throw new Error('OFFLINE');
+    throw new Error("OFFLINE");
   }
 
   return await operation();
