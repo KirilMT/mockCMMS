@@ -30,12 +30,10 @@ def test_view_schedule_passes_config(app):
                         with patch(
                             "apps.planning.src.routes.planning.MaintenanceOrder"
                         ):
-                            with patch(
-                                "apps.planning.src.routes.planning.TaskManager"
-                            ) as MockTaskManager:
+                            with patch("apps.planning.src.routes.planning.TaskManager"):
                                 with patch(
                                     "apps.planning.src.routes.planning.LineConditionManager"
-                                ) as MockLineConditionManager:
+                                ):
                                     with patch(
                                         "apps.planning.src.routes.planning.g"
                                     ) as mock_g:
@@ -68,7 +66,7 @@ def test_view_schedule_passes_config(app):
                                         ):
                                             view_schedule(1)
 
-                                            # Check if render_template was called with shift_config
+                                            # Check render_template called with shift_config
                                             args, kwargs = mock_render.call_args
                                             assert "shift_config" in kwargs
                                             assert kwargs["shift_config"] == mock_config
