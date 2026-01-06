@@ -531,6 +531,10 @@ def login():
         if user and user.check_password(request.form["password"]):
             session["user_id"] = user.id
             session["username"] = user.username
+            # Initialize session activity tracking
+            session["last_active"] = datetime.now(timezone.utc).timestamp()
+            # Ensure session is not permanent (cleared on browser close)
+            session.permanent = False
             flash("Logged in successfully!", "success")
             return redirect(url_for("main.index"))
         else:
