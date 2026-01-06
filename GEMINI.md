@@ -55,11 +55,6 @@ workspace-specific rules.
   unused or "dead" code.
 - **Hardcoding:** Avoid hardcoding values; use configuration files, environment
   variables, or constants where possible.
-- **Python Formatting Order (STRICT):** When formatting Python code, always run
-  tools in this order:
-  1. `isort src/` - Sort imports (PEP 8)
-  2. `black src/` - Format code structure
-  3. `docformatter --in-place -r src/` - Format docstrings (PEP 257)
 
 #### 1.1.1. The 5-Step Iterative Loop (Mandatory)
 
@@ -81,6 +76,28 @@ Every code change must follow this strict process for EACH file or module:
     Updates audit report if applicable.
 5.  **Commit**: Only commit if Steps 1-4 are perfect. Use Conventional Commits.
     - _If changes are made during Audit, LOOP BACK to Step 1._
+
+#### 1.1.2. Recommended Developer Workflow (Scripts)
+
+**Use the project scripts for efficient code quality enforcement:**
+
+| Step | Command                           | Purpose                                                            |
+| ---- | --------------------------------- | ------------------------------------------------------------------ |
+| 1    | `python scripts/format_code.py`   | **Auto-fix** all formatting (isort, black, docformatter, prettier) |
+| 2    | `python scripts/validate_code.py` | **Verify** all checks pass (linting, tests, coverage)              |
+| 3    | `git commit`                      | Pre-commit hooks run as final safety net                           |
+
+**Why this order?**
+
+- `format_code.py` applies fixes quickly (seconds).
+- `validate_code.py` runs comprehensive validation including tests (minutes).
+- Pre-commit hooks are a **backstop** - they catch anything missed before commit.
+
+**Quick Options:**
+
+- `python scripts/validate_code.py --quick` - Skip slow tests for faster iteration.
+- `python scripts/validate_code.py --backend` - Backend only.
+- `python scripts/validate_code.py --frontend` - Frontend only.
 
 ### 1.2. Reliability, Security & Performance
 
@@ -575,17 +592,7 @@ hours of work.
 - ❌ NEVER commit without passing validation
 - ❌ NEVER assume changes are correct without verification
 
-**Available Validation Options:**
-
-```bash
-# Run complete validation (recommended)
-python scripts/validate_code.py
-
-# Optional: Run only specific validation
-python scripts/validate_code.py --backend    # Python code only
-python scripts/validate_code.py --frontend   # JavaScript code only
-python scripts/validate_code.py --quick      # Skip slow E2E tests
-```
+> **See Section 1.1.2 for the recommended workflow and quick options.**
 
 **What the Script Validates:**
 
@@ -621,12 +628,12 @@ The `validate_code.py` script runs ALL checks that CI will run:
 4. **Re-run validation** - Ensure all checks pass
 5. **Only then commit** - All validation must pass
 
-**Pre-Commit Hooks (Future):**
+**Pre-Commit Hooks (ENABLED):**
 
-- Currently **DISABLED** (file: `.pre-commit-config.yaml.DISABLED`)
-- Will be **ENABLED** after Phase 2 (Code Formatting) is complete
-- When enabled, these checks will run AUTOMATICALLY before each commit
+- Pre-commit hooks are **ENABLED** (file: `.pre-commit-config.yaml`)
+- These checks run AUTOMATICALLY before each commit
 - You will NOT be able to commit if checks fail
+- Hooks run: `isort`, `black`, `docformatter`, `ruff`, `prettier`
 
 **Summary**: Local validation = CI simulation. If it fails locally, it will fail in CI. Save time by catching issues early.
 
@@ -1197,7 +1204,6 @@ completion summaries.
     ```
 
     **The script automatically:**
-
     - Updates CHANGELOG.md with new version and date
     - Updates README.md version footer
     - Creates git commit with conventional message
@@ -1212,7 +1218,6 @@ completion summaries.
     ```
 
     **Manual Approach (If Script Cannot Be Used):**
-
     1. Update the appropriate `CHANGELOG.md` file(s) with new entries following
        [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
     2. Update version numbers in both `CHANGELOG.md` and corresponding

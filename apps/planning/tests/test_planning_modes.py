@@ -1,5 +1,4 @@
 # apps/planning/tests/test_planning_modes.py
-
 """
 Unit tests for Planning Mode-Specific Logic (Phase 2 - Hybrid)
 
@@ -13,9 +12,7 @@ Tests cover:
 import pytest
 from datetime import datetime
 from src.services.db_utils import db, MaintenanceOrder, User, Skill, SparePart
-from apps.planning.src.services.planning_models import (
-    Schedule, PlanningTask
-)
+from apps.planning.src.services.planning_models import Schedule, PlanningTask
 from apps.planning.src.services.planning_engine import PlanningEngine
 from apps.planning.src.services.planning_result import UnassignedReason
 
@@ -24,10 +21,11 @@ from apps.planning.src.services.planning_result import UnassignedReason
 def planning_app():
     """Create a Flask app with in-memory database for planning mode tests."""
     from flask import Flask
+
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['TESTING'] = True
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["TESTING"] = True
 
     db.init_app(app)
 
@@ -46,7 +44,7 @@ def sample_schedule(planning_app):
             name="Test Schedule",
             start_date=datetime(2025, 11, 18, 8, 0),
             end_date=datetime(2025, 11, 20, 18, 0),
-            planning_status='Draft'
+            planning_status="Draft",
         )
         db.session.add(schedule)
         db.session.commit()
@@ -72,24 +70,34 @@ def sample_technicians(planning_app):
         db.session.commit()
 
         # Assign skills
-        db.session.add(TechnicianSkill(technician_id=tech1.id, skill_id=electrical.id, skill_level=5))
-        db.session.add(TechnicianSkill(technician_id=tech2.id, skill_id=mechanical.id, skill_level=5))
+        db.session.add(
+            TechnicianSkill(
+                technician_id=tech1.id, skill_id=electrical.id, skill_level=5
+            )
+        )
+        db.session.add(
+            TechnicianSkill(
+                technician_id=tech2.id, skill_id=mechanical.id, skill_level=5
+            )
+        )
 
         db.session.commit()
 
         yield {
-            'alice': tech1,
-            'bob': tech2,
-            'electrical': electrical,
-            'mechanical': mechanical
+            "alice": tech1,
+            "bob": tech2,
+            "electrical": electrical,
+            "mechanical": mechanical,
         }
 
 
-def test_shift_break_30_minute_window(planning_app, sample_schedule, sample_technicians):
+def test_shift_break_30_minute_window(
+    planning_app, sample_schedule, sample_technicians
+):
     """Test that tasks over 30 minutes are unassigned in shift-break mode."""
     with planning_app.app_context():
         # Merge skill into current session
-        electrical = db.session.merge(sample_technicians['electrical'])
+        electrical = db.session.merge(sample_technicians["electrical"])
 
         # Create a 45-minute task (exceeds 30-minute window)
         mo = MaintenanceOrder(
@@ -98,7 +106,7 @@ def test_shift_break_30_minute_window(planning_app, sample_schedule, sample_tech
             asset_id=1,
             estimated_completion_time=45,  # Exceeds 30 minutes
             labour_count=1,
-            priority="Medium"
+            priority="Medium",
         )
         mo.required_skills.append(electrical)
         db.session.add(mo)
@@ -107,7 +115,7 @@ def test_shift_break_30_minute_window(planning_app, sample_schedule, sample_tech
         task = PlanningTask(
             maintenance_order_id=mo.id,
             schedule_id=sample_schedule.id,
-            status='Unplanned'
+            status="Unplanned",
         )
         db.session.add(task)
         db.session.commit()
@@ -125,11 +133,13 @@ def test_shift_break_30_minute_window(planning_app, sample_schedule, sample_tech
         assert "30" in unassigned.reason_detail  # Should mention 30-minute limit
 
 
-def test_shift_break_accepts_short_tasks(planning_app, sample_schedule, sample_technicians):
+def test_shift_break_accepts_short_tasks(
+    planning_app, sample_schedule, sample_technicians
+):
     """Test that tasks under 30 minutes ARE assigned in shift-break mode."""
     with planning_app.app_context():
         # Merge skill into current session
-        electrical = db.session.merge(sample_technicians['electrical'])
+        electrical = db.session.merge(sample_technicians["electrical"])
 
         # Create a 20-minute task (fits within 30-minute window)
         mo = MaintenanceOrder(
@@ -138,7 +148,7 @@ def test_shift_break_accepts_short_tasks(planning_app, sample_schedule, sample_t
             asset_id=1,
             estimated_completion_time=20,  # Within 30 minutes
             labour_count=1,
-            priority="Medium"
+            priority="Medium",
         )
         mo.required_skills.append(electrical)
         db.session.add(mo)
@@ -147,7 +157,7 @@ def test_shift_break_accepts_short_tasks(planning_app, sample_schedule, sample_t
         task = PlanningTask(
             maintenance_order_id=mo.id,
             schedule_id=sample_schedule.id,
-            status='Unplanned'
+            status="Unplanned",
         )
         db.session.add(task)
         db.session.commit()
@@ -161,11 +171,13 @@ def test_shift_break_accepts_short_tasks(planning_app, sample_schedule, sample_t
         assert len(result.unassigned_tasks) == 0
 
 
-def test_shift_break_priority_ordering(planning_app, sample_schedule, sample_technicians):
+def test_shift_break_priority_ordering(
+    planning_app, sample_schedule, sample_technicians
+):
     """Test that shift-break mode prioritizes Critical/REP over PM tasks."""
     with planning_app.app_context():
         # Merge skill into current session
-        electrical = db.session.merge(sample_technicians['electrical'])
+        electrical = db.session.merge(sample_technicians["electrical"])
 
         # Create tasks with different types and priorities
         # PM task (lower priority in shift-break mode)
@@ -175,7 +187,7 @@ def test_shift_break_priority_ordering(planning_app, sample_schedule, sample_tec
             asset_id=1,
             estimated_completion_time=15,
             labour_count=1,
-            priority="High"
+            priority="High",
         )
         pm_task.required_skills.append(electrical)
         db.session.add(pm_task)
@@ -188,7 +200,7 @@ def test_shift_break_priority_ordering(planning_app, sample_schedule, sample_tec
             asset_id=1,
             estimated_completion_time=20,
             labour_count=1,
-            priority="Medium"  # Lower priority level but REP type
+            priority="Medium",  # Lower priority level but REP type
         )
         rep_task.required_skills.append(electrical)
         db.session.add(rep_task)
@@ -199,7 +211,7 @@ def test_shift_break_priority_ordering(planning_app, sample_schedule, sample_tec
             task = PlanningTask(
                 maintenance_order_id=mo.id,
                 schedule_id=sample_schedule.id,
-                status='Unplanned'
+                status="Unplanned",
             )
             db.session.add(task)
 
@@ -222,7 +234,7 @@ def test_weekend_no_time_limit(planning_app, sample_schedule, sample_technicians
     """Test that weekend mode accepts long-duration tasks."""
     with planning_app.app_context():
         # Merge skill into current session
-        mechanical = db.session.merge(sample_technicians['mechanical'])
+        mechanical = db.session.merge(sample_technicians["mechanical"])
 
         # Create a 4-hour (240 minute) task
         mo = MaintenanceOrder(
@@ -232,7 +244,7 @@ def test_weekend_no_time_limit(planning_app, sample_schedule, sample_technicians
             estimated_completion_time=240,  # 4 hours - too long for shift-break
             labour_count=1,
             priority="Medium",
-            frequency="Monthly"
+            frequency="Monthly",
         )
         mo.required_skills.append(mechanical)
         db.session.add(mo)
@@ -241,7 +253,7 @@ def test_weekend_no_time_limit(planning_app, sample_schedule, sample_technicians
         task = PlanningTask(
             maintenance_order_id=mo.id,
             schedule_id=sample_schedule.id,
-            status='Unplanned'
+            status="Unplanned",
         )
         db.session.add(task)
         db.session.commit()
@@ -258,11 +270,13 @@ def test_weekend_no_time_limit(planning_app, sample_schedule, sample_technicians
         assert assignment.estimated_duration_minutes == 240
 
 
-def test_weekend_pm_priority_ordering(planning_app, sample_schedule, sample_technicians):
+def test_weekend_pm_priority_ordering(
+    planning_app, sample_schedule, sample_technicians
+):
     """Test that weekend mode prioritizes PM over REP tasks."""
     with planning_app.app_context():
         # Merge skill into current session
-        mechanical = db.session.merge(sample_technicians['mechanical'])
+        mechanical = db.session.merge(sample_technicians["mechanical"])
 
         # Create PM and REP tasks
         pm_task = MaintenanceOrder(
@@ -272,7 +286,7 @@ def test_weekend_pm_priority_ordering(planning_app, sample_schedule, sample_tech
             estimated_completion_time=60,
             labour_count=1,
             priority="Medium",
-            frequency="Weekly"
+            frequency="Weekly",
         )
         pm_task.required_skills.append(mechanical)
         db.session.add(pm_task)
@@ -284,7 +298,7 @@ def test_weekend_pm_priority_ordering(planning_app, sample_schedule, sample_tech
             asset_id=1,
             estimated_completion_time=45,
             labour_count=1,
-            priority="High"  # Higher priority level
+            priority="High",  # Higher priority level
         )
         rep_task.required_skills.append(mechanical)
         db.session.add(rep_task)
@@ -295,7 +309,7 @@ def test_weekend_pm_priority_ordering(planning_app, sample_schedule, sample_tech
             task = PlanningTask(
                 maintenance_order_id=mo.id,
                 schedule_id=sample_schedule.id,
-                status='Unplanned'
+                status="Unplanned",
             )
             db.session.add(task)
 
@@ -318,7 +332,7 @@ def test_mode_comparison_same_task(planning_app, sample_schedule, sample_technic
     """Test that the same long task behaves differently in different modes."""
     with planning_app.app_context():
         # Merge skill into current session
-        electrical = db.session.merge(sample_technicians['electrical'])
+        electrical = db.session.merge(sample_technicians["electrical"])
 
         # Create a 45-minute task
         mo = MaintenanceOrder(
@@ -327,7 +341,7 @@ def test_mode_comparison_same_task(planning_app, sample_schedule, sample_technic
             asset_id=1,
             estimated_completion_time=45,
             labour_count=1,
-            priority="Medium"
+            priority="Medium",
         )
         mo.required_skills.append(electrical)
         db.session.add(mo)
@@ -336,20 +350,22 @@ def test_mode_comparison_same_task(planning_app, sample_schedule, sample_technic
         task = PlanningTask(
             maintenance_order_id=mo.id,
             schedule_id=sample_schedule.id,
-            status='Unplanned'
+            status="Unplanned",
         )
         db.session.add(task)
         db.session.commit()
 
         # Test 1: Shift-break mode - should REJECT
         engine = PlanningEngine()
-        result_shift_break = engine.generate_plan(sample_schedule, planning_mode="shift_break")
+        result_shift_break = engine.generate_plan(
+            sample_schedule, planning_mode="shift_break"
+        )
 
         assert len(result_shift_break.assigned_tasks) == 0
         assert len(result_shift_break.unassigned_tasks) == 1
 
         # Reset task status
-        task.status = 'Unplanned'
+        task.status = "Unplanned"
         db.session.commit()
 
         # Test 2: Weekend mode - should ACCEPT
@@ -357,4 +373,3 @@ def test_mode_comparison_same_task(planning_app, sample_schedule, sample_technic
 
         assert len(result_weekend.assigned_tasks) == 1
         assert len(result_weekend.unassigned_tasks) == 0
-

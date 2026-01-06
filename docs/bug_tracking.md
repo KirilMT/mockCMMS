@@ -57,12 +57,12 @@ This document tracks all identified bugs in the mockCMMS application. Each bug i
 
 ### Bug #35: Delete Functionality Regression (System Popup Issue)
 
-**Priority:** Critical  
+**Priority:** Critical
 **Status:** ✅ RESOLVED - December 18, 2025
 **Resolved:** December 18, 2025
 **Identified:** December 10, 2025
 
-**Description:**  
+**Description:**
 Delete functionality is compromised because the application relies on the browser's native `confirm()` system popup, which is unreliable in certain environments (e.g., Incognito mode, IDE embedded browsers). Additionally, the delete forms were improperly nested inside the main edit forms (Invalid HTML).
 
 **Status Update:**
@@ -104,9 +104,9 @@ Delete functionality is compromised because the application relies on the browse
 
 ### Bug #2: CSRF Token Missing - MO and Spare Parts Forms
 
-**Priority:** Critical  
-**Status:** ✅ RESOLVED - Prior to December 2, 2025  
-**Resolution:** Added CSRF tokens to all forms (`maintenance_order_detail.html`, `spare_part_detail.html`, `asset_detail.html`, `user_detail.html`).  
+**Priority:** Critical
+**Status:** ✅ RESOLVED - Prior to December 2, 2025
+**Resolution:** Added CSRF tokens to all forms (`maintenance_order_detail.html`, `spare_part_detail.html`, `asset_detail.html`, `user_detail.html`).
 **Files:** `src/templates/*.html`
 
 ---
@@ -115,11 +115,11 @@ Delete functionality is compromised because the application relies on the browse
 
 ### Bug #36: "Could Not Load Saved Configurations" Warning
 
-**Priority:** High  
-**Status:** Open  
+**Priority:** High
+**Status:** Open
 **Identified:** December 10, 2025
 
-**Description:**  
+**Description:**
 When navigating to the Assets page, a warning toast appears with the message: "Could not load saved configurations". This suggests an issue with the table configuration API or local storage.
 
 **Current Behavior:**
@@ -161,11 +161,11 @@ When navigating to the Assets page, a warning toast appears with the message: "C
 
 ### Bug #13: Table Views - Save/Load Functionality Not Working
 
-**Priority:** High  
-**Status:** Open  
+**Priority:** High
+**Status:** Open
 **Identified:** Prior to December 2, 2025
 
-**Description:**  
+**Description:**
 The complete table views save/load functionality is not working properly. Users cannot reliably save, load, or manage named table configurations.
 
 **Current Behavior:**
@@ -209,81 +209,81 @@ The complete table views save/load functionality is not working properly. Users 
 
 ### Bug #27: MO Table in Asset Details Should Use Advanced Table
 
-**Priority:** High  
-**Status:** ✅ FIXED - December 10, 2025  
-**Resolution:** Replaced basic Bootstrap table in `asset_detail.html` with Advanced Table component. Updated `main.py` to pass serialized MO data.  
+**Priority:** High
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Replaced basic Bootstrap table in `asset_detail.html` with Advanced Table component. Updated `main.py` to pass serialized MO data.
 **Files:** `src/templates/asset_detail.html`, `src/routes/main.py`
 
 ---
 
 ### Bug #1: Missing Delete Functionality for Assets
 
-**Priority:** High  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Fixed as part of Bug #R3. Delete buttons added to all detail pages.  
+**Priority:** High
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Fixed as part of Bug #R3. Delete buttons added to all detail pages.
 **See:** Bug #R3
 
 ---
 
 ### Bug #3: Incorrect Back Button Navigation
 
-**Priority:** High  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Fixed as part of Bug #R1. Back button now returns to originating page.  
+**Priority:** High
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Fixed as part of Bug #R1. Back button now returns to originating page.
 **See:** Bug #R1
 
 ---
 
 ### Bug #4: Table State Not Preserved on Navigation
 
-**Priority:** High  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Implemented `localStorage` state persistence with 24-hour expiration. Saves/restores sort, filters, search, columns.  
+**Priority:** High
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Implemented `localStorage` state persistence with 24-hour expiration. Saves/restores sort, filters, search, columns.
 **Files:** `src/static/js/advanced-table/table-core.js`, `table-data.js`, `table-sidebar.js`
 
 ---
 
 ### Bug #5: Assignees Field Needs Dropdown
 
-**Priority:** High  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Replaced textarea with Select2 multi-select dropdown. Added Teams and Technicians optgroups.  
+**Priority:** High
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Replaced textarea with Select2 multi-select dropdown. Added Teams and Technicians optgroups.
 **Files:** `src/routes/main.py`, `src/templates/maintenance_order_detail.html`, `src/templates/base.html`
 
 ---
 
 ### Bug #6: Missing Delete Functionality for MOs
 
-**Priority:** High  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Fixed as part of Bug #R3.  
+**Priority:** High
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Fixed as part of Bug #R3.
 **See:** Bug #R3
 
 ---
 
 ### Bug #11: Spare Parts CSRF Token Missing
 
-**Priority:** High  
-**Status:** ✅ RESOLVED - Prior to December 2, 2025  
-**Resolution:** Fixed together with Bug #2.  
+**Priority:** High
+**Status:** ✅ RESOLVED - Prior to December 2, 2025
+**Resolution:** Fixed together with Bug #2.
 **See:** Bug #2
 
 ---
 
 ### Bug #14: Cannot Click Table Elements After Column Changes
 
-**Priority:** High  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Replaced individual row listeners with event delegation on `<tbody>`. Listeners now survive table re-renders.  
+**Priority:** High
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Replaced individual row listeners with event delegation on `<tbody>`. Listeners now survive table re-renders.
 **Files:** `src/static/js/advanced-table/table-events.js`, `src/static/css/advanced-table.css`
 
 ---
 
 ### Bug #31: Table Header Not Sticky on Scroll
 
-**Priority:** High  
-**Status:** ✅ FIXED - December 10, 2025  
-**Resolution:** Fixed `overflow: hidden` causing sticky failure. Applied `overflow: visible` to `.advanced-table`.  
+**Priority:** High
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Fixed `overflow: hidden` causing sticky failure. Applied `overflow: visible` to `.advanced-table`.
 **Files:** `src/static/css/advanced-table.css`, `src/static/js/advanced-table/table-render.js`
 
 ---
@@ -292,10 +292,10 @@ The complete table views save/load functionality is not working properly. Users 
 
 ### Bug #7: Missing Required Field Indicators
 
-**Priority:** Medium  
+**Priority:** Medium
 **Status:** Partially Resolved - Prior to December 2, 2025
 
-**Description:**  
+**Description:**
 Forms do not clearly indicate which fields are required. Red asterisks (\*) have been added to most pages but not all.
 
 **Current Behavior:**
@@ -324,10 +324,10 @@ Apply same pattern to `user_detail.html`:
 
 ### Bug #8: Table Columns Too Narrow on Default Load
 
-**Priority:** Medium  
+**Priority:** Medium
 **Status:** Partially Resolved - December 4, 2025
 
-**Description:**  
+**Description:**
 When tables load, columns are too narrow, causing text to wrap or truncate. Smart default widths have been implemented but only for the MO table.
 
 **Current Behavior:**
@@ -358,117 +358,117 @@ Apply `getDefaultWidth()` logic to all tables, not just MO table.
 
 ### Bug #10: Table Width Not Responsive to Window Resize
 
-**Priority:** Medium  
-**Status:** ✅ RESOLVED - December 4, 2025  
-**Resolution:** Added `handleWindowResize` method in `table-resize.js` with event listeners.  
+**Priority:** Medium
+**Status:** ✅ RESOLVED - December 4, 2025
+**Resolution:** Added `handleWindowResize` method in `table-resize.js` with event listeners.
 **Files:** `src/static/js/advanced-table/table-resize.js`, `table-sidebar.js`
 
 ---
 
 ### Bug #16: Frequency Field Only for PM Orders
 
-**Priority:** Medium  
-**Status:** ✅ FIXED - December 1, 2025  
-**Resolution:** Added JS event listener to enable/disable frequency based on order type.  
+**Priority:** Medium
+**Status:** ✅ FIXED - December 1, 2025
+**Resolution:** Added JS event listener to enable/disable frequency based on order type.
 **Files:** `src/templates/maintenance_order_detail.html`
 
 ---
 
 ### Bug #17: OR Filter Operator Logic
 
-**Priority:** Medium  
-**Status:** ✅ FIXED - December 10, 2025  
-**Resolution:** Implemented "Conditional Mute" logic - previous filter muted until new OR row is complete.  
+**Priority:** Medium
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Implemented "Conditional Mute" logic - previous filter muted until new OR row is complete.
 **Files:** `src/static/js/advanced-table/table-sidebar.js`
 
 ---
 
 ### Bug #20: Missing Delete Functionality for Users
 
-**Priority:** Medium  
-**Status:** ✅ FIXED - December 10, 2025  
-**Resolution:** Added delete button and `delete_user` route with UserSkill relationship handling.  
+**Priority:** Medium
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Added delete button and `delete_user` route with UserSkill relationship handling.
 **Files:** `src/templates/user_detail.html`, `src/routes/main.py`
 
 ---
 
 ### Bug #21: Asset Field Not Pre-filled on MO Creation
 
-**Priority:** Medium  
-**Status:** ✅ FIXED - December 1, 2025  
-**Resolution:** Asset dropdown pre-selected and disabled when coming from asset page.  
+**Priority:** Medium
+**Status:** ✅ FIXED - December 1, 2025
+**Resolution:** Asset dropdown pre-selected and disabled when coming from asset page.
 **Files:** `src/routes/main.py`, `src/templates/maintenance_order_detail.html`
 
 ---
 
 ### Bug #22: CSRF Token Missing in MO Delete from Asset Details
 
-**Priority:** Medium  
-**Status:** ✅ FIXED - December 1, 2025  
-**Resolution:** Added CSRF token to delete form in asset_detail.html.  
+**Priority:** Medium
+**Status:** ✅ FIXED - December 1, 2025
+**Resolution:** Added CSRF token to delete form in asset_detail.html.
 **Files:** `src/templates/asset_detail.html`
 
 ---
 
 ### Bug #23: Frequency Field Not Showing Saved Value
 
-**Priority:** Medium  
-**Status:** ✅ FIXED - December 1, 2025  
-**Resolution:** Fixed case sensitivity in template comparison. Used `.lower()` filter.  
+**Priority:** Medium
+**Status:** ✅ FIXED - December 1, 2025
+**Resolution:** Fixed case sensitivity in template comparison. Used `.lower()` filter.
 **Files:** `src/templates/maintenance_order_detail.html`
 
 ---
 
 ### Bug #24: Autofill Background Color Inconsistency
 
-**Priority:** Medium  
-**Status:** ✅ FIXED - December 10, 2025  
-**Resolution:** CSS override for browser autofill styles in dark theme.  
+**Priority:** Medium
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** CSS override for browser autofill styles in dark theme.
 **Files:** `src/static/css/main.css`
 
 ---
 
 ### Bug #25: MO Section on Add New Asset Page
 
-**Priority:** Medium  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Wrapped MO section in `{% if asset %}` conditional.  
+**Priority:** Medium
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Wrapped MO section in `{% if asset %}` conditional.
 **Files:** `src/templates/asset_detail.html`
 
 ---
 
 ### Bug #26: Frequency Field Not Required for PM Orders
 
-**Priority:** Medium  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Added dynamic `required` attribute and backend validation for PM orders.  
+**Priority:** Medium
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Added dynamic `required` attribute and backend validation for PM orders.
 **Files:** `src/templates/maintenance_order_detail.html`, `src/routes/main.py`
 
 ---
 
 ### Bug #28: Assignees Dropdown Opens When Removing Item
 
-**Priority:** Medium  
-**Status:** ✅ FIXED - December 10, 2025  
-**Resolution:** Implemented Select2 event handlers to track dropdown state and prevent unwanted opening.  
+**Priority:** Medium
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Implemented Select2 event handlers to track dropdown state and prevent unwanted opening.
 **Files:** `src/templates/maintenance_order_detail.html`
 
 ---
 
 ### Bug #29: Missing Assignees Column in MO Table
 
-**Priority:** Medium  
-**Status:** ✅ RESOLVED - December 3, 2025  
-**Resolution:** Added localStorage check to clear outdated state missing new column.  
+**Priority:** Medium
+**Status:** ✅ RESOLVED - December 3, 2025
+**Resolution:** Added localStorage check to clear outdated state missing new column.
 **Files:** `src/templates/maintenance_orders.html`, `src/services/db_utils.py`
 
 ---
 
 ### Bug #30: Layout Shift When Adding Assignees
 
-**Priority:** Medium  
-**Status:** ✅ RESOLVED - December 9, 2025  
-**Resolution:** Added CSS max-height (120px) with overflow-y scroll for Select2 container.  
+**Priority:** Medium
+**Status:** ✅ RESOLVED - December 9, 2025
+**Resolution:** Added CSS max-height (120px) with overflow-y scroll for Select2 container.
 **Files:** `src/static/css/main.css`
 
 ---
@@ -477,10 +477,10 @@ Apply `getDefaultWidth()` logic to all tables, not just MO table.
 
 ### Bug #34: Long Text Overflow in Table Cells
 
-**Priority:** Low  
+**Priority:** Low
 **Status:** Open
 
-**Description:**  
+**Description:**
 Long descriptions or text content in table cells don't wrap or truncate properly, causing columns to expand excessively or horizontal scrolling.
 
 **Current Behavior:**
@@ -513,27 +513,27 @@ Long descriptions or text content in table cells don't wrap or truncate properly
 
 ### Bug #15: Status Field Should Be Hidden in MO Creation
 
-**Priority:** Low  
-**Status:** ✅ FIXED - December 10, 2025  
-**Resolution:** Confirmed `{% if mo %}` logic already hides status field. Backend defaults to "Open".  
+**Priority:** Low
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Confirmed `{% if mo %}` logic already hides status field. Backend defaults to "Open".
 **Files:** `src/templates/maintenance_order_detail.html`, `src/routes/main.py`
 
 ---
 
 ### Bug #19: KeyError - 'frequency' Field
 
-**Priority:** Low  
-**Status:** ✅ FIXED - December 1, 2025  
-**Resolution:** Changed `request.form['field']` to `request.form.get('field', '')` for optional fields.  
+**Priority:** Low
+**Status:** ✅ FIXED - December 1, 2025
+**Resolution:** Changed `request.form['field']` to `request.form.get('field', '')` for optional fields.
 **Files:** `src/routes/main.py`
 
 ---
 
 ### Bug #32: Add Filter Button Enabled Prematurely
 
-**Priority:** Low  
-**Status:** ✅ FIXED - December 10, 2025  
-**Resolution:** Updated `validateAllFilters` to disable button if any filter row is incomplete.  
+**Priority:** Low
+**Status:** ✅ FIXED - December 10, 2025
+**Resolution:** Updated `validateAllFilters` to disable button if any filter row is incomplete.
 **Files:** `src/static/js/advanced-table/table-sidebar.js`
 
 ---
@@ -542,27 +542,27 @@ Long descriptions or text content in table cells don't wrap or truncate properly
 
 ### Bug #R1: Redirect After MO Operations from Asset Detail
 
-**Priority:** High  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Added `return_to` parameter handling for proper redirects. Fixed back button, form actions, and delete routes.  
+**Priority:** High
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Added `return_to` parameter handling for proper redirects. Fixed back button, form actions, and delete routes.
 **Files:** `src/routes/main.py`, `src/templates/maintenance_order_detail.html`, `src/templates/asset_detail.html`
 
 ---
 
 ### Bug #R2: Frequency Not Pre-selected on Edit PM Order
 
-**Priority:** Medium  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Fixed case sensitivity mismatch - used `.lower()` filter in Jinja2 template.  
+**Priority:** Medium
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Fixed case sensitivity mismatch - used `.lower()` filter in Jinja2 template.
 **Files:** `src/templates/maintenance_order_detail.html`
 
 ---
 
 ### Bug #R3: Delete Button Placement and Duplicated Forms
 
-**Priority:** High  
-**Status:** ✅ RESOLVED - December 2, 2025  
-**Resolution:** Standardized delete button placement, fixed template syntax errors, removed duplicate forms, fixed cascade deletes for users and assets.  
+**Priority:** High
+**Status:** ✅ RESOLVED - December 2, 2025
+**Resolution:** Standardized delete button placement, fixed template syntax errors, removed duplicate forms, fixed cascade deletes for users and assets.
 **Files:** `src/templates/*.html`, `src/routes/main.py`, `src/services/db_utils.py`
 
 ---

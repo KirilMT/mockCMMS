@@ -5,298 +5,319 @@
 
 // Mock dependencies
 global.TableSidebar = class {
-    constructor(table) { this.table = table; }
-    generateHTML() { return '<div class="sidebar"></div>'; }
-    attachEventListeners() { }
-    populateColumns() { }
-    populateSavedViews() { }
-    restoreFilterUI() { }
+  constructor(table) {
+    this.table = table;
+  }
+  generateHTML() {
+    return '<div class="sidebar"></div>';
+  }
+  attachEventListeners() {}
+  populateColumns() {}
+  populateSavedViews() {}
+  restoreFilterUI() {}
 };
 
 // Load AdvancedTable and make it global BEFORE loading other modules
-const AdvancedTable = require('../../../../src/static/js/advanced-table/table-core');
+const AdvancedTable = require("../../../../src/static/js/advanced-table/table-core");
 global.AdvancedTable = AdvancedTable;
 
 // Load ALL modules that extend AdvancedTable.prototype
-require('../../../../src/static/js/advanced-table/table-data');
-require('../../../../src/static/js/advanced-table/table-render');
-require('../../../../src/static/js/advanced-table/table-events');
+require("../../../../src/static/js/advanced-table/table-data");
+require("../../../../src/static/js/advanced-table/table-render");
+require("../../../../src/static/js/advanced-table/table-events");
 
-describe('AdvancedTable Render Methods', () => {
-    let table;
-    let container;
-    let localStorageMock;
+describe("AdvancedTable Render Methods", () => {
+  let table;
+  let container;
+  let localStorageMock;
 
-    beforeEach(() => {
-        // Setup DOM
-        document.body.innerHTML = '<div id="test-container"></div>';
-        container = document.getElementById('test-container');
+  beforeEach(() => {
+    // Setup DOM
+    document.body.innerHTML = '<div id="test-container"></div>';
+    container = document.getElementById("test-container");
 
-        // Mock localStorage
-        localStorageMock = {
-            store: {},
-            getItem: jest.fn((key) => localStorageMock.store[key] || null),
-            setItem: jest.fn((key, value) => { localStorageMock.store[key] = value; }),
-            removeItem: jest.fn(),
-            clear: jest.fn(() => { localStorageMock.store = {}; })
-        };
-        Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true });
-
-        // Mock methods called in init
-        AdvancedTable.prototype.loadConfiguration = jest.fn();
-
-        table = new AdvancedTable('test-container', {
-            columns: [
-                { key: 'id', label: 'ID' },
-                { key: 'name', label: 'Name' },
-                { key: 'status', label: 'Status' }
-            ],
-            data: [
-                { id: 1, name: 'Item 1', status: 'Active' },
-                { id: 2, name: 'Item 2', status: 'Inactive' }
-            ],
-            pageName: 'testTable'
-        });
+    // Mock localStorage
+    localStorageMock = {
+      store: {},
+      getItem: jest.fn((key) => localStorageMock.store[key] || null),
+      setItem: jest.fn((key, value) => {
+        localStorageMock.store[key] = value;
+      }),
+      removeItem: jest.fn(),
+      clear: jest.fn(() => {
+        localStorageMock.store = {};
+      }),
+    };
+    Object.defineProperty(window, "localStorage", {
+      value: localStorageMock,
+      writable: true,
     });
 
-    afterEach(() => {
-        document.body.innerHTML = '';
-        jest.clearAllMocks();
+    // Mock methods called in init
+    AdvancedTable.prototype.loadConfiguration = jest.fn();
+
+    table = new AdvancedTable("test-container", {
+      columns: [
+        { key: "id", label: "ID" },
+        { key: "name", label: "Name" },
+        { key: "status", label: "Status" },
+      ],
+      data: [
+        { id: 1, name: "Item 1", status: "Active" },
+        { id: 2, name: "Item 2", status: "Inactive" },
+      ],
+      pageName: "testTable",
+    });
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+    jest.clearAllMocks();
+  });
+
+  describe("renderHeader", () => {
+    test("should render column headers with sort icons", () => {
+      const header = table.renderHeader();
+      expect(header).toContain("ID");
+      expect(header).toContain("Name");
+      expect(header).toContain("Status");
+      expect(header).toContain("fa-sort");
     });
 
-    describe('renderHeader', () => {
-        test('should render column headers with sort icons', () => {
-            const header = table.renderHeader();
-            expect(header).toContain('ID');
-            expect(header).toContain('Name');
-            expect(header).toContain('Status');
-            expect(header).toContain('fa-sort');
-        });
-
-        test('should show message when all columns hidden', () => {
-            table.hiddenColumns = new Set(['id', 'name', 'status']);
-            const header = table.renderHeader();
-            expect(header).toContain('All columns are hidden');
-        });
-
-        test('should respect column order', () => {
-            table.columnOrder = ['status', 'name', 'id'];
-            const header = table.renderHeader();
-            const statusIndex = header.indexOf('Status');
-            const nameIndex = header.indexOf('Name');
-            expect(statusIndex).toBeLessThan(nameIndex);
-        });
+    test("should show message when all columns hidden", () => {
+      table.hiddenColumns = new Set(["id", "name", "status"]);
+      const header = table.renderHeader();
+      expect(header).toContain("All columns are hidden");
     });
 
-    describe('renderBody', () => {
-        test('should render data rows', () => {
-            const body = table.renderBody();
-            expect(body).toContain('Item 1');
-            expect(body).toContain('Item 2');
-        });
+    test("should respect column order", () => {
+      table.columnOrder = ["status", "name", "id"];
+      const header = table.renderHeader();
+      const statusIndex = header.indexOf("Status");
+      const nameIndex = header.indexOf("Name");
+      expect(statusIndex).toBeLessThan(nameIndex);
+    });
+  });
 
-        test('should show empty message when no data', () => {
-            table.data = [];
-            const body = table.renderBody();
-            expect(body).toContain('No data available');
-        });
-
-        test('should show all columns hidden message', () => {
-            table.hiddenColumns = new Set(['id', 'name', 'status']);
-            const body = table.renderBody();
-            expect(body).toContain('All columns are hidden');
-        });
+  describe("renderBody", () => {
+    test("should render data rows", () => {
+      const body = table.renderBody();
+      expect(body).toContain("Item 1");
+      expect(body).toContain("Item 2");
     });
 
-    describe('getSortIcon', () => {
-        test('should return neutral sort icon for unsorted column', () => {
-            const icon = table.getSortIcon('name');
-            expect(icon).toContain('fa-sort');
-            expect(icon).toContain('text-muted');
-        });
-
-        test('should return ascending icon for asc sorted column', () => {
-            table.currentSort = { column: 'name', direction: 'asc' };
-            const icon = table.getSortIcon('name');
-            expect(icon).toContain('fa-sort-up');
-        });
-
-        test('should return descending icon for desc sorted column', () => {
-            table.currentSort = { column: 'name', direction: 'desc' };
-            const icon = table.getSortIcon('name');
-            expect(icon).toContain('fa-sort-down');
-        });
+    test("should show empty message when no data", () => {
+      table.data = [];
+      const body = table.renderBody();
+      expect(body).toContain("No data available");
     });
 
-    describe('formatCellValue', () => {
-        test('should return empty string for null/undefined', () => {
-            expect(table.formatCellValue(null, 'name', {})).toBe('');
-            expect(table.formatCellValue(undefined, 'name', {})).toBe('');
-        });
+    test("should show all columns hidden message", () => {
+      table.hiddenColumns = new Set(["id", "name", "status"]);
+      const body = table.renderBody();
+      expect(body).toContain("All columns are hidden");
+    });
+  });
 
-        test('should return value as-is for regular columns', () => {
-            expect(table.formatCellValue('Test Value', 'name', {})).toBe('Test Value');
-        });
-
-        test('should format date columns', () => {
-            table.columns.push({ key: 'created', label: 'Created', type: 'date' });
-            const result = table.formatCellValue('2025-12-17', 'created', {});
-            expect(result).toContain('2025');
-        });
-
-        test('should use custom render function if provided', () => {
-            table.columns.push({
-                key: 'custom',
-                label: 'Custom',
-                render: (value) => `<b>${value}</b>`
-            });
-            const result = table.formatCellValue(true, 'custom', {});
-            expect(result).toBe('<b>true</b>');
-        });
+  describe("getSortIcon", () => {
+    test("should return neutral sort icon for unsorted column", () => {
+      const icon = table.getSortIcon("name");
+      expect(icon).toContain("fa-sort");
+      expect(icon).toContain("text-muted");
     });
 
-    describe('updateTable', () => {
-        test('should update tbody content', () => {
-            // First render the table
-            table.render();
-
-            // Modify data and update
-            table.data = [{ id: 3, name: 'New Item', status: 'New' }];
-            table.updateTable();
-
-            const tbody = container.querySelector('tbody');
-            expect(tbody.innerHTML).toContain('New Item');
-        });
-
-        test('should update row count', () => {
-             table.render();
-             table.data = [];
-             table.updateTable();
-             const rowCount = container.querySelector('.row-count');
-             expect(rowCount.innerHTML).toContain('Showing <strong>0</strong>');
-        });
-
-        test('should re-attach sort listeners', () => {
-             table.render();
-             const th = container.querySelector('th.sortable');
-             table.sort = jest.fn();
-             
-             // Update table (should re-attach listeners)
-             table.updateTable();
-             
-             th.click();
-             expect(table.sort).toHaveBeenCalled();
-        });
-        
-        test('should call initColumnResize if function exists', () => {
-             table.render();
-             table.initColumnResize = jest.fn();
-             table.updateTable();
-             expect(table.initColumnResize).toHaveBeenCalled();
-        });
+    test("should return ascending icon for asc sorted column", () => {
+      table.currentSort = { column: "name", direction: "asc" };
+      const icon = table.getSortIcon("name");
+      expect(icon).toContain("fa-sort-up");
     });
 
-    describe('renderBody empty states', () => {
-         test('should show search no results message', () => {
-             table.data = [{}];
-             table.globalSearchTerm = 'xyz';
-             table.globalSearchDisplay = 'xyz';
-             // Mock filter to return empty
-             table.getFilteredData = jest.fn().mockReturnValue([]);
-             
-             const body = table.renderBody();
-             expect(body).toContain('No results found for "xyz"');
-         });
+    test("should return descending icon for desc sorted column", () => {
+      table.currentSort = { column: "name", direction: "desc" };
+      const icon = table.getSortIcon("name");
+      expect(icon).toContain("fa-sort-down");
+    });
+  });
 
-         test('should show filter no results message', () => {
-             table.data = [{}];
-             table.filters = [{ column: 'name', value: 'x' }];
-             // Mock filter to return empty
-             table.getFilteredData = jest.fn().mockReturnValue([]);
-             
-             const body = table.renderBody();
-             expect(body).toContain('No results match the applied filters');
-         });
-         
-         test('should show generic empty message', () => {
-              table.data = [{}];
-              // No search, no filters, but empty filtered data (e.g. logic error/custom filter)
-              table.getFilteredData = jest.fn().mockReturnValue([]);
-              
-              const body = table.renderBody();
-              expect(body).toContain('No data to display');
-         });
+  describe("formatCellValue", () => {
+    test("should return empty string for null/undefined", () => {
+      expect(table.formatCellValue(null, "name", {})).toBe("");
+      expect(table.formatCellValue(undefined, "name", {})).toBe("");
     });
 
-    // Additional branch coverage tests
-    describe('formatCellValue edge cases', () => {
-        test('should format datetime columns', () => {
-            table.columns.push({ key: 'updated', label: 'Updated', type: 'datetime' });
-            const result = table.formatCellValue('2025-12-17T14:30:00', 'updated', {});
-            expect(result).toContain('2025');
-        });
-
-        test('should handle empty string value', () => {
-            const result = table.formatCellValue('', 'name', {});
-            expect(result).toBe('');
-        });
-
-        test('should handle 0 as valid value', () => {
-            const result = table.formatCellValue(0, 'count', {});
-            expect(result).toBe(0);
-        });
-
-        test('should handle boolean false as valid value', () => {
-            const result = table.formatCellValue(false, 'active', {});
-            expect(result).toBe(false);
-        });
+    test("should return value as-is for regular columns", () => {
+      expect(table.formatCellValue("Test Value", "name", {})).toBe(
+        "Test Value",
+      );
     });
 
-
-
-    describe('restoreSearchUI', () => {
-        test('should restore search value if globalSearchDisplay exists', () => {
-            table.globalSearchDisplay = 'Test Search';
-            table.render();
-
-            const searchInput = document.getElementById('globalSearchInput');
-            expect(searchInput).not.toBeNull();
-            expect(searchInput.value).toBe('Test Search');
-        });
-
-        test('should work with empty search display', () => {
-            table.globalSearchDisplay = '';
-            table.render();
-
-            const searchInput = document.getElementById('globalSearchInput');
-            expect(searchInput).not.toBeNull();
-        });
+    test("should format date columns", () => {
+      table.columns.push({ key: "created", label: "Created", type: "date" });
+      const result = table.formatCellValue("2025-12-17", "created", {});
+      expect(result).toContain("2025");
     });
 
-    describe('render initialization', () => {
-        test('should call sidebar methods during render', () => {
-            const populateColumnsSpy = jest.spyOn(table.sidebar, 'populateColumns');
-            const populateSavedViewsSpy = jest.spyOn(table.sidebar, 'populateSavedViews');
-
-            table.render();
-
-            expect(populateColumnsSpy).toHaveBeenCalled();
-            expect(populateSavedViewsSpy).toHaveBeenCalled();
-        });
-
-        test('should call initColumnResize if available', () => {
-            table.initColumnResize = jest.fn();
-            table.render();
-
-            expect(table.initColumnResize).toHaveBeenCalled();
-        });
-
-        test('should call initResizeListener if available', () => {
-            table.initResizeListener = jest.fn();
-            table.render();
-
-            expect(table.initResizeListener).toHaveBeenCalled();
-        });
+    test("should use custom render function if provided", () => {
+      table.columns.push({
+        key: "custom",
+        label: "Custom",
+        render: (value) => `<b>${value}</b>`,
+      });
+      const result = table.formatCellValue(true, "custom", {});
+      expect(result).toBe("<b>true</b>");
     });
+  });
+
+  describe("updateTable", () => {
+    test("should update tbody content", () => {
+      // First render the table
+      table.render();
+
+      // Modify data and update
+      table.data = [{ id: 3, name: "New Item", status: "New" }];
+      table.updateTable();
+
+      const tbody = container.querySelector("tbody");
+      expect(tbody.innerHTML).toContain("New Item");
+    });
+
+    test("should update row count", () => {
+      table.render();
+      table.data = [];
+      table.updateTable();
+      const rowCount = container.querySelector(".row-count");
+      expect(rowCount.innerHTML).toContain("Showing <strong>0</strong>");
+    });
+
+    test("should re-attach sort listeners", () => {
+      table.render();
+      const th = container.querySelector("th.sortable");
+      table.sort = jest.fn();
+
+      // Update table (should re-attach listeners)
+      table.updateTable();
+
+      th.click();
+      expect(table.sort).toHaveBeenCalled();
+    });
+
+    test("should call initColumnResize if function exists", () => {
+      table.render();
+      table.initColumnResize = jest.fn();
+      table.updateTable();
+      expect(table.initColumnResize).toHaveBeenCalled();
+    });
+  });
+
+  describe("renderBody empty states", () => {
+    test("should show search no results message", () => {
+      table.data = [{}];
+      table.globalSearchTerm = "xyz";
+      table.globalSearchDisplay = "xyz";
+      // Mock filter to return empty
+      table.getFilteredData = jest.fn().mockReturnValue([]);
+
+      const body = table.renderBody();
+      expect(body).toContain('No results found for "xyz"');
+    });
+
+    test("should show filter no results message", () => {
+      table.data = [{}];
+      table.filters = [{ column: "name", value: "x" }];
+      // Mock filter to return empty
+      table.getFilteredData = jest.fn().mockReturnValue([]);
+
+      const body = table.renderBody();
+      expect(body).toContain("No results match the applied filters");
+    });
+
+    test("should show generic empty message", () => {
+      table.data = [{}];
+      // No search, no filters, but empty filtered data (e.g. logic error/custom filter)
+      table.getFilteredData = jest.fn().mockReturnValue([]);
+
+      const body = table.renderBody();
+      expect(body).toContain("No data to display");
+    });
+  });
+
+  // Additional branch coverage tests
+  describe("formatCellValue edge cases", () => {
+    test("should format datetime columns", () => {
+      table.columns.push({
+        key: "updated",
+        label: "Updated",
+        type: "datetime",
+      });
+      const result = table.formatCellValue(
+        "2025-12-17T14:30:00",
+        "updated",
+        {},
+      );
+      expect(result).toContain("2025");
+    });
+
+    test("should handle empty string value", () => {
+      const result = table.formatCellValue("", "name", {});
+      expect(result).toBe("");
+    });
+
+    test("should handle 0 as valid value", () => {
+      const result = table.formatCellValue(0, "count", {});
+      expect(result).toBe(0);
+    });
+
+    test("should handle boolean false as valid value", () => {
+      const result = table.formatCellValue(false, "active", {});
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("restoreSearchUI", () => {
+    test("should restore search value if globalSearchDisplay exists", () => {
+      table.globalSearchDisplay = "Test Search";
+      table.render();
+
+      const searchInput = document.getElementById("globalSearchInput");
+      expect(searchInput).not.toBeNull();
+      expect(searchInput.value).toBe("Test Search");
+    });
+
+    test("should work with empty search display", () => {
+      table.globalSearchDisplay = "";
+      table.render();
+
+      const searchInput = document.getElementById("globalSearchInput");
+      expect(searchInput).not.toBeNull();
+    });
+  });
+
+  describe("render initialization", () => {
+    test("should call sidebar methods during render", () => {
+      const populateColumnsSpy = jest.spyOn(table.sidebar, "populateColumns");
+      const populateSavedViewsSpy = jest.spyOn(
+        table.sidebar,
+        "populateSavedViews",
+      );
+
+      table.render();
+
+      expect(populateColumnsSpy).toHaveBeenCalled();
+      expect(populateSavedViewsSpy).toHaveBeenCalled();
+    });
+
+    test("should call initColumnResize if available", () => {
+      table.initColumnResize = jest.fn();
+      table.render();
+
+      expect(table.initColumnResize).toHaveBeenCalled();
+    });
+
+    test("should call initResizeListener if available", () => {
+      table.initResizeListener = jest.fn();
+      table.render();
+
+      expect(table.initResizeListener).toHaveBeenCalled();
+    });
+  });
 });
-

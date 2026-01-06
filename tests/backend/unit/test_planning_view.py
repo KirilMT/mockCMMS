@@ -30,7 +30,6 @@ def test_view_schedule_passes_config(app):
                         with patch(
                             "apps.planning.src.routes.planning.MaintenanceOrder"
                         ):
-
                             # Setup mocks
                             mock_schedule = MagicMock()
                             MockSchedule.query.get_or_404.return_value = mock_schedule

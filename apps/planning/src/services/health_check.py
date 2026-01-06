@@ -1,6 +1,5 @@
-"""
-Health check service for monitoring application status.
-"""
+"""Health check service for monitoring application status."""
+
 import sqlite3
 import os
 from datetime import datetime
@@ -16,7 +15,7 @@ class HealthChecker:
     def check_database_health(self):
         """Check database connectivity and basic functionality."""
         try:
-            db_path = current_app.config['DATABASE_PATH']
+            db_path = current_app.config["DATABASE_PATH"]
             if not os.path.exists(db_path):
                 return False, "Database file does not exist"
 
@@ -38,9 +37,9 @@ class HealthChecker:
     def check_filesystem_health(self):
         """Check critical filesystem paths and permissions."""
         critical_paths = [
-            current_app.config['OUTPUT_FOLDER'],
-            current_app.config['TEMPLATES_FOLDER'],
-            current_app.config['STATIC_FOLDER']
+            current_app.config["OUTPUT_FOLDER"],
+            current_app.config["TEMPLATES_FOLDER"],
+            current_app.config["STATIC_FOLDER"],
         ]
 
         issues = []
@@ -59,14 +58,16 @@ class HealthChecker:
         """Validate critical configuration settings."""
         try:
             # Check required config values
-            required_configs = ['SECRET_KEY', 'DATABASE_PATH']
-            missing = [key for key in required_configs if not current_app.config.get(key)]
+            required_configs = ["SECRET_KEY", "DATABASE_PATH"]
+            missing = [
+                key for key in required_configs if not current_app.config.get(key)
+            ]
 
             if missing:
                 return False, f"Missing configuration: {', '.join(missing)}"
 
             # Check if in debug mode for production warning
-            if current_app.config.get('FLASK_DEBUG'):
+            if current_app.config.get("FLASK_DEBUG"):
                 return True, "Configuration valid (FLASK_DEBUG ACTIVE)"
 
             return True, "Configuration healthy"
@@ -77,13 +78,18 @@ class HealthChecker:
     def get_application_metrics(self):
         """Get basic application metrics for monitoring."""
         try:
-            db_path = current_app.config['DATABASE_PATH']
+            db_path = current_app.config["DATABASE_PATH"]
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
 
             # Get record counts for key tables
             metrics = {}
-            tables = ['technicians', 'tasks', 'technologies', 'technician_technology_skills']
+            tables = [
+                "technicians",
+                "tasks",
+                "technologies",
+                "technician_technology_skills",
+            ]
 
             for table in tables:
                 try:
@@ -94,7 +100,9 @@ class HealthChecker:
 
             # Get database file size
             if os.path.exists(db_path):
-                metrics['database_size_mb'] = round(os.path.getsize(db_path) / 1024 / 1024, 2)
+                metrics["database_size_mb"] = round(
+                    os.path.getsize(db_path) / 1024 / 1024, 2
+                )
 
             conn.close()
             return metrics
@@ -106,37 +114,37 @@ class HealthChecker:
     def perform_full_health_check(self):
         """Perform comprehensive health check of all components."""
         checks = {
-            'timestamp': datetime.utcnow().isoformat(),
-            'status': 'healthy',
-            'checks': {}
+            "timestamp": datetime.utcnow().isoformat(),
+            "status": "healthy",
+            "checks": {},
         }
 
         # Database health
         db_healthy, db_message = self.check_database_health()
-        checks['checks']['database'] = {
-            'status': 'healthy' if db_healthy else 'unhealthy',
-            'message': db_message
+        checks["checks"]["database"] = {
+            "status": "healthy" if db_healthy else "unhealthy",
+            "message": db_message,
         }
 
         # Filesystem health
         fs_healthy, fs_message = self.check_filesystem_health()
-        checks['checks']['filesystem'] = {
-            'status': 'healthy' if fs_healthy else 'unhealthy',
-            'message': fs_message
+        checks["checks"]["filesystem"] = {
+            "status": "healthy" if fs_healthy else "unhealthy",
+            "message": fs_message,
         }
 
         # Configuration health
         config_healthy, config_message = self.check_configuration_health()
-        checks['checks']['configuration'] = {
-            'status': 'healthy' if config_healthy else 'unhealthy',
-            'message': config_message
+        checks["checks"]["configuration"] = {
+            "status": "healthy" if config_healthy else "unhealthy",
+            "message": config_message,
         }
 
         # Application metrics
-        checks['metrics'] = self.get_application_metrics()
+        checks["metrics"] = self.get_application_metrics()
 
         # Overall status
         if not all([db_healthy, fs_healthy, config_healthy]):
-            checks['status'] = 'unhealthy'
+            checks["status"] = "unhealthy"
 
         return checks

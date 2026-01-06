@@ -5,15 +5,15 @@
  * Prompts the user for a configuration name.
  */
 AdvancedTable.prototype.saveConfiguration = function () {
-  const name = prompt('Enter configuration name:');
+  const name = prompt("Enter configuration name:");
   if (!name || !name.trim()) return;
 
   const duplicate = this.savedConfigs.find(
-    (c) => c.config_name.toLowerCase() === name.trim().toLowerCase()
+    (c) => c.config_name.toLowerCase() === name.trim().toLowerCase(),
   );
   if (duplicate) {
     ToastNotification.error(
-      `Configuration name "${name.trim()}" already exists. Please choose a different name.`
+      `Configuration name "${name.trim()}" already exists. Please choose a different name.`,
     );
     return;
   }
@@ -28,13 +28,13 @@ AdvancedTable.prototype.saveConfiguration = function () {
   };
 
   const csrfToken = document
-    .querySelector('meta[name=csrf-token]')
-    ?.getAttribute('content');
-  fetch('/api/table-config/' + this.pageName, {
-    method: 'POST',
+    .querySelector("meta[name=csrf-token]")
+    ?.getAttribute("content");
+  fetch("/api/table-config/" + this.pageName, {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': csrfToken,
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
     },
     body: JSON.stringify(config),
   })
@@ -50,13 +50,13 @@ AdvancedTable.prototype.saveConfiguration = function () {
         this.loadConfiguration();
       } else {
         ToastNotification.error(
-          'Failed to save configuration: ' + (data.error || 'Unknown error')
+          "Failed to save configuration: " + (data.error || "Unknown error"),
         );
       }
     })
     .catch((error) => {
-      console.error('Error saving configuration:', error);
-      ToastNotification.error('Error saving configuration: ' + error.message);
+      console.error("Error saving configuration:", error);
+      ToastNotification.error("Error saving configuration: " + error.message);
     });
 };
 
@@ -66,13 +66,13 @@ AdvancedTable.prototype.saveConfiguration = function () {
  */
 AdvancedTable.prototype.loadConfiguration = function () {
   // Show loading overlay for initial load
-  this.showTableLoading('Loading saved views...');
+  this.showTableLoading("Loading saved views...");
 
-  this.fetchWithRetry('/api/table-config/' + this.pageName)
+  this.fetchWithRetry("/api/table-config/" + this.pageName)
     .then((response) => {
       if (!response.ok) {
         if (response.status === 404 || response.status === 401) {
-          throw new Error('NO_CONFIGS');
+          throw new Error("NO_CONFIGS");
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -102,21 +102,21 @@ AdvancedTable.prototype.loadConfiguration = function () {
       }
     })
     .catch((error) => {
-      if (error.message === 'NO_CONFIGS') {
+      if (error.message === "NO_CONFIGS") {
         // No configurations found, this is expected for new users
-      } else if (error.message === 'OFFLINE') {
+      } else if (error.message === "OFFLINE") {
         // Offline mode, silent fail
-      } else if (error.message === 'Max retries exceeded') {
+      } else if (error.message === "Max retries exceeded") {
         console.error(
-          'Failed to load configurations after multiple retries:',
-          error
+          "Failed to load configurations after multiple retries:",
+          error,
         );
         ToastNotification.error(
-          'Unable to load saved views. Please try again later.'
+          "Unable to load saved views. Please try again later.",
         );
       } else {
-        console.error('Error loading configurations:', error);
-        ToastNotification.warning('Could not load saved configurations');
+        console.error("Error loading configurations:", error);
+        ToastNotification.warning("Could not load saved configurations");
       }
       this.savedConfigs = [];
 
@@ -155,19 +155,18 @@ AdvancedTable.prototype.applyConfiguration = function (config) {
  * @param {string} method - The HTTP method (DELETE, POST, etc.).
  * @returns {Promise<any>} - The JSON response.
  */
-AdvancedTable.prototype.apiCall = function(url, method) {
+AdvancedTable.prototype.apiCall = function (url, method) {
   const csrfToken = document
-    .querySelector('meta[name=csrf-token]')
-    ?.getAttribute('content');
+    .querySelector("meta[name=csrf-token]")
+    ?.getAttribute("content");
 
   return fetch(url, {
     method: method,
     headers: {
-      'X-CSRFToken': csrfToken,
+      "X-CSRFToken": csrfToken,
     },
   }).then((response) => {
-    if (!response.ok)
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();
   });
 };
@@ -177,23 +176,23 @@ AdvancedTable.prototype.apiCall = function(url, method) {
  * @param {number|string} configId - The ID of the configuration to delete.
  */
 AdvancedTable.prototype.deleteConfiguration = function (configId) {
-  if (!confirm('Are you sure you want to delete this view?')) return;
+  if (!confirm("Are you sure you want to delete this view?")) return;
 
-  this.apiCall(`/api/table-config/${this.pageName}/${configId}`, 'DELETE')
+  this.apiCall(`/api/table-config/${this.pageName}/${configId}`, "DELETE")
     .then((data) => {
       if (data.success) {
         if (this.selectedConfigId === configId) {
           this.selectedConfigId = null;
         }
         this.loadConfiguration();
-        ToastNotification.success('View deleted successfully');
+        ToastNotification.success("View deleted successfully");
       } else {
-        ToastNotification.error('Failed to delete view');
+        ToastNotification.error("Failed to delete view");
       }
     })
     .catch((error) => {
-      console.error('Error deleting configuration:', error);
-      ToastNotification.error('Error deleting configuration');
+      console.error("Error deleting configuration:", error);
+      ToastNotification.error("Error deleting configuration");
     });
 };
 
@@ -202,17 +201,17 @@ AdvancedTable.prototype.deleteConfiguration = function (configId) {
  * @param {number|string} configId - The ID of the configuration to set as default.
  */
 AdvancedTable.prototype.setDefaultView = function (configId) {
-  this.apiCall(`/api/table-config/${this.pageName}/${configId}/default`, 'POST')
+  this.apiCall(`/api/table-config/${this.pageName}/${configId}/default`, "POST")
     .then((data) => {
       if (data.success) {
         this.loadConfiguration();
-        ToastNotification.success('Default view updated');
+        ToastNotification.success("Default view updated");
       } else {
-        ToastNotification.error('Failed to update default view');
+        ToastNotification.error("Failed to update default view");
       }
     })
     .catch((error) => {
-      console.error('Error setting default view:', error);
-      ToastNotification.error('Error setting default view');
+      console.error("Error setting default view:", error);
+      ToastNotification.error("Error setting default view");
     });
 };

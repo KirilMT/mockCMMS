@@ -67,7 +67,7 @@
   - [x] 5.4.4. Ensure interactions (hover, click, filtering) stay consistent with the table view. ✅ Click task → scroll to table row implemented
   - [x] 5.4.5. **NEW:** Add resource allocation view showing technician utilization over time ⚠️ **NOT IMPLEMENTED** (documentation claims it exists but not in custom version)
   - [ ] 5.4.6. **NEW:** Add drag-and-drop capability to reschedule tasks (Supervisor/Planner only) ⏳ **NOT IMPLEMENTED** - Future enhancement
-  
+
   **Actual Implementation Details (Custom Gantt):**
   - Created `planning-gantt-custom.js` - Full custom Gantt implementation
   - Created `planning-gantt-custom.css` - Custom styling matching original dashboard
@@ -82,7 +82,7 @@
     - Alternating column backgrounds for readability
     - Dynamic height based on technician count
     - No external dependencies (pure vanilla JavaScript)
-  
+
   **Known Issues:**
   - ⚠️ Column hover highlighting not working (attempted fix in November 19, still broken)
   - ⚠️ No resource utilization cards (documentation claims they exist)
@@ -298,7 +298,7 @@
     - **Status:** ✅ **RESOLVED** - Root cause found and fixed
     - **Root Cause Identified:**
       - Daily PMs were being filtered out by weekend mode
-      - User had 3 PM tasks with frequency="Daily" 
+      - User had 3 PM tasks with frequency="Daily"
       - Weekend filter only allowed Weekly/Monthly/Bi-weekly/Quarterly
       - Result: Only 5/8 tasks were eligible for planning
     - **Fixes Applied (November 20, 2025):**
@@ -322,7 +322,7 @@
       - No interrupting popups, clean modern UX
     - **Result:** Weekend planning now works for single-day and multi-day schedules
     - **Investigation Doc:** `docs/WEEKEND_PLANNING_BUG_INVESTIGATION.md`
-  
+
   - [ ] 5.9.2. **Advanced Table Height Issues** 🟡 **MEDIUM PRIORITY - November 20, 2025**
     - **Issue:** Table height works correctly in schedules page, but still has problems in Assets, MOs, Users, Spare Parts pages
     - **Current State:**
@@ -349,7 +349,7 @@
       - `src/templates/maintenance_orders.html`
       - `src/templates/spare_parts.html`
       - `src/templates/users.html`
-  
+
   - [ ] 5.9.3. **Gantt Chart Column Hover Highlighting** 🔴 **HIGH PRIORITY - November 20, 2025**
     - **Issue:** Hover over time columns in Gantt chart does not highlight entire column
     - **Expected Behavior:** When hovering over any cell in a time column (e.g., 09:00), entire column should highlight in blue
@@ -383,7 +383,7 @@
       - [ ] Move mouse away → column returns to normal background
       - [ ] Hover over row → row highlights (should already work)
       - [ ] Verify alternating column backgrounds are preserved
-  
+
   - [ ] 5.9.4. **CSS/JS Consolidation Audit** 🔴 **HIGH PRIORITY - CODE QUALITY**
     - **Goal:** Ensure ALL styling in CSS files, ALL scripts in JS files - NO inline styles or scripts
     - **Rationale:**
@@ -443,7 +443,7 @@
   - **⚠️ IMPORTANT:** These features must be implemented BEFORE Phase 4 (Cleanup) because Phase 4 will delete the legacy technician dashboard code that serves as the reference implementation.
   - **Priority:** 🔴 **HIGH - NOT A FUTURE FEATURE** - Critical to implement while original dashboard is still available for reference
   - **Timeline:** Must complete before starting Phase 4 cleanup
-  
+
   - [ ] 5.10.1. **Break Time Shading**
     - **Feature:** Gray-shaded columns for scheduled break times (e.g., lunch breaks, shift change)
     - **Benefits:** Visual clarity of available work time vs. break time
@@ -454,7 +454,7 @@
       - Apply gray background CSS class to break columns
       - Add legend indicating break time shading
     - **Priority:** 🟡 Medium - Nice to have, improves readability
-  
+
   - [ ] 5.10.2. **Current Time Indicator**
     - **Feature:** Red vertical line showing current time on Gantt chart
     - **Benefits:** Real-time awareness of schedule progress
@@ -465,7 +465,7 @@
       - Update position every minute (or on refresh)
       - Only show if current time falls within schedule date range
     - **Priority:** 🟡 Medium - Useful for active shift planning
-  
+
   - [ ] 5.10.3. **Drag & Drop Task Reschedule** 🔴 **HIGH PRIORITY**
     - **Feature:** Drag task bars to different times or technicians to reschedule
     - **Benefits:** Quick manual adjustments to auto-generated plans
@@ -483,7 +483,7 @@
       - [ ] Test drag to different technician (reassignment)
       - [ ] Test validation (prevent invalid drops)
       - [ ] Test conflict detection (overlapping tasks)
-  
+
   - [ ] 5.10.4. **Enhanced Tooltip Popups**
     - **Feature:** Detailed task information on hover (similar to original dashboard)
     - **Benefits:** Quick access to task details without navigating away
@@ -503,7 +503,7 @@
       - Add smooth fade-in/fade-out transitions
       - Ensure tooltip stays within viewport bounds
     - **Priority:** 🟡 Medium - Improves user experience
-  
+
   - [ ] 5.10.5. **Table-Gantt Synchronization** 🔴 **HIGH PRIORITY**
     - **Feature:** Bidirectional highlighting between table rows and Gantt bars
     - **Current State:** ✅ Click Gantt bar → highlights table row (implemented)
@@ -524,7 +524,7 @@
       - [ ] Test Gantt bar click → table row highlights (already works)
       - [ ] Test with multi-technician tasks
       - [ ] Test with filtered/sorted tables
-  
+
   - [ ] 5.10.6. **View Mode Enhancements**
     - **Feature:** Additional view modes beyond current Day view
     - **Reference:** Original dashboard supports multiple time scales
@@ -539,7 +539,7 @@
       - Dynamically generate time labels (15min, 30min, 1hr intervals)
       - Maintain user's view preference in session storage
     - **Priority:** 🟢 Low - Current day view is sufficient for now
-  
+
   - [ ] 5.10.7. **Print & Export Gantt**
     - **Feature:** Print-friendly Gantt chart and export to PDF/PNG
     - **Benefits:** Share plans with stakeholders, archive completed plans
@@ -550,7 +550,7 @@
       - Consider PDF export using library like jsPDF or html2canvas
       - Include schedule metadata (date, mode, statistics)
     - **Priority:** 🟡 Medium - Useful for documentation
-  
+
   - [ ] 5.10.8. **Testing & Validation for Advanced Features**
     - [ ] Unit tests for each new feature component
     - [ ] Integration tests for drag & drop workflow

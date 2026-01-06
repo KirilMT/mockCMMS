@@ -3,13 +3,13 @@
  */
 AdvancedTable.prototype.render = function () {
   const currentSearchValue = this.globalSearchDisplay || "";
-  const sidebarHTML = this.sidebar ? this.sidebar.generateHTML() : '';
+  const sidebarHTML = this.sidebar ? this.sidebar.generateHTML() : "";
 
   this.container.innerHTML = `
         <div class="advanced-table-wrapper">
             <div class="table-layout">
                 ${sidebarHTML}
-                
+
                 <div class="table-main">
                     <div class="table-controls">
                         <div class="d-flex align-items-center gap-2">
@@ -19,7 +19,9 @@ AdvancedTable.prototype.render = function () {
                             <div class="table-search">
                                 <input type="text" class="form-control form-control-sm" placeholder="Search all columns..."
                                        id="globalSearchInput" value="${currentSearchValue}">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" id="clearSearchBtn" style="display: ${currentSearchValue ? "inline-block" : "none"};" title="Clear search">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" id="clearSearchBtn" style="display: ${
+                                  currentSearchValue ? "inline-block" : "none"
+                                };" title="Clear search">
                                     <i class="fas fa-times"></i>
                                 </button>
                                 <button class="btn btn-sm btn-primary" type="button" id="applySearchBtn" title="Apply search">
@@ -28,7 +30,11 @@ AdvancedTable.prototype.render = function () {
                             </div>
                         </div>
                         <div class="table-info">
-                            <span class="row-count">Showing <strong>${this.getFilteredData().length}</strong> of <strong>${this.data.length}</strong> rows</span>
+                            <span class="row-count">Showing <strong>${
+                              this.getFilteredData().length
+                            }</strong> of <strong>${
+                              this.data.length
+                            }</strong> rows</span>
                         </div>
                         <div class="table-actions">
                             <button class="btn btn-sm btn-outline-success" data-action="exportData">
@@ -227,7 +233,9 @@ AdvancedTable.prototype.updateTable = function () {
   // Update row count
   const rowCount = this.container.querySelector(".row-count");
   if (rowCount) {
-    rowCount.innerHTML = `Showing <strong>${this.getFilteredData().length}</strong> of <strong>${this.data.length}</strong> rows`;
+    rowCount.innerHTML = `Showing <strong>${
+      this.getFilteredData().length
+    }</strong> of <strong>${this.data.length}</strong> rows`;
   }
 
   // Update header sort icons

@@ -1,7 +1,7 @@
 # Test Suite Organization
 
-**Total Tests:** 574+ tests (223 backend + 293 Jest + 71 E2E = 587 actual)  
-**Coverage:** 82%+ (Backend), 80%+ (Frontend)  
+**Total Tests:** 574+ tests (223 backend + 293 Jest + 71 E2E = 587 actual)
+**Coverage:** 82%+ (Backend), 80%+ (Frontend)
 **Last Updated:** December 19, 2025
 
 ---
@@ -42,33 +42,33 @@ tests/
 ### Backend Tests (`tests/backend/`) - pytest
 
 #### 1. Unit Tests (`tests/backend/unit/`)
-**Purpose:** Test individual components in isolation  
-**Speed:** Fast (<10 seconds)  
+**Purpose:** Test individual components in isolation
+**Speed:** Fast (<10 seconds)
 **Run:** `pytest tests/backend/unit/`
 
 #### 2. Functional Tests (`tests/backend/functional/`)
-**Purpose:** Test API endpoints and web routes  
-**Speed:** Medium (<20 seconds)  
+**Purpose:** Test API endpoints and web routes
+**Speed:** Medium (<20 seconds)
 **Run:** `pytest tests/backend/functional/`
 
 #### 3. Integration Tests (`tests/backend/integration/`)
-**Purpose:** Test complete workflows end-to-end  
-**Speed:** Medium-Slow (<15 seconds)  
+**Purpose:** Test complete workflows end-to-end
+**Speed:** Medium-Slow (<15 seconds)
 **Run:** `pytest tests/backend/integration/`
 
 #### 4. Security Tests (`tests/backend/security/`)
-**Purpose:** Validate security, authentication, and input validation  
-**Speed:** Fast-Medium (<10 seconds)  
+**Purpose:** Validate security, authentication, and input validation
+**Speed:** Fast-Medium (<10 seconds)
 **Run:** `pytest tests/backend/security/`
 
 #### 5. Performance Tests (`tests/backend/performance/`)
-**Purpose:** Validate system performance and scalability  
-**Speed:** Slow (<30 seconds)  
+**Purpose:** Validate system performance and scalability
+**Speed:** Slow (<30 seconds)
 **Run:** `pytest tests/backend/performance/`
 
 #### 6. Reliability Tests (`tests/backend/reliability/`)
-**Purpose:** Test error handling and system robustness  
-**Speed:** Fast (<5 seconds)  
+**Purpose:** Test error handling and system robustness
+**Speed:** Fast (<5 seconds)
 **Run:** `pytest tests/backend/reliability/`
 
 ---
@@ -76,8 +76,8 @@ tests/
 ### Frontend Tests (`tests/frontend/`)
 
 #### Jest Unit Tests (`tests/frontend/unit/`)
-**Purpose:** Test JavaScript components and logic  
-**Speed:** Fast (~10 seconds for 293 tests)  
+**Purpose:** Test JavaScript components and logic
+**Speed:** Fast (~10 seconds for 293 tests)
 **Run:** `npm test`
 
 **Files:**
@@ -86,8 +86,8 @@ tests/
 - `flash-messages.test.js` - Flash message tests
 
 #### Playwright E2E Tests (`tests/frontend/e2e/`)
-**Purpose:** Test full user workflows in browser  
-**Speed:** Slow (~4 minutes for 71 tests)  
+**Purpose:** Test full user workflows in browser
+**Speed:** Slow (~4 minutes for 71 tests)
 **Run:** `npm run test:e2e` or `npx playwright test`
 
 **Files:**

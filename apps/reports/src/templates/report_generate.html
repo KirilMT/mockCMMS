@@ -1,105 +1,141 @@
-{% extends "base.html" %}
-
-{% block title %}Generate Report{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Generate Report{% endblock %} {%
+block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3>Generate New Report</h3>
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h3>Generate New Report</h3>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+          <div class="mb-3">
+            <label for="title" class="form-label">Report Title</label>
+            <input
+              type="text"
+              class="form-control"
+              id="title"
+              name="title"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="report_type" class="form-label">Report Type</label>
+            <select
+              class="form-select"
+              id="report_type"
+              name="report_type"
+              required
+              onchange="toggleParameters()"
+            >
+              <option value="">Select Report Type</option>
+              <option value="reactive_production">
+                Reactive MOs During Production
+              </option>
+              <option value="completed_weekend">
+                Completed MOs for Weekend
+              </option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="format" class="form-label">Format</label>
+            <select class="form-select" id="format" name="format" required>
+              <option value="markdown">Markdown</option>
+              <option value="pdf">PDF (Text)</option>
+            </select>
+          </div>
+
+          <!-- Reactive Production Parameters -->
+          <div id="reactive_params" style="display: none">
+            <h5>Reactive Production Parameters</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="start_date" class="form-label">Start Date</label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="start_date"
+                    name="start_date"
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="end_date" class="form-label">End Date</label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="end_date"
+                    name="end_date"
+                  />
+                </div>
+              </div>
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Report Title</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="report_type" class="form-label">Report Type</label>
-                        <select class="form-select" id="report_type" name="report_type" required onchange="toggleParameters()">
-                            <option value="">Select Report Type</option>
-                            <option value="reactive_production">Reactive MOs During Production</option>
-                            <option value="completed_weekend">Completed MOs for Weekend</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="format" class="form-label">Format</label>
-                        <select class="form-select" id="format" name="format" required>
-                            <option value="markdown">Markdown</option>
-                            <option value="pdf">PDF (Text)</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Reactive Production Parameters -->
-                    <div id="reactive_params" style="display: none;">
-                        <h5>Reactive Production Parameters</h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="start_date" class="form-label">Start Date</label>
-                                    <input type="date" class="form-control" id="start_date" name="start_date">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="end_date" class="form-label">End Date</label>
-                                    <input type="date" class="form-control" id="end_date" name="end_date">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="priority" class="form-label">Priority Filter</label>
-                            <select class="form-select" id="priority" name="priority">
-                                <option value="All">All Priorities</option>
-                                <option value="Critical">Critical</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Weekend Parameters -->
-                    <div id="weekend_params" style="display: none;">
-                        <h5>Weekend Parameters</h5>
-                        <div class="mb-3">
-                            <label for="weekend_date" class="form-label">Weekend Date (any day of the week)</label>
-                            <input type="date" class="form-control" id="weekend_date" name="weekend_date">
-                            <small class="form-text text-muted">Select any date in the week to get the weekend report</small>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('reports.reports') }}" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Generate Report</button>
-                    </div>
-                </form>
+            <div class="mb-3">
+              <label for="priority" class="form-label">Priority Filter</label>
+              <select class="form-select" id="priority" name="priority">
+                <option value="All">All Priorities</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
             </div>
-        </div>
+          </div>
+
+          <!-- Weekend Parameters -->
+          <div id="weekend_params" style="display: none">
+            <h5>Weekend Parameters</h5>
+            <div class="mb-3">
+              <label for="weekend_date" class="form-label"
+                >Weekend Date (any day of the week)</label
+              >
+              <input
+                type="date"
+                class="form-control"
+                id="weekend_date"
+                name="weekend_date"
+              />
+              <small class="form-text text-muted"
+                >Select any date in the week to get the weekend report</small
+              >
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <a href="{{ url_for('reports.reports') }}" class="btn btn-secondary"
+              >Cancel</a
+            >
+            <button type="submit" class="btn btn-primary">
+              Generate Report
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-function toggleParameters() {
-    const reportType = document.getElementById('report_type').value;
-    const reactiveParams = document.getElementById('reactive_params');
-    const weekendParams = document.getElementById('weekend_params');
-    
+  function toggleParameters() {
+    const reportType = document.getElementById("report_type").value;
+    const reactiveParams = document.getElementById("reactive_params");
+    const weekendParams = document.getElementById("weekend_params");
+
     // Hide all parameter sections
-    reactiveParams.style.display = 'none';
-    weekendParams.style.display = 'none';
-    
+    reactiveParams.style.display = "none";
+    weekendParams.style.display = "none";
+
     // Show relevant parameters
-    if (reportType === 'reactive_production') {
-        reactiveParams.style.display = 'block';
-    } else if (reportType === 'completed_weekend') {
-        weekendParams.style.display = 'block';
+    if (reportType === "reactive_production") {
+      reactiveParams.style.display = "block";
+    } else if (reportType === "completed_weekend") {
+      weekendParams.style.display = "block";
     }
-}
+  }
 </script>
 {% endblock %}

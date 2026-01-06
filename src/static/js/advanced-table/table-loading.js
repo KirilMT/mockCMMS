@@ -11,7 +11,7 @@
  */
 AdvancedTable.prototype.showButtonLoading = function (
   button,
-  loadingText = 'Loading...'
+  loadingText = "Loading...",
 ) {
   if (!button) return { restore: () => {} };
 
@@ -39,12 +39,12 @@ AdvancedTable.prototype.showButtonLoading = function (
  * Show a loading overlay on the table content area only
  * @param {string} [message='Loading...'] - Loading message to display
  */
-AdvancedTable.prototype.showTableLoading = function (message = 'Loading...') {
+AdvancedTable.prototype.showTableLoading = function (message = "Loading...") {
   // Remove existing overlay if present
   this.hideTableLoading();
 
-  const overlay = document.createElement('div');
-  overlay.className = 'table-loading-overlay';
+  const overlay = document.createElement("div");
+  overlay.className = "table-loading-overlay";
   overlay.innerHTML = `
         <div class="table-loading">
             <div class="spinner-border text-primary" role="status"></div>
@@ -53,7 +53,7 @@ AdvancedTable.prototype.showTableLoading = function (message = 'Loading...') {
     `;
 
   // Append to table-responsive div, not the entire container
-  const tableResponsive = this.container.querySelector('.table-responsive');
+  const tableResponsive = this.container.querySelector(".table-responsive");
   if (tableResponsive) {
     tableResponsive.appendChild(overlay);
   } else {
@@ -67,10 +67,10 @@ AdvancedTable.prototype.showTableLoading = function (message = 'Loading...') {
  */
 AdvancedTable.prototype.hideTableLoading = function () {
   // Check in table-responsive first
-  const tableResponsive = this.container.querySelector('.table-responsive');
+  const tableResponsive = this.container.querySelector(".table-responsive");
   const overlay = tableResponsive
-    ? tableResponsive.querySelector('.table-loading-overlay')
-    : this.container.querySelector('.table-loading-overlay');
+    ? tableResponsive.querySelector(".table-loading-overlay")
+    : this.container.querySelector(".table-loading-overlay");
 
   if (overlay) {
     overlay.remove();

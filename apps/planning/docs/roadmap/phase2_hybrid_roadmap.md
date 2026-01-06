@@ -1,6 +1,6 @@
 # Phase 2 Hybrid Implementation Roadmap
 
-_Created: November 18, 2025_  
+_Created: November 18, 2025_
 _Strategy: Option 3 - Hybrid Approach_
 
 ---
@@ -110,13 +110,13 @@ class PlanningEngine:
         max_task_duration: int = None  # NEW: Add time constraint
     ) -> PlanningResult:
         # ...existing code...
-        
+
         # Set mode-specific constraints
         if planning_mode == "shift_break":
             max_task_duration = max_task_duration or 30  # 30-minute default
         else:
             max_task_duration = max_task_duration or shift_duration_minutes
-        
+
         # Pass to assignment logic
         # ...
 ```
@@ -151,7 +151,7 @@ def _filter_weekend_tasks(
 ) -> List[Tuple[PlanningTask, MaintenanceOrder]]:
     """Filter tasks suitable for weekend planning."""
     weekend_tasks = []
-    
+
     for task, mo in tasks:
         # Include based on frequency
         if mo.frequency in ['Weekly', 'Monthly']:
@@ -162,7 +162,7 @@ def _filter_weekend_tasks(
         # Include deferred maintenance
         elif mo.status == 'Deferred':
             weekend_tasks.append((task, mo))
-    
+
     return weekend_tasks
 ```
 
@@ -175,7 +175,7 @@ def _prioritize_tasks(
     planning_mode: str
 ) -> List[Tuple[PlanningTask, MaintenanceOrder]]:
     # ...existing priority maps...
-    
+
     if planning_mode == "weekend":
         # Weekend: PM-first approach
         type_priority_weekend = {
@@ -285,4 +285,3 @@ Once Priority 1 & 2 are complete:
 - Data Flow: `planning_data_flow.md`
 - Core Engine: `apps/planning/src/services/planning_engine.py`
 - Current Tests: `apps/planning/tests/test_planning_engine.py`
-

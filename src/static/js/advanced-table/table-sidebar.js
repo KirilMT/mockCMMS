@@ -23,7 +23,9 @@ class TableSidebar {
    */
   generateHTML() {
     return `
-            <div class="table-sidebar ${this.sidebarCollapsed ? "collapsed" : ""}">
+            <div class="table-sidebar ${
+              this.sidebarCollapsed ? "collapsed" : ""
+            }">
                 <div class="sidebar-header">
                     <h6>Table Controls</h6>
                     <button class="btn-collapse" title="Collapse sidebar">
@@ -33,13 +35,21 @@ class TableSidebar {
 
                 <!-- Filters Section -->
                 <div class="sidebar-section" data-section="filters">
-                    <div class="section-header ${this.expandedSections.includes("filters") ? "expanded" : ""}">
+                    <div class="section-header ${
+                      this.expandedSections.includes("filters")
+                        ? "expanded"
+                        : ""
+                    }">
                         <i class="fas fa-filter"></i>
                         <span>Filters</span>
                         <span class="badge">0</span>
                         <i class="fas fa-chevron-down toggle-icon"></i>
                     </div>
-                    <div class="section-content ${this.expandedSections.includes("filters") ? "" : "collapsed"}">
+                    <div class="section-content ${
+                      this.expandedSections.includes("filters")
+                        ? ""
+                        : "collapsed"
+                    }">
                         <div id="filterRows">
                             <!-- Filter rows will be populated here -->
                             <p class="empty-state-message" id="noFiltersMessage">No applied filters</p>
@@ -60,12 +70,20 @@ class TableSidebar {
 
                 <!-- Columns Section -->
                 <div class="sidebar-section" data-section="columns">
-                    <div class="section-header ${this.expandedSections.includes("columns") ? "expanded" : ""}">
+                    <div class="section-header ${
+                      this.expandedSections.includes("columns")
+                        ? "expanded"
+                        : ""
+                    }">
                         <i class="fas fa-columns"></i>
                         <span>Columns</span>
                         <i class="fas fa-chevron-down toggle-icon"></i>
                     </div>
-                    <div class="section-content ${this.expandedSections.includes("columns") ? "" : "collapsed"}">
+                    <div class="section-content ${
+                      this.expandedSections.includes("columns")
+                        ? ""
+                        : "collapsed"
+                    }">
                         <div id="columnList" class="column-list">
                             <!-- Column items will be populated here -->
                         </div>
@@ -82,12 +100,20 @@ class TableSidebar {
 
                 <!-- Saved Views Section -->
                 <div class="sidebar-section" data-section="configs">
-                    <div class="section-header ${this.expandedSections.includes("configs") ? "expanded" : ""}">
+                    <div class="section-header ${
+                      this.expandedSections.includes("configs")
+                        ? "expanded"
+                        : ""
+                    }">
                         <i class="fas fa-save"></i>
                         <span>Saved Views</span>
                         <i class="fas fa-chevron-down toggle-icon"></i>
                     </div>
-                    <div class="section-content ${this.expandedSections.includes("configs") ? "" : "collapsed"}">
+                    <div class="section-content ${
+                      this.expandedSections.includes("configs")
+                        ? ""
+                        : "collapsed"
+                    }">
                         <div id="savedViewsList" class="saved-views-list">
                             <!-- Saved views will be populated here -->
                         </div>
@@ -337,26 +363,44 @@ class TableSidebar {
                 <select class="form-select form-select-sm filter-column">
                     <option value="">Select Column</option>
                     ${this.table.columnOrder
-        .filter((key) => !this.table.hiddenColumns.has(key))
-        .map((key) => {
-          const col = this.table.columns.find(
-            (c) => c.key === key,
-          );
-          if (!col) return "";
-          return `<option value="${col.key}" ${col.key === column ? "selected" : ""}>${col.label}</option>`;
-        })
-        .join("")}
+                      .filter((key) => !this.table.hiddenColumns.has(key))
+                      .map((key) => {
+                        const col = this.table.columns.find(
+                          (c) => c.key === key,
+                        );
+                        if (!col) return "";
+                        return `<option value="${col.key}" ${
+                          col.key === column ? "selected" : ""
+                        }>${col.label}</option>`;
+                      })
+                      .join("")}
                 </select>
-                <select class="form-select form-select-sm filter-operator" ${!column ? "disabled" : ""}>
-                    <option value="contains" ${operator === "contains" ? "selected" : ""}>Contains</option>
-                    <option value="not_contains" ${operator === "not_contains" ? "selected" : ""}>Does Not Contain</option>
-                    <option value="equals" ${operator === "equals" ? "selected" : ""}>Equals</option>
-                    <option value="not_equals" ${operator === "not_equals" ? "selected" : ""}>Not Equals</option>
-                    <option value="starts_with" ${operator === "starts_with" ? "selected" : ""}>Starts With</option>
-                    <option value="ends_with" ${operator === "ends_with" ? "selected" : ""}>Ends With</option>
+                <select class="form-select form-select-sm filter-operator" ${
+                  !column ? "disabled" : ""
+                }>
+                    <option value="contains" ${
+                      operator === "contains" ? "selected" : ""
+                    }>Contains</option>
+                    <option value="not_contains" ${
+                      operator === "not_contains" ? "selected" : ""
+                    }>Does Not Contain</option>
+                    <option value="equals" ${
+                      operator === "equals" ? "selected" : ""
+                    }>Equals</option>
+                    <option value="not_equals" ${
+                      operator === "not_equals" ? "selected" : ""
+                    }>Not Equals</option>
+                    <option value="starts_with" ${
+                      operator === "starts_with" ? "selected" : ""
+                    }>Starts With</option>
+                    <option value="ends_with" ${
+                      operator === "ends_with" ? "selected" : ""
+                    }>Ends With</option>
                 </select>
-                <input type="text" class="form-control form-control-sm filter-value" 
-                       placeholder="Enter value..." value="${value || ""}" ${!column ? "disabled" : ""}>
+                <input type="text" class="form-control form-control-sm filter-value"
+                       placeholder="Enter value..." value="${value || ""}" ${
+                         !column ? "disabled" : ""
+                       }>
             </div>
             <button class="btn btn-sm btn-outline-danger remove-filter-btn" style="align-self: center;">
                 <i class="fas fa-times"></i>
@@ -373,11 +417,15 @@ class TableSidebar {
                 <div style="flex: 1; height: 1px; background: #dee2e6;"></div>
                 <div style="display: flex; gap: 12px; background: white; padding: 2px 12px; border-radius: 4px; border: 1px solid #dee2e6;">
                     <label style="display: flex; align-items: center; gap: 4px; margin: 0; cursor: default;">
-                        <input type="radio" class="filter-logic-radio" name="logic-${Date.now()}" value="AND" ${logic !== "OR" ? "checked" : ""}>
+                        <input type="radio" class="filter-logic-radio" name="logic-${Date.now()}" value="AND" ${
+                          logic !== "OR" ? "checked" : ""
+                        }>
                         <span style="pointer-events: none; user-select: none;">AND</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 4px; margin: 0; cursor: default;">
-                        <input type="radio" class="filter-logic-radio" name="logic-${Date.now()}" value="OR" ${logic === "OR" ? "checked" : ""}>
+                        <input type="radio" class="filter-logic-radio" name="logic-${Date.now()}" value="OR" ${
+                          logic === "OR" ? "checked" : ""
+                        }>
                         <span style="pointer-events: none; user-select: none;">OR</span>
                     </label>
                 </div>
@@ -1076,12 +1124,22 @@ class TableSidebar {
 
       viewItem.innerHTML = `
                 <div class="view-info" style="cursor: pointer; flex: 1;">
-                    <span class="view-name" title="${config.config_name}">${displayName}</span>
-                    ${config.is_default ? '<span class="badge badge-primary badge-sm">Default</span>' : ""}
+                    <span class="view-name" title="${
+                      config.config_name
+                    }">${displayName}</span>
+                    ${
+                      config.is_default
+                        ? '<span class="badge badge-primary badge-sm">Default</span>'
+                        : ""
+                    }
                 </div>
                 <div class="view-actions">
-                    <button class="btn btn-sm btn-link set-default-btn" title="${config.is_default ? "Remove default" : "Set as default"}">
-                        <i class="fas fa-star${config.is_default ? " text-warning" : ""}"></i>
+                    <button class="btn btn-sm btn-link set-default-btn" title="${
+                      config.is_default ? "Remove default" : "Set as default"
+                    }">
+                        <i class="fas fa-star${
+                          config.is_default ? " text-warning" : ""
+                        }"></i>
                     </button>
                     <button class="btn btn-sm btn-link delete-view-btn" title="Delete this view">
                         <i class="fas fa-trash text-danger"></i>
@@ -1334,7 +1392,7 @@ class TableSidebar {
         } else {
           ToastNotification.error(
             "Failed to update configuration: " +
-            (data.error || "Unknown error"),
+              (data.error || "Unknown error"),
           );
         }
       })
@@ -1427,7 +1485,7 @@ class TableSidebar {
         } else {
           ToastNotification.error(
             "Failed to delete configuration: " +
-            (data.error || "Unknown error"),
+              (data.error || "Unknown error"),
           );
         }
       })
@@ -1502,7 +1560,7 @@ class TableSidebar {
         } else {
           ToastNotification.error(
             "Failed to set default configuration: " +
-            (data.error || "Unknown error"),
+              (data.error || "Unknown error"),
           );
         }
       })
@@ -1549,7 +1607,7 @@ class TableSidebar {
         } else {
           ToastNotification.error(
             "Failed to remove default configuration: " +
-            (data.error || "Unknown error"),
+              (data.error || "Unknown error"),
           );
         }
       })

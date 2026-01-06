@@ -32,7 +32,7 @@
  * Process and display flash messages
  */
 function processFlashMessages() {
-  const flashContainer = document.getElementById('flash-messages');
+  const flashContainer = document.getElementById("flash-messages");
 
   if (flashContainer && flashContainer.dataset.messages) {
     try {
@@ -40,10 +40,10 @@ function processFlashMessages() {
 
       // Map Flask flash categories to ToastNotification types
       const categoryMap = {
-        danger: 'error', // Flask uses 'danger', ToastNotification uses 'error'
-        success: 'success',
-        warning: 'warning',
-        info: 'info',
+        danger: "error", // Flask uses 'danger', ToastNotification uses 'error'
+        success: "success",
+        warning: "warning",
+        info: "info",
       };
 
       flashMessages.forEach((msg) => {
@@ -55,16 +55,16 @@ function processFlashMessages() {
         }
       });
     } catch (error) {
-      console.error('Error parsing flash messages:', error);
+      console.error("Error parsing flash messages:", error);
     }
   }
 }
 
 // Try to process immediately if DOM is already loaded
-if (typeof document !== 'undefined') {
-  if (document.readyState === 'loading') {
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
     // DOM is still loading, wait for DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', processFlashMessages);
+    document.addEventListener("DOMContentLoaded", processFlashMessages);
   } else {
     // DOM is already loaded, process immediately
     processFlashMessages();
@@ -72,6 +72,6 @@ if (typeof document !== 'undefined') {
 }
 
 // Export for testing
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { processFlashMessages };
 }

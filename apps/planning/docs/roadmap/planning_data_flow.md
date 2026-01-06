@@ -262,7 +262,7 @@ for task in tasks:
 
 **Flow:**
 ```
-CMMS Tasks → Filter by urgency → Check parts → 
+CMMS Tasks → Filter by urgency → Check parts →
 → Assign to available shift techs → 30-min windows → UI
 ```
 
@@ -281,7 +281,7 @@ CMMS Tasks → Filter by urgency → Check parts →
 
 **Flow:**
 ```
-CMMS Tasks → Filter by schedule/frequency → Check parts → 
+CMMS Tasks → Filter by schedule/frequency → Check parts →
 → Assign to weekend crew → Multi-hour blocks → UI
 ```
 
@@ -373,4 +373,3 @@ User Login → Role Check → UI Permissions → API Access Control
 - Database Schema: `src/services/db_utils.py`
 - Planning Models: `apps/planning/src/services/planning_models.py`
 - Transformation Layer: `apps/planning/src/services/data_transformation.py`
-

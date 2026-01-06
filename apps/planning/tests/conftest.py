@@ -1,6 +1,5 @@
-"""
-Test configuration and fixtures for the Weekend Planning Project.
-"""
+"""Test configuration and fixtures for the Weekend Planning Project."""
+
 import sys
 import os
 from unittest.mock import MagicMock
@@ -10,41 +9,43 @@ try:
     import flask_limiter
 except ImportError:
     m = MagicMock()
-    m.__name__ = 'flask_limiter'
+    m.__name__ = "flask_limiter"
     m.__path__ = []
-    
+
     class MockLimiter:
         def __init__(self, *args, **kwargs):
             pass
+
         def limit(self, *args, **kwargs):
             def decorator(f):
                 return f
+
             return decorator
-            
+
     m.Limiter = MockLimiter
-    sys.modules['flask_limiter'] = m
-    sys.modules['flask_limiter.util'] = MagicMock()
+    sys.modules["flask_limiter"] = m
+    sys.modules["flask_limiter.util"] = MagicMock()
 
 # Mock pandas if not installed
 try:
     import pandas
 except ImportError:
     m = MagicMock()
-    m.__name__ = 'pandas'
+    m.__name__ = "pandas"
     m.__path__ = []
-    sys.modules['pandas'] = m
+    sys.modules["pandas"] = m
 
 # Mock requests if not installed
 try:
     import requests
 except ImportError:
     m = MagicMock()
-    m.__name__ = 'requests'
+    m.__name__ = "requests"
     m.__path__ = []
-    sys.modules['requests'] = m
+    sys.modules["requests"] = m
 
 # Add project root to the Python path to resolve `src` imports correctly
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -59,6 +60,7 @@ from apps.planning.src.config import Config
 
 class TestConfig(Config):
     """Test-specific configuration."""
+
     TESTING = True
     DEBUG_MODE = True
     WTF_CSRF_ENABLED = False  # Disable CSRF for testing
@@ -66,7 +68,7 @@ class TestConfig(Config):
     # Use in-memory database for tests
     @property
     def DATABASE_PATH(self):
-        return ':memory:'
+        return ":memory:"
 
 
 @pytest.fixture
@@ -76,10 +78,10 @@ def app():
 
     # Create a minimal Flask app for testing
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['TESTING'] = True
-    app.config['WTF_CSRF_ENABLED'] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["TESTING"] = True
+    app.config["WTF_CSRF_ENABLED"] = False
 
     # Initialize the db with the app
     db.init_app(app)
@@ -116,13 +118,9 @@ def test_db(app):
 def sample_technician_data():
     """Sample technician data for testing."""
     return {
-        'name': 'Test Technician',
-        'satellite_point_id': 1,
-        'skills': {
-            1: 3,  # technology_id: skill_level
-            2: 4,
-            3: 2
-        }
+        "name": "Test Technician",
+        "satellite_point_id": 1,
+        "skills": {1: 3, 2: 4, 3: 2},  # technology_id: skill_level
     }
 
 
@@ -130,8 +128,8 @@ def sample_technician_data():
 def sample_task_data():
     """Sample task data for testing."""
     return {
-        'name': 'Test Task',
-        'required_skills': [1, 2],  # technology_ids
-        'quantity': 2,
-        'duration': 120  # minutes
+        "name": "Test Task",
+        "required_skills": [1, 2],  # technology_ids
+        "quantity": 2,
+        "duration": 120,  # minutes
     }

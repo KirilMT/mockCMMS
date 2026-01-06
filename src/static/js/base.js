@@ -19,7 +19,7 @@ function showDeleteConfirm(form, message, callback) {
   const msg = message || "Are you sure you want to delete this item?";
 
   // Check if jQuery and Bootstrap modal are available
-  if (typeof $ !== 'undefined' && $.fn.modal) {
+  if (typeof $ !== "undefined" && $.fn.modal) {
     document.getElementById("deleteConfirmModalMessage").textContent = msg;
     $("#deleteConfirmModal").modal("show");
   } else {
@@ -49,7 +49,7 @@ let inputCallback = null;
 function showInputModal(message, callback) {
   inputCallback = callback;
 
-  if (typeof $ !== 'undefined' && $.fn.modal) {
+  if (typeof $ !== "undefined" && $.fn.modal) {
     document.getElementById("inputModalLabel").textContent = message;
     document.getElementById("inputModalValue").value = "";
     $("#inputModal").modal("show");
@@ -79,7 +79,7 @@ function showConfirmModal(message, callback) {
   confirmCallback = callback;
   const msg = message || "Are you sure you want to proceed?";
 
-  if (typeof $ !== 'undefined' && $.fn.modal) {
+  if (typeof $ !== "undefined" && $.fn.modal) {
     document.getElementById("confirmModalMessage").textContent = msg;
     $("#confirmModal").modal("show");
   } else {
@@ -98,9 +98,9 @@ function showConfirmModal(message, callback) {
  */
 function initBase() {
   // Initialize Select2 if present (Bootstrap 5 theme)
-  if (typeof $ !== 'undefined' && $.fn.select2) {
-    $('.select2').select2({
-      theme: 'bootstrap-5'
+  if (typeof $ !== "undefined" && $.fn.select2) {
+    $(".select2").select2({
+      theme: "bootstrap-5",
     });
   }
 
@@ -189,9 +189,9 @@ function initBase() {
   }
 
   // Handle global delete confirmation buttons
-  document.querySelectorAll('.delete-confirm-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const form = btn.closest('form');
+  document.querySelectorAll(".delete-confirm-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const form = btn.closest("form");
       const message = btn.dataset.confirmMessage;
       showDeleteConfirm(form, message);
     });
@@ -217,6 +217,6 @@ if (typeof module !== "undefined" && module.exports) {
     showDeleteConfirm,
     showInputModal,
     showConfirmModal,
-    initBase
+    initBase,
   };
 }

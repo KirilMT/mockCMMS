@@ -1,31 +1,34 @@
 /* global $ */
 
 // Enable/disable and require frequency field based on order type
-document.addEventListener('DOMContentLoaded', function () {
-  const orderTypeField = document.getElementById('order_type');
-  const frequencyField = document.getElementById('frequency');
+document.addEventListener("DOMContentLoaded", function () {
+  const orderTypeField = document.getElementById("order_type");
+  const frequencyField = document.getElementById("frequency");
   const frequencyLabel = document.querySelector('label[for="frequency"]');
 
   function updateFrequencyField() {
-    const isPM = orderTypeField.value === 'PM';
+    const isPM = orderTypeField.value === "PM";
 
     if (isPM) {
       // Enable and require the field for PM orders
       frequencyField.disabled = false;
       frequencyField.required = true;
       // Add required-field class to show red asterisk
-      if (frequencyLabel && !frequencyLabel.classList.contains('required-field')) {
-        frequencyLabel.classList.add('required-field');
+      if (
+        frequencyLabel &&
+        !frequencyLabel.classList.contains("required-field")
+      ) {
+        frequencyLabel.classList.add("required-field");
       }
       // Don't touch the value - let the HTML 'selected' attribute handle it
     } else {
       // Disable, clear, and make optional for non-PM orders
       frequencyField.disabled = true;
       frequencyField.required = false;
-      frequencyField.value = '';
+      frequencyField.value = "";
       // Remove required-field class
       if (frequencyLabel) {
-        frequencyLabel.classList.remove('required-field');
+        frequencyLabel.classList.remove("required-field");
       }
     }
   }
@@ -35,12 +38,12 @@ document.addEventListener('DOMContentLoaded', function () {
     updateFrequencyField();
 
     // Update when user changes the order type
-    orderTypeField.addEventListener('change', function () {
-      const isPM = orderTypeField.value === 'PM';
+    orderTypeField.addEventListener("change", function () {
+      const isPM = orderTypeField.value === "PM";
 
       if (!isPM) {
         // Only clear the value when user switches FROM PM to non-PM
-        frequencyField.value = '';
+        frequencyField.value = "";
       }
       // If switching TO PM, leave the value alone (it will be empty for new MOs,
       // or keep the existing value for edited MOs)
@@ -50,19 +53,20 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Initialize Select2 for assignees dropdown with multi-select support
-  const assigneesSelect = $('#assignees');
+  const assigneesSelect = $("#assignees");
   if (assigneesSelect.length) {
     assigneesSelect.select2({
-      theme: 'bootstrap-5',
-      placeholder: 'Select assignees...',
+      theme: "bootstrap-5",
+      placeholder: "Select assignees...",
       allowClear: true,
       closeOnSelect: false,
     });
 
     // Keep removal behavior intuitive and caret UX consistent
-    const containerEl = assigneesSelect.next('.select2-container');
-    const selectionEl = containerEl.find('.select2-selection--multiple');
-    const inlineInput = () => containerEl.find('.select2-search--inline input.select2-search__field');
+    const containerEl = assigneesSelect.next(".select2-container");
+    const selectionEl = containerEl.find(".select2-selection--multiple");
+    const inlineInput = () =>
+      containerEl.find(".select2-search--inline input.select2-search__field");
 
     const setCaretVisible = (isVisible) => {
       const input = inlineInput();
@@ -70,9 +74,9 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
       if (isVisible) {
-        input.prop('tabIndex', 0).css('width', '').focus();
+        input.prop("tabIndex", 0).css("width", "").focus();
       } else {
-        input.val('').prop('tabIndex', -1).css('width', '0px');
+        input.val("").prop("tabIndex", -1).css("width", "0px");
         if (document.activeElement === input[0]) {
           input.blur();
         }
@@ -94,20 +98,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     setCaretVisible(false);
 
-    selectionEl.on('mousedown.select2Removal', '.select2-selection__choice__remove', () => {
-      if (isOpen) {
-        armPreventClose('removal');
-        setTimeout(() => setCaretVisible(true), 0);
-      }
-      removalWhileClosed = !isOpen;
-      if (removalWhileClosed) {
-        setTimeout(() => setCaretVisible(false), 0);
-      }
-    });
+    selectionEl.on(
+      "mousedown.select2Removal",
+      ".select2-selection__choice__remove",
+      () => {
+        if (isOpen) {
+          armPreventClose("removal");
+          setTimeout(() => setCaretVisible(true), 0);
+        }
+        removalWhileClosed = !isOpen;
+        if (removalWhileClosed) {
+          setTimeout(() => setCaretVisible(false), 0);
+        }
+      },
+    );
 
     // Handle "Clear All" button: Let Select2 clear, but manage dropdown state
     // Listen for the clearing event which fires when allowClear 'x' is clicked
-    assigneesSelect.on('select2:clearing', () => {
+    assigneesSelect.on("select2:clearing", () => {
       // This fires BEFORE the clear happens
       // Capture current state
       const wasOpen = isOpen;
@@ -117,12 +125,12 @@ document.addEventListener('DOMContentLoaded', function () {
         removalWhileClosed = true;
       } else {
         // If open, keep it open
-        armPreventClose('clear');
+        armPreventClose("clear");
       }
     });
 
     // After clearing completes, ensure proper state
-    assigneesSelect.on('select2:unselect', (e) => {
+    assigneesSelect.on("select2:unselect", (e) => {
       // Check if this was a "clear all" (no data in event means clear button)
       if (!e.params || !e.params.data) {
         if (isOpen) {
@@ -133,27 +141,27 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
-    assigneesSelect.on('select2:opening', (e) => {
+    assigneesSelect.on("select2:opening", (e) => {
       if (removalWhileClosed && !isOpen) {
         removalWhileClosed = false;
         e.preventDefault();
       }
     });
 
-    assigneesSelect.on('select2:select', () => {
+    assigneesSelect.on("select2:select", () => {
       if (isOpen) {
-        armPreventClose('select');
+        armPreventClose("select");
         setTimeout(() => setCaretVisible(true), 0);
       }
     });
 
-    assigneesSelect.on('select2:open', () => {
+    assigneesSelect.on("select2:open", () => {
       isOpen = true;
       removalWhileClosed = false;
       setCaretVisible(true);
     });
 
-    assigneesSelect.on('select2:closing', (e) => {
+    assigneesSelect.on("select2:closing", (e) => {
       if (preventCloseReason) {
         preventCloseReason = null;
         clearTimeout(preventCloseTimer);
@@ -163,22 +171,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     const closeDropdown = () => {
-      assigneesSelect.select2('close');
+      assigneesSelect.select2("close");
     };
 
-    assigneesSelect.on('select2:close', () => {
+    assigneesSelect.on("select2:close", () => {
       isOpen = false;
       preventCloseReason = null;
       clearTimeout(preventCloseTimer);
       setCaretVisible(false);
     });
 
-    $(document).on('mousedown.select2Close', (event) => {
+    $(document).on("mousedown.select2Close", (event) => {
       if (!isOpen) {
         return;
       }
       const target = $(event.target);
-      const dropdown = $('.select2-container--open');
+      const dropdown = $(".select2-container--open");
       if (
         !selectionEl.is(target) &&
         selectionEl.has(target).length === 0 &&

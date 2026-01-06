@@ -16,7 +16,7 @@
       - In `planning`: A planning period (e.g., "Weekend of Nov 23-24")
       - In CMMS: A recurring pattern (daily/weekly/monthly maintenance schedule)
     - **User Feedback (Nov 18):** "we are using incorrectly the concept schedule"
-    - **Proposed Solution:** 
+    - **Proposed Solution:**
       - Rename `Schedule` model → `MaintenancePlan` or `WorkPlan`
       - Keep `MaintenanceOrder.schedule_name` for recurring pattern name
       - `MaintenancePlan` represents a specific planning period with assigned tasks
@@ -118,7 +118,7 @@
   - **Overview:** 300+ security issues found in JavaScript files, primarily in planning manage_mappings code
   - **Impact:** Critical security vulnerabilities (XSS, Code Injection, CSRF) make application unsafe for production
   - **Strategy:** Fix critical issues in files being kept, document issues in files being deleted
-  
+
   - [ ] 6.5.1. **JavaScript Security Vulnerabilities - CRITICAL** 🔴 **15+ Critical Issues**
     - **Affected Files (all in `apps/planning/src/static/js/`):**
       - `manage_mappings_technician_groups.js`
@@ -164,7 +164,7 @@
       - [ ] Replace `innerHTML` with `textContent` where possible
       - [ ] Use parameterized queries for all database operations
       - [ ] Add input validation on both client and server side
-  
+
   - [ ] 6.5.2. **Code Quality Issues** 🟡 **50+ High Priority Issues**
     - [ ] **Performance Inefficiencies**
       - Issue: Inefficient DOM operations, redundant loops
@@ -186,7 +186,7 @@
       - Issue: Large functions (>100 lines), tight coupling
       - Fix: Refactor into smaller functions, improve separation of concerns
       - Affected: manage_mappings_main.js, index.js
-  
+
   - [ ] 6.5.3. **Decision: Fix vs. Delete**
     - **Files to DELETE (Phase 6.2.2 - Excel workflow removal):**
       - All `manage_mappings_*.js` files will be deleted
@@ -199,7 +199,7 @@
       - Core UI JavaScript files
       - **Action:** Apply all security fixes before production deployment
       - **Priority:** 🔴 Critical - Must fix before going live
-  
+
   - [x] 6.5.4. **Security Audit of Planning Module JavaScript** ✅ **COMPLETE - November 20, 2025**
     - **Status:** ✅ **PASSED - PRODUCTION READY**
     - **Audit Report:** See `docs/SECURITY_AUDIT_PLANNING_MODULE.md` for full details
@@ -244,7 +244,7 @@
       - [x] Create security audit report ✅ DONE
       - [ ] Implement CSP headers (Phase 6.5.5 or separate task)
       - [ ] Add CSRF infrastructure when implementing state-changing operations (Phase 5.10)
-  
+
   - [ ] 6.5.5. **Add Security Testing to CI/CD Pipeline**
     - [ ] Automated vulnerability scanning
       - Tool: npm audit, Snyk, or similar
@@ -262,7 +262,7 @@
       - Tool: Bandit (Python), ESLint (JavaScript)
       - Frequency: Every commit
       - Action: Fail build on security issues
-  
+
   - [ ] 6.5.6. **Security Documentation**
     - [ ] Create `SECURITY.md` in repository root
       - Security policy
@@ -278,13 +278,13 @@
       - Required security reviews
       - Testing requirements
       - Deployment approval process
-  
+
   - [ ] 6.5.7. **Testing & Validation**
     - [ ] **Penetration Testing:** Hire security professional or use automated tools to test for vulnerabilities
     - [ ] **Security Code Review:** Have experienced developer review all security fixes
     - [ ] **Regression Testing:** Verify security fixes don't break functionality
     - [ ] **Load Testing:** Verify security measures don't significantly impact performance
-  
+
   - **Priority & Timeline:**
     - 🔴 **Immediate (Before any production deployment):**
       - Fix critical vulnerabilities in Planning module JavaScript (6.5.4)
@@ -298,7 +298,7 @@
       - Delete manage_mappings files with documented vulnerabilities
       - Ongoing security monitoring and updates
       - Regular security audits (quarterly)
-  
+
   - **Success Criteria:**
     - Zero critical/high security vulnerabilities in production code
     - All API calls use HTTPS
