@@ -150,7 +150,31 @@ python scripts/validate_code.py --frontend # JS/CSS only
 
 ```bash
 python scripts/release_manager.py patch --dry-run  # Preview bump
+python scripts/release_manager.py minor            # New features
+python scripts/release_manager.py major            # Breaking changes
 ```
+
+**Automated Release via Pre-Push Hook:**
+
+You can trigger automatic releases by including `[release:TYPE]` in your commit message:
+
+```bash
+# Regular commit (no release)
+git commit -m "feat: add new feature"
+git push  # Just validates, no release
+
+# Automatic release on push
+git commit -m "feat: feature complete [release:minor]"
+git push  # Validates + Creates release automatically
+
+# Available release types
+git commit -m "fix: bug fix [release:patch]"        # 1.0.0 -> 1.0.1
+git commit -m "feat: new feature [release:minor]"   # 1.0.0 -> 1.1.0
+git commit -m "feat!: breaking [release:major]"     # 1.0.0 -> 2.0.0
+git commit -m "chore: updates [release]"            # Defaults to patch
+```
+
+The `auto_release_hook.py` pre-push hook detects the `[release]` tag and automatically runs `release_manager.py`.
 
 ## 🏆 Critical Best Practices (Do's and Don'ts)
 
