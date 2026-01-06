@@ -19,7 +19,21 @@ load_dotenv()
 # (standard terminal output). This overrides any defaults from .env.
 app = create_app(config_overrides={"DEBUG": True})
 
+
+def check_setup():
+    """Verify that the environment is correctly set up."""
+    # Setup Validation
+    if not os.path.exists(".venv"):
+        print("\nERROR: Setup incomplete!")
+        print("Please run the setup script first:")
+        print("    .\\scripts\\setup.ps1")
+        print("\nThe application cannot start without proper setup.\n")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
+    check_setup()
+
     # Support E2E test mode with custom port
     port = int(os.getenv("FLASK_RUN_PORT", 5000))
     is_e2e_test = os.getenv("E2E_TEST", "").lower() in ("true", "1", "yes")
