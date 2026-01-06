@@ -8,9 +8,37 @@ if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
     sys.stderr.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
 
-from dotenv import load_dotenv
 
-from src.app import create_app
+def check_setup():
+    """Verify that the environment is correctly set up.
+
+    This MUST be called before importing any project modules (src.app, etc.) to ensure
+    dependencies are available.
+    """
+    # Skip validation in CI/CD or E2E testing environments
+    # These environments might install dependencies globally (no .venv needed)
+    if os.environ.get("CI") or os.environ.get("E2E_TEST"):
+        return
+
+    # Setup Validation: Check if .venv exists
+    if not os.path.exists(".venv"):
+        print("\nERROR: Setup incomplete!")
+        print("Please run the setup script first:")
+        print("    .\\scripts\\setup.ps1")
+        print("\nThe application cannot start without proper setup.\n")
+        sys.exit(1)
+
+
+# =============================================================================
+# CRITICAL: Run setup check BEFORE importing any project modules!
+# This ensures dependencies exist before any Flask/SQLAlchemy code runs.
+# =============================================================================
+check_setup()
+
+# Now it's safe to import project modules (after setup is verified)
+from dotenv import load_dotenv  # noqa: E402
+
+from src.app import create_app  # noqa: E402
 
 # Load environment variables
 load_dotenv()
@@ -20,25 +48,7 @@ load_dotenv()
 app = create_app(config_overrides={"DEBUG": True})
 
 
-def check_setup():
-    """Verify that the environment is correctly set up."""
-    # Skip validation in CI/CD or E2E testing environments
-    # These environments might install dependencies globally (no .venv needed)
-    if os.environ.get("CI") or os.environ.get("E2E_TEST"):
-        return
-
-    # Setup Validation
-    if not os.path.exists(".venv"):
-        print("\nERROR: Setup incomplete!")
-        print("Please run the setup script first:")
-        print("    .\\scripts\\setup.ps1")
-        print("\nThe application cannot start without proper setup.\n")
-        sys.exit(1)
-
-
 if __name__ == "__main__":
-    check_setup()
-
     # Support E2E test mode with custom port
     port = int(os.getenv("FLASK_RUN_PORT", 5000))
     is_e2e_test = os.getenv("E2E_TEST", "").lower() in ("true", "1", "yes")
