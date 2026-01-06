@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 import pytest
-from datetime import datetime, timedelta, timezone
 from flask import session, url_for
-from unittest.mock import patch
+
 
 class TestSessionTimeout:
     """Test suite for session timeout logic in app.py."""
