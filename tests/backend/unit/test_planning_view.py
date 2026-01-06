@@ -36,17 +36,26 @@ def test_view_schedule_passes_config(app):
                                 with patch(
                                     "apps.planning.src.routes.planning.LineConditionManager"
                                 ) as MockLineConditionManager:
-                                    with patch("apps.planning.src.routes.planning.g") as mock_g:
+                                    with patch(
+                                        "apps.planning.src.routes.planning.g"
+                                    ) as mock_g:
                                         # Setup mocks
                                         mock_schedule = MagicMock()
-                                        MockSchedule.query.get_or_404.return_value = mock_schedule
+                                        MockSchedule.query.get_or_404.return_value = (
+                                            mock_schedule
+                                        )
 
                                         mock_config = {
-                                            "shift_durations": {"shift_break": 10, "weekend": 20}
+                                            "shift_durations": {
+                                                "shift_break": 10,
+                                                "weekend": 20,
+                                            }
                                         }
                                         mock_load_config.return_value = mock_config
 
-                                        task_query = MockPlanningTask.query.filter_by.return_value
+                                        task_query = (
+                                            MockPlanningTask.query.filter_by.return_value
+                                        )
                                         task_query.all.return_value = []
 
                                         # Mock g.db
