@@ -1,43 +1,42 @@
 # .pre-commit-config.yaml
-# All versions MUST match requirements-dev.txt for consistency
 repos:
+  # Basic file checks (fast, non-redundant)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
       - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-symlinks
 
-  # Python formatting - order matters: isort -> black -> docformatter
-  - repo: https://github.com/pycqa/isort
-    rev: 7.0.0 # Must match requirements-dev.txt
+  # Local hooks using project scripts
+  - repo: local
     hooks:
-      - id: isort
-        name: isort (python)
+      - id: format-code
+        name: Format Code (isort, black, docformatter, prettier)
+        entry: python scripts/format_code.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
 
-  - repo: https://github.com/psf/black
-    rev: 25.12.0 # Must match requirements-dev.txt
-    hooks:
-      - id: black
+      - id: validate-code
+        name: Validate Code (lint, type-check, tests)
+        entry: python scripts/validate_code.py --quick
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
 
-  - repo: https://github.com/PyCQA/docformatter
-    rev: v1.7.7 # Must match requirements-dev.txt
-    hooks:
-      - id: docformatter
-        args: [--in-place]
-
-  # Python linting
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10 # Close to requirements-dev.txt (0.14.10 not available as pre-commit)
-    hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-
-  # JavaScript/CSS formatting (excludes Jinja2 templates)
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
-    hooks:
-      - id: prettier
-        types_or: [javascript, css]
-        exclude: ^src/templates/
+      - id: pre-push-validation
+        name: Pre-Push Full Validation
+        entry: python scripts/validate_code.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
