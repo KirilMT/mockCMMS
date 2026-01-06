@@ -205,6 +205,32 @@ python scripts/release_manager.py major   # For breaking changes
 git push origin main v1.2.0
 ```
 
+#### Automated Release via Commit Message (Alternative)
+
+**You can trigger automatic releases during `git push` by including `[release:TYPE]` in your commit message:**
+
+```sh
+# Regular commit (no release)
+git commit -m "feat: add new feature"
+git push  # Just validates, no release
+
+# Automatic release on push
+git commit -m "feat: feature complete [release:minor]"
+git push  # Validates + Creates release automatically
+
+# Available release types
+git commit -m "fix: bug fix [release:patch]"        # 1.0.0 -> 1.0.1
+git commit -m "feat: new feature [release:minor]"   # 1.0.0 -> 1.1.0
+git commit -m "feat!: breaking [release:major]"     # 1.0.0 -> 2.0.0
+git commit -m "chore: updates [release]"            # Defaults to patch
+```
+
+**How it works:**
+- The `auto_release_hook.py` pre-push hook detects the `[release]` tag
+- Automatically runs `release_manager.py` with the specified bump type
+- Creates the release commit and tag before pushing
+- Useful for quick releases without running the script manually
+
 #### Manual Version Updates (If Not Using Script)
 
 **Required Updates:**

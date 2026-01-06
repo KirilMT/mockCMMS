@@ -33,6 +33,14 @@ repos:
         always_run: true
         stages: [pre-commit]
 
+      - id: auto-release
+        name: Auto-Release (if commit contains [release])
+        entry: python scripts/auto_release_hook.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
       - id: pre-push-validation
         name: Pre-Push Full Validation
         entry: python scripts/validate_code.py
