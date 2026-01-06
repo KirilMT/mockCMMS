@@ -252,7 +252,7 @@ def _register_request_handlers(app):
             if last_active_ts is None:
                 # Force logout if no timestamp found (migrating old sessions)
                 session.clear()
-                # We can't use flash/redirect easily in before_request if we want to just clear user?
+                # Can't easily use flash/redirect in before_request.
                 # If we just clear the session, the main.login check will redirect them.
                 # However, to provide feedback, we can flash.
                 # But if we redirect here, we might interrupt the request.

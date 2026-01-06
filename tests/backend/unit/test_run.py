@@ -1,5 +1,4 @@
 import os
-import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -14,7 +13,7 @@ class TestRunEntry:
         with (
             patch.dict(os.environ, {"FLASK_RUN_PORT": "5000", "E2E_TEST": "False"}),
             patch("src.app.create_app") as mock_create_app,
-            patch("src.app.Flask") as mock_flask,
+            patch("src.app.Flask"),
             patch("dotenv.load_dotenv") as mock_load_dotenv,
             patch("os.path.exists") as mock_exists,
         ):
@@ -51,7 +50,7 @@ class TestRunEntry:
             patch.dict(os.environ, {}, clear=True),
             patch("os.path.exists", return_value=False),
             patch("sys.exit") as mock_exit,
-            patch("dotenv.load_dotenv") as mock_load_dotenv,
+            patch("dotenv.load_dotenv"),
         ):
 
             import run

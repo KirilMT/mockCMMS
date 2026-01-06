@@ -23,7 +23,7 @@ app = create_app(config_overrides={"DEBUG": True})
 def check_setup():
     """Verify that the environment is correctly set up."""
     # Skip validation in CI/CD or E2E testing environments
-    # These environments might install dependencies globally or use a different structure
+    # These environments might install dependencies globally (no .venv needed)
     if os.environ.get("CI") or os.environ.get("E2E_TEST"):
         return
 
