@@ -19,6 +19,9 @@ from datetime import datetime, timedelta
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "src"))
 
 from ..services.report_generator import ReportGenerator
+from .weekend_report import weekend_bp
+from .shift_report import shift_bp
+from .incidents import incidents_bp
 
 
 def get_db_connection():
@@ -32,6 +35,11 @@ def get_db_connection():
 reports_bp = Blueprint(
     "reports", __name__, url_prefix="/reports", template_folder="../templates"
 )
+
+# Register sub-blueprints
+reports_bp.register_blueprint(weekend_bp)
+reports_bp.register_blueprint(shift_bp)
+reports_bp.register_blueprint(incidents_bp)
 
 
 def login_required(f):

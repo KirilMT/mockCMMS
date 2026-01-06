@@ -1,13 +1,10 @@
 import os
 import json
+import csv
 import sys
 from datetime import datetime, timedelta
 
-# sys.path hack removed
-# Add the main src directory to the path handled by run.py
-
 from src.services.db_utils import MaintenanceOrder, Asset, User
-
 
 class ReportGenerator:
     def __init__(self):
@@ -17,15 +14,24 @@ class ReportGenerator:
         )
         os.makedirs(self.reports_dir, exist_ok=True)
 
-    def generate_report(self, report_type, title, parameters, format_type, user_id):
+    def generate_report(self, report_type, title, parameters, format_type, user_id, data=None):
         """Generate a report based on type and parameters."""
 
-        if report_type == "reactive_production":
-            data = self._get_reactive_production_data(parameters)
-        elif report_type == "completed_weekend":
-            data = self._get_completed_weekend_data(parameters)
+        # If data is not provided, fetch it based on legacy logic (optional backward compatibility)
+        if data is None:
+            if report_type == "reactive_production":
+                data = self._get_reactive_production_data(parameters)
+            elif report_type == "completed_weekend":
+                data = self._get_completed_weekend_data(parameters)
+            else:
+                 # For new reports, data should be passed in
+                 raise ValueError(f"Data required for report type: {report_type}")
         else:
-            raise ValueError(f"Unknown report type: {report_type}")
+             # Ensure data has standard fields if not present
+             if "generated_at" not in data:
+                 data["generated_at"] = datetime.now().isoformat()
+             if "title" not in data:
+                 data["title"] = title
 
         # Generate filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -35,6 +41,8 @@ class ReportGenerator:
         # Generate report based on format
         if format_type.lower() == "pdf":
             self._generate_pdf_report(data, title, file_path)
+        elif format_type.lower() == "csv":
+            self.generate_csv(data, file_path)
         elif format_type.lower() == "markdown":
             self._generate_markdown_report(data, title, file_path)
         else:
@@ -99,48 +107,113 @@ class ReportGenerator:
     def _generate_pdf_report(self, data, title, file_path):
         """Generate PDF report (placeholder - requires reportlab)"""
         # For now, create a simple text file as placeholder
-        with open(file_path.replace(".pdf", ".txt"), "w") as f:
-            f.write(f"PDF Report: {title}\n")
+        # In a real scenario, we would use reportlab or similar
+        txt_path = file_path.replace(".pdf", ".txt")
+        with open(txt_path, "w") as f:
+            f.write(f"PDF Report Placeholder: {title}\n")
             f.write("=" * 50 + "\n\n")
-            f.write(f"Generated: {data['generated_at']}\n")
-            f.write(f"Total Records: {data['total_count']}\n\n")
+            f.write(f"Generated: {data.get('generated_at', 'N/A')}\n")
 
-            for mo in data["maintenance_orders"]:
-                f.write(f"MO #{mo['id']}: {mo['description']}\n")
-                f.write(f"  Status: {mo['status']}\n")
-                f.write(f"  Priority: {mo['priority']}\n")
-                f.write(f"  Asset: {mo.get('asset_name', 'N/A')}\n\n")
+            # Try to find list data
+            items = []
+            if "maintenance_orders" in data:
+                items = data["maintenance_orders"]
+            elif "incidents" in data:
+                items = data["incidents"]
+            elif "tasks" in data:
+                items = data["tasks"]
+
+            f.write(f"Total Records: {len(items)}\n\n")
+
+            for item in items:
+                f.write(str(item) + "\n")
 
         # Return the text file path for now
-        return file_path.replace(".pdf", ".txt")
+        return txt_path
 
     def _generate_markdown_report(self, data, title, file_path):
         """Generate Markdown report."""
         with open(file_path, "w") as f:
             f.write(f"# {title}\n\n")
-            f.write(f"**Generated:** {data['generated_at']}\n")
-            f.write(f"**Total Records:** {data['total_count']}\n\n")
+            f.write(f"**Generated:** {data.get('generated_at', 'N/A')}\n")
+
+            items = []
+            if "maintenance_orders" in data:
+                items = data["maintenance_orders"]
+            elif "incidents" in data:
+                items = data["incidents"]
+            elif "tasks" in data:
+                items = data["tasks"]
+
+            f.write(f"**Total Records:** {len(items)}\n\n")
 
             if data.get("weekend_dates"):
                 f.write(
                     f"**Weekend Period:** {data['weekend_dates']['saturday']} to {data['weekend_dates']['sunday']}\n\n"
                 )
 
-            f.write("## Maintenance Orders\n\n")
+            f.write("## Data\n\n")
 
-            if data["maintenance_orders"]:
-                f.write("| ID | Description | Status | Priority | Asset |\n")
-                f.write("|----|-----------|---------|---------|---------|\n")
+            if items:
+                # Get headers from first item
+                headers = list(items[0].keys())
+                f.write("| " + " | ".join(headers) + " |\n")
+                f.write("|" + "|".join(["---"] * len(headers)) + "|\n")
 
-                for mo in data["maintenance_orders"]:
-                    f.write(
-                        f"| {mo['id']} | {mo['description']} | {mo['status']} | {mo['priority']} | {mo.get('asset_name', 'N/A')} |\n"
-                    )
+                for item in items:
+                    values = [str(item.get(h, '')) for h in headers]
+                    f.write("| " + " | ".join(values) + " |\n")
             else:
-                f.write("No maintenance orders found for the specified criteria.\n")
+                f.write("No data found for the specified criteria.\n")
 
             f.write(
                 f"\n---\n*Report generated by mockCMMS on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n"
             )
 
         return file_path
+
+    def generate_csv(self, data, file_path):
+        """Generate CSV export from data."""
+        items = []
+        if "maintenance_orders" in data:
+            items = data["maintenance_orders"]
+        elif "incidents" in data:
+            items = data["incidents"]
+        elif "tasks" in data:
+            items = data["tasks"]
+
+        if not items:
+            with open(file_path, "w", newline='') as f:
+                f.write("No data found")
+            return file_path
+
+        keys = items[0].keys()
+
+        with open(file_path, "w", newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=keys)
+            writer.writeheader()
+            writer.writerows(items)
+
+        return file_path
+
+    def generate_summary_stats(self, data):
+        """Calculate summary statistics"""
+        items = []
+        if "maintenance_orders" in data:
+            items = data["maintenance_orders"]
+        elif "incidents" in data:
+            items = data["incidents"]
+        elif "tasks" in data:
+            items = data["tasks"]
+
+        stats = {
+            "total_count": len(items),
+        }
+
+        # Add specific stats if available
+        # Example: Completion rate for tasks
+        completed = sum(1 for item in items if item.get('status') == 'Completed')
+        if items:
+            stats['completion_rate'] = f"{(completed / len(items)) * 100:.1f}%"
+
+        return stats
