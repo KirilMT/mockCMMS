@@ -130,7 +130,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     checks = []
 
     # 1. Import sorting (PEP 8)
-    print_section("Step 1/9: Import Sorting (isort)")
+    print_section("Step 1/10: Import Sorting (isort)")
     success, _ = run_command(
         ["isort", "src", "tests", "scripts", "run.py", "--check-only"],
         "Import sorting check",
@@ -138,7 +138,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     checks.append(("Import Sorting", success))
 
     # 2. Code formatting (Black)
-    print_section("Step 2/9: Code Formatting (black)")
+    print_section("Step 2/10: Code Formatting (black)")
     success, _ = run_command(
         ["black", "--check", "src", "tests", "scripts", "run.py"],
         "Code formatting check",
@@ -146,7 +146,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     checks.append(("Code Formatting", success))
 
     # 3. Docstring formatting (PEP 257)
-    print_section("Step 3/9: Docstring Formatting (docformatter)")
+    print_section("Step 3/10: Docstring Formatting (docformatter)")
     success, _ = run_command(
         ["docformatter", "--check", "-r", "src", "tests", "scripts", "run.py"],
         "Docstring formatting check",
@@ -154,14 +154,14 @@ def validate_python_backend(quick: bool = False) -> bool:
     checks.append(("Docstring Formatting", success))
 
     # 4. Linting (Ruff - fast, comprehensive)
-    print_section("Step 4/9: Linting (ruff)")
+    print_section("Step 4/10: Linting (ruff)")
     success, _ = run_command(
         ["ruff", "check", "src", "tests", "scripts", "run.py"], "Ruff linting"
     )
     checks.append(("Ruff Linting", success))
 
     # 5. Additional linting (Flake8)
-    print_section("Step 5/9: Additional Linting (flake8)")
+    print_section("Step 5/10: Additional Linting (flake8)")
     exclude_dirs = (
         "apps,.venv,node_modules,__pycache__,"
         ".git,.pytest_cache,htmlcov,playwright-report"
@@ -173,7 +173,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     checks.append(("Flake8 Linting", success))
 
     # 6. Type checking (mypy)
-    print_section("Step 6/9: Type Checking (mypy)")
+    print_section("Step 6/10: Type Checking (mypy)")
     success, _ = run_command(
         ["mypy"],  # Uses pyproject.toml: files=["src","tests","scripts","run.py"]
         "Type checking",
@@ -181,12 +181,12 @@ def validate_python_backend(quick: bool = False) -> bool:
     checks.append(("Type Checking", success))
 
     # 7. Security scanning (Bandit)
-    print_section("Step 7/9: Security Scanning (bandit)")
+    print_section("Step 7/10: Security Scanning (bandit)")
     success, _ = run_command(["bandit", "-r", "src/", "-ll"], "Security scanning")
     checks.append(("Security Scanning", success))
 
     # 8. Run all tests with coverage
-    print_section("Step 8/9: Running Tests with Coverage")
+    print_section("Step 8/10: Running Tests with Coverage")
     if quick:
         print_warning("Quick mode: Skipping full test suite")
         success, _ = run_command(
