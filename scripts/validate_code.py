@@ -43,24 +43,24 @@ def print_header(message: str) -> None:
 
 def print_section(message: str) -> None:
     """Print a formatted section header."""
-    print(f"\n{Colors.OKBLUE}{Colors.BOLD}{'─' * 80}{Colors.ENDC}")
+    print(f"\n{Colors.OKBLUE}{Colors.BOLD}{'-' * 80}{Colors.ENDC}")
     print(f"{Colors.OKBLUE}{Colors.BOLD}{message}{Colors.ENDC}")
-    print(f"{Colors.OKBLUE}{Colors.BOLD}{'─' * 80}{Colors.ENDC}\n")
+    print(f"{Colors.OKBLUE}{Colors.BOLD}{'-' * 80}{Colors.ENDC}\n")
 
 
 def print_success(message: str) -> None:
     """Print a success message."""
-    print(f"{Colors.OKGREEN}✓ {message}{Colors.ENDC}")
+    print(f"{Colors.OKGREEN}[OK] {message}{Colors.ENDC}")
 
 
 def print_error(message: str) -> None:
     """Print an error message."""
-    print(f"{Colors.FAIL}✗ {message}{Colors.ENDC}")
+    print(f"{Colors.FAIL}[FAIL] {message}{Colors.ENDC}")
 
 
 def print_warning(message: str) -> None:
     """Print a warning message."""
-    print(f"{Colors.WARNING}⚠ {message}{Colors.ENDC}")
+    print(f"{Colors.WARNING}[WARN] {message}{Colors.ENDC}")
 
 
 def run_command(
@@ -201,6 +201,7 @@ def validate_python_backend(quick: bool = False) -> bool:
                 "--cov=src",
                 "--cov-report=term-missing",
                 "--cov-report=html",
+                "--cov-report=xml",  # Ensure coverage.xml is generated for diff-cover
             ],
             "Full test suite with coverage",
         )
@@ -266,7 +267,7 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
 
     if not npm_available:
         print_warning(
-            "⚠️  npm not found - frontend validation will be skipped locally\n"
+            "[WARN] npm not found - frontend validation will be skipped locally\n"
             "   This is OK if you didn't modify any .js/.css/.html files\n"
             "   GitHub Actions will run frontend tests with Node.js installed"
         )
@@ -447,11 +448,11 @@ Examples:
 
     print()
     if all_passed:
-        print_success("All validation checks passed! ✓")
+        print_success("All validation checks passed!")
         print(f"{Colors.OKGREEN}You can safely commit your changes.{Colors.ENDC}")
         return 0
     else:
-        print_error("Some validation checks failed! ✗")
+        print_error("Some validation checks failed!")
         print(f"{Colors.FAIL}Please fix the issues before committing.{Colors.ENDC}")
         print(f"\n{Colors.WARNING}Remember:{Colors.ENDC}")
         print(f"{Colors.WARNING}  1. Fix the CODE, not the configuration{Colors.ENDC}")

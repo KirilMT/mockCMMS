@@ -37,6 +37,19 @@ class TestGeneralPages:
         response = auth_client.get("/maintenance_grid/1,2,3")
         assert response.status_code == 200
 
+    def test_shift_calendar_page_loads(self, auth_client):
+        """Test GET /shift_calendar returns calendar page."""
+        response = auth_client.get("/shift_calendar")
+        assert response.status_code == 200
+        # Check for context data in template (indirectly via HTML content)
+        assert b"Calendar" in response.data or b"calendar" in response.data
+
+    def test_planning_redirect(self, auth_client):
+        """Test GET /planning redirects to planning index."""
+        response = auth_client.get("/planning", follow_redirects=False)
+        assert response.status_code in [302, 303]
+        assert "/planning" in response.location
+
 
 class TestAssetsPages:
     """Test suite for asset management web pages."""
