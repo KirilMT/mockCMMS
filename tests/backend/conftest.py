@@ -49,6 +49,7 @@ def app():
         "SQLALCHEMY_BINDS": {
             "planning": "sqlite:///:memory:"  # In-memory for planning models
         },
+        "PLANNING_ENABLED": True,  # Explicitly enable planning for tests
         "AUTO_SEED_DATABASE": False,  # Prevent seeding in tests
         "SERVER_NAME": "localhost.localdomain",  # Required for url_for to work
         # Ensure connections are properly recycled
