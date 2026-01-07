@@ -66,7 +66,7 @@ def test_view_schedule_passes_config(app):
                                         ):
                                             view_schedule(1)
 
-                                            # Check render_template called with shift_config
+                                            # Check render_template was called
                                             args, kwargs = mock_render.call_args
                                             assert "shift_config" in kwargs
                                             assert kwargs["shift_config"] == mock_config
