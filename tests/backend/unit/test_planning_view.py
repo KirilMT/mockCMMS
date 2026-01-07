@@ -32,7 +32,8 @@ def test_view_schedule_passes_config(app):
                         ):
                             with patch("apps.planning.src.routes.planning.TaskManager"):
                                 with patch(
-                                    "apps.planning.src.routes.planning.LineConditionManager"
+                                    "apps.planning.src.routes.planning."
+                                    "LineConditionManager"
                                 ):
                                     with patch(
                                         "apps.planning.src.routes.planning.g"
@@ -51,9 +52,8 @@ def test_view_schedule_passes_config(app):
                                         }
                                         mock_load_config.return_value = mock_config
 
-                                        task_query = (
-                                            MockPlanningTask.query.filter_by.return_value
-                                        )
+                                        mock_query = MockPlanningTask.query
+                                        task_query = mock_query.filter_by.return_value
                                         task_query.all.return_value = []
 
                                         # Mock g.db
