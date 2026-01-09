@@ -59,13 +59,7 @@ endblock %} {% block extra_css %}
                     type="radio"
                     name="planning_mode"
                     value="shift_break"
-                    {%
-                    if
-                    planning_mode=""
-                    ="shift_break"
-                    %}checked{%
-                    endif
-                    %}
+                    {% if planning_mode == 'shift_break' %}checked{% endif %}
                     onchange="changePlanningMode('shift_break')"
                   />
                   <i class="fas fa-clock"></i> Shift Break
@@ -77,13 +71,7 @@ endblock %} {% block extra_css %}
                     type="radio"
                     name="planning_mode"
                     value="weekend"
-                    {%
-                    if
-                    planning_mode=""
-                    ="weekend"
-                    %}checked{%
-                    endif
-                    %}
+                    {% if planning_mode == 'weekend' %}checked{% endif %}
                     onchange="changePlanningMode('weekend')"
                   />
                   <i class="fas fa-calendar-week"></i> Weekend

@@ -32,6 +32,10 @@
     "Software"
   ],
   "technologies": [
+    { "name": "Mechanical", "group": "Mechanical" },
+    { "name": "Electrical", "group": "Electrical" },
+    { "name": "Software", "group": "Software" },
+    { "name": "Maintenance", "group": "Mechanical" },
     { "name": "Welding", "group": "Mechanical" },
     { "name": "Robotics", "group": "Mechanical" },
     { "name": "CNC_Machining", "group": "Mechanical" },
@@ -75,11 +79,16 @@
     { "name": "technician_20", "satellite_point": "SP_3", "skills": [{ "name": "PLC_Brand_A", "level": 3 }, { "name": "Circuit_Diagnostics", "level": 4 }, { "name": "High_Voltage_Safety", "level": 3 }] }
   ],
   "tasks": [
-    { "name": "PM_Sch_Group_1", "required_skills": [ "Welding", "Pneumatics" ] },
-    { "name": "PM_Sch_Group_2", "required_skills": [ "PLC_Brand_A" ] },
-    { "name": "PM_Sch_Group_3", "required_skills": [ "Robot_Brand_B_Robotics" ] },
-    { "name": "PM_Sch_Group_4", "required_skills": [ "Sensor_Calibration", "Circuit_Diagnostics" ] },
-    { "name": "PM_Sch_Group_5", "required_skills": [ "High_Voltage_Safety", "VFD_Configuration" ] },
+    { "name": "Weekly lubrication and calibration check", "required_skills": ["Robotics", "Maintenance"], "line_conditions": ["Robot Home", "Power Off"] },
+    { "name": "Torque wrench calibration and tool inspection", "required_skills": ["Mechanical"], "line_conditions": ["Line Empty"] },
+    { "name": "Emergency repair - welding tip replacement", "required_skills": ["Welding", "Robotics", "Electrical"], "line_conditions": ["Safety Gates Closed", "Power Off"] },
+    { "name": "Belt tension adjustment and motor inspection", "required_skills": ["Mechanical", "Electrical"], "line_conditions": ["Power Off", "Line Empty"] },
+    { "name": "Calibration of measurement equipment", "required_skills": ["Sensor_Calibration"], "line_conditions": ["Part in Fixture"] },
+    { "name": "PM_Sch_Group_1", "required_skills": [ "Welding", "Pneumatics" ], "line_conditions": ["Line Empty", "Safety Gates Closed"] },
+    { "name": "PM_Sch_Group_2", "required_skills": [ "PLC_Brand_A" ], "line_conditions": ["Power Off"] },
+    { "name": "PM_Sch_Group_3", "required_skills": [ "Robot_Brand_B_Robotics" ], "line_conditions": ["Robot Home", "Part in Fixture"] },
+    { "name": "PM_Sch_Group_4", "required_skills": [ "Sensor_Calibration", "Circuit_Diagnostics" ], "line_conditions": ["Power Off"] },
+    { "name": "PM_Sch_Group_5", "required_skills": [ "High_Voltage_Safety", "VFD_Configuration" ], "line_conditions": ["Power Off", "Safety Gates Closed"] },
     { "name": "PM_Sch_Group_6", "required_skills": [ "Hydraulics", "Pneumatics" ] },
     { "name": "PM_Sch_Group_7", "required_skills": [ "HMI_Development", "Python_Scripting" ] },
     { "name": "PM_Sch_Group_8", "required_skills": [ "Database_Management", "MES_Integration" ] },

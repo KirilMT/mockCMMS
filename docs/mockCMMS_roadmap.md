@@ -688,15 +688,23 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 
 This application already handles skill-based task assignment. The next logical steps involve deeper integration and more advanced planning management features.
 
-- **[ ] Line Conditions for Planning** _(Priority: High)_
+- **[IN PROGRESS] Line Conditions for Planning** _(Priority: High)_
 
   - **Goal:** Standardize the line conditions needed for task planning to ensure proper execution prerequisites.
-  - **Features:**
-    - Define and track line conditions (line full/empty, part in fixture, robot position).
-    - Add a dedicated column to the planning table showing the necessary line conditions for each task.
-    - Make conditions visible to users with operations roles.
-    - Integrate condition validation into the task assignment workflow.
-  - **Reference:** [GitHub Issue #6](https://github.com/KirilMT/mockCMMS/issues/6)
+  - **Implemented So Far:**
+    - ✅ **Database Schema:** Created `line_conditions` and `task_line_conditions` tables to support conditions.
+    - ✅ **Backend Logic:** Implemented `LineConditionManager` in `planning_db_utils.py` for handling condition logic.
+    - ✅ **API Endpoints:** Added endpoints to retrieve and manage task conditions (`get_line_conditions_api`, `manage_task_conditions_api`).
+    - ✅ **Dummy Data:** Updated seeding scripts to populate initial line conditions (e.g., "Line Empty", "Robot Home") and assign them to tasks.
+  - **Features to Implement:**
+    - **Manage Line Conditions UI:** Create an interface to create, modify, and delete global Line Conditions. This would be like a new page where
+      Planners could configure many different topics (Line Conditions, Asset Types, Cost Centers, Asset Status, Maintenance Order Types, Priorities,
+      Frequencies, Manufacturers, User Roles, Shift Teams, Satellite Points, etc) -> Everywhere that there is a dropdown, all it's possible options.
+    - **Task Condition Assignment:** Implement a UI (initially manual) to assign Line Conditions to Maintenance Orders (MOs).
+      - **Mechanism:** Multiple selection dropdown in the task/MO detail or edit view.
+    - ✅ **Planning Table Integration:** Display the assigned Line Conditions in a dedicated column in the planning table.
+    - **Visibility:** Make conditions visible to users with operations roles.
+    - **Future Enhancement:** Automate condition assignment based on predefined logic or criteria.
 
 - **[ ] Advanced User & Technician Management** _(Priority: Medium)_
 

@@ -50,7 +50,10 @@ def populate_dummy_data(conn, logger):
     for line in data.get("lines", []):
         sp_id = satellite_points.get(line["satellite_point"])
         if sp_id:
-            add_line(conn, line["name"], sp_id)
+            try:
+                add_line(conn, line["name"], sp_id)
+            except sqlite3.IntegrityError:
+                pass  # Line already exists, skip
     logger.info(f"Populated lines.")
 
     # Populate technology_groups
@@ -101,18 +104,7 @@ def populate_dummy_data(conn, logger):
                     update_technician_skill(conn, tech_id, tech_id_for_skill, level)
     logger.info(f"Populated {len(technicians)} technicians and their skills.")
 
-    # Populate tasks and their required skills
-    for task_data in data.get("tasks", []):
-        task_name = task_data["name"]
-        task_id = task_manager.get_or_create(task_name)
-        tasks[task_name] = task_id
-        for skill_name in task_data.get("required_skills", []):
-            skill_id = technologies.get(skill_name)
-            if skill_id:
-                task_manager.add_required_skill(task_id, skill_id)
-    logger.info(f"Populated {len(tasks)} tasks and their required skills.")
-
-    # Populate default line conditions
+    # Populate default line conditions (BEFORE tasks)
     line_condition_manager = LineConditionManager(conn)
     default_conditions = [
         {
@@ -142,12 +134,36 @@ def populate_dummy_data(conn, logger):
         },
     ]
 
+    conditions_map = {}
     for condition in default_conditions:
-        line_condition_manager.create_condition(
+        cid = line_condition_manager.create_condition(
             condition["name"], condition["description"], condition["color_code"]
         )
+        if cid:
+            conditions_map[condition["name"]] = cid
+
     if logger:
         logger.info(f"Populated {len(default_conditions)} default line conditions.")
+
+    # Populate tasks and their required skills / conditions
+    for task_data in data.get("tasks", []):
+        task_name = task_data["name"]
+        task_id = task_manager.get_or_create(task_name)
+        tasks[task_name] = task_id
+
+        # Skills
+        for skill_name in task_data.get("required_skills", []):
+            skill_id = technologies.get(skill_name)
+            if skill_id:
+                task_manager.add_required_skill(task_id, skill_id)
+
+        # Line Conditions
+        for condition_name in task_data.get("line_conditions", []):
+            cid = conditions_map.get(condition_name)
+            if cid:
+                line_condition_manager.assign_condition_to_task(task_id, cid)
+
+    logger.info(f"Populated {len(tasks)} tasks and their required skills and conditions.")
 
     conn.commit()
     if logger:
