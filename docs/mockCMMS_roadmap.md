@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated January 5, 2026_
+_Updated January 10, 2026_
 
 ---
 
@@ -302,6 +302,31 @@ The core application can be improved with the following features to support the 
     - **High-Volume Random Data Generation:** Generate large datasets (thousands of items per table) with realistic, randomized values to mimic production environments.
     - **Data Simulation Service:** Build a service that can generate realistic mock data (PMs, MOs, technician logs) for stress-testing and demonstration purposes.
     - **User Input Simulation:** Create a UI for simulating user inputs, such as manually triggering a breakdown alarm or reporting a technician as absent, to test the system's dynamic response.
+
+#### User & Calendar Management
+
+- **[ ] Advanced User & Technician Management** _(Priority: Medium)_
+
+  - **Goal:** Comprehensive user management with roles, skills, training, and external manpower integration.
+  - **Features:**
+    - **Roles & Permissions:** Implement role-based access control (RBAC) for different user types.
+    - **Skills Management:** Track and manage technician skills and certifications.
+    - **Training Tracking:** Record and monitor training completion and requirements.
+    - **Manpower API Integration:** Connect to an external manpower management system via an API to track:
+      - Onsite presence
+      - Sick leave status
+      - Vacation schedules
+      - Real-time availability
+    - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training).
+    - **Workload Tracking:** Track and visualize individual technician workload over time.
+
+- **[ ] Shift Calendar Redesign** _(Priority: Medium)_
+
+  - **Goal:** Improve the usability of the Shift Calendar page.
+  - **Features:**
+    - **Calendar Grid View:** Redesign the interface to resemble a standard calendar (month/week view) instead of a list.
+    - **No-Scroll Layout:** Optimize the layout to fit within the viewport without requiring vertical scrolling.
+    - **Interactive Elements:** Allow clicking on days/shifts for more details without leaving the calendar view.
 
 #### Testing & Quality Assurance
 
@@ -695,71 +720,11 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 
 ### `planning` App Enhancements
 
-This application already handles skill-based task assignment. The next logical steps involve deeper integration and more advanced planning management features.
-
-- **[IN PROGRESS] Line Conditions for Planning** _(Priority: High)_
-
-  - **Goal:** Standardize the line conditions needed for task planning to ensure proper execution prerequisites.
-  - **Implemented So Far:**
-    - ✅ **Database Schema:** `line_conditions` and `task_line_conditions` tables created.
-    - ✅ **Backend Logic:** `LineConditionManager` implemented.
-    - ✅ **API Endpoints:** `get_line_conditions_api` and `manage_task_conditions_api` added.
-    - ✅ **Dummy Data:** Population of default conditions and assignment to tasks.
-    - ✅ **Manage Line Conditions UI:** Create/Modify/Delete global conditions via Planning Settings.
-  - **Features to Implement:**
-    - **Task Condition Assignment:** Implement a UI (initially manual) to assign Line Conditions to Maintenance Orders (MOs).
-      - **Mechanism:** Multiple selection dropdown in the task/MO detail or edit view.
-    - **Planning Table Integration:** Display the assigned Line Conditions in a dedicated column in the planning table.
-    - **Visibility:** Make conditions visible to users with operations roles.
-    - **Future Enhancement:** Automate condition assignment based on predefined logic or criteria.
-
-- **[ ] Advanced User & Technician Management** _(Priority: Medium)_
-
-  - **Goal:** Comprehensive user management with roles, skills, training, and external manpower integration.
-  - **Features:**
-    - **Roles & Permissions:** Implement role-based access control (RBAC) for different user types.
-    - **Skills Management:** Track and manage technician skills and certifications.
-    - **Training Tracking:** Record and monitor training completion and requirements.
-    - **Manpower API Integration:** Connect to an external manpower management system via an API to track:
-      - Onsite presence
-      - Sick leave status
-      - Vacation schedules
-      - Real-time availability
-    - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training).
-    - **Workload Tracking:** Track and visualize individual technician workload over time.
-
-- **[ ] Shift Calendar Redesign** _(Priority: Medium)_
-
-  - **Goal:** Improve the usability of the Shift Calendar page.
-  - **Features:**
-    - **Calendar Grid View:** Redesign the interface to resemble a standard calendar (month/week view) instead of a list.
-    - **No-Scroll Layout:** Optimize the layout to fit within the viewport without requiring vertical scrolling.
-    - **Interactive Elements:** Allow clicking on days/shifts for more details without leaving the calendar view.
-
-- **[ ] Advanced Planning Algorithms** _(Priority: Medium)_
-  - **Goal:** Evolve beyond simple task assignment to holistic planning.
-  - **Features:**
-    - Develop logic for complex scheduling scenarios like multi-day shutdowns or holidays, factoring in technician availability.
-    - Create a simulation feature that can optimize schedules before finalizing them.
+> **See:** [Planning App Roadmap](../apps/planning/docs/planning_roadmap.md) for detailed feature plans and legacy code analysis tasks.
 
 ### `reports` App Enhancements
 
-This application is intended for reporting and analytics. The following features would provide significant value.
-
-- **[ ] Automated & Specialized Reporting**
-
-  - **Goal:** Generate key operational reports automatically.
-  - **Features:**
-    - **Weekend Task Report:** A report summarizing all tasks planned and completed over a weekend.
-    - **Shift Production Report:** A summary of maintenance activities during a specific shift.
-    - **Technician-Submitted Reports:** A system for technicians to log ad-hoc issues like breakdowns or PLC alarms, which can then be aggregated into reports.
-
-- **[ ] Advanced Statistical Analysis**
-  - **Goal:** Provide deeper insights into maintenance operations.
-  - **Features:**
-    - Develop statistical dashboards for asset performance (e.g., Mean Time Between Failures).
-    - Analyze technician performance and skill gaps.
-    - Generate reports on spare part consumption trends.
+> **See:** [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for future reporting features.
 
 ---
 
@@ -768,10 +733,11 @@ This application is intended for reporting and analytics. The following features
 **Critical Priority:**
 
 - ✅ **Core mockCMMS Code Quality Comprehensive Audit & Cleanup:** COMPLETE ([Detailed Plan](deprecated/core_code_quality_plan.md))
+- 🔴 **Legacy Code Analysis & Cleanup Decision (Planning App):** SUPER CRITICAL - [See Planning Roadmap](../apps/planning/docs/planning_roadmap.md)
 
 **High Priority:**
 
-- **Line Conditions for Planning:** Standardize prerequisites for task execution.
+- **Line Conditions for Planning:** [See Planning Roadmap](../apps/planning/docs/planning_roadmap.md)
 - **Frontend Architecture Decision:** Evaluate migration to a modern framework (Angular/React).
 - **CI/CD Pipeline:** ✅ COMPLETE.
 - **Team Collaboration Documentation:** GitHub workflows and setup automation.
@@ -783,8 +749,9 @@ This application is intended for reporting and analytics. The following features
 
 **Medium Priority:**
 
-- **Advanced Technician Tracking:** Availability, workload, and dynamic status.
-- **Automated, Specialized Reports:** Shift, weekend, and technician-submitted reports.
+- **Advanced User & Technician Management:** Comprehensive user management with roles, skills, training, and manpower API integration.
+- **Shift Calendar Redesign:** Improve calendar UI with grid view and interactive elements.
+- **Automated, Specialized Reports:** [See Reports Roadmap](../apps/reports/docs/reports_roadmap.md)
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
 - **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific filter operators.
 - **UI Regression Automation:** End-to-end UI testing.

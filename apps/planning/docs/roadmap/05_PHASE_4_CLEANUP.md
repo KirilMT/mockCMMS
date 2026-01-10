@@ -5,10 +5,34 @@
 **Status:** 📋 **PLANNED** (Not Started)
 
 **Priority Items from User Feedback:**
-1. 🔴 **HIGH PRIORITY:** Schedule → MaintenancePlan terminology change (user confusion reported)
-2. 🟡 **MEDIUM PRIORITY:** Legacy Excel workflow removal
-3. 🟡 **MEDIUM PRIORITY:** Obsolete UI component cleanup
-4. 🟢 **LOW PRIORITY:** Documentation updates
+1. 🔴 **SUPER CRITICAL:** Legacy Code Analysis & Cleanup Decision (Added January 10, 2026)
+2. 🔴 **HIGH PRIORITY:** Schedule → MaintenancePlan terminology change
+3. 🟡 **MEDIUM PRIORITY:** Legacy Excel workflow removal
+4. 🟡 **MEDIUM PRIORITY:** Obsolete UI component cleanup
+5. 🟢 **LOW PRIORITY:** Documentation updates
+
+- [ ] 6.0. **Legacy Code Analysis & Cleanup Decision** 🆕 🔴 **SUPER CRITICAL**
+  - **Status:** Not Started
+  - **Goal:** Execute deep analysis to decide strategy for `task_assigner.py` (1574 lines), `extract_data.py`, and other legacy files before removal.
+  - **Context:**
+    - ✅ New Architecture (Phase 1-3) is functional.
+    - ⚠️ Legacy Code is still actively used (dependency chain: Routes -> extract_data -> dashboard -> task_assigner).
+    - 🔴 Critical Dependency Chain Exists - Cannot safely delete legacy files without refactoring.
+  - **Dependencies:** This task blocks 6.2 (Remove Excel-based workflow components).
+  - [ ] 6.0.1. **Deep Code Analysis (Phase A)**
+    - [ ] **Algorithm Comparison:** Compare `task_assigner.py` (legacy) with `planning_engine.py` (new). Document unique features.
+    - [ ] **Complexity Analysis:** Analyze "permutation-based optimization" logic in `task_assigner.py`.
+    - [ ] **Dependency Mapping:** Map all imports of `task_assigner`, `extract_data`, `dashboard`.
+    - [ ] **Data Flow Tracing:** Trace data from `extract_data.py` (Excel parsing).
+    - [ ] **Excel Mapping Analysis:** Review `config_manager.py` and `config.json` for migration needs.
+  - [ ] 6.0.2. **Decision Making (Phase B)**
+    - [ ] **Create Decision Matrix:** For each file, decide: REUSE, REFACTOR, or DELETE.
+    - [ ] **Risk Assessment:** For DELETE files, identify regression risks and rollback strategy.
+  - [ ] 6.0.3. **Implementation Planning (Phase C)**
+    - [ ] **Porting Plan:** Define where code moves (e.g., `planning_utils.py`).
+    - [ ] **Deprecation Plan:** Identify and plan disconnect of entry points (Routes/UI).
+    - [ ] **Verification Tests:** Define tests to run before and after removal to ensure no regression.
+  - **Outcome:** A confirmed plan for which files to delete in 6.2 and which to port.
 
 - [ ] 6.1. **Terminology & Model Renaming** 🆕 🔴 **HIGH PRIORITY - USER REQUESTED**
   - [ ] 6.1.1. **Rename "Schedule" to "MaintenancePlan"** to avoid confusion with recurring maintenance schedules
