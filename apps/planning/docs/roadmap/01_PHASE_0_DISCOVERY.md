@@ -5,12 +5,14 @@
 **Status:** ✅ **COMPLETE** (November 18, 2025)
 
 **Key Decisions Made:**
+
 - ✅ Direct database access for efficiency (not API-based)
 - ✅ Shared Technician/Skill tables as single source of truth
 - ✅ Planning results stored by extending MaintenanceOrder model
 - ✅ Assignment algorithm located in `apps/planning/src/services/task_assigner.py`
 
 **Documentation Created:**
+
 - ✅ Data flow diagram: `docs/planning_data_flow.md`
 - ✅ Peer review: `docs/phase0_peer_review.md`
 - ✅ Data validation script: `validate_data_mapping.py`

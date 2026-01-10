@@ -1,21 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mock CMMS Maintenance Grid</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/maintenance_grid.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Mock CMMS Maintenance Grid</h1>
-        <p>This is a mock page for a CMMS maintenance grid, designed to simulate a view of multiple maintenance items.</p>
-        <div class="grid-info">
-            <p><strong>Maintenance IDs:</strong> {{ ids }}</p>
-            <p><strong>Status:</strong> Scheduled (Mock Data)</p>
-            <p><strong>Description:</strong> This grid would typically show details for multiple maintenance orders. (Mock Data)</p>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mock CMMS Maintenance Grid</title>
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/pages/maintenance_grid.css') }}">
+    </head>
+    <body>
+        <div class="container">
+            <h1>Mock CMMS Maintenance Grid</h1>
+            <p>
+                This is a mock page for a CMMS maintenance grid, designed to simulate a view of multiple maintenance items.
+            </p>
+            <div class="grid-info">
+                <p>
+                    <strong>Maintenance IDs:</strong> {{ ids }}
+                </p>
+                <p>
+                    <strong>Status:</strong> Scheduled (Mock Data)
+                </p>
+                <p>
+                    <strong>Description:</strong> This grid would typically show details for multiple maintenance orders. (Mock Data)
+                </p>
+            </div>
+            <p>
+                <a href="/">Back to Mock CMMS Home</a>
+            </p>
         </div>
-        <p><a href="/">Back to Mock CMMS Home</a></p>
-    </div>
-</body>
+    </body>
 </html>

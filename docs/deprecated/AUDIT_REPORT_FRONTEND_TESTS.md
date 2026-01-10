@@ -4,6 +4,7 @@
 **Scope:** Frontend Testing (Jest & Playwright)
 
 ## Summary
+
 Successfully implemented the frontend testing infrastructure covering Unit Tests (Jest) and End-to-End Tests (Playwright).
 
 - **Unit Tests:** 41 tests implemented covering core table logic, config, and sidebar interactions. (Phase 1)
@@ -16,30 +17,36 @@ Successfully implemented the frontend testing infrastructure covering Unit Tests
 ## Issues Found & Resolved
 
 ### Issue #1: Missing Dependencies
+
 **Description:** `python-dotenv` was missing from `requirements.txt` but used in `run.py`.
 **Resolution:** Installed via `requirements.txt` (it was present in the file, just needed installation in sandbox).
 
 ### Issue #2: Pagination Logic Missing
+
 **File:** `src/static/js/advanced-table/table-data.js`
 **Description:** `getPaginatedData` method was empty, causing pagination tests to fail.
 **Resolution:** Implemented slicing logic based on `currentPage` and `pageSize`.
 
 ### Issue #3: Route Mismatch in Test Plan
+
 **Category:** Documentation / Standards
 **Description:** `frontend_testing_plan.md` and initial test drafts used hyphenated routes (e.g., `/maintenance-orders`), but Flask routes use underscores (e.g., `/maintenance_orders`).
 **Resolution:** Updated all E2E tests to use correct underscore-based routes.
 
 ### Issue #4: Incorrect HTML Heading Levels
+
 **Category:** Accessibility / Standards
 **Description:** Smoke tests expected `<h2>` for page titles, but templates use `<h1>`.
 **Resolution:** Updated tests to target `<h1>`.
 
 ### Issue #5: Missing Fields in CRUD Tests
+
 **Category:** Testing
 **Description:** Initial CRUD tests missed required fields (`asset_code`, `estimated_completion_time`, etc.) and used incorrect values for dropdowns (e.g., 'Machine' instead of 'robot').
 **Resolution:** Updated `crud.spec.js` to populate all required fields with valid options matching the HTML templates.
 
 ### Issue #6: Visual Regression Baselines
+
 **Category:** Testing
 **Description:** Visual tests require baseline images which are not present initially.
 **Resolution:** Tests are configured. First run in CI or local with update flag will generate baselines.
@@ -55,6 +62,7 @@ Successfully implemented the frontend testing infrastructure covering Unit Tests
 ---
 
 ## Next Steps
+
 - Monitor CI pipeline stability.
 - Generate visual regression baselines.
 - Expand unit test coverage for `table-render.js` and `table-events.js`.

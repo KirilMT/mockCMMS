@@ -7,6 +7,7 @@ This document is a living, step-by-step action plan for integrating the legacy `
 The plan is organized by phases, each including specific testing points to ensure quality at every stage. Each task should be updated with status as work progresses.
 
 **Recent Updates (November 20, 2025):**
+
 - Added critical test repair tasks (Phase 1.6)
 - Added security vulnerability fixes (Phase 6.5, expanded)
 - Added UI/UX issues from user feedback (Phase 5.9, expanded)
@@ -63,24 +64,26 @@ Out of scope for the initial phases: full SCADA integration, fully automated REP
 
 ### Phase Status Breakdown:
 
-| Phase | Status | Progress | Critical Issues |
-|-------|--------|----------|----------------|
-| **Phase 0: Discovery** | ✅ Complete | 100% | None |
-| **Phase 1: Domain Model** | ⚠️ Uncertain | ~80%? | 🔴 Tests don't run - cannot verify |
-| **Phase 2: Planning Engine** | ⚠️ Uncertain | ~80%? | 🔴 Tests don't run - cannot verify |
-| **Phase 3: Planning UI** | 🔄 In Progress | ~60% | 🟡 Team logic incomplete, Gantt issues |
-| **Phase 4: Cleanup** | 📋 Not Started | 0% | 🔴 Terminology fix needed (user request) |
-| **Phase 5: Future** | 📋 Not Started | 0% | None |
+| Phase                        | Status         | Progress | Critical Issues                          |
+| ---------------------------- | -------------- | -------- | ---------------------------------------- |
+| **Phase 0: Discovery**       | ✅ Complete    | 100%     | None                                     |
+| **Phase 1: Domain Model**    | ⚠️ Uncertain   | ~80%?    | 🔴 Tests don't run - cannot verify       |
+| **Phase 2: Planning Engine** | ⚠️ Uncertain   | ~80%?    | 🔴 Tests don't run - cannot verify       |
+| **Phase 3: Planning UI**     | 🔄 In Progress | ~60%     | 🟡 Team logic incomplete, Gantt issues   |
+| **Phase 4: Cleanup**         | 📋 Not Started | 0%       | 🔴 Terminology fix needed (user request) |
+| **Phase 5: Future**          | 📋 Not Started | 0%       | None                                     |
 
 ### What's Actually Working (Verified):
 
 ✅ **Backend Structure:**
+
 - Planning models exist (`planning_models.py`)
 - Planning engine exists (`planning_engine.py`)
 - Planning routes exist (`planning.py`)
 - Database tables created (Schedule, PlanningTask)
 
 ✅ **UI Components:**
+
 - Planning index page renders
 - Schedule view page renders
 - Advanced table view works (after November 19 fixes)
@@ -92,17 +95,20 @@ Out of scope for the initial phases: full SCADA integration, fully automated REP
 ### What's Broken/Missing:
 
 ❌ **Testing Infrastructure:**
+
 - Test imports broken (cannot run any tests)
 - Actual test count unknown (claimed 35+, but 0 running)
 - No verification of Phase 1/2 implementations
 
 ❌ **Security:**
+
 - Critical XSS vulnerabilities in manage_mappings JavaScript
 - Missing CSRF protection on AJAX calls
 - Input validation inadequate
 - Using HTTP instead of HTTPS
 
 ❌ **UI/UX Issues:**
+
 - Weekend planning doesn't work for single-day schedules
 - Table height issues on Assets/MOs/Users/Spare Parts pages
 - Gantt column hover highlighting broken
@@ -111,6 +117,7 @@ Out of scope for the initial phases: full SCADA integration, fully automated REP
 - Team assignment logic incomplete
 
 ❌ **Documentation:**
+
 - Gantt implementation docs don't match code
 - Test status inaccurate (claiming tests pass when they don't run)
 - Feature completeness overstated
@@ -141,7 +148,7 @@ Out of scope for the initial phases: full SCADA integration, fully automated REP
    - CSS/JS consolidation audit
    - **Timeline:** 2-3 weeks
 
-6. **🟢 MEDIUM - Terminology Fix** (Phase 6.1)
+5. **🟢 MEDIUM - Terminology Fix** (Phase 6.1)
    - Rename Schedule → MaintenancePlan
    - Update all references
    - Database migration
@@ -170,6 +177,7 @@ Out of scope for the initial phases: full SCADA integration, fully automated REP
 **⚠️ CRITICAL STATUS (November 20, 2025): TEST SUITE IS BROKEN**
 
 **Current Reality:**
+
 - ❌ **ZERO tests actually running** due to import errors
 - ❌ Claims of "35+ tests passing" are INACCURATE
 - ❌ Cannot verify ANY Phase 1/2 implementations
@@ -181,6 +189,7 @@ Out of scope for the initial phases: full SCADA integration, fully automated REP
 All tests should remain in `apps/planning/tests/` organized by purpose. **DO NOT delete passing tests** - they serve as regression protection for future development.
 
 **Current Test Files (STATUS UNKNOWN - CANNOT RUN):**
+
 1. **Phase 1 Foundation Tests (IMPORT ERRORS):**
    - ❌ `test_domain_models.py` - ImportError: cannot import 'maintenance_order_spare_parts'
    - ⚠️ `test_transformation_layer.py` - Status unknown (6 tests claimed)
@@ -202,12 +211,14 @@ All tests should remain in `apps/planning/tests/` organized by purpose. **DO NOT
    - ⚠️ `conftest.py` - Status unknown
 
 **Test Retention Policy (AFTER FIXING IMPORTS):**
+
 - ✅ **KEEP all Phase 1 tests permanently** - They validate the foundation and will catch regressions
 - 🔄 **UPDATE legacy tests** - Refactor `test_core.py` to work with SQLAlchemy models instead of raw SQLite
 - ➕ **ADD new tests per phase** - Each phase should add tests, never remove existing ones
 - 📦 **ORGANIZE by phase** - Consider adding phase markers in test file docstrings
 
 **Running Tests by Phase (AFTER FIXING):**
+
 ```bash
 # CURRENT STATE: All commands FAIL with import errors
 # Must fix Phase 1.6 before any of these work
@@ -235,6 +246,7 @@ pytest apps/planning/tests/ --collect-only
 ```
 
 **Fix Verification Checklist:**
+
 - [ ] Test discovery succeeds (`--collect-only` works)
 - [ ] All test files import successfully
 - [ ] Actual test count matches documented count
@@ -258,15 +270,18 @@ pytest apps/planning/tests/ --collect-only
 ### ✅ COMPLETED TODAY:
 
 **1. Test Suite Fixed! (Phase 1.6)** ✅ **COMPLETE**
-   - Fixed all import errors in test files
-   - 60 tests now discoverable (up from 0)
-   - 38 core tests passing (100% pass rate)
-   - Can now verify Phase 1/2/3 implementations
-   - **Timeline:** Completed in ~1 hour
+
+- Fixed all import errors in test files
+- 60 tests now discoverable (up from 0)
+- 38 core tests passing (100% pass rate)
+- Can now verify Phase 1/2/3 implementations
+- **Timeline:** Completed in ~1 hour
 
 **2. Security Audit Complete! (Phase 6.5.4)** ✅ **COMPLETE**
-   - Audited planning module JavaScript files
-   - NO CRITICAL VULNERABILITIES FOUND 🎉
+
+- Audited planning module JavaScript files
+- NO CRITICAL VULNERABILITIES FOUND 🎉
+
 ### 🟡 HIGH - Complete Phase 3 Core Features:
 
 1. **Documentation Corrections** ✅ **MOSTLY COMPLETE - November 20, 2025**
@@ -292,7 +307,7 @@ pytest apps/planning/tests/ --collect-only
    - **Timeline:** 2 weeks
    - **User Impact:** HIGH - core feature requested
 
-5. **Weekend Planning Broken for Single-Day Schedules (Phase 5.9.1)**
+3. **Weekend Planning Broken for Single-Day Schedules (Phase 5.9.1)**
    - Single-day schedule assigns no tasks
    - Multi-day schedules work fine
    - Root cause unknown (filtering logic suspected)
@@ -300,7 +315,7 @@ pytest apps/planning/tests/ --collect-only
    - **Timeline:** 1 week
    - **User Impact:** HIGH - prevents usage
 
-6. **Role-Based Access Control Missing (Phase 5.5)**
+4. **Role-Based Access Control Missing (Phase 5.5)**
    - All users see same interface
    - No permission checks in routes
    - Technician, Supervisor, Planner roles defined but not enforced
@@ -308,7 +323,7 @@ pytest apps/planning/tests/ --collect-only
    - **Timeline:** 2 weeks
    - **User Impact:** MEDIUM - security and usability
 
-7. **Export Functionality Not Implemented (Phase 5.6)**
+5. **Export Functionality Not Implemented (Phase 5.6)**
    - Only CSV export works
    - PDF and Excel export needed
    - Email notification wanted by users
@@ -316,7 +331,7 @@ pytest apps/planning/tests/ --collect-only
    - **Timeline:** 1-2 weeks
    - **User Impact:** MEDIUM - required for workflow
 
-8. **Gantt Chart Advanced Features Missing (Phase 5.10)** 🔴 **CRITICAL - BEFORE PHASE 4**
+6. **Gantt Chart Advanced Features Missing (Phase 5.10)** 🔴 **CRITICAL - BEFORE PHASE 4**
    - Must implement BEFORE Phase 4 deletes original dashboard
    - Drag & drop task rescheduling (HIGH priority)
    - Table-Gantt bidirectional sync (HIGH priority)
@@ -336,14 +351,14 @@ pytest apps/planning/tests/ --collect-only
    - **Timeline:** 1 week
    - **User Impact:** LOW - cosmetic issue
 
-9. **Gantt Column Hover Highlighting Broken (Phase 5.9.3)**
-   - Column highlighting not working despite attempted fix
-   - Row highlighting works fine
-   - **Action:** Debug and fix column hover
-   - **Timeline:** 2-3 days
-   - **User Impact:** LOW - nice to have
+10. **Gantt Column Hover Highlighting Broken (Phase 5.9.3)**
+    - Column highlighting not working despite attempted fix
+    - Row highlighting works fine
+    - **Action:** Debug and fix column hover
+    - **Timeline:** 2-3 days
+    - **User Impact:** LOW - nice to have
 
-10. **CSS/JS Consolidation Needed (Phase 5.9.4)**
+11. **CSS/JS Consolidation Needed (Phase 5.9.4)**
     - Inline styles found in templates
     - Inline scripts mixed with external JS
     - Violates separation of concerns
@@ -351,7 +366,7 @@ pytest apps/planning/tests/ --collect-only
     - **Timeline:** 1-2 weeks
     - **User Impact:** NONE - code quality
 
-11. **Gantt Resource Utilization Missing (Phase 5.4.5)**
+12. **Gantt Resource Utilization Missing (Phase 5.4.5)**
     - Documentation claims feature exists
     - Custom Gantt doesn't have utilization cards
     - Would be useful for planning
@@ -418,25 +433,30 @@ pytest apps/planning/tests/ --collect-only
 ### Recommended Work Order:
 
 **✅ COMPLETED - November 20, 2025:**
+
 - ✅ Fix test suite (Phase 1.6) - **DONE!** 38/38 tests passing (100%)
 - ✅ Security audit planning module JS (Phase 6.5.4) - **DONE!** No critical vulnerabilities
 
 **Week 1-2: Documentation & Refinements (IN PROGRESS)**
+
 1. ✅ ~~Fix test suite (Phase 1.6)~~ - **COMPLETE!**
 2. ✅ ~~Security audit (Phase 6.5.4)~~ - **COMPLETE!**
 3. Update documentation to match reality (in progress)
 
 **Week 3-4: Core Features**
+
 4. Team assignment logic (Phase 5.7)
 5. Weekend planning bug (Phase 5.9.1)
 6. Role-based access control (Phase 5.5)
 
 **Week 5-6: Export & Refinements**
+
 7. Export functionality (Phase 5.6)
 8. Table height fix (Phase 5.9.2)
 9. Gantt column hover (Phase 5.9.3)
 
 **Week 7-9: Gantt Advanced Features (BEFORE Phase 4)** 🔴 **CRITICAL**
+
 10. Gantt Chart Advanced Features (Phase 5.10) - MUST complete before Phase 4
     - Drag & drop task rescheduling
     - Table-Gantt bidirectional sync
@@ -447,13 +467,15 @@ pytest apps/planning/tests/ --collect-only
     - **Note:** Need original technician dashboard as reference
 
 **Week 10-11: Phase 4 Cleanup (AFTER Gantt features complete)**
+
 11. Terminology fix (Phase 6.1)
 12. CSS/JS consolidation (Phase 5.9.4)
 13. Legacy removal (Phase 6.2, 6.3) - Can delete original dashboard now
 
 **Week 12+: Phase 5 Enhancements**
+
 14. Future features as needed
-13. Future features as needed
+15. Future features as needed
 
 ### Success Metrics:
 

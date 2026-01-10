@@ -18,24 +18,24 @@ A modular Flask application for intelligent maintenance planning and planning ma
 
 Here's a glimpse of the Planning in action:
 
-| Main Page | Manage Mappings |
-| :---: | :---: |
-| *Users can upload Excel files and initiate the assignment process.* | *A dedicated UI for managing technicians, skills, and tasks.* |
-| ![Main Page](docs/assets/mainPage.png) | ![Manage Mappings Page](docs/assets/manageMappingsPage.png) |
+|                              Main Page                              |                        Manage Mappings                        |
+| :-----------------------------------------------------------------: | :-----------------------------------------------------------: |
+| _Users can upload Excel files and initiate the assignment process._ | _A dedicated UI for managing technicians, skills, and tasks._ |
+|               ![Main Page](docs/assets/mainPage.png)                |  ![Manage Mappings Page](docs/assets/manageMappingsPage.png)  |
 
-| Absent Technicians Modal | REP Task Assignment |
-| :---: | :---: |
-| *Easily mark technicians as absent before generating the schedule.* | *Manually assign high-priority REP tasks to eligible technicians.* |
+|                      Absent Technicians Modal                       |                          REP Task Assignment                           |
+| :-----------------------------------------------------------------: | :--------------------------------------------------------------------: |
+| _Easily mark technicians as absent before generating the schedule._ |   _Manually assign high-priority REP tasks to eligible technicians._   |
 | ![Absent Technicians Modal](docs/assets/absentTechniciansModal.png) | ![REP Tasks Assignment Modal](docs/assets/REPTasksAssignmentModal.png) |
 
-| Additional Task Creation | Technician Dashboard - Table View |
-| :---: | :---: |
-| *Dynamically add new tasks during the assignment process.* | *A clear, tabular view of the final schedule for each technician.* |
+|                            Additional Task Creation                            |                    Technician Dashboard - Table View                    |
+| :----------------------------------------------------------------------------: | :---------------------------------------------------------------------: |
+|           _Dynamically add new tasks during the assignment process._           |   _A clear, tabular view of the final schedule for each technician._    |
 | ![Additional Task Creation Modal](docs/assets/additionalTaskCreationModal.png) | ![Technician Dashboard Table](docs/assets/technicianDashboardTable.png) |
 
-| Technician Dashboard - Gantt Chart View |
-| :---: |
-| *An interactive Gantt chart visualizes the entire weekend schedule.* |
+|                    Technician Dashboard - Gantt Chart View                    |
+| :---------------------------------------------------------------------------: |
+|     _An interactive Gantt chart visualizes the entire weekend schedule._      |
 | ![Technician Dashboard Gantt Chart](docs/assets/technicianDashboardGantt.png) |
 
 ## 📁 App Structure
@@ -98,6 +98,7 @@ The testing process involves two main stages: automatic data population from a J
 This first stage provides the foundational data for the application (technicians, skills, tasks, etc.).
 
 1.  **Enable Test Database Mode**: In the main CMMS `.env` file, ensure the following variable is set:
+
     ```env
     DEBUG_USE_TEST_DB=1
     ```
@@ -114,14 +115,14 @@ After the initial data has been loaded, you can test the application's data impo
 
 1.  **Navigate to Planning**: Open your browser and go to `http://127.0.0.1:5000/planning-manager/`.
 2.  **Import Sample Data**:
-    *   Use the file upload functionality to import `testsExcel.xlsb` and `testsExcel2.xlsb` from the `apps/planning/test_data/` directory.
-    *   This will add to or modify the initial data in the database.
+    - Use the file upload functionality to import `testsExcel.xlsb` and `testsExcel2.xlsb` from the `apps/planning/test_data/` directory.
+    - This will add to or modify the initial data in the database.
 3.  **Run Task Assignment**:
-    *   Once the data is imported, you can trigger the task assignment process from the UI.
-    *   The application will use its skill-based algorithm to assign the tasks to the most suitable technicians.
+    - Once the data is imported, you can trigger the task assignment process from the UI.
+    - The application will use its skill-based algorithm to assign the tasks to the most suitable technicians.
 4.  **View the Dashboards**:
-    *   **Supervisor Dashboard**: Navigate to the supervisor dashboard to get an overview of all task assignments, schedules, and workloads.
-    *   **Technician Dashboard**: Check the individual technician dashboards to see their specific schedules and assigned tasks.
+    - **Supervisor Dashboard**: Navigate to the supervisor dashboard to get an overview of all task assignments, schedules, and workloads.
+    - **Technician Dashboard**: Check the individual technician dashboards to see their specific schedules and assigned tasks.
 
 ### Testing with a Fixed Date
 
@@ -133,6 +134,7 @@ For consistent testing of scheduling logic, you can force the application to use
   # Example: Set the date to April 19, 2025, at 4:00 PM
   DEBUG_FIXED_DATE=2025-04-19T16:00:00
   ```
+
 - If `DEBUG_FIXED_DATE` is not set, the application will default to a canonical test date (`2025-04-19 16:00:00`) when in debug mode.
 
 ## 🔧 Configuration
@@ -141,22 +143,23 @@ For consistent testing of scheduling logic, you can force the application to use
 
 All configuration is managed through the main CMMS `.env` file:
 
-| Variable | Description | Default |
-|---|---|---|
-| `PLANNING_ENABLED` | Enable/disable this app | True |
-| `SECRET_KEY` | Flask secret key for sessions | Auto-generated |
-| `DATA_SOURCE` | Data source for task data ('excel' or 'api') | 'excel' |
-| `FLASK_DEBUG` | Enable debug mode (1/true/yes) | 0 |
-| `DEBUG_USE_TEST_DB` | Force use of test database and load dummy data | 0 |
-| `DEBUG_FIXED_DATE` | Fixed date for testing (ISO format) | `2025-04-19T16:00:00` (in debug) |
-| `DATABASE_FILENAME` | Custom database filename | Based on debug mode |
-| `CSRF_TIME_LIMIT` | CSRF token expiration (seconds) | 3600 |
-| `SESSION_LIFETIME` | Session timeout (seconds) | 1800 |
-| `MAX_UPLOAD_SIZE` | Maximum file upload size (bytes) | 16777216 |
+| Variable            | Description                                    | Default                          |
+| ------------------- | ---------------------------------------------- | -------------------------------- |
+| `PLANNING_ENABLED`  | Enable/disable this app                        | True                             |
+| `SECRET_KEY`        | Flask secret key for sessions                  | Auto-generated                   |
+| `DATA_SOURCE`       | Data source for task data ('excel' or 'api')   | 'excel'                          |
+| `FLASK_DEBUG`       | Enable debug mode (1/true/yes)                 | 0                                |
+| `DEBUG_USE_TEST_DB` | Force use of test database and load dummy data | 0                                |
+| `DEBUG_FIXED_DATE`  | Fixed date for testing (ISO format)            | `2025-04-19T16:00:00` (in debug) |
+| `DATABASE_FILENAME` | Custom database filename                       | Based on debug mode              |
+| `CSRF_TIME_LIMIT`   | CSRF token expiration (seconds)                | 3600                             |
+| `SESSION_LIFETIME`  | Session timeout (seconds)                      | 1800                             |
+| `MAX_UPLOAD_SIZE`   | Maximum file upload size (bytes)               | 16777216                         |
 
 ## 📊 Skill-Based Assignment System
 
 The application uses a sophisticated skill-based assignment system that:
+
 - Matches technicians to tasks based on required technical skills
 - Supports multiple skill requirements per task
 - Calculates optimal team sizes based on task complexity
@@ -211,8 +214,7 @@ The application provides REST API endpoints for programmatic access:
 
 - **PEP 8 Compliance:** Python code follows PEP 8 styling guidelines
 - **Class-based Architecture:** Modern object-oriented design patterns
-- **Error Handling:** Comprehensive error handling and logging
--**Documentation:** Well-documented code with clear docstrings
+- **Error Handling:** Comprehensive error handling and logging -**Documentation:** Well-documented code with clear docstrings
 
 ## 📊 Database Schema
 

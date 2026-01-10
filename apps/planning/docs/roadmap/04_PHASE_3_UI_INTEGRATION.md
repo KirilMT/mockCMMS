@@ -5,6 +5,7 @@
 **Status:** 🔄 **IN PROGRESS** (Started November 18, 2025)
 
 **Implementation Summary:**
+
 - ✅ Planning routes added to `planning` blueprint
 - ✅ Main planning index page created
 - ✅ Schedule view with mode selection (shift-break/weekend)
@@ -15,6 +16,7 @@
 - ⏳ Export options (needs implementation)
 
 **⚠️ Known Issues from User Feedback (November 18-19, 2025):**
+
 1. ✅ **RESOLVED:** Advanced table features broken after render - Fixed with event listener re-attachment
 2. ✅ **RESOLVED:** Schedule terminology confusion - User wants "Schedule" renamed to "MaintenancePlan" (moved to Phase 4.1)
 3. 🔄 **IN PROGRESS:** Team size assignment logic incomplete - Planning engine assigns single techs, not teams properly
@@ -24,6 +26,7 @@
 7. ⏳ **PENDING:** Export options not implemented
 
 **🎯 Current Focus Areas:**
+
 1. **Team Assignment Logic Enhancement** - Improve algorithm to properly form multi-technician teams
 2. **Gantt Chart Implementation** - Full visualization with timeline and resource allocation
 3. **Role-Based Views** - Different interfaces for Planner/Supervisor/Technician
@@ -331,7 +334,7 @@
     - **Attempted Fix (November 19):**
       ```css
       .page-full-height .advanced-table-wrapper {
-          min-height: calc(100vh - 280px);
+        min-height: calc(100vh - 280px);
       }
       ```
     - **Status:** Partial fix - needs refinement
@@ -358,9 +361,13 @@
     - **Attempted Fix (November 19):**
       ```javascript
       // Added data-col-index attribute approach
-      const colIndex = cell.getAttribute('data-col-index');
-      const allCells = this.container.querySelectorAll(`[data-col-index="${colIndex}"]`);
-      allCells.forEach(c => { c.style.background = '#e3f2fd'; });
+      const colIndex = cell.getAttribute("data-col-index");
+      const allCells = this.container.querySelectorAll(
+        `[data-col-index="${colIndex}"]`,
+      );
+      allCells.forEach((c) => {
+        c.style.background = "#e3f2fd";
+      });
       ```
     - **Status:** Not working as expected
     - **Possible Issues:**

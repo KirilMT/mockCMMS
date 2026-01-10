@@ -10,6 +10,7 @@
 
 > [!IMPORTANT]
 > **📚 Related Documentation:** This plan is part of a larger implementation strategy. For full context, see:
+>
 > - **[Implementation Priority Guide](IMPLEMENTATION_PRIORITY_GUIDE.md)** - Overall phased approach and timeline
 > - **[mockCMMS Roadmap](mockCMMS_roadmap.md)** - Strategic features and current active work
 > - **[Core Code Quality Plan](core_code_quality_plan.md)** - Postponed code audit (resumes after testing)
@@ -20,6 +21,7 @@
 
 > [!TIP]
 > **🤖 For AI Assistants:**
+>
 > 1. This plan defines **210 specific tests** (210 complete ✅)
 > 2. **Phase 1 (Days 1-6):** Foundation tests ✅ COMPLETE (96 tests)
 > 3. **Phase 2 (Days 7-12):** Security & Robustness tests ✅ COMPLETE (48 tests)
@@ -39,10 +41,11 @@ This document outlines the strategy for creating a comprehensive, automated test
 This plan supersedes the previous code quality audit plan as the main priority.
 
 ### Key Objectives:
--   **High Test Coverage:** Achieve significant unit and integration test coverage for all core backend files (`run.py`, `app.py`, `routes/*.py`, `services/*.py`).
--   **Automated Verification:** Create a test suite that can be run automatically via `pytest` to validate the application's functionality from the command line.
--   **CI/CD Integration:** Ensure the new test suite is fully integrated into the existing GitHub Actions CI workflow.
--   **Enable Safe Refactoring:** Build the foundation required to safely perform large-scale changes, such as applying `black` formatting, with confidence.
+
+- **High Test Coverage:** Achieve significant unit and integration test coverage for all core backend files (`run.py`, `app.py`, `routes/*.py`, `services/*.py`).
+- **Automated Verification:** Create a test suite that can be run automatically via `pytest` to validate the application's functionality from the command line.
+- **CI/CD Integration:** Ensure the new test suite is fully integrated into the existing GitHub Actions CI workflow.
+- **Enable Safe Refactoring:** Build the foundation required to safely perform large-scale changes, such as applying `black` formatting, with confidence.
 
 ---
 
@@ -118,18 +121,18 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 ### Verification Methods Summary
 
-| Method | What It Verifies | Tool/Phase |
-|--------|-----------------|-----------|
-| **Regression Tests** | Behavior consistency | pytest (Phase 1) |
-| **Linting** | Code style & syntax | ruff, pylint (Phase 2) |
-| **Type Checking** | Logic flow correctness | mypy (Phase 2) |
-| **Complexity Analysis** | Code maintainability | radon (Phase 2) |
-| **Duplicate Detection** | Code reusability | jscpd (Phase 2) |
-| **Security Scanning** | Vulnerability detection | bandit (Phase 2) |
-| **Requirements Review** | Business logic correctness | Manual (Phase 3) |
-| **Code Review** | Overall quality | Human judgment (Phase 3) |
-| **Integration Tests** | Workflow correctness | pytest (Phase 4) |
-| **Performance Tests** | Speed & efficiency | pytest-benchmark (Phase 4) |
+| Method                  | What It Verifies           | Tool/Phase                 |
+| ----------------------- | -------------------------- | -------------------------- |
+| **Regression Tests**    | Behavior consistency       | pytest (Phase 1)           |
+| **Linting**             | Code style & syntax        | ruff, pylint (Phase 2)     |
+| **Type Checking**       | Logic flow correctness     | mypy (Phase 2)             |
+| **Complexity Analysis** | Code maintainability       | radon (Phase 2)            |
+| **Duplicate Detection** | Code reusability           | jscpd (Phase 2)            |
+| **Security Scanning**   | Vulnerability detection    | bandit (Phase 2)           |
+| **Requirements Review** | Business logic correctness | Manual (Phase 3)           |
+| **Code Review**         | Overall quality            | Human judgment (Phase 3)   |
+| **Integration Tests**   | Workflow correctness       | pytest (Phase 4)           |
+| **Performance Tests**   | Speed & efficiency         | pytest-benchmark (Phase 4) |
 
 > [!NOTE]
 > **Current Focus:** Phase 1 (Regression Tests). Phases 2-4 are documented in `IMPLEMENTATION_PRIORITY_GUIDE.md` and `core_code_quality_plan.md`.
@@ -145,27 +148,33 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Note:** Tests are organized by **testing concern** in separate directories for optimal test execution and CI/CD integration.
 
 **Unit Tests (`tests/unit/`)** - Fast, isolated component tests:
--   `test_app.py`: 33 tests ✅ **COMPLETE** (18 original + 15 Phase 3) ✅ Dec 13, 2025
--   `test_db_utils.py`: 11 tests ✅ **COMPLETE** (3 original + 8 Phase 3) ✅ Dec 12, 2025
--   `test_shift_utils.py`: 5 tests ✅ **COMPLETE** (100% coverage, no additions needed)
+
+- `test_app.py`: 33 tests ✅ **COMPLETE** (18 original + 15 Phase 3) ✅ Dec 13, 2025
+- `test_db_utils.py`: 11 tests ✅ **COMPLETE** (3 original + 8 Phase 3) ✅ Dec 12, 2025
+- `test_shift_utils.py`: 5 tests ✅ **COMPLETE** (100% coverage, no additions needed)
 
 **Functional Tests (`tests/functional/`)** - API and route endpoint tests:
--   `test_api_routes.py`: 66 tests ✅ **COMPLETE** (41 original + 25 Phase 3) ✅ Dec 13, 2025
--   `test_main_routes.py`: 39 tests ✅ **COMPLETE** (29 original + 10 Phase 3) ✅ Dec 12, 2025
+
+- `test_api_routes.py`: 66 tests ✅ **COMPLETE** (41 original + 25 Phase 3) ✅ Dec 13, 2025
+- `test_main_routes.py`: 39 tests ✅ **COMPLETE** (29 original + 10 Phase 3) ✅ Dec 12, 2025
 
 **Integration Tests (`tests/integration/`)** - End-to-end workflow tests:
--   `test_integration.py`: 18 tests ✅ **COMPLETE** (10 original + 8 Phase 3) ✅ Dec 12, 2025
+
+- `test_integration.py`: 18 tests ✅ **COMPLETE** (10 original + 8 Phase 3) ✅ Dec 12, 2025
 
 **Security Tests (`tests/security/`)** - Authentication, validation, security:
--   `test_auth.py`: 8 tests ✅ **COMPLETE** 🔴 CRITICAL
--   `test_validation.py`: 6 tests ✅ **COMPLETE** 🟡 HIGH
--   `test_advanced_validation.py`: 10 tests ✅ **COMPLETE** 🟡 MEDIUM
+
+- `test_auth.py`: 8 tests ✅ **COMPLETE** 🔴 CRITICAL
+- `test_validation.py`: 6 tests ✅ **COMPLETE** 🟡 HIGH
+- `test_advanced_validation.py`: 10 tests ✅ **COMPLETE** 🟡 MEDIUM
 
 **Performance Tests (`tests/performance/`)** - Scalability and optimization:
--   `test_performance.py`: 8 tests ✅ **COMPLETE** 🟢 LOW
+
+- `test_performance.py`: 8 tests ✅ **COMPLETE** 🟢 LOW
 
 **Reliability Tests (`tests/reliability/`)** - Error handling and robustness:
--   `test_errors.py`: 6 tests ✅ **COMPLETE** 🟡 MEDIUM
+
+- `test_errors.py`: 6 tests ✅ **COMPLETE** 🟡 MEDIUM
 
 **Current Status:** 210/210 tests complete (100%) ✅
 **Target Coverage:** 80-85% (current: 82.99%) ✅ **TARGET ACHIEVED**
@@ -173,6 +182,7 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Overall Goal:** ✅ ACHIEVED - 82.99% coverage, all tests passing, ready for Week 3
 
 **Directory Benefits:**
+
 - ✅ Run tests by category: `pytest tests/unit/`, `pytest tests/security/`, etc.
 - ✅ Optimize CI/CD: Run fast tests first, slow tests in separate stages
 - ✅ Clear organization: Easy to find tests by purpose
@@ -189,58 +199,59 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:** ✅ **Completed: December 11, 2025** (18 tests total: 10 required + 8 bonus)
 
 1.  **[x] `test_create_app_default_config`** ✅
-    -   Create app without specifying config
-    -   Assert app is created successfully
-    -   Assert default config values are set
+    - Create app without specifying config
+    - Assert app is created successfully
+    - Assert default config values are set
 
 2.  **[x] `test_create_app_testing_config`** ✅
-    -   Create app with `TESTING=True`
-    -   Assert testing mode is enabled
-    -   Assert test database is used
+    - Create app with `TESTING=True`
+    - Assert testing mode is enabled
+    - Assert test database is used
 
 3.  **[x] `test_database_initialization`** ✅
-    -   Create app and initialize database
-    -   Assert `db` object exists
-    -   Assert database tables are created
+    - Create app and initialize database
+    - Assert `db` object exists
+    - Assert database tables are created
 
 4.  **[x] `test_blueprints_registered`** ✅
-    -   Create app
-    -   Assert `main_bp` is registered
-    -   Assert `api_bp` is registered
-    -   Assert `planning_bp` is registered (if enabled)
-    -   Assert `reports_bp` is registered (if enabled)
+    - Create app
+    - Assert `main_bp` is registered
+    - Assert `api_bp` is registered
+    - Assert `planning_bp` is registered (if enabled)
+    - Assert `reports_bp` is registered (if enabled)
 
 5.  **[x] `test_secret_key_from_env`** ✅
-    -   Set `SECRET_KEY` in environment
-    -   Create app
-    -   Assert app uses the environment's secret key
+    - Set `SECRET_KEY` in environment
+    - Create app
+    - Assert app uses the environment's secret key
 
 6.  **[x] `test_secret_key_fallback`** ✅
-    -   Ensure `SECRET_KEY` is not in environment
-    -   Create app
-    -   Assert app generates a fallback secret key
+    - Ensure `SECRET_KEY` is not in environment
+    - Create app
+    - Assert app generates a fallback secret key
 
 7.  **[x] `test_database_uri_configuration`** ✅
-    -   Create app
-    -   Assert `SQLALCHEMY_DATABASE_URI` is set correctly
+    - Create app
+    - Assert `SQLALCHEMY_DATABASE_URI` is set correctly
 
 8.  **[x] `test_app_context`** ✅
-    -   Create app
-    -   Push app context
-    -   Assert context is active
-    -   Pop context
+    - Create app
+    - Push app context
+    - Assert context is active
+    - Pop context
 
 9.  **[x] `test_request_context`** ✅
-    -   Create app
-    -   Create request context
-    -   Assert request context is active
+    - Create app
+    - Create request context
+    - Assert request context is active
 
 10. **[x] `test_error_handlers_registered`** ✅
-    -   Create app
-    -   Assert 404 error handler exists
-    -   Assert 500 error handler exists (if implemented)
+    - Create app
+    - Assert 404 error handler exists
+    - Assert 500 error handler exists (if implemented)
 
 **Bonus Tests Implemented:**
+
 11. `test_csrf_protection_enabled_in_production`
 12. `test_csrf_protection_disabled_in_testing`
 13. `test_sqlalchemy_track_modifications_disabled`
@@ -261,221 +272,223 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **✅ Completed: December 11, 2025** (41 tests, all passing)
 
 **Test Structure:** For each endpoint, test:
+
 1.  **Success case** (valid request, correct response)
 2.  **Error case** (invalid data, missing data, not found, etc.)
 
 **🐛 Bugs Fixed by Tests:**
+
 - Fixed Asset API: Changed `location` → `asset_code`, `asset_type`, `cost_center`
 - Fixed SparePart API: Changed `name`/`quantity` → `description`/`stock_quantity`
 
 #### Assets API (`/v1/assets`)
 
 1.  **[x] `test_get_assets_empty`** ✅
-    -   GET `/v1/assets` with no assets in database
-    -   Assert 200 status
-    -   Assert empty list returned
+    - GET `/v1/assets` with no assets in database
+    - Assert 200 status
+    - Assert empty list returned
 
 2.  **[x] `test_get_assets_with_data`** ✅
-    -   Add 3 assets to database
-    -   GET `/v1/assets`
-    -   Assert 200 status
-    -   Assert 3 assets returned
-    -   Assert each asset has required fields
+    - Add 3 assets to database
+    - GET `/v1/assets`
+    - Assert 200 status
+    - Assert 3 assets returned
+    - Assert each asset has required fields
 
 3.  **[x] `test_get_asset_by_id_success`** ✅
-    -   Add an asset to database
-    -   GET `/v1/assets/<id>`
-    -   Assert 200 status
-    -   Assert correct asset data returned
+    - Add an asset to database
+    - GET `/v1/assets/<id>`
+    - Assert 200 status
+    - Assert correct asset data returned
 
 4.  **[x] `test_get_asset_by_id_not_found`** ✅
-    -   GET `/v1/assets/999` (non-existent ID)
-    -   Assert 404 status
-    -   Assert error message returned
+    - GET `/v1/assets/999` (non-existent ID)
+    - Assert 404 status
+    - Assert error message returned
 
 5.  **[x] `test_add_asset_success`** ✅
-    -   POST `/v1/assets` with valid data
-    -   Assert 201 status
-    -   Assert asset created in database
-    -   Assert returned data matches input
+    - POST `/v1/assets` with valid data
+    - Assert 201 status
+    - Assert asset created in database
+    - Assert returned data matches input
 
 6.  **[x] `test_add_asset_missing_name`** ✅
-    -   POST `/v1/assets` without `name` field
-    -   Assert 400 status
-    -   Assert error message about missing name
+    - POST `/v1/assets` without `name` field
+    - Assert 400 status
+    - Assert error message about missing name
 
 7.  **[x] `test_update_asset_success`** ✅
-    -   Add an asset to database
-    -   PUT `/v1/assets/<id>` with updated data
-    -   Assert 200 status
-    -   Assert asset updated in database
+    - Add an asset to database
+    - PUT `/v1/assets/<id>` with updated data
+    - Assert 200 status
+    - Assert asset updated in database
 
 8.  **[x] `test_update_asset_not_found`** ✅
-    -   PUT `/v1/assets/999` with valid data
-    -   Assert 404 status
+    - PUT `/v1/assets/999` with valid data
+    - Assert 404 status
 
 9.  **[x] `test_delete_asset_success`** ✅
-    -   Add an asset to database
-    -   DELETE `/v1/assets/<id>`
-    -   Assert 200 status
-    -   Assert asset removed from database
+    - Add an asset to database
+    - DELETE `/v1/assets/<id>`
+    - Assert 200 status
+    - Assert asset removed from database
 
 10. **[x] `test_delete_asset_not_found`** ✅
-    -   DELETE `/v1/assets/999`
-    -   Assert 404 status
+    - DELETE `/v1/assets/999`
+    - Assert 404 status
 
 #### Maintenance Orders API (`/v1/mos`)
 
 11. **[x] `test_get_mos_empty`** ✅
-    -   GET `/v1/mos` with no MOs in database
-    -   Assert 200 status
-    -   Assert empty list returned
+    - GET `/v1/mos` with no MOs in database
+    - Assert 200 status
+    - Assert empty list returned
 
 12. **[x] `test_get_mos_with_data`** ✅
-    -   Add 3 MOs to database
-    -   GET `/v1/mos`
-    -   Assert 200 status
-    -   Assert 3 MOs returned
+    - Add 3 MOs to database
+    - GET `/v1/mos`
+    - Assert 200 status
+    - Assert 3 MOs returned
 
 13. **[x] `test_get_mo_by_id_success`** ✅
-    -   Add an MO to database
-    -   GET `/v1/mos/<id>`
-    -   Assert 200 status
-    -   Assert correct MO data returned
+    - Add an MO to database
+    - GET `/v1/mos/<id>`
+    - Assert 200 status
+    - Assert correct MO data returned
 
 14. **[x] `test_get_mo_by_id_not_found`** ✅
-    -   GET `/v1/mos/999`
-    -   Assert 404 status
+    - GET `/v1/mos/999`
+    - Assert 404 status
 
 15. **[x] `test_add_mo_success`** ✅
-    -   POST `/v1/mos` with valid data (asset_id, description, order_type)
-    -   Assert 201 status
-    -   Assert MO created in database
+    - POST `/v1/mos` with valid data (asset_id, description, order_type)
+    - Assert 201 status
+    - Assert MO created in database
 
 16. **[x] `test_add_mo_missing_required_fields`** ✅
-    -   POST `/v1/mos` without `asset_id`
-    -   Assert 400 status
+    - POST `/v1/mos` without `asset_id`
+    - Assert 400 status
 
 17. **[x] `test_add_mo_with_skills`** ✅
-    -   POST `/v1/mos` with `required_skills` array
-    -   Assert 201 status
-    -   Assert skills associated with MO
+    - POST `/v1/mos` with `required_skills` array
+    - Assert 201 status
+    - Assert skills associated with MO
 
 18. **[x] `test_update_mo_success`** ✅
-    -   Add an MO to database
-    -   PUT `/v1/mos/<id>` with updated data
-    -   Assert 200 status
-    -   Assert MO updated in database
+    - Add an MO to database
+    - PUT `/v1/mos/<id>` with updated data
+    - Assert 200 status
+    - Assert MO updated in database
 
 19. **[x] `test_update_mo_not_found`** ✅
-    -   PUT `/v1/mos/999` with valid data
-    -   Assert 404 status
+    - PUT `/v1/mos/999` with valid data
+    - Assert 404 status
 
 20. **[x] `test_delete_mo_success`** ✅
-    -   Add an MO to database
-    -   DELETE `/v1/mos/<id>`
-    -   Assert 200 status
-    -   Assert MO removed from database
+    - Add an MO to database
+    - DELETE `/v1/mos/<id>`
+    - Assert 200 status
+    - Assert MO removed from database
 
 21. **[x] `test_delete_mo_not_found`** ✅
-    -   DELETE `/v1/mos/999`
-    -   Assert 404 status
+    - DELETE `/v1/mos/999`
+    - Assert 404 status
 
 #### Spare Parts API (`/v1/spare_parts`)
 
 22. **[x] `test_get_spare_parts_empty`** ✅
-    -   GET `/v1/spare_parts`
-    -   Assert 200 status
-    -   Assert empty list
+    - GET `/v1/spare_parts`
+    - Assert 200 status
+    - Assert empty list
 
 23. **[x] `test_get_spare_parts_with_data`** ✅
-    -   Add 3 spare parts to database
-    -   GET `/v1/spare_parts`
-    -   Assert 200 status
-    -   Assert 3 parts returned
+    - Add 3 spare parts to database
+    - GET `/v1/spare_parts`
+    - Assert 200 status
+    - Assert 3 parts returned
 
 24. **[x] `test_get_spare_part_by_id_success`** ✅
-    -   Add a spare part to database
-    -   GET `/v1/spare_parts/<id>`
-    -   Assert 200 status
+    - Add a spare part to database
+    - GET `/v1/spare_parts/<id>`
+    - Assert 200 status
 
 25. **[x] `test_get_spare_part_by_id_not_found`** ✅
-    -   GET `/v1/spare_parts/999`
-    -   Assert 404 status
+    - GET `/v1/spare_parts/999`
+    - Assert 404 status
 
 26. **[x] `test_add_spare_part_success`** ✅
-    -   POST `/v1/spare_parts` with valid data
-    -   Assert 201 status
+    - POST `/v1/spare_parts` with valid data
+    - Assert 201 status
 
 27. **[x] `test_add_spare_part_missing_required_fields`** ✅
-    -   POST `/v1/spare_parts` without required fields
-    -   Assert 400 status
+    - POST `/v1/spare_parts` without required fields
+    - Assert 400 status
 
 28. **[x] `test_update_spare_part_success`** ✅
-    -   Add a spare part to database
-    -   PUT `/v1/spare_parts/<id>` with updated data
-    -   Assert 200 status
+    - Add a spare part to database
+    - PUT `/v1/spare_parts/<id>` with updated data
+    - Assert 200 status
 
 29. **[x] `test_update_spare_part_not_found`** ✅
-    -   PUT `/v1/spare_parts/999`
-    -   Assert 404 status
+    - PUT `/v1/spare_parts/999`
+    - Assert 404 status
 
 30. **[x] `test_delete_spare_part_success`** ✅
-    -   Add a spare part to database
-    -   DELETE `/v1/spare_parts/<id>`
-    -   Assert 200 status
+    - Add a spare part to database
+    - DELETE `/v1/spare_parts/<id>`
+    - Assert 200 status
 
 31. **[x] `test_delete_spare_part_not_found`** ✅
-    -   DELETE `/v1/spare_parts/999`
-    -   Assert 404 status
+    - DELETE `/v1/spare_parts/999`
+    - Assert 404 status
 
 #### Users API (`/v1/users`)
 
 32. **[x] `test_get_users_empty`** ✅
-    -   GET `/v1/users`
-    -   Assert 200 status
-    -   Assert empty list
+    - GET `/v1/users`
+    - Assert 200 status
+    - Assert empty list
 
 33. **[x] `test_get_users_with_data`** ✅
-    -   Add 3 users to database
-    -   GET `/v1/users`
-    -   Assert 200 status
-    -   Assert 3 users returned
+    - Add 3 users to database
+    - GET `/v1/users`
+    - Assert 200 status
+    - Assert 3 users returned
 
 34. **[x] `test_get_user_by_id_success`** ✅
-    -   Add a user to database
-    -   GET `/v1/users/<id>`
-    -   Assert 200 status
+    - Add a user to database
+    - GET `/v1/users/<id>`
+    - Assert 200 status
 
 35. **[x] `test_get_user_by_id_not_found`** ✅
-    -   GET `/v1/users/999`
-    -   Assert 404 status
+    - GET `/v1/users/999`
+    - Assert 404 status
 
 36. **[x] `test_add_user_success`** ✅
-    -   POST `/v1/users` with valid data
-    -   Assert 201 status
+    - POST `/v1/users` with valid data
+    - Assert 201 status
 
 37. **[x] `test_add_user_missing_required_fields`** ✅
-    -   POST `/v1/users` without username
-    -   Assert 400 status
+    - POST `/v1/users` without username
+    - Assert 400 status
 
 38. **[x] `test_update_user_success`** ✅
-    -   Add a user to database
-    -   PUT `/v1/users/<id>` with updated data
-    -   Assert 200 status
+    - Add a user to database
+    - PUT `/v1/users/<id>` with updated data
+    - Assert 200 status
 
 39. **[x] `test_update_user_not_found`** ✅
-    -   PUT `/v1/users/999`
-    -   Assert 404 status
+    - PUT `/v1/users/999`
+    - Assert 404 status
 
 40. **[x] `test_delete_user_success`** ✅
-    -   Add a user to database
-    -   DELETE `/v1/users/<id>`
-    -   Assert 200 status
+    - Add a user to database
+    - DELETE `/v1/users/<id>`
+    - Assert 200 status
 
 41. **[x] `test_delete_user_not_found`** ✅
-    -   DELETE `/v1/users/999`
-    -   Assert 404 status
+    - DELETE `/v1/users/999`
+    - Assert 404 status
 
 **Estimated Tests:** 41
 
@@ -492,159 +505,159 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 #### General Pages
 
 1.  **[x] `test_index_page_loads`** ✅
-    -   GET `/`
-    -   Assert 200 status
-    -   Assert "Dashboard" or expected content in response
+    - GET `/`
+    - Assert 200 status
+    - Assert "Dashboard" or expected content in response
 
 2.  **[x] `test_tickets_page_loads`** ✅
-    -   GET `/tickets/TICKET-001`
-    -   Assert 200 status
+    - GET `/tickets/TICKET-001`
+    - Assert 200 status
 
 3.  **[x] `test_maintenance_grid_page_loads`** ✅
-    -   GET `/maintenance_grid/1,2,3`
-    -   Assert 200 status
+    - GET `/maintenance_grid/1,2,3`
+    - Assert 200 status
 
 #### Assets Pages
 
 4.  **[x] `test_assets_list_page_loads`** ✅
-    -   GET `/assets`
-    -   Assert 200 status
-    -   Assert page contains assets table or expected content
+    - GET `/assets`
+    - Assert 200 status
+    - Assert page contains assets table or expected content
 
 5.  **[x] `test_assets_add_page_get`** ✅
-    -   GET `/assets/add`
-    -   Assert 200 status
-    -   Assert form is present
+    - GET `/assets/add`
+    - Assert 200 status
+    - Assert form is present
 
 6.  **[x] `test_assets_add_page_post_success`** ✅
-    -   POST `/assets/add` with valid form data
-    -   Assert redirect to assets list (302 or 303)
-    -   Assert asset created in database
+    - POST `/assets/add` with valid form data
+    - Assert redirect to assets list (302 or 303)
+    - Assert asset created in database
 
 7.  **[x] `test_assets_add_page_post_validation_error`** ✅
-    -   POST `/assets/add` with invalid data
-    -   Assert 200 status (form re-rendered with errors)
-    -   Assert error message displayed
+    - POST `/assets/add` with invalid data
+    - Assert 200 status (form re-rendered with errors)
+    - Assert error message displayed
 
 8.  **[x] `test_asset_detail_page_loads`** ✅
-    -   Add an asset to database
-    -   GET `/assets/<id>`
-    -   Assert 200 status
-    -   Assert asset details displayed
+    - Add an asset to database
+    - GET `/assets/<id>`
+    - Assert 200 status
+    - Assert asset details displayed
 
 9.  **[x] `test_asset_detail_page_not_found`** ✅
-    -   GET `/assets/999`
-    -   Assert 404 status
+    - GET `/assets/999`
+    - Assert 404 status
 
 10. **[x] `test_asset_edit_page_get`** ✅
-    -   Add an asset to database
-    -   GET `/assets/<id>/edit`
-    -   Assert 200 status
-    -   Assert form pre-filled with asset data
+    - Add an asset to database
+    - GET `/assets/<id>/edit`
+    - Assert 200 status
+    - Assert form pre-filled with asset data
 
 11. **[x] `test_asset_edit_page_post_success`** ✅
-    -   Add an asset to database
-    -   POST `/assets/<id>/edit` with updated data
-    -   Assert redirect
-    -   Assert asset updated in database
+    - Add an asset to database
+    - POST `/assets/<id>/edit` with updated data
+    - Assert redirect
+    - Assert asset updated in database
 
 12. **[x] `test_asset_delete_post_success`** ✅
-    -   Add an asset to database
-    -   POST `/assets/<id>/delete`
-    -   Assert redirect
-    -   Assert asset removed from database
+    - Add an asset to database
+    - POST `/assets/<id>/delete`
+    - Assert redirect
+    - Assert asset removed from database
 
 #### Maintenance Orders Pages
 
 13. **[x] `test_mos_list_page_loads`** ✅
-    -   GET `/maintenance_orders`
-    -   Assert 200 status
+    - GET `/maintenance_orders`
+    - Assert 200 status
 
 14. **[x] `test_mo_add_page_get`** ✅
-    -   GET `/maintenance_orders/add`
-    -   Assert 200 status
-    -   Assert form is present
+    - GET `/maintenance_orders/add`
+    - Assert 200 status
+    - Assert form is present
 
 15. **[x] `test_mo_add_page_post_success`** ✅
-    -   Add an asset to database
-    -   POST `/maintenance_orders/add` with valid data
-    -   Assert redirect
-    -   Assert MO created in database
+    - Add an asset to database
+    - POST `/maintenance_orders/add` with valid data
+    - Assert redirect
+    - Assert MO created in database
 
 16. **[x] `test_mo_detail_page_loads`** ✅
-    -   Add an MO to database
-    -   GET `/maintenance_orders/<id>`
-    -   Assert 200 status
+    - Add an MO to database
+    - GET `/maintenance_orders/<id>`
+    - Assert 200 status
 
 17. **[x] `test_mo_edit_page_get`** ✅
-    -   Add an MO to database
-    -   GET `/maintenance_orders/<id>/edit`
-    -   Assert 200 status
+    - Add an MO to database
+    - GET `/maintenance_orders/<id>/edit`
+    - Assert 200 status
 
 18. **[x] `test_mo_edit_page_post_success`** ✅
-    -   Add an MO to database
-    -   POST `/maintenance_orders/<id>/edit` with updated data
-    -   Assert redirect
-    -   Assert MO updated in database
+    - Add an MO to database
+    - POST `/maintenance_orders/<id>/edit` with updated data
+    - Assert redirect
+    - Assert MO updated in database
 
 19. **[x] `test_mo_delete_post_success`** ✅
-    -   Add an MO to database
-    -   POST `/maintenance_orders/<id>/delete`
-    -   Assert redirect
-    -   Assert MO removed from database
+    - Add an MO to database
+    - POST `/maintenance_orders/<id>/delete`
+    - Assert redirect
+    - Assert MO removed from database
 
 #### Spare Parts Pages
 
 20. **[x] `test_spare_parts_list_page_loads`** ✅
-    -   GET `/spare_parts`
-    -   Assert 200 status
+    - GET `/spare_parts`
+    - Assert 200 status
 
 21. **[x] `test_spare_part_add_page_get`** ✅
-    -   GET `/spare_parts/add`
-    -   Assert 200 status
+    - GET `/spare_parts/add`
+    - Assert 200 status
 
 22. **[x] `test_spare_part_add_page_post_success`** ✅
-    -   POST `/spare_parts/add` with valid data
-    -   Assert redirect
-    -   Assert spare part created in database
+    - POST `/spare_parts/add` with valid data
+    - Assert redirect
+    - Assert spare part created in database
 
 23. **[x] `test_spare_part_detail_page_loads`** ✅
-    -   Add a spare part to database
-    -   GET `/spare_parts/<id>`
-    -   Assert 200 status
+    - Add a spare part to database
+    - GET `/spare_parts/<id>`
+    - Assert 200 status
 
 24. **[x] `test_spare_part_edit_page_get`** ✅
-    -   Add a spare part to database
-    -   GET `/spare_parts/<id>/edit`
-    -   Assert 200 status
+    - Add a spare part to database
+    - GET `/spare_parts/<id>/edit`
+    - Assert 200 status
 
 25. **[x] `test_spare_part_edit_page_post_success`** ✅
-    -   Add a spare part to database
-    -   POST `/spare_parts/<id>/edit` with updated data
-    -   Assert redirect
-    -   Assert spare part updated in database
+    - Add a spare part to database
+    - POST `/spare_parts/<id>/edit` with updated data
+    - Assert redirect
+    - Assert spare part updated in database
 
 26. **[x] `test_spare_part_delete_post_success`** ✅
-    -   Add a spare part to database
-    -   POST `/spare_parts/<id>/delete`
-    -   Assert redirect
-    -   Assert spare part removed from database
+    - Add a spare part to database
+    - POST `/spare_parts/<id>/delete`
+    - Assert redirect
+    - Assert spare part removed from database
 
 #### Users Pages
 
 27. **[x] `test_users_list_page_loads`** ✅
-    -   GET `/users`
-    -   Assert 200 status
+    - GET `/users`
+    - Assert 200 status
 
 28. **[x] `test_register_page_get`** ✅
-    -   GET `/register`
-    -   Assert 200 status
-    -   Assert registration form is present
+    - GET `/register`
+    - Assert 200 status
+    - Assert registration form is present
 
 29. **[x] `test_register_page_post_success`** ✅
-    -   POST `/register` with valid data
-    -   Assert redirect
-    -   Assert user created in database
+    - POST `/register` with valid data
+    - Assert redirect
+    - Assert user created in database
 
 **Estimated Tests:** 29
 
@@ -659,22 +672,22 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_populate_dummy_data`** ✅
-    -   Call `populate_dummy_data(logger)`
-    -   Assert database is populated with sample data
-    -   Assert assets exist
-    -   Assert MOs exist
-    -   Assert users exist
+    - Call `populate_dummy_data(logger)`
+    - Assert database is populated with sample data
+    - Assert assets exist
+    - Assert MOs exist
+    - Assert users exist
 
 2.  **[x] `test_populate_dummy_data_idempotent`** ✅
-    -   Call `populate_dummy_data(logger)` twice
-    -   Assert unique constraints are enforced
-    -   Verify IntegrityError is raised (expected behavior - not truly idempotent)
+    - Call `populate_dummy_data(logger)` twice
+    - Assert unique constraints are enforced
+    - Verify IntegrityError is raised (expected behavior - not truly idempotent)
 
 3.  **[x] `test_database_models_relationships`** ✅
-    -   Create an Asset
-    -   Create a MaintenanceOrder linked to that Asset
-    -   Assert relationship works correctly
-    -   Assert cascade behavior (cascade delete verified)
+    - Create an Asset
+    - Create a MaintenanceOrder linked to that Asset
+    - Assert relationship works correctly
+    - Assert cascade behavior (cascade delete verified)
 
 **Estimated Tests:** 3
 
@@ -689,24 +702,24 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_get_shift_teams_shift_a`** ✅
-    -   Call `get_shift_teams(date, teams)` for a date that should be Shift A
-    -   Assert correct shift team returned
+    - Call `get_shift_teams(date, teams)` for a date that should be Shift A
+    - Assert correct shift team returned
 
 2.  **[x] `test_get_shift_teams_shift_b`** ✅
-    -   Call `get_shift_teams(date, teams)` for a date that should be Shift B
-    -   Assert correct shift team returned
+    - Call `get_shift_teams(date, teams)` for a date that should be Shift B
+    - Assert correct shift team returned
 
 3.  **[x] `test_get_shift_teams_shift_c`** ✅
-    -   Call `get_shift_teams(date, teams)` for a date that should be Shift C
-    -   Assert correct shift team returned
+    - Call `get_shift_teams(date, teams)` for a date that should be Shift C
+    - Assert correct shift team returned
 
 4.  **[x] `test_get_shift_teams_rotation_cycle`** ✅
-    -   Call `get_shift_teams(date, teams)` for multiple consecutive dates
-    -   Assert correct rotation pattern (verified across weeks)
+    - Call `get_shift_teams(date, teams)` for multiple consecutive dates
+    - Assert correct rotation pattern (verified across weeks)
 
 5.  **[x] `test_get_shift_teams_invalid_input`** ✅
-    -   Call `get_shift_teams(None, teams)`
-    -   Assert handles gracefully and returns None for missing teams
+    - Call `get_shift_teams(None, teams)`
+    - Assert handles gracefully and returns None for missing teams
 
 **Estimated Tests:** 5
 
@@ -723,55 +736,55 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_login_success`** ✅
-    -   POST to `/login` with valid credentials
-    -   Assert 200/302 status (success or redirect)
-    -   Assert session is created
-    -   Assert user is logged in
+    - POST to `/login` with valid credentials
+    - Assert 200/302 status (success or redirect)
+    - Assert session is created
+    - Assert user is logged in
 
 2.  **[x] `test_login_invalid_credentials`** ✅
-    -   POST to `/login` with invalid password
-    -   Assert 401/403 status or error message
-    -   Assert session is NOT created
-    -   Assert user is NOT logged in
+    - POST to `/login` with invalid password
+    - Assert 401/403 status or error message
+    - Assert session is NOT created
+    - Assert user is NOT logged in
 
 3.  **[x] `test_logout`** ✅
-    -   Login first
-    -   POST to `/logout`
-    -   Assert session is destroyed
-    -   Assert user is logged out
-    -   Assert redirect to login page
+    - Login first
+    - POST to `/logout`
+    - Assert session is destroyed
+    - Assert user is logged out
+    - Assert redirect to login page
 
 4.  **[x] `test_protected_route_requires_auth`** ✅
-    -   Access protected route without login
-    -   Assert 401/403 status or redirect to login
-    -   Login and try again
-    -   Assert 200 status (access granted)
+    - Access protected route without login
+    - Assert 401/403 status or redirect to login
+    - Login and try again
+    - Assert 200 status (access granted)
 
 5.  **[x] `test_admin_only_route_blocks_technician`** ✅
-    -   Login as Technician role
-    -   Access admin-only route
-    -   Assert 403 status (forbidden)
-    -   Login as Admin role
-    -   Assert 200 status (access granted)
+    - Login as Technician role
+    - Access admin-only route
+    - Assert 403 status (forbidden)
+    - Login as Admin role
+    - Assert 200 status (access granted)
 
 6.  **[x] `test_password_hashing`** ✅
-    -   Create user with password
-    -   Assert password is hashed (not plain text in DB)
-    -   Assert hash verification works
-    -   Assert incorrect password fails verification
+    - Create user with password
+    - Assert password is hashed (not plain text in DB)
+    - Assert hash verification works
+    - Assert incorrect password fails verification
 
 7.  **[x] `test_session_management`** ✅
-    -   Login and get session cookie
-    -   Make authenticated request with session
-    -   Assert request succeeds
-    -   Logout and try same session
-    -   Assert session is invalid
+    - Login and get session cookie
+    - Make authenticated request with session
+    - Assert request succeeds
+    - Logout and try same session
+    - Assert session is invalid
 
 8.  **[x] `test_csrf_protection`** ✅
-    -   POST to form without CSRF token
-    -   Assert 400/403 status (CSRF validation fails)
-    -   POST with valid CSRF token
-    -   Assert 200 status (request succeeds)
+    - POST to form without CSRF token
+    - Assert 400/403 status (CSRF validation fails)
+    - POST with valid CSRF token
+    - Assert 200 status (request succeeds)
 
 **Estimated Tests:** 8
 
@@ -788,39 +801,39 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_sql_injection_prevention`** ✅
-    -   Submit form with SQL injection payload (e.g., `'; DROP TABLE assets; --`)
-    -   Assert payload is escaped/sanitized
-    -   Assert database is not affected
-    -   Assert data is stored safely
+    - Submit form with SQL injection payload (e.g., `'; DROP TABLE assets; --`)
+    - Assert payload is escaped/sanitized
+    - Assert database is not affected
+    - Assert data is stored safely
 
 2.  **[x] `test_xss_prevention`** ✅
-    -   Submit form with XSS payload (e.g., `<script>alert('XSS')</script>`)
-    -   Assert payload is escaped in HTML output
-    -   Assert script does not execute
-    -   Assert data is displayed safely
+    - Submit form with XSS payload (e.g., `<script>alert('XSS')</script>`)
+    - Assert payload is escaped in HTML output
+    - Assert script does not execute
+    - Assert data is displayed safely
 
 3.  **[x] `test_required_fields_validation`** ✅
-    -   POST to create asset without required field (e.g., no name)
-    -   Assert 400 status or validation error
-    -   Assert error message indicates missing field
-    -   Assert database record is NOT created
+    - POST to create asset without required field (e.g., no name)
+    - Assert 400 status or validation error
+    - Assert error message indicates missing field
+    - Assert database record is NOT created
 
 4.  **[x] `test_unique_constraint_handling`** ✅
-    -   Create asset with asset_code "TEST-001"
-    -   Try to create another asset with same code
-    -   Assert 400/409 status or validation error
-    -   Assert error message indicates duplicate
-    -   Assert only one record exists
+    - Create asset with asset_code "TEST-001"
+    - Try to create another asset with same code
+    - Assert 400/409 status or validation error
+    - Assert error message indicates duplicate
+    - Assert only one record exists
 
 5.  **[x] `test_data_type_validation`** ✅
-    -   POST asset with invalid data type (e.g., string for integer field)
-    -   Assert 400 status or validation error
-    -   Assert error message indicates type mismatch
+    - POST asset with invalid data type (e.g., string for integer field)
+    - Assert 400 status or validation error
+    - Assert error message indicates type mismatch
 
 6.  **[x] `test_max_length_validation`** ✅
-    -   POST asset with name exceeding max length (256+ chars)
-    -   Assert 400 status or validation error
-    -   Assert data is not truncated silently
+    - POST asset with name exceeding max length (256+ chars)
+    - Assert 400 status or validation error
+    - Assert data is not truncated silently
 
 **Estimated Tests:** 6
 
@@ -837,41 +850,41 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_404_page_renders`** ✅
-    -   GET non-existent route (e.g., `/nonexistent`)
-    -   Assert 404 status
-    -   Assert custom 404 page renders
-    -   Assert page contains helpful message
+    - GET non-existent route (e.g., `/nonexistent`)
+    - Assert 404 status
+    - Assert custom 404 page renders
+    - Assert page contains helpful message
 
 2.  **[x] `test_500_error_handling`** ✅
-    -   Trigger server error (e.g., force exception in route)
-    -   Assert 500 status
-    -   Assert custom 500 page renders (if implemented)
-    -   Assert error is logged
+    - Trigger server error (e.g., force exception in route)
+    - Assert 500 status
+    - Assert custom 500 page renders (if implemented)
+    - Assert error is logged
 
 3.  **[x] `test_database_error_recovery`** ✅
-    -   Simulate database error (e.g., disconnect)
-    -   Make request that requires database
-    -   Assert graceful error handling
-    -   Assert error message to user
+    - Simulate database error (e.g., disconnect)
+    - Make request that requires database
+    - Assert graceful error handling
+    - Assert error message to user
 
 4.  **[x] `test_invalid_id_handling`** ✅
-    -   GET asset detail with invalid ID (e.g., 999999)
-    -   Assert 404 status
-    -   Assert error message displayed
-    -   GET asset with non-integer ID (e.g., "abc")
-    -   Assert 400/404 status
+    - GET asset detail with invalid ID (e.g., 999999)
+    - Assert 404 status
+    - Assert error message displayed
+    - GET asset with non-integer ID (e.g., "abc")
+    - Assert 400/404 status
 
 5.  **[x] `test_concurrent_update_conflict`** ✅
-    -   Load asset for editing (timestamp T1)
-    -   Another user updates same asset (timestamp T2)
-    -   Submit first edit
-    -   Assert conflict detection or last-write-wins behavior
+    - Load asset for editing (timestamp T1)
+    - Another user updates same asset (timestamp T2)
+    - Submit first edit
+    - Assert conflict detection or last-write-wins behavior
 
 6.  **[x] `test_transaction_rollback_on_error`** ✅
-    -   Start transaction to create MO with invalid data
-    -   Assert transaction is rolled back
-    -   Assert database is unchanged
-    -   Assert no partial data is saved
+    - Start transaction to create MO with invalid data
+    - Assert transaction is rolled back
+    - Assert database is unchanged
+    - Assert no partial data is saved
 
 **Estimated Tests:** 6
 
@@ -888,80 +901,80 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_complete_maintenance_workflow`** ✅
-    -   Create asset
-    -   Create maintenance order for asset
-    -   Assign technician to MO
-    -   Update MO status to "In Progress"
-    -   Complete MO
-    -   Assert all state transitions work
-    -   Assert data consistency throughout
+    - Create asset
+    - Create maintenance order for asset
+    - Assign technician to MO
+    - Update MO status to "In Progress"
+    - Complete MO
+    - Assert all state transitions work
+    - Assert data consistency throughout
 
 2.  **[x] `test_user_registration_to_assignment`** ✅
-    -   Register new user as Technician
-    -   Assign skill to technician
-    -   Assign technician to team
-    -   Create MO requiring that skill
-    -   Assign MO to technician
-    -   Assert complete user lifecycle works
+    - Register new user as Technician
+    - Assign skill to technician
+    - Assign technician to team
+    - Create MO requiring that skill
+    - Assign MO to technician
+    - Assert complete user lifecycle works
 
 3.  **[x] `test_asset_lifecycle`** ✅
-    -   Create new asset
-    -   Create PM schedule for asset
-    -   Generate MOs from schedule
-    -   Complete MOs
-    -   Update asset status to "Maintenance"
-    -   Complete maintenance and return to "Operational"
-    -   Assert asset state tracking works
+    - Create new asset
+    - Create PM schedule for asset
+    - Generate MOs from schedule
+    - Complete MOs
+    - Update asset status to "Maintenance"
+    - Complete maintenance and return to "Operational"
+    - Assert asset state tracking works
 
 4.  **[x] `test_data_flow_across_modules`** ✅
-    -   Create spare part
-    -   Create MO requiring that spare part
-    -   Link spare part to MO
-    -   Complete MO
-    -   Assert spare part inventory is updated
-    -   Assert data flows correctly between modules
+    - Create spare part
+    - Create MO requiring that spare part
+    - Link spare part to MO
+    - Complete MO
+    - Assert spare part inventory is updated
+    - Assert data flows correctly between modules
 
 5.  **[x] `test_planning_integration`** ✅
-    -   Create multiple MOs with different skills
-    -   Create technicians with various skills
-    -   Trigger planning/assignment logic
-    -   Assert MOs are assigned based on skills
-    -   Assert workload distribution is balanced
+    - Create multiple MOs with different skills
+    - Create technicians with various skills
+    - Trigger planning/assignment logic
+    - Assert MOs are assigned based on skills
+    - Assert workload distribution is balanced
 
 6.  **[x] `test_shift_team_rotation_workflow`** ✅
-    -   Create teams with shift assignments
-    -   Query shift for specific dates
-    -   Create MOs for those dates
-    -   Assert MOs are assigned to correct shift
-    -   Assert rotation pattern is followed
+    - Create teams with shift assignments
+    - Query shift for specific dates
+    - Create MOs for those dates
+    - Assert MOs are assigned to correct shift
+    - Assert rotation pattern is followed
 
 7.  **[x] `test_cascade_relationships`** ✅
-    -   Create asset with multiple MOs
-    -   Delete asset
-    -   Assert cascade delete of MOs (or prevention)
-    -   Create MO with spare parts
-    -   Delete MO
-    -   Assert spare parts are handled correctly
+    - Create asset with multiple MOs
+    - Delete asset
+    - Assert cascade delete of MOs (or prevention)
+    - Create MO with spare parts
+    - Delete MO
+    - Assert spare parts are handled correctly
 
 8.  **[x] `test_multi_user_concurrent_access`** ✅
-    -   Two users access same asset simultaneously
-    -   Both try to edit
-    -   Assert concurrent access is handled
-    -   Assert data integrity maintained
+    - Two users access same asset simultaneously
+    - Both try to edit
+    - Assert concurrent access is handled
+    - Assert data integrity maintained
 
 9.  **[x] `test_reports_integration`** ✅
-    -   Create MOs with different statuses
-    -   Generate report
-    -   Assert report contains correct data
-    -   Assert report filters work
-    -   Assert export functionality works
+    - Create MOs with different statuses
+    - Generate report
+    - Assert report contains correct data
+    - Assert report filters work
+    - Assert export functionality works
 
 10. **[x] `test_search_and_filter_integration`** ✅
-    -   Create assets with various attributes
-    -   Search by name, code, type
-    -   Filter by status, cost center
-    -   Assert search results are correct
-    -   Assert filters work in combination
+    - Create assets with various attributes
+    - Search by name, code, type
+    - Filter by status, cost center
+    - Assert search results are correct
+    - Assert filters work in combination
 
 **Estimated Tests:** 10-12
 
@@ -978,63 +991,63 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_boundary_conditions`** ✅
-    -   Create asset with minimum valid values
-    -   Create asset with maximum valid values
-    -   Assert both are accepted
-    -   Try just beyond boundaries
-    -   Assert validation rejects
+    - Create asset with minimum valid values
+    - Create asset with maximum valid values
+    - Assert both are accepted
+    - Try just beyond boundaries
+    - Assert validation rejects
 
 2.  **[x] `test_null_and_none_handling`** ✅
-    -   Submit form with null/None values in optional fields
-    -   Assert nulls are handled gracefully
-    -   Query data with null values
-    -   Assert queries work correctly
+    - Submit form with null/None values in optional fields
+    - Assert nulls are handled gracefully
+    - Query data with null values
+    - Assert queries work correctly
 
 3.  **[x] `test_empty_string_validation`** ✅
-    -   POST asset with empty string for required field
-    -   Assert validation rejects
-    -   POST with whitespace-only string
-    -   Assert validation rejects
+    - POST asset with empty string for required field
+    - Assert validation rejects
+    - POST with whitespace-only string
+    - Assert validation rejects
 
 4.  **[x] `test_concurrent_updates`** ✅
-    -   Two requests update same asset simultaneously
-    -   Assert no data loss
-    -   Assert integrity is maintained
-    -   Assert last-write-wins or optimistic locking works
+    - Two requests update same asset simultaneously
+    - Assert no data loss
+    - Assert integrity is maintained
+    - Assert last-write-wins or optimistic locking works
 
 5.  **[x] `test_transaction_rollbacks`** ✅
-    -   Create MO with invalid related data
-    -   Assert transaction is rolled back
-    -   Assert partial data is not saved
-    -   Assert database is consistent
+    - Create MO with invalid related data
+    - Assert transaction is rolled back
+    - Assert partial data is not saved
+    - Assert database is consistent
 
 6.  **[x] `test_cascade_delete_prevention`** ✅
-    -   Create asset with completed MOs
-    -   Try to delete asset
-    -   Assert cascade delete is prevented (if business rule)
-    -   Or assert cascade works correctly (if allowed)
+    - Create asset with completed MOs
+    - Try to delete asset
+    - Assert cascade delete is prevented (if business rule)
+    - Or assert cascade works correctly (if allowed)
 
 7.  **[x] `test_unique_constraint_race_condition`** ✅
-    -   Two requests create asset with same code simultaneously
-    -   Assert only one succeeds
-    -   Assert database constraint is enforced
+    - Two requests create asset with same code simultaneously
+    - Assert only one succeeds
+    - Assert database constraint is enforced
 
 8.  **[x] `test_foreign_key_constraint_enforcement`** ✅
-    -   Try to create MO with non-existent asset_id
-    -   Assert foreign key constraint prevents creation
-    -   Assert error message is helpful
+    - Try to create MO with non-existent asset_id
+    - Assert foreign key constraint prevents creation
+    - Assert error message is helpful
 
 9.  **[x] `test_date_boundary_validation`** ✅
-    -   Create MO with past due date
-    -   Create MO with far future date
-    -   Assert dates are validated
-    -   Assert date logic works correctly
+    - Create MO with past due date
+    - Create MO with far future date
+    - Assert dates are validated
+    - Assert date logic works correctly
 
 10. **[x] `test_pagination_edge_cases`** ✅
-    -   Query with page beyond available pages
-    -   Query with negative page number
-    -   Query with zero items per page
-    -   Assert pagination handles edge cases
+    - Query with page beyond available pages
+    - Query with negative page number
+    - Query with zero items per page
+    - Assert pagination handles edge cases
 
 **Estimated Tests:** 10
 
@@ -1051,46 +1064,46 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_large_dataset_queries`** ✅
-    -   Populate database with 1000+ assets
-    -   Query all assets
-    -   Assert query completes in < 2 seconds
-    -   Assert pagination works efficiently
+    - Populate database with 1000+ assets
+    - Query all assets
+    - Assert query completes in < 2 seconds
+    - Assert pagination works efficiently
 
 2.  **[x] `test_pagination_performance`** ✅
-    -   Query page 1, 50, 100 of large dataset
-    -   Assert all pages load in similar time
-    -   Assert no degradation on later pages
+    - Query page 1, 50, 100 of large dataset
+    - Assert all pages load in similar time
+    - Assert no degradation on later pages
 
 3.  **[x] `test_n_plus_one_query_detection`** ✅
-    -   Query assets with related MOs
-    -   Monitor SQL query count
-    -   Assert eager loading is used
-    -   Assert query count is optimal (not N+1)
+    - Query assets with related MOs
+    - Monitor SQL query count
+    - Assert eager loading is used
+    - Assert query count is optimal (not N+1)
 
 4.  **[x] `test_search_performance`** ✅
-    -   Search large dataset by name
-    -   Assert search completes in < 1 second
-    -   Assert indexes are being used
+    - Search large dataset by name
+    - Assert search completes in < 1 second
+    - Assert indexes are being used
 
 5.  **[x] `test_complex_filter_performance`** ✅
-    -   Apply multiple filters (status, type, center)
-    -   Assert query is optimized
-    -   Assert response time is acceptable
+    - Apply multiple filters (status, type, center)
+    - Assert query is optimized
+    - Assert response time is acceptable
 
 6.  **[x] `test_concurrent_request_handling`** ✅
-    -   Simulate 10 concurrent requests
-    -   Assert all complete successfully
-    -   Assert no deadlocks or timeouts
+    - Simulate 10 concurrent requests
+    - Assert all complete successfully
+    - Assert no deadlocks or timeouts
 
 7.  **[x] `test_memory_usage_with_large_results`** ✅
-    -   Query very large result set
-    -   Assert memory usage is reasonable
-    -   Assert no memory leaks
+    - Query very large result set
+    - Assert memory usage is reasonable
+    - Assert no memory leaks
 
 8.  **[x] `test_database_connection_pooling`** ✅
-    -   Make multiple sequential requests
-    -   Assert connections are reused
-    -   Assert no connection exhaustion
+    - Make multiple sequential requests
+    - Assert connections are reused
+    - Assert no connection exhaustion
 
 **Estimated Tests:** 8
 
@@ -1107,64 +1120,64 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_api_error_responses_400`** ✅
-    -   Test invalid JSON payloads
-    -   Test missing required fields
-    -   Test invalid data types
-    -   Assert 400 Bad Request responses
+    - Test invalid JSON payloads
+    - Test missing required fields
+    - Test invalid data types
+    - Assert 400 Bad Request responses
 
 2.  **[x] `test_api_error_responses_404`** ✅
-    -   Test GET with non-existent IDs
-    -   Test PUT with non-existent resources
-    -   Test DELETE with non-existent resources
-    -   Assert 404 Not Found responses
+    - Test GET with non-existent IDs
+    - Test PUT with non-existent resources
+    - Test DELETE with non-existent resources
+    - Assert 404 Not Found responses
 
 3.  **[x] `test_api_error_responses_500`** ✅
-    -   Test database connection errors (simulated)
-    -   Test constraint violations
-    -   Assert 500 Internal Server Error responses
-    -   Verify error messages returned
+    - Test database connection errors (simulated)
+    - Test constraint violations
+    - Assert 500 Internal Server Error responses
+    - Verify error messages returned
 
 4.  **[x] `test_api_table_config_operations`** ✅
-    -   Test save table configuration (lines 333-360)
-    -   Test set as default (removes other defaults)
-    -   Test delete table configuration
-    -   Test with authentication required
+    - Test save table configuration (lines 333-360)
+    - Test set as default (removes other defaults)
+    - Test delete table configuration
+    - Test with authentication required
 
 5.  **[x] `test_api_complex_filters`** ✅
-    -   Test multiple filter combinations
-    -   Test sorting with multiple fields
-    -   Test pagination with filters
-    -   Verify query optimization
+    - Test multiple filter combinations
+    - Test sorting with multiple fields
+    - Test pagination with filters
+    - Verify query optimization
 
 6.  **[x] `test_api_bulk_operations`** ✅
-    -   Test bulk create operations
-    -   Test bulk update operations
-    -   Test transaction rollback on partial failure
-    -   Verify all-or-nothing behavior
+    - Test bulk create operations
+    - Test bulk update operations
+    - Test transaction rollback on partial failure
+    - Verify all-or-nothing behavior
 
 7.  **[x] `test_api_authentication_required`** ✅
-    -   Test all endpoints without authentication
-    -   Verify 401 responses
-    -   Test with invalid session
-    -   Test session expiry
+    - Test all endpoints without authentication
+    - Verify 401 responses
+    - Test with invalid session
+    - Test session expiry
 
 8.  **[x] `test_api_role_management`** ✅
-    -   Test user role assignment
-    -   Test role creation in user update
-    -   Test role removal
-    -   Verify relationship updates
+    - Test user role assignment
+    - Test role creation in user update
+    - Test role removal
+    - Verify relationship updates
 
 9.  **[x] `test_api_query_parameter_validation`** ✅
-    -   Test invalid query parameters
-    -   Test parameter type validation
-    -   Test parameter range validation
-    -   Test SQL injection attempts
+    - Test invalid query parameters
+    - Test parameter type validation
+    - Test parameter range validation
+    - Test SQL injection attempts
 
 10. **[x] `test_api_response_format_consistency`** ✅
-    -   Verify all endpoints return consistent JSON format
-    -   Test success response structure
-    -   Test error response structure
-    -   Verify HTTP headers
+    - Verify all endpoints return consistent JSON format
+    - Test success response structure
+    - Test error response structure
+    - Verify HTTP headers
 
 **Estimated Tests:** 10
 
@@ -1183,64 +1196,64 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_app_reports_module_enabled`** ✅
-    -   Set REPORTS_ENABLED=True in environment
-    -   Create app instance
-    -   Verify reports blueprint registered
-    -   Test /reports route exists
+    - Set REPORTS_ENABLED=True in environment
+    - Create app instance
+    - Verify reports blueprint registered
+    - Test /reports route exists
 
 2.  **[x] `test_app_reports_module_disabled`** ✅
-    -   Set REPORTS_ENABLED=False in environment
-    -   Create app instance
-    -   Verify reports blueprint NOT registered
-    -   Test /reports route returns 404
+    - Set REPORTS_ENABLED=False in environment
+    - Create app instance
+    - Verify reports blueprint NOT registered
+    - Test /reports route returns 404
 
 3.  **[x] `test_app_planning_module_enabled`** ✅
-    -   Set PLANNING_ENABLED=True in environment
-    -   Create app instance
-    -   Verify planning blueprint registered at /planning
-    -   Verify planning blueprint registered at /api
-    -   Test both routes exist
+    - Set PLANNING_ENABLED=True in environment
+    - Create app instance
+    - Verify planning blueprint registered at /planning
+    - Verify planning blueprint registered at /api
+    - Test both routes exist
 
 4.  **[x] `test_app_planning_module_disabled`** ✅
-    -   Set PLANNING_ENABLED=False in environment
-    -   Create app instance
-    -   Verify planning blueprint NOT registered
-    -   Test /planning route returns 404
+    - Set PLANNING_ENABLED=False in environment
+    - Create app instance
+    - Verify planning blueprint NOT registered
+    - Test /planning route returns 404
 
 5.  **[x] `test_app_blueprint_registration_error_handling`** ✅
-    -   Simulate blueprint import error
-    -   Verify app still creates successfully
-    -   Verify error logged
-    -   Test graceful degradation
+    - Simulate blueprint import error
+    - Verify app still creates successfully
+    - Verify error logged
+    - Test graceful degradation
 
 6.  **[x] `test_app_database_initialization`** ✅
-    -   Test with new database
-    -   Verify tables created
-    -   Test with MOCKCMMS_DEBUG_USE_TEST_DB=True
-    -   Verify dummy data populated
+    - Test with new database
+    - Verify tables created
+    - Test with MOCKCMMS_DEBUG_USE_TEST_DB=True
+    - Verify dummy data populated
 
 7.  **[x] `test_app_security_headers`** ✅
-    -   Make any request to app
-    -   Verify Permissions-Policy header set
-    -   Verify Cross-Origin-Opener-Policy header set
-    -   Verify values are correct
+    - Make any request to app
+    - Verify Permissions-Policy header set
+    - Verify Cross-Origin-Opener-Policy header set
+    - Verify values are correct
 
 8.  **[x] `test_app_legacy_url_redirect`** ✅
-    -   Request /planning-manager route
-    -   Verify redirect to /planning
-    -   Test query parameters preserved
-    -   Verify redirect is 302
+    - Request /planning-manager route
+    - Verify redirect to /planning
+    - Test query parameters preserved
+    - Verify redirect is 302
 
 9.  **[x] `test_app_context_processor_variables`** ✅
-    -   Test PLANNING_ENABLED injected into templates
-    -   Test REPORTS_ENABLED injected into templates
-    -   Verify values match environment variables
+    - Test PLANNING_ENABLED injected into templates
+    - Test REPORTS_ENABLED injected into templates
+    - Verify values match environment variables
 
 10. **[x] `test_app_csrf_protection`** ✅
-    -   Test CSRF token generation
-    -   Test POST without CSRF token fails
-    -   Test POST with valid CSRF token succeeds
-    -   Verify CSRF exempt blueprints
+    - Test CSRF token generation
+    - Test POST without CSRF token fails
+    - Test POST with valid CSRF token succeeds
+    - Verify CSRF exempt blueprints
 
 **Estimated Tests:** 10
 
@@ -1259,63 +1272,63 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_delete_asset_with_maintenance_orders`** ✅
-    -   Create asset
-    -   Send DELETE request
-    -   Verify asset deleted from database
-    -   Verify redirect to asset list
+    - Create asset
+    - Send DELETE request
+    - Verify asset deleted from database
+    - Verify redirect to asset list
 
 2.  **[x] `test_delete_asset_nonexistent`** ✅
-    -   Create asset with associated MOs
-    -   Send DELETE request
-    -   Verify cascade delete (MOs deleted too)
-    -   Test database consistency
+    - Create asset with associated MOs
+    - Send DELETE request
+    - Verify cascade delete (MOs deleted too)
+    - Test database consistency
 
 3.  **[x] `test_delete_maintenance_order_success`** ✅
-    -   Send DELETE request with invalid ID
-    -   Verify 404 response or error message
-    -   Verify no database changes
+    - Send DELETE request with invalid ID
+    - Verify 404 response or error message
+    - Verify no database changes
 
 4.  **[x] `test_delete_user_success`** ✅
-    -   Create MO
-    -   Send DELETE request
-    -   Verify MO deleted
-    -   Verify asset still exists
+    - Create MO
+    - Send DELETE request
+    - Verify MO deleted
+    - Verify asset still exists
 
 5.  **[x] `test_delete_spare_part_success`** ✅
-    -   Create user
-    -   Send DELETE request
-    -   Verify user deleted
-    -   Test orphaned relationships
+    - Create user
+    - Send DELETE request
+    - Verify user deleted
+    - Test orphaned relationships
 
 6.  **[x] `test_form_validation_failures`** ✅
-    -   Create spare part
-    -   Send DELETE request
-    -   Verify deletion
-    -   Test referential integrity
+    - Create spare part
+    - Send DELETE request
+    - Verify deletion
+    - Test referential integrity
 
 7.  **[x] `test_route_error_responses`** ✅
-    -   Test empty required fields
-    -   Test invalid field values
-    -   Verify error messages displayed
-    -   Test form data persistence on error
+    - Test empty required fields
+    - Test invalid field values
+    - Verify error messages displayed
+    - Test form data persistence on error
 
 8.  **[x] `test_pagination_edge_cases_main`** ✅
-    -   Test routes with database errors
-    -   Verify 500 error handling
-    -   Test error page rendering
-    -   Verify error logging
+    - Test routes with database errors
+    - Verify 500 error handling
+    - Test error page rendering
+    - Verify error logging
 
 9.  **[x] `test_search_and_filter_combinations`** ✅
-    -   Test page beyond available data
-    -   Test negative page numbers
-    -   Test page=0
-    -   Verify graceful handling
+    - Test page beyond available data
+    - Test negative page numbers
+    - Test page=0
+    - Verify graceful handling
 
 10. **[x] `test_asset_detail_with_related_data`** ✅
-    -   Test search with multiple filters
-    -   Test empty search results
-    -   Test special characters in search
-    -   Verify query performance
+    - Test search with multiple filters
+    - Test empty search results
+    - Test special characters in search
+    - Verify query performance
 
 **Estimated Tests:** 10
 
@@ -1336,52 +1349,52 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_user_password_hashing`** ✅
-    -   Test set_password method
-    -   Test check_password method
-    -   Verify password never stored plain text
-    -   Test password updates
+    - Test set_password method
+    - Test check_password method
+    - Verify password never stored plain text
+    - Test password updates
 
 2.  **[x] `test_user_to_dict_method`** ✅
-    -   Test to_dict() without roles
-    -   Test to_dict(include_roles=True)
-    -   Verify all fields serialized
-    -   Test with missing optional fields
+    - Test to_dict() without roles
+    - Test to_dict(include_roles=True)
+    - Verify all fields serialized
+    - Test with missing optional fields
 
 3.  **[x] `test_model_string_representations`** ✅
-    -   Test __repr__ for all models
-    -   Verify readable output
-    -   Test with None values
-    -   Test with special characters
+    - Test **repr** for all models
+    - Verify readable output
+    - Test with None values
+    - Test with special characters
 
 4.  **[x] `test_database_constraints`** ✅
-    -   Test unique constraints (asset_code, etc.)
-    -   Test NOT NULL constraints
-    -   Test foreign key constraints
-    -   Verify IntegrityError raised
+    - Test unique constraints (asset_code, etc.)
+    - Test NOT NULL constraints
+    - Test foreign key constraints
+    - Verify IntegrityError raised
 
 5.  **[x] `test_cascade_relationships_all_models`** ✅
-    -   Test Asset → MaintenanceOrder cascade
-    -   Test User → roles cascade
-    -   Test Team → users relationship
-    -   Verify orphan prevention
+    - Test Asset → MaintenanceOrder cascade
+    - Test User → roles cascade
+    - Test Team → users relationship
+    - Verify orphan prevention
 
 6.  **[x] `test_model_default_values`** ✅
-    -   Create models without optional fields
-    -   Verify defaults applied
-    -   Test timestamp defaults
-    -   Test enum defaults
+    - Create models without optional fields
+    - Verify defaults applied
+    - Test timestamp defaults
+    - Test enum defaults
 
 7.  **[x] `test_query_filter_edge_cases`** ✅
-    -   Test filter by None values
-    -   Test filter by empty strings
-    -   Test filter with special characters
-    -   Verify SQL injection prevention
+    - Test filter by None values
+    - Test filter by empty strings
+    - Test filter with special characters
+    - Verify SQL injection prevention
 
 8.  **[x] `test_relationship_back_references`** ✅
-    -   Test bi-directional relationships
-    -   Verify backref works
-    -   Test relationship updates
-    -   Test relationship deletions
+    - Test bi-directional relationships
+    - Verify backref works
+    - Test relationship updates
+    - Test relationship deletions
 
 **Estimated Tests:** 8
 
@@ -1398,65 +1411,65 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Test Cases:**
 
 1.  **[x] `test_complete_asset_lifecycle`** ✅
-    -   Create asset
-    -   Update asset details
-    -   Create MO for asset
-    -   Update MO status
-    -   Complete MO
-    -   Generate report (if enabled)
-    -   Delete asset
-    -   Verify all steps work together
+    - Create asset
+    - Update asset details
+    - Create MO for asset
+    - Update MO status
+    - Complete MO
+    - Generate report (if enabled)
+    - Delete asset
+    - Verify all steps work together
 
 2.  **[x] `test_complete_user_workflow_enhanced`** ✅
-    -   Create user account
-    -   Assign roles
-    -   Login
-    -   Create assets/MOs
-    -   Update profile
-    -   Logout
-    -   Delete user
+    - Create user account
+    - Assign roles
+    - Login
+    - Create assets/MOs
+    - Update profile
+    - Logout
+    - Delete user
 
 3.  **[x] `test_maintenance_order_workflow_enhanced`** ✅
-    -   Create reactive MO
-    -   Assign technicians
-    -   Add spare parts
-    -   Update status through lifecycle
-    -   Complete and close
-    -   Verify history
+    - Create reactive MO
+    - Assign technicians
+    - Add spare parts
+    - Update status through lifecycle
+    - Complete and close
+    - Verify history
 
 4.  **[x] `test_search_and_reporting_workflow_enhanced`** ✅
-    -   Create multiple assets
-    -   Search by various criteria
-    -   Filter results
-    -   Sort results
-    -   Export/download (if implemented)
+    - Create multiple assets
+    - Search by various criteria
+    - Filter results
+    - Sort results
+    - Export/download (if implemented)
 
 5.  **[x] `test_concurrent_user_operations_enhanced`** ✅
-    -   Simulate two users editing same asset
-    -   Test last-write-wins
-    -   Verify no data corruption
-    -   Test locking behavior (if implemented)
+    - Simulate two users editing same asset
+    - Test last-write-wins
+    - Verify no data corruption
+    - Test locking behavior (if implemented)
 
 6.  **[x] `test_error_recovery_workflow_enhanced`** ✅
-    -   Trigger database error
-    -   Verify rollback
-    -   Retry operation
-    -   Verify data consistency
+    - Trigger database error
+    - Verify rollback
+    - Retry operation
+    - Verify data consistency
 
 7.  **[x] `test_session_management_workflow_enhanced`** ✅
-    -   Login
-    -   Perform operations
-    -   Session timeout
-    -   Verify redirect to login
-    -   Re-login and continue
+    - Login
+    - Perform operations
+    - Session timeout
+    - Verify redirect to login
+    - Re-login and continue
 
 8.  **[x] `test_table_configuration_workflow_enhanced`** ✅
-    -   Save custom column order
-    -   Save custom filters
-    -   Set as default
-    -   Switch configurations
-    -   Delete configuration
-    -   Verify persistence
+    - Save custom column order
+    - Save custom filters
+    - Set as default
+    - Switch configurations
+    - Delete configuration
+    - Verify persistence
 
 **Estimated Tests:** 8 enhanced tests
 
@@ -1481,39 +1494,39 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Location:** `tests/unit/test_app.py` - New class `TestAppErrorHandling`
 
 1.  **[x] `test_reports_blueprint_registration_error`** ✅
-    -   Mock reports blueprint import to raise ImportError
-    -   Create app with REPORTS_ENABLED=True
-    -   Assert app creates successfully despite error
-    -   Assert reports blueprint NOT registered
-    -   **Lines Covered:** 50-52 (error handling in blueprint registration)
+    - Mock reports blueprint import to raise ImportError
+    - Create app with REPORTS_ENABLED=True
+    - Assert app creates successfully despite error
+    - Assert reports blueprint NOT registered
+    - **Lines Covered:** 50-52 (error handling in blueprint registration)
 
 2.  **[x] `test_planning_blueprint_registration_error`** ✅
-    -   Mock planning blueprint import to raise ImportError
-    -   Create app with PLANNING_ENABLED=True
-    -   Assert app creates successfully despite error
-    -   Assert planning blueprint NOT registered
-    -   **Lines Covered:** 70-74 (error handling in blueprint registration)
+    - Mock planning blueprint import to raise ImportError
+    - Create app with PLANNING_ENABLED=True
+    - Assert app creates successfully despite error
+    - Assert planning blueprint NOT registered
+    - **Lines Covered:** 70-74 (error handling in blueprint registration)
 
 3.  **[x] `test_before_planning_request_database_error`** ✅
-    -   Mock sqlite3.connect to raise Exception
-    -   Request /planning route
-    -   Assert 404 or 500 error response
-    -   Assert database error handled gracefully
-    -   **Lines Covered:** 95-106 (database connection error handling)
+    - Mock sqlite3.connect to raise Exception
+    - Request /planning route
+    - Assert 404 or 500 error response
+    - Assert database error handled gracefully
+    - **Lines Covered:** 95-106 (database connection error handling)
 
 4.  **[x] `test_close_db_teardown`** ✅
-    -   Simulate database connection in g.db
-    -   Trigger request context teardown
-    -   Assert close_db function executes
-    -   Verify teardown logic exists
-    -   **Lines Covered:** 114 (teardown function)
+    - Simulate database connection in g.db
+    - Trigger request context teardown
+    - Assert close_db function executes
+    - Verify teardown logic exists
+    - **Lines Covered:** 114 (teardown function)
 
 5.  **[x] `test_database_seeding_error_handling`** ✅
-    -   Mock populate_dummy_data to raise Exception
-    -   Create app with MOCKCMMS_DEBUG_USE_TEST_DB=1
-    -   Assert app creates successfully despite seeding error
-    -   Assert app remains functional
-    -   **Lines Covered:** 126-133 (seeding error handling)
+    - Mock populate_dummy_data to raise Exception
+    - Create app with MOCKCMMS_DEBUG_USE_TEST_DB=1
+    - Assert app creates successfully despite seeding error
+    - Assert app remains functional
+    - **Lines Covered:** 126-133 (seeding error handling)
 
 **Coverage Impact:** app.py improved from 70.71% to 88.89% (+18.18%)
 
@@ -1522,90 +1535,90 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 **Location:** `tests/functional/test_api_routes.py` - New class `TestAPIEdgeCasesAndErrorPaths`
 
 1.  **[x] `test_add_asset_missing_asset_code`** ✅
-    -   POST /v1/assets without asset_code field
-    -   Assert 400 Bad Request
-    -   Assert error message mentions asset_code
-    -   **Lines Covered:** 39 (asset_code validation)
+    - POST /v1/assets without asset_code field
+    - Assert 400 Bad Request
+    - Assert error message mentions asset_code
+    - **Lines Covered:** 39 (asset_code validation)
 
 2.  **[x] `test_update_asset_invalid_json`** ✅
-    -   PUT /v1/assets/<id> with empty data
-    -   Assert 400 Bad Request
-    -   Assert error about invalid JSON
-    -   **Lines Covered:** 59 (JSON validation)
+    - PUT /v1/assets/<id> with empty data
+    - Assert 400 Bad Request
+    - Assert error about invalid JSON
+    - **Lines Covered:** 59 (JSON validation)
 
 3.  **[x] `test_update_mo_invalid_json`** ✅
-    -   PUT /v1/mos/<id> with None data
-    -   Assert 400 Bad Request
-    -   **Lines Covered:** 124 (JSON validation)
+    - PUT /v1/mos/<id> with None data
+    - Assert 400 Bad Request
+    - **Lines Covered:** 124 (JSON validation)
 
 4.  **[x] `test_update_spare_part_invalid_json`** ✅
-    -   PUT /v1/spare_parts/<id> with empty data
-    -   Assert 400 Bad Request
-    -   **Lines Covered:** 179 (JSON validation)
+    - PUT /v1/spare_parts/<id> with empty data
+    - Assert 400 Bad Request
+    - **Lines Covered:** 179 (JSON validation)
 
 5.  **[x] `test_update_user_invalid_json`** ✅
-    -   PUT /v1/users/<id> with None data
-    -   Assert 400 Bad Request
-    -   **Lines Covered:** 243 (JSON validation)
+    - PUT /v1/users/<id> with None data
+    - Assert 400 Bad Request
+    - **Lines Covered:** 243 (JSON validation)
 
 6.  **[x] `test_add_role_duplicate_name`** ✅
-    -   POST /v1/roles with existing role name
-    -   Assert 409 Conflict
-    -   Assert error message about duplicate
-    -   **Lines Covered:** 274-275 (duplicate constraint)
+    - POST /v1/roles with existing role name
+    - Assert 409 Conflict
+    - Assert error message about duplicate
+    - **Lines Covered:** 274-275 (duplicate constraint)
 
 7.  **[x] `test_add_role_missing_name`** ✅
-    -   POST /v1/roles without name field
-    -   Assert 400 Bad Request
-    -   **Lines Covered:** 248 (required field validation)
+    - POST /v1/roles without name field
+    - Assert 400 Bad Request
+    - **Lines Covered:** 248 (required field validation)
 
 8.  **[x] `test_register_user_duplicate_username`** ✅
-    -   POST /v1/users with existing username
-    -   Assert 409 Conflict
-    -   Assert error about duplicate username
-    -   **Lines Covered:** 294-302 (duplicate user validation)
+    - POST /v1/users with existing username
+    - Assert 409 Conflict
+    - Assert error about duplicate username
+    - **Lines Covered:** 294-302 (duplicate user validation)
 
 9.  **[x] `test_register_user_duplicate_email`** ✅
-    -   POST /v1/users with existing email
-    -   Assert 409 Conflict
-    -   **Lines Covered:** 307-308 (duplicate email validation)
+    - POST /v1/users with existing email
+    - Assert 409 Conflict
+    - **Lines Covered:** 307-308 (duplicate email validation)
 
 10. **[x] `test_filtered_data_invalid_entity`** ✅
-    -   GET /api/invalid_entity/filtered
-    -   Assert 400 Bad Request
-    -   Assert error about invalid entity
-    -   **Lines Covered:** 451-486 (entity validation)
+    - GET /api/invalid_entity/filtered
+    - Assert 400 Bad Request
+    - Assert error about invalid entity
+    - **Lines Covered:** 451-486 (entity validation)
 
 11. **[x] `test_login_missing_credentials`** ✅
-    -   POST /v1/auth/login without username
-    -   POST /v1/auth/login without password
-    -   Assert 400 Bad Request for both
-    -   **Lines Covered:** 312-316 (credential validation)
+    - POST /v1/auth/login without username
+    - POST /v1/auth/login without password
+    - Assert 400 Bad Request for both
+    - **Lines Covered:** 312-316 (credential validation)
 
 12. **[x] `test_login_invalid_credentials`** ✅
-    -   POST /v1/auth/login with wrong password
-    -   Assert 401 Unauthorized
-    -   Assert error message about invalid credentials
-    -   **Lines Covered:** 321-329 (authentication failure)
+    - POST /v1/auth/login with wrong password
+    - Assert 401 Unauthorized
+    - Assert error message about invalid credentials
+    - **Lines Covered:** 321-329 (authentication failure)
 
 13. **[x] `test_update_table_config_not_owned`** ✅
-    -   Create config owned by user_id=999
-    -   Try to update as different user
-    -   Assert 404 Not Found
-    -   Assert authorization check works
-    -   **Lines Covered:** 378-399 (ownership validation)
+    - Create config owned by user_id=999
+    - Try to update as different user
+    - Assert 404 Not Found
+    - Assert authorization check works
+    - **Lines Covered:** 378-399 (ownership validation)
 
 14. **[x] `test_set_default_table_config_not_owned`** ✅
-    -   Create config owned by user_id=999
-    -   Try to set as default as different user
-    -   Assert 404 Not Found
-    -   **Lines Covered:** 403-421 (ownership validation)
+    - Create config owned by user_id=999
+    - Try to set as default as different user
+    - Assert 404 Not Found
+    - **Lines Covered:** 403-421 (ownership validation)
 
 15. **[x] `test_remove_default_table_config_not_owned`** ✅
-    -   Create config owned by user_id=999
-    -   Try to remove default as different user
-    -   Assert 404 Not Found
-    -   **Lines Covered:** 425-436 (ownership validation)
+    - Create config owned by user_id=999
+    - Try to remove default as different user
+    - Assert 404 Not Found
+    - **Lines Covered:** 425-436 (ownership validation)
 
 **Coverage Impact:** api.py improved from 69.19% to 78.78% (+9.59%)
 
@@ -1624,6 +1637,7 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 ### 4.1. Configuration Files
 
 **[x] Create `pytest.ini`:** ✅ **Completed: December 11, 2025**
+
 ```ini
 [pytest]
 testpaths = tests
@@ -1638,6 +1652,7 @@ markers =
 ```
 
 **[x] Create `pyproject.toml` (if not exists):** ✅ **Completed: December 11, 2025**
+
 ```toml
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -1650,79 +1665,89 @@ testpaths = [
 ### 4.2. Test Fixtures (`tests/conftest.py`)
 
 **[x] Enhance `conftest.py` with:** ✅ **Completed: December 11, 2025**
--   `app` fixture: Creates Flask app in testing mode ✅
--   `client` fixture: Provides test client for making requests ✅
--   `db_session` fixture: Provides database session with auto-rollback ✅
--   `sample_asset` fixture: Creates a sample asset for tests ✅
--   `sample_mo` fixture: Creates a sample maintenance order ✅
--   `sample_user` fixture: Creates a sample user ✅
--   `auth_client` fixture: Provides authenticated test client ✅
+
+- `app` fixture: Creates Flask app in testing mode ✅
+- `client` fixture: Provides test client for making requests ✅
+- `db_session` fixture: Provides database session with auto-rollback ✅
+- `sample_asset` fixture: Creates a sample asset for tests ✅
+- `sample_mo` fixture: Creates a sample maintenance order ✅
+- `sample_user` fixture: Creates a sample user ✅
+- `auth_client` fixture: Provides authenticated test client ✅
 
 **Bonus Fixtures Added:**
--   `runner` fixture: CLI test runner for Click commands
--   `sample_role` fixture: Sample role (Technician)
--   `sample_admin_user` fixture: Admin user for permission tests
--   `sample_team` fixture: Sample team with shift information
--   `sample_skill` fixture: Sample skill (e.g., Welding)
--   `sample_spare_part` fixture: Sample spare part with inventory
--   `multiple_assets` fixture: 3 assets for list/filter testing
--   `multiple_mos` fixture: Multiple MOs for list/pagination testing
+
+- `runner` fixture: CLI test runner for Click commands
+- `sample_role` fixture: Sample role (Technician)
+- `sample_admin_user` fixture: Admin user for permission tests
+- `sample_team` fixture: Sample team with shift information
+- `sample_skill` fixture: Sample skill (e.g., Welding)
+- `sample_spare_part` fixture: Sample spare part with inventory
+- `multiple_assets` fixture: 3 assets for list/filter testing
+- `multiple_mos` fixture: Multiple MOs for list/pagination testing
 
 ---
 
 ## 5. Implementation Timeline
 
 ### Phase 1: Foundation Tests (Days 1-6) ✅ COMPLETED
--   [x] Configure `pytest.ini` and `pyproject.toml` ✅ **Completed: December 11, 2025**
--   [x] Enhance `tests/conftest.py` with comprehensive fixtures ✅ **Completed: December 11, 2025**
--   [x] Create `tests/test_app.py` (18 tests) ✅ **Completed: December 11, 2025**
--   [x] Run and verify all tests pass ✅
+
+- [x] Configure `pytest.ini` and `pyproject.toml` ✅ **Completed: December 11, 2025**
+- [x] Enhance `tests/conftest.py` with comprehensive fixtures ✅ **Completed: December 11, 2025**
+- [x] Create `tests/test_app.py` (18 tests) ✅ **Completed: December 11, 2025**
+- [x] Run and verify all tests pass ✅
 
 ### Phase 2: API & Routes Coverage (Days 3-5) ✅ COMPLETED
--   [x] Create `tests/test_api_routes.py` (41 tests) ✅ **Completed: December 11, 2025**
--   [x] Implement all API endpoint tests ✅
--   [x] Run and verify all tests pass ✅
--   [x] Fix API bugs discovered by tests ✅
+
+- [x] Create `tests/test_api_routes.py` (41 tests) ✅ **Completed: December 11, 2025**
+- [x] Implement all API endpoint tests ✅
+- [x] Run and verify all tests pass ✅
+- [x] Fix API bugs discovered by tests ✅
 
 ### Phase 3: Web Routes Coverage (Day 5) ✅ COMPLETED
--   [x] Create `tests/test_main_routes.py` (29 tests) ✅ **Completed: December 11, 2025**
--   [x] Implement all web route tests ✅
--   [x] Run and verify all tests pass ✅
+
+- [x] Create `tests/test_main_routes.py` (29 tests) ✅ **Completed: December 11, 2025**
+- [x] Implement all web route tests ✅
+- [x] Run and verify all tests pass ✅
 
 ### Phase 4: Utilities Coverage (Days 5-6) ✅ COMPLETED
--   [x] Create `tests/test_db_utils.py` (3 tests) ✅ **Completed: December 12, 2025**
--   [x] Create `tests/test_shift_utils.py` (5 tests) ✅ **Completed: December 12, 2025**
--   [x] Run and verify all tests pass ✅ **96/96 passing!**
+
+- [x] Create `tests/test_db_utils.py` (3 tests) ✅ **Completed: December 12, 2025**
+- [x] Create `tests/test_shift_utils.py` (5 tests) ✅ **Completed: December 12, 2025**
+- [x] Run and verify all tests pass ✅ **96/96 passing!**
 
 ### Phase 5: Security & Validation (Days 7-9) ✅ COMPLETE
--   [x] Create `tests/test_auth.py` (8 tests) ✅ **Completed: December 12, 2025** 🔴 CRITICAL
--   [x] Create `tests/test_validation.py` (6 tests) ✅ **Completed: December 12, 2025** 🟡 HIGH
--   [x] Create `tests/test_errors.py` (6 tests) ✅ **Completed: December 12, 2025** 🟡 MEDIUM
--   [x] Run and verify all 116 tests pass ✅ DONE
+
+- [x] Create `tests/test_auth.py` (8 tests) ✅ **Completed: December 12, 2025** 🔴 CRITICAL
+- [x] Create `tests/test_validation.py` (6 tests) ✅ **Completed: December 12, 2025** 🟡 HIGH
+- [x] Create `tests/test_errors.py` (6 tests) ✅ **Completed: December 12, 2025** 🟡 MEDIUM
+- [x] Run and verify all 116 tests pass ✅ DONE
 
 ### Phase 6: Integration & Advanced Testing (Days 9-11) ✅ COMPLETE
--   [x] Create `tests/test_integration.py` (10 tests) 🟡 **MEDIUM - Day 9-10** ✅ DONE
--   [x] Create `tests/test_advanced_validation.py` (10 tests) 🟡 **MEDIUM - Day 10** ✅ DONE
--   [x] Create `tests/test_performance.py` (8 tests) 🟢 **LOW - Day 11** ✅ DONE
--   [x] Run and verify all 144 tests pass ✅ DONE
+
+- [x] Create `tests/test_integration.py` (10 tests) 🟡 **MEDIUM - Day 9-10** ✅ DONE
+- [x] Create `tests/test_advanced_validation.py` (10 tests) 🟡 **MEDIUM - Day 10** ✅ DONE
+- [x] Create `tests/test_performance.py` (8 tests) 🟢 **LOW - Day 11** ✅ DONE
+- [x] Run and verify all 144 tests pass ✅ DONE
 
 ### Phase 7: Final Validation & CI Integration (Day 12) ✅ COMPLETE
--   [x] Run complete test suite (144 tests) ✅ DONE (locally)
--   [x] Verify 70%+ code coverage achieved ✅ 75.64% (exceeds 70% requirement, stretch goal 80%)
--   [x] Update CI workflow to run full test suite ✅ DONE (configured in .github/workflows/ci.yml)
--   [x] Add coverage reporting to CI ✅ DONE (Codecov integration configured)
--   [ ] Verify all tests pass in CI environment (pending first GitHub Actions run)
--   [x] Documentation updates complete ✅ DONE
+
+- [x] Run complete test suite (144 tests) ✅ DONE (locally)
+- [x] Verify 70%+ code coverage achieved ✅ 75.64% (exceeds 70% requirement, stretch goal 80%)
+- [x] Update CI workflow to run full test suite ✅ DONE (configured in .github/workflows/ci.yml)
+- [x] Add coverage reporting to CI ✅ DONE (Codecov integration configured)
+- [ ] Verify all tests pass in CI environment (pending first GitHub Actions run)
+- [x] Documentation updates complete ✅ DONE
 
 ### Phase 8: Enhanced Coverage Tests (Days 13-15) ✅ COMPLETE
--   [x] Add 10 tests to `tests/functional/test_api_routes.py` (41 → 51 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
--   [x] Add 10 tests to `tests/unit/test_app.py` (18 → 28 tests) ✅ **COMPLETED: December 12, 2025** 🟡 HIGH
--   [x] Add 10 tests to `tests/functional/test_main_routes.py` (29 → 39 tests) ✅ **COMPLETED: December 12, 2025** 🟡 HIGH
--   [x] Add 8 tests to `tests/unit/test_db_utils.py` (3 → 11 tests) ✅ **COMPLETED: December 12, 2025** 🟢 MEDIUM
--   [x] Add 8 tests to `tests/integration/test_integration.py` (10 → 18 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
--   [x] Run and verify all 190 tests pass ✅ **COMPLETED: December 12, 2025**
--   [x] Achieve 78.39% code coverage ✅ (Phase 8 target achieved)
--   [ ] Update CI to enforce coverage threshold (pending)
+
+- [x] Add 10 tests to `tests/functional/test_api_routes.py` (41 → 51 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
+- [x] Add 10 tests to `tests/unit/test_app.py` (18 → 28 tests) ✅ **COMPLETED: December 12, 2025** 🟡 HIGH
+- [x] Add 10 tests to `tests/functional/test_main_routes.py` (29 → 39 tests) ✅ **COMPLETED: December 12, 2025** 🟡 HIGH
+- [x] Add 8 tests to `tests/unit/test_db_utils.py` (3 → 11 tests) ✅ **COMPLETED: December 12, 2025** 🟢 MEDIUM
+- [x] Add 8 tests to `tests/integration/test_integration.py` (10 → 18 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
+- [x] Run and verify all 190 tests pass ✅ **COMPLETED: December 12, 2025**
+- [x] Achieve 78.39% code coverage ✅ (Phase 8 target achieved)
+- [ ] Update CI to enforce coverage threshold (pending)
 
 **Note:** Phase 8 achieved 78.39% coverage. Phase 3 final (Day 16) added 20 more targeted tests to reach 82.99% coverage (210 total tests).
 
@@ -1731,11 +1756,12 @@ testpaths = [
 **Progress:** 46/46 tests complete (100%) ✅, Coverage improved: 75.64% → 78.39% (+2.75%)
 
 ### Phase 3 (Continued): Targeted Coverage Enhancement ✅ COMPLETE
--   [x] Add 5 tests to `tests/unit/test_app.py` (28 → 33 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
--   [x] Add 15 tests to `tests/functional/test_api_routes.py` (51 → 66 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
--   [x] Run and verify all 210 tests pass ✅ **COMPLETED: December 12, 2025**
--   [x] Achieve 82.99% code coverage ✅ **TARGET EXCEEDED** (goal: 80-85%)
--   [x] Update all documentation ✅ **COMPLETED: December 12, 2025**
+
+- [x] Add 5 tests to `tests/unit/test_app.py` (28 → 33 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
+- [x] Add 15 tests to `tests/functional/test_api_routes.py` (51 → 66 tests) ✅ **COMPLETED: December 12, 2025** 🔴 CRITICAL
+- [x] Run and verify all 210 tests pass ✅ **COMPLETED: December 12, 2025**
+- [x] Achieve 82.99% code coverage ✅ **TARGET EXCEEDED** (goal: 80-85%)
+- [x] Update all documentation ✅ **COMPLETED: December 12, 2025**
 
 **Note:** Phase 3 final focused on **targeted tests for uncovered error paths** rather than adding more happy path tests. This strategic approach achieved +4.60% coverage with only 20 tests.
 
@@ -1748,34 +1774,38 @@ testpaths = [
 ## 6. Success Criteria
 
 ### Test Coverage Goals:
--   **Overall:** 80%+ code coverage ✅ **ACHIEVED: 82.99%** (target: 80%, exceeded by 2.99%)
--   **Critical paths:** 90%+ coverage (API endpoints, database operations, authentication)
-    - src/app.py: 88.89% ✅ (target: 85%+)
-    - src/routes/api.py: 78.78% 🟡 (target: 90%, close)
-    - src/routes/main.py: 81.42% ✅ (target: 80%+)
-    - src/services/db_utils.py: 86.01% ✅ (target: 85%+)
-    - src/services/shift_utils.py: 100.00% ✅ (perfect coverage)
--   **Security:** 90%+ coverage (authentication, authorization, input validation) ✅
--   **All tests pass:** 100% pass rate locally ✅ **210/210 tests passing**
+
+- **Overall:** 80%+ code coverage ✅ **ACHIEVED: 82.99%** (target: 80%, exceeded by 2.99%)
+- **Critical paths:** 90%+ coverage (API endpoints, database operations, authentication)
+  - src/app.py: 88.89% ✅ (target: 85%+)
+  - src/routes/api.py: 78.78% 🟡 (target: 90%, close)
+  - src/routes/main.py: 81.42% ✅ (target: 80%+)
+  - src/services/db_utils.py: 86.01% ✅ (target: 85%+)
+  - src/services/shift_utils.py: 100.00% ✅ (perfect coverage)
+- **Security:** 90%+ coverage (authentication, authorization, input validation) ✅
+- **All tests pass:** 100% pass rate locally ✅ **210/210 tests passing**
 
 ### Quality Metrics:
--   All 210 tests implemented ✅ **ALL COMPLETE** (144 original + 66 Phase 3 enhanced)
--   All tests pass locally ✅ **210/210 passing** (100% pass rate)
--   Test execution time < 120 seconds ✅ (120.78s actual, acceptable for 210 tests)
--   No flaky tests (tests that randomly fail/pass) ✅
--   Security vulnerabilities: 0 critical, 0 high ✅
--   Code quality: All automated checks passing locally ✅
+
+- All 210 tests implemented ✅ **ALL COMPLETE** (144 original + 66 Phase 3 enhanced)
+- All tests pass locally ✅ **210/210 passing** (100% pass rate)
+- Test execution time < 120 seconds ✅ (120.78s actual, acceptable for 210 tests)
+- No flaky tests (tests that randomly fail/pass) ✅
+- Security vulnerabilities: 0 critical, 0 high ✅
+- Code quality: All automated checks passing locally ✅
 
 ### Coverage Improvement Summary:
--   **Phase 1 Start:** 62.50% (96 tests)
--   **Phase 2 Complete:** 75.64% (144 tests) → +13.14%
--   **Phase 3 Complete:** 78.39% (190 tests) → +2.75%
--   **Phase 3 Final:** 82.99% (210 tests) → +4.60%
--   **Total Improvement:** +20.49% coverage, +114 tests
+
+- **Phase 1 Start:** 62.50% (96 tests)
+- **Phase 2 Complete:** 75.64% (144 tests) → +13.14%
+- **Phase 3 Complete:** 78.39% (190 tests) → +2.75%
+- **Phase 3 Final:** 82.99% (210 tests) → +4.60%
+- **Total Improvement:** +20.49% coverage, +114 tests
 
 ### Phase 3 Final Test Details (Targeted Coverage Enhancement):
 
 **Added to `tests/unit/test_app.py` (5 tests):**
+
 1. `test_reports_blueprint_registration_error` - Blueprint import failure handling
 2. `test_planning_blueprint_registration_error` - Blueprint import failure handling
 3. `test_before_planning_request_database_error` - Database connection error handling
@@ -1785,6 +1815,7 @@ testpaths = [
 **Coverage Impact:** app.py: 70.71% → 88.89% (+18.18%)
 
 **Added to `tests/functional/test_api_routes.py` (15 tests):**
+
 1. `test_add_asset_missing_asset_code` - Missing required field validation
 2. `test_update_asset_invalid_json` - Invalid JSON handling
 3. `test_update_mo_invalid_json` - Invalid JSON handling
@@ -1814,6 +1845,7 @@ testpaths = [
 This testing plan is **Phase 1** of the comprehensive implementation strategy outlined in `IMPLEMENTATION_PRIORITY_GUIDE.md`.
 
 **Sequential Workflow:**
+
 ```
 Phase 0: Foundation Setup (Week 1) ✅ COMPLETED
     ↓
@@ -1836,35 +1868,37 @@ Phase 3-5: Frontend, Templates, Standards (Weeks 4-7) ⏸️ POSTPONED
 **After completing each milestone in this plan:**
 
 1.  **Mark Progress in This Document:**
-    -   Update test checkboxes from `[ ]` to `[x]`
-    -   Update "Last Updated" date at the top
-    -   Update "Status" field when phases complete
+    - Update test checkboxes from `[ ]` to `[x]`
+    - Update "Last Updated" date at the top
+    - Update "Status" field when phases complete
 
 2.  **Update `IMPLEMENTATION_PRIORITY_GUIDE.md`:**
-    -   Mark corresponding Week 2 tasks as complete
-    -   Update Quick Start Checklist progress
+    - Mark corresponding Week 2 tasks as complete
+    - Update Quick Start Checklist progress
 
 3.  **Update `mockCMMS_roadmap.md`:**
-    -   Update "ACTIVE WORK" section status
-    -   Move completed sprint to "RECENTLY COMPLETED" when done
-    -   Add completion date and summary
+    - Update "ACTIVE WORK" section status
+    - Move completed sprint to "RECENTLY COMPLETED" when done
+    - Add completion date and summary
 
 4.  **Update `core_code_quality_plan.md`:**
-    -   ✅ When all 96 tests pass, change status from "⏸️ Postponed" to "🟢 Ready to Start"
-    -   ✅ COMPLETED - Status updated, ready for Phase 2
+    - ✅ When all 96 tests pass, change status from "⏸️ Postponed" to "🟢 Ready to Start"
+    - ✅ COMPLETED - Status updated, ready for Phase 2
 
 ### 8.3. When to Start Code Quality Audit
 
 **✅ ALL CRITICAL PREREQUISITES MET - Ready for Week 3!**
--   ✅ All phases complete: Phase 1 (96), Phase 2 (48), Phase 3 (66) = 210 tests
--   ✅ Phase 1 tests pass locally (100% pass rate)
--   ✅ Phase 2 tests implemented (48/48 tests) ← **COMPLETED!**
--   ✅ All 210 tests pass locally (100% pass rate)
--   ⏳ All tests pass in CI (GitHub Actions) - CI configured, pending first run (not blocking)
--   ✅ Code coverage reaches 80%+ (current: 82.99%) ← **TARGET ACHIEVED!**
--   ✅ Security coverage comprehensive (all security tests passing)
+
+- ✅ All phases complete: Phase 1 (96), Phase 2 (48), Phase 3 (66) = 210 tests
+- ✅ Phase 1 tests pass locally (100% pass rate)
+- ✅ Phase 2 tests implemented (48/48 tests) ← **COMPLETED!**
+- ✅ All 210 tests pass locally (100% pass rate)
+- ⏳ All tests pass in CI (GitHub Actions) - CI configured, pending first run (not blocking)
+- ✅ Code coverage reaches 80%+ (current: 82.99%) ← **TARGET ACHIEVED!**
+- ✅ Security coverage comprehensive (all security tests passing)
 
 **Prerequisites for `core_code_quality_plan.md`:**
+
 - ✅ All 210 tests in this plan are implemented ← **DONE!**
 - ✅ All 210 tests pass locally (100% pass rate) ← **DONE!**
 - ✅ Coverage �� 80-85% achieved (82.99%) ← **DONE!**
@@ -1872,6 +1906,7 @@ Phase 3-5: Frontend, Templates, Standards (Weeks 4-7) ⏸️ POSTPONED
 **Verdict:** 🚀 **READY TO PROCEED TO WEEK 3!**
 
 **Status:** ✅ **READY FOR WEEK 3!**
+
 - ✅ Coverage reaches 80%+
 - ✅ Security tests validate authentication/authorization
 - ✅ Integration tests validate end-to-end workflows
@@ -1891,6 +1926,7 @@ For each file or group of files, repeat until perfect:
 **See:** `core_code_quality_plan.md` for detailed workflow per file type (Python, JavaScript, CSS, HTML, etc.)
 
 **Why extended scope matters:**
+
 - 🔴 **Security:** Authentication/authorization vulnerabilities are critical
 - 🟡 **Robustness:** Validation/error handling prevents data corruption
 - 🟡 **Quality:** Integration tests validate real-world usage
@@ -1899,19 +1935,22 @@ For each file or group of files, repeat until perfect:
 **Current Status:** ✅ Week 2 COMPLETE - All 210 tests passing, 82.99% coverage achieved, ready for Week 3
 
 **Why this order matters:**
--   Code formatting with `black` will modify many files
--   Tests provide automated verification that nothing broke ✅ DONE!
--   Without tests, formatting changes are high-risk
--   Tests enable safe refactoring throughout the audit ✅ NOW READY!
+
+- Code formatting with `black` will modify many files
+- Tests provide automated verification that nothing broke ✅ DONE!
+- Without tests, formatting changes are high-risk
+- Tests enable safe refactoring throughout the audit ✅ NOW READY!
 
 ### 8.4. CI/CD Integration
 
 **Current State:**
--   ✅ Basic CI workflow exists (`.github/workflows/ci.yml`)
--   ✅ Runs `pytest` on push/PR
--   ⏸️ Needs enhancement to run comprehensive test suite
+
+- ✅ Basic CI workflow exists (`.github/workflows/ci.yml`)
+- ✅ Runs `pytest` on push/PR
+- ⏸️ Needs enhancement to run comprehensive test suite
 
 **Required Updates to CI:**
+
 ```yaml
 # .github/workflows/ci.yml
 - name: Test with pytest and generate coverage
@@ -1929,15 +1968,17 @@ For each file or group of files, repeat until perfect:
 ```
 
 **When to update CI:**
--   After Phase 1 Day 2 (when test infrastructure is ready)
--   Before Phase 1 Day 5 (before running full test suite)
+
+- After Phase 1 Day 2 (when test infrastructure is ready)
+- Before Phase 1 Day 5 (before running full test suite)
 
 ---
 
 ## 7. Postponed Tasks
 
 The following tasks are officially postponed until the test suite provides adequate coverage:
--   **Code Formatting:** Applying `black` to the codebase.
--   **Comprehensive Code Audit:** The detailed line-by-line audit described in `core_code_quality_plan.md`.
+
+- **Code Formatting:** Applying `black` to the codebase.
+- **Comprehensive Code Audit:** The detailed line-by-line audit described in `core_code_quality_plan.md`.
 
 **This testing plan is now the single source of truth for the current development sprint.**

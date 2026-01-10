@@ -124,7 +124,6 @@ It is **critical** to check whether your branch is already linked to a remote br
     ```
 
     **How to interpret the output:**
-
     - **Tracked (Can push directly):** You will see the remote branch in brackets.
       _Example:_ `* feature-branch  1234567 [origin/feature-branch] Commit message`
     - **Untracked (Must create PR):** You will **NOT** see any `[origin/...]` reference.
@@ -226,6 +225,7 @@ git commit -m "chore: updates [release]"            # Defaults to patch
 ```
 
 **How it works:**
+
 - The `auto_release_hook.py` pre-push hook detects the `[release]` tag
 - Automatically runs `release_manager.py` with the specified bump type
 - Creates the release commit and tag before pushing
@@ -237,7 +237,6 @@ git commit -m "chore: updates [release]"            # Defaults to patch
 
 1. **Update CHANGELOG.md** (follow
    [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format):
-
    - Main app: `/CHANGELOG.md`
    - planning: `/apps/planning/CHANGELOG.md`
    - Add new version entry with date and categorized changes

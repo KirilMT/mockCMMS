@@ -5,6 +5,7 @@
 **Status:** 📋 **PLANNED** (Not Started)
 
 **Priority Items from User Feedback:**
+
 1. 🔴 **SUPER CRITICAL:** Legacy Code Analysis & Cleanup Decision (Added January 10, 2026)
 2. 🔴 **HIGH PRIORITY:** Schedule → MaintenancePlan terminology change
 3. 🟡 **MEDIUM PRIORITY:** Legacy Excel workflow removal

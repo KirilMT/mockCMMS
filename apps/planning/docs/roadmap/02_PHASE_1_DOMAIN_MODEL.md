@@ -7,16 +7,19 @@
 ### Implementation Summary
 
 **Models Implemented:**
+
 - `PlanningTask` - Links MOs to schedules with assignment tracking (`apps/planning/src/services/planning_models.py`)
 - `TechnicianSkill` - Association model with skill levels (1-5 rating)
 - `Schedule` - Planning period with status tracking (Draft/Published/Locked)
 - `Shift`, `Technician`, `Skill` - Shared models in main CMMS database (`src/services/db_utils.py`)
 
 **Services Implemented:**
+
 - `data_transformation.py` - Converts MaintenanceOrder → PlanningTask with validation
 - `inventory_service.py` - Checks spare parts availability and flags unplannable tasks
 
 **Database Schema:**
+
 - Many-to-many: MaintenanceOrder ↔ SparePart (via `maintenance_order_spare_parts` with `quantity_required`)
 - Many-to-many: Technician ↔ Skill (via `TechnicianSkill` with `skill_level`)
 - One-to-many: Schedule → PlanningTask
@@ -25,6 +28,7 @@
 ### Test Coverage (15 tests - all passing ✅)
 
 **Test Files (KEEP ALL - they validate the foundation for Phase 2+):**
+
 1. `test_domain_models.py` (4 tests) - Validates all model relationships and constraints
 2. `test_transformation_layer.py` (6 tests) - Validates CMMS data transformation with error handling
 3. `test_inventory_integration.py` (5 tests) - Validates spare parts availability logic

@@ -392,6 +392,28 @@ create a testing guide document in `docs/` with:**
 
 ### 1.5. Documentation Management
 
+#### 🚨 CRITICAL: Modular Documentation Structure (MANDATORY)
+
+**The documentation for this monorepo is MODULAR. You MUST follow this structure:**
+
+1.  **Core Roadmap:** `docs/mockCMMS_roadmap.md`
+    - Contains high-level project goals and links to app roadmaps.
+    - **DO NOT** add detailed app tasks here. Use links instead.
+2.  **Core Bug Tracking:** `docs/bug_tracking.md`
+    - Contains bugs for the core application (Assets, MOs, Users).
+    - Contains links to app bug trackers.
+    - **DO NOT** add app-specific bugs here.
+3.  **App Documentation:** Each app in `apps/<app_name>/` has its own `docs/` folder:
+    - **Roadmap:** `apps/<app_name>/docs/<app_name>_roadmap.md`
+    - **Bug Tracking:** `apps/<app_name>/docs/<app_name>_bug_tracking.md`
+    - **Technical Docs:** `apps/<app_name>/docs/`
+
+**When updating documentation:**
+
+- Identify if the task belongs to Core or an App.
+- Update the **specific** file for that component.
+- If referencing an App task in Core docs, use a **LINK**, not a duplicate entry.
+
 #### 🚨 CRITICAL: Documentation Standards (MANDATORY)
 
 **Documentation quality is CRITICAL to avoid wasting time and resources.**
@@ -549,8 +571,6 @@ hours of work.
 
 ### 1.7. Pre-Commit Validation (MANDATORY)
 
-### 1.7. Pre-Commit Validation (MANDATORY)
-
 #### 🚨 CRITICAL: AI MUST ALWAYS RUN VALIDATION (MANDATORY)
 
 **Validation Workflow for AI:**
@@ -658,6 +678,22 @@ git add path/to/file1.ext path/to/file2.ext
 - If a file has both related and unrelated changes, use `git add -p` for partial
   staging
 
+**Step 3a: Capture Staged Changes (MANDATORY for AI workflows)**
+
+- After staging files, capture the diff for AI analysis:
+
+```bash
+git diff --cached > temp_diff_output.txt
+```
+
+- AI must read `temp_diff_output.txt` to understand ALL staged changes
+- This enables AI to create detailed, accurate commit messages
+- Clean up the temporary file after committing:
+
+```bash
+del temp_diff_output.txt
+```
+
 **Step 4: Verify Staged Changes**
 
 ```bash
@@ -706,20 +742,21 @@ git diff src/templates/base.html
 # 3. Stage related files
 git add src/static/css/main.css src/templates/base.html docs/bug_tracking.md
 
-# 4. Verify staged changes
+# 4. Capture staged changes for AI review (MANDATORY for AI workflows)
+git diff --cached > temp_diff_output.txt
+# [AI reads temp_diff_output.txt to understand ALL staged changes]
+# [AI uses this to create detailed commit message]
+
+# 5. Verify staged changes
 git diff --cached --stat
 git diff --cached src/static/css/main.css
 
-# 5. Check commit history for style
+# 6. Check commit history for style
 git log -n 5
 
-# 6. Commit with detailed message
-git commit -m "feat: Fix Bug #30 - Assignees field layout shift
+# 7. Commit with detailed message derived from diff
+git commit -m "fix(ui): resolve assignee display overflow in MO modal (#30)
 
-Implemented fixed height (100px) for Select2 container to prevent
-layout shifts when adding/removing assignees.
-
-Files Changed:
 - src/static/css/main.css (Bug #30 CSS fix)
 - src/templates/base.html (CSS cache busting)
 - docs/bug_tracking.md (Bug #30 marked resolved)
@@ -730,6 +767,9 @@ Technical Details:
 
 Testing:
 - Verified no layout shift with multiple assignees"
+
+# 8. Clean up temporary file
+del temp_diff_output.txt
 ```
 
 **CRITICAL**: Never commit without reviewing ALL changed files. Hidden changes
@@ -761,6 +801,11 @@ Testing:
   subtasks within that task before moving to the next task. Do NOT leave tasks
   partially complete. If a task has 8 subtasks, implement all 8 before marking
   the task as done.
+- **Commit Message Generation (MANDATORY):** Before committing, ALWAYS capture
+  staged changes using `git diff --cached > temp_diff_output.txt`, read the
+  output to understand all changes, use it to create detailed commit messages,
+  then clean up with `del temp_diff_output.txt`. This ensures commit messages
+  accurately reflect all staged changes.
 
 ### 1.10. Advanced PowerShell Operations (Fallback Only)
 

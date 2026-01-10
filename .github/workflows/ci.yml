@@ -42,6 +42,19 @@ jobs:
           # Check PEP 257 docstring standards
           docformatter --check -r src tests scripts run.py
 
+      - name: Check documentation formatting with prettier
+        run: |
+          # Verify documentation formatting
+          npx prettier --check "docs/**/*.md" "*.md" "apps/**/*.md" \
+            "*.json" ".github/**/*.md"
+
+      - name: Check Jinja2 templates with djlint
+        run: |
+          # Check Jinja2 template formatting and linting
+          # Using soft failure (just warning) for initial rollout
+          djlint --check src/templates apps/**/templates || \
+            echo "::warning::djlint found formatting issues"
+
       - name: Lint with ruff
         run: |
           # Fast, modern linting (catches more than flake8)

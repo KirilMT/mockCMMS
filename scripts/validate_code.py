@@ -125,12 +125,12 @@ def run_command(
 
 def validate_python_backend(quick: bool = False) -> bool:
     """Run all Python backend validation checks."""
-    print_header("PYTHON BACKEND VALIDATION")
+    print_header("BACKEND VALIDATION")
 
     checks = []
 
     # 1. Import sorting (PEP 8)
-    print_section("Step 1/9: Import Sorting (isort)")
+    print_section("Step 1/10: Import Sorting (isort)")
     success, _ = run_command(
         ["isort", "src", "tests", "scripts", "run.py", "--check-only"],
         "Import sorting check",
@@ -138,7 +138,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     checks.append(("Import Sorting", success))
 
     # 2. Code formatting (Black)
-    print_section("Step 2/9: Code Formatting (black)")
+    print_section("Step 2/10: Code Formatting (black)")
     success, _ = run_command(
         ["black", "--check", "src", "tests", "scripts", "run.py"],
         "Code formatting check",
@@ -146,35 +146,47 @@ def validate_python_backend(quick: bool = False) -> bool:
     checks.append(("Code Formatting", success))
 
     # 3. Docstring formatting (PEP 257)
-    print_section("Step 3/9: Docstring Formatting (docformatter)")
+    print_section("Step 3/10: Docstring Formatting (docformatter)")
     success, _ = run_command(
         ["docformatter", "--check", "-r", "src", "tests", "scripts", "run.py"],
         "Docstring formatting check",
     )
     checks.append(("Docstring Formatting", success))
 
-    # 4. Linting (Ruff - modern, fast linter replacing flake8)
-    print_section("Step 4/9: Linting (ruff)")
+    # 4. Linting (Ruff - replaces Flake8/Pylint)
+    print_section("Step 4/10: Linting (ruff)")
     success, _ = run_command(
         ["ruff", "check", "src", "tests", "scripts", "run.py"], "Ruff linting"
     )
     checks.append(("Ruff Linting", success))
 
-    # 5. Type checking (mypy)
-    print_section("Step 5/9: Type Checking (mypy)")
-    success, _ = run_command(
-        ["mypy"],  # Uses pyproject.toml: files=["src","tests","scripts","run.py"]
-        "Type checking",
-    )
+    # 5. Type checking (Validation)
+    print_section("Step 5/10: Type Checking (mypy)")
+    success, _ = run_command(["mypy"], "Type checking")
     checks.append(("Type Checking", success))
 
     # 6. Security scanning (Bandit)
-    print_section("Step 6/9: Security Scanning (bandit)")
+    print_section("Step 6/10: Security Scanning (bandit)")
+    # -ll: report only medium and high severity issues
     success, _ = run_command(["bandit", "-r", "src/", "-ll"], "Security scanning")
     checks.append(("Security Scanning", success))
 
-    # 7. Run all tests with coverage
-    print_section("Step 7/9: Running Tests with Coverage")
+    # 7. Template Linting (djlint)
+    print_section("Step 7/10: Template Linting (djlint)")
+    # Apps templates excluded due to risk/lack of tests
+    template_paths = ["src/templates"]
+    success, _ = run_command(
+        ["djlint", "--check"] + template_paths,
+        "Jinja2 template linting",
+    )
+    if not success:
+        print_warning("DjLint found issues (soft failure for now)")
+        checks.append(("Template Linting", True))
+    else:
+        checks.append(("Template Linting", success))
+
+    # 8. Running Tests
+    print_section("Step 8/10: Running Tests with Coverage")
     if quick:
         print_warning("Quick mode: Skipping full test suite")
         success, _ = run_command(
@@ -195,17 +207,17 @@ def validate_python_backend(quick: bool = False) -> bool:
         )
         checks.append(("Tests with Coverage", success))
 
-    # 8. Coverage validation (Total >= 82%)
+    # 9. Coverage validation (Total >= 82%)
     if not quick:
-        print_section("Step 8/9: Total Coverage Validation")
+        print_section("Step 9/10: Total Coverage Validation")
         success, _ = run_command(
             ["pytest", "tests/", "--cov=src", "--cov-fail-under=82", "-q"],
             "Coverage threshold check (>= 82%)",
         )
         checks.append(("Total Coverage Threshold", success))
 
-        # 9. Diff Coverage validation (New Code >= 90%)
-        print_section("Step 9/9: Diff (Patch) Coverage")
+        # 10. Diff Coverage validation (New Code >= 90%)
+        print_section("Step 10/10: Diff (Patch) Coverage")
         # Ensure we have coverage.xml
         if not os.path.exists("coverage.xml"):
             print_warning("coverage.xml not found, skipping diff-cover")
@@ -246,9 +258,60 @@ def validate_python_backend(quick: bool = False) -> bool:
     return all_passed
 
 
-def validate_javascript_frontend(quick: bool = False) -> bool:
-    """Run all JavaScript frontend validation checks."""
-    print_header("JAVASCRIPT FRONTEND VALIDATION")
+def validate_others() -> bool:
+    """Run validation checks for documentation and other files."""
+    print_header("OTHERS VALIDATION")
+
+    checks = []
+
+    # Documentation linting (Prettier)
+    print_section("Step 1/1: Documentation Linting (prettier)")
+    doc_paths = [
+        "docs/**/*.md",
+        "*.md",  # Root markdown
+        "apps/**/*.md",  # App documentation
+        "*.json",
+        ".github/**/*.md",
+    ]
+    # Check if Prettier is installed first
+    try:
+        use_shell = sys.platform == "win32"
+        check_prettier = subprocess.run(
+            ["npm", "list", "prettier"],
+            cwd=os.getcwd(),
+            capture_output=True,
+            shell=use_shell,
+            check=False,
+        )
+        if check_prettier.returncode == 0:
+            success, _ = run_command(
+                ["npx", "prettier", "--check"] + doc_paths,
+                "Documentation formatting check",
+            )
+            checks.append(("Documentation Linting", success))
+        else:
+            print_warning("Prettier not installed - skipping documentation linting")
+            # Not a failure, just skipped
+            checks.append(("Documentation Linting", True))
+    except Exception:
+        print_warning("Error checking for Prettier - skipping documentation linting")
+        checks.append(("Documentation Linting", True))
+
+    # Print summary
+    print_section("Others Validation Summary")
+    all_passed = all(success for _, success in checks)
+    for check_name, success in checks:
+        if success:
+            print_success(f"{check_name}")
+        else:
+            print_error(f"{check_name}")
+
+    return all_passed
+
+
+def validate_frontend(quick: bool = False) -> bool:
+    """Run all frontend validation checks (JS, CSS, Templates)."""
+    print_header("FRONTEND VALIDATION")
 
     # Check if npm is available
     npm_available = shutil.which("npm") is not None
@@ -263,7 +326,7 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
     checks = []
 
     # 1. ESLint - JavaScript linting (SHOULD be in CI but currently missing)
-    print_section("Step 1/3: JavaScript Linting (eslint)")
+    print_section("Step 1/4: JavaScript Linting (eslint)")
     success, _ = run_command(
         [
             "npx",
@@ -277,7 +340,7 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
     checks.append(("ESLint", success))
 
     # 2. JavaScript tests (Jest) with coverage - MATCHES CI
-    print_section("Step 2/3: JavaScript Tests (jest)")
+    print_section("Step 2/4: JavaScript Tests (jest)")
     success, _ = run_command(
         [
             "npm",
@@ -303,7 +366,7 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
         print_warning("Quick mode: Skipping E2E tests")
 
     # Print summary
-    print_section("JavaScript Frontend Validation Summary")
+    print_section("Frontend Validation Summary")
     all_passed = all(success for _, success in checks)
     for check_name, success in checks:
         if success:
@@ -377,6 +440,7 @@ Examples:
     python scripts/validate_code.py              # Run all checks
     python scripts/validate_code.py --backend    # Only backend checks
     python scripts/validate_code.py --frontend   # Only frontend checks
+    python scripts/validate_code.py --docs       # Only documentation/other checks
     python scripts/validate_code.py --quick      # Skip slow tests
         """,
     )
@@ -389,20 +453,33 @@ Examples:
         help="Run only JavaScript frontend validation",
     )
     parser.add_argument(
+        "--docs",
+        action="store_true",
+        help="Run only Documentation validation",
+    )
+    parser.add_argument(
+        "--configuration",
+        action="store_true",
+        help="Run only Configuration validation",
+    )
+    parser.add_argument(
         "--quick",
         action="store_true",
         help="Quick mode: Skip slow tests (E2E, visual regression)",
-    )
-    parser.add_argument(
-        "--no-config", action="store_true", help="Skip configuration validation"
     )
 
     args = parser.parse_args()
 
     # Determine what to run
-    run_backend = args.backend or not args.frontend
-    run_frontend = args.frontend or not args.backend
-    run_config = not args.no_config
+    # If no specific category flags are set, run ALL.
+    # We check if ANY category flag is enabled.
+    any_flag = args.backend or args.frontend or args.docs or args.configuration
+    run_all = not any_flag
+
+    run_backend = args.backend or run_all
+    run_frontend = args.frontend or run_all
+    run_docs = args.docs or run_all
+    run_config = args.configuration or run_all
 
     print_header("MOCKCMMS CODE VALIDATION")
     print(f"{Colors.OKCYAN}This script simulates the CI pipeline locally.{Colors.ENDC}")
@@ -416,12 +493,16 @@ Examples:
         results.append(("Backend", backend_passed))
 
     if run_frontend:
-        frontend_passed = validate_javascript_frontend(quick=args.quick)
+        frontend_passed = validate_frontend(quick=args.quick)
         results.append(("Frontend", frontend_passed))
 
     if run_config:
         config_passed = validate_configuration()
         results.append(("Configuration", config_passed))
+
+    if run_docs:
+        docs_passed = validate_others()
+        results.append(("Others", docs_passed))
 
     # Final summary
     print_header("FINAL VALIDATION SUMMARY")
@@ -443,7 +524,10 @@ Examples:
         print_error("Some validation checks failed!")
         print(f"{Colors.FAIL}Please fix the issues before committing.{Colors.ENDC}")
         print(f"\n{Colors.WARNING}Remember:{Colors.ENDC}")
-        print(f"{Colors.WARNING}  1. Fix the CODE, not the configuration{Colors.ENDC}")
+        print(
+            f"{Colors.WARNING}  1. Fix the CODE, not the configuration "
+            f"or the tests{Colors.ENDC}"
+        )
         print(f"{Colors.WARNING}  2. Do NOT lower coverage thresholds{Colors.ENDC}")
         print(f"{Colors.WARNING}  3. Do NOT disable linting rules{Colors.ENDC}")
         print(

@@ -10,6 +10,7 @@ describe("FlashMessages", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
     ToastNotification.show = jest.fn();
+    console.error.mockClear(); // Clear previous calls
 
     // We need to load or reload the module to trigger execution or access the function.
     // But flash-messages.js executes immediately or on DOMContentLoaded.
@@ -170,5 +171,35 @@ describe("FlashMessages", () => {
         originalDescriptor,
       );
     }
+  });
+
+  test("FM-1.10: handles empty JSON string gracefully without error", () => {
+    // Empty data-messages string (common template render issue)
+    document.body.innerHTML = `<div id="flash-messages" data-messages=''></div>`;
+
+    require("../../../src/static/js/flash-messages.js");
+
+    // Should not log error for empty input, just return
+    expect(ToastNotification.show).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  test("FM-1.11: handles 'None' string gracefully (Flask specific)", () => {
+    // Flask might render "None" if variable is None
+    document.body.innerHTML = `<div id="flash-messages" data-messages='None'></div>`;
+
+    require("../../../src/static/js/flash-messages.js");
+
+    expect(ToastNotification.show).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  test("FM-1.12: handles 'null' string gracefully", () => {
+    document.body.innerHTML = `<div id="flash-messages" data-messages='null'></div>`;
+
+    require("../../../src/static/js/flash-messages.js");
+
+    expect(ToastNotification.show).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 });

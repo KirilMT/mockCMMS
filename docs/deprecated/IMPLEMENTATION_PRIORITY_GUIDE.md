@@ -305,13 +305,11 @@ This path is designed to help you get up to speed with the project structure, go
 #### High-Priority Setup (Completed First)
 
 1. **[x] Git Workflow Foundation**
-
    - Create `.github/pull_request_template.md`
    - Document commit message standards in `CONTRIBUTING.md`
    - Set up basic branch protection on `main` (require PRs)
 
 2. **[x] Security Basics**
-
    - Move `SECRET_KEY` to `.env`
    - Document PAT token policy
    - Enable 2FA for your account
@@ -329,7 +327,6 @@ This path is designed to help you get up to speed with the project structure, go
 ### Prerequisite 2: Test Suite Foundation - ✅ **COMPLETE**
 
 1.  **[x] Primary Focus:** Comprehensive Test Suite Implementation ✅
-
     - [x] Create a detailed testing plan (`docs/comprehensive_testing_plan.md`)
     - [x] Develop a robust test suite for the core `mockCMMS` application
     - [x] Goal: Achieve 80-85% test coverage ✅ **ACHIEVED: 82.99%**
@@ -730,22 +727,18 @@ This path is designed to help you get up to speed with the project structure, go
 **When you're unsure what to do next:**
 
 1. **Is foundation setup complete?**
-
    - No → Work on foundation setup
    - Yes → Continue to #2
 
 2. **Is CI working for current file types?**
-
    - No → Set up CI for current phase
    - Yes → Continue to #3
 
 3. **Are there open PRs waiting?**
-
    - Yes → Review/merge PRs first
    - No → Continue to #4
 
 4. **What phase are you on in code audit?**
-
    - Follow `core_code_quality_plan.md` for current phase
    - Create PRs following workflow standards
 

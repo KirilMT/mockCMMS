@@ -222,3 +222,6 @@ jest_*.txt
 # JSCPD duplicate detector
 jscpd-report/
 .jscpd/
+
+# Temporary Diff Output (AI Workflow)
+temp_diff_output.txt

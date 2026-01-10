@@ -9,8 +9,9 @@ New to the project? Follow this learning path to get up to speed:
 
 ### Step 1: Understand the Big Picture (1-2 hours)
 
-1.  Read the **[mockCMMS Roadmap](docs/mockCMMS_roadmap.md)** to understand the project's vision.
-2.  Read this **CONTRIBUTING guide** in its entirety.
+1.  Read the **[mockCMMS Roadmap](../docs/mockCMMS_roadmap.md)** to understand the project's vision.
+2.  If working on a specific app, read its roadmap in `apps/<app_name>/docs/`.
+3.  Read this **CONTRIBUTING guide** in its entirety.
 
 ### Step 2: Set Up Your Environment (2-3 hours)
 
