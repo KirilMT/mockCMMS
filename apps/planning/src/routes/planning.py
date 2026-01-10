@@ -683,38 +683,6 @@ def lines_api():
     return jsonify([]), 200
 
 
-@planning_bp.route("/api/lines/<int:line_id>", methods=["PUT", "DELETE"])
-def manage_line(line_id):
-    try:
-        if request.method == "PUT":
-            try:
-                data = request.get_json() or {}
-            except:
-                data = {}
-            name = data.get("name", "").strip()
-            if name:
-                try:
-                    cursor = g.db.cursor()
-                    cursor.execute(
-                        "UPDATE lines SET name = ? WHERE id = ?", (name, line_id)
-                    )
-                    g.db.commit()
-                except:
-                    pass
-            return jsonify({"id": line_id, "name": name}), 200
-        elif request.method == "DELETE":
-            try:
-                cursor = g.db.cursor()
-                cursor.execute("DELETE FROM lines WHERE id = ?", (line_id,))
-                g.db.commit()
-            except:
-                pass
-            return jsonify({"id": line_id}), 200
-    except:
-        pass
-    return jsonify({"id": line_id}), 200
-
-
 @planning_bp.route("/api/technologies", methods=["GET"])
 def technologies_api():
     try:
@@ -757,15 +725,76 @@ def technician_groups_api():
     return jsonify([]), 200
 
 
-@planning_bp.route("/api/conditions", methods=["GET"])
-def get_line_conditions_api():
-    """Get all available line conditions."""
+@planning_bp.route("/settings")
+def settings_route():
+    """Planning Settings Page."""
+    return render_template("settings.html")
+
+
+@planning_bp.route("/api/conditions", methods=["GET", "POST"])
+def manage_conditions_api():
+    """Get all available line conditions or create a new one."""
     try:
         line_condition_manager = LineConditionManager(g.db)
-        conditions = line_condition_manager.get_all_conditions()
-        return jsonify(conditions), 200
+
+        if request.method == "GET":
+            conditions = line_condition_manager.get_all_conditions()
+            return jsonify(conditions), 200
+
+        elif request.method == "POST":
+            data = request.get_json()
+            name = data.get("name")
+            description = data.get("description")
+            color_code = data.get("color_code", "blue")
+
+            if not name:
+                return jsonify({"error": "Name is required"}), 400
+
+            condition_id = line_condition_manager.create_condition(name, description, color_code)
+            if condition_id:
+                return jsonify({"message": "Condition created", "id": condition_id}), 201
+            else:
+                return jsonify({"error": "Condition with this name likely already exists"}), 409
+
     except Exception as e:
-        current_app.logger.error(f"Error fetching line conditions: {e}", exc_info=True)
+        if g.db:
+            g.db.rollback()
+        current_app.logger.error(f"Error managing conditions: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@planning_bp.route("/api/conditions/<int:condition_id>", methods=["PUT", "DELETE"])
+def update_delete_condition_api(condition_id):
+    """Update or delete a line condition."""
+    try:
+        line_condition_manager = LineConditionManager(g.db)
+
+        if request.method == "PUT":
+            data = request.get_json()
+            name = data.get("name")
+            description = data.get("description")
+            color_code = data.get("color_code", "blue")
+
+            if not name:
+                return jsonify({"error": "Name is required"}), 400
+
+            success = line_condition_manager.update_condition(condition_id, name, description, color_code)
+            if success:
+                return jsonify({"message": "Condition updated"}), 200
+            else:
+                return jsonify({"error": "Failed to update condition (name might be duplicate)"}), 409
+
+        elif request.method == "DELETE":
+            success = line_condition_manager.delete_condition(condition_id)
+            if success:
+                return jsonify({"message": "Condition deleted"}), 200
+            else:
+                return jsonify({"error": "Condition not found"}), 404
+
+    except Exception as e:
+        if g.db:
+            g.db.rollback()
+        current_app.logger.error(f"Error updating/deleting condition: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
 

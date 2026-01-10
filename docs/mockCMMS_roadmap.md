@@ -269,6 +269,15 @@ The core application can be improved with the following features to support the 
     - **Separated Log Files:** Use distinct files for application, error, and performance logs.
   - **Reference:** `apps/planning/src/services/logging_config.py`
 
+- **[ ] Global Settings Integration** _(Priority: High)_
+
+  - **Goal:** Implement a consistent "Settings" interface across all major modules (Assets, MOs, Users, Spare Parts) to manage configuration data.
+  - **Concept:** A dedicated settings page or modal for each module where administrators can configure dropdown options and reference data.
+  - **Scope:**
+    - **Configurable Topics:** Asset Types, Cost Centers, Asset Status, Maintenance Order Types, Priorities, Frequencies, Manufacturers, User Roles, Shift Teams, Satellite Points, etc.
+    - **Implementation:** Replace hardcoded options or JSON configuration files with database-driven settings manageable via the UI.
+    - **Location:** Access settings from the main list/dashboard pages of each module (not detail pages).
+
 - **[ ] Integration & Cleanup (Maintenance Grid & Tickets)** _(Priority: Medium)_
   - **Goal:** Review and properly implement or deprecate the integration stub pages (`maintenance_grid.html`, `ticket.html`).
   - **Scope:**
@@ -692,17 +701,15 @@ This application already handles skill-based task assignment. The next logical s
 
   - **Goal:** Standardize the line conditions needed for task planning to ensure proper execution prerequisites.
   - **Implemented So Far:**
-    - ✅ **Database Schema:** Created `line_conditions` and `task_line_conditions` tables to support conditions.
-    - ✅ **Backend Logic:** Implemented `LineConditionManager` in `planning_db_utils.py` for handling condition logic.
-    - ✅ **API Endpoints:** Added endpoints to retrieve and manage task conditions (`get_line_conditions_api`, `manage_task_conditions_api`).
-    - ✅ **Dummy Data:** Updated seeding scripts to populate initial line conditions (e.g., "Line Empty", "Robot Home") and assign them to tasks.
+    - ✅ **Database Schema:** `line_conditions` and `task_line_conditions` tables created.
+    - ✅ **Backend Logic:** `LineConditionManager` implemented.
+    - ✅ **API Endpoints:** `get_line_conditions_api` and `manage_task_conditions_api` added.
+    - ✅ **Dummy Data:** Population of default conditions and assignment to tasks.
+    - ✅ **Manage Line Conditions UI:** Create/Modify/Delete global conditions via Planning Settings.
   - **Features to Implement:**
-    - **Manage Line Conditions UI:** Create an interface to create, modify, and delete global Line Conditions. This would be like a new page where
-      Planners could configure many different topics (Line Conditions, Asset Types, Cost Centers, Asset Status, Maintenance Order Types, Priorities,
-      Frequencies, Manufacturers, User Roles, Shift Teams, Satellite Points, etc) -> Everywhere that there is a dropdown, all it's possible options.
     - **Task Condition Assignment:** Implement a UI (initially manual) to assign Line Conditions to Maintenance Orders (MOs).
       - **Mechanism:** Multiple selection dropdown in the task/MO detail or edit view.
-    - ✅ **Planning Table Integration:** Display the assigned Line Conditions in a dedicated column in the planning table.
+    - **Planning Table Integration:** Display the assigned Line Conditions in a dedicated column in the planning table.
     - **Visibility:** Make conditions visible to users with operations roles.
     - **Future Enhancement:** Automate condition assignment based on predefined logic or criteria.
 

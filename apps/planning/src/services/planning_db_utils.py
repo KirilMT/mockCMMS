@@ -995,6 +995,28 @@ class LineConditionManager:
         )
         return [dict(row) for row in self.cursor.fetchall()]
 
+    def update_condition(self, condition_id, name, description=None, color_code="blue"):
+        """Updates an existing line condition."""
+        try:
+            self.cursor.execute(
+                "UPDATE line_conditions SET name = ?, description = ?, color_code = ? WHERE id = ?",
+                (name, description, color_code, condition_id),
+            )
+            self.conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+
+    def delete_condition(self, condition_id):
+        """Deletes a line condition."""
+        # First check if it's used? Cascade delete is handled by DB foreign key on task_line_conditions usually,
+        # but let's check definition.
+        # Definition: FOREIGN KEY(condition_id) REFERENCES line_conditions(id) ON DELETE CASCADE
+        # So deleting condition will remove it from tasks too.
+        self.cursor.execute("DELETE FROM line_conditions WHERE id = ?", (condition_id,))
+        self.conn.commit()
+        return self.cursor.rowcount > 0
+
     def assign_condition_to_task(self, task_id, condition_id):
         """Assigns a condition to a task."""
         try:
