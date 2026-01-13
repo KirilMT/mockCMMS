@@ -2,94 +2,179 @@
 
 {% block title %}Shift Calendar{% endblock %}
 
+{% block extra_css %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/shift_calendar.css') }}">
+{% endblock %}
+
 {% block content %}
-{% macro team_badge(team) %}
-{% set color = 'secondary' %}
-{% if team.name == 'Team A' %}
-{% set color = 'primary' %}
-{% elif team.name == 'Team B' %}
-{% set color = 'warning' %}
-{% elif team.name == 'Team C' %}
-{% set color = 'success' %}
-{% elif team.name == 'Team D' %}
-{% set color = 'danger' %}
-{% endif %}
-<span class="badge badge-{{ color }}">{{ team.name }}</span>
-{% endmacro %}
-
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Shift Calendar</h1>
-    <div>
-        <a href="{{ url_for('main.shift_calendar', year=prev_year, month=prev_month) }}"
-            class="btn btn-outline-primary">
-            <i class="fas fa-chevron-left"></i> Previous
-        </a>
-        <span class="h4 mx-3">{{ month_name }} {{ year }}</span>
-        <a href="{{ url_for('main.shift_calendar', year=next_year, month=next_month) }}"
-            class="btn btn-outline-primary">
-            Next <i class="fas fa-chevron-right"></i>
-        </a>
+<div class="shift-calendar-container">
+    <div class="d-flex justify-content-between align-items-center mb-2 calendar-controls">
+        <h1>Shift Calendar</h1>
+        <div>
+            <a href="{{ url_for('main.shift_calendar', year=prev_year, month=prev_month) }}"
+                class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-chevron-left"></i> Previous
+            </a>
+            <span class="h4 mx-3 align-middle">{{ month_name }} {{ year }}</span>
+            <a href="{{ url_for('main.shift_calendar', year=next_year, month=next_month) }}"
+                class="btn btn-outline-primary btn-sm">
+                Next <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
     </div>
-</div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="thead-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>Day</th>
-                        <th>Week #</th>
-                        <th>Early Shift (06:00 - 18:00)</th>
-                        <th>Late Shift (18:00 - 06:00)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for day in calendar_days %}
-                    <tr class="{% if day.is_today %}table-primary{% endif %}">
-                        <td>{{ day.date_str }}</td>
-                        <td>{{ day.day_name }}</td>
-                        <td>{{ day.week_num }}</td>
-                        <td>
-                            {% if day.early_teams %}
-                            {% for team in day.early_teams %}
-                            {{ team_badge(team) }}
-                            {% endfor %}
-                            {% else %}
-                            <span class="text-muted">-</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if day.late_teams %}
-                            {% for team in day.late_teams %}
-                            {{ team_badge(team) }}
-                            {% endfor %}
-                            {% else %}
-                            <span class="text-muted">-</span>
-                            {% endif %}
-                        </td>
-                    </tr>
+    <!-- Calendar Header -->
+    <div class="calendar-header-row">
+        <div class="calendar-header-day">Mon</div>
+        <div class="calendar-header-day">Tue</div>
+        <div class="calendar-header-day">Wed</div>
+        <div class="calendar-header-day">Thu</div>
+        <div class="calendar-header-day">Fri</div>
+        <div class="calendar-header-day">Sat</div>
+        <div class="calendar-header-day">Sun</div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-grid">
+        {% for day in calendar_days %}
+            <div class="calendar-day {% if not day.is_current_month %}other-month{% endif %} {% if day.is_today %}today{% endif %}"
+                 onclick="openDayModal(this)"
+                 data-date="{{ day.date_str }}"
+                 data-dayname="{{ day.day_name }}"
+                 data-early="{{ day.early_teams | tojson | forceescape }}"
+                 data-late="{{ day.late_teams | tojson | forceescape }}">
+
+                <div class="day-number">{{ day.day_num }}</div>
+
+                <div class="shift-assignments">
+                    {% for team in day.early_teams %}
+                     <div class="shift-block early">
+                        <span class="team-indicator {{ team.name|lower|replace(' ', '-') }}">{{ team.name }}</span>
+                        <!-- <small>({{ team.users|length }})</small> -->
+                     </div>
                     {% endfor %}
-                </tbody>
-            </table>
+                    {% for team in day.late_teams %}
+                     <div class="shift-block late">
+                         <span class="team-indicator {{ team.name|lower|replace(' ', '-') }}">{{ team.name }}</span>
+                         <!-- <small>({{ team.users|length }})</small> -->
+                     </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Legend (Footer) -->
+    <div class="mt-2 text-muted small d-flex flex-wrap align-items-center">
+        <span class="mr-3"><span class="badge badge-success mr-1" style="background-color: #d1e7dd; color: #0f5132; border: 1px solid #198754;">Early</span> 06:00 - 18:00</span>
+        <span class="mr-3"><span class="badge badge-secondary mr-1" style="background-color: #e2e3e5; color: #41464b; border: 1px solid #6c757d;">Late</span> 18:00 - 06:00</span>
+
+        <div class="ml-auto">
+            <span class="team-indicator team-a">Team A</span>
+            <span class="team-indicator team-b">Team B</span>
+            <span class="team-indicator team-c">Team C</span>
+            <span class="team-indicator team-d">Team D</span>
         </div>
     </div>
 </div>
 
-<div class="mt-4">
-    <h4>Legend</h4>
-    <div class="row">
-        <div class="col-md-12">
-            <p><strong>Schedule Pattern:</strong> 2-2-3 Rotating Schedule (Pitman Schedule)</p>
-            <ul>
-                <li><strong>Group 1 (Teams A & B):</strong> Work Mon, Tue, Fri, Sat, Sun (Odd Weeks) / Wed, Thu (Even
-                    Weeks)</li>
-                <li><strong>Group 2 (Teams C & D):</strong> Work Wed, Thu (Odd Weeks) / Mon, Tue, Fri, Sat, Sun (Even
-                    Weeks)</li>
-                <li><strong>Shift Rotation:</strong> Teams swap between Early and Late shifts every 2 weeks.</li>
-            </ul>
+<!-- Details Modal -->
+<div class="modal fade" id="dayDetailsModal" tabindex="-1" role="dialog" aria-labelledby="modalDateTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDateTitle">Shift Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Early Shift Column -->
+                    <div class="col-md-6">
+                        <div class="card h-100" style="border-left: 5px solid #198754; background-color: #f8fffb;">
+                            <div class="card-header bg-transparent d-flex justify-content-between align-items-center border-bottom-0">
+                                <h5 class="mb-0 text-success font-weight-bold">Early Shift</h5>
+                                <span class="badge badge-light border">06:00 - 18:00</span>
+                            </div>
+                            <div class="card-body" id="earlyShiftContent">
+                                <!-- Content populated via JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Late Shift Column -->
+                    <div class="col-md-6">
+                        <div class="card h-100" style="border-left: 5px solid #6c757d; background-color: #fcfcfc;">
+                            <div class="card-header bg-transparent d-flex justify-content-between align-items-center border-bottom-0">
+                                <h5 class="mb-0 text-secondary font-weight-bold">Late Shift</h5>
+                                <span class="badge badge-light border">18:00 - 06:00</span>
+                            </div>
+                            <div class="card-body" id="lateShiftContent">
+                                <!-- Content populated via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+    function openDayModal(element) {
+        const dateStr = element.getAttribute('data-date');
+        const dayName = element.getAttribute('data-dayname');
+        const earlyData = JSON.parse(element.getAttribute('data-early') || '[]');
+        const lateData = JSON.parse(element.getAttribute('data-late') || '[]');
+
+        // Set Title
+        document.getElementById('modalDateTitle').innerText = `Shift Details: ${dayName}, ${dateStr}`;
+
+        // Populate Early Shift
+        const earlyContent = document.getElementById('earlyShiftContent');
+        earlyContent.innerHTML = renderTeamList(earlyData);
+
+        // Populate Late Shift
+        const lateContent = document.getElementById('lateShiftContent');
+        lateContent.innerHTML = renderTeamList(lateData);
+
+        // Show Modal
+        $('#dayDetailsModal').modal('show');
+    }
+
+    function renderTeamList(teams) {
+        if (!teams || teams.length === 0) {
+            return '<p class="text-muted text-center my-3"><em>No teams assigned</em></p>';
+        }
+
+        let html = '';
+        teams.forEach(team => {
+            const teamClass = team.name.toLowerCase().replace(' ', '-');
+            html += `<div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="team-indicator ${teamClass} mr-2" style="font-size: 0.9rem; padding: 4px 10px;">${team.name}</span>
+                        </div>`;
+
+            if (team.users && team.users.length > 0) {
+                html += '<ul class="list-group list-group-flush ml-1 pl-3 border-left">';
+                team.users.forEach(user => {
+                    html += `<li class="list-group-item py-1 px-2 border-0 bg-transparent"><i class="fas fa-user mr-2 text-muted"></i>${user.username}</li>`;
+                });
+                html += '</ul>';
+            } else {
+                html += '<p class="small text-muted ml-3 mb-0">No technicians enrolled</p>';
+            }
+            html += '</div>';
+        });
+        return html;
+    }
+</script>
 {% endblock %}

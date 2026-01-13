@@ -2,10 +2,11 @@
 
 import calendar
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from sqlalchemy.orm import joinedload
 
 from src.services.db_utils import (
     Asset,
@@ -103,31 +104,57 @@ def _process_mo_form(mo, form_data):
 # --- Calendar Generation Helper ---
 def _generate_calendar_data(year, month):
     """Generates the data structure required for the shift calendar template."""
-    num_days = calendar.monthrange(year, month)[1]
-    teams = Team.query.all()
+    teams = Team.query.options(joinedload(Team.users)).all()
     calendar_days = []
 
-    for day in range(1, num_days + 1):
-        date_obj = datetime(year, month, day)
-        early_team, late_team = get_shift_teams(date_obj, teams)
+    # Get the first day of the month
+    first_day = datetime(year, month, 1)
+    # 0 = Monday, 6 = Sunday
+    start_weekday = first_day.weekday()
+
+    # Calculate the start date of the calendar grid (last Monday)
+    current_date = first_day - timedelta(days=start_weekday)
+
+    # Calculate end of month
+    _, num_days_in_month = calendar.monthrange(year, month)
+    last_day = datetime(year, month, num_days_in_month)
+
+    # Calculate end date of the calendar grid (next Sunday)
+    end_date = last_day + timedelta(days=(6 - last_day.weekday()))
+
+    while current_date <= end_date:
+        early_team, late_team = get_shift_teams(current_date, teams)
 
         day_data = {
-            "date_str": date_obj.strftime("%Y-%m-%d"),
-            "day_name": date_obj.strftime("%A"),
-            "week_num": date_obj.isocalendar()[1],
-            "is_today": date_obj.date() == datetime.now().date(),
+            "date_str": current_date.strftime("%Y-%m-%d"),
+            "day_num": current_date.day,
+            "day_name": current_date.strftime("%A"),
+            "week_num": current_date.isocalendar()[1],
+            "is_today": current_date.date() == datetime.now().date(),
+            "is_current_month": current_date.month == month,
             "early_teams": (
-                [{"name": early_team.name, "users": early_team.users}]
+                [
+                    {
+                        "name": early_team.name,
+                        "users": [{"username": u.username} for u in early_team.users],
+                    }
+                ]
                 if early_team
                 else []
             ),
             "late_teams": (
-                [{"name": late_team.name, "users": late_team.users}]
+                [
+                    {
+                        "name": late_team.name,
+                        "users": [{"username": u.username} for u in late_team.users],
+                    }
+                ]
                 if late_team
                 else []
             ),
         }
         calendar_days.append(day_data)
+        current_date += timedelta(days=1)
 
     return calendar_days
 
