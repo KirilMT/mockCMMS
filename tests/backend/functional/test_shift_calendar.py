@@ -1,11 +1,13 @@
 """Tests for shift calendar route and logic.
 
-This module tests the shift calendar page, parameter handling, and data generation logic.
+This module tests the shift calendar page, parameter handling, and data generation
+logic.
 """
 
 import pytest
-from datetime import datetime
-from src.services.db_utils import Team, User, Role, db
+
+from src.services.db_utils import Role, Team, User, db
+
 
 class TestShiftCalendar:
     """Test suite for shift calendar route logic."""
@@ -35,7 +37,7 @@ class TestShiftCalendar:
                 user_a = User(username="tech_a", email="tech_a@example.com")
                 user_a.set_password("password")
                 user_a.roles.append(tech_role)
-                user_a.team_id = teams[0].id # Team A
+                user_a.team_id = teams[0].id  # Team A
                 db.session.add(user_a)
 
             db.session.commit()
@@ -82,6 +84,5 @@ class TestShiftCalendar:
         # Check that we have enough days generated (grid view includes previous/next month days)
         # Checking for specific day numbers or structure might be redundant if we check for success,
         # but verifies data integrity.
-        assert b"31" in response.data # Day 31 exists
-        assert b"1" in response.data # Day 1 exists
-
+        assert b"31" in response.data  # Day 31 exists
+        assert b"1" in response.data  # Day 1 exists
