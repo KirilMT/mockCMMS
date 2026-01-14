@@ -81,8 +81,10 @@ class TestShiftCalendar:
         # We pick a month with 31 days to ensure full coverage of the loop
         response = auth_client.get("/shift_calendar?year=2024&month=1")
         assert response.status_code == 200
-        # Check that we have enough days generated (grid view includes previous/next month days)
-        # Checking for specific day numbers or structure might be redundant if we check for success,
+        # Check that we have enough days generated (grid view includes previous/next
+        # month days)
+        # Checking for specific day numbers or structure might be redundant if we check
+        # for success,
         # but verifies data integrity.
         assert b"31" in response.data  # Day 31 exists
         assert b"1" in response.data  # Day 1 exists
