@@ -30,7 +30,7 @@ describe("Maintenance Orders Page", () => {
         "mosTable",
         [{ id: 1 }],
         expect.any(Array),
-        25,
+        0,
       );
     });
 
