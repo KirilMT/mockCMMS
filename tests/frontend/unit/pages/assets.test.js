@@ -24,7 +24,7 @@ describe("Assets Page - Render Functions", () => {
         "assetsTable",
         [{ id: 1 }],
         expect.any(Array),
-        25,
+        0,
       );
     });
 

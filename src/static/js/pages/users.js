@@ -100,7 +100,7 @@ function initUsersTable() {
   const usersDataElement = document.getElementById("users-data");
   if (usersDataElement) {
     const usersData = JSON.parse(usersDataElement.textContent);
-    initAdvancedTable("usersTable", usersData, getUsersColumns(), 25);
+    initAdvancedTable("usersTable", usersData, getUsersColumns(), 0);
   }
 }
 

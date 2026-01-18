@@ -25,7 +25,7 @@ class AdvancedTable {
     this.pageSize =
       options.pageSize !== undefined && options.pageSize !== null
         ? options.pageSize
-        : 25;
+        : 0;
 
     this.savedConfigs = [];
     this.selectedConfigId = null; // Current active view (matches config exactly)

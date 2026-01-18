@@ -19,6 +19,13 @@ import sys
 from pathlib import Path
 from typing import List, Tuple
 
+# Fix for Windows UnicodeEncodeError when printing special characters
+if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass  # Fallback to default behavior if reconfigure fails
+
 
 class Colors:
     """ANSI color codes for terminal output."""

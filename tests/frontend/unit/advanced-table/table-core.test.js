@@ -51,7 +51,7 @@ describe("AdvancedTable", () => {
 
     expect(table.container).toBe(tableContainer);
     expect(table.currentPage).toBe(1);
-    expect(table.pageSize).toBe(25);
+    expect(table.pageSize).toBe(0);
     expect(table.sortColumn).toBeUndefined(); // It is not set in constructor default options, but in currentSort
     expect(table.currentSort).toEqual({ column: null, direction: "asc" });
     expect(table.pageName).toBe("default");
@@ -295,6 +295,6 @@ describe("AdvancedTable", () => {
     });
     expect(table.data).toEqual([]);
     expect(table.columns).toEqual([]);
-    expect(table.pageSize).toBe(25);
+    expect(table.pageSize).toBe(0);
   });
 });
