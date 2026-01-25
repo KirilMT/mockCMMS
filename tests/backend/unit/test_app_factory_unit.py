@@ -727,3 +727,18 @@ class TestCoverageImprovements:
                     # If connect was called, it means the test fixture set a path
                     # Just verify the function doesn't crash
                     pass  # No assertion needed - in-memory skips sqlite3.connect
+
+    @patch.dict(os.environ)
+    def test_app_production_db_default_coverage(self):
+        """Trigger the production DB default branch in src/app.py."""
+        # surgically remove vars that would trigger other branches,
+        # but don't clear everything which can break coverage internals
+        if "TESTING_PRODUCTION" in os.environ:
+            del os.environ["TESTING_PRODUCTION"]
+        if "E2E_TEST" in os.environ:
+            del os.environ["E2E_TEST"]
+        if "TESTING" in os.environ:
+            del os.environ["TESTING"]
+        app = create_app({"TESTING": False})
+        # Check that it uses mockcmms.db (the production default)
+        assert "mockcmms.db" in app.config["SQLALCHEMY_DATABASE_URI"]

@@ -28,8 +28,8 @@ test.describe("Weekend Report", () => {
     // Verify Data Table exists
     // Initially table might not be visible if no data selected
     // Check for form inputs first
-    await expect(page.locator('input[name="start_date"]')).toBeVisible();
-    await expect(page.locator('input[name="end_date"]')).toBeVisible();
+    await expect(page.locator("input#start_date")).toBeVisible();
+    await expect(page.locator("input#end_date")).toBeVisible();
 
     // Click Filter
     // Navigate directly with params to avoid flaky UI input interactions
