@@ -3,10 +3,11 @@
 
 import os
 import sqlite3
+from datetime import datetime, timedelta, timezone
 
 import click
 from dotenv import load_dotenv
-from flask import Flask, g, jsonify, redirect, request, session
+from flask import Flask, flash, g, jsonify, redirect, request, session, url_for
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect  # type: ignore[import-untyped]
@@ -45,6 +46,7 @@ def create_app(config_overrides=None):
         # Disable rate limiting for E2E tests to prevent timeouts/failures
         RATELIMIT_ENABLED=not is_e2e,
         RATELIMIT_STORAGE_URI="memory://",
+        PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
     )
 
     # Determine (and verify) if we are in testing mode early.
@@ -333,7 +335,32 @@ def _register_request_handlers(app):
     @app.before_request
     def load_logged_in_user():
         user_id = session.get("user_id")
-        g.user = db.session.get(User, user_id) if user_id is not None else None
+        if user_id:
+            # Session Timeout Logic
+            last_active_ts = session.get("last_active")
+            now_ts = datetime.now(timezone.utc).timestamp()
+
+            if last_active_ts is None:
+                # Force logout if no timestamp found (migrating old sessions)
+                session.clear()
+                flash("Session invalid. Please log in again.", "warning")
+                return redirect(url_for("main.login"))
+
+            # 30 minutes in seconds = 1800 (default)
+            timeout_seconds = 1800
+            lifetime = app.config.get("PERMANENT_SESSION_LIFETIME")
+            if isinstance(lifetime, timedelta):
+                timeout_seconds = lifetime.total_seconds()
+
+            if (now_ts - last_active_ts) > timeout_seconds:
+                session.clear()
+                flash("Session expired due to inactivity.", "info")
+                return redirect(url_for("main.login"))
+
+            session["last_active"] = now_ts
+            g.user = db.session.get(User, user_id)
+        else:
+            g.user = None
 
     @app.before_request
     def redirect_legacy_urls():

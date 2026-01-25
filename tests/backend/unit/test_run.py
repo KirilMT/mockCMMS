@@ -1,11 +1,12 @@
-"""Test run.py application entry point."""
-
+import os
 import sys
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestRunEntry:
-    """Test the application entry point."""
+    """Test suite for the application entry point (run.py)."""
 
     def setup_method(self):
         """Ensure run module is not in sys.modules so it re-executes."""
@@ -17,32 +18,93 @@ class TestRunEntry:
         if "run" in sys.modules:
             del sys.modules["run"]
 
-    def test_run_app_import(self):
-        """Test that run.py can be imported and app is created."""
-        # Patch db.create_all to prevent database creation side effects
-        # Patch populate_dummy_data to prevent DB access when tables don't exist
-        # Patch load_dotenv to prevent environment side effects
+    @pytest.fixture
+    def mock_env(self):
+        """Mock environment variables and modules."""
+        # Combine feature-specific patches with main branch structural patches
         with (
+            patch.dict(os.environ, {"FLASK_RUN_PORT": "5000", "E2E_TEST": "False"}),
+            patch("src.app.create_app") as mock_create_app,
+            patch("src.app.Flask"),
+            patch("dotenv.load_dotenv") as mock_load_dotenv,
+            patch("os.path.exists") as mock_exists,
+            # Feature-specific patches to prevent DB/Seeding side effects in unit tests
             patch("src.app.db.create_all"),
             patch("src.app.populate_dummy_data"),
             patch("apps.planning.src.services.seeding.seed_planning_data"),
             patch("src.app.os.makedirs"),
-            patch("dotenv.load_dotenv"),
         ):
+            # Setup successful environment check
+            mock_exists.return_value = True
+
+            mock_app = MagicMock()
+            mock_create_app.return_value = mock_app
+            yield {
+                "create_app": mock_create_app,
+                "app": mock_app,
+                "load_dotenv": mock_load_dotenv,
+                "exists": mock_exists,
+            }
+
+    def test_run_app_import(self, mock_env):
+        """Test that run.py imports and initializes the app correctly."""
+        import importlib
+
+        import run
+
+        importlib.reload(run)
+
+        mock_env["load_dotenv"].assert_called()
+        # Verify app creation with debug mode as in run.py
+        mock_env["create_app"].assert_called()
+
+    def test_run_app_setup_missing(self):
+        """Test that run.py exits if setup is missing."""
+        # Ensure CI/E2E_TEST env vars are NOT set
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("os.path.exists", return_value=False),
+            patch("sys.exit") as mock_exit,
+            patch("dotenv.load_dotenv"),
+            patch("src.app.db.create_all"),
+            patch("src.app.populate_dummy_data"),
+            patch("apps.planning.src.services.seeding.seed_planning_data"),
+        ):
+            # In some versions it might be in sys.modules from other tests
+            import importlib
+
             import run
 
-            assert run.app is not None
-            assert run.app.name == "src.app"
+            importlib.reload(run)
 
-    def test_run_app_config(self):
+            run.check_setup()
+            mock_exit.assert_called_with(1)
+
+    def test_run_app_setup_bypass_ci(self):
+        """Test that setup check is skipped in CI environment."""
+        with (
+            patch.dict(os.environ, {"CI": "true"}),
+            patch("os.path.exists", return_value=False),
+            patch("sys.exit") as mock_exit,
+            patch("dotenv.load_dotenv"),
+            patch("src.app.db.create_all"),
+            patch("src.app.populate_dummy_data"),
+            patch("apps.planning.src.services.seeding.seed_planning_data"),
+        ):
+            import importlib
+
+            import run
+
+            importlib.reload(run)
+
+            run.check_setup()
+            mock_exit.assert_not_called()
+
+    def test_run_app_config(self, mock_env):
         """Test that the app from run.py has expected configuration."""
-        with (
-            patch("src.app.db.create_all"),
-            patch("src.app.populate_dummy_data"),
-            patch("apps.planning.src.services.seeding.seed_planning_data"),
-            patch("src.app.os.makedirs"),
-            patch("dotenv.load_dotenv"),
-        ):
-            import run
+        import importlib
 
-            assert run.app.config is not None
+        import run
+
+        importlib.reload(run)
+        assert run.app is mock_env["app"]

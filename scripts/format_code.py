@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Code Formatting Script.
 
-Actively formats code using configured formatters (Black, isort, docformatter).
+Actively formats code using configured formatters:
+- Python: ruff (lint fixing), isort (imports), black (code), docformatter (docstrings)
+- JavaScript: prettier
+
 This script APPLIES changes, unlike validate_code.py which only checks.
 
 Usage:
@@ -94,14 +97,29 @@ class CodeFormatter:
             return False
 
     def format_python(self) -> bool:
-        """Format Python code using isort, black, and docformatter."""
+        """Format Python code using ruff, isort, black, and docformatter.
+
+        Order is important:
+        1. ruff --fix: Auto-fix linting issues (unused imports, etc.)
+        2. isort: Sort remaining imports
+        3. black: Format code structure
+        4. docformatter: Format docstrings
+        """
         print("\n" + "=" * 80)
         print("PYTHON CODE FORMATTING")
         print("=" * 80)
 
         all_passed = True
 
-        # 1. Sort imports (isort)
+        # 0. Fix linting issues with ruff (before other formatters)
+        # This removes unused imports, fixes simple linting issues, etc.
+        ruff_args = ["ruff", "check", "src", "tests", "scripts", "run.py", "apps"]
+        if not self.check_only:
+            ruff_args.append("--fix")
+
+        all_passed &= self.run_command(ruff_args, "Lint fixing (ruff)")
+
+        # 1. Sort imports (isort) - after ruff removes unused imports
         isort_args = ["isort", "src", "tests", "scripts", "run.py", "apps"]
         if self.check_only:
             isort_args.append("--check-only")

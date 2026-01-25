@@ -8,9 +8,37 @@ if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
     sys.stderr.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
 
-from dotenv import load_dotenv
 
-from src.app import create_app
+def check_setup():
+    """Verify that the environment is correctly set up.
+
+    This MUST be called before importing any project modules (src.app, etc.) to ensure
+    dependencies are available.
+    """
+    # Skip validation in CI/CD or E2E testing environments
+    # These environments might install dependencies globally (no .venv needed)
+    if os.environ.get("CI") or os.environ.get("E2E_TEST"):
+        return
+
+    # Setup Validation: Check if .venv exists
+    if not os.path.exists(".venv"):
+        print("\nERROR: Setup incomplete!")
+        print("Please run the setup script first:")
+        print("    .\\scripts\\setup.ps1")
+        print("\nThe application cannot start without proper setup.\n")
+        sys.exit(1)
+
+
+# =============================================================================
+# CRITICAL: Run setup check BEFORE importing any project modules!
+# This ensures dependencies exist before any Flask/SQLAlchemy code runs.
+# =============================================================================
+check_setup()
+
+# Now it's safe to import project modules (after setup is verified)
+from dotenv import load_dotenv  # noqa: E402
+
+from src.app import create_app  # noqa: E402
 
 # Load environment variables
 load_dotenv()
@@ -18,6 +46,7 @@ load_dotenv()
 # Initialize app with DEBUG=True to ensure development logging
 # (standard terminal output). This overrides any defaults from .env.
 app = create_app(config_overrides={"DEBUG": True})
+
 
 if __name__ == "__main__":
     # Support E2E test mode with custom port

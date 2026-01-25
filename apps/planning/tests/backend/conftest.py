@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 
 import pytest
 
@@ -62,6 +63,8 @@ def auth_client(client, app):
         _db.session.commit()
     with client.session_transaction() as sess:
         sess["user_id"] = 1
+        sess["username"] = "testuser"
+        sess["last_active"] = datetime.now(timezone.utc).timestamp()
         sess["_fresh"] = True
     return client
 

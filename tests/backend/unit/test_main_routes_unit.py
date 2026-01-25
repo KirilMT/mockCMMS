@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from src.routes.main import _get_technicians_and_teams, _process_mo_form
@@ -66,6 +67,7 @@ class TestMainRouteHelpers:
         with app.app_context():
             with client.session_transaction() as sess:
                 sess["user_id"] = 1
+                sess["last_active"] = datetime.now(timezone.utc).timestamp()
 
             with (
                 patch("src.routes.main.db") as mock_db,
@@ -113,6 +115,7 @@ class TestMainRouteHelpers:
         with app.app_context():
             with client.session_transaction() as sess:
                 sess["user_id"] = sample_user.id
+                sess["last_active"] = datetime.now(timezone.utc).timestamp()
 
             data = {
                 "asset_id": str(sample_asset.id),
@@ -135,6 +138,7 @@ class TestMainRouteHelpers:
 
             with client.session_transaction() as sess:
                 sess["user_id"] = sample_admin_user.id
+                sess["last_active"] = datetime.now(timezone.utc).timestamp()
 
             data = {
                 "username": "editeduser",
@@ -167,6 +171,7 @@ class TestMainRouteHelpers:
 
             with client.session_transaction() as sess:
                 sess["user_id"] = sample_user.id
+                sess["last_active"] = datetime.now(timezone.utc).timestamp()
 
             with patch("src.routes.main.db.session.delete") as mock_delete:
                 mock_delete.side_effect = Exception("Delete Error")
@@ -191,6 +196,7 @@ class TestMainRouteHelpers:
 
             with client.session_transaction() as sess:
                 sess["user_id"] = sample_user.id
+                sess["last_active"] = datetime.now(timezone.utc).timestamp()
 
             # Detail
             assert client.get(f"/spare_parts/{part_id}").status_code == 200

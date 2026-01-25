@@ -436,6 +436,8 @@ def logged_in_user(client, sample_user):
     with client.session_transaction() as sess:
         sess["user_id"] = sample_user.id
         sess["username"] = sample_user.username
+        # Set last_active timestamp to prevent immediate session expiration
+        sess["last_active"] = datetime.now(timezone.utc).timestamp()
     return sample_user
 
 
