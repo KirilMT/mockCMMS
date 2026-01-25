@@ -94,10 +94,13 @@ def run_command(
         env["DATABASE_FILENAME"] = ":memory:"
 
         if force_all_apps:
-            # Force enable all known modular apps for full project health check
-            env["PLANNING_ENABLED"] = "true"
-            env["REPORTS_ENABLED"] = "true"
-            # Add future apps here to ensure they are always validated
+            # We no longer force enable here to avoid masking configuration issues.
+            # Instead, we rely on pyproject.toml and pytest-env.
+            # We must explicitly UNSET them from the subprocess env if they exist
+            # in the parent process to ensure perfect CI parity.
+            env.pop("PLANNING_ENABLED", None)
+            env.pop("REPORTS_ENABLED", None)
+            pass
 
         result = subprocess.run(
             command,
@@ -141,6 +144,17 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     print_header("PYTHON BACKEND VALIDATION")
 
     checks = []
+
+    # 0. Check for critical testing tools
+    print_section("Step 0/9: Dependency Check")
+    try:
+        import pytest_env  # noqa: F401
+
+        print_success("pytest-env is installed")
+    except ImportError:
+        print_error("pytest-env is MISSING. pyproject.toml env vars will be ignored!")
+        print_warning("Run: pip install pytest-env")
+        return False
 
     # 1. Import sorting (PEP 8)
     print_section("Step 1/9: Import Sorting (isort)")

@@ -25,8 +25,9 @@ class TestDataAggregator:
     scenarios."""
 
     @pytest.fixture
-    def aggregator(self):
-        return DataAggregator()
+    def aggregator(self, app):
+        with app.app_context():
+            yield DataAggregator()
 
     # =========================================================================
     # MOCKED LOGIC TESTS (Coverage Focused)

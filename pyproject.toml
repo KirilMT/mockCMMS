@@ -199,8 +199,8 @@ ignore_missing_imports = true
 explicit_package_bases = true
 namespace_packages = true
 mypy_path = "."
-# Check all Python code
-files = ["src", "tests", "scripts", "run.py", "apps"]
+# Check all Python code from the root to ensure unambiguous resolution
+files = ["."]
 exclude = [
     ".venv/",
     "node_modules/",

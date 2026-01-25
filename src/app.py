@@ -196,7 +196,7 @@ def create_app(config_overrides=None):
             except Exception as e:
                 app.logger.error("Database seeding failed: %s", e)
 
-            if get_env_bool("PLANNING_ENABLED", "false"):
+            if get_env_bool("PLANNING_ENABLED", "true"):
                 try:
                     from apps.planning.src.services.planning_db_utils import init_db
 
@@ -295,7 +295,7 @@ def _register_blueprints(app, csrf):
         except ImportError as e:
             app.logger.error("Reports module not available: %s", e)
 
-    if get_env_bool("PLANNING_ENABLED", "false"):
+    if get_env_bool("PLANNING_ENABLED", "true"):
         try:
             from apps.planning.src.routes.planning import planning_bp
 
@@ -369,7 +369,7 @@ def _register_request_handlers(app):
             return redirect(new_path, code=301)
         return None
 
-    planning_val = os.getenv("PLANNING_ENABLED", "False")
+    planning_val = os.getenv("PLANNING_ENABLED", "True")
     if planning_val.lower() in ("true", "1", "t") or app.testing:
 
         @app.before_request
@@ -433,5 +433,5 @@ def _register_context_processors(app):
     def inject_config():
         return {
             "PLANNING_ENABLED": get_env_bool("PLANNING_ENABLED", "true"),
-            "REPORTS_ENABLED": get_env_bool("REPORTS_ENABLED", "true"),
+            "REPORTS_ENABLED": get_env_bool("REPORTS_ENABLED", "false"),
         }
