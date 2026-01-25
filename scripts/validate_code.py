@@ -86,21 +86,24 @@ def run_command(
         # On Windows, use shell=True for npm/npx to find them in PATH
         use_shell = sys.platform == "win32" and command[0] in ("npm", "npx")
 
-        # Set PYTHONIOENCODING to force UTF-8 for subprocess to avoid cp1252 errors
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
-        # Force testing environment for all subprocesses started by this validator
-        env["TESTING"] = "1"
-        env["DATABASE_FILENAME"] = ":memory:"
+        # IRONCLAD MODE: Fresh, minimal env to mirror CI clean state.
+        # Blocks local shell variables from masking configuration gaps.
+        ironclad_env = {
+            "PATH": os.environ.get("PATH", ""),
+            "PYTHONPATH": os.environ.get("PYTHONPATH", "."),
+            "SYSTEMROOT": os.environ.get(
+                "SYSTEMROOT", ""
+            ),  # Essential for Windows subprocess
+            "PYTHONIOENCODING": "utf-8",
+            "TESTING": "1",
+            "DATABASE_FILENAME": ":memory:",
+            "CI": "true",  # Simulate CI environment for absolute parity
+        }
 
-        if force_all_apps:
-            # We no longer force enable here to avoid masking configuration issues.
-            # Instead, we rely on pyproject.toml and pytest-env.
-            # We must explicitly UNSET them from the subprocess env if they exist
-            # in the parent process to ensure perfect CI parity.
-            env.pop("PLANNING_ENABLED", None)
-            env.pop("REPORTS_ENABLED", None)
-            pass
+        # Whitelist other system-essential variables
+        for key in ["APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "USERPROFILE", "COMSPEC"]:
+            if key in os.environ:
+                ironclad_env[key] = os.environ[key]
 
         result = subprocess.run(
             command,
@@ -110,7 +113,7 @@ def run_command(
             errors="replace",  # Replace undecodable bytes instead of crashing
             shell=use_shell,  # Use shell on Windows for npm/npx
             check=check,
-            env=env,  # Use modified environment
+            env=ironclad_env,  # Use isolated minimal environment
         )
 
         if result.returncode == 0:

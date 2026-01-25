@@ -86,7 +86,7 @@ test.describe("Visual Regression - Planning App", () => {
 
     await expect(page).toHaveScreenshot("planning-schedule-detail.png", {
       fullPage: true,
-      maxDiffPixelRatio: 0.02, // Allow 2% tolerance for font rendering
+      maxDiffPixelRatio: 0.02, // Allow 2% tolerance for font rendering (Masks handle dynamic content)
       mask: [
         page.locator('input[name="csrf_token"]'),
         page.locator(".alert-success"), // Mask success toast with dynamic task count

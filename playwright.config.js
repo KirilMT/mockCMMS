@@ -52,6 +52,7 @@ module.exports = defineConfig({
   use: {
     // Use dedicated test port
     baseURL: "http://127.0.0.1:5001",
+    timezoneId: "UTC", // Force UTC for absolute visual regression parity across OSs
 
     // Capture evidence on failure
     screenshot: "only-on-failure",

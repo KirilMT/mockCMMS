@@ -203,10 +203,18 @@ class PlanningEngine:
         active_teams: List[Team] = []
         if is_odd_week:
             # Pattern 1: Team A (Early) and Team B (Late)
-            active_teams = Team.query.filter(Team.rotation_pattern == "Pattern 1").all()
+            active_teams = (
+                Team.query.filter(Team.rotation_pattern == "Pattern 1")
+                .order_by(Team.id)
+                .all()
+            )
         else:
             # Pattern 2: Team C (Early) and Team D (Late)
-            active_teams = Team.query.filter(Team.rotation_pattern == "Pattern 2").all()
+            active_teams = (
+                Team.query.filter(Team.rotation_pattern == "Pattern 2")
+                .order_by(Team.id)
+                .all()
+            )
 
         self._log(
             "info",
@@ -350,8 +358,8 @@ class PlanningEngine:
                 )
             ]
 
-        # Fetch all teams once
-        all_teams = Team.query.all()
+        # Fetch all teams once - use deterministic ordering
+        all_teams = Team.query.order_by(Team.id).all()
         from src.services.shift_utils import get_shift_teams
 
         # Iterate through shifts and assign tasks
@@ -517,11 +525,15 @@ class PlanningEngine:
         """
         plannable_tasks = []
 
-        # Get all unplanned or draft tasks for this schedule
-        tasks = PlanningTask.query.filter(
-            PlanningTask.schedule_id == schedule.id,
-            PlanningTask.status.in_(["Unplanned", "Draft"]),
-        ).all()
+        # Get all unplanned or draft tasks for this schedule - order by ID for parity
+        tasks = (
+            PlanningTask.query.filter(
+                PlanningTask.schedule_id == schedule.id,
+                PlanningTask.status.in_(["Unplanned", "Draft"]),
+            )
+            .order_by(PlanningTask.id)
+            .all()
+        )
 
         for task in tasks:
             mo = db.session.get(MaintenanceOrder, task.maintenance_order_id)
@@ -577,10 +589,15 @@ class PlanningEngine:
     def _get_available_technicians(self, schedule: Schedule) -> List[User]:
         """Get technicians available during the schedule period."""
         # In the new schema, technicians are Users with a team_id
-        # We also check availability_status
-        return User.query.filter(  # type: ignore[no-any-return]
-            User.team_id.isnot(None), User.availability_status == "Available"
-        ).all()
+        # We also check availability_status - order by ID for parity
+        return cast(
+            List[User],
+            User.query.filter(
+                User.team_id.isnot(None), User.availability_status == "Available"
+            )
+            .order_by(User.id)
+            .all(),
+        )
 
     def _filter_weekend_tasks(
         self, tasks: List[Tuple[PlanningTask, MaintenanceOrder]], result: PlanningResult
@@ -1170,8 +1187,8 @@ class PlanningEngine:
 
             tech_scores.append((tech, total_score, skill_count, avg_skill_level))
 
-        # Sort by total score (descending)
-        tech_scores.sort(key=lambda x: x[1], reverse=True)
+        # Sort by score (desc), then ID (asc) for 100% determinism
+        tech_scores.sort(key=lambda x: (-x[1], x[0].id))
 
         # Select team with experience balancing
         selected_team = self._balance_team_experience(tech_scores, team_size)
