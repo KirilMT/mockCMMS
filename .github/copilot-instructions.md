@@ -95,7 +95,8 @@ Every code change must follow this strict process for EACH file or module:
 
 **Quick Options:**
 
-- `python scripts/validate_code.py --quick` - Skip slow tests for faster iteration.
+- `python scripts/validate_code.py --quick` - **Quick Mode**: Skips slow tests and honors `.env` to only test active modular apps.
+- `python scripts/validate_code.py` - **Health Mode**: Exhaustive validation. Forces all modular apps ENABLED to ensure project-wide stability.
 - `python scripts/validate_code.py --backend` - Backend only.
 - `python scripts/validate_code.py --frontend` - Frontend only.
 
@@ -626,6 +627,8 @@ Write-Host "PROCESS FINISHED"
    python scripts/validate_code.py --quick
    ```
 
+   _(Note: Quick mode skips slow tests and only runs tests for modular apps enabled in your `.env`)_
+
 2. ✅ **Make code changes**
 
 3. ✅ **AFTER making code changes** - Run full validation:
@@ -662,6 +665,12 @@ The `validate_code.py` script runs ALL checks that CI will run:
 - Jest unit tests with coverage
 - Playwright E2E tests
 - Visual regression tests (screenshots)
+
+**Modular App Handling:**
+
+- All modular apps in `apps/` are subject to global linting, formatting, and type checking to prevent code rot.
+- Tests for modular apps are dynamically collected based on environment variables (e.g., `PLANNING_ENABLED`).
+- **Health Mode** (running `validate_code.py` without `--quick`) forces all apps ENABLED to verify total project health.
 
 **Configuration Files:**
 

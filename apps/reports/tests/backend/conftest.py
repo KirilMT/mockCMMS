@@ -1,11 +1,6 @@
 import os
-import sys
 
 import pytest
-
-sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-)
 
 from src.app import create_app  # noqa: E402
 from src.services.db_utils import db as _db  # noqa: E402

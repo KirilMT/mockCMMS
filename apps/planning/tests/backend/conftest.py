@@ -1,17 +1,6 @@
 import os
-import sys
 
 import pytest
-
-# Add paths for imports
-base_path = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
-)
-src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
-sys.path.append(base_path)
-sys.path.append(src_path)
-
-os.environ["TESTING"] = "1"
 
 from apps.planning.src.services.planning_db_utils import init_db  # noqa: E402
 from src.app import create_app  # noqa: E402

@@ -64,7 +64,10 @@ def print_warning(message: str) -> None:
 
 
 def run_command(
-    command: List[str], description: str, check: bool = True
+    command: List[str],
+    description: str,
+    check: bool = True,
+    force_all_apps: bool = False,
 ) -> Tuple[bool, str]:
     """Run a shell command and return success status and output.
 
@@ -72,6 +75,7 @@ def run_command(
         command: Command and arguments as a list
         description: Human-readable description of what's being checked
         check: Whether to check return code (default: True)
+        force_all_apps: Whether to force enable all modular apps (default: False)
 
     Returns:
         Tuple of (success: bool, output: str)
@@ -87,8 +91,13 @@ def run_command(
         env["PYTHONIOENCODING"] = "utf-8"
         # Force testing environment for all subprocesses started by this validator
         env["TESTING"] = "1"
-        env["PLANNING_ENABLED"] = "true"
         env["DATABASE_FILENAME"] = ":memory:"
+
+        if force_all_apps:
+            # Force enable all known modular apps for full project health check
+            env["PLANNING_ENABLED"] = "true"
+            env["REPORTS_ENABLED"] = "true"
+            # Add future apps here to ensure they are always validated
 
         result = subprocess.run(
             command,
@@ -127,7 +136,7 @@ def run_command(
         return False, f"Command not found: {command[0]}"
 
 
-def validate_python_backend(quick: bool = False) -> bool:
+def validate_python_backend(quick: bool = False, force_all_apps: bool = True) -> bool:
     """Run all Python backend validation checks."""
     print_header("PYTHON BACKEND VALIDATION")
 
@@ -138,6 +147,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     success, _ = run_command(
         ["isort", "src", "apps", "tests", "scripts", "run.py", "--check-only"],
         "Import sorting check",
+        force_all_apps=True,
     )
     checks.append(("Import Sorting", success))
 
@@ -146,6 +156,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     success, _ = run_command(
         ["black", "--check", "src", "apps", "tests", "scripts", "run.py"],
         "Code formatting check",
+        force_all_apps=True,
     )
     checks.append(("Code Formatting", success))
 
@@ -154,13 +165,16 @@ def validate_python_backend(quick: bool = False) -> bool:
     success, _ = run_command(
         ["docformatter", "--check", "-r", "src", "apps", "tests", "scripts", "run.py"],
         "Docstring formatting check",
+        force_all_apps=True,
     )
     checks.append(("Docstring Formatting", success))
 
     # 4. Linting (Ruff - fast, comprehensive)
     print_section("Step 4/9: Linting (ruff)")
     success, _ = run_command(
-        ["ruff", "check", "src", "apps", "tests", "scripts", "run.py"], "Ruff linting"
+        ["ruff", "check", "src", "apps", "tests", "scripts", "run.py"],
+        "Ruff linting",
+        force_all_apps=True,
     )
     checks.append(("Ruff Linting", success))
 
@@ -172,6 +186,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     success, _ = run_command(
         ["flake8", ".", "--exclude", exclude_dirs],
         "Flake8 linting",
+        force_all_apps=True,
     )
     checks.append(("Flake8 Linting", success))
 
@@ -180,13 +195,16 @@ def validate_python_backend(quick: bool = False) -> bool:
     success, _ = run_command(
         ["mypy"],  # Uses pyproject.toml: files=["src","tests","scripts","run.py"]
         "Type checking",
+        force_all_apps=True,
     )
     checks.append(("Type Checking", success))
 
     # 7. Security scanning (Bandit)
     print_section("Step 7/9: Security Scanning (bandit)")
     success, _ = run_command(
-        ["bandit", "-r", "src/", "apps/", "-ll"], "Security scanning"
+        ["bandit", "-r", "src/", "apps/", "-ll"],
+        "Security scanning",
+        force_all_apps=True,
     )
     checks.append(("Security Scanning", success))
 
@@ -195,7 +213,9 @@ def validate_python_backend(quick: bool = False) -> bool:
     if quick:
         print_warning("Quick mode: Skipping full test suite")
         success, _ = run_command(
-            ["pytest", "-c", "pyproject.toml", "-x", "--tb=short"], "Quick test run"
+            ["pytest", "-c", "pyproject.toml", "-x", "--tb=short"],
+            "Quick test run",
+            force_all_apps=force_all_apps,
         )
         checks.append(("Tests", success))
     else:
@@ -211,6 +231,7 @@ def validate_python_backend(quick: bool = False) -> bool:
                 "--cov-report=xml",  # Required for diff-cover
             ],
             "Full test suite with coverage",
+            force_all_apps=force_all_apps,
         )
         checks.append(("Tests with Coverage", success))
 
@@ -228,6 +249,7 @@ def validate_python_backend(quick: bool = False) -> bool:
                 "-q",
             ],
             "Coverage threshold check (>= 82%)",
+            force_all_apps=force_all_apps,
         )
         checks.append(("Total Coverage Threshold", success))
 
@@ -273,7 +295,9 @@ def validate_python_backend(quick: bool = False) -> bool:
     return all_passed
 
 
-def validate_javascript_frontend(quick: bool = False) -> bool:
+def validate_javascript_frontend(
+    quick: bool = False, force_all_apps: bool = True
+) -> bool:
     """Run all JavaScript frontend validation checks."""
     print_header("JAVASCRIPT FRONTEND VALIDATION")
 
@@ -301,6 +325,7 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
             "--report-unused-disable-directives",
         ],
         "ESLint check",
+        force_all_apps=force_all_apps,
     )
     checks.append(("ESLint", success))
 
@@ -316,6 +341,7 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
             "--coverageReporters=lcov",
         ],
         "Jest tests with coverage",
+        force_all_apps=force_all_apps,
     )
     checks.append(("Jest Tests", success))
 
@@ -325,6 +351,7 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
         success, _ = run_command(
             ["npx", "playwright", "test", "--project=chromium"],
             "Playwright E2E tests (chromium)",
+            force_all_apps=force_all_apps,
         )
         checks.append(("E2E Tests", success))
     else:
@@ -431,6 +458,8 @@ Examples:
     run_backend = args.backend or not args.frontend
     run_frontend = args.frontend or not args.backend
     run_config = not args.no_config
+    # Force enable all apps for full validation (unless quick mode is used locally)
+    force_all_apps = not args.quick
 
     print_header("MOCKCMMS CODE VALIDATION")
     print(f"{Colors.OKCYAN}This script simulates the CI pipeline locally.{Colors.ENDC}")
@@ -440,11 +469,15 @@ Examples:
 
     # Run validations
     if run_backend:
-        backend_passed = validate_python_backend(quick=args.quick)
+        backend_passed = validate_python_backend(
+            quick=args.quick, force_all_apps=force_all_apps
+        )
         results.append(("Backend", backend_passed))
 
     if run_frontend:
-        frontend_passed = validate_javascript_frontend(quick=args.quick)
+        frontend_passed = validate_javascript_frontend(
+            quick=args.quick, force_all_apps=force_all_apps
+        )
         results.append(("Frontend", frontend_passed))
 
     if run_config:

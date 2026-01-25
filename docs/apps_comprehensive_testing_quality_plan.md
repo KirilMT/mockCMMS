@@ -10,6 +10,7 @@
 
 > [!IMPORTANT]
 > **📚 Related Documentation:**
+>
 > - **[Core Testing Plan](deprecated/comprehensive_testing_plan.md)** - Reference (261 tests, 82.99% coverage)
 > - **[Core Audit Plan](deprecated/core_code_quality_plan.md)** - 5-step iterative loop methodology
 > - **[Frontend Testing Plan](deprecated/frontend_testing_plan.md)** - Reference (519 tests, 80.8% coverage)
@@ -23,6 +24,7 @@
 ### Context
 
 **Planning App:** Imported from [WorkforceManager](https://github.com/KirilMT/WorkforceManager) and adapted to mockCMMS
+
 - ✅ Has 11 backend test files (70 tests counted)
 - ❌ **CRITICAL:** Tests use `Technician`/`TechnicianSkill` models (don't exist in mockCMMS)
 - ❌ **CRITICAL:** Tests may not run at all (import errors expected)
@@ -33,6 +35,7 @@
 - ⚠️ Code quality audit status unknown
 
 **Reports App:** Newly implemented by Google Jules
+
 - ✅ Implementation complete (weekend/shift/incident reports)
 - ⚠️ Only 5 basic tests in `test_reports.py`
 - ❌ No unit tests (models, services)
@@ -91,22 +94,22 @@ mockCMMS/
 
 ### Execution Commands
 
+**Unified Command (Recommended):**
+
 ```bash
-# Planning app
-cd apps/planning
-pytest tests/                      # All tests
-pytest tests/unit/                 # Unit only
-pytest --cov=src --cov-report=html # With coverage
+python scripts/validate_code.py            # Health Mode (Verify all apps)
+python scripts/validate_code.py --quick    # Developer Mode (Honors .env flags)
+```
 
-# Reports app
-cd apps/reports
-pytest tests/                      # All tests
-pytest tests/unit/                 # Unit only
-pytest --cov=src --cov-report=html # With coverage
+**Manual Pytest Execution:**
+Pytest uses a **Smart Collector** in the root directory.
 
-# Linting (from root)
-ruff check apps/planning/src/
-ruff check apps/reports/src/
+```bash
+# Skip specific apps during development
+$env:PLANNING_ENABLED="false"; pytest
+
+# Run all backend tests across all apps
+pytest
 ```
 
 ---
@@ -120,6 +123,7 @@ ruff check apps/reports/src/
 **Tasks:**
 
 **Task 0.1.1: Verify Planning App Integration**
+
 - [ ] Start mockCMMS: `python run.py`
 - [ ] Verify Planning app loads: Navigate to `/planning`
 - [ ] Check for errors in console/logs
@@ -128,6 +132,7 @@ ruff check apps/reports/src/
 - [ ] Document any integration issues
 
 **Task 0.1.2: Verify Reports App Integration**
+
 - [ ] Verify Reports app loads: Navigate to `/reports`
 - [ ] Check for errors in console/logs
 - [ ] Verify database tables exist (Incident)
@@ -136,6 +141,7 @@ ruff check apps/reports/src/
 - [ ] Document any integration issues
 
 **Task 0.1.3: Setup Test Environment**
+
 - [ ] Install test dependencies: `pip install -r requirements-dev.txt`
 - [ ] Verify pytest works: `pytest --version`
 - [ ] Verify coverage works: `pytest --cov=src tests/backend/unit/ --cov-report=term`
@@ -143,12 +149,14 @@ ruff check apps/reports/src/
 - [ ] Verify Playwright works: `playwright --version`
 - [ ] Install Jest: `npm install` (if package.json exists)
 
-**Task 0.1.4: Create Test Databases**
-- [ ] Planning: Create `apps/planning/instance/test_planning.db`
-- [ ] Reports: Create `apps/reports/instance/test_reports.db`
-- [ ] Verify in-memory SQLite works in tests
+**Task 0.1.4: Configure Dynamic Skipping**
+
+- [ ] Update `.env` with `PLANNING_ENABLED=true` and `REPORTS_ENABLED=true`.
+- [ ] Verify root `conftest.py` is active.
+- [ ] Verify in-memory SQLite works in tests.
 
 **BLOCKERS - DO NOT PROCEED IF:**
+
 - ❌ Apps don't load in browser
 - ❌ Database tables missing
 - ❌ Core models not accessible
@@ -163,6 +171,7 @@ ruff check apps/reports/src/
 **Priority:** 🔴 **CRITICAL**
 
 **Current Test Files (70 tests total):**
+
 1. `test_core.py` (12 tests) - ❌ **DELETE** (marked deprecated, uses old SQLite)
 2. `test_domain_models.py` (4 tests) - ❌ **BROKEN** (uses Technician/TechnicianSkill - don't exist)
 3. `test_health.py` (11 tests) - ⚠️ **VALIDATE**
@@ -181,6 +190,7 @@ ruff check apps/reports/src/
 **Validation Tasks:**
 
 **Task 1.1.1: Run All Tests & Document Failures**
+
 - [ ] Execute `pytest apps/planning/tests/ -v`
 - [ ] **Expected:** Most/all tests will FAIL
 - [ ] Document each failure:
@@ -192,12 +202,14 @@ ruff check apps/reports/src/
 - [ ] Estimate rewrite effort per file
 
 **Task 1.1.2: Analyze Failures**
+
 - [ ] Check for old model references (Technician vs User)
 - [ ] Check for old architecture patterns
 - [ ] Check for missing dependencies
 - [ ] Document required fixes per file
 
 **Task 1.1.3: Fix or Delete (MAJOR REWRITE REQUIRED)**
+
 - [ ] **DELETE** `test_core.py` (12 tests) - Already marked deprecated
 - [ ] **REWRITE** `test_domain_models.py` (4 tests - 100% rewrite):
   - Remove all `Technician` references → `User(role='Technician')`
@@ -226,6 +238,7 @@ ruff check apps/reports/src/
 - [ ] **Target:** 100% pass rate (58 tests after deleting 12)
 
 **Task 1.1.4: Reorganize Tests**
+
 - [ ] Create `tests/unit/` directory
 - [ ] Create `tests/functional/` directory
 - [ ] Create `tests/integration/` directory
@@ -242,6 +255,7 @@ ruff check apps/reports/src/
 **Estimated:** 70 existing tests (15 rewrite + 43 validate + 12 delete = 58 remaining)
 
 **CRITICAL BLOCKERS:**
+
 - ❌ Tests use non-existent models (Technician, TechnicianSkill)
 - ❌ Tests imported from WorkforceManager (different architecture)
 - ❌ Tests likely won't run at all (import errors)
@@ -256,6 +270,7 @@ ruff check apps/reports/src/
 **Core mockCMMS has these test categories - Planning app is missing:**
 
 **Missing Test Categories:**
+
 - [ ] **Security Tests** (0 tests) - XSS, SQL injection, CSRF, authentication
 - [ ] **Performance Tests** (0 tests) - Load testing, query optimization
 - [ ] **Route Tests** (0 tests) - All `/planning` endpoints
@@ -265,6 +280,7 @@ ruff check apps/reports/src/
 **Required New Tests:**
 
 **`tests/security/test_planning_security.py` (15 tests):**
+
 - [ ] `test_xss_prevention_in_task_names`
 - [ ] `test_sql_injection_prevention`
 - [ ] `test_csrf_protection_on_forms`
@@ -282,6 +298,7 @@ ruff check apps/reports/src/
 - [ ] `test_password_hashing_if_applicable`
 
 **`tests/functional/test_planning_routes.py` (20 tests):**
+
 - [ ] `test_planning_index_loads`
 - [ ] `test_planning_index_requires_auth`
 - [ ] `test_manage_mappings_loads`
@@ -304,6 +321,7 @@ ruff check apps/reports/src/
 - [ ] `test_500_server_error_handling`
 
 **`tests/performance/test_planning_performance.py` (8 tests):**
+
 - [ ] `test_large_dataset_planning` (100+ tasks)
 - [ ] `test_planning_engine_performance` (<5s for 50 tasks)
 - [ ] `test_gantt_rendering_performance`
@@ -320,6 +338,7 @@ ruff check apps/reports/src/
 **Priority:** 🔴 **CRITICAL**
 
 **JavaScript Files to Test:**
+
 - `static/js/index.js` (~200 lines)
 - `static/js/manage_mappings_main.js` (~300 lines)
 - `static/js/manage_mappings_globals.js`
@@ -336,6 +355,7 @@ ruff check apps/reports/src/
 **Total:** ~12 JavaScript files, ~2000+ lines of code
 
 **Test Structure:**
+
 ```
 tests/frontend/
 ├── unit/                          # Jest
@@ -392,6 +412,7 @@ tests/frontend/
 **Tasks:**
 
 **Task 1.4.1: Automated Analysis**
+
 - [ ] Run `ruff check apps/planning/src/`
 - [ ] Run `pylint apps/planning/src/`
 - [ ] Run `mypy apps/planning/src/`
@@ -403,6 +424,7 @@ tests/frontend/
 **Task 1.4.2: Python Backend Audit (5-Step Loop)**
 
 **Files to Audit (13 files):**
+
 - [ ] `src/routes/planning.py`
 - [ ] `src/services/planning_engine.py`
 - [ ] `src/services/planning_models.py`
@@ -418,6 +440,7 @@ tests/frontend/
 - [ ] `src/services/seeding.py`
 
 **Per File (5-Step Loop):**
+
 1. **Lint:** `ruff check [file]` → Fix all issues
 2. **Format:** `black [file]` → Review changes
 3. **Test:** `pytest tests/` → All must pass ✅
@@ -430,6 +453,7 @@ tests/frontend/
 5. **Loop/Complete:** If changes → Step 1; else commit ✅
 
 **Task 1.4.3: Frontend Audit**
+
 - [ ] Audit all templates (no inline JS/CSS)
 - [ ] Audit all JavaScript files (ESLint)
 - [ ] Audit all CSS files (Stylelint)
@@ -448,6 +472,7 @@ tests/frontend/
 **Target:** 76 comprehensive tests
 
 **Test Structure:**
+
 ```
 tests/
 ├── conftest.py                    # Fixtures
@@ -463,6 +488,7 @@ tests/
 ```
 
 **Task 2.1.1: Setup Test Infrastructure**
+
 - [ ] Create `tests/conftest.py` with fixtures:
   - `app` - Flask app with reports enabled
   - `client` - Test client
@@ -480,6 +506,7 @@ tests/
 **Task 2.1.2: Unit Tests (31 tests)**
 
 **`tests/unit/test_models.py` (9 tests):**
+
 - [ ] `test_incident_creation`
 - [ ] `test_incident_to_dict`
 - [ ] `test_incident_required_fields`
@@ -493,6 +520,7 @@ tests/
 **`tests/unit/test_services.py` (22 tests):**
 
 **DataAggregator (12 tests):**
+
 - [ ] `test_get_weekend_tasks_empty`
 - [ ] `test_get_weekend_tasks_with_data`
 - [ ] `test_get_weekend_tasks_date_filtering`
@@ -507,6 +535,7 @@ tests/
 - [ ] `test_get_incidents_multiple_filters`
 
 **ReportGenerator (10 tests):**
+
 - [ ] `test_generate_csv_with_tasks`
 - [ ] `test_generate_csv_with_incidents`
 - [ ] `test_generate_csv_empty_data`
@@ -523,6 +552,7 @@ tests/
 **`tests/functional/test_routes.py` (30 tests):**
 
 **Weekend Report (7 tests):**
+
 - [ ] `test_weekend_report_get_default_dates`
 - [ ] `test_weekend_report_get_custom_dates`
 - [ ] `test_weekend_report_with_tasks`
@@ -532,6 +562,7 @@ tests/
 - [ ] `test_weekend_report_invalid_dates`
 
 **Shift Report (8 tests):**
+
 - [ ] `test_shift_report_get_morning`
 - [ ] `test_shift_report_get_afternoon`
 - [ ] `test_shift_report_get_night`
@@ -542,6 +573,7 @@ tests/
 - [ ] `test_shift_report_invalid_shift`
 
 **Incident Routes (11 tests):**
+
 - [ ] `test_incident_list_empty`
 - [ ] `test_incident_list_with_data`
 - [ ] `test_incident_list_filter_by_type`
@@ -555,6 +587,7 @@ tests/
 - [ ] `test_incident_aggregate_export_pdf`
 
 **Original Reports (4 tests):**
+
 - [ ] `test_reports_index_loads`
 - [ ] `test_report_detail_loads`
 - [ ] `test_report_generate_form`
@@ -563,6 +596,7 @@ tests/
 **Task 2.1.4: Integration Tests (5 tests)**
 
 **`tests/integration/test_workflows.py` (5 tests):**
+
 - [ ] `test_complete_weekend_report_workflow`
 - [ ] `test_complete_shift_report_workflow`
 - [ ] `test_complete_incident_workflow`
@@ -572,6 +606,7 @@ tests/
 **Task 2.1.5: Security Tests (10 tests)**
 
 **`tests/security/test_validation.py` (10 tests):**
+
 - [ ] `test_incident_xss_prevention`
 - [ ] `test_incident_sql_injection_prevention`
 - [ ] `test_report_authentication_required`
@@ -588,6 +623,7 @@ tests/
 **Priority:** 🟡 **HIGH**
 
 **Test Structure:**
+
 ```
 tests/frontend/
 └── e2e/                           # Playwright
@@ -633,6 +669,7 @@ tests/frontend/
 **Priority:** 🔴 **CRITICAL**
 
 **Task 2.3.1: Automated Analysis**
+
 - [ ] Run `ruff check apps/reports/src/`
 - [ ] Run `pylint apps/reports/src/`
 - [ ] Run `mypy apps/reports/src/`
@@ -644,6 +681,7 @@ tests/frontend/
 **Task 2.3.2: Python Backend Audit (5-Step Loop)**
 
 **Files to Audit:**
+
 - [ ] `src/models.py`
 - [ ] `src/routes/reports.py`
 - [ ] `src/routes/weekend_report.py`
@@ -653,9 +691,11 @@ tests/frontend/
 - [ ] `src/services/report_generator.py`
 
 **Per File:**
+
 1. Lint → 2. Format → 3. Test → 4. Audit → 5. Loop/Complete
 
 **Task 2.3.3: Frontend Audit**
+
 - [ ] Audit all templates (no inline JS/CSS)
 - [ ] Audit CSS files
 - [ ] Verify accessibility
@@ -796,6 +836,7 @@ warn_unused_configs = true
 ### Planning App: 141 Total Tests
 
 **Existing Tests: 70 tests (58 after cleanup)**
+
 - `test_core.py`: 12 tests → **DELETE** (deprecated)
 - `test_domain_models.py`: 4 tests → **REWRITE** (100%)
 - `test_planning_engine.py`: 11 tests → **REWRITE** (80%)
@@ -810,17 +851,20 @@ warn_unused_configs = true
 - **Subtotal:** 70 tests (15 rewrite + 43 validate - 12 delete = 58 remaining)
 
 **New Backend Tests: 43 tests**
+
 - Security: 15 tests
 - Routes: 20 tests
 - Performance: 8 tests
 
 **New Frontend Tests: 40 tests**
+
 - Jest unit: ~15 tests
 - Playwright E2E: ~25 tests
 
 ### Reports App: 96 Total Tests
 
 **Backend: 76 tests (ALL NEW)**
+
 - Unit: 31 tests
   - Models: 9 tests
   - Services: 22 tests
@@ -833,6 +877,7 @@ warn_unused_configs = true
 - Security: 10 tests
 
 **Frontend: 20 tests (ALL NEW)**
+
 - Playwright E2E: 20 tests
   - Weekend report: 5 tests
   - Shift report: 5 tests
@@ -842,15 +887,18 @@ warn_unused_configs = true
 ### Grand Total: 237 Tests
 
 **Breakdown:**
+
 - Planning: 141 tests (58 existing + 43 new backend + 40 frontend)
 - Reports: 96 tests (76 backend + 20 frontend)
 
 **Effort Estimate:**
+
 - Planning: 15 tests to REWRITE + 43 tests to VALIDATE + 83 NEW tests
 - Reports: 96 NEW tests (from scratch)
 - **Total NEW/REWRITE:** 194 tests
 
 **Comparison to Core mockCMMS:**
+
 - Core: 780 tests (261 backend + 519 frontend) @ 82.99% coverage
 - Apps: 237 tests (177 backend + 60 frontend) @ 80%+ target
 - **Apps represent 30% of core test volume** (appropriate for modular apps)

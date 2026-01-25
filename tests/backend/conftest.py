@@ -6,19 +6,12 @@ sample data fixtures.
 """
 
 import os
-import sys
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
-# Add the project root to the Python path
+# Project root calculation needed for cleanup fixtures
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
-# Set TESTING globally to ensure apps/planning/src/config.py
-# picks up the correct DB (memory)
-os.environ["TESTING"] = "1"
 
 from src.app import create_app  # noqa: E402
 from src.services.db_utils import (  # noqa: E402
