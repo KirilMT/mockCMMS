@@ -156,6 +156,16 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
         print_warning("Run: pip install pytest-env")
         return False
 
+    # 0.1. Check for diff-cover
+    try:
+        import diff_cover  # noqa: F401
+
+        print_success("diff-cover is installed")
+    except ImportError:
+        print_error("diff-cover is MISSING. Patch coverage will not be enforced!")
+        print_warning("Run: pip install diff-cover")
+        return False
+
     # 1. Import sorting (PEP 8)
     print_section("Step 1/9: Import Sorting (isort)")
     success, _ = run_command(
@@ -244,10 +254,10 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
                 "--cov-report=html",
                 "--cov-report=xml",  # Required for diff-cover
             ],
-            "Full test suite with coverage",
+            "Full test suite with discovery (500+ tests)",
             force_all_apps=force_all_apps,
         )
-        checks.append(("Tests with Coverage", success))
+        checks.append(("Full Discovery Suite", success))
 
     # 9. Coverage validation (Total >= 82%)
     if not quick:

@@ -67,8 +67,8 @@ jobs:
 
       - name: Test with pytest and generate coverage
         run: |
-          # Run ALL tests (not just backend) with stricter coverage requirement
-          pytest tests/ \
+          # Run ALL tests to ensure 100% discovery (539+ tests)
+          pytest \
             --cov=src \
             --cov=apps \
             --cov-report=xml \
