@@ -14,9 +14,13 @@ from flask import g, has_app_context, has_request_context, request
 
 from src.app import create_app
 from src.services.db_utils import db
+from src.services.simulation_service import DataSimulationService
 
-# Default binds - prevents UnboundExecutionError for planning models
-TEST_SQLALCHEMY_BINDS = {"planning": "sqlite:///:memory:"}
+# Default binds - prevents UnboundExecutionError for modular models
+TEST_SQLALCHEMY_BINDS = {
+    "planning": "sqlite:///:memory:",
+    "reports": "sqlite:///:memory:",
+}
 
 
 def create_test_app(config=None):
@@ -218,9 +222,83 @@ class TestAppFactory:
         response = client.get("/nonexistent-route-12345")
         assert response.status_code == 404
 
-        # The response should be either JSON or HTML
         # depending on how error handlers are implemented
         assert response.data is not None
+
+    def test_inject_config_context(self, app):
+        """Test inject_config context processor."""
+        with app.app_context():
+            # Get context processor function
+            context_processors = app.template_context_processors[None]
+            inject_config = next(
+                p for p in context_processors if p.__name__ == "inject_config"
+            )
+            ctx = inject_config()
+            assert "PLANNING_ENABLED" in ctx
+            assert "REPORTS_ENABLED" in ctx
+            assert ctx["PLANNING_ENABLED"] is True  # New default
+
+    def test_simulate_data_cli(self, app):
+        """Test simulate-data CLI command execution coverage."""
+        runner = app.test_cli_runner()
+        # Mock actual services to avoid side effects
+        with (
+            patch.object(
+                DataSimulationService, "generate_random_assets", return_value=[]
+            ),
+            patch.object(
+                DataSimulationService, "generate_random_users", return_value=[]
+            ),
+            patch.object(
+                DataSimulationService, "generate_random_orders", return_value=[]
+            ),
+        ):
+            result = runner.invoke(args=["simulate-data", "--count", "1"])
+            assert result.exit_code == 0
+            assert "Generated 0 assets" in result.output
+
+    def test_close_db_coverage(self, app):
+        """Test close_db coverage branch."""
+        with app.app_context():
+            # Set a mock DB connection in g
+            mock_conn = MagicMock()
+            g.db = mock_conn
+            from src.app import close_db
+
+            close_db()
+            # Conn should be closed
+            assert mock_conn.close.called
+            # And popped from g
+            assert "db" not in g
+
+    def test_makedirs_error_handling(self):
+        """Test error handling when directory creation fails in create_app."""
+        with patch("src.app.os.makedirs", side_effect=OSError("Drive full")):
+            # Patch the logger on the Flask class or instance
+            with patch("flask.Flask.logger") as mock_logger:
+                # Force non-memory DB to reach makedirs
+                app = create_app(
+                    {"SQLALCHEMY_DATABASE_URI": "sqlite:///nonexistent/test.db"}
+                )
+                assert app is not None
+                # Verify logger was called with error
+                assert mock_logger.error.called
+
+    def test_reports_seeding_error_coverage(self):
+        """Test coverage for reports/planning seeding error scenarios."""
+        # Mock populate_dummy_data to succeed, but reports seeding to fail
+        with (
+            patch("src.app.populate_dummy_data"),
+            patch(
+                "apps.reports.src.services.seeding.seed_reports_data",
+                side_effect=Exception("Reports BOOM"),
+            ),
+            patch("src.app.LoggingConfig.setup_logging"),
+        ):
+            # Set env vars to trigger seeding
+            with patch.dict(os.environ, {"REPORTS_ENABLED": "true"}):
+                app = create_app({"AUTO_SEED_DATABASE": True, "TESTING": True})
+                assert app is not None
 
 
 class TestAppConfiguration:
@@ -733,12 +811,13 @@ class TestCoverageImprovements:
         """Trigger the production DB default branch in src/app.py."""
         # surgically remove vars that would trigger other branches,
         # but don't clear everything which can break coverage internals
-        if "TESTING_PRODUCTION" in os.environ:
-            del os.environ["TESTING_PRODUCTION"]
-        if "E2E_TEST" in os.environ:
-            del os.environ["E2E_TEST"]
-        if "TESTING" in os.environ:
-            del os.environ["TESTING"]
-        app = create_app({"TESTING": False})
-        # Check that it uses mockcmms.db (the production default)
-        assert "mockcmms.db" in app.config["SQLALCHEMY_DATABASE_URI"]
+        if "PLANNING_ENABLED" in os.environ:
+            del os.environ["PLANNING_ENABLED"]
+        if "REPORTS_ENABLED" in os.environ:
+            del os.environ["REPORTS_ENABLED"]
+
+        # Mock db.create_all and seeders to prevent side effects
+        with patch("src.app.db.create_all"), patch("src.app.populate_dummy_data"):
+            app = create_app({"TESTING": False})
+            # Check that it uses mockcmms.db (the production default)
+            assert "mockcmms.db" in app.config["SQLALCHEMY_DATABASE_URI"]

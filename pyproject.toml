@@ -67,6 +67,7 @@ env = [
     "TESTING=1",
     "DATABASE_FILENAME=:memory:",
     "PLANNING_ENABLED=true",
+    "REPORTS_ENABLED=true",
 ]
 
 
@@ -195,7 +196,9 @@ python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
-# Check all Python code except apps/ (modular apps have their own CI)
+explicit_package_bases = true
+namespace_packages = true
+mypy_path = "."
 # Check all Python code
 files = ["src", "tests", "scripts", "run.py", "apps"]
 exclude = [

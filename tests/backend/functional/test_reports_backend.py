@@ -203,3 +203,64 @@ class TestReportsBackend:
             data={"start_date": "2024-01-01", "end_date": "2024-01-02"},
         )
         assert response.status_code == 200
+
+
+class TestReportsIncidentsFunctional:
+    """High-fidelity functional tests for incidents blueprint routes."""
+
+    def test_incident_list_empty(self, client):
+        """Test listing incidents when none exist."""
+        from src.services.db_utils import db
+
+        with client.application.app_context():
+            db.create_all()
+        response = client.get("/reports/incidents/")
+        assert response.status_code == 200
+        assert b"Incident Reports" in response.data
+
+    def test_create_incident_success(self, client):
+        """Test successful incident creation verified in DB."""
+        from apps.reports.src.models import Incident
+        from src.services.db_utils import db
+
+        with client.application.app_context():
+            db.create_all()
+        data = {
+            "incident_type": "Breakdown",
+            "equipment_line": "Line 1",
+            "description": "Functional Test failure",
+            "severity": "High",
+        }
+        response = client.post("/reports/incidents/", data=data, follow_redirects=True)
+        assert response.status_code == 200
+        assert b"Incident logged successfully" in response.data
+        with client.application.app_context():
+            incident = Incident.query.filter_by(
+                description="Functional Test failure"
+            ).first()
+            assert incident is not None
+            assert incident.severity == "High"
+
+    def test_incident_export_success(self, client, tmp_path):
+        """Test exporting incidents as CSV using real filesystem path."""
+        from apps.reports.src.models import Incident
+        from apps.reports.src.services.report_generator import ReportGenerator
+        from src.services.db_utils import db
+
+        with client.application.app_context():
+            db.create_all()
+            inc = Incident(
+                incident_type="Maintenance",
+                equipment_line="Line 2",
+                description="Export Test",
+                severity="Low",
+                technician_name="TestBot",
+            )
+            db.session.add(inc)
+            db.session.commit()
+        data = {"start_date": "2020-01-01", "end_date": "2030-12-31", "format": "csv"}
+        with pytest.MonkeyPatch().context() as m:
+            m.setattr(ReportGenerator, "reports_dir", str(tmp_path))
+            response = client.post("/reports/incidents/aggregate/export", data=data)
+            assert response.status_code == 200
+            assert response.headers["Content-Disposition"].startswith("attachment")

@@ -245,10 +245,10 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
                 "pyproject.toml",
                 "--cov=src",
                 "--cov=apps",
-                "--cov-fail-under=82",
+                "--cov-fail-under=85",
                 "-q",
             ],
-            "Coverage threshold check (>= 82%)",
+            "Coverage threshold check (>= 85%)",
             force_all_apps=force_all_apps,
         )
         checks.append(("Total Coverage Threshold", success))

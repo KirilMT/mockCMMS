@@ -62,7 +62,8 @@ class DataAggregator:
             if filters.get("end_date"):
                 query = query.filter(
                     Incident.timestamp
-                    <= datetime.strptime(filters["end_date"], "%Y-%m-%d")
+                    < datetime.strptime(filters["end_date"], "%Y-%m-%d")
+                    + timedelta(days=1)
                 )
 
         return [incident.to_dict() for incident in query.all()]

@@ -99,8 +99,8 @@ class ReportGenerator:
 
         mos = MaintenanceOrder.query.filter(
             MaintenanceOrder.status == "Completed",
-            MaintenanceOrder.completion_date >= saturday,
-            MaintenanceOrder.completion_date <= sunday + timedelta(days=1),
+            MaintenanceOrder.modified_on >= saturday,
+            MaintenanceOrder.modified_on <= sunday + timedelta(days=1),
         ).all()
 
         return {

@@ -24,20 +24,24 @@ from .services.simulation_service import DataSimulationService
 # UnboundExecutionError when the module is disabled. C0415 is acceptable here.
 
 
+def get_env_bool(name, default="true"):
+    """Get boolean value from environment variable."""
+    return os.getenv(name, default).lower() in ("true", "1", "t", "yes")
+
+
 def create_app(config_overrides=None):
     """Create and configure the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
     # --- Configuration ---
     # Check if running in E2E test mode
-    is_e2e = os.environ.get("E2E_TEST", "False").lower() in ("true", "1", "t")
+    is_e2e = get_env_bool("E2E_TEST", "false")
 
     app.config.from_mapping(
         SECRET_KEY=os.getenv("SECRET_KEY", "dev_key_fallback_for_testing"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        TESTING=os.environ.get("TESTING", "0") == "1",
-        AUTO_SEED_DATABASE=os.getenv("AUTO_SEED_DATABASE", "True").lower()
-        in ("true", "1", "t"),
+        TESTING=get_env_bool("TESTING", "false"),
+        AUTO_SEED_DATABASE=get_env_bool("AUTO_SEED_DATABASE", "true"),
         # Disable rate limiting for E2E tests to prevent timeouts/failures
         RATELIMIT_ENABLED=not is_e2e,
         RATELIMIT_STORAGE_URI="memory://",
@@ -81,11 +85,7 @@ def create_app(config_overrides=None):
     # Configure Binds for Modular Apps
     binds = app.config.get("SQLALCHEMY_BINDS", {}).copy()
 
-    planning_enabled = os.getenv("PLANNING_ENABLED", "False").lower() in (
-        "true",
-        "1",
-        "t",
-    )
+    planning_enabled = get_env_bool("PLANNING_ENABLED", "true")
 
     if planning_enabled or app.testing:
         if "planning" not in binds:
@@ -110,11 +110,7 @@ def create_app(config_overrides=None):
                 app.config["DATABASE_PATH"] = planning_db_path
                 binds["planning"] = f"sqlite:///{planning_db_path}"
 
-    reports_enabled = os.getenv("REPORTS_ENABLED", "False").lower() in (
-        "true",
-        "1",
-        "t",
-    )
+    reports_enabled = get_env_bool("REPORTS_ENABLED", "true")
     if reports_enabled or app.testing:
         if "reports" not in binds:
             if app.testing and not os.environ.get("E2E_TEST"):
@@ -138,8 +134,17 @@ def create_app(config_overrides=None):
     app.config["SQLALCHEMY_BINDS"] = binds
 
     # Setup Logging
-    LoggingConfig.setup_logging(app)
-    db.init_app(app)
+    try:
+        LoggingConfig.setup_logging(app)
+    except OSError as e:
+        # Fallback if log directory cannot be created
+        app.logger.error("Failed to setup logging directory: %s", e)
+    try:
+        db.init_app(app)
+        app.config["DB_INITIALIZED"] = True
+    except OSError as e:
+        app.config["DB_INITIALIZED"] = False
+        app.logger.error("Failed to initialize database: %s", e)
 
     if is_e2e:
         app.config["WTF_CSRF_ENABLED"] = False
@@ -179,15 +184,17 @@ def create_app(config_overrides=None):
     app_ctx = app.app_context()
     app_ctx.__enter__()
     try:
-        db.create_all()
-        if app.config.get("AUTO_SEED_DATABASE", True):
+        if app.config.get("DB_INITIALIZED"):
+            db.create_all()
+        if app.config.get("AUTO_SEED_DATABASE", True) and app.config.get(
+            "DB_INITIALIZED"
+        ):
             try:
                 populate_dummy_data(app.logger)
             except Exception as e:
                 app.logger.error("Database seeding failed: %s", e)
 
-            planning_val = os.getenv("PLANNING_ENABLED", "False")
-            if planning_val.lower() in ("true", "1", "t"):
+            if get_env_bool("PLANNING_ENABLED", "false"):
                 try:
                     from apps.planning.src.services.planning_db_utils import init_db
 
@@ -209,8 +216,7 @@ def create_app(config_overrides=None):
                 except Exception as e:
                     app.logger.error("Planning App seeding failed: %s", e)
 
-            reports_val = os.getenv("REPORTS_ENABLED", "False")
-            if reports_val.lower() in ("true", "1", "t"):
+            if get_env_bool("REPORTS_ENABLED", "false"):
                 try:
                     from apps.reports.src.services.seeding import seed_reports_data
 
@@ -259,8 +265,7 @@ def _register_blueprints(app, csrf):
 
     app.register_blueprint(simulation_bp)
 
-    reports_val = os.getenv("REPORTS_ENABLED", "False")
-    if reports_val.lower() in ("true", "1", "t"):
+    if get_env_bool("REPORTS_ENABLED", "false"):
         try:
             from apps.reports.src.routes.reports import reports_bp
 
@@ -288,8 +293,7 @@ def _register_blueprints(app, csrf):
         except ImportError as e:
             app.logger.error("Reports module not available: %s", e)
 
-    planning_val = os.getenv("PLANNING_ENABLED", "False")
-    if planning_val.lower() in ("true", "1", "t"):
+    if get_env_bool("PLANNING_ENABLED", "false"):
         try:
             from apps.planning.src.routes.planning import planning_bp
 
@@ -316,6 +320,13 @@ def _register_blueprints(app, csrf):
                     app.logger.error("Failed to create Planning directory: %s", e)
         except Exception as e:
             app.logger.error("Planning App not available: %s", e)
+
+
+def close_db(_exception=None):
+    """Gracefully close the database connection."""
+    db_conn = g.pop("db", None)
+    if db_conn is not None:
+        db_conn.close()
 
 
 def _register_request_handlers(app):
@@ -370,12 +381,6 @@ def _register_request_handlers(app):
                     return jsonify({"error": "Database connection failed"}), 503
             return None
 
-    @app.teardown_appcontext
-    def close_db(_exception=None):
-        db_conn = g.pop("db", None)
-        if db_conn is not None:
-            db_conn.close()
-
     app.teardown_request(close_db)
 
     @app.after_request
@@ -399,9 +404,7 @@ def _register_request_handlers(app):
 def _register_context_processors(app):
     @app.context_processor
     def inject_config():
-        p_enabled = os.getenv("PLANNING_ENABLED", "False").lower() in ("true", "1", "t")
-        r_enabled = os.getenv("REPORTS_ENABLED", "False").lower() in ("true", "1", "t")
         return {
-            "PLANNING_ENABLED": p_enabled,
-            "REPORTS_ENABLED": r_enabled,
+            "PLANNING_ENABLED": get_env_bool("PLANNING_ENABLED", "true"),
+            "REPORTS_ENABLED": get_env_bool("REPORTS_ENABLED", "true"),
         }

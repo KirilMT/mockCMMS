@@ -121,20 +121,7 @@ def db_session(app):
         Session: SQLAlchemy database session
     """
     with app.app_context():
-        # Start a transaction
-        connection = db.engine.connect()
-        transaction = connection.begin()
-
-        # Bind session to the connection
-        session = db.create_scoped_session(options={"bind": connection})
-        db.session = session
-
-        yield session
-
-        # Rollback transaction and close connection
-        transaction.rollback()
-        connection.close()
-        session.remove()
+        yield db.session
 
 
 @pytest.fixture(scope="function")
