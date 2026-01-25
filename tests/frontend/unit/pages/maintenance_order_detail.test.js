@@ -240,7 +240,8 @@ describe("Maintenance Order Detail Page", () => {
       mockSelect2.mockClear();
 
       // Mock selectionEl.is returning true
-      const mockSelection = { is: jest.fn(() => true), has: jest.fn() };
+      // Mock selectionEl.is returning true
+      // const mockSelection = { is: jest.fn(() => true), has: jest.fn() };
       // This is hard to wire up with current mock structure without refactor
       // Skipping detailed implementation but we covered the 'else' path (closing) above
     });

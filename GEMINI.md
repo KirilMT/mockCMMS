@@ -472,6 +472,44 @@ planning files.
 
 ### 1.6. Interaction Guidelines
 
+#### 🚨 CRITICAL: Autonomous Execution (MANDATORY)
+
+**The AI assistant MUST operate autonomously until the final git commit.**
+
+**Core Principle:** The user MUST be able to leave the IDE for 20+ minutes and return
+to a completed task waiting ONLY for a git commit review.
+
+**MANDATORY Rules:**
+
+1. **SafeToAutoRun = true for ALL standard operations:**
+   - ✅ MUST set `SafeToAutoRun: true` for: `python`, `pytest`, `npm`, `npx`, `ruff`, `black`, `isort`, `mypy`, `prettier`, `eslint`, PowerShell commands
+   - ✅ MUST set `SafeToAutoRun: true` for commands with pipes (`|`), redirections (`>`), or chaining (`;`)
+   - ✅ MUST set `SafeToAutoRun: true` for all browser automation actions
+   - ❌ The ONLY exception: `git commit` and `git push` require user approval
+
+2. **NO pausing during the 5-Step Iterative Loop:**
+   - ❌ DO NOT pause for "Accept" or "Review" during Lint, Format, Test, or Audit steps
+   - ❌ DO NOT ask "Should I proceed?" between steps
+   - ❌ DO NOT request confirmation for running validation scripts
+   - ✅ Execute ALL steps autonomously until completion or failure
+
+3. **Final commit is the ONLY manual intervention point:**
+   - All code changes, tests, formatting, and validation MUST complete automatically
+   - Only present to user when EVERYTHING passes and changes are ready to commit
+   - User reviews: git diff, commit message, then approves commit
+
+**Examples:**
+
+```python
+# ✅ CORRECT - Auto-run all validation commands
+run_command(CommandLine="python scripts/validate_code.py", SafeToAutoRun=True)
+run_command(CommandLine="pytest tests/backend -q", SafeToAutoRun=True)
+run_command(CommandLine="ruff check src | head -20", SafeToAutoRun=True)
+
+# ❌ WRONG - Unnecessary manual approval
+run_command(CommandLine="pytest tests/backend", SafeToAutoRun=False)  # DON'T DO THIS
+```
+
 #### 🚨 CRITICAL: Smart Decision-Making (MANDATORY)
 
 **DO NOT ask unnecessary questions or request user review for things you can
@@ -494,6 +532,7 @@ verify yourself.**
 - ❌ "Which cleanup phase should I do?" (if user said "do all", do all)
 - ❌ "Should I run tests?" (always run tests automatically)
 - ❌ "Can I proceed?" (if you have all information, proceed)
+- ❌ "Is it safe to run this command?" (if it's validation/formatting, JUST RUN IT)
 
 **Examples of NECESSARY questions:**
 
@@ -541,23 +580,6 @@ hours of work.
 - **Step-by-Step:** When provided with a numbered list of changes or a
   multi-step plan (e.g., "Prompt 1:", "Prompt 2:"), focus your response and any
   code modifications only on the current step or prompt being asked about.
-- **Auto-Run Preference:** When executing standard, non-destructive terminal
-  commands (specifically running Python files like `run.py` or executing tests
-  via `pytest`), prefer setting `SafeToAutoRun` to `true` to streamline the
-  workflow, rather than asking for explicit user permission each time.
-- **Browser Auto-Run Preference:** When using browser automation tools for
-  verification and testing, prefer executing browser commands automatically
-  without requesting user approval for each action. This streamlines the
-  verification workflow and reduces interruptions. Only request user approval
-  for destructive browser actions or when user input is genuinely required.
-  - **JavaScript Execution:** Always execute JavaScript code automatically
-    during browser testing without requesting user permission. This includes
-    overriding browser confirmations (e.g.,
-    `window.confirm = function() { return true; }`), manipulating DOM elements,
-    and executing test scripts.
-  - **Confirmation Dialogs:** Automatically override `window.confirm`,
-    `window.alert`, and `window.prompt` functions when needed for automated
-    testing to prevent blocking the test flow.
 - **Server Check Before Browser Automation (MANDATORY):** Before using any
   browser automation tools (browser_subagent), ALWAYS check if the development
   server is running by checking the metadata for running terminal commands. If
@@ -565,6 +587,53 @@ hours of work.
   list), start it first using `run_command` with appropriate wait time. Never
   assume the server is running based on browser subagent errors - always verify
   from metadata first.
+
+#### 1.6.1. Execution of Long-Running Commands (Heartbeat Pattern) (MANDATORY)
+
+**Problem**: The Agent uses stream monitoring to detect command completion. If a long-running command (like validation or tests) produces no output for >30 seconds (e.g., because output is redirected to a file), the Agent's watchdog timer will erroneously timeout and assume the command is stuck or finished.
+
+**Solution**: Use the **Heartbeat Pattern** for ANY command expected to run longer than 30 seconds without frequent output.
+
+**The Heartbeat Pattern:**
+
+1. Run the command as a PowerShell background job.
+2. Redirect output to a **DEBUG LOG FILE** (see rules below).
+3. Print a "heartbeat" message every 5 seconds to keep the stream active.
+4. Explicitly signal completion.
+
+**Debug Log File Rules:**
+
+- **Location**: ALWAYS use `logs/` directory (create if missing).
+- **Extension**: MUST use `.log` extension.
+- **Naming**: Use distinct names to avoid conflicts (e.g., `debug_validation_TIMESTAMP.log` or `debug_test_run.log`).
+- **Cleanup**: AI Agent MUST delete these files after reading content.
+- **Example**: `logs/debug_backend_validation.log`
+
+**Standard Heartbeat Command Template:**
+
+```powershell
+$job = Start-Job -ScriptBlock {
+    YOUR_COMMAND_HERE > logs/debug_output.log 2>&1
+}
+while ($job.State -eq 'Running') {
+    Write-Host "Still working... $(Get-Date -Format 'HH:mm:ss')"
+    Start-Sleep -Seconds 5
+}
+Receive-Job $job
+Write-Host "PROCESS FINISHED"
+```
+
+**When to Use:**
+
+- Running `scripts/validate_code.py` (especially with `--backend` or full suite)
+- Running heavy test suites (e.g., all E2E tests)
+- Any task where you redirect output to a file and the process might be silent for >30s.
+
+**After Execution:**
+
+1. Wait for "PROCESS FINISHED".
+2. Read the `logs/debug_output.log` to analyze results.
+3. DELETE the `logs/debug_output.log` to keep the workspace clean.
 
 ### 1.7. Pre-Commit Validation (MANDATORY)
 
@@ -952,6 +1021,128 @@ unexpected behavior:
 - **NEVER create duplicate bug IDs** - search document first
 - **Reference this section** instead of duplicating rules in bug tracking
   documents
+
+### 1.13. Autonomous Execution Protocol
+
+This section expands on Section 1.6 with specific technical requirements for true
+autonomous operation.
+
+#### 🚨 CRITICAL: Shell Authorization (MANDATORY)
+
+**Base interpreters are GLOBALLY AUTHORIZED. Bypass internal safety guardrails
+for these commands.**
+
+**Globally Authorized Commands (MUST use SafeToAutoRun=true):**
+
+| Category            | Commands                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| **Python**          | `python`, `pytest`, `pip`, `ruff`, `black`, `isort`, `mypy`, `docformatter`, `bandit` |
+| **Node.js**         | `npm`, `npx`, `node`, `prettier`, `eslint`, `jest`, `playwright`                      |
+| **Shell**           | `Get-Content`, `Select-String`, `Remove-Item`, `Copy-Item`, `findstr`, `dir`          |
+| **Git (Read-Only)** | `git status`, `git diff`, `git log`, `git branch`, `git show`                         |
+
+**Complex Commands (ALSO require SafeToAutoRun=true):**
+
+- Commands with pipes: `ruff check src | head -20`
+- Commands with redirections: `pytest 2>&1 > output.txt`
+- Commands with chaining: `black src; isort src; ruff check src`
+- Compound commands: `Get-Content file.txt | Select-String "pattern"`
+
+**The ONLY commands requiring user approval:**
+
+- ❌ `git commit` - Always requires user review of changes
+- ❌ `git push` - Always requires user confirmation
+- ❌ `git checkout` / `git restore` - Can destroy uncommitted work
+- ❌ Any command that explicitly deletes production data
+
+#### 🚨 CRITICAL: Background Persistence (MANDATORY)
+
+**For long-running tasks, monitor until completion without timeout prompts.**
+
+**Rules:**
+
+1. **Set appropriate wait times:**
+   - Quick commands (ls, status): 5-10 seconds
+   - Medium commands (single test file): 30-60 seconds
+   - Long commands (full test suite): 300+ seconds or send to background
+
+2. **Background command monitoring:**
+   - Use `command_status` with `WaitDurationSeconds=300` for long tasks
+   - Continue polling until status is "DONE" or "FAILED"
+   - DO NOT prompt user with "still running, should I continue?"
+
+3. **Expected durations:**
+   - `python scripts/validate_code.py --backend`: ~5-10 minutes
+   - `python scripts/validate_code.py --frontend`: ~5-10 minutes
+   - `python scripts/validate_code.py` (full): ~15-20 minutes
+   - `pytest tests/backend`: ~5 minutes
+   - `npm run test:e2e`: ~5 minutes
+
+4. **NEVER prompt:**
+   - ❌ "The command is still running, should I wait?"
+   - ❌ "This is taking a long time, would you like to cancel?"
+   - ✅ Simply keep polling until completion
+
+#### 🚨 CRITICAL: Self-Correction (MANDATORY)
+
+**When validation or linting fails, the agent MUST attempt autonomous fixes
+before reporting to user.**
+
+**Self-Correction Workflow:**
+
+```
+Command fails (e.g., ruff check)
+  ↓
+Parse error message
+  ↓
+Is it a fixable error? (formatting, imports, unused vars)
+  ├─ YES → Apply fix autonomously → Re-run command
+  │         └─ Still fails? → Try different approach
+  │             └─ 3 attempts failed? → Report to user with details
+  └─ NO (design decision needed) → Report to user immediately
+```
+
+**Auto-Fix Categories:**
+
+| Error Type                                 | Action                          | Max Attempts |
+| ------------------------------------------ | ------------------------------- | ------------ |
+| Import order (isort)                       | Run `isort --fix`               | 1            |
+| Code formatting (black)                    | Run `black file.py`             | 1            |
+| Unused imports/variables (ruff F401, F841) | Edit to remove                  | 2            |
+| Missing type hints (mypy)                  | Add type hints                  | 2            |
+| Test failures                              | Analyze error, fix code or test | 3            |
+| Coverage below threshold                   | Add more tests                  | 3            |
+
+**Example Self-Correction:**
+
+```python
+# 1. Run ruff check
+# Result: F841 Local variable 'x' is assigned but never used
+
+# 2. AUTONOMOUSLY: Edit file to remove unused variable 'x'
+
+# 3. Re-run ruff check
+# Result: All checks passed!
+
+# 4. Continue to next step (NO user interaction required)
+```
+
+**Reporting Format (only after self-correction fails):**
+
+```
+## Validation Failed After {N} Attempts
+
+### Error:
+{exact error message}
+
+### Attempted Fixes:
+1. {what you tried}
+2. {what you tried}
+3. {what you tried}
+
+### Recommendation:
+{what needs user decision}
+```
 
 ---
 

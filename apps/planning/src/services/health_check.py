@@ -1,8 +1,9 @@
 """Health check service for monitoring application status."""
 
-import sqlite3
 import os
-from datetime import datetime
+import sqlite3
+from datetime import datetime, timezone
+
 from flask import current_app
 
 
@@ -93,7 +94,7 @@ class HealthChecker:
 
             for table in tables:
                 try:
-                    cursor.execute(f"SELECT COUNT(*) FROM {table}")
+                    cursor.execute(f"SELECT COUNT(*) FROM {table}")  # nosec B608
                     metrics[f"{table}_count"] = cursor.fetchone()[0]
                 except sqlite3.Error:
                     metrics[f"{table}_count"] = "error"
@@ -114,7 +115,7 @@ class HealthChecker:
     def perform_full_health_check(self):
         """Perform comprehensive health check of all components."""
         checks = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "status": "healthy",
             "checks": {},
         }

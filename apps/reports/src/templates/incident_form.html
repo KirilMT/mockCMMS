@@ -7,6 +7,7 @@
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ url_for('reports.incidents.create_incident') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="mb-3">
                     <label for="incident_type" class="form-label">Incident Type</label>
                     <select class="form-select" id="incident_type" name="incident_type" required>

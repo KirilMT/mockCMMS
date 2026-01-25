@@ -11,7 +11,8 @@ const { defineConfig, devices } = require("@playwright/test");
  */
 
 module.exports = defineConfig({
-  testDir: "./tests/frontend/e2e",
+  testDir: ".",
+  testMatch: ["tests/frontend/e2e/**/*.spec.js", "apps/**/tests/frontend/e2e/**/*.spec.js"],
 
   // Global setup runs before all tests
   globalSetup: require.resolve("./tests/frontend/e2e/e2e-test-setup.js"),
@@ -76,10 +77,13 @@ module.exports = defineConfig({
   // Web server configuration - starts Flask with test database
   webServer: {
     // Windows command to set environment variables and start server
-    command: "python run.py",
+    command: "node tests/frontend/e2e/pre-test-cleanup.js && python run.py",
     env: {
       E2E_TEST: "true",
       FLASK_RUN_PORT: "5001",
+      PLANNING_ENABLED: "true",
+      REPORTS_ENABLED: "true",
+      FIXED_DATE_SEEDING: "2026-01-21", // Seed DB with this fixed date for consistent visual tests
     },
     url: "http://127.0.0.1:5001",
 

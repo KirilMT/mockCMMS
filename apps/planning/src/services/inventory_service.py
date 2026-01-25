@@ -1,15 +1,13 @@
 # apps/planning/src/services/inventory_service.py
 
 from sqlalchemy import select
-from src.services.db_utils import (
-    MaintenanceOrder,
-    SparePart,
-    db,
-    maintenance_order_spare_parts,
-)
+
+from src.services.db_utils import MaintenanceOrder, db, maintenance_order_spare_parts
 
 
-def check_spare_parts_availability(maintenance_order: MaintenanceOrder) -> (bool, dict):
+def check_spare_parts_availability(
+    maintenance_order: MaintenanceOrder,
+) -> tuple[bool, dict]:
     """Checks the stock levels for all spare parts required by a maintenance order.
 
     Args:

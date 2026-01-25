@@ -20,7 +20,7 @@
                     </select>
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+                    <button type="submit" class="btn btn-primary w-100">View Report</button>
                 </div>
             </form>
         </div>
@@ -28,11 +28,19 @@
 
     {% if stats %}
     <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-center">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Total Activities</h5>
-                    <p class="card-text display-4">{{ stats.total_count }}</p>
+                    <h6 class="card-title">Completed Tasks</h6>
+                    <h2 class="mb-0">{{ stats.completed_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark text-center">
+                <div class="card-body">
+                    <h6 class="card-title">Pending Tasks</h6>
+                    <h2 class="mb-0">{{ stats.pending_count }}</h2>
                 </div>
             </div>
         </div>
@@ -40,9 +48,9 @@
     {% endif %}
 
     {% if tasks %}
-    <div class="card mb-4">
+    <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Shift Activities</span>
+            <span>Tasks for {{ date }} - {{ shift }} Shift</span>
             <div>
                 <form method="POST" action="{{ url_for('reports.shift.export_shift_report') }}" class="d-inline">
                     <input type="hidden" name="date" value="{{ date }}">
@@ -54,30 +62,34 @@
                     <input type="hidden" name="date" value="{{ date }}">
                     <input type="hidden" name="shift" value="{{ shift }}">
                     <input type="hidden" name="format" value="pdf">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Export PDF</button>
+                    <button type="submit" class="btn btn-sm btn-outline-danger ms-1">Export PDF</button>
                 </form>
             </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Description</th>
-                            <th>Status</th>
+                            <th>Time</th>
                             <th>Asset</th>
-                            <th>Created At</th>
+                            <th>Description</th>
+                            <th>Assigned</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for task in tasks %}
                         <tr>
-                            <td>{{ task.id }}</td>
+                            <td>{{ task.time }}</td>
+                            <td>{{ task.asset }}</td>
                             <td>{{ task.description }}</td>
-                            <td>{{ task.status }}</td>
-                            <td>{{ task.asset_name }}</td>
-                            <td>{{ task.created_at }}</td>
+                            <td>{{ task.assignee }}</td>
+                            <td>
+                                <span class="badge {% if task.status == 'Completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ task.status }}
+                                </span>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -85,8 +97,8 @@
             </div>
         </div>
     </div>
-    {% elif request.args.get('date') %}
-    <div class="alert alert-info">No activities found for this shift.</div>
+    {% elif date %}
+    <div class="alert alert-info">No tasks found for this shift.</div>
     {% endif %}
 </div>
 {% endblock %}

@@ -376,4 +376,31 @@ test.describe("Visual Regression - Special Pages", () => {
       maxDiffPixelRatio: 0.1, // Increase threshold for complex calendar grid
     });
   });
+
+  test("VR-20: Simulation Tools Page", async ({ page }) => {
+    await page.goto("/simulation/");
+    await page.waitForLoadState("networkidle");
+
+    // Trigger a breakdown to see the full UI state including "Recent Breakdowns"
+    await page.click('button:has-text("TRIGGER BREAKDOWN")');
+    await page.waitForLoadState("networkidle");
+
+    // Explicitly wait for the Recent Breakdowns list item to appear
+    await page.waitForSelector(".list-group-item", {
+      state: "visible",
+      timeout: 10000,
+    });
+
+    await expect(page).toHaveScreenshot("simulation-dashboard.png", {
+      fullPage: true,
+      mask: [
+        page.locator(".card-title"), // Dynamic stats counts
+        page.locator('input[name="csrf_token"]'), // CSRF tokens
+        page.locator(".list-group-item small.text-muted"), // Timestamps
+        page.locator(".list-group-item strong"), // Asset codes
+        page.locator(".sim-tech-select"), // Technician dropdown
+        page.locator(".alert"), // Success/Error messages
+      ],
+    });
+  });
 });

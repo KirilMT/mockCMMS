@@ -25,6 +25,8 @@ class TestRunEntry:
         with (
             patch("src.app.db.create_all"),
             patch("src.app.populate_dummy_data"),
+            patch("apps.planning.src.services.seeding.seed_planning_data"),
+            patch("src.app.os.makedirs"),
             patch("dotenv.load_dotenv"),
         ):
             import run
@@ -37,6 +39,8 @@ class TestRunEntry:
         with (
             patch("src.app.db.create_all"),
             patch("src.app.populate_dummy_data"),
+            patch("apps.planning.src.services.seeding.seed_planning_data"),
+            patch("src.app.os.makedirs"),
             patch("dotenv.load_dotenv"),
         ):
             import run

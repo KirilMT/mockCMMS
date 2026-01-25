@@ -1,0 +1,104 @@
+{
+  "incidents": [
+    {
+      "incident_type": "Mechanical",
+      "equipment_line": "Line_1",
+      "description": "Bearing failure on motor drive assembly",
+      "severity": "High",
+      "technician_name": "mike.tech",
+      "resolved": true,
+      "resolution_notes": "Replaced bearing and recalibrated tension",
+      "days_ago": 2
+    },
+    {
+      "incident_type": "Electrical",
+      "equipment_line": "Line_4",
+      "description": "Short circuit in control panel causing intermittent stops",
+      "severity": "Critical",
+      "technician_name": "sarah.supervisor",
+      "resolved": false,
+      "resolution_notes": null,
+      "days_ago": 1
+    },
+    {
+      "incident_type": "Safety",
+      "equipment_line": "Assembly Hall",
+      "description": "Emergency stop button partially unresponsive",
+      "severity": "Critical",
+      "technician_name": "admin",
+      "resolved": true,
+      "resolution_notes": "Replaced switch assembly and verified all E-stops",
+      "days_ago": 5
+    },
+    {
+      "incident_type": "Software",
+      "equipment_line": "Paint Shop",
+      "description": "HMI freezing during color change cycle",
+      "severity": "Medium",
+      "technician_name": "lisa.planner",
+      "resolved": false,
+      "resolution_notes": "Checking logs for memory leak",
+      "days_ago": 0
+    },
+    {
+      "incident_type": "Hydraulics",
+      "equipment_line": "Stamping Press G1",
+      "description": "Slow leak detected in main cylinder manifold",
+      "severity": "Low",
+      "technician_name": "david.tech",
+      "resolved": true,
+      "resolution_notes": "Tightened fittings and topped up fluid",
+      "days_ago": 10
+    },
+    {
+      "incident_type": "Mechanical",
+      "equipment_line": "Conveyor System D1",
+      "description": "Belt slippage under full load",
+      "severity": "Medium",
+      "technician_name": "mike.tech",
+      "resolved": true,
+      "resolution_notes": "Adjusted take-up pulley",
+      "days_ago": 3
+    },
+    {
+      "incident_type": "Electrical",
+      "equipment_line": "Line_8",
+      "description": "VFD fault F001 - Overvoltage",
+      "severity": "Medium",
+      "technician_name": "emma.tech",
+      "resolved": true,
+      "resolution_notes": "Checked braking resistor, found loose connection",
+      "days_ago": 4
+    },
+    {
+      "incident_type": "Robotics",
+      "equipment_line": "Paint Line Robot A1",
+      "description": "Collision detected - E-stop triggered",
+      "severity": "High",
+      "technician_name": "sarah.supervisor",
+      "resolved": true,
+      "resolution_notes": "Reset robot, verified path clearance, no hardware damage",
+      "days_ago": 2
+    },
+    {
+      "incident_type": "Pneumatics",
+      "equipment_line": "Line_15",
+      "description": "Air pressure drop below 4 bar",
+      "severity": "High",
+      "technician_name": "alex.tech",
+      "resolved": false,
+      "resolution_notes": null,
+      "days_ago": 0
+    },
+    {
+      "incident_type": "Other",
+      "equipment_line": "Loading Bay",
+      "description": "Oil spill near secondary entrance",
+      "severity": "Medium",
+      "technician_name": "admin",
+      "resolved": true,
+      "resolution_notes": "Spill kit used, area cleaned and cordoned off",
+      "days_ago": 1
+    }
+  ]
+}

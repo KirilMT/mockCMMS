@@ -431,7 +431,8 @@ class TestIntegration:
             assets = []
             for i in range(3):
                 asset = Asset(
-                    asset_code=f"PLANNING-{i+1:03d}", name=f"Planning Test Asset {i+1}"
+                    asset_code=f"PLANNING-{i + 1:03d}",
+                    name=f"Planning Test Asset {i + 1}",
                 )
                 db.session.add(asset)
                 assets.append(asset)
@@ -442,7 +443,7 @@ class TestIntegration:
             for i, asset in enumerate(assets):
                 mo = MaintenanceOrder(
                     asset_id=asset.id,
-                    description=f"Planning test MO {i+1}",
+                    description=f"Planning test MO {i + 1}",
                     order_type="reactive",
                     status="Open",
                     priority=priorities[i],
@@ -676,7 +677,7 @@ class TestIntegration:
             for i, status in enumerate(statuses):
                 mo = MaintenanceOrder(
                     asset_id=asset.id,
-                    description=f"Report test MO {i+1}",
+                    description=f"Report test MO {i + 1}",
                     order_type="reactive",
                     status=status,
                     priority="Medium",
@@ -953,8 +954,8 @@ class TestIntegration:
         with app.app_context():
             for i in range(5):
                 asset = Asset(
-                    asset_code=f"SEARCH-{i+10:03d}",
-                    name=f"Search Test {i+1}",
+                    asset_code=f"SEARCH-{i + 10:03d}",
+                    name=f"Search Test {i + 1}",
                     asset_type="Equipment" if i % 2 == 0 else "Tool",
                 )
                 db.session.add(asset)

@@ -163,20 +163,6 @@ Thumbs.db
 ~$*.xls
 ~$*.xlsb
 
-# Runtime artifacts (new structure)
-# Main app runtime artifacts
-instance/*.db
-logs/
-
-# planning runtime artifacts
-apps/planning/instance/*.db
-apps/planning/logs/
-apps/planning/output/
-
-# reports runtime artifacts
-apps/reports/instance/reports/*
-!apps/reports/instance/reports/.gitkeep
-
 # Sensitive files
 .env
 !.env.example
@@ -222,3 +208,6 @@ jest_*.txt
 # JSCPD duplicate detector
 jscpd-report/
 .jscpd/
+
+# isort temporary files
+*.py.isorted

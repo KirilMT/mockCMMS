@@ -1,18 +1,19 @@
 # src/config_manager.py
+import json
+import os
 import sqlite3
 import traceback
-import os
-import json
+
 from .planning_db_utils import (
     get_db_connection,
     get_technician_lines_via_satellite_point,
 )
 
 # --- Configuration Store ---
-TECHNICIAN_TASKS = {}
-TECHNICIAN_LINES = {}
-TECHNICIANS = []
-TECHNICIAN_GROUPS = {}
+
+TECHNICIAN_LINES: dict[str, list[str]] = {}
+TECHNICIANS: list[str] = []
+TECHNICIAN_GROUPS: dict[str, list[str]] = {}
 
 
 # Load task name mapping from external config
@@ -22,7 +23,7 @@ def _load_task_name_mapping():
 
         config = Config()
         return config._config.get("task_name_mapping", {})
-    except:
+    except Exception:
         return {}
 
 
@@ -30,14 +31,13 @@ TASK_NAME_MAPPING = _load_task_name_mapping()
 
 
 def load_app_config(database_path, logger=None):  # Added logger argument
-    global TECHNICIAN_TASKS, TECHNICIAN_LINES, TECHNICIANS, TECHNICIAN_GROUPS
-    TECHNICIAN_TASKS.clear()
+    TECHNICIAN_LINES.clear()
     TECHNICIAN_LINES.clear()
     TECHNICIANS.clear()
     TECHNICIAN_GROUPS.clear()
     # Initialize default groups. Satellite points will be dynamic from DB.
-    # The concept of TECHNICIAN_GROUPS might need to align with satellite points now.
-    # For now, keeping its structure but it will be populated based on technician's satellite point name.
+    # The concept of TECHNICIAN_GROUPS might align with satellite points now.
+    # It populated based on technician's satellite point name.
     # We will fetch all satellite points and use their names as keys if needed.
 
     def _log(message, level="info"):
@@ -49,14 +49,20 @@ def load_app_config(database_path, logger=None):  # Added logger argument
             elif level == "error":
                 logger.error(message)
             # Removed explicit debug level handling here to reduce verbosity
-            # If a message was intended for debug, it won't be printed unless logger's global level is DEBUG
+            # If a message was intended for debug, it won't be printed
+            # unless logger's global level is DEBUG
             # and the call to _log specifies 'debug'.
-            # For very detailed, less frequent debugging, direct logger.debug() calls can be used.
+            # For very detailed debugging, direct logger.debug() calls can be used.
         else:
             print(f"{level.upper()}: {message}")  # Fallback
 
+    if not database_path:
+        _log("  Database path not provided. Skipping config load.", "warning")
+        return
+
     _log(
-        f"Attempting to load configuration from database: {os.path.abspath(database_path)}"
+        f"Attempting to load configuration from database: "
+        f"{os.path.abspath(database_path)}"
     )
     conn = None
     try:
@@ -67,7 +73,8 @@ def load_app_config(database_path, logger=None):  # Added logger argument
         _log("  Successfully connected to the database for config load.")
         cursor = conn.cursor()
 
-        # Fetch all satellite points to map their IDs to names for TECHNICIAN_GROUPS population
+        # Fetch all satellite points to map their IDs to names for
+        # TECHNICIAN_GROUPS population
         cursor.execute("SELECT id, name FROM satellite_points")
         satellite_points_map = {sp["id"]: sp["name"] for sp in cursor.fetchall()}
         # Initialize TECHNICIAN_GROUPS with names from satellite_points table
@@ -80,7 +87,8 @@ def load_app_config(database_path, logger=None):  # Added logger argument
         cursor.execute(sql_query)
         db_technicians = cursor.fetchall()
         _log(
-            f"  Query executed. Number of rows fetched from 'technicians' table: {len(db_technicians)}"
+            f"  Query executed. Rows fetched from 'technicians' table: "
+            f"{len(db_technicians)}"
         )
 
         if not db_technicians:
@@ -94,14 +102,15 @@ def load_app_config(database_path, logger=None):  # Added logger argument
             tech_name = row["name"]
             tech_satellite_point_id = row["satellite_point_id"]
 
-            # Determine satellite point name for grouping, with a fallback for unassigned technicians
+            # Determine satellite point name for grouping, with a fallback
             tech_satellite_point_name = satellite_points_map.get(
                 tech_satellite_point_id, "Unassigned"
             )
 
             if not tech_name:
                 _log(
-                    f"      SKIPPING row {row_idx + 1} (ID {tech_id}) due to missing name.",
+                    f"      SKIPPING row {row_idx + 1} (ID {tech_id}) "
+                    "due to missing name.",
                     "warning",
                 )
                 continue
@@ -113,11 +122,11 @@ def load_app_config(database_path, logger=None):  # Added logger argument
                 TECHNICIAN_GROUPS[tech_satellite_point_name] = []
             TECHNICIAN_GROUPS[tech_satellite_point_name].append(tech_name)
 
-            # Fetch lines for the technician using their satellite_point_id via the new db_utils function
-            # get_technician_lines_via_satellite_point returns a list of line names
-            # The original code expected line numbers, this needs to be clarified if line names or IDs are expected here.
-            # Assuming line *names* are now expected in TECHNICIAN_LINES based on the db structure.
-            # If line IDs (integers) were expected, the get_technician_lines_via_satellite_point would need to return IDs or this logic adjusted.
+            # Fetch lines for the technician using their satellite_point_id
+            # via the new db_utils function.
+            # technician_actual_lines returns a list of line names.
+            # Assumes line *names* are now expected in TECHNICIAN_LINES.
+            # If line IDs were expected, the function would need adjustment.
             # For now, proceeding with line names as strings.
             technician_actual_lines = get_technician_lines_via_satellite_point(
                 conn, tech_id
@@ -125,7 +134,8 @@ def load_app_config(database_path, logger=None):  # Added logger argument
             TECHNICIAN_LINES[tech_name] = technician_actual_lines
 
         _log(
-            f"Successfully loaded configuration for {len(TECHNICIANS)} technicians from database via config_manager."
+            f"Successfully loaded configuration for {len(TECHNICIANS)} "
+            "technicians via config_manager."
         )
 
     except sqlite3.Error as e:

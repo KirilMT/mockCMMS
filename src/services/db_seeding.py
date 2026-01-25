@@ -1,5 +1,6 @@
 # src/services/db_seeding.py
 """Database seeding helper functions."""
+
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -139,7 +140,7 @@ def _create_assets(assets_data, logger):
     assets = {}
     for i, asset_info in enumerate(assets_data):
         asset, _ = _get_or_create(Asset, name=asset_info["name"])
-        asset.asset_code = asset_info.get("asset_code", f"AST-{i+1:04d}")
+        asset.asset_code = asset_info.get("asset_code", f"AST-{i + 1:04d}")
         asset.description = asset_info.get("description", "")
         asset.asset_type = asset_info.get("asset_type", "equipment")
         asset.cost_center = asset_info.get("cost_center", "general")
@@ -149,16 +150,46 @@ def _create_assets(assets_data, logger):
     return assets
 
 
+def get_seeding_base_date():
+    """Get the base date for seeding data.
+
+    If FIXED_DATE_SEEDING env var is set, use that date (parsed as YYYY-MM-DD).
+    Otherwise, use current UTC time.
+    """
+    fixed_date_str = os.environ.get("FIXED_DATE_SEEDING")
+    if fixed_date_str:
+        try:
+            # Parse YYYY-MM-DD and set time to ~mid-day UTC for stability
+            dt = datetime.strptime(fixed_date_str, "%Y-%m-%d")
+            return dt.replace(
+                hour=12, minute=0, second=0, microsecond=0, tzinfo=timezone.utc
+            )
+        except ValueError:
+            pass
+    return datetime.now(timezone.utc)
+
+
 def _create_maintenance_orders(orders_data, assets, skills, logger):
     """Create maintenance orders."""
+    base_now = get_seeding_base_date()
+
     for mo_info in orders_data:
         asset = assets.get(mo_info["asset"])
         if asset:
             due_date = None
+            created_at = base_now
+
             if mo_info.get("due_days_from_now") is not None:
-                due_date = datetime.now(timezone.utc) + timedelta(
-                    days=mo_info["due_days_from_now"]
+                due_date = base_now + timedelta(days=mo_info["due_days_from_now"])
+            elif mo_info.get("due_days_from_weekend") is not None:
+                days_until_saturday = (5 - base_now.weekday()) % 7
+                next_saturday = base_now + timedelta(days=days_until_saturday)
+                due_date = next_saturday + timedelta(
+                    days=mo_info["due_days_from_weekend"]
                 )
+
+            if mo_info.get("created_hours_ago") is not None:
+                created_at = base_now - timedelta(hours=mo_info["created_hours_ago"])
 
             mo, _ = _get_or_create(
                 MaintenanceOrder, description=mo_info["description"], asset=asset
@@ -166,6 +197,7 @@ def _create_maintenance_orders(orders_data, assets, skills, logger):
             mo.order_type = mo_info.get("order_type", "PM")
             mo.status = mo_info.get("status", "Open")
             mo.due_date = due_date
+            mo.created_at = created_at
             mo.priority = mo_info.get("priority", "Medium")
             mo.schedule_name = mo_info.get("schedule_name")
             mo.frequency = mo_info.get("frequency")

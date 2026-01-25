@@ -1,33 +1,30 @@
+"""Routes for the main Reports dashboard."""
+
+import os
+import sys
+from functools import wraps
+
 from flask import (
     Blueprint,
+    current_app,
+    flash,
+    redirect,
     render_template,
     request,
-    redirect,
-    url_for,
-    flash,
     session,
-    jsonify,
-    send_file,
-    current_app,
+    url_for,
 )
-import sys
-import os
-from functools import wraps
-from datetime import datetime, timedelta
 
 # Add the main src directory to the path to import from mockCMMS
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "src"))
 
-from ..services.report_generator import ReportGenerator
-from .weekend_report import weekend_bp
-from .shift_report import shift_bp
-from .incidents import incidents_bp
+from .incidents import incidents_bp  # noqa: E402
+from .shift_report import shift_bp  # noqa: E402
+from .weekend_report import weekend_bp  # noqa: E402
 
 
 def get_db_connection():
     """Get database connection using current app's SQLAlchemy."""
-    from flask_sqlalchemy import SQLAlchemy
-
     db = current_app.extensions["sqlalchemy"]
     return db
 
@@ -72,7 +69,8 @@ def reports():
         else:
             # Use raw SQL to avoid SQLAlchemy instance conflicts
             query = """
-            SELECT r.id, r.title, r.report_type, r.format, r.generated_on, r.parameters, r.file_path,
+            SELECT r.id, r.title, r.report_type, r.format, r.generated_on,
+                   r.parameters, r.file_path,
                    u.username as generated_by_name
             FROM reports r
             LEFT JOIN users u ON r.generated_by = u.id
@@ -99,9 +97,9 @@ def reports():
                 )
 
         return render_template("reports.html", reports=reports_data)
-    except Exception as e:
+    except Exception:
         flash(
-            f"Reports feature is not yet available. Database setup required.", "warning"
+            "Reports feature is not yet available. Database setup required.", "warning"
         )
         return render_template("reports.html", reports=[])
 

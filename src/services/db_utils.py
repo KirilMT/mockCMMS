@@ -157,6 +157,8 @@ class Team(db.Model):  # type: ignore
 
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True, nullable=False)
+    shift_type = Column(String(50), nullable=True)
+    rotation_pattern = Column(String(50), nullable=True)
 
     def to_dict(self):
         """Serialize Team to dictionary."""

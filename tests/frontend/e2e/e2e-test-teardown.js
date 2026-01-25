@@ -15,7 +15,7 @@ const { execSync } = require("child_process");
 
 // Configuration - must match e2e-test-setup.js
 const TEST_PORT = 5001;
-const PROJECT_ROOT = path.resolve(__dirname, "../..");
+const PROJECT_ROOT = path.resolve(__dirname, "../../..");
 const INSTANCE_DIR = path.join(PROJECT_ROOT, "instance");
 const TEST_DB_PATH = path.join(INSTANCE_DIR, "mockcmms_e2e.db");
 
@@ -31,10 +31,10 @@ function killProcessOnPort(port) {
         const parts = lines[0].trim().split(/\s+/);
         const pid = parts[parts.length - 1];
         if (pid) {
-          console.log(`🔌 Killing server on port ${port} (PID: ${pid})`);
+          console.warn(`🔌 Killing server on port ${port} (PID: ${pid})`);
           try {
             execSync(`taskkill /PID ${pid} /F`);
-          } catch (err) {
+          } catch (_err) {
             // Process might have already exited
           }
           return true;
@@ -48,16 +48,39 @@ function killProcessOnPort(port) {
         return true;
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Ignore errors (no process found)
   }
   return false;
 }
 
+async function tryDeleteFile(filePath, retries = 5) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.warn(`✅ Removed test database: ${filePath}`);
+      }
+      return true;
+    } catch (error) {
+      if (i === retries - 1) {
+        console.warn(
+          `⚠️  Could not remove test database (likely locked): ${error.message}`,
+        );
+      } else {
+        console.warn(
+          `   Delete failed (attempt ${i + 1}/${retries}), retrying in 1s...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+  }
+}
+
 /**
  * Global teardown function called by Playwright after all tests complete
  */
-async function globalTeardown(config) {
+async function globalTeardown() {
   console.log("\n🧹 E2E Test Global Teardown Starting...\n");
 
   // Kill the server to release DB file lock.
@@ -68,19 +91,31 @@ async function globalTeardown(config) {
   // Wait for process to fully release file handles
   await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  // Step 1: Remove test database if it exists
-  if (fs.existsSync(TEST_DB_PATH)) {
-    try {
-      fs.unlinkSync(TEST_DB_PATH);
-      console.log(`✅ Removed test database: ${TEST_DB_PATH}`);
-    } catch (error) {
-      console.log(
-        `⚠️  Could not remove test database (likely locked): ${error.message}`,
-      );
-      // Do not throw here - allow graceful exit. Setup will clean it next time.
+  // Modular App DB Paths
+  const PLANNING_DB_PATH = path.join(
+    PROJECT_ROOT,
+    "apps",
+    "planning",
+    "instance",
+    "planning_e2e.db",
+  );
+  const REPORTS_DB_PATH = path.join(
+    PROJECT_ROOT,
+    "apps",
+    "reports",
+    "instance",
+    "reports_e2e.db",
+  );
+
+  // Step 1: Remove test databases if they exist
+  const dbs = [TEST_DB_PATH, PLANNING_DB_PATH, REPORTS_DB_PATH];
+
+  for (const dbPath of dbs) {
+    if (fs.existsSync(dbPath)) {
+      await tryDeleteFile(dbPath);
+    } else {
+      console.log(`   No test database to clean up: ${path.basename(dbPath)}`);
     }
-  } else {
-    console.log("   No test database to clean up.");
   }
 
   // Step 2: Remove instance directory ONLY if it's empty

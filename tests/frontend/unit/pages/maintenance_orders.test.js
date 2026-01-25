@@ -21,9 +21,6 @@ describe("Maintenance Orders Page", () => {
     test("initializes table with data", () => {
       document.body.innerHTML = '<div id="mos-data">[{"id":1}]</div>';
 
-      // Spy on localStorage (mocked globally or via JSDOM)
-      const setItemSpy = jest.spyOn(Storage.prototype, "setItem");
-
       initMaintenanceOrdersTable();
 
       expect(global.initAdvancedTable).toHaveBeenCalledWith(

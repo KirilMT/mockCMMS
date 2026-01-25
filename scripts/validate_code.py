@@ -85,6 +85,10 @@ def run_command(
         # Set PYTHONIOENCODING to force UTF-8 for subprocess to avoid cp1252 errors
         env = os.environ.copy()
         env["PYTHONIOENCODING"] = "utf-8"
+        # Force testing environment for all subprocesses started by this validator
+        env["TESTING"] = "1"
+        env["PLANNING_ENABLED"] = "true"
+        env["DATABASE_FILENAME"] = ":memory:"
 
         result = subprocess.run(
             command,
@@ -132,7 +136,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     # 1. Import sorting (PEP 8)
     print_section("Step 1/9: Import Sorting (isort)")
     success, _ = run_command(
-        ["isort", "src", "tests", "scripts", "run.py", "--check-only"],
+        ["isort", "src", "apps", "tests", "scripts", "run.py", "--check-only"],
         "Import sorting check",
     )
     checks.append(("Import Sorting", success))
@@ -140,7 +144,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     # 2. Code formatting (Black)
     print_section("Step 2/9: Code Formatting (black)")
     success, _ = run_command(
-        ["black", "--check", "src", "tests", "scripts", "run.py"],
+        ["black", "--check", "src", "apps", "tests", "scripts", "run.py"],
         "Code formatting check",
     )
     checks.append(("Code Formatting", success))
@@ -148,7 +152,7 @@ def validate_python_backend(quick: bool = False) -> bool:
     # 3. Docstring formatting (PEP 257)
     print_section("Step 3/9: Docstring Formatting (docformatter)")
     success, _ = run_command(
-        ["docformatter", "--check", "-r", "src", "tests", "scripts", "run.py"],
+        ["docformatter", "--check", "-r", "src", "apps", "tests", "scripts", "run.py"],
         "Docstring formatting check",
     )
     checks.append(("Docstring Formatting", success))
@@ -156,15 +160,14 @@ def validate_python_backend(quick: bool = False) -> bool:
     # 4. Linting (Ruff - fast, comprehensive)
     print_section("Step 4/9: Linting (ruff)")
     success, _ = run_command(
-        ["ruff", "check", "src", "tests", "scripts", "run.py"], "Ruff linting"
+        ["ruff", "check", "src", "apps", "tests", "scripts", "run.py"], "Ruff linting"
     )
     checks.append(("Ruff Linting", success))
 
     # 5. Additional linting (Flake8)
     print_section("Step 5/9: Additional Linting (flake8)")
     exclude_dirs = (
-        "apps,.venv,node_modules,__pycache__,"
-        ".git,.pytest_cache,htmlcov,playwright-report"
+        ".venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report"
     )
     success, _ = run_command(
         ["flake8", ".", "--exclude", exclude_dirs],
@@ -182,7 +185,9 @@ def validate_python_backend(quick: bool = False) -> bool:
 
     # 7. Security scanning (Bandit)
     print_section("Step 7/9: Security Scanning (bandit)")
-    success, _ = run_command(["bandit", "-r", "src/", "-ll"], "Security scanning")
+    success, _ = run_command(
+        ["bandit", "-r", "src/", "apps/", "-ll"], "Security scanning"
+    )
     checks.append(("Security Scanning", success))
 
     # 8. Run all tests with coverage
@@ -190,17 +195,20 @@ def validate_python_backend(quick: bool = False) -> bool:
     if quick:
         print_warning("Quick mode: Skipping full test suite")
         success, _ = run_command(
-            ["pytest", "tests/", "-x", "--tb=short"], "Quick test run"
+            ["pytest", "-c", "pyproject.toml", "-x", "--tb=short"], "Quick test run"
         )
         checks.append(("Tests", success))
     else:
         success, _ = run_command(
             [
                 "pytest",
-                "tests/",
+                "-c",
+                "pyproject.toml",
                 "--cov=src",
+                "--cov=apps",
                 "--cov-report=term-missing",
                 "--cov-report=html",
+                "--cov-report=xml",  # Required for diff-cover
             ],
             "Full test suite with coverage",
         )
@@ -210,7 +218,15 @@ def validate_python_backend(quick: bool = False) -> bool:
     if not quick:
         print_section("Step 9/10: Total Coverage Validation")
         success, _ = run_command(
-            ["pytest", "tests/", "--cov=src", "--cov-fail-under=82", "-q"],
+            [
+                "pytest",
+                "-c",
+                "pyproject.toml",
+                "--cov=src",
+                "--cov=apps",
+                "--cov-fail-under=82",
+                "-q",
+            ],
             "Coverage threshold check (>= 82%)",
         )
         checks.append(("Total Coverage Threshold", success))
@@ -280,6 +296,7 @@ def validate_javascript_frontend(quick: bool = False) -> bool:
             "npx",
             "eslint",
             "src/static/js",
+            "apps",
             "tests/frontend",
             "--report-unused-disable-directives",
         ],

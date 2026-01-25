@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
 
 from flask import current_app, g, request
@@ -101,7 +101,7 @@ class MetricsCollector:
         return {
             "requests": self.request_metrics,
             "database": self.database_metrics,
-            "collection_time": datetime.utcnow().isoformat(),
+            "collection_time": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -167,12 +167,13 @@ class LoggingConfig:
         root_logger = logging.getLogger()
         root_logger.setLevel(log_level)
 
-        # In Production: Take full control (Wipe defaults, use JSON Console)
-        # In Debug: Touch NOTHING regarding console (Let Flask/Werkzeug defaults rule)
-        if not flask_debug:
-            for handler in root_logger.handlers[:]:
+        # Remove existing handlers to avoid duplicates and poisoned mocks from tests
+        for handler in root_logger.handlers[:]:
+            # Always remove if it's a mock or if we're not in debug
+            if not flask_debug or "MagicMock" in str(type(handler)):
                 root_logger.removeHandler(handler)
 
+        if not flask_debug:
             # Add JSON Console for Production to ensure logs are visible
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(StructuredFormatter())

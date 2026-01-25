@@ -1,9 +1,10 @@
 import json
-import os
 import logging
+import os
 from datetime import datetime
-from src.services.db_utils import db, MaintenanceOrder
-from apps.planning.src.services.planning_models import Schedule, PlanningTask
+
+from apps.planning.src.services.planning_models import PlanningTask, Schedule
+from src.services.db_utils import MaintenanceOrder, db
 
 logger = logging.getLogger(__name__)
 

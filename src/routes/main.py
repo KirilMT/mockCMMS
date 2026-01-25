@@ -180,7 +180,7 @@ def add_asset():
 @main_bp.route("/assets/<int:asset_id>")
 @login_required
 def asset_detail(asset_id):
-    asset = Asset.query.get_or_404(asset_id)
+    asset = db.get_or_404(Asset, asset_id)
     active_mos = [mo.to_dict() for mo in asset.maintenance_orders]
     return render_template("asset_detail.html", asset=asset, active_mos=active_mos)
 
@@ -188,7 +188,7 @@ def asset_detail(asset_id):
 @main_bp.route("/assets/<int:asset_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_asset(asset_id):
-    asset = Asset.query.get_or_404(asset_id)
+    asset = db.get_or_404(Asset, asset_id)
     if request.method == "POST":
         asset.asset_code = request.form["asset_code"]
         asset.name = request.form["name"]
@@ -206,7 +206,7 @@ def edit_asset(asset_id):
 @main_bp.route("/assets/<int:asset_id>/delete", methods=["POST"])
 @login_required
 def delete_asset(asset_id):
-    asset = Asset.query.get_or_404(asset_id)
+    asset = db.get_or_404(Asset, asset_id)
     db.session.delete(asset)
     db.session.commit()
     flash("Asset deleted successfully!", "success")
@@ -230,7 +230,7 @@ def add_mo():
     assets = Asset.query.all()
     return_to = request.args.get("return_to")
     asset_id = request.args.get("asset_id")
-    preselected_asset = Asset.query.get(asset_id) if asset_id else None
+    preselected_asset = db.session.get(Asset, asset_id) if asset_id else None
 
     if request.method == "POST":
         new_mo = MaintenanceOrder()
@@ -258,7 +258,7 @@ def add_mo():
 @main_bp.route("/maintenance_orders/<int:mo_id>")
 @login_required
 def mo_detail(mo_id):
-    mo = MaintenanceOrder.query.get_or_404(mo_id)
+    mo = db.get_or_404(MaintenanceOrder, mo_id)
     technicians, teams = _get_technicians_and_teams()
     assets = Asset.query.all()
     selected_assignees = json.loads(mo.assignees_json) if mo.assignees_json else []
@@ -279,7 +279,7 @@ def mo_detail(mo_id):
 @main_bp.route("/maintenance_orders/<int:mo_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_mo(mo_id):
-    mo = MaintenanceOrder.query.get_or_404(mo_id)
+    mo = db.get_or_404(MaintenanceOrder, mo_id)
     technicians, teams = _get_technicians_and_teams()
     assets = Asset.query.all()
     return_to = request.args.get("return_to")
@@ -310,7 +310,7 @@ def edit_mo(mo_id):
 @main_bp.route("/maintenance_orders/<int:mo_id>/delete", methods=["POST"])
 @login_required
 def delete_mo(mo_id):
-    mo = MaintenanceOrder.query.get_or_404(mo_id)
+    mo = db.get_or_404(MaintenanceOrder, mo_id)
     asset_id = mo.asset_id
     try:
         db.session.delete(mo)
@@ -357,14 +357,14 @@ def add_spare_part():
 @main_bp.route("/spare_parts/<int:part_id>")
 @login_required
 def spare_part_detail(part_id):
-    part = SparePart.query.get_or_404(part_id)
+    part = db.get_or_404(SparePart, part_id)
     return render_template("spare_part_detail.html", part=part)
 
 
 @main_bp.route("/spare_parts/<int:part_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_spare_part(part_id):
-    part = SparePart.query.get_or_404(part_id)
+    part = db.get_or_404(SparePart, part_id)
     if request.method == "POST":
         part.description = request.form["description"]
         part.manufacturer = request.form["manufacturer"]
@@ -381,7 +381,7 @@ def edit_spare_part(part_id):
 @main_bp.route("/spare_parts/<int:part_id>/delete", methods=["POST"])
 @login_required
 def delete_spare_part(part_id):
-    part = SparePart.query.get_or_404(part_id)
+    part = db.get_or_404(SparePart, part_id)
     db.session.delete(part)
     db.session.commit()
     flash("Spare Part deleted successfully!", "success")
@@ -449,7 +449,7 @@ def register():
 @main_bp.route("/users/<int:user_id>")
 @login_required
 def user_detail(user_id):
-    user = User.query.get_or_404(user_id)
+    user = db.get_or_404(User, user_id)
     is_technician = any(role.name == "Technician" for role in user.roles)
     return render_template(
         "user_detail.html",
@@ -464,7 +464,7 @@ def user_detail(user_id):
 @main_bp.route("/users/<int:user_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = db.get_or_404(User, user_id)
     if request.method == "POST":
         user.username = request.form["username"]
         user.email = request.form["email"]
@@ -513,7 +513,7 @@ def edit_user(user_id):
 @main_bp.route("/users/<int:user_id>/delete", methods=["POST"])
 @login_required
 def delete_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = db.get_or_404(User, user_id)
     db.session.delete(user)
     db.session.commit()
     flash("User deleted successfully!", "success")
