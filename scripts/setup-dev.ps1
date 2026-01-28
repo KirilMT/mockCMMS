@@ -1,5 +1,5 @@
 # setup-dev.ps1 - Development Environment Setup
-# Sets up development tools for Python and JavaScript
+# Calls setup.ps1 for production setup, then adds dev-specific tools
 
 # Ensure we are in the project root
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
@@ -13,97 +13,54 @@ Write-Host "========================================`n" -ForegroundColor Cyan
 # Error counter for final summary
 $script:ErrorCount = 0
 
+# ============================================================================
+# STEP 1: RUN PRODUCTION SETUP
+# ============================================================================
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host "   PRODUCTION SETUP" -ForegroundColor Magenta
+Write-Host "========================================`n" -ForegroundColor Magenta
+
+$setupScript = Join-Path $scriptPath "setup.ps1"
+if (-not (Test-Path $setupScript)) {
+    Write-Error "setup.ps1 not found at: $setupScript"
+    exit 1
+}
+
+Write-Host "Running production setup (setup.ps1)...`n" -ForegroundColor Yellow
+
+# Execute setup.ps1 with CalledFromDev parameter to suppress header/footer
+& $setupScript -CalledFromDev
+$productionExitCode = $LASTEXITCODE
+
+if ($productionExitCode -ne 0) {
+    Write-Error "`nProduction setup failed. Cannot continue with development setup."
+    exit $productionExitCode
+}
+
+Write-Host "`n" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "   Production Setup Complete" -ForegroundColor Green
+Write-Host "========================================`n" -ForegroundColor Green
+
+# ============================================================================
+# STEP 2: DEVELOPMENT TOOLS SETUP
+# ============================================================================
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host "   DEVELOPMENT TOOLS SETUP" -ForegroundColor Magenta
+Write-Host "========================================`n" -ForegroundColor Magenta
+
 # Function to refresh environment variables without restart
 function Refresh-EnvPath {
     Write-Host "   Refreshing environment variables..." -ForegroundColor Gray
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 }
 
-# Step 1: Check Prerequisites
-Write-Host "[Step 1/3] Checking prerequisites..." -ForegroundColor Yellow
+# Step 1: Check for Node.js (only dev requirement)
+Write-Host "[Dev Step 1/3] Checking Node.js..." -ForegroundColor Yellow
 
-# Step 1.1: Check for Python
-function Check-Python {
-    if (Get-Command python -ErrorAction SilentlyContinue) {
-        $v = python --version 2>&1
-        if ($v -match "Python (\d+)\.(\d+)") {
-            $major = [int]$Matches[1]
-            $minor = [int]$Matches[2]
-            if ($major -ge 3 -and $minor -ge 12) {
-                Write-Host "   Found: " -NoNewline -ForegroundColor White
-                Write-Host "$v" -NoNewline -ForegroundColor White
-                Write-Host " OK" -ForegroundColor Green
-                return $true
-            }
-            else {
-                Write-Warning "   Found: $v (Python 3.12+ recommended)"
-                return $true # Warning but proceed
-            }
-        }
-    }
-    return $false
-}
-
-if (-not (Check-Python)) {
-    Write-Warning "   Python not found. Attempting to install latest version via winget..."
-
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        try {
-            # Attempt silent install of latest Python 3
-            Write-Host "   Installing Python..." -ForegroundColor Magenta
-            winget install -e --id Python.Python.3 --silent --accept-package-agreements --accept-source-agreements
-
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "   Python installed successfully." -ForegroundColor Green
-                Refresh-EnvPath
-
-                # Re-check
-                if (-not (Check-Python)) {
-                    Write-Error "   Python installed but not found in PATH. Please restart terminal."
-                    exit 1
-                }
-            }
-            else {
-                Write-Error "   Failed to install Python via winget."
-                exit 1
-            }
-        }
-        catch {
-            Write-Error "   An error occurred during Python installation."
-            exit 1
-        }
-    }
-    else {
-        Write-Error "   Python is not installed and winget (App Installer) is not available."
-        Write-Error "   Please install Python 3.12+ manually from https://python.org"
-        exit 1
-    }
-}
-
-# Step 1.2: Check for Node.js
+# Step 1.1: Check for Node.js
 function Check-Node {
-    # First, check if Node.js is installed in common locations
-    $nodeLocations = @(
-        "C:\Program Files\nodejs",
-        "C:\Program Files (x86)\nodejs",
-        "${env:ProgramFiles}\nodejs",
-        "${env:ProgramFiles(x86)}\nodejs",
-        "${env:LOCALAPPDATA}\Programs\nodejs"
-    )
-
-    $nodeInstalled = $false
-    foreach ($location in $nodeLocations) {
-        if (Test-Path "$location\node.exe") {
-            $nodeInstalled = $true
-            # Add to current session PATH if not already there
-            if ($env:Path -notlike "*$location*") {
-                $env:Path = "$location;$env:Path"
-            }
-            break
-        }
-    }
-
-    # Now check if npm command works
+    # First, check if npm command works
     if (Get-Command npm -ErrorAction SilentlyContinue) {
         $v = npm --version 2>&1
         if ($v -match "(\d+)\.(\d+)") {
@@ -114,155 +71,229 @@ function Check-Node {
         }
     }
 
-    # If node.exe exists but npm doesn't work, it's a PATH issue
-    if ($nodeInstalled) {
-        Write-Host "   Found: " -NoNewline -ForegroundColor White
-        Write-Host "Node.js" -NoNewline -ForegroundColor White
-        Write-Host " (PATH refreshed) " -NoNewline -ForegroundColor Green
-        Write-Host "OK" -ForegroundColor Green
-        return $true
+    # Check if Node.js is installed in common locations
+    $nodeLocations = @(
+        "${env:ProgramFiles}\nodejs",
+        "${env:ProgramFiles(x86)}\nodejs",
+        "${env:LOCALAPPDATA}\Programs\nodejs",
+        "C:\Program Files\nodejs",
+        "C:\Program Files (x86)\nodejs"
+    )
+
+    $nodeFound = $false
+    foreach ($location in $nodeLocations) {
+        if (Test-Path "$location\node.exe") {
+            Write-Host "   Found Node.js at: $location" -ForegroundColor Yellow
+
+            # Add to current session PATH if not already there
+            if ($env:Path -notlike "*$location*") {
+                $env:Path = "$location;$env:Path"
+            }
+
+            # Add to system PATH permanently
+            try {
+                $currentPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+                if ($currentPath -notlike "*$location*") {
+                    $newPath = "$location;$currentPath"
+                    [System.Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+                    Write-Host "   Added to system PATH " -NoNewline -ForegroundColor White
+                    Write-Host "OK" -ForegroundColor Green
+                }
+                else {
+                    Write-Host "   Already in system PATH " -NoNewline -ForegroundColor White
+                    Write-Host "OK" -ForegroundColor Green
+                }
+            }
+            catch {
+                Write-Warning "   Could not add to system PATH (may require admin rights). Added to current session only."
+            }
+
+            $nodeFound = $true
+            break
+        }
+    }
+
+    # Re-check if npm works now
+    if ($nodeFound) {
+        if (Get-Command npm -ErrorAction SilentlyContinue) {
+            $v = npm --version 2>&1
+            if ($v -match "(\d+)\.(\d+)") {
+                Write-Host "   Version: " -NoNewline -ForegroundColor White
+                Write-Host "npm $v" -ForegroundColor Green
+                return $true
+            }
+        }
     }
 
     return $false
 }
 
 if (-not (Check-Node)) {
-    Write-Warning "   Node.js/npm not found. Attempting to install latest version via winget..."
+    Write-Warning "   Node.js/npm not found. Attempting automatic installation via winget..."
 
     if (Get-Command winget -ErrorAction SilentlyContinue) {
         try {
-            # Attempt silent install of Node.js
-            Write-Host "   Installing Node.js..." -ForegroundColor Magenta
-            winget install -e --id OpenJS.NodeJS --silent --accept-package-agreements --accept-source-agreements
+            # Try multiple possible Node.js package IDs
+            $nodeIds = @("OpenJS.NodeJS", "OpenJS.NodeJS.LTS")
+            $installed = $false
 
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "   Node.js installed successfully." -ForegroundColor Green
+            foreach ($id in $nodeIds) {
+                Write-Host "   Trying package ID: $id..." -ForegroundColor Gray
+
+                # Start installation process
+                $startTime = Get-Date
+                $process = Start-Process -FilePath "winget" -ArgumentList "install -e --id $id --silent --accept-package-agreements --accept-source-agreements" -NoNewWindow -PassThru -Wait
+                $duration = (Get-Date) - $startTime
+
+                if ($process.ExitCode -eq 0) {
+                    Write-Host "   Node.js installed successfully (took $([int]$duration.TotalSeconds) seconds)" -ForegroundColor Green
+                    $installed = $true
+                    break
+                }
+            }
+
+            if ($installed) {
                 Refresh-EnvPath
 
                 # Re-check
                 if (-not (Check-Node)) {
-                    Write-Error "   Node.js installed but not found in PATH. Please restart terminal."
+                    Write-Warning "   Node.js installed but not found in PATH."
+                    Write-Host "   Please restart your terminal and run this script again." -ForegroundColor Yellow
                     exit 1
                 }
             }
             else {
-                Write-Error "   Failed to install Node.js via winget."
+                Write-Warning "   Automatic installation via winget failed."
+                Write-Host ""
+                Write-Host "   Please install Node.js manually:" -ForegroundColor Yellow
+                Write-Host "   1. Download from: https://nodejs.org/" -ForegroundColor White
+                Write-Host "   2. Run installer (npm is included)" -ForegroundColor White
+                Write-Host "   3. Restart terminal and run this script again" -ForegroundColor White
                 exit 1
             }
         }
         catch {
-            Write-Error "   An error occurred during Node.js installation."
+            Write-Warning "   Automatic installation failed: $_"
+            Write-Host "   Please install Node.js manually from https://nodejs.org" -ForegroundColor Yellow
             exit 1
         }
     }
     else {
-        Write-Error "   Node.js is not installed and winget is not available."
-        Write-Error "   Please install Node.js manually from https://nodejs.org"
+        Write-Error "   Node.js not found and winget not available."
+        Write-Host "   Please install Node.js manually from https://nodejs.org" -ForegroundColor Yellow
         exit 1
     }
 }
 
+# Step 2: Check for GitHub CLI
+Write-Host "`n[Dev Step 2/4] Checking GitHub CLI..." -ForegroundColor Yellow
 
-# Step 2: Python Development Setup
-Write-Host "`n[Step 2/3] Setting up Python development tools..." -ForegroundColor Yellow
+function Check-GitHubCLI {
+    # First check if gh command is available
+    if (Get-Command gh -ErrorAction SilentlyContinue) {
+        $v = gh --version 2>&1 | Select-Object -First 1
+        if ($v -match "gh version (\S+)") {
+            Write-Host "   Found: " -NoNewline -ForegroundColor White
+            Write-Host "gh $($Matches[1])" -NoNewline -ForegroundColor White
+            Write-Host " OK" -ForegroundColor Green
+            return $true
+        }
+    }
 
-# Use correct Windows path
+    # Check common installation location
+    $ghPath = "C:\Program Files\GitHub CLI\gh.exe"
+    if (Test-Path $ghPath) {
+        Write-Host "   Found GitHub CLI at: $ghPath" -ForegroundColor Yellow
+        $ghDir = Split-Path -Parent $ghPath
+
+        # Add to current session PATH
+        $env:Path = "$ghDir;$env:Path"
+
+        # Add to system PATH permanently
+        try {
+            $currentPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+            if ($currentPath -notlike "*$ghDir*") {
+                $newPath = "$ghDir;$currentPath"
+                [System.Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+                Write-Host "   Added to system PATH " -NoNewline -ForegroundColor White
+                Write-Host "OK" -ForegroundColor Green
+            }
+            else {
+                Write-Host "   Already in system PATH " -NoNewline -ForegroundColor White
+                Write-Host "OK" -ForegroundColor Green
+            }
+        }
+        catch {
+            Write-Warning "   Could not add to system PATH (may require admin rights). Added to current session only."
+        }
+
+        # Re-check if command works now
+        if (Get-Command gh -ErrorAction SilentlyContinue) {
+            $v = gh --version 2>&1 | Select-Object -First 1
+            if ($v -match "gh version (\S+)") {
+                Write-Host "   Version: " -NoNewline -ForegroundColor White
+                Write-Host "gh $($Matches[1])" -ForegroundColor Green
+                return $true
+            }
+        }
+    }
+
+    return $false
+}
+
+if (-not (Check-GitHubCLI)) {
+    Write-Warning "   GitHub CLI not found. Attempting automatic installation via winget..."
+
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        try {
+            Write-Host "   Trying package ID: GitHub.cli..." -ForegroundColor Gray
+
+            # Start installation process
+            $startTime = Get-Date
+            $process = Start-Process -FilePath "winget" -ArgumentList "install -e --id GitHub.cli --silent --accept-package-agreements --accept-source-agreements" -NoNewWindow -PassThru -Wait
+            $duration = (Get-Date) - $startTime
+
+            if ($process.ExitCode -eq 0) {
+                Write-Host "   GitHub CLI installed successfully (took $([int]$duration.TotalSeconds) seconds)" -ForegroundColor Green
+                Refresh-EnvPath
+
+                # Re-check
+                if (-not (Check-GitHubCLI)) {
+                    Write-Warning "   GitHub CLI installed but not found in PATH."
+                    Write-Host "   Please restart your terminal to use 'gh' command." -ForegroundColor Yellow
+                }
+            }
+            else {
+                Write-Warning "   Automatic installation via winget failed."
+                Write-Host "   GitHub CLI is optional but recommended for PR creation." -ForegroundColor Yellow
+                Write-Host "   You can install it later from: https://cli.github.com" -ForegroundColor Gray
+            }
+        }
+        catch {
+            Write-Warning "   Automatic installation failed: $_"
+            Write-Host "   GitHub CLI is optional. Install from: https://cli.github.com" -ForegroundColor Gray
+        }
+    }
+    else {
+        Write-Host "   GitHub CLI not found (optional)." -ForegroundColor Gray
+        Write-Host "   Install from: https://cli.github.com" -ForegroundColor Gray
+    }
+}
+
+# Step 3: Python Development Tools
+Write-Host "`n[Dev Step 3/4] Installing Python development tools..." -ForegroundColor Yellow
+
+# Use correct Windows path (venv already exists from setup.ps1)
 $pipPath = ".\.venv\Scripts\pip.exe"
 $pythonPath = ".\.venv\Scripts\python.exe"
 
-# Create venv if it doesn't exist
-if (-not (Test-Path ".venv")) {
-    Write-Host "   Creating " -NoNewline -ForegroundColor White
-    Write-Host ".venv" -NoNewline -ForegroundColor Magenta
-    Write-Host "..." -NoNewline -ForegroundColor White
-    python -m venv .venv
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host " OK" -ForegroundColor Green
-    }
-    else {
-        Write-Host " FAILED" -ForegroundColor Red
-        Write-Error "Failed to create virtual environment."
-        exit 1
-    }
-}
-else {
-    Write-Host "   Virtual environment already exists " -NoNewline -ForegroundColor White
-    Write-Host "OK" -ForegroundColor Green
-}
-
-# Verify pip exists
+# Verify pip exists (should exist from production setup)
 if (-not (Test-Path $pipPath)) {
     Write-Error "   pip not found at $pipPath"
-    Write-Error "   Virtual environment may be corrupted. Try deleting .venv and running again."
+    Write-Error "   Production setup may have failed. Run setup.ps1 manually."
     exit 1
 }
 
-# Upgrade pip first
-Write-Host "   Checking " -NoNewline -ForegroundColor White
-Write-Host "pip" -NoNewline -ForegroundColor Magenta
-Write-Host "..." -NoNewline -ForegroundColor White
-
-# Capture output to check if upgrade occurred
-$pipOutput = (& $pythonPath -m pip install --upgrade pip 2>&1) -join " "
-$pipExitCode = $LASTEXITCODE
-
-if ($pipExitCode -eq 0) {
-    # Get current pip version
-    $pipVersionOutput = (& $pythonPath -m pip --version 2>&1) -join " "
-    $pipVersion = ""
-    if ($pipVersionOutput -match "pip ([0-9]+\.[0-9]+(\.[0-9]+)?)") {
-        $pipVersion = $Matches[1]
-    }
-
-    # Check if it was already up to date or upgraded
-    if ($pipOutput -match "Requirement already satisfied") {
-        Write-Host " up to date " -NoNewline -ForegroundColor Green
-        if ($pipVersion) { Write-Host "(v$pipVersion)" -ForegroundColor Gray } else { Write-Host "" }
-    }
-    else {
-        Write-Host " upgraded " -NoNewline -ForegroundColor Green
-        if ($pipVersion) { Write-Host "(v$pipVersion)" -ForegroundColor Gray } else { Write-Host "" }
-    }
-}
-else {
-    Write-Host " FAILED (non-critical)" -ForegroundColor Yellow
-}
-
-# Install core requirements first
-if (Test-Path "requirements.txt") {
-    # Check if Flask is already installed as a proxy for all dependencies
-    $flaskCheck = & $pipPath show Flask 2>$null
-
-    if ($flaskCheck -match "Name: Flask") {
-        Write-Host "   Core dependencies already installed " -NoNewline -ForegroundColor White
-        Write-Host "OK" -ForegroundColor Green
-    }
-    else {
-        Write-Host "   Installing " -NoNewline -ForegroundColor White
-        Write-Host "requirements.txt" -NoNewline -ForegroundColor Magenta
-        Write-Host " (core)..." -ForegroundColor White
-        Write-Host ""
-
-        # Show installation progress (visible output)
-        & $pipPath install -r requirements.txt 2>&1 | Where-Object { $_ -notmatch "^ERROR:" -and $_ -notmatch "planning .* requires" }
-
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host ""
-            Write-Host "   Core dependencies installed " -NoNewline -ForegroundColor White
-            Write-Host "OK" -ForegroundColor Green
-        }
-        else {
-            Write-Host ""
-            Write-Host "   Core dependencies installation " -NoNewline -ForegroundColor White
-            Write-Host "FAILED" -ForegroundColor Red
-            $script:ErrorCount++
-        }
-    }
-}
-else {
-    Write-Warning "   requirements.txt not found. Skipping core dependencies."
-    $script:ErrorCount++
-}
 
 # Install dev requirements
 if (Test-Path "requirements-dev.txt") {
@@ -301,8 +332,8 @@ else {
 }
 
 
-# Step 3: JavaScript Development Setup
-Write-Host "`n[Step 3/3] Setting up JavaScript development tools..." -ForegroundColor Yellow
+# Step 4: JavaScript Development Tools
+Write-Host "`n[Dev Step 4/4] Setting up JavaScript development tools..." -ForegroundColor Yellow
 
 if (-not (Test-Path "package.json")) {
     Write-Host "   Initializing " -NoNewline -ForegroundColor White
@@ -402,6 +433,7 @@ else {
 Write-Host "`n========================================" -ForegroundColor Cyan
 if ($script:ErrorCount -eq 0) {
     Write-Host "   Development Setup Complete!" -ForegroundColor Green
+    Write-Host "   (Production + Dev Tools)" -ForegroundColor Gray
 }
 else {
     Write-Host "   Setup completed with $($script:ErrorCount) warning(s)" -ForegroundColor Yellow
