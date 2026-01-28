@@ -41,9 +41,10 @@ def mock_all_models():
 
 
 @pytest.fixture
-def engine(mock_all_models):
+def engine(mock_all_models, app):
     """Fixture to provide a PlanningEngine instance with a mocked logger."""
-    return PlanningEngine(logger=MagicMock())
+    with app.app_context():
+        yield PlanningEngine(logger=MagicMock())
 
 
 @pytest.fixture
@@ -103,12 +104,8 @@ class TestPlanningEngine:
         ].query.filter.return_value.order_by.return_value.all.return_value = [team_a]
 
         date = datetime(2025, 1, 1)
-        # Wrap in app_context to avoid RuntimeError during database/config access
-        from flask import Flask
-
-        with Flask(__name__).app_context():
-            teams = engine._get_working_teams(date)
-            assert any(t.name == "Team A" for t in teams)
+        teams = engine._get_working_teams(date)
+        assert any(t.name == "Team A" for t in teams)
 
     def test_team_selection_greedy(self, engine):
         """Test greedy algorithm for team selection based on skills."""
@@ -137,14 +134,11 @@ class TestPlanningEngine:
             assert len(res) == 1
 
             # T1 + T2 cover all
-            from flask import Flask
-
-            with Flask(__name__).app_context():
-                res = engine._find_team_with_skill_coverage(
-                    [t1, t2], req_skills, 2, {}, 60
-                )
-                assert len(res) == 2
-                assert t1 in res and t2 in res
+            res = engine._find_team_with_skill_coverage(
+                [t1, t2], req_skills, 2, {}, 60
+            )
+            assert len(res) == 2
+            assert t1 in res and t2 in res
 
     def test_select_best_team_scoring(self, engine):
         """Test scoring and top-N selection in _select_best_team."""
@@ -174,11 +168,8 @@ class TestPlanningEngine:
             side_effect=lambda s, n: [x[0] for x in s[:n]],
         ):
             # Time score weight is 0.4. T2 should rank higher if skills equal.
-            from flask import Flask
-
-            with Flask(__name__).app_context():
-                best = engine._select_best_team([t1, t2], 1, workloads)
-                assert best == [t2]
+            best = engine._select_best_team([t1, t2], 1, workloads)
+            assert best == [t2]
 
     def test_calculate_adjusted_duration(self, engine):
         """Test duration adjustment for extra technicians."""
@@ -219,22 +210,16 @@ class TestPlanningEngine:
             return_value=(True, None),
         ):
             # All 3 positional arguments are required
-            from flask import Flask
-
-            with Flask(__name__).app_context():
-                plannable = engine._get_plannable_tasks(MagicMock(), True, result)
-                assert len(plannable) == 1
-                assert plannable[0][0] == task2
-                result.add_warning.assert_called()
+            plannable = engine._get_plannable_tasks(MagicMock(), True, result)
+            assert len(plannable) == 1
+            assert plannable[0][0] == task2
+            result.add_warning.assert_called()
 
     def test_generate_plan_no_tasks(self, engine, mock_schedule):
         """Test generate_plan with no plannable tasks found."""
         with patch.object(engine, "_get_plannable_tasks", return_value=[]):
-            from flask import Flask
-
-            with Flask(__name__).app_context():
-                result = engine.generate_plan(mock_schedule, planning_mode="weekend")
-                assert "No plannable tasks found for this schedule" in result.warnings
+            result = engine.generate_plan(mock_schedule, planning_mode="weekend")
+            assert "No plannable tasks found for this schedule" in result.warnings
 
     def test_no_technicians_available(self, engine, mock_all_models, mock_schedule):
         """Test generate_plan when no technicians exist."""
@@ -254,11 +239,8 @@ class TestPlanningEngine:
             ),
             patch.object(engine, "_filter_weekend_tasks", side_effect=lambda t, r: t),
         ):
-            from flask import Flask
-
-            with Flask(__name__).app_context():
-                result = engine.generate_plan(mock_schedule)
-                assert "No available technicians found" in result.errors
+            result = engine.generate_plan(mock_schedule)
+            assert "No available technicians found" in result.errors
 
     @patch("src.services.shift_utils.get_shift_teams")
     @patch("apps.planning.src.services.planning_engine.check_spare_parts_availability")
@@ -293,14 +275,11 @@ class TestPlanningEngine:
             mock_dt.now.return_value = datetime(2025, 1, 1, 6, 0)
             mock_dt.utcnow.return_value = datetime(2025, 1, 1, 6, 0)
 
-            from flask import Flask
-
-            with Flask(__name__).app_context():
-                result = engine.generate_plan(
-                    mock_schedule, planning_mode="shift_break"
-                )
-                assert len(result.assigned_tasks) == 1
-                assert result.assigned_tasks[0].planning_task_id == 1
+            result = engine.generate_plan(
+                mock_schedule, planning_mode="shift_break"
+            )
+            assert len(result.assigned_tasks) == 1
+            assert result.assigned_tasks[0].planning_task_id == 1
 
     def test_generate_plan_wrapper(self, mock_all_models):
         """Test convenience wrapper function."""
