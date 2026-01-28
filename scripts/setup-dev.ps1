@@ -189,6 +189,7 @@ if (-not (Check-Node)) {
 Write-Host "`n[Dev Step 2/4] Checking GitHub CLI..." -ForegroundColor Yellow
 
 function Check-GitHubCLI {
+    # First check if gh command is available
     if (Get-Command gh -ErrorAction SilentlyContinue) {
         $v = gh --version 2>&1 | Select-Object -First 1
         if ($v -match "gh version (\S+)") {
@@ -198,6 +199,45 @@ function Check-GitHubCLI {
             return $true
         }
     }
+
+    # Check common installation location
+    $ghPath = "C:\Program Files\GitHub CLI\gh.exe"
+    if (Test-Path $ghPath) {
+        Write-Host "   Found GitHub CLI at: $ghPath" -ForegroundColor Yellow
+        $ghDir = Split-Path -Parent $ghPath
+
+        # Add to current session PATH
+        $env:Path = "$ghDir;$env:Path"
+
+        # Add to system PATH permanently
+        try {
+            $currentPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+            if ($currentPath -notlike "*$ghDir*") {
+                $newPath = "$ghDir;$currentPath"
+                [System.Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+                Write-Host "   Added to system PATH " -NoNewline -ForegroundColor White
+                Write-Host "OK" -ForegroundColor Green
+            }
+            else {
+                Write-Host "   Already in system PATH " -NoNewline -ForegroundColor White
+                Write-Host "OK" -ForegroundColor Green
+            }
+        }
+        catch {
+            Write-Warning "   Could not add to system PATH (may require admin rights). Added to current session only."
+        }
+
+        # Re-check if command works now
+        if (Get-Command gh -ErrorAction SilentlyContinue) {
+            $v = gh --version 2>&1 | Select-Object -First 1
+            if ($v -match "gh version (\S+)") {
+                Write-Host "   Version: " -NoNewline -ForegroundColor White
+                Write-Host "gh $($Matches[1])" -ForegroundColor Green
+                return $true
+            }
+        }
+    }
+
     return $false
 }
 
