@@ -13,9 +13,14 @@ def app():
         {
             "TESTING": True,
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+            "SQLALCHEMY_BINDS": {
+                "reports": "sqlite:///:memory:",
+                "planning": "sqlite:///:memory:",
+            },
             "REPORTS_ENABLED": True,
             "WTF_CSRF_ENABLED": False,
             "AUTO_SEED_DATABASE": False,
+            # No SERVER_NAME to avoid cookie domain mismatch issues in test_client
         }
     )
     with test_app.app_context():
@@ -45,8 +50,19 @@ def auth_client(client, app):
             u.roles.append(r)
             _db.session.add(u)
         _db.session.commit()
+
+        # Robustly get the ID of the test user
+        u = User.query.filter_by(username="testuser").first()
+        user_id = u.id
+        username = u.username
+
+    from datetime import datetime, timezone
+
     with client.session_transaction() as sess:
-        sess["user_id"] = 1
+        sess["user_id"] = user_id
+        sess["username"] = username
+        # Set last_active to prevent session timeout
+        sess["last_active"] = datetime.now(timezone.utc).timestamp()
     return client
 
 

@@ -263,15 +263,12 @@ test.describe("Visual Regression - Sidebar Sections", () => {
   });
 
   test("VR-16: Sidebar filters section expanded", async ({ page }) => {
-    await page.goto("/assets");
-    await waitForTable(page, "#assetsTable");
-
     // Ensure sidebar starts COLLAPSED
     await page.evaluate(() => {
       localStorage.setItem("tableSidebarCollapsed", "true");
       localStorage.removeItem("tableSidebarSections");
     });
-    await page.reload();
+    await page.goto("/assets");
     await waitForTable(page, "#assetsTable");
 
     // Open sidebar first
@@ -295,15 +292,12 @@ test.describe("Visual Regression - Sidebar Sections", () => {
   });
 
   test("VR-17: Sidebar columns section expanded", async ({ page }) => {
-    await page.goto("/assets");
-    await waitForTable(page, "#assetsTable");
-
     // Ensure sidebar starts COLLAPSED
     await page.evaluate(() => {
       localStorage.setItem("tableSidebarCollapsed", "true");
       localStorage.removeItem("tableSidebarSections");
     });
-    await page.reload();
+    await page.goto("/assets");
     await waitForTable(page, "#assetsTable");
 
     // Open sidebar
@@ -327,15 +321,14 @@ test.describe("Visual Regression - Sidebar Sections", () => {
   });
 
   test("VR-18: Sidebar saved views section expanded", async ({ page }) => {
-    await page.goto("/assets");
-    await waitForTable(page, "#assetsTable");
+    test.slow(); // Integrated slow test (triples timeout)
 
     // Ensure sidebar starts COLLAPSED
     await page.evaluate(() => {
       localStorage.setItem("tableSidebarCollapsed", "true");
       localStorage.removeItem("tableSidebarSections");
     });
-    await page.reload();
+    await page.goto("/assets");
     await waitForTable(page, "#assetsTable");
 
     // Open sidebar

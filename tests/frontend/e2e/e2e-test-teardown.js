@@ -25,21 +25,30 @@ const TEST_DB_PATH = path.join(INSTANCE_DIR, "mockcmms_e2e.db");
 function killProcessOnPort(port) {
   try {
     if (process.platform === "win32") {
+      // Use pipe correctly to filter for port
       const output = execSync(`netstat -ano | findstr :${port}`).toString();
       const lines = output.trim().split("\n");
-      if (lines.length > 0) {
-        const parts = lines[0].trim().split(/\s+/);
-        const pid = parts[parts.length - 1];
-        if (pid) {
-          console.warn(`🔌 Killing server on port ${port} (PID: ${pid})`);
-          try {
-            execSync(`taskkill /PID ${pid} /F`);
-          } catch (_err) {
-            // Process might have already exited
+      let killed = false;
+
+      for (const line of lines) {
+        // Only target LISTENING processes to avoid killing clients or TIME_WAIT
+        if (line.includes(`:${port}`) && line.includes("LISTENING")) {
+          const parts = line.trim().split(/\s+/);
+          // PID is the last column
+          const pid = parts[parts.length - 1];
+
+          if (pid && /^\d+$/.test(pid) && pid !== "0") {
+            console.warn(`🛑 Killing server on port ${port} (PID: ${pid})`);
+            try {
+              execSync(`taskkill /PID ${pid} /F`);
+              killed = true;
+            } catch (_err) {
+              // Process might have already exited
+            }
           }
-          return true;
         }
       }
+      return killed;
     } else {
       // Linux/Mac fallback (lsof)
       const pid = execSync(`lsof -t -i:${port}`).toString().trim();

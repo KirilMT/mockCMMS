@@ -4,6 +4,8 @@ This module tests complete user workflows and multi-step processes to validate e
 end functionality, data flow across modules, and system integration.
 """
 
+import os
+
 import pytest
 
 from src.services.db_utils import (
@@ -647,6 +649,10 @@ class TestIntegration:
             assert asset is not None
             assert asset.asset_code == "CONCURRENT-001"
 
+    @pytest.mark.skipif(
+        os.getenv("REPORTS_ENABLED", "true").lower() not in ("true", "1", "t"),
+        reason="Reports module is disabled (REPORTS_ENABLED=False)",
+    )
     def test_reports_integration(self, client, app, admin_user):
         """Test reports integration with MO data.
 

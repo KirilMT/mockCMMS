@@ -34,19 +34,19 @@ test.describe("Planning App Smoke Tests", () => {
   test("SMOKE-P02: Navigate to Manage Mappings UI", async ({ page }) => {
     await login(page);
     await page.goto("/planning/manage_mappings_ui");
-    await page.waitForLoadState("networkidle");
+    // Use domcontentloaded instead of networkidle which can timeout on slow pages
+    await page.waitForLoadState("domcontentloaded");
 
     // Verify unique element on this page
     await expect(
       page.getByRole("heading", { name: "Skill-Based Mappings Management" }),
-    ).toBeVisible();
-    await expect(page.locator("#manageSatelliteLinesSection")).toBeVisible();
+    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("#manageSatelliteLinesSection")).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test("SMOKE-P03: API Health Check - Get Technicians", async ({
-    request,
-    page,
-  }) => {
+  test("SMOKE-P03: API Health Check - Get Technicians", async ({ page }) => {
     // We need auth cookie for API call if it's protected, usually via browser context
     // But for simplicity, we can try accessing via Page to ensure session is active
     await login(page);

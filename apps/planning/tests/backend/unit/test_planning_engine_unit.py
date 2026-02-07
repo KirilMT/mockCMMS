@@ -134,9 +134,7 @@ class TestPlanningEngine:
             assert len(res) == 1
 
             # T1 + T2 cover all
-            res = engine._find_team_with_skill_coverage(
-                [t1, t2], req_skills, 2, {}, 60
-            )
+            res = engine._find_team_with_skill_coverage([t1, t2], req_skills, 2, {}, 60)
             assert len(res) == 2
             assert t1 in res and t2 in res
 
@@ -275,9 +273,7 @@ class TestPlanningEngine:
             mock_dt.now.return_value = datetime(2025, 1, 1, 6, 0)
             mock_dt.utcnow.return_value = datetime(2025, 1, 1, 6, 0)
 
-            result = engine.generate_plan(
-                mock_schedule, planning_mode="shift_break"
-            )
+            result = engine.generate_plan(mock_schedule, planning_mode="shift_break")
             assert len(result.assigned_tasks) == 1
             assert result.assigned_tasks[0].planning_task_id == 1
 

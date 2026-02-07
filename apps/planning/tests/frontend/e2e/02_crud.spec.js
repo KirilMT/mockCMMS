@@ -19,7 +19,6 @@ test.describe("Planning App CRUD Tests", () => {
     await login(page); // Authenticate session
 
     const techName = `E2E Tech ${Date.now()}`;
-    const uniqueId = Date.now();
     let techId;
 
     // 1. CREATE
@@ -30,6 +29,13 @@ test.describe("Planning App CRUD Tests", () => {
           satellite_point_id: 1, // Assuming ID 1 exists (Main)
         },
       });
+      // Log response body on failure for debugging
+      if (response.status() !== 201) {
+        const body = await response.text();
+        console.error(
+          `Create Technician failed with status ${response.status()}: ${body}`,
+        );
+      }
       expect(response.status()).toBe(201);
       const data = await response.json();
       techId = data.technician.id;

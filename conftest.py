@@ -14,6 +14,11 @@ Modular Isolation:
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# Load .env file BEFORE any test collection
+load_dotenv()
+
 # Set TESTING globally for all pytest runs
 os.environ["TESTING"] = "1"
 

@@ -1,3 +1,14 @@
+import os
+
+import pytest
+
+# Skip all tests in this file if REPORTS_ENABLED is not True
+pytestmark = pytest.mark.skipif(
+    os.getenv("REPORTS_ENABLED", "true").lower() not in ("true", "1", "t"),
+    reason="Reports module is disabled (REPORTS_ENABLED=False)",
+)
+
+
 def test_incident_xss_prevention(auth_client, app):
     """Test that XSS entries are either sanitized or handled safely."""
     xss_payload = "<script>alert('XSS')</script>"

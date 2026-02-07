@@ -53,6 +53,7 @@ def app():
             "pool_pre_ping": True,
             "pool_recycle": 300,
         },
+        "DB_INITIALIZED": True,  # Ensure db.create_all() is called in create_app
     }
 
     test_app = create_app(config_overrides)

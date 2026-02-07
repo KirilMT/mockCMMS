@@ -60,4 +60,10 @@ if __name__ == "__main__":
 
     # Note: In debug mode, Flask's reloader spawns a child process.
     # We disable it for E2E tests to ensure clean process termination (PID handling).
-    app.run(debug=True, port=port, use_reloader=not is_e2e_test)
+    app.run(
+        host="127.0.0.1",
+        debug=True,
+        port=port,
+        use_reloader=not is_e2e_test,
+        threaded=True,
+    )

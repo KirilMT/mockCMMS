@@ -1,8 +1,15 @@
-﻿import tempfile
+﻿import os
+import tempfile
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Skip all tests in this file if REPORTS_ENABLED is not True
+pytestmark = pytest.mark.skipif(
+    os.getenv("REPORTS_ENABLED", "true").lower() not in ("true", "1", "t"),
+    reason="Reports module is disabled (REPORTS_ENABLED=False)",
+)
 
 
 class TestReportsBackend:
@@ -72,7 +79,9 @@ class TestReportsBackend:
         mock_db.return_value.session.execute.side_effect = [mock_result, [row1]]
 
         response = auth_client.get("/reports/")
-        assert response.status_code == 200
+        assert (
+            response.status_code == 200
+        ), f"Redirect to: {response.headers.get('Location')}"
         assert b"Rep 1" in response.data
 
     def test_reports_generate_route(self, auth_client):

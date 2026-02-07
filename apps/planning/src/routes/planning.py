@@ -422,11 +422,16 @@ def technicians_api():
             # load_app_config(
             #     current_app.config.get("DATABASE_PATH"), current_app.logger
             # )
+            if new_tech:
+                cols = [d[0] for d in cursor.description]
+                new_tech_dict = dict(zip(cols, new_tech))
+            else:
+                new_tech_dict = {}
             return (
                 jsonify(
                     {
                         "message": f"Technician '{name}' added.",
-                        "technician": dict(new_tech),
+                        "technician": new_tech_dict,
                     }
                 ),
                 201,
@@ -496,11 +501,17 @@ def manage_technician_api(technician_id):
             # load_app_config(
             #     current_app.config.get("DATABASE_PATH"), current_app.logger
             # )
+            if updated_tech:
+                cols = [d[0] for d in cursor.description]
+                updated_tech_dict = dict(zip(cols, updated_tech))
+            else:
+                updated_tech_dict = {}
+
             return (
                 jsonify(
                     {
                         "message": f"Technician {technician_id} updated.",
-                        "technician": dict(updated_tech),
+                        "technician": updated_tech_dict,
                     }
                 ),
                 200,
@@ -521,6 +532,10 @@ def manage_technician_api(technician_id):
             ).fetchone()
             if not tech:
                 return jsonify({"message": "Technician not found."}), 404
+
+            # Safe name extraction
+            tech_name = tech[0] if isinstance(tech, tuple) else tech["name"]
+
             cursor.execute(
                 "DELETE FROM technician_technology_skills WHERE technician_id = ?",
                 (technician_id,),
@@ -537,7 +552,7 @@ def manage_technician_api(technician_id):
                 #     current_app.config.get("DATABASE_PATH"), current_app.logger
                 # )
                 return (
-                    jsonify({"message": f"Technician '{tech['name']}' deleted."}),
+                    jsonify({"message": f"Technician '{tech_name}' deleted."}),
                     200,
                 )
             return jsonify({"message": "Technician not deleted."}), 500

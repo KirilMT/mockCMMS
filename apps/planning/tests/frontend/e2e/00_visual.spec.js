@@ -1,4 +1,10 @@
 const { test, expect } = require("@playwright/test");
+const {
+  isModuleEnabled,
+} = require("../../../../../tests/frontend/e2e/test-utils");
+
+// Skip all planning tests if the module is disabled
+const planningEnabled = isModuleEnabled("PLANNING");
 
 /**
  * Planning App - Visual Regression Tests
@@ -16,7 +22,9 @@ async function login(page) {
   await expect(page.locator("nav").first()).toBeVisible({ timeout: 10000 });
 }
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page }, testInfo) => {
+  // Skip test if planning module is disabled
+  test.skip(!planningEnabled, "Planning module is disabled in .env");
   await login(page);
   // Inject consistent height style matching core standard
   await page.addInitScript(() => {

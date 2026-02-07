@@ -11,6 +11,7 @@ from flask import Flask, flash, g, jsonify, redirect, request, session, url_for
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect  # type: ignore[import-untyped]
+from sqlalchemy.pool import NullPool
 
 # Local blueprint imports
 from .routes.api import api_bp
@@ -37,6 +38,10 @@ def create_app(config_overrides=None):
     # --- Configuration ---
     # Check if running in E2E test mode
     is_e2e = get_env_bool("E2E_TEST", "false")
+    if is_e2e:
+        print(f"Ÿ E2E Mode Detected. E2E_TEST={is_e2e}")
+        # Use NullPool to prevent file locking issues with SQLite on Windows
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"poolclass": NullPool}
 
     app.config.from_mapping(
         SECRET_KEY=os.getenv("SECRET_KEY", "dev_key_fallback_for_testing"),
@@ -64,20 +69,22 @@ def create_app(config_overrides=None):
     if not app.config.get("SQLALCHEMY_DATABASE_URI"):
         if (
             app.testing
-            and not os.environ.get("TESTING_PRODUCTION")
-            and not os.environ.get("E2E_TEST")
+            and not get_env_bool("TESTING_PRODUCTION", "false")
+            and not get_env_bool("E2E_TEST", "false")
         ):
             app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        elif os.environ.get("TESTING_PRODUCTION"):
+        elif get_env_bool("TESTING_PRODUCTION", "false"):
             db_name = "mockcmms_test.db"
             app.config["SQLALCHEMY_DATABASE_URI"] = (
                 f"sqlite:///{os.path.join(app.instance_path, db_name)}"
             )
-        elif os.environ.get("E2E_TEST"):
+        elif get_env_bool("E2E_TEST", "false"):
             db_name = "mockcmms_e2e.db"
-            app.config["SQLALCHEMY_DATABASE_URI"] = (
-                f"sqlite:///{os.path.join(app.instance_path, db_name)}"
-            )
+            db_path = os.path.join(app.instance_path, db_name)
+            app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+            # Ensure the directory exists
+            os.makedirs(app.instance_path, exist_ok=True)
+            print(f"🧪 E2E Database Path: {db_path}")
         else:
             # Production/Development default
             app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -89,6 +96,11 @@ def create_app(config_overrides=None):
 
     planning_enabled = get_env_bool("PLANNING_ENABLED", "true")
 
+    # Planning module database path - MONOREPO: apps/planning/instance/
+    planning_instance_dir = os.path.join(
+        app.root_path, "..", "apps", "planning", "instance"
+    )
+
     if planning_enabled or app.testing:
         if "planning" not in binds:
             if "DATABASE_PATH" in app.config and app.testing:
@@ -96,57 +108,55 @@ def create_app(config_overrides=None):
                 binds["planning"] = f"sqlite:///{planning_db_path}"
             elif app.testing and not os.environ.get("E2E_TEST"):
                 binds["planning"] = "sqlite:///:memory:"
-            else:
-                planning_db_name = "planning.db"
-                if os.environ.get("E2E_TEST"):
-                    planning_db_name = "planning_e2e.db"
-
+            elif os.environ.get("E2E_TEST"):
                 planning_db_path = os.path.join(
-                    app.root_path,
-                    "..",
-                    "apps",
-                    "planning",
-                    "instance",
-                    planning_db_name,
+                    planning_instance_dir, "planning_e2e.db"
                 )
-                app.config["DATABASE_PATH"] = planning_db_path
                 binds["planning"] = f"sqlite:///{planning_db_path}"
+                # Ensure legacy code finds the correct DB
+                app.config["DATABASE_PATH"] = planning_db_path
+            else:
+                planning_db_path = os.path.join(planning_instance_dir, "planning.db")
+                binds["planning"] = f"sqlite:///{planning_db_path}"
+                # Ensure legacy code finds the correct DB
+                app.config["DATABASE_PATH"] = planning_db_path
 
-    reports_enabled = get_env_bool("REPORTS_ENABLED", "true")
+    reports_enabled = get_env_bool("REPORTS_ENABLED", "false")
+
+    # Reports module database path - MONOREPO: apps/reports/instance/
+    reports_instance_dir = os.path.join(
+        app.root_path, "..", "apps", "reports", "instance"
+    )
+
     if reports_enabled or app.testing:
         if "reports" not in binds:
             if app.testing and not os.environ.get("E2E_TEST"):
                 binds["reports"] = "sqlite:///:memory:"
+            elif os.environ.get("E2E_TEST"):
+                reports_db_path = os.path.join(reports_instance_dir, "reports_e2e.db")
+                binds["reports"] = f"sqlite:///{reports_db_path}"
             else:
-                reports_db_name = "reports.db"
-                if os.environ.get("E2E_TEST"):
-                    reports_db_name = "reports_e2e.db"
-
-                reports_db_path = os.path.join(
-                    app.root_path,
-                    "..",
-                    "apps",
-                    "reports",
-                    "instance",
-                    reports_db_name,
-                )
-                app.config["REPORTS_DATABASE_PATH"] = reports_db_path
+                reports_db_path = os.path.join(reports_instance_dir, "reports.db")
                 binds["reports"] = f"sqlite:///{reports_db_path}"
 
     app.config["SQLALCHEMY_BINDS"] = binds
 
-    # Setup Logging
+    # Initialize extensions
+    db.init_app(app)
+
+    # --- Logging ---
     try:
         LoggingConfig.setup_logging(app)
     except OSError as e:
         # Fallback if log directory cannot be created
         app.logger.error("Failed to setup logging directory: %s", e)
-    try:
-        db.init_app(app)
-        app.config["DB_INITIALIZED"] = True
-    except OSError as e:
-        app.config["DB_INITIALIZED"] = False
-        app.logger.error("Failed to initialize database: %s", e)
+
+    # Disable verbose Werkzeug request logs (GET /static/...) during E2E tests
+    # This unclutters the test output so failures are easier to see.
+    if is_e2e:
+        import logging
+
+        logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
     if is_e2e:
         app.config["WTF_CSRF_ENABLED"] = False
@@ -182,17 +192,61 @@ def create_app(config_overrides=None):
         except OSError as e:
             app.logger.error("Failed to create instance folder: %s", e)
 
-    # Bypass mangling of "with" keyword using explicit context management
+    # Init DB tables if enabled
+    # E2E NOTE: We must ensure tables exist before requests come in.
+    # The run.py starts the server, creating the app.
+    # For E2E tests, we ALWAYS initialize DB unconditionally
+
+    # Restored logic: Verify if we should init DB. Defaults to True for this mock app.
+    should_init_db = app.config.get("DB_INITIALIZED", True) or is_e2e
+
+    # CRITICAL: For E2E tests, ALWAYS initialize DB - no conditions
+    if is_e2e:
+        should_init_db = True
+
     app_ctx = app.app_context()
     app_ctx.__enter__()
     try:
-        if app.config.get("DB_INITIALIZED"):
+        if should_init_db:
+            if is_e2e:
+                print("🧪 Initializing E2E Database Schema...")
+
+            # Import models to ensure they are registered with SQLAlchemy
+            # This is critical for fresh DB creation
+
+            # Create all tables for ALL binds (main db + planning + reports)
             db.create_all()
-        if app.config.get("AUTO_SEED_DATABASE", True) and app.config.get(
-            "DB_INITIALIZED"
-        ):
+            # Also create tables for each bind explicitly
+            for bind_key in app.config.get("SQLALCHEMY_BINDS", {}).keys():
+                db.create_all(bind_key=bind_key)
+            app.logger.info("Database tables created successfully.")
+
+            if is_e2e:
+                # Verify User table existence
+                try:
+                    with db.engine.connect() as conn:
+                        from sqlalchemy import text
+
+                        result = conn.execute(
+                            text(
+                                "SELECT name FROM sqlite_master "
+                                "WHERE type='table' AND name='user'"
+                            )
+                        )
+                        if result.fetchone():
+                            print("✅ User table verified.")
+                        else:
+                            print("❌ User table MISSING after create_all()!")
+                except Exception as e:
+                    print(f"⚠️ Verification check failed: {e}")
+
+        should_seed = app.config.get("AUTO_SEED_DATABASE", True) and should_init_db
+        if should_seed:
             try:
-                populate_dummy_data(app.logger)
+                # In E2E mode, we must ensure data exists immediately
+                if is_e2e or get_env_bool("AUTO_SEED_DATABASE", "true"):
+                    populate_dummy_data(app.logger)
+                    app.logger.info("Dummy data populated successfully.")
             except Exception as e:
                 app.logger.error("Database seeding failed: %s", e)
 
@@ -375,9 +429,17 @@ def _register_request_handlers(app):
         @app.before_request
         def before_planning_request():
             if request.path.startswith("/planning"):
+                # Avoid opening manual SQLite connection if SQLAlchemy is sufficient.
+                # Only use g.db if strictly necessary for legacy code not using ORM.
                 try:
                     binds = app.config.get("SQLALCHEMY_BINDS", {})
                     planning_uri = binds.get("planning", "")
+
+                    # If we use SQLAlchemy, we might not need this manual connection
+                    # anymore.
+                    # But if legacy code relies on g.db, we must ensure it doesn't
+                    # conflict.
+
                     db_path = app.config.get("DATABASE_PATH")
                     if ":memory:" in str(planning_uri):
                         return None
@@ -401,8 +463,12 @@ def _register_request_handlers(app):
                             if not app.testing:
                                 os.makedirs(os.path.dirname(db_path), exist_ok=True)
                         if os.path.exists(os.path.dirname(db_path)):
-                            g.db = sqlite3.connect(db_path, timeout=30)
-                            g.db.row_factory = sqlite3.Row
+                            # Use check_same_thread=False since the
+                            # reloader/threaded=True might be used.
+                            # However, better is to avoid this if possible.
+                            g.db = sqlite3.connect(
+                                db_path, timeout=30, check_same_thread=False
+                            )
                 except sqlite3.Error as e:
                     app.logger.error(f"Failed to connect to planning database: {e}")
                     return jsonify({"error": "Database connection failed"}), 503

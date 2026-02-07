@@ -1150,7 +1150,9 @@ class TableSidebar {
       // Click on view info to load it
       const viewInfo = viewItem.querySelector(".view-info");
       if (viewInfo) {
-        viewInfo.addEventListener("click", () => {
+        viewInfo.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           this.loadView(config);
         });
       }

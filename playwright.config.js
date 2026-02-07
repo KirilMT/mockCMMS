@@ -1,4 +1,59 @@
 const { defineConfig, devices } = require("@playwright/test");
+const fs = require("fs");
+const path = require("path");
+
+/**
+ * Load environment variables from .env file.
+ * This follows the same pattern as backend tests (conftest.py).
+ */
+function loadEnvFile() {
+  const envPath = path.resolve(__dirname, ".env");
+  const env = {};
+  if (fs.existsSync(envPath)) {
+    const content = fs.readFileSync(envPath, "utf8");
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith("#")) {
+        const [key, ...valueParts] = trimmed.split("=");
+        if (key && valueParts.length > 0) {
+          env[key.trim()] = valueParts.join("=").trim();
+        }
+      }
+    }
+  }
+  return env;
+}
+
+/**
+ * Check if a module is enabled based on .env configuration.
+ * Follows same logic as backend tests: default to true unless explicitly disabled.
+ */
+function isModuleEnabled(envVars, moduleName) {
+  const envVar = `${moduleName.toUpperCase()}_ENABLED`;
+  const value = (envVars[envVar] || "true").toLowerCase();
+  return ["true", "1", "t", "yes"].includes(value);
+}
+
+// Load .env settings
+const envVars = loadEnvFile();
+const planningEnabled = isModuleEnabled(envVars, "PLANNING");
+const reportsEnabled = isModuleEnabled(envVars, "REPORTS");
+
+// Dynamically build testMatch based on enabled modules
+const testMatch = ["tests/frontend/e2e/**/*.spec.js"];
+const testIgnore = [];
+
+if (planningEnabled) {
+  testMatch.push("apps/planning/tests/frontend/e2e/**/*.spec.js");
+} else {
+  testIgnore.push("**/apps/planning/**");
+}
+
+if (reportsEnabled) {
+  testMatch.push("apps/reports/tests/frontend/e2e/**/*.spec.js");
+} else {
+  testIgnore.push("**/apps/reports/**");
+}
 
 /**
  * Playwright E2E Test Configuration
@@ -8,11 +63,14 @@ const { defineConfig, devices } = require("@playwright/test");
  * - Sets E2E_TEST=true for test database isolation
  * - Global setup ensures clean test environment
  * - Retries for flaky test resilience
+ * - Respects .env settings for PLANNING_ENABLED and REPORTS_ENABLED (like backend tests)
+ *   NOTE: Test files in apps/ should use test.skip() based on process.env to skip when disabled
  */
 
 module.exports = defineConfig({
   testDir: ".",
-  testMatch: ["tests/frontend/e2e/**/*.spec.js", "apps/**/tests/frontend/e2e/**/*.spec.js"],
+  testMatch: testMatch,
+  testIgnore: testIgnore,
 
   // Global setup runs before all tests
   globalSetup: require.resolve("./tests/frontend/e2e/e2e-test-setup.js"),
@@ -82,8 +140,9 @@ module.exports = defineConfig({
     env: {
       E2E_TEST: "true",
       FLASK_RUN_PORT: "5001",
-      PLANNING_ENABLED: "true",
-      REPORTS_ENABLED: "true",
+      // Pass through module settings from .env (follows backend test pattern)
+      PLANNING_ENABLED: planningEnabled ? "true" : "false",
+      REPORTS_ENABLED: reportsEnabled ? "true" : "false",
       FIXED_DATE_SEEDING: "2026-01-21", // Seed DB with this fixed date for consistent visual tests
     },
     url: "http://127.0.0.1:5001",

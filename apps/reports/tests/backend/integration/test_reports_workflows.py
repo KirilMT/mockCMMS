@@ -1,5 +1,15 @@
+import os
+
+import pytest
+
 from apps.reports.src.models import Incident
 from apps.reports.src.services.data_aggregator import DataAggregator
+
+# Skip all tests in this file if REPORTS_ENABLED is not True
+pytestmark = pytest.mark.skipif(
+    os.getenv("REPORTS_ENABLED", "true").lower() not in ("true", "1", "t"),
+    reason="Reports module is disabled (REPORTS_ENABLED=False)",
+)
 
 
 def test_incident_workflow(auth_client, app):
