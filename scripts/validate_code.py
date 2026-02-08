@@ -288,7 +288,7 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
         )
         checks.append(("Total Coverage Threshold", success))
 
-        # 10. Diff Coverage validation (New Code >= 90%)
+        # 10. Diff Coverage validation (New Code >= 92%)
         print_section("Step 10/10: Diff (Patch) Coverage")
         # Ensure we have coverage.xml
         if not os.path.exists("coverage.xml"):
@@ -305,9 +305,9 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
                         "diff-cover",
                         "coverage.xml",
                         "--compare-branch=origin/main",
-                        "--fail-under=90",
+                        "--fail-under=92",
                     ],
-                    "Diff Coverage Check (New Code needs 90% coverage)",
+                    "Diff Coverage Check (New Code needs 92% coverage)",
                 )
                 checks.append(("Diff Coverage", success))
             else:

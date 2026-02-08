@@ -599,3 +599,145 @@ class TestPlanningApi:
                 assert res.status_code == 500
                 assert "DB Lock" in res.json.get("error")
                 mock_rollback.assert_called()
+
+
+class TestPlanningApiCoverage:
+    """Targeted tests for exception handling and edge cases in Planning API to boost
+    coverage."""
+
+    @pytest.fixture(autouse=True)
+    def setup_app(self, app):
+        with app.app_context():
+            yield
+
+    def test_manage_technician_put_exception(self, auth_client):
+        """Test server error during technician update."""
+        # Create a technician to update
+        res = auth_client.post("/planning/api/technicians", json={"name": "TechEx"})
+        tid = res.json["technician"]["id"]
+
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            # We need mock_g.db.cursor() to raise Exception
+            mock_g.db.cursor.side_effect = Exception("Forced Error")
+
+            res = auth_client.put(
+                f"/planning/api/technicians/{tid}", json={"name": "New"}
+            )
+            assert res.status_code == 500
+            assert "Server error" in res.json.get("message", "")
+
+    def test_manage_technician_delete_exception(self, auth_client):
+        """Test server error during technician deletion."""
+        # Create a technician to delete
+        res = auth_client.post("/planning/api/technicians", json={"name": "DelEx"})
+        tid = res.json["technician"]["id"]
+
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            mock_g.db.cursor.side_effect = Exception("Forced Error")
+
+            res = auth_client.delete(f"/planning/api/technicians/{tid}")
+            assert res.status_code == 500
+            assert "Server error" in res.json.get("message", "")
+
+    def test_satellite_points_api_exception(self, auth_client):
+        """Test exception handling in satellite_points_api."""
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            mock_g.db.cursor.side_effect = Exception("Forced Error")
+
+            # GET exception
+            res_get = auth_client.get("/planning/api/satellite_points")
+            # The exception handler returns empty list and 200
+            assert res_get.status_code == 200
+            assert res_get.json == []
+
+    def test_satellite_points_post_error_paths(self, auth_client):
+        """Test error paths in satellite_points_api POST."""
+        # Test missing name
+        res_no_name = auth_client.post("/planning/api/satellite_points", json={})
+        assert res_no_name.status_code == 200
+        assert res_no_name.json.get("error") == "Name required"
+
+        # Test inner exception during insert
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            mock_cursor = MagicMock()
+            # Force integrity error or similar on execute
+            mock_cursor.execute.side_effect = Exception("DB Error")
+            mock_g.db.cursor.return_value = mock_cursor
+
+            res_ex = auth_client.post(
+                "/planning/api/satellite_points", json={"name": "NewPoint"}
+            )
+            assert res_ex.status_code == 200
+            assert res_ex.json.get("error") == "Created"
+
+    def test_manage_satellite_point_exception(self, auth_client):
+        """Test exception handling in manage_satellite_point."""
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            mock_g.db.cursor.side_effect = Exception("Forced Error")
+
+            # PUT exception
+            res_put = auth_client.put(
+                "/planning/api/satellite_points/1", json={"name": "Upd"}
+            )
+            assert res_put.status_code == 200
+
+            # DELETE exception
+            res_del = auth_client.delete("/planning/api/satellite_points/1")
+            assert res_del.status_code == 200
+
+    def test_lines_api_exception(self, auth_client):
+        """Test exception handling in lines_api."""
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            mock_g.db.cursor.side_effect = Exception("Forced Error")
+
+            res_get = auth_client.get("/planning/api/lines")
+            assert res_get.status_code == 200
+            assert res_get.json == []
+
+    def test_lines_post_error_paths(self, auth_client):
+        """Test error paths in lines_api POST."""
+        # Test missing name
+        res_no_name = auth_client.post("/planning/api/lines", json={})
+        assert res_no_name.status_code == 200
+        assert res_no_name.json.get("error") == "Name required"
+
+        # Test inner exception
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            mock_cursor = MagicMock()
+            mock_cursor.execute.side_effect = Exception("DB Error")
+            mock_g.db.cursor.return_value = mock_cursor
+
+            res_ex = auth_client.post("/planning/api/lines", json={"name": "NewLine"})
+            assert res_ex.status_code == 200
+            assert res_ex.json.get("error") == "Created"
+
+    def test_manage_line_exception(self, auth_client):
+        """Test exception handling in manage_line."""
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            mock_g.db.cursor.side_effect = Exception("Forced Error")
+
+            # PUT exception
+            res_put = auth_client.put("/planning/api/lines/1", json={"name": "Upd"})
+            assert res_put.status_code == 200
+
+            # DELETE exception
+            res_del = auth_client.delete("/planning/api/lines/1")
+            assert res_del.status_code == 200
+
+    def test_technologies_api_exception(self, auth_client):
+        """Test exception handling in technologies_api."""
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            mock_g.db.cursor.side_effect = Exception("Forced Error")
+
+            res = auth_client.get("/planning/api/technologies")
+            assert res.status_code == 200
+            assert res.json == []
+
+    def test_technology_groups_api_exception(self, auth_client):
+        """Test exception handling in technology_groups_api."""
+        with patch("apps.planning.src.routes.planning.g") as mock_g:
+            mock_g.db.cursor.side_effect = Exception("Forced Error")
+
+            res = auth_client.get("/planning/api/technology_groups")
+            assert res.status_code == 200
+            assert res.json == []

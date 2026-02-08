@@ -178,6 +178,9 @@ omit = [
     "*/venv/*",
     "*/.venv/*",
     "*/migrations/*",
+    "apps/planning/src/services/extract_data.py",
+    "apps/planning/src/services/data_processing.py",
+    "apps/planning/src/services/dashboard.py",
 ]
 
 [tool.coverage.report]

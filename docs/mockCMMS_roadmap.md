@@ -214,7 +214,15 @@ The core application can be improved with the following features to support the 
   - **Testing:** Manual testing following the `table_features_test_plan.md` methodology.
   - **Dependencies:** None (completed).
 
-- [ ] **Infrastructure & Quality Refinement** _(Priority: Medium)_
+- **[ ] Docker-Based Visual Regression Testing** _(Priority: High)_
+  - **Goal:** Implement containerized visual testing to eliminate cross-platform rendering inconsistencies (Windows vs. Linux).
+  - **Detailed Plan:** [docs/visual_testing_strategy.md](visual_testing_strategy.md)
+  - **Scope:**
+    - Add `npm run test:visual:docker` script
+    - Use official Playwright Docker image
+    - Remove current 5% tolerance workaround
+
+- **[ ] Infrastructure & Quality Refinement** _(Priority: Medium)_
   - **Goal:** Consolidate and expand the robustness of the CI/CD and testing infrastructure.
   - **Features:**
     - **Ruff Rule Expansion:** Enable `B` (Bugbear), `I` (Isort), and `UP` (Pyupgrade) rules to catch more logic bugs and consolidate `isort` and `flake8` checks.
@@ -731,6 +739,7 @@ This application is intended for reporting and analytics. The following features
 
 - **Line Conditions for Planning:** Standardize prerequisites for task execution.
 - **Frontend Architecture Decision:** Evaluate migration to a modern framework (Angular/React).
+- **Docker-Based Visual Regression Testing:** Standardize visual testing with containerized runner.
 - **CI/CD Pipeline:** ✅ COMPLETE.
 - **Team Collaboration Documentation:** GitHub workflows and setup automation.
 - ✅ **Standardize Naming Conventions:** COMPLETE.
