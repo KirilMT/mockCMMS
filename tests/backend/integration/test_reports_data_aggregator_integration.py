@@ -1,53 +1,39 @@
-from datetime import datetime, timedelta
+﻿from datetime import datetime, timedelta
 
-from apps.reports.src.models import Incident
 from apps.reports.src.services.data_aggregator import DataAggregator
 from src.services.db_utils import Asset, MaintenanceOrder, db
 
 
-def test_data_aggregator(app):
-    with app.app_context():
-        # Setup data
-        today = datetime.now()
-
-        # Create Asset
-        asset = Asset(asset_code="A1", name="Test Asset")
-        db.session.add(asset)
-        db.session.commit()
-
-        # Create MaintenanceOrder
-        mo = MaintenanceOrder(
-            asset_id=asset.id,
-            description="Test Order",
-            order_type="Preventive",
+class TestReportsDataAggregatorIntegration:
+    def test_get_aggregated_shift_data_integration(self, app, db_session):
+        # Create a test asset first (required foreign key)
+        test_asset = Asset(name="Test Asset", asset_code="TEST001")
+        db.session.add(test_asset)
+        db.session.flush()  # Get the ID
+        now = datetime.now()
+        start = now.replace(hour=6, minute=0, second=0)
+        # Breakdown (Reactive)
+        breakdown = MaintenanceOrder(
+            asset_id=test_asset.id,
+            description="Belt snapped - Broken Belt",
+            order_type="Reactive",
+            priority="High",
+            status="In Progress",
+            created_at=start + timedelta(hours=1),  # Inside shift
+        )
+        db.session.add(breakdown)
+        # Completed Activity (PM or anything completed)
+        activity = MaintenanceOrder(
+            asset_id=test_asset.id,
+            description="Cleaned sensor - Clean Sensor",
+            order_type="PM",
             status="Completed",
-            due_date=today,
-            created_at=today,
+            due_date=start + timedelta(hours=2),  # Inside shift
         )
-        db.session.add(mo)
-
-        # Create Incident
-        incident = Incident(
-            incident_type="Safety Issue",
-            equipment_line="Line 2",
-            description="Test Safety",
-            severity="Medium",
-            technician_name="Tech 1",
-            timestamp=today,
-        )
-        db.session.add(incident)
+        db.session.add(activity)
         db.session.commit()
-
         aggregator = DataAggregator()
-
-        # Test weekend tasks (simplified check)
-        start_date = (today - timedelta(days=1)).strftime("%Y-%m-%d")
-        end_date = (today + timedelta(days=1)).strftime("%Y-%m-%d")
-        tasks = aggregator.get_weekend_tasks(start_date, end_date)
-        # Just checking it runs without error as date logic is complex
-        assert len(tasks) >= 0
-
-        # Test incidents
-        incidents = aggregator.get_incidents()
-        assert len(incidents) == 1
-        assert incidents[0]["incident_type"] == "Safety Issue"
+        data = aggregator.get_aggregated_shift_data(now.strftime("%Y-%m-%d"), "Early")
+        assert "breakdowns" in data
+        assert len(data["breakdowns"]) >= 1
+        assert "break_activities" in data

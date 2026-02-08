@@ -5,35 +5,38 @@ from datetime import datetime
 from src.services.db_utils import db
 
 
-class Incident(db.Model):  # type: ignore
-    __bind_key__ = "reports"  # Modular: Use separate reports database
-    __tablename__ = "incidents"
+class Report(db.Model):
+    __bind_key__ = "reports"
+    __tablename__ = "reports"
+    __table_args__ = {"extend_existing": True}  # Fix for duplicate metadata error
 
     id = db.Column(db.Integer, primary_key=True)
-    incident_type = db.Column(db.String(50), nullable=False)
-    equipment_line = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    severity = db.Column(db.String(20), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    technician_name = db.Column(db.String(100), nullable=False)
-    resolved = db.Column(db.Boolean, default=False)
-    resolution_notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    title = db.Column(db.String(200), nullable=False)
+    report_type = db.Column(db.String(50), nullable=False)
+    format = db.Column(db.String(20), nullable=False, default="html")  # Always html
+    generated_on = db.Column(db.DateTime, default=datetime.utcnow)
+    parameters = db.Column(db.JSON)  # Stores generation params
+    data = db.Column(db.JSON)  # Stores the actual report content
+    file_path = db.Column(db.String(500))
+    generated_by = db.Column(db.Integer)  # User ID, loosely coupled
 
     def to_dict(self):
+        # Extract shift from parameters
+        shift = None
+        if self.parameters:
+            params = self.parameters if isinstance(self.parameters, dict) else {}
+            shift = params.get("shift")
+
         return {
             "id": self.id,
-            "incident_type": self.incident_type,
-            "equipment_line": self.equipment_line,
-            "description": self.description,
-            "severity": self.severity,
-            "timestamp": (
-                self.timestamp.strftime("%Y-%m-%d %H:%M") if self.timestamp else None
+            "title": self.title,
+            "report_type": self.report_type,
+            "shift": shift,
+            "generated_on": (
+                self.generated_on.isoformat() if self.generated_on else None
             ),
-            "technician_name": self.technician_name,
-            "resolved": self.resolved,
-            "resolution_notes": self.resolution_notes,
-            "created_at": (
-                self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else None
-            ),
+            "parameters": self.parameters,
+            "data": self.data,
+            "file_path": self.file_path,
+            "generated_by": self.generated_by,
         }

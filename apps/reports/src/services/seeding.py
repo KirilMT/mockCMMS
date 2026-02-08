@@ -1,9 +1,8 @@
 import json
 import logging
 import os
-from datetime import datetime, timedelta, timezone
 
-from apps.reports.src.models import Incident
+from apps.reports.src.models import Report
 from src.services.db_utils import db
 
 logger = logging.getLogger(__name__)
@@ -30,61 +29,52 @@ def _load_dummy_data():
     return None
 
 
-def _get_or_create_incident(data):
-    """Helper to get or create an incident based on description and timestamp.
-
-    Uses description and incident_type as keys.
-    """
-    # Since timestamp is dynamic, we use description and incident_type as key
-    instance = Incident.query.filter_by(
-        description=data["description"], incident_type=data["incident_type"]
-    ).first()
-
-    if instance:
-        return instance, False
-
-    # Calculate timestamp based on days_ago
-    days_ago = data.get("days_ago", 0)
-    timestamp = datetime.now(timezone.utc) - timedelta(days=days_ago)
-
-    instance = Incident(
-        incident_type=data["incident_type"],
-        equipment_line=data["equipment_line"],
-        description=data["description"],
-        severity=data["severity"],
-        technician_name=data["technician_name"],
-        timestamp=timestamp,
-        resolved=data.get("resolved", False),
-        resolution_notes=data.get("resolution_notes"),
-    )
-    db.session.add(instance)
-    return instance, True
-
-
 def seed_reports_data(app_logger=None):
     """Seeds the Reports App data if not already present."""
     log = app_logger or logger
 
     log.info("Checking if Reports database needs to be populated.")
+
+    # Check if table exists first (in case of fresh install)
     try:
-        if Incident.query.first():
-            log.info("Reports database already contains data. Skipping seeding.")
+        if Report.query.first():
+            log.info("Reports database already contains data. Skipping population.")
+            return
+    except Exception as e:
+        log.warning(f"Report table query failed (might not exist yet): {e}")
+        return
+
+    log.info("Populating Reports database with dummy data.")
+
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # apps/reports/src/services -> apps/reports/test_data/dummy_data.json
+        dummy_path = os.path.join(
+            current_dir, "..", "..", "test_data", "dummy_data.json"
+        )
+
+        if not os.path.exists(dummy_path):
+            log.warning(f"Reports dummy data not found: {dummy_path}")
             return
 
-        data = _load_dummy_data()
-        if not data or "incidents" not in data:
-            log.warning("No incident dummy data found for Reports App.")
-            return
+        with open(dummy_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-        log.info("Populating Reports database with modular dummy data.")
-        count = 0
-        for item in data["incidents"]:
-            _, created = _get_or_create_incident(item)
-            if created:
-                count += 1
+        reports_list = data.get("reports", [])
+
+        for r_data in reports_list:
+            report = Report(
+                title=r_data["title"],
+                report_type=r_data["report_type"],
+                parameters=r_data["parameters"],
+                data=r_data["data"],
+                generated_by=1,  # System/Admin
+            )
+            db.session.add(report)
 
         db.session.commit()
-        log.info(f"Successfully seeded {count} incidents for Reports App.")
+        log.info(f"Seeded {len(reports_list)} reports.")
+
     except Exception as e:
+        log.error(f"Failed to seed reports data: {e}")
         db.session.rollback()
-        log.error(f"Error seeding Reports App data: {e}", exc_info=True)

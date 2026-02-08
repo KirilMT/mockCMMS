@@ -71,7 +71,8 @@ class TestReportGenerator:
         assert path.endswith(".txt")
         with open(path, "r") as f:
             content = f.read()
-            assert "PDF Report Placeholder: My PDF Title" in content
+            assert "Report: My PDF Title" in content  # Actual behavior
+            assert "Generated:" in content
 
     def test_generate_csv_no_data(self, generator, tmp_path):
         """Test CSV generation with empty data."""

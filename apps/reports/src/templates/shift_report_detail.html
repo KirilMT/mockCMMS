@@ -1,0 +1,444 @@
+﻿{% extends "base.html" %}
+{% block title %}Shift Report Details{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('reports.static', filename='css/report-detail.css') }}">
+{% endblock %}
+{% block content %}
+<div class="container-fluid" data-report-id="{{ report.id }}">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h1>{{ report.title }}</h1>
+            <div>
+                <a href="{{ url_for('reports.reports') }}" class="btn btn-secondary">Back to Reports</a>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">Export</button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('reports.export_report', report_id=report.id, fmt='pdf') }}">PDF</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.export_report', report_id=report.id, fmt='markdown') }}">Markdown</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.export_report', report_id=report.id, fmt='txt') }}">Text</a></li>
+                    </ul>
+                </div>
+                <button id="copyMdBtn" class="btn btn-info text-white">Copy for Teams (MD)</button>
+            </div>
+        </div>
+    </div>
+    <div class="report-container" id="report-content">
+        <div class="text-center mb-4">
+            <h2 class="report-header">
+                <u>
+                    <span class="editable-field" data-field="report_title"
+                        onclick='openEditModal("header", "Report Header", {{ {"date": data.shift_info.date | default(""), "shift": data.shift_info.shift | default(""), "team_name": data.team_name | default(""), "team_color": data.team_color | default("")}|tojson|safe }})'>
+                        Shift Report - {{ data.shift_info.date if data.shift_info else 'dd/mm/yyyy' }} - {{ data.shift_info.shift if data.shift_info else 'Early' }} - <span class="team-name" style="color: {{ data.team_color | default('#e74c3c') }}">{{ data.team_name | default('Red Shift') }}</span>
+                    </span>
+                </u>
+            </h2>
+        </div>
+        <div class="metadata-row">
+            <div class="row">
+                <div class="col-md-3">
+                    <span class="metadata-label">Attendance:</span>
+                    <span class="editable-field" onclick='openEditModal("metadata", "Attendance", {{ {"key": "attendance", "value": data.attendance | default("")}|tojson|safe }})'>{{ data.attendance | default('N/A') }}</span>
+                </div>
+                <div class="col-md-3">
+                    <span class="metadata-label">EHS incidents:</span>
+                    <span class="editable-field" onclick='openEditModal("metadata", "EHS Incidents", {{ {"key": "ehs_incidents", "value": data.ehs_incidents | default(0)}|tojson|safe }})'>{{ data.ehs_incidents | default(0) }}</span>
+                </div>
+                <div class="col-md-3">
+                    <span class="metadata-label">VIGEL:</span>
+                    <span class="editable-field" onclick='openEditModal("metadata", "VIGEL", {{ {"key": "vigel", "value": data.vigel | default("")}|tojson|safe }})'>{{ data.vigel | default('-/-') }}</span>
+                </div>
+                <div class="col-md-3">
+                    <span class="metadata-label">MDS:</span>
+                    <span class="editable-field" onclick='openEditModal("metadata", "MDS", {{ {"key": "mds", "value": data.mds | default("")}|tojson|safe }})'>{{ data.mds | default('-/-') }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <div class="section-header">
+                <span class="section-title">Handover from previous Shift:</span>
+                <button class="btn btn-sm btn-success" onclick="openAddModal('handover_from', 'Handover from Previous Shift')"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="handover_from_items">
+                {% set hf = data.shift_info.handover_from_previous if data.shift_info else [] %}
+                {% if hf %}
+                    {% for item in hf %}
+                    <div class="report-item">
+                        <div class="item-actions">
+                            <button class="btn btn-outline-warning btn-sm" onclick='openEditModal("handover_from", "Handover Item", {{ item|tojson|safe }}, {{ loop.index0 }})'><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('handover_from', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+                        </div>
+                        {% if item is mapping %}
+                           <strong>{{ item.asset }}</strong> - {{ item.title }}
+                           <p class="ms-4 mb-0 text-muted">{{ item.description }}</p>
+                        {% else %}
+                           <strong>ASSET_CODE</strong> - {{ item }}
+                           <p class="ms-4 mb-0 text-muted">{{ item }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No handover notes from previous shift.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <div class="section-header">
+                <span class="section-title">Breakdowns:</span>
+                <button class="btn btn-sm btn-success" onclick="openAddModal('breakdown', 'Breakdown')"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="breakdown_items">
+                {% if data.breakdowns %}
+                    {% for bd in data.breakdowns %}
+                    <div class="report-item">
+                        <div class="item-actions">
+                            <button class="btn btn-outline-warning btn-sm" onclick="openEditModal('breakdown', 'Breakdown', '', {{ loop.index0 }})"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('breakdown', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <strong>{{ bd.equipment_line | default('ASSET_CODE') }}</strong> - Start Time: {{ bd.timestamp }} - Duration: {{ bd.duration | default('N/A') }}
+                        <ul class="mb-0 mt-2">
+                            <li><span class="item-label">Fault:</span> {{ bd.description }}</li>
+                            <li><span class="item-label">Root cause:</span> {{ bd.root_cause | default('Click to enter text.') }}</li>
+                            <li><span class="item-label">Recovery:</span> {{ bd.resolution_notes | default('Click to enter text.') }}</li>
+                        </ul>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No breakdowns recorded.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mb-4">
+            <div class="section-header">
+                <span class="section-title">Engineering support/ FLUX Tickets / Break Activities:</span>
+                <button class="btn btn-sm btn-success" onclick="openAddModal('activity', 'Activity')"><i class="fas fa-plus"></i></button>
+            </div>
+            <h6 class="mt-3"><strong>FLUX Tickets/MOs:</strong></h6>
+            <ol id="activity_items">
+                {% if data.break_activities %}
+                    {% for a in data.break_activities %}
+                    <li class="report-item" style="list-style-position: inside;">
+                        <div class="item-actions">
+                            <button class="btn btn-outline-warning btn-sm" onclick="openEditModal('activity', 'Activity', '', {{ loop.index0 }})"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('activity', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <strong>{{ a.asset }}</strong> - {{ a.description }} (MO/Ticket <strong>ID:</strong> {{ a.mo_id | default('N/A') }}): {{ a.status | default('details') }}
+                    </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="text-muted">None recorded.</li>
+                {% endif %}
+            </ol>
+            <h6 class="mt-3"><strong>Engineering Support:</strong></h6>
+            <ol>
+                {% if data.engineering_support %}
+                    {% for e in data.engineering_support %}
+                    <li><strong>{{ e.asset }}</strong> - {{ e.title }}: {{ e.details | default('details') }}</li>
+                    {% endfor %}
+                {% else %}
+                    <li class="text-muted">None recorded.</li>
+                {% endif %}
+            </ol>
+        </div>
+        <div class="mb-4">
+            <div class="section-header">
+                <span class="section-title">Handover to next Shift:</span>
+                <button class="btn btn-sm btn-success" onclick="openAddModal('handover_to', 'Handover to Next Shift')"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="handover_to_items">
+                {% set ht = data.shift_info.handover_to_next if data.shift_info else [] %}
+                {% if ht %}
+                    {% for item in ht %}
+                    <div class="report-item">
+                        <div class="item-actions">
+                            <button class="btn btn-outline-warning btn-sm" onclick="openEditModal('handover_to', 'Handover Item', '{{ item }}', {{ loop.index0 }})"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('handover_to', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <strong>ASSET_CODE</strong> - {{ item }}
+                        <p class="ms-4 mb-0 text-muted">Description of failure, reparation details, conclusion, breakdown time.</p>
+                        <p class="ms-4 mb-0 fst-italic text-muted">Pictures</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No handover notes for next shift.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="mt-5 pt-4 border-top">
+            <p class="mb-1">Have a good shift,</p>
+            <p><strong>{{ report.generated_by_name | default('Technician') }}</strong></p>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Edit Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Header Form -->
+                <div id="edit-header-form" class="modal-form-content" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label">Shift Date</label>
+                        <input type="date" class="form-control" id="edit-header-date">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Shift</label>
+                        <select class="form-select" id="edit-header-shift">
+                            <option value="Early">Early</option>
+                            <option value="Night">Night</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Team Name</label>
+                        <select class="form-select" id="edit-header-team">
+                            <option value="">Select Team...</option>
+                            {% for team in teams %}
+                            <option value="{{ team }}">{{ team }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" id="edit-header-color">
+                </div>
+
+                <!-- Metadata Form -->
+                <div id="edit-metadata-form" class="modal-form-content" style="display:none;">
+                    <input type="hidden" id="edit-metadata-key">
+                    <div class="mb-3">
+                        <label class="form-label">Value</label>
+                        <input type="text" class="form-control" id="edit-metadata-value">
+                    </div>
+                </div>
+
+                <!-- Handover Form -->
+                <div id="edit-handover-form" class="modal-form-content" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label">Asset Code</label>
+                        <input type="text" class="form-control" id="edit-handover-asset">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" id="edit-handover-title">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description / Details</label>
+                        <textarea class="form-control" id="edit-handover-desc" rows="4"></textarea>
+                    </div>
+                </div>
+
+                <!-- Breakdown Form -->
+                <div id="edit-breakdown-form" class="modal-form-content" style="display:none;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Asset Code</label>
+                            <input type="text" class="form-control" id="edit-bd-asset">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="edit-bd-time">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Duration</label>
+                            <input type="text" class="form-control" id="edit-bd-duration" placeholder="e.g. 30min">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fault / Description</label>
+                        <textarea class="form-control" id="edit-bd-fault" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Root Cause</label>
+                        <textarea class="form-control" id="edit-bd-root" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Recovery / Resolution</label>
+                        <textarea class="form-control" id="edit-bd-recovery" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Activity Form -->
+                <div id="edit-activity-form" class="modal-form-content" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label">Asset Code</label>
+                        <input type="text" class="form-control" id="edit-act-asset">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description / Work Done</label>
+                        <textarea class="form-control" id="edit-act-desc" rows="3"></textarea>
+                    </div>
+                </div>
+
+                 <!-- Simple Task Form (PMs/MOs weekend) -->
+                <div id="edit-simple-task-form" class="modal-form-content" style="display:none;">
+                     <div class="mb-3" id="edit-task-id-group" style="display:none;">
+                        <label class="form-label">ID (if applicable)</label>
+                        <input type="text" class="form-control" id="edit-task-id">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Asset Code</label>
+                        <input type="text" class="form-control" id="edit-task-asset">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="edit-task-desc" rows="3"></textarea>
+                    </div>
+                     <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <input type="text" class="form-control" id="edit-task-status">
+                    </div>
+                </div>
+
+                <!-- Generic Form -->
+                <div id="edit-generic-form" class="modal-form-content" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-control" id="edit-generic-content" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addModalLabel">Add Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Handover Form -->
+                <div id="add-handover-form" class="modal-form-content" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label">Asset Code</label>
+                        <input type="text" class="form-control" id="add-handover-asset">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" id="add-handover-title">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description / Details</label>
+                        <textarea class="form-control" id="add-handover-desc" rows="4"></textarea>
+                    </div>
+                </div>
+
+                <!-- Breakdown Form -->
+                <div id="add-breakdown-form" class="modal-form-content" style="display:none;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Asset Code</label>
+                            <input type="text" class="form-control" id="add-bd-asset">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="add-bd-time">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Duration</label>
+                            <input type="text" class="form-control" id="add-bd-duration" placeholder="e.g. 30min">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fault / Description</label>
+                        <textarea class="form-control" id="add-bd-fault" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Root Cause</label>
+                        <textarea class="form-control" id="add-bd-root" rows="2"></textarea>
+                    </div>
+                     <div class="mb-3">
+                        <label class="form-label">Recovery / Resolution</label>
+                        <textarea class="form-control" id="add-bd-recovery" rows="2"></textarea>
+                    </div>
+                </div>
+
+                 <!-- Activity Form -->
+                <div id="add-activity-form" class="modal-form-content" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label">Asset Code</label>
+                        <input type="text" class="form-control" id="add-act-asset">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description / Work Done</label>
+                        <textarea class="form-control" id="add-act-desc" rows="3"></textarea>
+                    </div>
+                </div>
+
+                 <!-- Simple Task Form (PMs/MOs weekend) -->
+                <div id="add-simple-task-form" class="modal-form-content" style="display:none;">
+                     <div class="mb-3" id="add-task-id-group" style="display:none;">
+                        <label class="form-label">ID (if applicable)</label>
+                        <input type="text" class="form-control" id="add-task-id">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Asset Code</label>
+                        <input type="text" class="form-control" id="add-task-asset">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="add-task-desc" rows="3"></textarea>
+                    </div>
+                     <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <input type="text" class="form-control" id="add-task-status" value="Open">
+                    </div>
+                </div>
+
+                <!-- Generic Form -->
+                <div id="add-generic-form" class="modal-form-content" style="display:none;">
+                    <div class="mb-3">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-control" id="add-generic-content" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="saveAddBtn">Add Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="reportDeleteConfirmModal" tabindex="-1" aria-labelledby="reportDeleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportDeleteConfirmModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this item?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmReportDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.reportData = {
+        reportType: 'shift',
+        shiftInfo: {{ data.shift_info | tojson | safe if data.shift_info else '{}' }},
+        breakdowns: {{ data.breakdowns | tojson | safe if data.breakdowns else '[]' }},
+        activities: {{ data.break_activities | tojson | safe if data.break_activities else '[]' }},
+        teamName: '{{ data.team_name | default("Red Shift") }}',
+        generatedBy: '{{ report.generated_by_name | default("Technician") }}',
+        attendance: '{{ data.attendance | default("N/A") }}',
+        ehsIncidents: {{ data.ehs_incidents | default(0) }},
+        vigel: '{{ data.vigel | default("-/-") }}',
+        mds: '{{ data.mds | default("-/-") }}'
+    };
+</script>
+<script src="{{ url_for('reports.static', filename='js/report-interactions.js') }}"></script>
+{% endblock %}

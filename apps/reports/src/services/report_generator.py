@@ -56,6 +56,11 @@ class ReportGenerator:
             self.generate_csv(data, file_path)
         elif format_type.lower() == "markdown":
             self._generate_markdown_report(data, title, file_path)
+        elif format_type.lower() == "json":
+            import json
+
+            with open(file_path, "w") as f:
+                json.dump(data, f, default=str)
         else:
             raise ValueError(f"Unsupported format: {format_type}")
 
@@ -119,74 +124,346 @@ class ReportGenerator:
         }
 
     def _generate_pdf_report(self, data, title, file_path):
-        """Generate PDF report (placeholder - requires reportlab)"""
-        # For now, create a simple text file as placeholder
-        # In a real scenario, we would use reportlab or similar
+        """Generate PDF report (text format - requires reportlab for true PDF)."""
+        # For now, create a formatted text file as placeholder
         txt_path = file_path.replace(".pdf", ".txt")
         with open(txt_path, "w") as f:
-            f.write(f"PDF Report Placeholder: {title}\n")
-            f.write("=" * 50 + "\n\n")
-            f.write(f"Generated: {data.get('generated_at', 'N/A')}\n")
+            # Handle shift_report type
+            if data.get("shift_info"):
+                self._generate_shift_report_text(f, data, title)
+            # Handle weekend_report type
+            elif data.get("weekend_info"):
+                self._generate_weekend_report_text(f, data, title)
+            # Handle legacy/generic reports
+            else:
+                f.write(f"Report: {title}\n")
+                f.write("=" * 50 + "\n\n")
+                f.write(f"Generated: {data.get('generated_at', 'N/A')}\n")
 
-            # Try to find list data
-            items = []
-            if "maintenance_orders" in data:
-                items = data["maintenance_orders"]
-            elif "incidents" in data:
-                items = data["incidents"]
-            elif "tasks" in data:
-                items = data["tasks"]
+                items = []
+                if "maintenance_orders" in data:
+                    items = data["maintenance_orders"]
+                elif "incidents" in data:
+                    items = data["incidents"]
+                elif "tasks" in data:
+                    items = data["tasks"]
 
-            f.write(f"Total Records: {len(items)}\n\n")
+                f.write(f"Total Records: {len(items)}\n\n")
 
-            for item in items:
-                f.write(str(item) + "\n")
+                for item in items:
+                    f.write(str(item) + "\n")
 
-        # Return the text file path for now
         return txt_path
+
+    def _generate_shift_report_text(self, f, data, title):
+        """Generate shift report as formatted text."""
+        shift_info = data.get("shift_info", {})
+        date = shift_info.get("date", "N/A")
+        shift = shift_info.get("shift", "N/A")
+        team = data.get("team_name", "Red Shift")
+
+        f.write(f"SHIFT REPORT – {date} – {shift} – {team}\n")
+        f.write("=" * 60 + "\n\n")
+        f.write(f"Attendance: {data.get('attendance', 'N/A')}\n")
+        f.write(f"EHS incidents: {data.get('ehs_incidents', 0)}\n")
+        f.write(f"VIGEL: {data.get('vigel', '-/-')}\n")
+        f.write(f"MDS: {data.get('mds', '-/-')}\n\n")
+
+        f.write("HANDOVER FROM PREVIOUS SHIFT\n")
+        f.write("-" * 40 + "\n")
+        hf = shift_info.get("handover_from_previous", [])
+        if hf:
+            for item in hf:
+                f.write(f"  • {item}\n")
+        else:
+            f.write("  No notes\n")
+        f.write("\n")
+
+        f.write("BREAKDOWNS\n")
+        f.write("-" * 40 + "\n")
+        breakdowns = data.get("breakdowns", [])
+        if breakdowns:
+            for bd in breakdowns:
+                f.write(
+                    f"\n  {bd.get('equipment_line', 'ASSET')} - "
+                    f"{bd.get('timestamp', 'N/A')}\n"
+                )
+                f.write(f"    Fault: {bd.get('description', 'N/A')}\n")
+                f.write(f"    Root cause: {bd.get('root_cause', 'N/A')}\n")
+                f.write(f"    Recovery: {bd.get('resolution_notes', 'N/A')}\n")
+        else:
+            f.write("  No breakdowns\n")
+        f.write("\n")
+
+        f.write("ENGINEERING SUPPORT / BREAK ACTIVITIES\n")
+        f.write("-" * 40 + "\n")
+        activities = data.get("break_activities", [])
+        if activities:
+            for a in activities:
+                f.write(
+                    f"  • {a.get('asset', 'ASSET')} - "
+                    f"{a.get('description', 'N/A')}\n"
+                )
+        else:
+            f.write("  None\n")
+        f.write("\n")
+
+        f.write("HANDOVER TO NEXT SHIFT\n")
+        f.write("-" * 40 + "\n")
+        ht = shift_info.get("handover_to_next", [])
+        if ht:
+            for item in ht:
+                f.write(f"  • {item}\n")
+        else:
+            f.write("  No notes\n")
+        f.write("\n")
+
+        f.write("=" * 60 + "\n")
+        f.write("Have a good shift,\nTechnician\n")
+
+    def _generate_weekend_report_text(self, f, data, title):
+        """Generate weekend report as formatted text."""
+        weekend_info = data.get("weekend_info", {})
+        date = weekend_info.get("date", "N/A")
+        shift = data.get("shift", "Early")
+
+        f.write(f"WEEKEND SHIFT REPORT – {date} – {shift}\n")
+        f.write("=" * 60 + "\n\n")
+        f.write(f"Attendance: {data.get('attendance', 'N/A')}\n")
+        f.write(f"EHS incidents: {data.get('ehs_incidents', 0)}\n\n")
+
+        f.write("PMs\n")
+        f.write("-" * 40 + "\n")
+        pms = data.get("pms", [])
+        if pms:
+            for pm in pms:
+                f.write(
+                    f"  • {pm.get('asset', 'ASSET')} - "
+                    f"{pm.get('description', 'N/A')} "
+                    f"({pm.get('status', 'Completed')})\n"
+                )
+        else:
+            f.write("  No PMs\n")
+        f.write("\n")
+
+        f.write("MOs/TICKETS\n")
+        f.write("-" * 40 + "\n")
+        mos = data.get("mos", []) or data.get("mos_tickets", [])
+        if mos:
+            for mo in mos:
+                f.write(
+                    f"  • {mo.get('asset', 'ASSET')} - "
+                    f"{mo.get('description', 'N/A')}\n"
+                )
+        else:
+            f.write("  No MOs/Tickets\n")
+        f.write("\n")
+
+        f.write("ADDITIONAL TICKETS NOT ON WEEKEND LIST\n")
+        f.write("-" * 40 + "\n")
+        additional = data.get("additional_tickets", [])
+        if additional:
+            for t in additional:
+                f.write(
+                    f"  • {t.get('asset', 'ASSET')} - "
+                    f"{t.get('description', 'N/A')}\n"
+                )
+        else:
+            f.write("  None\n")
+        f.write("\n")
+
+        f.write("HANDOVER INSTRUCTIONS\n")
+        f.write("-" * 40 + "\n")
+        instructions = data.get("handover_instructions", [])
+        if instructions:
+            for h in instructions:
+                f.write(f"  • {h}\n")
+        else:
+            f.write("  No instructions\n")
+        f.write("\n")
+
+        f.write("=" * 60 + "\n")
+        f.write("Have a good shift,\nTechnician\n")
 
     def _generate_markdown_report(self, data, title, file_path):
         """Generate Markdown report."""
         with open(file_path, "w") as f:
-            f.write(f"# {title}\n\n")
-            f.write(f"**Generated:** {data.get('generated_at', 'N/A')}\n")
-
-            items = []
-            if "maintenance_orders" in data:
-                items = data["maintenance_orders"]
-            elif "incidents" in data:
-                items = data["incidents"]
-            elif "tasks" in data:
-                items = data["tasks"]
-
-            f.write(f"**Total Records:** {len(items)}\n\n")
-
-            if data.get("weekend_dates"):
-                f.write(
-                    f"**Weekend Period:** {data['weekend_dates']['saturday']} "
-                    f"to {data['weekend_dates']['sunday']}\n\n"
-                )
-
-            f.write("## Data\n\n")
-
-            if items:
-                # Get headers from first item
-                headers = list(items[0].keys())
-                f.write("| " + " | ".join(headers) + " |\n")
-                f.write("|" + "|".join(["---"] * len(headers)) + "|\n")
-
-                for item in items:
-                    values = [str(item.get(h, "")) for h in headers]
-                    f.write("| " + " | ".join(values) + " |\n")
+            # Handle shift_report type
+            if data.get("shift_info"):
+                self._generate_shift_report_markdown(f, data, title)
+            # Handle weekend_report type
+            elif data.get("weekend_info"):
+                self._generate_weekend_report_markdown(f, data, title)
+            # Handle legacy/generic reports
             else:
-                f.write("No data found for the specified criteria.\n")
-
-            f.write(
-                f"\n---\n*Report generated by mockCMMS on "
-                f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n"
-            )
+                self._generate_generic_markdown(f, data, title)
 
         return file_path
+
+    def _generate_shift_report_markdown(self, f, data, title):
+        """Generate shift report in Markdown format."""
+        shift_info = data.get("shift_info", {})
+        date = shift_info.get("date", "N/A")
+        shift = shift_info.get("shift", "N/A")
+        team = data.get("team_name", "Red Shift")
+
+        f.write(f"# Shift Report – {date} – {shift} – {team}\n\n")
+        f.write(f"**Attendance:** {data.get('attendance', 'N/A')}\n")
+        f.write(f"**EHS incidents:** {data.get('ehs_incidents', 0)}\n")
+        f.write(f"**VIGEL:** {data.get('vigel', '-/-')}\n")
+        f.write(f"**MDS:** {data.get('mds', '-/-')}\n\n")
+
+        # Handover from previous shift
+        f.write("## Handover from previous Shift\n\n")
+        hf = shift_info.get("handover_from_previous", [])
+        if hf:
+            for item in hf:
+                f.write(f"- {item}\n")
+        else:
+            f.write("- No notes\n")
+        f.write("\n")
+
+        # Breakdowns
+        f.write("## Breakdowns\n\n")
+        breakdowns = data.get("breakdowns", [])
+        if breakdowns:
+            for bd in breakdowns:
+                f.write(
+                    f"### {bd.get('equipment_line', 'ASSET')} - "
+                    f"{bd.get('timestamp', 'N/A')}\n"
+                )
+                f.write(f"- **Fault:** {bd.get('description', 'N/A')}\n")
+                f.write(f"- **Root cause:** {bd.get('root_cause', 'N/A')}\n")
+                f.write(f"- **Recovery:** {bd.get('resolution_notes', 'N/A')}\n\n")
+        else:
+            f.write("- No breakdowns\n\n")
+
+        # Break Activities
+        f.write("## Engineering Support / Break Activities\n\n")
+        activities = data.get("break_activities", [])
+        if activities:
+            for a in activities:
+                f.write(
+                    f"- **{a.get('asset', 'ASSET')}** - "
+                    f"{a.get('description', 'N/A')}\n"
+                )
+        else:
+            f.write("- None\n")
+        f.write("\n")
+
+        # Handover to next shift
+        f.write("## Handover to next Shift\n\n")
+        ht = shift_info.get("handover_to_next", [])
+        if ht:
+            for item in ht:
+                f.write(f"- {item}\n")
+        else:
+            f.write("- No notes\n")
+        f.write("\n")
+
+        f.write("---\n\nHave a good shift,\n\n**Technician**\n")
+
+    def _generate_weekend_report_markdown(self, f, data, title):
+        """Generate weekend report in Markdown format."""
+        weekend_info = data.get("weekend_info", {})
+        date = weekend_info.get("date", "N/A")
+        shift = data.get("shift", "Early")
+
+        f.write(f"# Weekend Shift Report – {date} – {shift}\n\n")
+        f.write(f"**Attendance:** {data.get('attendance', 'N/A')}\n")
+        f.write(f"**EHS incidents:** {data.get('ehs_incidents', 0)}\n\n")
+
+        # PMs
+        f.write("## PMs\n\n")
+        pms = data.get("pms", [])
+        if pms:
+            for pm in pms:
+                f.write(
+                    f"- **{pm.get('asset', 'ASSET')}** - "
+                    f"{pm.get('description', 'N/A')} "
+                    f"({pm.get('status', 'Completed')})\n"
+                )
+        else:
+            f.write("- No PMs\n")
+        f.write("\n")
+
+        # MOs/Tickets
+        f.write("## MOs/Tickets\n\n")
+        mos = data.get("mos", []) or data.get("mos_tickets", [])
+        if mos:
+            for mo in mos:
+                f.write(
+                    f"- **{mo.get('asset', 'ASSET')}** - "
+                    f"{mo.get('description', 'N/A')}\n"
+                )
+        else:
+            f.write("- No MOs/Tickets\n")
+        f.write("\n")
+
+        # Additional tickets
+        f.write("## Additional tickets not on weekend list\n\n")
+        additional = data.get("additional_tickets", [])
+        if additional:
+            for t in additional:
+                f.write(
+                    f"- **{t.get('asset', 'ASSET')}** - "
+                    f"{t.get('description', 'N/A')}\n"
+                )
+        else:
+            f.write("- None\n")
+        f.write("\n")
+
+        # Handover instructions
+        f.write("## Handover Instructions\n\n")
+        instructions = data.get("handover_instructions", [])
+        if instructions:
+            for h in instructions:
+                f.write(f"- {h}\n")
+        else:
+            f.write("- No instructions\n")
+        f.write("\n")
+
+        f.write("---\n\nHave a good shift,\n\n**Technician**\n")
+
+    def _generate_generic_markdown(self, f, data, title):
+        """Generate generic Markdown report for legacy types."""
+        f.write(f"# {title}\n\n")
+        f.write(f"**Generated:** {data.get('generated_at', 'N/A')}\n")
+
+        items = []
+        if "maintenance_orders" in data:
+            items = data["maintenance_orders"]
+        elif "incidents" in data:
+            items = data["incidents"]
+        elif "tasks" in data:
+            items = data["tasks"]
+
+        f.write(f"**Total Records:** {len(items)}\n\n")
+
+        if data.get("weekend_dates"):
+            f.write(
+                f"**Weekend Period:** {data['weekend_dates']['saturday']} "
+                f"to {data['weekend_dates']['sunday']}\n\n"
+            )
+
+        f.write("## Data\n\n")
+
+        if items:
+            # Get headers from first item
+            headers = list(items[0].keys())
+            f.write("| " + " | ".join(headers) + " |\n")
+            f.write("|" + "|".join(["---"] * len(headers)) + "|\n")
+
+            for item in items:
+                values = [str(item.get(h, "")) for h in headers]
+                f.write("| " + " | ".join(values) + " |\n")
+        else:
+            f.write("No data found for the specified criteria.\n")
+
+        f.write(
+            f"\n---\n*Report generated by mockCMMS on "
+            f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n"
+        )
 
     def generate_csv(self, data, file_path):
         """Generate CSV export from data."""

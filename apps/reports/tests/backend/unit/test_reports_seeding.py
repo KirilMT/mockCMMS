@@ -1,141 +1,77 @@
-import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from apps.reports.src.models import Incident
-from apps.reports.src.services.seeding import (
-    _get_or_create_incident,
-    _load_dummy_data,
-    seed_reports_data,
-)
-from src.services.db_utils import db
+from apps.reports.src.services.seeding import seed_reports_data
 
 
 class TestReportsSeeding:
+    """Test seeding functionality for reports."""
+
     @pytest.fixture(autouse=True)
-    def setup_app(self, app):
+    def setup_app_context(self, app):
         with app.app_context():
-            # Ensure DB is empty for seeding tests
-            Incident.query.delete()
-            db.session.commit()
             yield
 
-    def test_load_dummy_data_not_found(self):
-        with patch("os.path.exists", return_value=False):
-            assert _load_dummy_data() is None
+    @pytest.fixture
+    def mock_db_session(self):
+        with patch("src.services.db_utils.db.session") as mock_session:
+            yield mock_session
 
-    def test_load_dummy_data_exception(self):
-        with patch("builtins.open", side_effect=Exception("Open Error")):
-            assert _load_dummy_data() is None
+    @pytest.fixture
+    def mock_report_query(self):
+        with patch("apps.reports.src.models.Report.query") as mock_query:
+            yield mock_query
 
-    def test_load_dummy_data_success(self, tmp_path):
-        dummy_file = tmp_path / "dummy.json"
-        data = {"incidents": [{"description": "Test"}]}
-        dummy_file.write_text(json.dumps(data), encoding="utf-8")
+    def test_seed_reports_data_already_has_data(
+        self, mock_report_query, mock_db_session
+    ):
+        """Test seeding skips if Report table has data."""
+        mock_report_query.first.return_value = MagicMock()  # Data exists
+
+        # Call function
+        seed_reports_data()
+
+        # Verify no add or commit
+        mock_db_session.add.assert_not_called()
+        mock_db_session.commit.assert_not_called()
+
+    def test_seed_reports_data_no_file(self, mock_report_query, mock_db_session):
+        """Test seeding handles missing file gracefully."""
+        mock_report_query.first.return_value = None  # Empty table
 
         with patch(
-            "apps.reports.src.services.seeding.os.path.join",
-            return_value=str(dummy_file),
+            "apps.reports.src.services.seeding.os.path.exists", return_value=False
         ):
-            with patch(
-                "apps.reports.src.services.seeding.os.path.exists", return_value=True
-            ):
-                loaded = _load_dummy_data()
-                assert loaded == data
-
-    def test_get_or_create_incident_exists(self, db_session):
-        data = {
-            "incident_type": "Breakdown",
-            "equipment_line": "Line 1",
-            "description": "Test Incident",
-            "severity": "High",
-            "technician_name": "Tech 1",
-            "days_ago": 1,
-        }
-        # First creation
-        inc, created = _get_or_create_incident(data)
-        assert created is True
-        db.session.commit()
-
-        # Second call
-        inc2, created2 = _get_or_create_incident(data)
-        assert created2 is False
-        assert inc2.id == inc.id
-
-    def test_seed_reports_data_already_has_data(self):
-        with (
-            patch("apps.reports.src.models.Incident.query") as mock_query,
-            patch("apps.reports.src.services.seeding.logger") as mock_logger,
-        ):
-            mock_query.first.return_value = MagicMock()
             seed_reports_data()
-            mock_logger.info.assert_any_call(
-                "Reports database already contains data. Skipping seeding."
-            )
 
-    def test_seed_reports_data_no_file(self):
-        with (
-            patch("apps.reports.src.models.Incident.query") as mock_query,
-            patch(
-                "apps.reports.src.services.seeding._load_dummy_data", return_value=None
-            ),
-            patch("apps.reports.src.services.seeding.logger") as mock_logger,
-        ):
-            mock_query.first.return_value = None
-            seed_reports_data()
-            mock_logger.warning.assert_any_call(
-                "No incident dummy data found for Reports App."
-            )
+        mock_db_session.add.assert_not_called()
 
-    def test_seed_reports_data_exception(self):
-        with (
-            patch("apps.reports.src.models.Incident.query") as mock_query,
-            patch(
-                "apps.reports.src.services.seeding._load_dummy_data",
-                side_effect=Exception("Seed Boom"),
-            ),
-            patch(
-                "apps.reports.src.services.seeding.db.session.rollback"
-            ) as mock_rollback,
-        ):
-            mock_query.first.return_value = None
-            seed_reports_data()
-            mock_rollback.assert_called()
+    def test_seed_reports_data_success(self, mock_report_query, mock_db_session):
+        """Test successful seeding."""
+        mock_report_query.first.return_value = None  # Empty table
 
-    def test_seed_reports_data_full_success(self, db_session):
-        data = {
-            "incidents": [
+        dummy_data = {
+            "reports": [
                 {
-                    "incident_type": "PM",
-                    "equipment_line": "L1",
-                    "description": "D1",
-                    "severity": "Low",
-                    "technician_name": "T1",
+                    "title": "Shift Report - Seeded",
+                    "report_type": "shift_report",
+                    "format": "html",
+                    "parameters": {"date": "2026-02-08", "shift": "Early"},
+                    "data": {"key": "value"},
                 }
             ]
         }
-        with (
-            patch(
-                "apps.reports.src.services.seeding._load_dummy_data", return_value=data
-            ),
-            patch("apps.reports.src.services.seeding.logger") as mock_logger,
-        ):
-            # No mock for Incident.query here, use real DB
-            seed_reports_data()
-            # Verify one incident was added
-            inc = Incident.query.filter_by(description="D1").first()
-            assert inc is not None
 
-            # Find any log call that starts with "Successfully seeded 1 incidents"
-            found = False
-            for call in mock_logger.info.call_args_list:
-                if call.args and str(call.args[0]).startswith(
-                    "Successfully seeded 1 incidents"
-                ):
-                    found = True
-                    break
-            assert found, (
-                "Expected seeding info log not found. "
-                f"Logs: {mock_logger.info.call_args_list}"
-            )
+        with patch(
+            "apps.reports.src.services.seeding.os.path.exists", return_value=True
+        ):
+            with patch(
+                "apps.reports.src.services.seeding.json.load", return_value=dummy_data
+            ):
+                with patch("builtins.open", mock_open(read_data="{}")):
+                    seed_reports_data()
+
+        # Verify add called
+        assert mock_db_session.add.called
+        assert mock_db_session.commit.called

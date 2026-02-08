@@ -112,7 +112,18 @@ class AdvancedTable {
         this.hiddenColumns = new Set(state.hiddenColumns);
       }
       if (state.columnOrder && Array.isArray(state.columnOrder)) {
-        this.columnOrder = state.columnOrder;
+        // Filter out stale column keys that don't exist in current columns
+        const validKeys = this.columns.map((c) => c.key);
+        const filteredOrder = state.columnOrder.filter((key) =>
+          validKeys.includes(key),
+        );
+        // Add any new columns that weren't in the saved state
+        validKeys.forEach((key) => {
+          if (!filteredOrder.includes(key)) {
+            filteredOrder.push(key);
+          }
+        });
+        this.columnOrder = filteredOrder;
       }
       if (state.currentPage) {
         this.currentPage = state.currentPage;

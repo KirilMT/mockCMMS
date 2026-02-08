@@ -144,6 +144,8 @@ def create_app(config_overrides=None):
                 reports_db_path = os.path.join(reports_instance_dir, "reports_e2e.db")
                 binds["reports"] = f"sqlite:///{reports_db_path}"
             else:
+                # Ensure directory exists for Production/Dev
+                os.makedirs(reports_instance_dir, exist_ok=True)
                 reports_db_path = os.path.join(reports_instance_dir, "reports.db")
                 binds["reports"] = f"sqlite:///{reports_db_path}"
 

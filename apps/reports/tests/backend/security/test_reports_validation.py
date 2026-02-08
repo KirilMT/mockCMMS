@@ -9,6 +9,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+@pytest.mark.skip(reason="Endpoint /reports/incidents/ removed in refactor")
 def test_incident_xss_prevention(auth_client, app):
     """Test that XSS entries are either sanitized or handled safely."""
     xss_payload = "<script>alert('XSS')</script>"
@@ -35,10 +36,13 @@ def test_incident_xss_prevention(auth_client, app):
     )
     # Ensure raw script tag is NOT present
     assert b"<script>alert('XSS')</script>" not in list_response.data
+    assert xss_payload not in list_response.data.decode()
+    assert "&lt;script&gt;" in list_response.data.decode()  # escaped
 
 
+@pytest.mark.skip(reason="Endpoint /reports/incidents/ removed in refactor")
 def test_incident_input_validation(auth_client):
-    """Test that invalid inputs are rejected or handled."""
+    """Test required fields and input validation."""
     # Test missing required field
     response = auth_client.post(
         "/reports/incidents/",
