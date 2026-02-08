@@ -70,3 +70,24 @@ def auth_client(client, app):
 def db_session(app):
     with app.app_context():
         yield _db.session
+
+
+@pytest.fixture(scope="function", autouse=True)
+def cleanup_report_artifacts():
+    """Clean up generated report files after each test."""
+    yield
+    # Path to reports directory
+    reports_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "instance", "reports")
+    )
+    if os.path.exists(reports_dir):
+        for filename in os.listdir(reports_dir):
+            if (
+                filename.endswith(".csv")
+                or filename.endswith(".pdf")
+                or filename.endswith(".md")
+            ):
+                try:
+                    os.remove(os.path.join(reports_dir, filename))
+                except OSError:
+                    pass

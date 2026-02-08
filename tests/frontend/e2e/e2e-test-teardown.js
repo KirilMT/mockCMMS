@@ -121,29 +121,48 @@ async function globalTeardown() {
 
   for (const dbPath of dbs) {
     if (fs.existsSync(dbPath)) {
+      console.log(`   Found database to delete: ${dbPath}`);
       await tryDeleteFile(dbPath);
     } else {
       console.log(`   No test database to clean up: ${path.basename(dbPath)}`);
     }
   }
 
-  // Step 2: Remove instance directory ONLY if it's empty
-  // This ensures we never delete the directory if mockcmms.db exists
-  if (fs.existsSync(INSTANCE_DIR)) {
-    try {
-      const files = fs.readdirSync(INSTANCE_DIR);
-      if (files.length === 0) {
-        fs.rmdirSync(INSTANCE_DIR);
-        console.log(`✅ Removed empty instance directory: ${INSTANCE_DIR}`);
-      } else {
-        console.log(
-          `   Instance directory not empty, keeping: ${files.join(", ")}`,
+  // Step 2: Remove instance directories ONLY if they are empty
+  const instanceDirs = [
+    INSTANCE_DIR,
+    path.dirname(PLANNING_DB_PATH),
+    path.dirname(REPORTS_DB_PATH),
+  ];
+
+  for (const dir of instanceDirs) {
+    if (fs.existsSync(dir)) {
+      try {
+        const files = fs.readdirSync(dir);
+        if (files.length === 0) {
+          fs.rmdirSync(dir);
+          console.log(`✅ Removed empty instance directory: ${dir}`);
+        } else {
+          // Check if valid production DBs exist to avoid confusing logs
+          const prodFiles = files.filter(
+            (f) =>
+              f.endsWith(".db") && !f.includes("_test") && !f.includes("_e2e"),
+          );
+          if (prodFiles.length > 0) {
+            console.log(
+              `   Keeping instance directory (Production DBs present): ${path.basename(dir)}`,
+            );
+          } else {
+            console.log(
+              `   Instance directory not empty, keeping: ${path.basename(dir)} (${files.length} files)`,
+            );
+          }
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️  Could not check/remove instance directory: ${error.message}`,
         );
       }
-    } catch (error) {
-      console.log(
-        `⚠️  Could not check/remove instance directory: ${error.message}`,
-      );
     }
   }
 

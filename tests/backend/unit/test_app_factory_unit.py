@@ -120,7 +120,16 @@ class TestAppFactory:
         self, mock_seed, mock_db_init, mock_makedirs
     ):
         """Test that E2E test mode configures high rate limits to avoid blocking."""
-        app = create_test_app()
+        # Pass in-memory URIs to prevent file creation even with E2E_TEST=True
+        app = create_test_app(
+            {
+                "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+                "SQLALCHEMY_BINDS": {
+                    "planning": "sqlite:///:memory:",
+                    "reports": "sqlite:///:memory:",
+                },
+            }
+        )
         # When E2E_TEST=True, rate limiting should be disabled
         assert app.config.get("RATELIMIT_ENABLED") is False
 
@@ -128,6 +137,54 @@ class TestAppFactory:
         with app.app_context():
             db.session.remove()
             db.engine.dispose()
+
+    @patch.dict(
+        os.environ,
+        {
+            "E2E_TEST": "True",
+            "PLANNING_ENABLED": "True",
+            "REPORTS_ENABLED": "True",
+        },
+    )
+    @patch("src.app.db.create_all")
+    @patch("src.app.db.init_app")
+    @patch("src.app.populate_dummy_data")
+    @patch("apps.planning.src.services.seeding.seed_planning_data")
+    @patch("apps.reports.src.services.seeding.seed_reports_data")
+    @patch("apps.planning.src.services.planning_db_utils.init_db")
+    @patch("src.app.os.makedirs")
+    @patch("builtins.print")  # Suppress print to avoid encoding issues
+    def test_e2e_mode_creates_instance_directories(
+        self,
+        mock_print,
+        mock_makedirs,
+        mock_init_db,
+        mock_reports_seed,
+        mock_planning_seed,
+        mock_populate,
+        mock_db_init_app,
+        mock_create_all,
+    ):
+        """Test that E2E mode sets up correct database paths."""
+        # Create app in E2E mode WITHOUT passing binds
+        app = create_app()
+
+        # Verify E2E database paths are configured
+        assert "mockcmms_e2e.db" in app.config["SQLALCHEMY_DATABASE_URI"]
+
+        binds = app.config.get("SQLALCHEMY_BINDS", {})
+        assert "planning" in binds
+        assert "planning_e2e.db" in binds["planning"]
+        assert "reports" in binds
+        assert "reports_e2e.db" in binds["reports"]
+
+        # Verify makedirs was called for all instance directories
+        call_args = [str(call[0][0]) for call in mock_makedirs.call_args_list]
+        assert any(
+            "instance" in arg for arg in call_args
+        ), f"Main instance directory not created. Calls: {call_args}"
+
+        # No cleanup needed - db.init_app was mocked so no real connections exist
 
     def test_secret_key_fallback(self):
         """Test app uses a fallback secret key when not in the environment."""
@@ -142,45 +199,51 @@ class TestAppFactory:
         # The conftest uses in-memory SQLite for clean test isolation
         assert app.config["SQLALCHEMY_DATABASE_URI"] == "sqlite:///:memory:"
 
-        # Test E2E mode uses dedicated e2e database
-        # Use create_app but patch db.create_all to prevent actual file creation
+        # Test E2E mode configuration detection
+        # We verify the CONFIG values contain e2e paths, but use in-memory
+        # to prevent actual file creation during unit tests
         original_e2e = os.environ.get("E2E_TEST")
         original_planning = os.environ.get("PLANNING_ENABLED")
         os.environ["E2E_TEST"] = "1"
-        os.environ["PLANNING_ENABLED"] = "True"  # Enable planning for E2E bind test
+        os.environ["PLANNING_ENABLED"] = "True"
         try:
-            # Patch db.create_all to prevent actual database file creation
-            # We only want to verify config logic, not create files
-            with patch.object(db, "create_all"):
-                with patch("src.app.populate_dummy_data"):  # Skip seeding too
-                    with patch(
-                        "apps.planning.src.services.seeding.seed_planning_data"
-                    ):  # Skip planning seeding
-                        with patch("src.app.os.makedirs"):  # Prevent directory creation
-                            # Don't pass SQLALCHEMY_BINDS - let E2E logic set them
-                            e2e_app = create_app()
-                            e2e_uri = e2e_app.config["SQLALCHEMY_DATABASE_URI"]
-                            # Verify E2E config detection works
-                            assert "sqlite:///" in e2e_uri
-                            assert "mockcmms_e2e.db" in e2e_uri
+            with (
+                patch.object(db, "create_all"),
+                patch("src.app.populate_dummy_data"),
+                patch("apps.planning.src.services.seeding.seed_planning_data"),
+                patch("apps.reports.src.services.seeding.seed_reports_data"),
+                patch("apps.planning.src.services.planning_db_utils.init_db"),
+                patch("src.app.os.makedirs"),
+            ):
+                # Pass in-memory URIs to prevent file creation, but the config
+                # logic will still be exercised. We verify E2E detection works
+                # by checking that the app doesn't crash and binds are set.
+                e2e_app = create_app(
+                    {
+                        "TESTING": True,
+                        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+                        "SQLALCHEMY_BINDS": {
+                            "planning": "sqlite:///:memory:",
+                            "reports": "sqlite:///:memory:",
+                        },
+                    }
+                )
 
-                            # Verify planning bind uses E2E
-                            planning_bind = e2e_app.config.get(
-                                "SQLALCHEMY_BINDS", {}
-                            ).get("planning")
-                            assert (
-                                planning_bind is not None
-                            ), "Planning bind should be set"
-                            assert "planning_e2e.db" in str(planning_bind)
+                # Verify the app was created successfully with E2E env
+                assert e2e_app.config["TESTING"] is True
 
-                    # Clean up connections (no files created)
-                    with e2e_app.app_context():
-                        db.session.remove()
-                        db.engine.dispose()
-                        for engine in db.engines.values():
-                            engine.dispose()
+                # Verify binds are set (in-memory versions)
+                binds = e2e_app.config.get("SQLALCHEMY_BINDS", {})
+                assert "planning" in binds
+                assert "reports" in binds
+
+                # Clean up
+                with e2e_app.app_context():
+                    db.session.remove()
+                    db.engine.dispose()
+                    for engine in db.engines.values():
+                        engine.dispose()
         finally:
-            # Restore environment variables
             if original_e2e:
                 os.environ["E2E_TEST"] = original_e2e
             else:
@@ -283,7 +346,10 @@ class TestAppFactory:
                 with patch("src.app.db.init_app"), patch("src.app.db.create_all"):
                     # Force non-memory DB to reach makedirs in create_app logic
                     app = create_app(
-                        {"SQLALCHEMY_DATABASE_URI": "sqlite:///nonexistent/test.db"}
+                        {
+                            "SQLALCHEMY_DATABASE_URI": "sqlite:///nonexistent/test.db",
+                            "TESTING": True,
+                        }
                     )
                     assert app is not None
                     # Verify logger was called with error
@@ -714,24 +780,30 @@ class TestCoverageImprovements:
                 except (OSError, PermissionError):
                     pass
 
-        # Test E2E - patch db.create_all to prevent actual file creation
+        # Test E2E configuration - use in-memory to prevent file creation
+        # We only verify the app creates successfully with E2E env set
         with patch.dict(os.environ, {"PLANNING_ENABLED": "True", "E2E_TEST": "True"}):
-            with patch.object(db, "create_all"):  # Prevent DB file creation
-                with patch("src.app.populate_dummy_data"):  # Skip seeding
-                    with patch(
-                        "apps.planning.src.services.seeding.seed_planning_data"
-                    ):  # Skip planning seeding
-                        with patch("src.app.os.makedirs"):  # Prevent directory creation
-                            app = create_app({"TESTING": True})
+            with patch.object(db, "create_all"):
+                with patch("src.app.populate_dummy_data"):
+                    with patch("apps.planning.src.services.seeding.seed_planning_data"):
+                        with patch("src.app.os.makedirs"):
+                            # Pass in-memory URIs to prevent file creation
+                            app = create_app(
+                                {
+                                    "TESTING": True,
+                                    "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+                                    "SQLALCHEMY_BINDS": {
+                                        "planning": "sqlite:///:memory:",
+                                        "reports": "sqlite:///:memory:",
+                                    },
+                                }
+                            )
                             binds = app.config.get("SQLALCHEMY_BINDS", {})
-                            # E2E config should reference e2e.db files
-                            assert "planning_e2e.db" in binds.get("planning", "")
+                            # Verify binds are set (in-memory versions we passed)
+                            assert "planning" in binds
+                            assert "reports" in binds
 
-                            # Verify mockcmms_e2e.db is in main URI
-                            main_uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
-                            assert "mockcmms_e2e.db" in main_uri
-
-                            # Clean up connections (no files created)
+                            # Clean up connections
                             with app.app_context():
                                 db.session.remove()
                                 db.engine.dispose()
@@ -865,6 +937,8 @@ class TestCoverageImprovements:
             patch("apps.reports.src.services.seeding.seed_reports_data"),
             patch("apps.planning.src.services.planning_db_utils.init_db"),
             patch("src.app.load_dotenv"),
+            patch("src.app.os.makedirs"),  # Prevent directory creation
+            patch("src.app.db.init_app"),  # Prevent engine creation/file touching
         ):  # Prevent reloading .env which restores E2E_TEST
 
             # Disable auto seeding to avoid table errors since we mock create_all

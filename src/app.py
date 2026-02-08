@@ -70,7 +70,7 @@ def create_app(config_overrides=None):
         if (
             app.testing
             and not get_env_bool("TESTING_PRODUCTION", "false")
-            and not get_env_bool("E2E_TEST", "false")
+            and not is_e2e
         ):
             app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
         elif get_env_bool("TESTING_PRODUCTION", "false"):
@@ -78,7 +78,7 @@ def create_app(config_overrides=None):
             app.config["SQLALCHEMY_DATABASE_URI"] = (
                 f"sqlite:///{os.path.join(app.instance_path, db_name)}"
             )
-        elif get_env_bool("E2E_TEST", "false"):
+        elif is_e2e:
             db_name = "mockcmms_e2e.db"
             db_path = os.path.join(app.instance_path, db_name)
             app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
@@ -103,12 +103,17 @@ def create_app(config_overrides=None):
 
     if planning_enabled or app.testing:
         if "planning" not in binds:
+            # Priority 1: DATABASE_PATH in config (used by some tests)
             if "DATABASE_PATH" in app.config and app.testing:
                 planning_db_path = app.config["DATABASE_PATH"]
                 binds["planning"] = f"sqlite:///{planning_db_path}"
-            elif app.testing and not os.environ.get("E2E_TEST"):
+            # Priority 2: Standard Testing (In-Memory)
+            elif app.testing and not is_e2e:
                 binds["planning"] = "sqlite:///:memory:"
-            elif os.environ.get("E2E_TEST"):
+            # Priority 3: E2E Testing (File-based isolation)
+            elif is_e2e:
+                # Ensure the planning instance directory exists for E2E
+                os.makedirs(planning_instance_dir, exist_ok=True)
                 planning_db_path = os.path.join(
                     planning_instance_dir, "planning_e2e.db"
                 )
@@ -116,6 +121,7 @@ def create_app(config_overrides=None):
                 # Ensure legacy code finds the correct DB
                 app.config["DATABASE_PATH"] = planning_db_path
             else:
+                # Priority 4: Production/Development Standard
                 planning_db_path = os.path.join(planning_instance_dir, "planning.db")
                 binds["planning"] = f"sqlite:///{planning_db_path}"
                 # Ensure legacy code finds the correct DB
@@ -130,9 +136,11 @@ def create_app(config_overrides=None):
 
     if reports_enabled or app.testing:
         if "reports" not in binds:
-            if app.testing and not os.environ.get("E2E_TEST"):
+            if app.testing and not is_e2e:
                 binds["reports"] = "sqlite:///:memory:"
-            elif os.environ.get("E2E_TEST"):
+            elif is_e2e:
+                # Ensure the reports instance directory exists for E2E
+                os.makedirs(reports_instance_dir, exist_ok=True)
                 reports_db_path = os.path.join(reports_instance_dir, "reports_e2e.db")
                 binds["reports"] = f"sqlite:///{reports_db_path}"
             else:
@@ -255,9 +263,16 @@ def create_app(config_overrides=None):
                     from apps.planning.src.services.planning_db_utils import init_db
 
                     planning_db_path = app.config.get("DATABASE_PATH")
-                    if planning_db_path and ":memory:" not in str(planning_db_path):
+                    # Init file-based DBs in non-testing mode OR E2E mode
+                    # E2E mode uses file-based DBs for isolation
+                    should_init_planning_db = (
+                        planning_db_path
+                        and ":memory:" not in str(planning_db_path)
+                        and (not app.testing or is_e2e)
+                    )
+                    if should_init_planning_db:
                         db_dir = os.path.dirname(planning_db_path)
-                        if not os.path.exists(db_dir):
+                        if db_dir and not os.path.exists(db_dir):
                             os.makedirs(db_dir, exist_ok=True)
                         init_db(
                             planning_db_path,
@@ -328,24 +343,24 @@ def _register_blueprints(app, csrf):
             app.register_blueprint(reports_bp)
             csrf.exempt(reports_bp)
             app.logger.info("Reports Blueprint registered.")
-            reports_binds = app.config.get("SQLALCHEMY_BINDS", {})
-            reports_db_uri = reports_binds.get("reports", "")
-            if not app.testing or (
-                reports_db_uri and ":memory:" not in str(reports_db_uri)
-            ):
-                try:
-                    if "sqlite:///" in str(reports_db_uri):
-                        r_path = os.path.dirname(
-                            str(reports_db_uri).replace("sqlite:///", "")
-                        )
-                    else:
-                        r_path = os.path.join(
-                            app.root_path, "..", "apps", "reports", "instance"
-                        )
-                    if r_path:
-                        os.makedirs(r_path, exist_ok=True)
-                except OSError as e:
-                    app.logger.error("Failed to create Reports directory: %s", e)
+            # Only create directories for NON-testing and NON-memory databases
+            if not app.testing:
+                reports_binds = app.config.get("SQLALCHEMY_BINDS", {})
+                reports_db_uri = reports_binds.get("reports", "")
+                if reports_db_uri and ":memory:" not in str(reports_db_uri):
+                    try:
+                        if "sqlite:///" in str(reports_db_uri):
+                            r_path = os.path.dirname(
+                                str(reports_db_uri).replace("sqlite:///", "")
+                            )
+                        else:
+                            r_path = os.path.join(
+                                app.root_path, "..", "apps", "reports", "instance"
+                            )
+                        if r_path:
+                            os.makedirs(r_path, exist_ok=True)
+                    except OSError as e:
+                        app.logger.error("Failed to create Reports directory: %s", e)
         except ImportError as e:
             app.logger.error("Reports module not available: %s", e)
 
@@ -356,24 +371,24 @@ def _register_blueprints(app, csrf):
             app.register_blueprint(planning_bp)
             csrf.exempt(planning_bp)
             app.logger.info("Planning Blueprint registered.")
-            planning_binds = app.config.get("SQLALCHEMY_BINDS", {})
-            planning_db_uri = planning_binds.get("planning", "")
-            if not app.testing or (
-                planning_db_uri and ":memory:" not in str(planning_db_uri)
-            ):
-                try:
-                    if "sqlite:///" in str(planning_db_uri):
-                        p_path = os.path.dirname(
-                            str(planning_db_uri).replace("sqlite:///", "")
-                        )
-                    else:
-                        p_path = os.path.join(
-                            app.root_path, "..", "apps", "planning", "instance"
-                        )
-                    if p_path:
-                        os.makedirs(p_path, exist_ok=True)
-                except OSError as e:
-                    app.logger.error("Failed to create Planning directory: %s", e)
+            # Only create directories for NON-testing and NON-memory databases
+            if not app.testing:
+                planning_binds = app.config.get("SQLALCHEMY_BINDS", {})
+                planning_db_uri = planning_binds.get("planning", "")
+                if planning_db_uri and ":memory:" not in str(planning_db_uri):
+                    try:
+                        if "sqlite:///" in str(planning_db_uri):
+                            p_path = os.path.dirname(
+                                str(planning_db_uri).replace("sqlite:///", "")
+                            )
+                        else:
+                            p_path = os.path.join(
+                                app.root_path, "..", "apps", "planning", "instance"
+                            )
+                        if p_path:
+                            os.makedirs(p_path, exist_ok=True)
+                    except OSError as e:
+                        app.logger.error("Failed to create Planning directory: %s", e)
         except Exception as e:
             app.logger.error("Planning App not available: %s", e)
 

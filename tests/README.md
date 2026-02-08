@@ -2,7 +2,7 @@
 
 **Total Tests:** 574+ tests (223 backend + 293 Jest + 71 E2E = 587 actual)
 **Coverage:** 82%+ (Backend), 80%+ (Frontend)
-**Last Updated:** December 19, 2025
+**Last Updated:** February 7, 2026
 
 ---
 
@@ -231,6 +231,115 @@ Add to appropriate category in `tests/frontend/`:
 
 - **JavaScript logic test?** → `unit/*.test.js`
 - **Browser workflow test?** → `e2e/*.spec.js`
+
+---
+
+## 🗄️ Database Isolation (CRITICAL)
+
+**All backend pytest tests MUST use in-memory SQLite databases. NO file-based databases should ever be created during `pytest` runs.**
+
+### The Golden Rules
+
+> 1. When `app.testing == True`, NO file-based databases should be created.
+> 2. If you see `*.db` files appearing in `apps/*/instance/` after running pytest, it's a **BUG**.
+> 3. E2E databases (`*_e2e.db`) are ONLY for Playwright tests, NEVER for pytest.
+
+### Database Types and When They're Used
+
+| Database Type | Example | Created By | When |
+|--------------|---------|------------|------|
+| **Production** | `planning.db`, `reports.db`, `mockcmms.db` | `run.py` | Running the app normally |
+| **E2E** | `planning_e2e.db`, `reports_e2e.db`, `mockcmms_e2e.db` | Playwright tests | E2E tests with `E2E_TEST=true` |
+| **In-Memory** | `sqlite:///:memory:` | pytest | ALL backend unit/functional/integration tests |
+
+### ⚠️ Common Mistake: Testing E2E Configuration
+
+**WRONG:** Setting `E2E_TEST=True` in a unit test without in-memory URIs:
+```python
+# ❌ THIS CREATES FILE-BASED DATABASES!
+with patch.dict(os.environ, {"E2E_TEST": "True"}):
+    app = create_app({"TESTING": True})  # Will create planning_e2e.db, etc.!
+```
+
+**CORRECT:** Always pass in-memory URIs when testing E2E configuration:
+```python
+# ✅ This uses in-memory databases even with E2E_TEST=True
+with patch.dict(os.environ, {"E2E_TEST": "True"}):
+    app = create_app({
+        "TESTING": True,
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        "SQLALCHEMY_BINDS": {
+            "planning": "sqlite:///:memory:",
+            "reports": "sqlite:///:memory:",
+        },
+    })
+```
+
+**Why?** When `E2E_TEST=True`, `src/app.py` configures file-based E2E database paths. SQLite creates these files when the engine connects, even if `db.create_all` is patched.
+
+### Required Configuration in conftest.py
+
+Every conftest.py that creates a Flask app MUST include ALL database binds:
+
+```python
+config_overrides = {
+    "TESTING": True,
+    "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+    "SQLALCHEMY_BINDS": {
+        "planning": "sqlite:///:memory:",  # ← REQUIRED
+        "reports": "sqlite:///:memory:",   # ← REQUIRED
+        # Add ALL new app binds here when creating new modules
+    },
+}
+```
+
+### Adding a New Modular App
+
+When adding a new app (e.g., `apps/inventory/`):
+
+1. **Update `src/app.py`** - Add the bind configuration with testing guard
+2. **Update ALL conftest.py files** - Add `"inventory": "sqlite:///:memory:"`
+   - `tests/backend/conftest.py`
+   - `apps/planning/tests/backend/conftest.py`
+   - `apps/reports/tests/backend/conftest.py`
+   - Your new `apps/inventory/tests/backend/conftest.py`
+3. **Update E2E teardown** - Add to `tests/frontend/e2e/e2e-test-teardown.js`
+4. **Update isolation tests** - Add to `tests/backend/security/test_db_isolation_proof.py`
+
+### Safety Net Tests
+
+The `tests/backend/security/test_db_isolation_proof.py` file contains comprehensive tests that will **FAIL immediately** if:
+- Any production database files are created during testing
+- Any E2E database files are created during backend pytest
+- Any database bind uses a file-based URI instead of in-memory
+- Instance directories are created with new DB files
+
+These tests catch isolation violations before they cause data corruption.
+
+### Quick Verification
+
+```powershell
+# Clean up any stray DBs first
+Remove-Item -Path "apps\*\instance" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "instance\*.db" -Force -ErrorAction SilentlyContinue
+
+# Run tests
+python scripts/validate_code.py --quick
+
+# Check for leaks (should output NOTHING)
+Get-ChildItem -Path "apps" -Recurse -Filter "*.db" | Select-Object FullName
+Get-ChildItem -Path "instance" -Filter "*.db" | Select-Object FullName
+```
+
+### Troubleshooting Database Leaks
+
+If you see `*.db` files after running tests:
+
+1. **Identify the culprit:** Run tests one file at a time to find which test creates the files
+2. **Check for `E2E_TEST=True`:** Search for tests that set this env var
+3. **Add in-memory URIs:** Pass `SQLALCHEMY_DATABASE_URI` and `SQLALCHEMY_BINDS` with `:memory:`
+4. **Mock `os.makedirs`:** Add `@patch("src.app.os.makedirs")` to prevent directory creation
+5. **Run isolation tests:** `pytest tests/backend/security/test_db_isolation_proof.py -v`
 
 ---
 

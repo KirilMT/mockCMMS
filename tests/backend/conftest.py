@@ -7,6 +7,7 @@ sample data fixtures.
 
 import os
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
@@ -24,6 +25,54 @@ from src.services.db_utils import (  # noqa: E402
     User,
     db,
 )
+
+
+def _cleanup_test_databases():
+    """Clean up E2E test databases only.
+
+    This function removes ONLY E2E databases (*_e2e.db) that may be left over from
+    Playwright tests. It does NOT touch production-named databases (planning.db,
+    reports.db, mockcmms.db) since we cannot safely determine if they were created by
+    tests or are legitimate production databases.
+
+    The test isolation tests (test_db_isolation_proof.py) will catch if tests are
+    incorrectly creating production databases.
+    """
+    root = Path(project_root)
+    apps_dir = root / "apps"
+
+    # E2E databases to clean up - these are ALWAYS test artifacts
+    e2e_dbs = [
+        root / "instance" / "mockcmms_e2e.db",
+        apps_dir / "planning" / "instance" / "planning_e2e.db",
+        apps_dir / "reports" / "instance" / "reports_e2e.db",
+    ]
+
+    for db_path in e2e_dbs:
+        if db_path.exists():
+            try:
+                db_path.unlink()
+            except PermissionError:
+                pass  # File is locked, skip
+
+    # Clean up empty instance directories (but only if truly empty)
+    instance_dirs = [
+        apps_dir / "planning" / "instance",
+        apps_dir / "reports" / "instance",
+    ]
+    for instance_dir in instance_dirs:
+        try:
+            if instance_dir.exists() and not any(instance_dir.iterdir()):
+                instance_dir.rmdir()
+        except (OSError, PermissionError):
+            pass
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_databases_after_tests():
+    """Session-scoped fixture that cleans up test databases after all tests."""
+    yield  # Run all tests first
+    _cleanup_test_databases()
 
 
 @pytest.fixture(scope="function")
@@ -44,7 +93,8 @@ def app():
         "WTF_CSRF_ENABLED": False,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "SQLALCHEMY_BINDS": {
-            "planning": "sqlite:///:memory:"  # In-memory for planning models
+            "planning": "sqlite:///:memory:",  # In-memory for planning models
+            "reports": "sqlite:///:memory:",  # In-memory for reports models
         },
         "AUTO_SEED_DATABASE": False,  # Prevent seeding in tests
         "SERVER_NAME": "localhost.localdomain",  # Required for url_for to work

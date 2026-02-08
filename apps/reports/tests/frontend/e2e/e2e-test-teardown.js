@@ -9,7 +9,24 @@ const { execSync } = require("child_process");
 const TEST_PORT = 5003;
 const PROJECT_ROOT = path.resolve(__dirname, "../../../../..");
 const INSTANCE_DIR = path.join(PROJECT_ROOT, "instance");
-const TEST_DB_PATH = path.join(INSTANCE_DIR, "mockcmms_reports_e2e.db");
+// Main app E2E database
+const MAIN_TEST_DB_PATH = path.join(INSTANCE_DIR, "mockcmms_e2e.db");
+// Reports module E2E database (correct path)
+const REPORTS_E2E_DB_PATH = path.join(
+  PROJECT_ROOT,
+  "apps",
+  "reports",
+  "instance",
+  "reports_e2e.db",
+);
+// Planning module E2E database (for completeness)
+const PLANNING_E2E_DB_PATH = path.join(
+  PROJECT_ROOT,
+  "apps",
+  "planning",
+  "instance",
+  "planning_e2e.db",
+);
 
 function killProcessOnPort(port) {
   try {
@@ -46,13 +63,44 @@ async function globalTeardown(config) {
   killProcessOnPort(TEST_PORT);
   await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  if (fs.existsSync(TEST_DB_PATH)) {
-    try {
-      fs.unlinkSync(TEST_DB_PATH);
-    } catch (error) {
-      // Ignore cleanup errors
+  // Clean up all E2E databases
+  const dbsToClean = [
+    MAIN_TEST_DB_PATH,
+    REPORTS_E2E_DB_PATH,
+    PLANNING_E2E_DB_PATH,
+  ];
+
+  for (const dbPath of dbsToClean) {
+    if (fs.existsSync(dbPath)) {
+      try {
+        fs.unlinkSync(dbPath);
+        console.log(`✅ Removed E2E database: ${dbPath}`);
+      } catch (error) {
+        console.warn(`⚠️  Could not remove ${dbPath}: ${error.message}`);
+      }
     }
   }
+
+  // Clean up empty instance directories
+  const instanceDirs = [
+    path.dirname(REPORTS_E2E_DB_PATH),
+    path.dirname(PLANNING_E2E_DB_PATH),
+  ];
+
+  for (const dir of instanceDirs) {
+    if (fs.existsSync(dir)) {
+      try {
+        const files = fs.readdirSync(dir);
+        if (files.length === 0) {
+          fs.rmdirSync(dir);
+          console.log(`✅ Removed empty directory: ${dir}`);
+        }
+      } catch (error) {
+        // Ignore errors
+      }
+    }
+  }
+
   console.log("\n✅ Global teardown complete.\n");
 }
 

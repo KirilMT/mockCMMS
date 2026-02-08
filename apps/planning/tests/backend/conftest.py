@@ -21,7 +21,10 @@ def app(monkeypatch, tmp_path):
             "TESTING": True,
             "WTF_CSRF_ENABLED": False,
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-            "SQLALCHEMY_BINDS": {"planning": f"sqlite:///{planning_db_path}"},
+            "SQLALCHEMY_BINDS": {
+                "planning": f"sqlite:///{planning_db_path}",
+                "reports": "sqlite:///:memory:",
+            },
             "DATABASE_PATH": planning_db_path,
             "OUTPUT_FOLDER": output_path,
             "AUTO_SEED_DATABASE": False,

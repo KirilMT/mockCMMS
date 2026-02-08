@@ -17,7 +17,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # Load .env variables so validata_code.py knows about local configuration
 try:
@@ -77,6 +77,8 @@ def run_command(
     description: str,
     check: bool = True,
     force_all_apps: bool = False,
+    env: Optional[Dict[str, str]] = None,
+    ignore_failure: bool = False,
 ) -> Tuple[bool, str]:
     """Run a shell command and return success status and output.
 
@@ -85,6 +87,8 @@ def run_command(
         description: Human-readable description of what's being checked
         check: Whether to check return code (default: True)
         force_all_apps: Whether to force enable all modular apps (default: False)
+        env: Optional dictionary of environment variables to merge
+        ignore_failure: If True, do not print error on failure (default: False)
 
     Returns:
         Tuple of (success: bool, output: str)
@@ -379,10 +383,16 @@ def validate_javascript_frontend(
     # 3. E2E tests (Playwright) - MATCHES CI
     if not quick:
         print_section("Step 3/3: E2E Tests (playwright)")
+        # Force E2E_TEST=true to ensure production DBs are not touched
+        # This overrides any local .env settings
+        ironclad_env_e2e = os.environ.copy()
+        ironclad_env_e2e["E2E_TEST"] = "true"
+
         success, _ = run_command(
             ["npx", "playwright", "test", "--project=chromium"],
             "Playwright E2E tests (chromium)",
             force_all_apps=force_all_apps,
+            env=ironclad_env_e2e,
         )
         checks.append(("E2E Tests", success))
     else:
