@@ -66,6 +66,42 @@ def auth_client(client, app):
     return client
 
 
+@pytest.fixture
+def auth_headers(client, app):
+    """Fixture that sets up auth session and returns empty headers dict.
+
+    The auth is done via session, not headers, but this pattern allows tests to use the
+    same client for authenticated requests.
+    """
+    from src.services.db_utils import Role, User
+
+    with app.app_context():
+        r = Role.query.filter_by(name="Admin").first()
+        if not r:
+            r = Role(name="Admin")
+            _db.session.add(r)
+        if not User.query.filter_by(username="testuser").first():
+            u = User(username="testuser", email="test@example.com")
+            u.set_password("password")
+            u.roles.append(r)
+            _db.session.add(u)
+        _db.session.commit()
+
+        u = User.query.filter_by(username="testuser").first()
+        user_id = u.id
+        username = u.username
+
+    from datetime import datetime, timezone
+
+    with client.session_transaction() as sess:
+        sess["user_id"] = user_id
+        sess["username"] = username
+        sess["last_active"] = datetime.now(timezone.utc).timestamp()
+
+    # Return empty headers dict - auth is via session
+    return {}
+
+
 @pytest.fixture(scope="function")
 def db_session(app):
     with app.app_context():

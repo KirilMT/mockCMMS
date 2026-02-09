@@ -5,7 +5,7 @@ from datetime import datetime
 from src.services.db_utils import db
 
 
-class Report(db.Model):
+class Report(db.Model):  # type: ignore
     __bind_key__ = "reports"
     __tablename__ = "reports"
     __table_args__ = {"extend_existing": True}  # Fix for duplicate metadata error

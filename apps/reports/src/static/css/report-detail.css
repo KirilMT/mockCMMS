@@ -43,6 +43,21 @@
   margin: 0;
 }
 
+/* Collapse Icon */
+.collapse-icon {
+  margin-right: 0.5rem;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+[aria-expanded="false"] .collapse-icon {
+  transform: rotate(-90deg);
+}
+
+[aria-expanded="true"] .collapse-icon {
+  transform: rotate(0deg);
+}
+
 .section-title-orange {
   background: linear-gradient(90deg, #f39c12, #e67e22);
   color: #fff;

@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated January 24, 2026_
+_Updated February 8, 2026_
 
 ---
 
@@ -88,6 +88,22 @@ _Updated January 24, 2026_
 > [!IMPORTANT] > **📋 Active Plan:** [Core Code Quality Plan](deprecated/core_code_quality_plan.md) - All 9 Phases Complete ✅
 > **🧪 Frontend Tests:** 437 Jest + 82 Playwright tests ✅ (80%+ branch coverage)
 > **📊 Backend Tests:** 261 pytest tests ✅ (88%+ coverage)
+
+---
+
+## 📋 PLANNED WORK
+
+- **[ ] Bootstrap 5 Migration** _(Priority: Medium)_
+  - **Goal:** Upgrade from Bootstrap 4.5.2 to Bootstrap 5.3.x to modernize the UI framework and improve accessibility.
+  - **Detailed Plan:** [docs/bootstrap5_upgrade_analysis.md](bootstrap5_upgrade_analysis.md)
+  - **Key Benefits:**
+    - Improved accessibility features
+    - Better responsive utilities
+    - Enhanced form controls
+    - Modern CSS architecture
+    - Better performance
+  - **Estimated Effort:** 2-3 weeks
+  - **Status:** Pending - Planning phase
 
 ---
 

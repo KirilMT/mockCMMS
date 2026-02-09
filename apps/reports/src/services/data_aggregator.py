@@ -55,18 +55,8 @@ class DataAggregator:
         """Query MaintenanceOrder and other relevant data for the specific shift."""
         date = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
-        if shift.lower() == "early":
-            start_hour, end_hour = 6, 18
-        else:
-            start_hour, end_hour = 18, 6
-
-        start_time = date.replace(hour=start_hour, minute=0, second=0)
-        if shift.lower() == "night":
-            end_time = (date + timedelta(days=1)).replace(
-                hour=end_hour, minute=0, second=0
-            )
-        else:
-            end_time = date.replace(hour=end_hour, minute=0, second=0)
+        shift_utils = ShiftUtils()
+        start_time, end_time = shift_utils.get_shift_window(date, shift)
 
         tasks = MaintenanceOrder.query.filter(
             MaintenanceOrder.created_at >= start_time,

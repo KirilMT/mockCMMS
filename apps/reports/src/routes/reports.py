@@ -19,10 +19,10 @@ from flask import (
 
 # Add the main src directory to the path to import from mockCMMS
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "src"))
-from apps.reports.src import models as report_models
-from apps.reports.src.services import data_aggregator as da_service
-from apps.reports.src.services import report_generator as rg_service
-from src.services.db_utils import db
+from apps.reports.src import models as report_models  # noqa: E402
+from apps.reports.src.services import data_aggregator as da_service  # noqa: E402
+from apps.reports.src.services import report_generator as rg_service  # noqa: E402
+from src.services.db_utils import Team, db  # noqa: E402
 
 from .shift_report import shift_bp  # noqa: E402
 from .weekend_report import weekend_bp  # noqa: E402
@@ -44,6 +44,7 @@ reports_bp.register_blueprint(shift_bp)
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        print(f"DEBUG: login_required check. Session keys: {list(session.keys())}")
         if "user_id" not in session:
             flash("Login required to access this page.", "warning")
             return redirect("/login")
@@ -192,7 +193,7 @@ def generate_report():
 @reports_bp.route("/<int:report_id>")
 @login_required
 def report_detail(report_id):
-    from src.services.db_utils import User
+    from src.services.db_utils import Asset, User
 
     report = report_models.Report.query.get_or_404(report_id)
 
@@ -209,7 +210,8 @@ def report_detail(report_id):
     # Load report data from DB
     data = report.data or {}
 
-    # Fallback for old reports or if data is missing in DB but file exists (migration path)
+    # Fallback for old reports or if data is missing in DB but file exists
+    # (migration path)
     if (
         not data
         and report.file_path
@@ -233,27 +235,93 @@ def report_detail(report_id):
         template_name = "weekend_report_detail.html"
 
     # Fetch teams for dropdowns
-    from src.services.db_utils import User
     # Get distinct team names from users
     teams = []
     try:
-        # Use query from DB directly
-        teams_query = db.session.query(User.team).distinct().filter(User.team != None).all()
+        # Query Team table directly for team names
+        teams_query = db.session.query(Team.name).order_by(Team.name).all()
         teams = [t[0] for t in teams_query if t[0]]
-        teams.sort()
     except Exception as e:
         current_app.logger.warning(f"Failed to fetch teams: {e}")
-        # Fallback to defaults if DB fails
-        teams = ["Team A", "Team B", "Team C", "Team D"]
+        teams = []  # Empty list, no fallback teams
 
-    return render_template(template_name, report=report, data=data, teams=teams)
+    # Fetch Assets for dropdowns
+    assets = []
+    try:
+        assets_query = (
+            Asset.query.with_entities(Asset.asset_code).order_by(Asset.asset_code).all()
+        )
+        assets = [a[0] for a in assets_query]  # with_entities returns tuples
+    except Exception as e:
+        current_app.logger.warning(f"Failed to fetch assets: {e}")
+
+    # Load config for metadata totals (equipment, technology)
+    config_path = os.path.join(os.path.dirname(__file__), "..", "config", "config.json")
+    metadata_config = {"equipment_1_total": 10, "equipment_2_total": 15}  # Defaults
+    try:
+        if os.path.exists(config_path):
+            with open(config_path, "r") as f:
+                config = json.load(f)
+                metadata_config = config.get("metadata_totals", metadata_config)
+    except Exception as e:
+        current_app.logger.warning(f"Failed to load config: {e}")
+
+    # Get technician count for attendance total
+    technician_count = 0
+    try:
+        # Count users in the same team as the report's team
+        # Since this is a historical report, we should probably prefer a stored
+        # total if available
+        # But if not, we default to current DB count.
+
+        # Check if stored in data first (added via new logic)
+        if data.get("attendance_total"):
+            technician_count = int(data.get("attendance_total"))
+        else:
+            # Fallback: Count users in the same team as the report's team
+            report_team = data.get("team_name", "")  # Top level name
+            if not report_team and "shift_info" in data:
+                report_team = data["shift_info"].get("team_name", "")
+
+            if report_team:
+                team_obj = Team.query.filter_by(name=report_team).first()
+                if team_obj:
+                    technician_count = User.query.filter_by(team=team_obj).count()
+
+            # If still low/zero and we have dummy data "Team A" scenario with only
+            # 4 seed users
+            # The user might be expecting 18?
+            # We can override if attendance > count (impossible normally)
+            attendance_val = int(data.get("attendance", 0))
+            if attendance_val > technician_count:
+                # Assume missing data or simulation, fallback to attendance value
+                # or reasonable total?
+                # No, let's just use attendance value matching if it's dummy data
+                # Actually, if technician_count is 4, it's 4. User asked "Why 4?".
+                # Answer: Because there are 4 technicians in DB.
+                # But sticking to "defaults":
+                pass
+
+    except Exception as e:
+        current_app.logger.warning(f"Failed to count technicians: {e}")
+
+    return render_template(
+        template_name,
+        report=report,
+        data=data,
+        teams=teams,
+        assets=assets,
+        vigel_total=metadata_config.get("vigel_total", 10),
+        mds_total=metadata_config.get("mds_total", 15),
+        technician_count=technician_count,
+    )
 
 
 @reports_bp.route("/<int:report_id>/update", methods=["POST"])
 @login_required
 def update_report_data(report_id):
-    """
-    Update a specific section of the report data.
+    """Update a specific section of the report data.
+
     Expects JSON payload with:
     - section: 'header', 'metadata', 'breakdown', etc.
     - index: index of item in list (if applicable)
@@ -276,6 +344,7 @@ def update_report_data(report_id):
         report.data = current_data
         # Force strict update
         from sqlalchemy.orm.attributes import flag_modified
+
         flag_modified(report, "data")
         db.session.commit()
 
@@ -286,7 +355,12 @@ def update_report_data(report_id):
                 current_data["shift_info"] = {}
             current_data["shift_info"]["date"] = payload.get("date")
             current_data["shift_info"]["shift"] = payload.get("shift")
-            current_data["team_name"] = payload.get("team_name")
+
+            # Update both top-level and shift_info team_name to ensure UI reflects it
+            new_team = payload.get("team_name")
+            current_data["team_name"] = new_team
+            current_data["shift_info"]["team_name"] = new_team
+
             current_data["team_color"] = payload.get("team_color")
             save()
             return {"success": True}
@@ -303,23 +377,32 @@ def update_report_data(report_id):
         # --- HANDOVER ---
         if section in ["handover_from", "handover_to", "handover"]:
             # Map section name to data key
-            data_key = "handover_instructions" # default for weekend
+            # data_key = "handover_instructions"  # default for weekend
             if section == "handover_from":
-                if "shift_info" not in current_data: current_data["shift_info"] = {}
+                if "shift_info" not in current_data:
+                    current_data["shift_info"] = {}
                 # This refers to shift_info['handover_from_previous']
                 # The structure in shift report:
-                # current_data['shift_info']['handover_from_previous'] -> list of strings or objects?
+                # current_data['shift_info']['handover_from_previous'] ->
+                # list of strings or objects?
                 # DataAggregator returns list of strings usually.
-                # Let's standardize on objects: { asset, title, description } or simple string
-                target_list = current_data.get("shift_info", {}).get("handover_from_previous", [])
+                # Let's standardize on objects: { asset, title, description }
+                # or simple string
+                target_list = current_data.get("shift_info", {}).get(
+                    "handover_from_previous", []
+                )
                 # If target list is missing in shift_info, init it
                 if "handover_from_previous" not in current_data.get("shift_info", {}):
-                    if "shift_info" not in current_data: current_data["shift_info"] = {}
+                    if "shift_info" not in current_data:
+                        current_data["shift_info"] = {}
                     current_data["shift_info"]["handover_from_previous"] = []
                     target_list = current_data["shift_info"]["handover_from_previous"]
             elif section == "handover_to":
-                if "shift_info" not in current_data: current_data["shift_info"] = {}
-                target_list = current_data.get("shift_info", {}).get("handover_to_next", [])
+                if "shift_info" not in current_data:
+                    current_data["shift_info"] = {}
+                target_list = current_data.get("shift_info", {}).get(
+                    "handover_to_next", []
+                )
                 if "handover_to_next" not in current_data.get("shift_info", {}):
                     current_data["shift_info"]["handover_to_next"] = []
                     target_list = current_data["shift_info"]["handover_to_next"]
@@ -331,13 +414,13 @@ def update_report_data(report_id):
                     target_list = current_data["handover_instructions"]
 
             # Construct Item
-            item = payload.get("description") # fallback
+            item = payload.get("description")  # fallback
             # If we want detailed object:
             if payload.get("asset") or payload.get("title"):
                 item = {
                     "asset": payload.get("asset"),
                     "title": payload.get("title"),
-                    "description": payload.get("description")
+                    "description": payload.get("description"),
                 }
 
             # ACTION
@@ -362,12 +445,14 @@ def update_report_data(report_id):
         if section == "breakdown":
             target_list = current_data.get("breakdowns", [])
             item = {
-                "equipment_line": payload.get("asset"), # Mapping asset -> equipment_line for consistency
+                "equipment_line": payload.get(
+                    "asset"
+                ),  # Mapping asset -> equipment_line for consistency
                 "timestamp": payload.get("timestamp"),
                 "duration": payload.get("duration"),
                 "description": payload.get("description"),
                 "root_cause": payload.get("root_cause"),
-                "resolution_notes": payload.get("resolution_notes")
+                "resolution_notes": payload.get("resolution_notes"),
             }
 
             if action == "edit" and index is not None:
@@ -381,24 +466,58 @@ def update_report_data(report_id):
             save()
             return {"success": True}
 
-        # --- ACTIVITIES ---
-        if section == "activities":
-            target_list = current_data.get("break_activities", [])
-            if not target_list and "activities" in current_data: target_list = current_data["activities"] # fallback key
+        # --- ACTIVITIES (Generic Add / Specific Edit) ---
+        # Handle 'activities' (Add), 'flux_tickets' (Edit/Del),
+        # 'engineering_support' (Edit/Del)
+        if section in ["activities", "flux_tickets", "engineering_support"]:
+            # Determine target list based on section or type (for Add)
+            target_key = "break_activities"  # Default
+            target_list = []
 
+            # If explicit section (Edit/Delete)
+            if section == "flux_tickets":
+                target_key = "break_activities"
+            elif section == "engineering_support":
+                target_key = "engineering_support"
+            elif section == "activities" and action == "add":
+                # For ADD via generic modal, check type from payload
+                act_type = payload.get("type", "flux_ticket")
+                if act_type == "flux_ticket":
+                    target_key = "break_activities"
+                else:
+                    target_key = "engineering_support"
+
+            # Fetch current list
+            target_list = current_data.get(target_key, [])
+            if not target_list and target_key in current_data:
+                # target_list = current_data[target_key]
+                # Use retrieval by key directly if get returned empty list but key
+                # exists
+                target_list = current_data[target_key]
+
+            # Construct Item
             item = {
                 "asset": payload.get("asset"),
-                "description": payload.get("description")
+                "title": payload.get("title"),  # For Eng Support
+                "description": payload.get("description"),
+                "type": payload.get("type"),  # For FLUX
+                "mo_id": payload.get("mo_id"),  # For FLUX
+                "status": payload.get("status"),  # For FLUX
             }
 
             if action == "edit" and index is not None:
-                target_list[int(index)] = item
+                # For FLUX tickets, we need to be careful if list is mixed?
+                # No, break_activities is list of all Flux tickets usually.
+                # But engineering_support is separate key.
+                if 0 <= int(index) < len(target_list):
+                    target_list[int(index)] = item
             elif action == "add":
                 target_list.append(item)
             elif action == "delete" and index is not None:
-                target_list.pop(int(index))
+                if 0 <= int(index) < len(target_list):
+                    target_list.pop(int(index))
 
-            current_data["break_activities"] = target_list
+            current_data[target_key] = target_list
             save()
             return {"success": True}
 
@@ -407,7 +526,7 @@ def update_report_data(report_id):
             key_map = {
                 "pms": "pms",
                 "mos": "mos",
-                "additional": "additional_tickets" # Check exact key in weekend data
+                "additional": "additional_tickets",  # Check exact key in weekend data
             }
             key = key_map.get(section, section)
             target_list = current_data.get(key, [])
@@ -415,7 +534,7 @@ def update_report_data(report_id):
             item = {
                 "asset": payload.get("asset"),
                 "description": payload.get("description"),
-                "status": payload.get("status")
+                "status": payload.get("status"),
             }
             if payload.get("id"):
                 item["id"] = payload.get("id")
@@ -503,8 +622,8 @@ def export_report(report_id, fmt):
 
     try:
         target_fmt = fmt
-        if fmt == "txt":
-            target_fmt = "markdown"
+        # if fmt == "txt":
+        #    target_fmt = "markdown"
 
         # Handle parameters - could be dict (from JSON column) or string
         params = report.parameters
@@ -536,5 +655,3 @@ def export_report(report_id, fmt):
         flash(f"Export failed: {e}", "danger")
 
     return redirect(url_for("reports.report_detail", report_id=report_id))
-
-

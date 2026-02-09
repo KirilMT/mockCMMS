@@ -65,7 +65,8 @@ class TestReportsBackend:
 
         # POST without data fails (missing required fields)
         # We need to send data to satisfy NOT NULL constraints if we want 200/302
-        # Or assert that it handles failure gracefully (e.g. 200 with error, or raise exception)
+        # Or assert that it handles failure gracefully (e.g. 200 with error, or
+        # raise exception)
         # The route expects 'title', 'report_type' in form.
 
         post_data = {

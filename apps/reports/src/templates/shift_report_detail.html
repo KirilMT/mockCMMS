@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+﻿﻿{% extends "base.html" %}
 {% block title %}Shift Report Details{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('reports.static', filename='css/report-detail.css') }}">
@@ -11,7 +11,7 @@
             <div>
                 <a href="{{ url_for('reports.reports') }}" class="btn btn-secondary">Back to Reports</a>
                 <div class="btn-group">
-                    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">Export</button>
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">Export</button>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{{ url_for('reports.export_report', report_id=report.id, fmt='pdf') }}">PDF</a></li>
                         <li><a class="dropdown-item" href="{{ url_for('reports.export_report', report_id=report.id, fmt='markdown') }}">Markdown</a></li>
@@ -26,141 +26,231 @@
         <div class="text-center mb-4">
             <h2 class="report-header">
                 <u>
+                    {% set header_data = {
+                        "date": (data.shift_info.date if data.shift_info and data.shift_info.date else ""),
+                        "shift": (data.shift_info.shift if data.shift_info and data.shift_info.shift else "Early"),
+                        "team_name": (data.shift_info.team_name if data.shift_info and data.shift_info.team_name else data.team_name | default("")),
+                        "team_color": (data.team_color | default("#3498db"))
+                    } %}
                     <span class="editable-field" data-field="report_title"
-                        onclick='openEditModal("header", "Report Header", {{ {"date": data.shift_info.date | default(""), "shift": data.shift_info.shift | default(""), "team_name": data.team_name | default(""), "team_color": data.team_color | default("")}|tojson|safe }})'>
-                        Shift Report - {{ data.shift_info.date if data.shift_info else 'dd/mm/yyyy' }} - {{ data.shift_info.shift if data.shift_info else 'Early' }} - <span class="team-name" style="color: {{ data.team_color | default('#e74c3c') }}">{{ data.team_name | default('Red Shift') }}</span>
+                        onclick='openEditModal("header", "Report Header", {{ header_data | tojson | safe }})'>
+                        Shift Report - {{ header_data.date or 'dd/mm/yyyy' }} - {{ header_data.shift }}{% if header_data.team_name %} - <span class="team-name" style="color: {{ header_data.team_color }}">{{ header_data.team_name }}</span>{% endif %}
                     </span>
                 </u>
             </h2>
         </div>
         <div class="metadata-row">
             <div class="row">
+                {% set attendance_val = (data.attendance | default("0") | string) %}
+                {% set attendance_data = {"key": "attendance", "value": attendance_val, "total": technician_count} %}
+
+                {# Attendance Color Logic #}
+                {% set att_pct = 0 %}
+                {% if attendance_data.total|int > 0 %}
+                    {% set att_pct = (attendance_val|int / attendance_data.total|int) * 100 %}
+                {% endif %}
+                {% set att_class = "text-danger" %}
+                {% if att_pct >= 80 %}
+                    {% set att_class = "text-success" %}
+                {% elif att_pct >= 50 %}
+                    {% set att_class = "text-warning" %}
+                {% endif %}
+
+                {% set ehs_val = (data.ehs_incidents | default(0) | string) %}
+                {% set ehs_int = (ehs_val | int) %}
+                {% set ehs_data = {"key": "ehs_incidents", "value": ehs_val} %}
+
+                {# VIGEL Color Logic #}
+                {% set vigel_val = (data.vigel | default("0") | string) %}
+                {% set vigel_total_int = vigel_total | int %}
+                {% set vigel_pct = 0 %}
+                {% if vigel_total_int > 0 %}
+                    {% set vigel_pct = (vigel_val|int / vigel_total_int) * 100 %}
+                {% endif %}
+                {% set vigel_class = "text-danger" %}
+                {% if vigel_pct >= 80 %}
+                    {% set vigel_class = "text-success" %}
+                {% elif vigel_pct >= 50 %}
+                    {% set vigel_class = "text-warning" %}
+                {% endif %}
+                {% set vigel_data = {"key": "vigel", "value": vigel_val, "total": vigel_total} %}
+
+                {# MDS Color Logic #}
+                {% set mds_val = (data.mds | default("0") | string) %}
+                {% set mds_total_int = mds_total | int %}
+                {% set mds_pct = 0 %}
+                {% if mds_total_int > 0 %}
+                    {% set mds_pct = (mds_val|int / mds_total_int) * 100 %}
+                {% endif %}
+                {% set mds_class = "text-danger" %}
+                {% if mds_pct >= 80 %}
+                    {% set mds_class = "text-success" %}
+                {% elif mds_pct >= 50 %}
+                    {% set mds_class = "text-warning" %}
+                {% endif %}
+                {% set mds_data = {"key": "mds", "value": mds_val, "total": mds_total} %}
+
                 <div class="col-md-3">
                     <span class="metadata-label">Attendance:</span>
-                    <span class="editable-field" onclick='openEditModal("metadata", "Attendance", {{ {"key": "attendance", "value": data.attendance | default("")}|tojson|safe }})'>{{ data.attendance | default('N/A') }}</span>
+                    <span class="editable-field fw-bold {{ att_class }}" onclick='openEditModal("metadata", "Attendance", {{ attendance_data | tojson | safe }})'>{{ attendance_val }}/{{ attendance_data.total }}</span>
                 </div>
                 <div class="col-md-3">
                     <span class="metadata-label">EHS incidents:</span>
-                    <span class="editable-field" onclick='openEditModal("metadata", "EHS Incidents", {{ {"key": "ehs_incidents", "value": data.ehs_incidents | default(0)}|tojson|safe }})'>{{ data.ehs_incidents | default(0) }}</span>
+                    {% if ehs_int == 0 %}
+                         <span class="editable-field text-success fw-bold" onclick='openEditModal("metadata", "EHS Incidents", {{ ehs_data | tojson | safe }})'>0</span>
+                    {% else %}
+                         <span class="editable-field text-danger fw-bold" onclick='openEditModal("metadata", "EHS Incidents", {{ ehs_data | tojson | safe }})'>{{ ehs_val }}</span>
+                    {% endif %}
                 </div>
                 <div class="col-md-3">
                     <span class="metadata-label">VIGEL:</span>
-                    <span class="editable-field" onclick='openEditModal("metadata", "VIGEL", {{ {"key": "vigel", "value": data.vigel | default("")}|tojson|safe }})'>{{ data.vigel | default('-/-') }}</span>
+                    <span class="editable-field fw-bold {{ vigel_class }}" onclick='openEditModal("metadata", "VIGEL", {{ vigel_data | tojson | safe }})'>{{ vigel_val }}/{{ vigel_data.total }}</span>
                 </div>
                 <div class="col-md-3">
                     <span class="metadata-label">MDS:</span>
-                    <span class="editable-field" onclick='openEditModal("metadata", "MDS", {{ {"key": "mds", "value": data.mds | default("")}|tojson|safe }})'>{{ data.mds | default('-/-') }}</span>
+                    <span class="editable-field fw-bold {{ mds_class }}" onclick='openEditModal("metadata", "MDS", {{ mds_data | tojson | safe }})'>{{ mds_val }}/{{ mds_data.total }}</span>
                 </div>
             </div>
         </div>
         <div class="mb-4">
-            <div class="section-header">
-                <span class="section-title">Handover from previous Shift:</span>
-                <button class="btn btn-sm btn-success" onclick="openAddModal('handover_from', 'Handover from Previous Shift')"><i class="fas fa-plus"></i></button>
+            <div class="section-header" style="cursor: pointer;" data-toggle="collapse" data-target="#handover_from_section" aria-expanded="true">
+                <span class="section-title">
+                    <i class="fas fa-chevron-down collapse-icon"></i>
+                    Handover from previous Shift:
+                </span>
+                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddModal('handover_from', 'Handover from Previous Shift')"><i class="fas fa-plus"></i></button>
             </div>
-            <div id="handover_from_items">
-                {% set hf = data.shift_info.handover_from_previous if data.shift_info else [] %}
-                {% if hf %}
-                    {% for item in hf %}
-                    <div class="report-item">
-                        <div class="item-actions">
-                            <button class="btn btn-outline-warning btn-sm" onclick='openEditModal("handover_from", "Handover Item", {{ item|tojson|safe }}, {{ loop.index0 }})'><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('handover_from', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+            <div id="handover_from_section" class="collapse show">
+                <div id="handover_from_items">
+                    {% set hf = data.shift_info.handover_from_previous if data.shift_info else [] %}
+                    {% if hf %}
+                        {% for item in hf %}
+                        <div class="report-item">
+                            <div class="item-actions">
+                                <button class="btn btn-outline-warning btn-sm" onclick='openEditModal("handover_from", "Handover Item", {{ item|tojson|safe }}, {{ loop.index0 }})'><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('handover_from', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+                            </div>
+                            {% if item is mapping %}
+                               <strong>{{ item.asset }}</strong> - <em>{{ item.title }}</em>
+                               <p class="ms-4 mb-0 text-muted">{{ item.description }}</p>
+                            {% else %}
+                               <strong>ASSET_CODE</strong> - <em>{{ item }}</em>
+                               <p class="ms-4 mb-0 text-muted">{{ item }}</p>
+                            {% endif %}
                         </div>
-                        {% if item is mapping %}
-                           <strong>{{ item.asset }}</strong> - {{ item.title }}
-                           <p class="ms-4 mb-0 text-muted">{{ item.description }}</p>
-                        {% else %}
-                           <strong>ASSET_CODE</strong> - {{ item }}
-                           <p class="ms-4 mb-0 text-muted">{{ item }}</p>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">No handover notes from previous shift.</p>
-                {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No handover notes from previous shift.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
         <div class="mb-4">
-            <div class="section-header">
-                <span class="section-title">Breakdowns:</span>
-                <button class="btn btn-sm btn-success" onclick="openAddModal('breakdown', 'Breakdown')"><i class="fas fa-plus"></i></button>
+            <div class="section-header" style="cursor: pointer;" data-toggle="collapse" data-target="#breakdown_section" aria-expanded="true">
+                <span class="section-title">
+                    <i class="fas fa-chevron-down collapse-icon"></i>
+                    Breakdowns:
+                </span>
+                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddModal('breakdown', 'Breakdown')"><i class="fas fa-plus"></i></button>
             </div>
-            <div id="breakdown_items">
-                {% if data.breakdowns %}
-                    {% for bd in data.breakdowns %}
-                    <div class="report-item">
-                        <div class="item-actions">
-                            <button class="btn btn-outline-warning btn-sm" onclick="openEditModal('breakdown', 'Breakdown', '', {{ loop.index0 }})"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('breakdown', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+            <div id="breakdown_section" class="collapse show">
+                <div id="breakdown_items">
+                    {% if data.breakdowns %}
+                        {% for bd in data.breakdowns %}
+                        <div class="report-item">
+                            <div class="item-actions">
+                                <button class="btn btn-outline-warning btn-sm" onclick='openEditModal("breakdown", "Breakdown", {{ bd | tojson | safe }}, {{ loop.index0 }})'><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('breakdown', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <strong>{{ bd.equipment_line | default('ASSET_CODE') }}</strong> - Start Time: {{ bd.timestamp }} - Duration: {{ bd.duration | default('N/A') }}
+                            <ul class="mb-0 mt-2">
+                                <li><span class="item-label">Fault:</span> {{ bd.description }}</li>
+                                <li><span class="item-label">Root cause:</span> {{ bd.root_cause | default('Click to enter text.') }}</li>
+                                <li><span class="item-label">Recovery:</span> {{ bd.resolution_notes | default('Click to enter text.') }}</li>
+                            </ul>
                         </div>
-                        <strong>{{ bd.equipment_line | default('ASSET_CODE') }}</strong> - Start Time: {{ bd.timestamp }} - Duration: {{ bd.duration | default('N/A') }}
-                        <ul class="mb-0 mt-2">
-                            <li><span class="item-label">Fault:</span> {{ bd.description }}</li>
-                            <li><span class="item-label">Root cause:</span> {{ bd.root_cause | default('Click to enter text.') }}</li>
-                            <li><span class="item-label">Recovery:</span> {{ bd.resolution_notes | default('Click to enter text.') }}</li>
-                        </ul>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">No breakdowns recorded.</p>
-                {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No breakdowns recorded.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
         <div class="mb-4">
-            <div class="section-header">
-                <span class="section-title">Engineering support/ FLUX Tickets / Break Activities:</span>
-                <button class="btn btn-sm btn-success" onclick="openAddModal('activity', 'Activity')"><i class="fas fa-plus"></i></button>
+            <div class="section-header" style="cursor: pointer;" data-toggle="collapse" data-target="#activity_section" aria-expanded="true">
+                <span class="section-title">
+                    <i class="fas fa-chevron-down collapse-icon"></i>
+                    Engineering support/ FLUX Tickets / Break Activities:
+                </span>
+                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddModal('activities', 'Activity')"><i class="fas fa-plus"></i></button>
             </div>
-            <h6 class="mt-3"><strong>FLUX Tickets/MOs:</strong></h6>
-            <ol id="activity_items">
-                {% if data.break_activities %}
-                    {% for a in data.break_activities %}
-                    <li class="report-item" style="list-style-position: inside;">
-                        <div class="item-actions">
-                            <button class="btn btn-outline-warning btn-sm" onclick="openEditModal('activity', 'Activity', '', {{ loop.index0 }})"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('activity', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
-                        </div>
-                        <strong>{{ a.asset }}</strong> - {{ a.description }} (MO/Ticket <strong>ID:</strong> {{ a.mo_id | default('N/A') }}): {{ a.status | default('details') }}
-                    </li>
-                    {% endfor %}
-                {% else %}
-                    <li class="text-muted">None recorded.</li>
-                {% endif %}
-            </ol>
-            <h6 class="mt-3"><strong>Engineering Support:</strong></h6>
-            <ol>
-                {% if data.engineering_support %}
-                    {% for e in data.engineering_support %}
-                    <li><strong>{{ e.asset }}</strong> - {{ e.title }}: {{ e.details | default('details') }}</li>
-                    {% endfor %}
-                {% else %}
-                    <li class="text-muted">None recorded.</li>
-                {% endif %}
-            </ol>
+            <div id="activity_section" class="collapse show">
+                <h6 class="mt-3"><strong>FLUX Tickets/MOs:</strong></h6>
+                <ol id="flux_ticket_items">
+                    {% set flux_tickets = data.break_activities | selectattr('type', 'equalto', 'flux_ticket') | list if data.break_activities else [] %}
+                    {% if flux_tickets %}
+                        {% for a in flux_tickets %}
+                        <li class="report-item" style="list-style-position: inside;">
+                            <div class="item-actions">
+                                <button class="btn btn-outline-warning btn-sm" onclick='openEditModal("flux_tickets", "Activity", {{ a | tojson | safe }}, {{ loop.index0 }})'><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('flux_tickets', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <strong>{{ a.asset | default('ASSET_CODE') }}</strong> - <em>{{ a.title | default('Title') }}</em> (MO/Ticket ID: {{ a.mo_id | default('Num.') }}): {{ a.description | default('details') }} {{ a.status }}
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="text-muted">None recorded.</li>
+                    {% endif %}
+                </ol>
+                <h6 class="mt-3"><strong>Engineering Support:</strong></h6>
+                <ol id="engineering_support_items">
+                    {% if data.engineering_support %}
+                        {% for e in data.engineering_support %}
+                        <li class="report-item" style="list-style-position: inside;">
+                            <div class="item-actions">
+                                <button class="btn btn-outline-warning btn-sm" onclick='openEditModal("engineering_support", "Engineering Support", {{ e | tojson | safe }}, {{ loop.index0 }})'><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('engineering_support', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <strong>{{ e.asset | default('ASSET_CODE') }}</strong> - <em>{{ e.title | default('Title') }}</em>: {{ e.description | default('details') }}
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="text-muted">None recorded.</li>
+                    {% endif %}
+                </ol>
+            </div>
         </div>
         <div class="mb-4">
-            <div class="section-header">
-                <span class="section-title">Handover to next Shift:</span>
-                <button class="btn btn-sm btn-success" onclick="openAddModal('handover_to', 'Handover to Next Shift')"><i class="fas fa-plus"></i></button>
+            <div class="section-header" style="cursor: pointer;" data-toggle="collapse" data-target="#handover_to_section" aria-expanded="true">
+                <span class="section-title">
+                    <i class="fas fa-chevron-down collapse-icon"></i>
+                    Handover to next Shift:
+                </span>
+                <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); openAddModal('handover_to', 'Handover to Next Shift')"><i class="fas fa-plus"></i></button>
             </div>
-            <div id="handover_to_items">
-                {% set ht = data.shift_info.handover_to_next if data.shift_info else [] %}
-                {% if ht %}
-                    {% for item in ht %}
-                    <div class="report-item">
-                        <div class="item-actions">
-                            <button class="btn btn-outline-warning btn-sm" onclick="openEditModal('handover_to', 'Handover Item', '{{ item }}', {{ loop.index0 }})"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('handover_to', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+            <div id="handover_to_section" class="collapse show">
+                <div id="handover_to_items">
+                    {% set ht = data.shift_info.handover_to_next if data.shift_info else [] %}
+                    {% if ht %}
+                        {% for item in ht %}
+                        <div class="report-item">
+                            <div class="item-actions">
+                                <button class="btn btn-outline-warning btn-sm" onclick='openEditModal("handover_to", "Handover Item", {{ item|tojson|safe }}, {{ loop.index0 }})'><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteItem('handover_to', {{ loop.index0 }})"><i class="fas fa-trash"></i></button>
+                            </div>
+                            {% if item is mapping %}
+                               <strong>{{ item.asset }}</strong> - <em>{{ item.title }}</em>
+                               <p class="ms-4 mb-0 text-muted">{{ item.description }}</p>
+                            {% else %}
+                               <strong>ASSET_CODE</strong> - <em>{{ item }}</em>
+                               <p class="ms-4 mb-0 text-muted">{{ item }}</p>
+                            {% endif %}
                         </div>
-                        <strong>ASSET_CODE</strong> - {{ item }}
-                        <p class="ms-4 mb-0 text-muted">Description of failure, reparation details, conclusion, breakdown time.</p>
-                        <p class="ms-4 mb-0 fst-italic text-muted">Pictures</p>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">No handover notes for next shift.</p>
-                {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No handover notes for next shift.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
         <div class="mt-5 pt-4 border-top">
@@ -169,12 +259,12 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel">Edit Item</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Header Form -->
@@ -207,23 +297,33 @@
                     <input type="hidden" id="edit-metadata-key">
                     <div class="mb-3">
                         <label class="form-label">Value</label>
-                        <input type="text" class="form-control" id="edit-metadata-value">
+                        <input type="text" class="form-control" id="edit-metadata-value" placeholder="Enter value">
                     </div>
                 </div>
 
-                <!-- Handover Form -->
+                <!-- Handover Form (Shift & Weekend) -->
                 <div id="edit-handover-form" class="modal-form-content" style="display:none;">
                     <div class="mb-3">
                         <label class="form-label">Asset Code</label>
-                        <input type="text" class="form-control" id="edit-handover-asset">
+                        <select class="form-control" id="edit-handover-asset" data-placeholder="Select Asset or type custom...">
+                            <option value="">Select Asset...</option>
+                            {% for asset in assets %}
+                            <option value="{{ asset }}">{{ asset }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Or leave empty if just general text.</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Title</label>
-                        <input type="text" class="form-control" id="edit-handover-title">
+                        <input type="text" class="form-control" id="edit-handover-title" placeholder="Brief title or heading">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description / Details</label>
+                        <label class="form-label">Description / Instruction</label>
                         <textarea class="form-control" id="edit-handover-desc" rows="4"></textarea>
+                    </div>
+                    <div class="mb-3">
+                         <label class="form-label">Attachments</label>
+                         <input type="file" class="form-control" id="edit-handover-file">
                     </div>
                 </div>
 
@@ -231,8 +331,13 @@
                 <div id="edit-breakdown-form" class="modal-form-content" style="display:none;">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Asset Code</label>
-                            <input type="text" class="form-control" id="edit-bd-asset">
+                            <label class="form-label">Asset Code / Line</label>
+                            <select class="form-control" id="edit-bd-asset" data-placeholder="Select Asset or type custom...">
+                                <option value="">Select Asset...</option>
+                                {% for asset in assets %}
+                                <option value="{{ asset }}">{{ asset }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Start Time</label>
@@ -255,17 +360,45 @@
                         <label class="form-label">Recovery / Resolution</label>
                         <textarea class="form-control" id="edit-bd-recovery" rows="2"></textarea>
                     </div>
+                    <div class="mb-3">
+                         <label class="form-label">Attachments</label>
+                         <input type="file" class="form-control" id="edit-bd-file">
+                    </div>
                 </div>
 
                 <!-- Activity Form -->
                 <div id="edit-activity-form" class="modal-form-content" style="display:none;">
                     <div class="mb-3">
-                        <label class="form-label">Asset Code</label>
-                        <input type="text" class="form-control" id="edit-act-asset">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="edit-act-type">
+                            <option value="flux_ticket">FLUX Ticket/MO</option>
+                            <option value="engineering_support">Engineering Support</option>
+                        </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description / Work Done</label>
+                        <label class="form-label">Asset</label>
+                        <select class="form-control" id="edit-act-asset" data-placeholder="Select Asset or type custom...">
+                            <option value="">Select Asset...</option>
+                            {% for asset in assets %}
+                            <option value="{{ asset }}">{{ asset }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3" id="edit-act-mo-group">
+                        <label class="form-label">MO/Ticket ID</label>
+                        <input type="text" class="form-control" id="edit-act-mo-id" placeholder="e.g., MO-12345">
+                    </div>
+                    <div class="mb-3" id="edit-act-title-group" style="display:none;">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" id="edit-act-title" placeholder="Brief description">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description / Details</label>
                         <textarea class="form-control" id="edit-act-desc" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3" id="edit-act-status-group">
+                        <label class="form-label">Status</label>
+                        <input type="text" class="form-control" id="edit-act-status" placeholder="e.g., Completed, In Progress">
                     </div>
                 </div>
 
@@ -277,7 +410,12 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Asset Code</label>
-                        <input type="text" class="form-control" id="edit-task-asset">
+                        <select class="form-control" id="edit-task-asset" data-placeholder="Select Asset or type custom...">
+                            <option value="">Select Asset...</option>
+                            {% for asset in assets %}
+                            <option value="{{ asset }}">{{ asset }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
@@ -298,33 +436,43 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="saveEditBtn">Save Changes</button>
             </div>
         </div>
     </div>
 </div>
-<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addModalLabel">Add Item</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Handover Form -->
                 <div id="add-handover-form" class="modal-form-content" style="display:none;">
                     <div class="mb-3">
                         <label class="form-label">Asset Code</label>
-                        <input type="text" class="form-control" id="add-handover-asset">
+                        <select class="form-control" id="add-handover-asset" data-placeholder="Select Asset or type custom...">
+                            <option value="">Select Asset...</option>
+                            {% for asset in assets %}
+                            <option value="{{ asset }}">{{ asset }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Or leave empty if just general text.</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Title</label>
-                        <input type="text" class="form-control" id="add-handover-title">
+                        <input type="text" class="form-control" id="add-handover-title" placeholder="Brief title or heading">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description / Details</label>
                         <textarea class="form-control" id="add-handover-desc" rows="4"></textarea>
+                    </div>
+                    <div class="mb-3">
+                         <label class="form-label">Attachments</label>
+                         <input type="file" class="form-control" id="add-handover-file">
                     </div>
                 </div>
 
@@ -333,7 +481,12 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Asset Code</label>
-                            <input type="text" class="form-control" id="add-bd-asset">
+                            <select class="form-control" id="add-bd-asset" data-placeholder="Select Asset or type custom...">
+                                <option value="">Select Asset...</option>
+                                {% for asset in assets %}
+                                <option value="{{ asset }}">{{ asset }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Start Time</label>
@@ -361,12 +514,36 @@
                  <!-- Activity Form -->
                 <div id="add-activity-form" class="modal-form-content" style="display:none;">
                     <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="add-act-type">
+                            <option value="flux_ticket">FLUX Ticket/MO</option>
+                            <option value="engineering_support">Engineering Support</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Asset Code</label>
-                        <input type="text" class="form-control" id="add-act-asset">
+                        <select class="form-control" id="add-act-asset" data-placeholder="Select Asset or type custom...">
+                            <option value="">Select Asset...</option>
+                            {% for asset in assets %}
+                            <option value="{{ asset }}">{{ asset }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3" id="add-act-mo-group">
+                        <label class="form-label">MO/Ticket ID</label>
+                        <input type="text" class="form-control" id="add-act-mo-id" placeholder="e.g., MO-12345">
+                    </div>
+                    <div class="mb-3" id="add-act-title-group" style="display:none;">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" id="add-act-title" placeholder="Brief description">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description / Work Done</label>
                         <textarea class="form-control" id="add-act-desc" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3" id="add-act-status-group">
+                        <label class="form-label">Status</label>
+                        <input type="text" class="form-control" id="add-act-status" placeholder="e.g., Completed, In Progress" value="Open">
                     </div>
                 </div>
 
@@ -378,7 +555,12 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Asset Code</label>
-                        <input type="text" class="form-control" id="add-task-asset">
+                        <select class="form-control" id="add-task-asset" data-placeholder="Select Asset or type custom...">
+                            <option value="">Select Asset...</option>
+                            {% for asset in assets %}
+                            <option value="{{ asset }}">{{ asset }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
@@ -399,30 +581,37 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" id="saveAddBtn">Add Item</button>
             </div>
         </div>
     </div>
 </div>
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="reportDeleteConfirmModal" tabindex="-1" aria-labelledby="reportDeleteConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="reportDeleteConfirmModal" tabindex="-1" aria-labelledby="reportDeleteConfirmModalLabel">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="reportDeleteConfirmModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete this item?</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmReportDeleteBtn">Delete</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Datalist for Assets -->
+<datalist id="assetOptions">
+    {% for asset in assets %}
+    <option value="{{ asset }}"></option>
+    {% endfor %}
+</datalist>
 {% endblock %}
 
 {% block extra_js %}
@@ -432,7 +621,8 @@
         shiftInfo: {{ data.shift_info | tojson | safe if data.shift_info else '{}' }},
         breakdowns: {{ data.breakdowns | tojson | safe if data.breakdowns else '[]' }},
         activities: {{ data.break_activities | tojson | safe if data.break_activities else '[]' }},
-        teamName: '{{ data.team_name | default("Red Shift") }}',
+        engineering_support: {{ data.engineering_support | tojson | safe if data.engineering_support else '[]' }},
+        teamName: '{{ data.team_name | default("") }}',
         generatedBy: '{{ report.generated_by_name | default("Technician") }}',
         attendance: '{{ data.attendance | default("N/A") }}',
         ehsIncidents: {{ data.ehs_incidents | default(0) }},
@@ -442,3 +632,9 @@
 </script>
 <script src="{{ url_for('reports.static', filename='js/report-interactions.js') }}"></script>
 {% endblock %}
+
+
+
+
+
+

@@ -136,6 +136,7 @@ temp/
 # External/sensitive configuration
 apps/planning/config/config.json
 config/config.json
+apps/reports/config/config.json
 
 # IDE specific files
 .vscode/
