@@ -570,52 +570,13 @@ hours of work.
   assume the server is running based on browser subagent errors - always verify
   from metadata first.
 
-#### 1.6.1. Execution of Long-Running Commands (Heartbeat Pattern) (MANDATORY)
-
-**Problem**: The Agent uses stream monitoring to detect command completion. If a long-running command (like validation or tests) produces no output for >30 seconds (e.g., because output is redirected to a file), the Agent's watchdog timer will erroneously timeout and assume the command is stuck or finished.
-
-**Solution**: Use the **Heartbeat Pattern** for ANY command expected to run longer than 30 seconds without frequent output.
-
-**The Heartbeat Pattern:**
-
-1. Run the command as a PowerShell background job.
-2. Redirect output to a **DEBUG LOG FILE** (see rules below).
-3. Print a "heartbeat" message every 5 seconds to keep the stream active.
-4. Explicitly signal completion.
-
-**Debug Log File Rules:**
+#### 1.6.1. Debug Log File Rules
 
 - **Location**: ALWAYS use `logs/` directory (create if missing).
 - **Extension**: MUST use `.log` extension.
 - **Naming**: Use distinct names to avoid conflicts (e.g., `debug_validation_TIMESTAMP.log` or `debug_test_run.log`).
 - **Cleanup**: AI Agent MUST delete these files after reading content.
 - **Example**: `logs/debug_backend_validation.log`
-
-**Standard Heartbeat Command Template:**
-
-```powershell
-$job = Start-Job -ScriptBlock {
-    YOUR_COMMAND_HERE > logs/debug_output.log 2>&1
-}
-while ($job.State -eq 'Running') {
-    Write-Host "Still working... $(Get-Date -Format 'HH:mm:ss')"
-    Start-Sleep -Seconds 5
-}
-Receive-Job $job
-Write-Host "PROCESS FINISHED"
-```
-
-**When to Use:**
-
-- Running `scripts/validate_code.py` (especially with `--backend` or full suite)
-- Running heavy test suites (e.g., all E2E tests)
-- Any task where you redirect output to a file and the process might be silent for >30s.
-
-**After Execution:**
-
-1. Wait for "PROCESS FINISHED".
-2. Read the `logs/debug_output.log` to analyze results.
-3. DELETE the `logs/debug_output.log` to keep the workspace clean.
 
 ### 1.7. Pre-Commit Validation (MANDATORY)
 
