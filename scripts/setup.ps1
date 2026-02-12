@@ -16,7 +16,7 @@ $script:ErrorCount = 0
 # Function to refresh environment variables without restart
 function Refresh-EnvPath {
     Write-Host "   Refreshing environment variables..." -ForegroundColor Gray
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 }
 
 # Step 1: Check Prerequisites
@@ -34,7 +34,8 @@ function Check-Python {
                 Write-Host "$v" -NoNewline -ForegroundColor White
                 Write-Host " OK" -ForegroundColor Green
                 return $true
-            } else {
+            }
+            else {
                 Write-Warning "   Found: $v (Python 3.12+ recommended)"
                 return $true # Warning but proceed
             }
@@ -68,8 +69,8 @@ if (-not (Check-Python)) {
             }
         }
         catch {
-             Write-Error "   An error occurred during Python installation."
-             exit 1
+            Write-Error "   An error occurred during Python installation."
+            exit 1
         }
     }
     else {
@@ -343,6 +344,11 @@ Write-Host "     python run.py" -ForegroundColor Magenta
 Write-Host ""
 Write-Host "  3. (Optional) Setup development environment:" -ForegroundColor White
 Write-Host "     .\scripts\setup-dev.ps1" -ForegroundColor Magenta
+Write-Host ""
+Write-Host "  4. (IDE Users):" -ForegroundColor White
+Write-Host "     If the IDE doesn't detect the environment, press Ctrl+Shift+P," -ForegroundColor Gray
+Write-Host "     select 'Developer: Reload Window', or manually select the" -ForegroundColor Gray
+Write-Host "     interpreter from .\.venv\Scripts\python.exe" -ForegroundColor Gray
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
