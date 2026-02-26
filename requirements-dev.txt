@@ -9,7 +9,7 @@ docformatter==1.7.7     # Docstring formatting (PEP 257 compliant)
 
 # Linting (ESSENTIAL - Run always)
 flake8==7.3.0
-ruff==0.15.0
+ruff==0.15.2
 pylint==3.3.9
 
 # Type Checking (OPTIONAL - Run periodically)
