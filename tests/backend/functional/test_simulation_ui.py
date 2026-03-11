@@ -1,3 +1,5 @@
+"""Functional tests for the Simulation UI routes."""
+
 from src.services.db_utils import Asset, MaintenanceOrder, Role, SparePart, User, db
 
 
@@ -6,6 +8,7 @@ class TestSimulationUI:
 
     def test_simulation_dashboard_access(self, client):
         """Test accessing the simulation dashboard."""
+        # Note: client comes from conftest but uses our local 'app' fixture
         response = client.get("/simulation/")
 
         assert response.status_code == 200
@@ -15,25 +18,28 @@ class TestSimulationUI:
 
     def test_trigger_breakdown(self, client, app):
         """Test triggering a breakdown."""
+        # Clean environment to prevent pollution from previous tests
+        # Clean environment done via fixtures
+
+        # Step 1: Create an operational asset
         with app.app_context():
-            # Create an operational asset first
             asset = Asset(asset_code="TEST-BD", name="Test Asset", status="Operational")
             db.session.add(asset)
             db.session.commit()
+            asset_id = asset.id
 
-            response = client.post(
-                "/simulation/trigger-breakdown", follow_redirects=True
-            )
+        # Step 2: Trigger breakdown via POST
+        response = client.post("/simulation/trigger-breakdown", follow_redirects=True)
+        assert response.status_code == 200
 
-            assert response.status_code == 200
-
-            # Verify asset status
-            updated_asset = Asset.query.filter_by(asset_code="TEST-BD").first()
+        # Step 3: Verify in a fresh context
+        with app.app_context():
+            updated_asset = db.session.get(Asset, asset_id)
             assert updated_asset.status == "Offline"
 
             # Verify MO creation (Reactive)
             mo = MaintenanceOrder.query.filter_by(
-                asset_id=updated_asset.id, order_type="Reactive"
+                asset_id=asset_id, order_type="Reactive"
             ).first()
             assert mo is not None
             assert mo.priority == "Critical"
@@ -43,50 +49,57 @@ class TestSimulationUI:
         with app.app_context():
             initial_count = Asset.query.count()
 
-            # Test Assets
-            response = client.post(
-                "/simulation/generate",
-                data={"type": "assets", "count": 5},
-                follow_redirects=True,
-            )
-            assert response.status_code == 200
-            assert Asset.query.count() == initial_count + 5
+        # Test Assets
+        response = client.post(
+            "/simulation/generate",
+            data={"type": "assets", "count": 5},
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
 
-            # Test Spare Parts
+        with app.app_context():
+            assert Asset.query.count() == initial_count + 5
             initial_parts = SparePart.query.count()
-            response = client.post(
-                "/simulation/generate",
-                data={"type": "spare_parts", "count": 5},
-                follow_redirects=True,
-            )
-            assert response.status_code == 200
+
+        # Test Spare Parts
+        response = client.post(
+            "/simulation/generate",
+            data={"type": "spare_parts", "count": 5},
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+
+        with app.app_context():
             assert SparePart.query.count() == initial_parts + 5
 
     def test_set_availability(self, client, app):
         """Test setting technician availability."""
+        # Step 1: Create user and role
         with app.app_context():
-            # Create a user and role
-            role = Role(name="Technician")
-            db.session.add(role)
+            role = Role.query.filter_by(name="Technician").first()
+            if not role:
+                role = Role(name="Technician")
+                db.session.add(role)
+                db.session.flush()
 
             user = User(username="sim_tech", email="sim@test.com")
             user.set_password("pass")
             user.roles.append(role)
             db.session.add(user)
             db.session.commit()
+            user_id = user.id
 
-            response = client.post(
-                "/simulation/set-availability",
-                data={"user_id": user.id, "status": "Sick"},
-                follow_redirects=True,
-            )
+        # Step 2: Update availability
+        response = client.post(
+            "/simulation/set-availability",
+            data={"user_id": user_id, "status": "Sick"},
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
 
-            assert response.status_code == 200
-
-            # Check if the UI reflects the new status in the dropdown
-            assert b"sim_tech (Sick)" in response.data
-
-            updated_user = db.session.get(User, user.id)
+        # Step 3: Verify in fresh context
+        with app.app_context():
+            updated_user = db.session.get(User, user_id)
             assert updated_user.availability_status == "Sick"
 
     def test_generate_users_data(self, client, app):
@@ -94,67 +107,66 @@ class TestSimulationUI:
         with app.app_context():
             initial_count = User.query.count()
 
-            response = client.post(
-                "/simulation/generate",
-                data={"type": "users", "count": 3},
-                follow_redirects=True,
-            )
-            assert response.status_code == 200
+        response = client.post(
+            "/simulation/generate",
+            data={"type": "users", "count": 3},
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+
+        with app.app_context():
             assert User.query.count() >= initial_count + 3
 
     def test_generate_orders_data(self, client, app):
         """Test generating maintenance orders via simulation UI."""
+        # Create an asset first - orders require assets
         with app.app_context():
-            # Create an asset first - orders require assets
             asset = Asset(
                 asset_code="TEST-ORD", name="Test Asset", status="Operational"
             )
             db.session.add(asset)
             db.session.commit()
-
             initial_count = MaintenanceOrder.query.count()
 
-            response = client.post(
-                "/simulation/generate",
-                data={"type": "orders", "count": 3},
-                follow_redirects=True,
-            )
-            assert response.status_code == 200
+        response = client.post(
+            "/simulation/generate",
+            data={"type": "orders", "count": 3},
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+
+        with app.app_context():
             assert MaintenanceOrder.query.count() >= initial_count + 3
 
     def test_generate_invalid_data_type(self, client, app):
         """Test generating data with invalid type shows error."""
-        with app.app_context():
-            response = client.post(
-                "/simulation/generate",
-                data={"type": "invalid_type", "count": 5},
-                follow_redirects=True,
-            )
-            assert response.status_code == 200
-            assert b"Invalid data type selected" in response.data
+        response = client.post(
+            "/simulation/generate",
+            data={"type": "invalid_type", "count": 5},
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        assert b"Invalid data type selected" in response.data
 
     def test_trigger_breakdown_no_operational_assets(self, client, app):
         """Test triggering breakdown when no operational assets exist."""
+        # Remove all operational assets
         with app.app_context():
-            # Remove all operational assets
             Asset.query.filter_by(status="Operational").delete()
             db.session.commit()
 
-            response = client.post(
-                "/simulation/trigger-breakdown", follow_redirects=True
-            )
+        response = client.post("/simulation/trigger-breakdown", follow_redirects=True)
 
-            assert response.status_code == 200
-            assert b"No operational assets available" in response.data
+        assert response.status_code == 200
+        assert b"No operational assets available" in response.data
 
     def test_set_availability_user_not_found(self, client, app):
         """Test setting availability for non-existent user."""
-        with app.app_context():
-            response = client.post(
-                "/simulation/set-availability",
-                data={"user_id": 99999, "status": "Available"},
-                follow_redirects=True,
-            )
+        response = client.post(
+            "/simulation/set-availability",
+            data={"user_id": 99999, "status": "Available"},
+            follow_redirects=True,
+        )
 
-            assert response.status_code == 200
-            assert b"User not found" in response.data
+        assert response.status_code == 200
+        assert b"User not found" in response.data

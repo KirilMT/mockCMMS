@@ -6,7 +6,7 @@
 
 class PlanningGanttChart {
   constructor(containerId, scheduleId, options = {}) {
-    console.log("[Gantt] Initializing Planning Gantt Chart...");
+    console.warn("[Gantt] Initializing Planning Gantt Chart...");
 
     this.scheduleId = scheduleId;
     this.container = document.getElementById(containerId);
@@ -25,7 +25,7 @@ class PlanningGanttChart {
   }
 
   async init() {
-    console.log("[Gantt] Loading data...");
+    console.warn("[Gantt] Loading data...");
     await this.loadData();
     this.render();
   }
@@ -33,13 +33,13 @@ class PlanningGanttChart {
   async loadData() {
     try {
       const response = await fetch(
-        `/planning/planning/schedules/${this.scheduleId}/gantt-data`,
+        `/planning/schedules/${this.scheduleId}/gantt-data`,
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("[Gantt] Loaded data:", data);
+      console.warn("[Gantt] Loaded data:", data);
 
       this.scheduleData = data.schedule;
       this.technicians = data.technicians;
@@ -53,7 +53,7 @@ class PlanningGanttChart {
           task.status === "Planned",
       );
 
-      console.log(
+      console.warn(
         `[Gantt] Filtered ${this.tasks.length} planned tasks from ${data.tasks.length} total`,
       );
     } catch (error) {
@@ -64,7 +64,6 @@ class PlanningGanttChart {
                     Failed to load Gantt data: ${error.message}
                 </div>
             `;
-      throw error;
     }
   }
 
@@ -77,7 +76,7 @@ class PlanningGanttChart {
       return;
     }
 
-    console.log("[Gantt] Rendering custom Gantt chart...");
+    console.warn("[Gantt] Rendering custom Gantt chart...");
 
     // Build time grid
     const { startTime, endTime, timeColumns } = this.buildTimeGrid();
@@ -185,7 +184,10 @@ class PlanningGanttChart {
           queryDate.setDate(queryDate.getDate() - 1);
         }
 
-        const dateStr = queryDate.toISOString().split("T")[0];
+        const qy = queryDate.getFullYear();
+        const qm = String(queryDate.getMonth() + 1).padStart(2, "0");
+        const qd = String(queryDate.getDate()).padStart(2, "0");
+        const dateStr = `${qy}-${qm}-${qd}`;
         const scheduleEntry = this.shiftSchedule.find((entry) =>
           entry.date.startsWith(dateStr),
         );
@@ -209,16 +211,29 @@ class PlanningGanttChart {
       let lastShift = null;
 
       while (currentTime < latestTime) {
-        const currentDay = currentTime.toDateString();
+        // Use deterministic YYYY-MM-DD key (not toDateString which is locale-dependent)
+        const y = currentTime.getFullYear();
+        const m = String(currentTime.getMonth() + 1).padStart(2, "0");
+        const d = String(currentTime.getDate()).padStart(2, "0");
+        const currentDay = `${y}-${m}-${d}`;
         const currentShift = getShiftInfo(currentTime);
 
         let dayLabel = "";
         let isNewDay = false;
 
         if (currentDay !== lastDay) {
-          dayLabel = currentTime.toLocaleDateString("en-US", {
-            weekday: "long",
-          });
+          // Use deterministic day-of-week formatting (not locale/timezone dependent)
+          // This ensures identical rendering on all OS/CI environments
+          const WEEKDAYS = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ];
+          dayLabel = WEEKDAYS[currentTime.getDay()];
           isNewDay = true;
           lastDay = currentDay;
         }
@@ -470,7 +485,7 @@ class PlanningGanttChart {
       .join("");
   }
 
-  renderTaskBars(tasks, startTime, endTime) {
+  renderTaskBars(tasks, startTime) {
     const COLUMN_WIDTH = 100; // pixels per hour (matches time grid)
     const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
 
@@ -493,7 +508,6 @@ class PlanningGanttChart {
                 <div class="gantt-task-bar"
                      data-task-id="${taskId}"
                      style="
-                         position: absolute;
                          left: ${left}px;
                          width: ${width}px;
                          top: 8px;
@@ -502,8 +516,6 @@ class PlanningGanttChart {
                          border-radius: 4px;
                          padding: 0 8px;
                          display: flex;
-                         align-items: center;
-                         justify-content: center;
                          color: white;
                          font-size: 0.9em;
                          font-weight: 600;
@@ -530,11 +542,11 @@ class PlanningGanttChart {
   }
 
   formatHour(date) {
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
+    // Use deterministic formatting (not locale/timezone dependent)
+    // This ensures identical rendering on all OS/CI environments
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
   }
 
   addInteractivity() {
@@ -556,7 +568,7 @@ class PlanningGanttChart {
         const colIndex = cell.getAttribute("data-col-index");
         // Highlight all cells with the same column index
         const allCells = this.container.querySelectorAll(
-          `[data - col - index="${colIndex}"]`,
+          `[data-col-index="${colIndex}"]`,
         );
         allCells.forEach((c) => {
           c.style.background = "#e3f2fd";
@@ -566,7 +578,7 @@ class PlanningGanttChart {
         const colIndex = cell.getAttribute("data-col-index");
         // Restore original background for all cells in this column
         const allCells = this.container.querySelectorAll(
-          `[data - col - index= "${colIndex}"]`,
+          `[data-col-index="${colIndex}"]`,
         );
         allCells.forEach((c) => {
           const idx = parseInt(colIndex);
@@ -582,11 +594,11 @@ class PlanningGanttChart {
     // Add click handlers for task bars with table navigation
     const taskBars = this.container.querySelectorAll(".gantt-task-bar");
     taskBars.forEach((bar) => {
-      bar.addEventListener("click", (e) => {
+      bar.addEventListener("click", () => {
         const taskId = bar.getAttribute("data-task-id");
         const task = this.tasks.find((t) => t.maintenance_order_id == taskId);
 
-        console.log("[Gantt] Task clicked:", task);
+        console.warn("[Gantt] Task clicked:", task);
 
         if (this.options.onTaskClick) {
           this.options.onTaskClick(task);
@@ -636,7 +648,7 @@ class PlanningGanttChart {
       }, 2000);
     } else {
       // Don't spam console - just silently fail (task might be filtered out)
-      console.log(
+      console.warn(
         "[Gantt] MO ID",
         moId,
         "not visible in current table view (may be filtered)",
@@ -668,8 +680,12 @@ function initPlanningGantt(containerId, scheduleId, options = {}) {
   return new PlanningGanttChart(containerId, scheduleId, options);
 }
 
-// Export for use in templates
+// Export for use in templates and testing
 if (typeof window !== "undefined") {
   window.PlanningGanttChart = PlanningGanttChart;
   window.initPlanningGantt = initPlanningGantt;
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { PlanningGanttChart, initPlanningGantt };
 }

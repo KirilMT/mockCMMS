@@ -2,9 +2,9 @@
 """
 Planning Engine - Core Assignment Algorithm
 
-This module implements the skill-based task assignment algorithm for the Planning module.
-It replaces the legacy Excel-based task_assigner.py with a clean implementation using
-SQLAlchemy domain models.
+This module implements the skill-based task assignment algorithm for the
+Planning module. It replaces the legacy Excel-based task_assigner.py with
+a clean implementation using SQLAlchemy domain models.
 
 Key Features:
 - Skill-based task-to-technician matching
@@ -14,24 +14,26 @@ Key Features:
 - Constraint validation (spare parts, skills, availability)
 """
 
-import time
 import json
 import os
-from datetime import datetime, timedelta, time as dt_time
-from typing import List, Tuple, Optional, Dict, Set
-from collections import defaultdict
+import time
 from dataclasses import dataclass
+from datetime import datetime
+from datetime import time as dt_time
+from datetime import timedelta, timezone
+from typing import Dict, List, Optional, Set, Tuple, cast
 
-from src.services.db_utils import db, MaintenanceOrder, User, Skill, Team, UserSkill
+from src.services.db_utils import MaintenanceOrder, Team, User, db
+
+from .inventory_service import check_spare_parts_availability
 from .planning_models import PlanningTask, Schedule
 from .planning_result import (
     PlanningResult,
     TaskAssignment,
-    UnassignedTask,
     TechnicianWorkload,
     UnassignedReason,
+    UnassignedTask,
 )
-from .inventory_service import check_spare_parts_availability
 
 
 @dataclass
@@ -81,11 +83,11 @@ class PlanningEngine:
         try:
             if os.path.exists(config_path):
                 with open(config_path, "r") as f:
-                    return json.load(f)
+                    return json.load(f)  # type: ignore[no-any-return]
             elif os.path.exists(example_path):
                 self._log("warning", "config.json not found, using config.example.json")
                 with open(example_path, "r") as f:
-                    return json.load(f)
+                    return json.load(f)  # type: ignore[no-any-return]
             else:
                 self._log("error", "No configuration file found!")
                 return {}
@@ -160,7 +162,10 @@ class PlanningEngine:
                     # Determine if overnight (crosses midnight)
                     is_overnight = inter_start.date() != inter_end.date()
 
-                    shift_name = f"{shift_start_dt.strftime('%A')} - {shift_data['name'].capitalize()}"
+                    shift_name = (
+                        f"{shift_start_dt.strftime('%A')} - "
+                        f"{shift_data['name'].capitalize()}"
+                    )
 
                     generated_shifts.append(
                         ShiftDefinition(
@@ -191,23 +196,32 @@ class PlanningEngine:
         Returns:
             List of Team objects that are active for this week
         """
-        from src.services.db_utils import Team
 
         week_number = date.isocalendar()[1]
         is_odd_week = (week_number % 2) != 0
 
+        active_teams: List[Team] = []
         if is_odd_week:
             # Pattern 1: Team A (Early) and Team B (Late)
-            active_teams = Team.query.filter(Team.rotation_pattern == "Pattern 1").all()
+            active_teams = (
+                Team.query.filter(Team.rotation_pattern == "Pattern 1")
+                .order_by(Team.id)
+                .all()
+            )
         else:
             # Pattern 2: Team C (Early) and Team D (Late)
-            active_teams = Team.query.filter(Team.rotation_pattern == "Pattern 2").all()
+            active_teams = (
+                Team.query.filter(Team.rotation_pattern == "Pattern 2")
+                .order_by(Team.id)
+                .all()
+            )
 
         self._log(
             "info",
-            f"Week {week_number} ({'Odd' if is_odd_week else 'Even'}): Active teams: {[t.name for t in active_teams]}",
+            f"Week {week_number} ({'Odd' if is_odd_week else 'Even'}): "
+            f"Active teams: {[t.name for t in active_teams]}",
         )
-        return active_teams
+        return active_teams  # type: ignore[no-any-return]
 
     def generate_plan(
         self,
@@ -215,16 +229,20 @@ class PlanningEngine:
         planning_mode: str = "weekend",
         shift_duration_minutes: int = 720,  # 12 hours default
         check_parts: bool = True,
-        max_task_duration: int = None,  # NEW: Time constraint for shift-break mode
+        max_task_duration: Optional[
+            int
+        ] = None,  # NEW: Time constraint for shift-break mode
     ) -> PlanningResult:
         """Generate a complete planning result for a schedule.
 
         Args:
             schedule: Schedule object containing tasks to plan
             planning_mode: "shift_break" (30-min windows) or "weekend" (multi-day)
-            shift_duration_minutes: Total available minutes per shift (used for utilization calc)
+            shift_duration_minutes: Total available minutes per shift
+                                    (used for utilization calc)
             check_parts: Whether to check spare parts availability
-            max_task_duration: Maximum task duration in minutes (auto-set by mode if None)
+            max_task_duration: Maximum task duration in minutes
+                               (auto-set by mode if None)
 
         Returns:
             PlanningResult with all assignments and metadata
@@ -243,19 +261,19 @@ class PlanningEngine:
             max_task_duration = (
                 max_task_duration or shift_duration_minutes
             )  # No effective limit
-            self._log("info", f"Weekend mode: no strict time limit")
+            self._log("info", "Weekend mode: no strict time limit")
 
         self._log("info", f"Starting planning for schedule: {schedule.name}")
         self._log("info", f"Mode: {planning_mode}")
 
         # Initialize result
         result = PlanningResult(
-            schedule_id=schedule.id,
-            schedule_name=schedule.name,
+            schedule_id=cast(int, schedule.id),
+            schedule_name=cast(str, schedule.name),
             planning_mode=planning_mode,
-            start_date=schedule.start_date,
-            end_date=schedule.end_date,
-            created_at=datetime.utcnow(),
+            start_date=cast(datetime, schedule.start_date),
+            end_date=cast(datetime, schedule.end_date),
+            created_at=datetime.now(timezone.utc),
         )
 
         # Get plannable tasks (with MO data)
@@ -266,7 +284,7 @@ class PlanningEngine:
 
         # Apply mode-specific filtering
         if planning_mode == "weekend":
-            self._log("info", f"Applying weekend mode filtering...")
+            self._log("info", "Applying weekend mode filtering...")
             tasks_to_plan = self._filter_weekend_tasks(tasks_to_plan, result)
             self._log(
                 "info", f"After weekend filtering: {len(tasks_to_plan)} tasks remain"
@@ -278,7 +296,8 @@ class PlanningEngine:
                 "warning", f"Zero tasks to plan after filtering (mode={planning_mode})"
             )
             result.calculate_statistics()
-            result.statistics.planning_duration_seconds = time.time() - start_time
+            if result.statistics:
+                result.statistics.planning_duration_seconds = time.time() - start_time
             return result
 
         # Get available technicians (Global pool)
@@ -297,7 +316,8 @@ class PlanningEngine:
                     )
                 )
             result.calculate_statistics()
-            result.statistics.planning_duration_seconds = time.time() - start_time
+            if result.statistics:
+                result.statistics.planning_duration_seconds = time.time() - start_time
             return result
 
         self._log(
@@ -306,9 +326,11 @@ class PlanningEngine:
         )
 
         # Initialize workload tracking (Global across all shifts)
-        # We use a default shift duration for utilization calc, but actual availability is per shift
+        # We use a default shift duration for utilization calc,
+        # but actual availability is per shift
         technician_workloads = self._initialize_workloads(
-            all_technicians, shift_duration_minutes * 3  # Approx 3 days
+            all_technicians,
+            shift_duration_minutes * 3,  # Approx 3 days
         )
 
         # Sort tasks by priority
@@ -318,7 +340,9 @@ class PlanningEngine:
         # Define Shifts
         shifts = []
         if planning_mode == "weekend":
-            shifts = self._get_weekend_shifts(schedule.start_date, schedule.end_date)
+            shifts = self._get_weekend_shifts(
+                cast(datetime, schedule.start_date), cast(datetime, schedule.end_date)
+            )
             self._log("info", f"Generated {len(shifts)} weekend shifts")
         else:
             # Create a single dummy shift for shift_break or other modes
@@ -326,23 +350,24 @@ class PlanningEngine:
                 ShiftDefinition(
                     name="Standard",
                     day_name="Day 1",
-                    start_time=schedule.start_date,
-                    end_time=schedule.end_date,
+                    start_time=cast(datetime, schedule.start_date),
+                    end_time=cast(datetime, schedule.end_date),
                     duration_minutes=int(
                         (schedule.end_date - schedule.start_date).total_seconds() / 60
                     ),
                 )
             ]
 
-        # Fetch all teams once
-        all_teams = Team.query.all()
+        # Fetch all teams once - use deterministic ordering
+        all_teams = Team.query.order_by(Team.id).all()
         from src.services.shift_utils import get_shift_teams
 
         # Iterate through shifts and assign tasks
         for shift in shifts:
             self._log(
                 "info",
-                f"Planning for shift: {shift.name} ({shift.start_time} - {shift.end_time})",
+                f"Planning for shift: {shift.name} "
+                f"({shift.start_time} - {shift.end_time})",
             )
 
             # Filter technicians by Shift Team (Rotation Logic)
@@ -396,18 +421,23 @@ class PlanningEngine:
 
             self._log(
                 "info",
-                f"Available technicians for {shift.name}: {len(shift_technicians)} ({', '.join([t.username for t in shift_technicians])})",
+                f"Available technicians for {shift.name}: "
+                f"{len(shift_technicians)} "
+                f"({', '.join([cast(str, t.username) for t in shift_technicians])})",
             )
 
             if not shift_technicians:
                 self._log(
                     "warning",
-                    f"No technicians found for shift {shift.name} (Required: {allowed_team_names})",
+                    f"No technicians found for shift {shift.name} "
+                    f"(Required: {allowed_team_names})",
                 )
 
             # Track which technicians are busy during this shift (boolean)
             # Each technician can only work on ONE task per shift (parallel execution)
-            shift_tech_busy = {t.id: False for t in shift_technicians}
+            shift_tech_busy: Dict[int, bool] = {
+                cast(int, t.id): False for t in shift_technicians
+            }
 
             current_time = shift.start_time
 
@@ -415,7 +445,7 @@ class PlanningEngine:
             tasks_assigned_in_shift = []
 
             for i, (task, mo) in enumerate(unassigned_tasks):
-                # Skip if already assigned (shouldn't happen if we manage list correctly, but safety check)
+                # Skip if already assigned (safety check)
                 if task.id in [t.planning_task_id for t in result.assigned_tasks]:
                     continue
 
@@ -439,13 +469,14 @@ class PlanningEngine:
 
                     # Update current time?
                     # In a real Gantt, tasks are parallel.
-                    # Here we are simplifying: we just check if tech has time in the shift.
-                    # The 'planned_start_time' might need to be smarter (finding first gap).
+                    # Here we are simplifying: check if tech has time in the shift.
+                    # The 'planned_start_time' might need to be smarter.
                     # For now, we set start time to shift start + offset?
                     # Or just shift start if we assume parallel execution?
-                    # The original code did: current_time = assignment_result.planned_end_time
+                    # Original code did:
+                    # current_time = assignment_result.planned_end_time
                     # which implies sequential execution.
-                    # Let's keep sequential for simplicity of 'current_time' but per-tech availability matters.
+                    # Keep sequential for simplicity of 'current_time'.
 
                     # Actually, if we have multiple techs, they can work in parallel.
                     # But 'current_time' variable suggests a global cursor.
@@ -474,7 +505,8 @@ class PlanningEngine:
 
         # Calculate statistics
         result.calculate_statistics()
-        result.statistics.planning_duration_seconds = time.time() - start_time
+        if result.statistics:
+            result.statistics.planning_duration_seconds = time.time() - start_time
 
         self._log(
             "info",
@@ -493,14 +525,18 @@ class PlanningEngine:
         """
         plannable_tasks = []
 
-        # Get all unplanned or draft tasks for this schedule
-        tasks = PlanningTask.query.filter(
-            PlanningTask.schedule_id == schedule.id,
-            PlanningTask.status.in_(["Unplanned", "Draft"]),
-        ).all()
+        # Get all unplanned or draft tasks for this schedule - order by ID for parity
+        tasks = (
+            PlanningTask.query.filter(
+                PlanningTask.schedule_id == schedule.id,
+                PlanningTask.status.in_(["Unplanned", "Draft"]),
+            )
+            .order_by(PlanningTask.id)
+            .all()
+        )
 
         for task in tasks:
-            mo = MaintenanceOrder.query.get(task.maintenance_order_id)
+            mo = db.session.get(MaintenanceOrder, task.maintenance_order_id)
 
             if not mo:
                 result.add_warning(
@@ -553,10 +589,15 @@ class PlanningEngine:
     def _get_available_technicians(self, schedule: Schedule) -> List[User]:
         """Get technicians available during the schedule period."""
         # In the new schema, technicians are Users with a team_id
-        # We also check availability_status
-        return User.query.filter(
-            User.team_id.isnot(None), User.availability_status == "Available"
-        ).all()
+        # We also check availability_status - order by ID for parity
+        return cast(
+            List[User],
+            User.query.filter(
+                User.team_id.isnot(None), User.availability_status == "Available"
+            )
+            .order_by(User.id)
+            .all(),
+        )
 
     def _filter_weekend_tasks(
         self, tasks: List[Tuple[PlanningTask, MaintenanceOrder]], result: PlanningResult
@@ -565,7 +606,7 @@ class PlanningEngine:
 
         Weekend planning focuses on:
         - Scheduled PMs (Weekly, Monthly frequency)
-        - Outstanding REP tasks
+        - Outstanding Reactive/Corrective tasks
         - Deferred maintenance
         - Any tasks not dependent on production line being active
 
@@ -578,7 +619,7 @@ class PlanningEngine:
         """
         weekend_tasks = []
         filtered_count = 0
-        filter_reasons = {}  # Track why tasks were filtered
+        filter_reasons: dict[str, int] = {}  # Track why tasks were filtered
 
         self._log("info", f"Weekend filtering: Processing {len(tasks)} tasks")
 
@@ -615,22 +656,24 @@ class PlanningEngine:
                 self._log("debug", f"MO-{mo.id}: Included (PM without frequency)")
                 continue
 
-            # Include outstanding REP/Corrective tasks
-            if mo.order_type in ["REP", "Corrective"]:
+            # Include outstanding Reactive/Corrective tasks
+            if mo.order_type in ["Reactive", "Corrective"]:
                 if mo.status in ["Open", "In Progress"]:
                     weekend_tasks.append((task, mo))
                     self._log(
                         "debug",
-                        f"MO-{mo.id}: Included (REP/Corrective, status={mo.status})",
+                        f"MO-{mo.id}: Included "
+                        f"(Reactive/Corrective, status={mo.status})",
                     )
                     continue
                 else:
                     filtered_count += 1
-                    reason = f"REP/Corrective with status {mo.status}"
+                    reason = f"Reactive/Corrective with status {mo.status}"
                     filter_reasons[reason] = filter_reasons.get(reason, 0) + 1
                     self._log(
                         "debug",
-                        f"MO-{mo.id}: Filtered out (REP/Corrective, status={mo.status})",
+                        f"MO-{mo.id}: Filtered out (Reactive/Corrective, "
+                        f"status={mo.status})",
                     )
                     continue
 
@@ -648,7 +691,10 @@ class PlanningEngine:
 
             # Task didn't match any weekend criteria
             filtered_count += 1
-            reason = f"Type={mo.order_type}, Status={mo.status}, Freq={mo.frequency or 'None'}"
+            reason = (
+                f"Type={mo.order_type}, Status={mo.status}, "
+                f"Freq={mo.frequency or 'None'}"
+            )
             filter_reasons[reason] = filter_reasons.get(reason, 0) + 1
             self._log(
                 "debug",
@@ -665,7 +711,8 @@ class PlanningEngine:
 
         self._log(
             "info",
-            f"Weekend filtering: {len(weekend_tasks)} tasks selected from {len(tasks)} total",
+            f"Weekend filtering: {len(weekend_tasks)} tasks "
+            f"selected from {len(tasks)} total",
         )
 
         return weekend_tasks
@@ -676,17 +723,19 @@ class PlanningEngine:
         """Initialize workload tracking for all technicians."""
         workloads = {}
         for tech in technicians:
-            workloads[tech.id] = TechnicianWorkload(
-                technician_id=tech.id,
-                technician_name=tech.username,
+            workloads[cast(int, tech.id)] = TechnicianWorkload(
+                technician_id=cast(int, tech.id),
+                technician_name=cast(str, tech.username),
                 total_assigned_minutes=0,
                 total_available_minutes=shift_duration_minutes,
                 utilization_percentage=0.0,
                 assigned_task_count=0,
                 assigned_task_ids=[],
-                shift_name=tech.team.name if tech.team else None,
+                shift_name=cast(str, tech.team.name) if tech.team else None,
             )
-        return workloads
+        return cast(
+            Dict[int, TechnicianWorkload], workloads
+        )  # Cast because SQLAlchemy Column types cause mismatch
 
     def _prioritize_tasks(
         self, tasks: List[Tuple[PlanningTask, MaintenanceOrder]], planning_mode: str
@@ -694,18 +743,23 @@ class PlanningEngine:
         """Sort tasks by priority based on planning mode.
 
         Priority order for shift_break mode:
-        1. Task type FIRST (REP > Corrective > PM > Project) - Reactive focus
+        1. Task type FIRST (Reactive > Corrective > PM > Project) - Reactive focus
         2. Then by priority level within type (Critical > High > Medium > Low)
 
         Priority order for weekend mode:
-        1. Task type FIRST (PM > REP > Corrective > Project) - Preventive focus
+        1. Task type FIRST (PM > Reactive > Corrective > Project) - Preventive focus
         2. Then by priority level within type (Critical > High > Medium > Low)
         """
         priority_map = {"Critical": 1, "High": 2, "Medium": 3, "Low": 4, "Undefined": 5}
 
-        type_priority_shift_break = {"REP": 1, "Corrective": 2, "PM": 3, "Project": 4}
+        type_priority_shift_break = {
+            "Reactive": 1,
+            "Corrective": 2,
+            "PM": 3,
+            "Project": 4,
+        }
 
-        type_priority_weekend = {"PM": 1, "REP": 2, "Corrective": 3, "Project": 4}
+        type_priority_weekend = {"PM": 1, "Reactive": 2, "Corrective": 3, "Project": 4}
 
         type_map = (
             type_priority_shift_break
@@ -719,7 +773,7 @@ class PlanningEngine:
             type_val = type_map.get(mo.order_type, 99)
 
             # Both modes: Type FIRST, then priority
-            # Shift-break: REP-first (reactive)
+            # Shift-break: Reactive-first
             # Weekend: PM-first (preventive)
             return (type_val, priority_val, mo.id)
 
@@ -735,8 +789,8 @@ class PlanningEngine:
         result: PlanningResult,
         planning_mode: str,
         max_task_duration: int,
-        shift_end_time: datetime = None,
-        shift_tech_busy: Dict[int, bool] = None,
+        shift_end_time: Optional[datetime] = None,
+        shift_tech_busy: Optional[Dict[int, bool]] = None,
     ) -> Optional[TaskAssignment]:
         """Attempt to assign a single task to technician(s).
 
@@ -752,19 +806,20 @@ class PlanningEngine:
 
         # Check time window constraint
         if not self._fits_time_window(
-            estimated_duration, max_task_duration, planning_mode
+            cast(int, estimated_duration), max_task_duration, planning_mode
         ):
             result.add_unassigned(
                 self._create_unassigned_task(
                     task,
                     mo,
                     UnassignedReason.INSUFFICIENT_TIME,
-                    f"Task duration ({estimated_duration} min) exceeds time window ({max_task_duration} min)",
+                    f"Task duration ({estimated_duration} min) exceeds "
+                    f"time window ({max_task_duration} min)",
                 )
             )
             return None
 
-        # Check if task fits in shift window (parallel execution - all tasks start at shift.start_time)
+        # Check if task fits in shift window (parallel execution)
         if shift_end_time:
             shift_duration_minutes = (
                 shift_end_time - current_time
@@ -787,9 +842,9 @@ class PlanningEngine:
             eligible_technicians = self._find_team_with_skill_coverage(
                 available_technicians,
                 required_skills,
-                required_tech_count,
+                cast(int, required_tech_count),
                 workloads,
-                estimated_duration,
+                cast(int, estimated_duration),
                 shift_tech_busy,
             )
         else:
@@ -798,7 +853,7 @@ class PlanningEngine:
                 available_technicians,
                 required_skills,
                 workloads,
-                estimated_duration,
+                cast(int, estimated_duration),
                 shift_tech_busy,
             )
 
@@ -812,7 +867,7 @@ class PlanningEngine:
 
         # Select best technicians (now with advanced team formation logic)
         selected_technicians = self._select_best_team(
-            eligible_technicians, required_tech_count, workloads
+            eligible_technicians, cast(int, required_tech_count), workloads
         )
 
         # Validate team has all required skills collectively
@@ -821,34 +876,38 @@ class PlanningEngine:
         ):
             return None
 
-        # Calculate actual duration (could be adjusted based on team size and composition)
+        # Calculate actual duration (could be adjusted based on team)
         actual_duration = self._calculate_adjusted_duration(
-            estimated_duration, required_tech_count, len(selected_technicians)
+            cast(int, estimated_duration),
+            cast(int, required_tech_count),
+            len(selected_technicians),
         )
 
         # Create assignment
         assignment = TaskAssignment(
-            planning_task_id=task.id,
-            maintenance_order_id=mo.id,
-            task_description=mo.description,
-            assigned_technician_ids=[t.id for t in selected_technicians],
-            assigned_technician_names=[t.username for t in selected_technicians],
+            planning_task_id=cast(int, task.id),
+            maintenance_order_id=cast(int, mo.id),
+            task_description=cast(str, mo.title or mo.description),
+            assigned_technician_ids=[cast(int, t.id) for t in selected_technicians],
+            assigned_technician_names=[
+                cast(str, t.username) for t in selected_technicians
+            ],
             planned_start_time=current_time,
             planned_end_time=current_time + timedelta(minutes=actual_duration),
-            estimated_duration_minutes=estimated_duration,
+            estimated_duration_minutes=cast(int, estimated_duration),
             actual_duration_minutes=actual_duration,
             required_skills=required_skills,
-            priority=mo.priority,
-            task_type=mo.order_type,
+            priority=cast(str, mo.priority),
+            task_type=cast(str, mo.order_type),
         )
 
         # Update workloads for all team members
         for tech in selected_technicians:
             # Update global workload (for statistics and reporting)
-            workload = workloads[tech.id]
+            workload = workloads[cast(int, tech.id)]
             workload.total_assigned_minutes += actual_duration
             workload.assigned_task_count += 1
-            workload.assigned_task_ids.append(task.id)
+            workload.assigned_task_ids.append(cast(int, task.id))
             workload.utilization_percentage = (
                 workload.total_assigned_minutes / workload.total_available_minutes * 100
                 if workload.total_available_minutes > 0
@@ -856,12 +915,13 @@ class PlanningEngine:
             )
 
             # Mark technician as busy for this shift (parallel execution)
-            if shift_tech_busy is not None and tech.id in shift_tech_busy:
-                shift_tech_busy[tech.id] = True
+            if shift_tech_busy is not None and cast(int, tech.id) in shift_tech_busy:
+                shift_tech_busy[cast(int, tech.id)] = True
 
         self._log(
             "info",
-            f"Assigned task {mo.id} to team: {', '.join([t.username for t in selected_technicians])}",
+            f"Assigned task {mo.id} to team: "
+            f"{', '.join([cast(str, t.username) for t in selected_technicians])}",
         )
 
         return assignment
@@ -872,7 +932,7 @@ class PlanningEngine:
         required_skills: List[str],
         workloads: Dict[int, TechnicianWorkload],
         task_duration: int,
-        shift_tech_busy: Dict[int, bool] = None,
+        shift_tech_busy: Optional[Dict[int, bool]] = None,
     ) -> List[User]:
         """Find technicians who have the required skills and available time."""
         if not required_skills:
@@ -909,17 +969,20 @@ class PlanningEngine:
         technician: User,
         workloads: Dict[int, TechnicianWorkload],
         task_duration: int,
-        shift_tech_busy: Dict[int, bool] = None,
+        shift_tech_busy: Optional[Dict[int, bool]] = None,
     ) -> bool:
         """Check if technician has enough available time."""
         # Check if technician is already busy in this shift (parallel execution)
         if shift_tech_busy is not None:
-            if technician.id in shift_tech_busy and shift_tech_busy[technician.id]:
+            if (
+                cast(int, technician.id) in shift_tech_busy
+                and shift_tech_busy[cast(int, technician.id)]
+            ):
                 # Technician is already assigned to a task in this shift
                 return False
 
         # Also check global workload (for multi-shift scenarios)
-        workload = workloads.get(technician.id)
+        workload = workloads.get(cast(int, technician.id))
         if not workload:
             return False
 
@@ -935,7 +998,7 @@ class PlanningEngine:
         team_size: int,
         workloads: Dict[int, TechnicianWorkload],
         task_duration: int,
-        shift_tech_busy: Dict[int, bool] = None,
+        shift_tech_busy: Optional[Dict[int, bool]] = None,
     ) -> List[User]:
         """Find technicians who collectively have all required skills for a multi-person
         task.
@@ -985,8 +1048,8 @@ class PlanningEngine:
 
         # Strategy: Greedily select technicians to maximize skill coverage
         # This is a simplified approach - more sophisticated algorithms exist
-        selected = []
-        covered_skills = set()
+        selected: List[User] = []
+        covered_skills: Set[str] = set()
         remaining_pool = tech_with_some_skills.copy()
 
         # First pass: Select technicians to cover as many skills as possible
@@ -1091,7 +1154,7 @@ class PlanningEngine:
         # Score each technician based on multiple factors
         tech_scores = []
         for tech in eligible_technicians:
-            workload = workloads[tech.id]
+            workload = workloads[cast(int, tech.id)]
 
             # Factor 1: Available time (workload balancing) - weight 40%
             remaining_time = (
@@ -1130,8 +1193,8 @@ class PlanningEngine:
 
             tech_scores.append((tech, total_score, skill_count, avg_skill_level))
 
-        # Sort by total score (descending)
-        tech_scores.sort(key=lambda x: x[1], reverse=True)
+        # Sort by score (desc), then ID (asc) for 100% determinism
+        tech_scores.sort(key=lambda x: (-x[1], x[0].id))
 
         # Select team with experience balancing
         selected_team = self._balance_team_experience(tech_scores, team_size)
@@ -1145,12 +1208,13 @@ class PlanningEngine:
         technicians.
 
         Strategy:
-        - For teams of 2+: Try to include at least one highly skilled technician (skill level >= 4)
+        - For teams of 2+: Try to include at least one senior
+          technician (skill level >= 4)
         - Avoid all-junior or all-senior teams if possible
         - Maximize overall team skill coverage
 
         Args:
-            scored_technicians: List of (Technician, score, skill_count, avg_skill_level) tuples
+            scored_technicians: List of (Tech, score, skill_count, avg_sl)
             team_size: Number of technicians needed
 
         Returns:
@@ -1164,12 +1228,7 @@ class PlanningEngine:
         senior_techs = [
             (t, s, sc, sl) for t, s, sc, sl in scored_technicians if sl >= 4.0
         ]
-        mid_techs = [
-            (t, s, sc, sl) for t, s, sc, sl in scored_technicians if 3.0 <= sl < 4.0
-        ]
-        junior_techs = [
-            (t, s, sc, sl) for t, s, sc, sl in scored_technicians if sl < 3.0
-        ]
+        # (Mid and junior techs not explicitly used in Current Strategy)
 
         selected = []
 
@@ -1200,7 +1259,8 @@ class PlanningEngine:
         if actual_team_size <= required_team_size:
             return base_duration
 
-        # Simple efficiency model: each extra technician reduces time by 10%, up to 30% max
+        # Simple efficiency model: each extra tech reduces time by 10%,
+        # up to 30% max
         extra_techs = actual_team_size - required_team_size
         efficiency_gain = min(0.30, extra_techs * 0.10)
         adjusted_duration = int(base_duration * (1 - efficiency_gain))
@@ -1244,14 +1304,14 @@ class PlanningEngine:
         )
 
         return UnassignedTask(
-            planning_task_id=task.id,
-            maintenance_order_id=mo.id,
-            task_description=mo.description,
+            planning_task_id=cast(int, task.id),
+            maintenance_order_id=cast(int, mo.id),
+            task_description=cast(str, mo.title or mo.description),
             reason=reason,
             reason_detail=detail,
             required_skills=required_skills,
-            priority=mo.priority,
-            task_type=mo.order_type,
+            priority=cast(str, mo.priority),
+            task_type=cast(str, mo.order_type),
             missing_skills=missing_skills,
             insufficient_parts=insufficient_parts,
         )
@@ -1271,7 +1331,7 @@ def generate_plan(
     Returns:
         PlanningResult object with all assignments
     """
-    schedule = Schedule.query.get(schedule_id)
+    schedule = db.session.get(Schedule, schedule_id)
     if not schedule:
         raise ValueError(f"Schedule {schedule_id} not found")
 

@@ -1,7 +1,9 @@
-import pytest
-from apps.planning.src.services.planning_db_utils import LineConditionManager
-import sqlite3
 import os
+import sqlite3
+
+import pytest
+
+from apps.planning.src.services.planning_db_utils import LineConditionManager
 
 # Use a separate test database for this test file to avoid conflicts
 TEST_DB_PATH = "apps/planning/test_planning_conditions.db"

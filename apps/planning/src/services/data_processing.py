@@ -5,10 +5,12 @@ Do not invest in new features here - file will be deleted.
 See: apps/planning/docs/roadmap/05_PHASE_4_CLEANUP.md section 6.2
 """
 
+import logging
+
 # src/data_processing.py
 import re
+
 import pandas as pd
-import logging
 
 # Get a logger for this module
 logger = logging.getLogger(__name__)
@@ -29,7 +31,7 @@ def normalize_string(s):
         localizations = config._config.get("localizations", {})
         for german, english in localizations.items():
             s = s.replace(german, english)
-    except:
+    except Exception:
         pass
     return s
 
@@ -70,7 +72,8 @@ def sanitize_data(data, logger=None):  # Added logger parameter
     for idx, row in enumerate(data):
         sanitized_row = row.copy() if isinstance(row, dict) else {}
         # 'name' should ideally be set before sanitize_data.
-        # If 'name' is missing, use 'scheduler_group_task'. If both missing, use a placeholder.
+        # If 'name' is missing, use 'scheduler_group_task'.
+        # If both missing, use a placeholder.
         # 'id' should also be present from earlier stages.
         task_name_original = sanitized_row.get(
             "name",
@@ -97,10 +100,13 @@ def sanitize_data(data, logger=None):  # Added logger parameter
                 sanitized_row[field] = default_val
                 _log_sanitize(
                     "warning",
-                    f"Sanitize: Missing or invalid '{field}' for task ID '{task_id_original}' (Name: '{task_name_original}'), set to default '{default_val}'",
+                    f"Sanitize: Missing or invalid '{field}' for task ID "
+                    f"'{task_id_original}' (Name: '{task_name_original}'), "
+                    f"set to default '{default_val}'",
                 )
 
-        # Ensure 'name' is explicitly set if it relied on scheduler_group_task and that was defaulted
+        # Ensure 'name' is explicitly set if it relied on scheduler_group_task
+        # and that was defaulted
         if "name" not in sanitized_row or not sanitized_row["name"]:
             sanitized_row["name"] = sanitized_row.get(
                 "scheduler_group_task", f"Defaulted Name {task_id_original}"
@@ -110,7 +116,8 @@ def sanitize_data(data, logger=None):  # Added logger parameter
             ):  # If scheduler_group_task was also missing
                 _log_sanitize(
                     "warning",
-                    f"Sanitize: Task ID '{task_id_original}' ended up with a placeholder name: '{sanitized_row['name']}'",
+                    f"Sanitize: Task ID '{task_id_original}' ended up with a "
+                    f"placeholder name: '{sanitized_row['name']}'",
                 )
 
         for field in numeric_fields_to_int:
@@ -121,7 +128,9 @@ def sanitize_data(data, logger=None):  # Added logger parameter
                 )
                 _log_sanitize(
                     "warning",
-                    f"Warning: Invalid {field}='{value}' for task '{task_name_original}' at row {idx + 1}, setting to {default_val}",
+                    f"Warning: Invalid {field}='{value}' for task "
+                    f"'{task_name_original}' at row {idx + 1}, "
+                    f"setting to {default_val}",
                 )
                 sanitized_row[field] = default_val
             else:
@@ -133,7 +142,8 @@ def sanitize_data(data, logger=None):  # Added logger parameter
         sanitized_data.append(sanitized_row)
     _log_sanitize(
         "info",
-        f"Sanitized {len(sanitized_data)} rows from {len(data)} input rows via data_processing.",
+        f"Sanitized {len(sanitized_data)} rows from {len(data)} "
+        "input rows via data_processing.",
     )
     return sanitized_data
 
@@ -142,7 +152,7 @@ def validate_assignments_flat_input(assignments_list):
     valid_assignments = []
     if not isinstance(assignments_list, list):
         logger.warning(
-            f"Warning: validate_assignments_flat_input expects a list, got {type(assignments_list)}"
+            f"Warning: validate_flat_input expects a list, got {type(assignments_list)}"
         )
         return []
 
@@ -163,7 +173,8 @@ def validate_assignments_flat_input(assignments_list):
         for field in required_fields:
             if field not in assignment or assignment[field] is None:
                 logger.warning(
-                    f"Warning: Missing or None {field} in assignment at index {idx}: {assignment}"
+                    f"Warning: Missing or None {field} in assignment "
+                    f"at index {idx}: {assignment}"
                 )
                 missing_field = True
                 break
@@ -175,7 +186,8 @@ def validate_assignments_flat_input(assignments_list):
             duration = float(assignment["duration"])
             if start < 0 or duration < 0:
                 logger.warning(
-                    f"Warning: Invalid start={start} or duration={duration} in assignment at index {idx}: {assignment}"
+                    f"Warning: Invalid start={start} or duration={duration} "
+                    f"in assignment at index {idx}: {assignment}"
                 )
                 continue
             if (
@@ -183,11 +195,12 @@ def validate_assignments_flat_input(assignments_list):
                 or "_" not in assignment["instance_id"]
             ):
                 logger.warning(
-                    f"Warning: Invalid instance_id='{assignment['instance_id']}' in assignment at index {idx}: {assignment}"
+                    f"Warning: Invalid instance_id='{assignment['instance_id']}' "
+                    f"in assignment at index {idx}: {assignment}"
                 )
                 continue
             task_id_part = assignment["instance_id"].split("_")[0]
-            # Allow 'additional_X', 'pm_orig_X_Y', or numeric IDs, or 'pm_X' (from older ID scheme if still possible)
+            # Allow 'additional_X', 'pm_orig_X_Y', or numeric IDs
             if not (
                 task_id_part.startswith("additional")
                 or task_id_part.startswith("pm_orig")
@@ -195,7 +208,9 @@ def validate_assignments_flat_input(assignments_list):
                 or task_id_part.isdigit()
             ):
                 logger.warning(
-                    f"Warning: Invalid task_id_part format '{task_id_part}' in instance_id='{assignment['instance_id']}' in assignment at index {idx}: {assignment}"
+                    f"Warning: Invalid task_id_part format '{task_id_part}' "
+                    f"in instance_id='{assignment['instance_id']}' "
+                    f"in assignment at index {idx}: {assignment}"
                 )
                 continue
             valid_assignments.append(assignment)
@@ -204,7 +219,8 @@ def validate_assignments_flat_input(assignments_list):
                 f"Warning: Invalid assignment at index {idx}: {str(e)} - {assignment}"
             )
     logger.info(
-        f"Validated {len(valid_assignments)} assignments from {len(assignments_list)} via data_processing."
+        f"Validated {len(valid_assignments)} assignments from "
+        f"{len(assignments_list)} via data_processing."
     )
     return valid_assignments
 
@@ -218,6 +234,7 @@ def calculate_available_time(assignments, present_technicians, total_work_minute
             available_time[tech] -= duration
         else:
             logger.warning(
-                f"Warning: Technician {tech} from assignment not in available_time for calculation (might be N/A or not present)."
+                f"Warning: Tech {tech} not in available_time for "
+                "calculation (might be N/A or not present)."
             )
     return available_time

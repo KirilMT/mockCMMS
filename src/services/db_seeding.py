@@ -1,5 +1,6 @@
 # src/services/db_seeding.py
 """Database seeding helper functions."""
+
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -19,17 +20,18 @@ from .db_utils import (
 
 def _load_dummy_data(logger):
     """Load and parse the dummy data JSON file."""
+    dummy_data_path = ""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    dummy_data_path = os.path.join(
+        current_dir, "..", "..", "test_data", "dummy_data.json"
+    )
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        dummy_data_path = os.path.join(
-            current_dir, "..", "..", "test_data", "dummy_data.json"
-        )
         with open(dummy_data_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        logger.error(f"Dummy data file not found at {dummy_data_path}")
+        logger.error("Dummy data file not found")
     except json.JSONDecodeError:
-        logger.error(f"Error decoding JSON from {dummy_data_path}")
+        logger.error("Error decoding dummy data JSON")
     return None
 
 
@@ -139,7 +141,7 @@ def _create_assets(assets_data, logger):
     assets = {}
     for i, asset_info in enumerate(assets_data):
         asset, _ = _get_or_create(Asset, name=asset_info["name"])
-        asset.asset_code = asset_info.get("asset_code", f"AST-{i+1:04d}")
+        asset.asset_code = asset_info.get("asset_code", f"AST-{i + 1:04d}")
         asset.description = asset_info.get("description", "")
         asset.asset_type = asset_info.get("asset_type", "equipment")
         asset.cost_center = asset_info.get("cost_center", "general")
@@ -149,27 +151,112 @@ def _create_assets(assets_data, logger):
     return assets
 
 
+def get_seeding_base_date():
+    """Get the base date for seeding data.
+
+    If FIXED_DATE_SEEDING env var is set, use that date (parsed as YYYY-MM-DD).
+    Otherwise, use current UTC time.
+    """
+    fixed_date_str = os.environ.get("FIXED_DATE_SEEDING")
+    if fixed_date_str:
+        try:
+            # Parse YYYY-MM-DD and set time to ~mid-day UTC for stability
+            dt = datetime.strptime(fixed_date_str, "%Y-%m-%d")
+            return dt.replace(
+                hour=12, minute=0, second=0, microsecond=0, tzinfo=timezone.utc
+            )
+        except ValueError:
+            pass
+    return datetime.now(timezone.utc)
+
+
+def _resolve_mo_assignees(assignee_tokens):
+    """Resolve assignee tokens like user:<username> or team:<team_name> to users."""
+    resolved_users = []
+    seen_user_ids = set()
+
+    for token in assignee_tokens or []:
+        if not isinstance(token, str):
+            continue
+        value = token.strip()
+        if not value:
+            continue
+
+        if value.startswith("user:"):
+            username = value.split(":", 1)[1].strip()
+            user = User.query.filter_by(username=username).first()
+            if user and user.id not in seen_user_ids:
+                resolved_users.append(user)
+                seen_user_ids.add(user.id)
+            continue
+
+        if value.startswith("team:"):
+            team_name = value.split(":", 1)[1].strip()
+            team = Team.query.filter_by(name=team_name).first()
+            if not team:
+                continue
+            for user in User.query.filter_by(team_id=team.id).all():
+                if user.id not in seen_user_ids:
+                    resolved_users.append(user)
+                    seen_user_ids.add(user.id)
+
+    return resolved_users
+
+
 def _create_maintenance_orders(orders_data, assets, skills, logger):
     """Create maintenance orders."""
+    base_now = get_seeding_base_date()
+
     for mo_info in orders_data:
         asset = assets.get(mo_info["asset"])
         if asset:
             due_date = None
-            if mo_info.get("due_days_from_now") is not None:
-                due_date = datetime.now(timezone.utc) + timedelta(
-                    days=mo_info["due_days_from_now"]
+            created_at = base_now
+
+            if mo_info.get("due_date"):
+                due_date = datetime.fromisoformat(mo_info["due_date"])
+                if due_date.tzinfo is None:
+                    due_date = due_date.replace(tzinfo=timezone.utc)
+            elif mo_info.get("due_days_from_now") is not None:
+                due_date = base_now + timedelta(days=mo_info["due_days_from_now"])
+            elif mo_info.get("due_days_from_weekend") is not None:
+                days_until_saturday = (5 - base_now.weekday()) % 7
+                next_saturday = base_now + timedelta(days=days_until_saturday)
+                due_date = next_saturday + timedelta(
+                    days=mo_info["due_days_from_weekend"]
                 )
+
+            if mo_info.get("created_at"):
+                created_at = datetime.fromisoformat(mo_info["created_at"])
+                if created_at.tzinfo is None:
+                    created_at = created_at.replace(tzinfo=timezone.utc)
+            elif mo_info.get("created_hours_ago") is not None:
+                created_at = base_now - timedelta(hours=mo_info["created_hours_ago"])
 
             mo, _ = _get_or_create(
                 MaintenanceOrder, description=mo_info["description"], asset=asset
             )
+            mo.title = mo_info.get("title")  # New field
+            mo.category = mo_info.get("category")  # New field
             mo.order_type = mo_info.get("order_type", "PM")
             mo.status = mo_info.get("status", "Open")
             mo.due_date = due_date
+            mo.created_at = created_at
             mo.priority = mo_info.get("priority", "Medium")
             mo.schedule_name = mo_info.get("schedule_name")
             mo.frequency = mo_info.get("frequency")
             mo.estimated_completion_time = mo_info.get("estimated_completion_time", 60)
+            mo.labour_count = mo_info.get("labour_count", 1)
+            mo.justification = mo_info.get("justification")
+
+            # Breakdown-specific fields (for Reactive MOs)
+            mo.downtime_duration = mo_info.get("downtime_duration")
+            mo.root_cause = mo_info.get("root_cause")
+            mo.recovery = mo_info.get("recovery")
+
+            assignee_tokens = mo_info.get("assignees", [])
+            mo.assignees_json = json.dumps(assignee_tokens) if assignee_tokens else None
+            mo.assignees = _resolve_mo_assignees(assignee_tokens)
 
             for skill_name in mo_info.get("required_skills", []):
                 if (

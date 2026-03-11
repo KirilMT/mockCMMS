@@ -28,6 +28,7 @@ For development (testing, linting), also run:
 ```
 
 **Configure Modular Apps:** Edit `.env` to enable/disable apps:
+
 ```dotenv
 PLANNING_ENABLED=False  # Enable/disable Planning module
 REPORTS_ENABLED=False   # Enable/disable Reports module
@@ -39,14 +40,14 @@ REPORTS_ENABLED=False   # Enable/disable Reports module
 
 ## 2. Tech Stack
 
-| Category         | Technologies                                       |
-| :--------------- | :------------------------------------------------- |
-| **Backend**      | Python 3.12, Flask, SQLAlchemy, Jinja2             |
-| **Frontend**     | Vanilla JavaScript (ES6+), CSS3                    |
-| **Database**     | SQLite (dev), PostgreSQL (prod-ready)              |
+| Category         | Technologies                                                                  |
+| :--------------- | :---------------------------------------------------------------------------- |
+| **Backend**      | Python 3.12, Flask, SQLAlchemy, Jinja2                                        |
+| **Frontend**     | Vanilla JavaScript (ES6+), CSS3                                               |
+| **Database**     | SQLite (dev), PostgreSQL (prod-ready)                                         |
 | **Testing**      | Pytest (backend), Jest (frontend unit), Playwright (E2E), 80%+ coverage floor |
-| **Linting**      | Ruff, Pylint, Flake8, Black, Mypy (backend), ESLint (frontend) |
-| **Architecture** | Modular Monorepo (`src/` core, `apps/` extensions) |
+| **Linting**      | Ruff, Pylint, Flake8, Black, Mypy (backend), ESLint (frontend)                |
+| **Architecture** | Modular Monorepo (`src/` core, `apps/` extensions)                            |
 
 ---
 
@@ -149,6 +150,7 @@ Add new tests to the appropriate category. See [tests/README.md](./tests/README.
 | [tests/README.md](./tests/README.md)                                     | Test suite organization.                                       |
 
 **Key Scripts:**
+
 - `scripts/format_code.py` - Auto-fix formatting (isort, black, docformatter, prettier)
 - `scripts/validate_code.py` - Comprehensive validation (linting, tests, coverage)
 - `scripts/release_manager.py` - Automated version bumping and changelog updates

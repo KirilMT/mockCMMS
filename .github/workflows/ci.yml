@@ -30,17 +30,17 @@ jobs:
       - name: Check import sorting with isort
         run: |
           # Check PEP 8 import organization
-          isort src tests scripts run.py --check-only
+          isort src apps tests scripts run.py --check-only
 
       - name: Check code formatting with black
         run: |
           # Check Black code formatting
-          black --check src tests scripts run.py
+          black --check src apps tests scripts run.py
 
       - name: Check docstring formatting with docformatter
         run: |
           # Check PEP 257 docstring standards
-          docformatter --check -r src tests scripts run.py
+          docformatter --check -r src apps tests scripts run.py
 
       - name: Check documentation formatting with prettier
         run: |
@@ -58,13 +58,13 @@ jobs:
       - name: Lint with ruff
         run: |
           # Fast, modern linting (catches more than flake8)
-          ruff check src tests scripts run.py
+          ruff check src apps tests scripts run.py
 
       - name: Lint with flake8
         run: >-
           flake8 .
           --count
-          --exclude=apps,.venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report
+          --exclude=.venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report
           --show-source
           --statistics
 
@@ -76,12 +76,16 @@ jobs:
       - name: Security scan with bandit
         run: |
           # Detect security vulnerabilities
-          bandit -r src/ -ll
+          bandit -r src/ apps/ -ll
 
       - name: Test with pytest and generate coverage
         run: |
-          # Run ALL tests (not just backend) with stricter coverage requirement
-          pytest tests/ --cov=src --cov-report=xml --cov-fail-under=82
+          # Run ALL tests to ensure 100% discovery (539+ tests)
+          pytest \
+            --cov=src \
+            --cov=apps \
+            --cov-report=xml \
+            --cov-fail-under=85
 
       - name: Check diff coverage (new code)
         run: |

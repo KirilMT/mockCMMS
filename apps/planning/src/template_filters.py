@@ -1,6 +1,3 @@
-from flask import current_app
-
-
 def register_template_filters(app):
     @app.template_filter("system_name")
     def system_name(dummy):
@@ -15,8 +12,9 @@ def register_template_filters(app):
     @app.template_filter("maintenance_url")
     def maintenance_url(task_name):
         try:
-            from src.services.config import Config
             from urllib.parse import quote
+
+            from src.services.config import Config
 
             config = Config()
             base_url = config._config["internal_system"]["base_url"]

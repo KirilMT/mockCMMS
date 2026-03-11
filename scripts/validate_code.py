@@ -12,12 +12,28 @@ Usage:
 """
 
 import argparse
+import io
 import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
+
+# Fix Windows console encoding for emoji output from tools like black
+if sys.stdout.encoding != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if sys.stderr.encoding != "utf-8":
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
+# Load .env variables so validata_code.py knows about local configuration
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv might not be installed in base env,
+    # but validation usually happens in venv
 
 
 class Colors:
@@ -64,7 +80,12 @@ def print_warning(message: str) -> None:
 
 
 def run_command(
-    command: List[str], description: str, check: bool = True
+    command: List[str],
+    description: str,
+    check: bool = True,
+    force_all_apps: bool = False,
+    env: Optional[Dict[str, str]] = None,
+    ignore_failure: bool = False,
 ) -> Tuple[bool, str]:
     """Run a shell command and return success status and output.
 
@@ -72,6 +93,9 @@ def run_command(
         command: Command and arguments as a list
         description: Human-readable description of what's being checked
         check: Whether to check return code (default: True)
+        force_all_apps: Whether to force enable all modular apps (default: False)
+        env: Optional dictionary of environment variables to merge
+        ignore_failure: If True, do not print error on failure (default: False)
 
     Returns:
         Tuple of (success: bool, output: str)
@@ -82,9 +106,40 @@ def run_command(
         # On Windows, use shell=True for npm/npx to find them in PATH
         use_shell = sys.platform == "win32" and command[0] in ("npm", "npx")
 
-        # Set PYTHONIOENCODING to force UTF-8 for subprocess to avoid cp1252 errors
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
+        # IRONCLAD MODE: Fresh, minimal env to mirror CI clean state.
+        # Blocks local shell variables from masking configuration gaps.
+        ironclad_env = {
+            "PATH": os.environ.get("PATH", ""),
+            "PYTHONPATH": os.environ.get("PYTHONPATH", "."),
+            "SYSTEMROOT": os.environ.get(
+                "SYSTEMROOT", ""
+            ),  # Essential for Windows subprocess
+            "PYTHONIOENCODING": "utf-8",
+            "TESTING": "1",
+            "DATABASE_FILENAME": ":memory:",
+            "CI": "true",  # Simulate CI environment for absolute parity
+        }
+
+        # Whitelist other system-essential variables
+        for key in ["APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "USERPROFILE", "COMSPEC"]:
+            if key in os.environ:
+                ironclad_env[key] = os.environ[key]
+
+        # Handle Modular App Configuration
+        if force_all_apps:
+            # CI/Full Validation Mode: Force enable all apps
+            ironclad_env["PLANNING_ENABLED"] = "true"
+            ironclad_env["REPORTS_ENABLED"] = "true"
+        else:
+            # Local/Quick Mode: Respect local .env configuration
+            if "PLANNING_ENABLED" in os.environ:
+                ironclad_env["PLANNING_ENABLED"] = os.environ["PLANNING_ENABLED"]
+            if "REPORTS_ENABLED" in os.environ:
+                ironclad_env["REPORTS_ENABLED"] = os.environ["REPORTS_ENABLED"]
+
+        # Pass E2E_TEST if set (important for quick mode skipping E2E)
+        if "E2E_TEST" in os.environ:
+            ironclad_env["E2E_TEST"] = os.environ["E2E_TEST"]
 
         result = subprocess.run(
             command,
@@ -94,7 +149,7 @@ def run_command(
             errors="replace",  # Replace undecodable bytes instead of crashing
             shell=use_shell,  # Use shell on Windows for npm/npx
             check=check,
-            env=env,  # Use modified environment
+            env=ironclad_env,  # Use isolated minimal environment
         )
 
         if result.returncode == 0:
@@ -112,7 +167,8 @@ def run_command(
     except subprocess.CalledProcessError as e:
         print_error(f"{description} failed with return code {e.returncode}")
         print(f"\n{Colors.WARNING}Output:{Colors.ENDC}")
-        print(e.stdout)
+        if e.stdout:
+            print(e.stdout)
         if e.stderr:
             print(f"\n{Colors.FAIL}Errors:{Colors.ENDC}")
             print(e.stderr)
@@ -123,7 +179,7 @@ def run_command(
         return False, f"Command not found: {command[0]}"
 
 
-def validate_python_backend(quick: bool = False) -> bool:
+def validate_python_backend(quick: bool = False, force_all_apps: bool = True) -> bool:
     """Run all Python backend validation checks."""
     print_header("BACKEND VALIDATION")
 
@@ -132,31 +188,36 @@ def validate_python_backend(quick: bool = False) -> bool:
     # 1. Import sorting (PEP 8)
     print_section("Step 1/10: Import Sorting (isort)")
     success, _ = run_command(
-        ["isort", "src", "tests", "scripts", "run.py", "--check-only"],
+        ["isort", "src", "apps", "tests", "scripts", "run.py", "--check-only"],
         "Import sorting check",
+        force_all_apps=True,
     )
     checks.append(("Import Sorting", success))
 
     # 2. Code formatting (Black)
     print_section("Step 2/10: Code Formatting (black)")
     success, _ = run_command(
-        ["black", "--check", "src", "tests", "scripts", "run.py"],
+        ["black", "--check", "src", "apps", "tests", "scripts", "run.py"],
         "Code formatting check",
+        force_all_apps=True,
     )
     checks.append(("Code Formatting", success))
 
     # 3. Docstring formatting (PEP 257)
     print_section("Step 3/10: Docstring Formatting (docformatter)")
     success, _ = run_command(
-        ["docformatter", "--check", "-r", "src", "tests", "scripts", "run.py"],
+        ["docformatter", "--check", "-r", "src", "apps", "tests", "scripts", "run.py"],
         "Docstring formatting check",
+        force_all_apps=True,
     )
     checks.append(("Docstring Formatting", success))
 
-    # 4. Linting (Ruff - replaces Flake8/Pylint)
+    # 4. Linting (Ruff - fast, comprehensive)
     print_section("Step 4/10: Linting (ruff)")
     success, _ = run_command(
-        ["ruff", "check", "src", "tests", "scripts", "run.py"], "Ruff linting"
+        ["ruff", "check", "src", "apps", "tests", "scripts", "run.py"],
+        "Ruff linting",
+        force_all_apps=True,
     )
     checks.append(("Ruff Linting", success))
 
@@ -190,33 +251,47 @@ def validate_python_backend(quick: bool = False) -> bool:
     if quick:
         print_warning("Quick mode: Skipping full test suite")
         success, _ = run_command(
-            ["pytest", "tests/", "-x", "--tb=short"], "Quick test run"
+            ["pytest", "-c", "pyproject.toml", "-x", "--tb=short"],
+            "Quick test run",
+            force_all_apps=force_all_apps,
         )
         checks.append(("Tests", success))
     else:
         success, _ = run_command(
             [
                 "pytest",
-                "tests/",
+                "-c",
+                "pyproject.toml",
                 "--cov=src",
+                "--cov=apps",
                 "--cov-report=term-missing",
                 "--cov-report=html",
-                "--cov-report=xml",  # Ensure coverage.xml is generated for diff-cover
+                "--cov-report=xml",  # Required for diff-cover
             ],
-            "Full test suite with coverage",
+            "Full test suite with discovery (500+ tests)",
+            force_all_apps=force_all_apps,
         )
-        checks.append(("Tests with Coverage", success))
+        checks.append(("Full Discovery Suite", success))
 
     # 9. Coverage validation (Total >= 82%)
     if not quick:
         print_section("Step 9/10: Total Coverage Validation")
         success, _ = run_command(
-            ["pytest", "tests/", "--cov=src", "--cov-fail-under=82", "-q"],
-            "Coverage threshold check (>= 82%)",
+            [
+                "pytest",
+                "-c",
+                "pyproject.toml",
+                "--cov=src",
+                "--cov=apps",
+                "--cov-fail-under=85",
+                "-q",
+            ],
+            "Coverage threshold check (>= 85%)",
+            force_all_apps=force_all_apps,
         )
         checks.append(("Total Coverage Threshold", success))
 
-        # 10. Diff Coverage validation (New Code >= 90%)
+        # 10. Diff Coverage validation (New Code >= 92%)
         print_section("Step 10/10: Diff (Patch) Coverage")
         # Ensure we have coverage.xml
         if not os.path.exists("coverage.xml"):
@@ -233,9 +308,9 @@ def validate_python_backend(quick: bool = False) -> bool:
                         "diff-cover",
                         "coverage.xml",
                         "--compare-branch=origin/main",
-                        "--fail-under=90",
+                        "--fail-under=92",
                     ],
-                    "Diff Coverage Check (New Code needs 90% coverage)",
+                    "Diff Coverage Check (New Code needs 92% coverage)",
                 )
                 checks.append(("Diff Coverage", success))
             else:
@@ -309,9 +384,11 @@ def validate_others() -> bool:
     return all_passed
 
 
-def validate_frontend(quick: bool = False) -> bool:
-    """Run all frontend validation checks (JS, CSS, Templates)."""
-    print_header("FRONTEND VALIDATION")
+def validate_javascript_frontend(
+    quick: bool = False, force_all_apps: bool = True
+) -> bool:
+    """Run all JavaScript frontend validation checks."""
+    print_header("JAVASCRIPT FRONTEND VALIDATION")
 
     # Check if npm is available
     npm_available = shutil.which("npm") is not None
@@ -332,10 +409,12 @@ def validate_frontend(quick: bool = False) -> bool:
             "npx",
             "eslint",
             "src/static/js",
+            "apps",
             "tests/frontend",
             "--report-unused-disable-directives",
         ],
         "ESLint check",
+        force_all_apps=force_all_apps,
     )
     checks.append(("ESLint", success))
 
@@ -351,15 +430,23 @@ def validate_frontend(quick: bool = False) -> bool:
             "--coverageReporters=lcov",
         ],
         "Jest tests with coverage",
+        force_all_apps=force_all_apps,
     )
     checks.append(("Jest Tests", success))
 
     # 3. E2E tests (Playwright) - MATCHES CI
     if not quick:
         print_section("Step 3/3: E2E Tests (playwright)")
+        # Force E2E_TEST=true to ensure production DBs are not touched
+        # This overrides any local .env settings
+        ironclad_env_e2e = os.environ.copy()
+        ironclad_env_e2e["E2E_TEST"] = "true"
+
         success, _ = run_command(
             ["npx", "playwright", "test", "--project=chromium"],
             "Playwright E2E tests (chromium)",
+            force_all_apps=force_all_apps,
+            env=ironclad_env_e2e,
         )
         checks.append(("E2E Tests", success))
     else:
@@ -480,6 +567,8 @@ Examples:
     run_frontend = args.frontend or run_all
     run_docs = args.docs or run_all
     run_config = args.configuration or run_all
+    # Force enable all apps for full validation (unless quick mode is used locally)
+    force_all_apps = not args.quick
 
     print_header("MOCKCMMS CODE VALIDATION")
     print(f"{Colors.OKCYAN}This script simulates the CI pipeline locally.{Colors.ENDC}")
@@ -489,11 +578,15 @@ Examples:
 
     # Run validations
     if run_backend:
-        backend_passed = validate_python_backend(quick=args.quick)
+        backend_passed = validate_python_backend(
+            quick=args.quick, force_all_apps=force_all_apps
+        )
         results.append(("Backend", backend_passed))
 
     if run_frontend:
-        frontend_passed = validate_frontend(quick=args.quick)
+        frontend_passed = validate_javascript_frontend(
+            quick=args.quick, force_all_apps=force_all_apps
+        )
         results.append(("Frontend", frontend_passed))
 
     if run_config:

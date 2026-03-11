@@ -270,7 +270,21 @@ AdvancedTable.prototype.saveColumnWidths = function () {
   });
 
   const storageKey = `table-column-widths-${this.pageName}`;
-  localStorage.setItem(storageKey, JSON.stringify(widths));
+  const storage = window.StorageManager || {
+    set: (k, v) => {
+      try {
+        if (typeof localStorage !== "undefined" && localStorage) {
+          localStorage.setItem(k, v);
+          return true;
+        }
+      } catch (err) {
+        console.warn("Storage.set failed:", err);
+      }
+      return false;
+    },
+  };
+
+  storage.set(storageKey, JSON.stringify(widths));
 };
 
 /**
@@ -278,7 +292,20 @@ AdvancedTable.prototype.saveColumnWidths = function () {
  */
 AdvancedTable.prototype.restoreColumnWidths = function () {
   const storageKey = `table-column-widths-${this.pageName}`;
-  const savedWidths = localStorage.getItem(storageKey);
+  const storage = window.StorageManager || {
+    get: (k) => {
+      try {
+        if (typeof localStorage !== "undefined" && localStorage) {
+          return localStorage.getItem(k);
+        }
+      } catch (err) {
+        console.warn("Storage.get failed:", err);
+      }
+      return null;
+    },
+  };
+
+  const savedWidths = storage.get(storageKey);
 
   if (!savedWidths) return;
 

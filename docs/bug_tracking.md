@@ -167,6 +167,49 @@ When navigating to the Assets page, a warning toast appears with the message: "C
 
 ---
 
+### Bug #37: Edit/Delete Buttons Should Only Appear for Manually Added Report Items
+
+**Priority:** High
+**Status:** Open
+**Identified:** March 11, 2026
+
+**Description:**
+In the Reports app, edit and delete buttons currently appear for all report items (breakdowns, handovers, activities, tasks), regardless of whether they were automatically imported from Maintenance Orders or manually added by users. Since items linked to MOs are dependent on those MOs, they should not be editable or deletable within the report interface.
+
+**Current Behavior:**
+
+- All report items display edit and delete buttons
+- Users can attempt to edit/delete items that are linked to MOs
+- This creates confusion about data ownership and integrity
+- Deleting MO-linked items could cause data inconsistencies
+
+**Expected Behavior:**
+
+- Edit and delete buttons should **only appear** for items that were manually added using the "+" button
+- Items automatically imported from MOs should be read-only (no edit/delete buttons)
+- This distinction should apply to all report types:
+  - Shift Reports: breakdowns, handovers, activities, tasks
+  - Weekend Reports: breakdowns, handovers, activities, tasks
+- Users should understand which items are system-generated vs. user-added
+
+**Possible Solution:**
+
+1. Add a flag to report items indicating their source (e.g., `source: 'manual'` or `source: 'mo_linked'`)
+2. Update report rendering logic to conditionally show edit/delete buttons based on source
+3. Apply this logic consistently across all report types and item types
+4. Consider adding a visual indicator (e.g., icon or badge) to distinguish MO-linked items
+
+**Affected Files:**
+
+- `apps/reports/src/templates/shift_report_detail.html` (conditional button display)
+- `apps/reports/src/templates/weekend_report_detail.html` (conditional button display)
+- `apps/reports/src/services/report_generator.py` (add source metadata to items)
+- `apps/reports/src/services/data_aggregator.py` (track item source during aggregation)
+- `apps/reports/src/static/js/report-interactions.js` (update edit/delete handlers)
+- `apps/reports/src/routes/reports.py` (validate source before allowing edits/deletes)
+
+---
+
 ### Bug #13: Table Views - Save/Load Functionality Not Working
 
 **Priority:** High
@@ -578,24 +621,24 @@ Long descriptions or text content in table cells don't wrap or truncate properly
 ## 📊 BUG SUMMARY BY PRIORITY
 
 > [!NOTE]
-> Last updated: December 18, 2025
+> Last updated: March 11, 2026
 
 ### Summary Counts
 
 | Category  | Open  | Partial | In Progress | Fixed  | Total  |
 | --------- | ----- | ------- | ----------- | ------ | ------ |
 | Critical  | 0     | 0       | 0           | 2      | 2      |
-| High      | 2     | 0       | 0           | 9      | 11     |
+| High      | 3     | 0       | 0           | 9      | 12     |
 | Medium    | 1     | 2       | 0           | 11     | 13     |
 | Low       | 1     | 0       | 0           | 3      | 4      |
-| **Total** | **4** | **2**   | **0**       | **25** | **30** |
+| **Total** | **5** | **2**   | **0**       | **25** | **31** |
 
 > [!WARNING] > **Critical Bug:** #35 (Delete Functionality Regression) requires immediate attention.
 
 ### Open Bugs
 
 - **Critical:** #35 Delete Functionality Regression
-- **High:** #13 Table Views Save/Load, #36 Config Warning
+- **High:** #13 Table Views Save/Load, #36 Config Warning, #37 Edit/Delete Buttons for Manual Items
 - **Low:** #34 Long Text Overflow
 
 ### Partially Resolved

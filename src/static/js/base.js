@@ -1,4 +1,63 @@
 /* global $ */
+// Robust Storage Manager to handle SecurityError and restricted environments
+window.StorageManager = {
+  getStorage: function () {
+    try {
+      return window.localStorage;
+    } catch (e) {
+      return null;
+    }
+  },
+  set: function (key, value) {
+    try {
+      const storage = this.getStorage();
+      if (storage) {
+        storage.setItem(key, value);
+        return true;
+      }
+    } catch (e) {
+      console.warn(`StorageManager.set failed for ${key}:`, e);
+    }
+    return false;
+  },
+  get: function (key, defaultValue = null) {
+    try {
+      const storage = this.getStorage();
+      if (storage) {
+        return storage.getItem(key) || defaultValue;
+      }
+    } catch (e) {
+      console.warn(`StorageManager.get failed for ${key}:`, e);
+    }
+    return defaultValue;
+  },
+  remove: function (key) {
+    try {
+      const storage = this.getStorage();
+      if (storage) {
+        storage.removeItem(key);
+        return true;
+      }
+    } catch (e) {
+      console.warn(`StorageManager.remove failed for ${key}:`, e);
+    }
+    return false;
+  },
+  // Check if storage is actually available and working
+  isAvailable: function () {
+    try {
+      const storage = this.getStorage();
+      if (!storage) return false;
+      const testKey = "__storage_test__";
+      storage.setItem(testKey, testKey);
+      storage.removeItem(testKey);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+};
+
 // Global delete confirmation handler
 let deleteFormToSubmit = null;
 let deleteCallback = null;

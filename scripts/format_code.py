@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Code Formatting Script.
 
-Actively formats code using configured formatters (Black, isort, docformatter).
+Actively formats code using configured formatters:
+- Python: ruff (lint fixing), isort (imports), black (code), docformatter (docstrings)
+- JavaScript: prettier
+
 This script APPLIES changes, unlike validate_code.py which only checks.
 
 Usage:
@@ -94,29 +97,52 @@ class CodeFormatter:
             return False
 
     def format_python(self) -> bool:
-        """Format Python code using isort, black, and docformatter."""
+        """Format Python code using ruff, isort, black, and docformatter.
+
+        Order is important:
+        1. ruff --fix: Auto-fix linting issues (unused imports, etc.)
+        2. isort: Sort remaining imports
+        3. black: Format code structure
+        4. docformatter: Format docstrings
+        """
         print("\n" + "=" * 80)
         print("PYTHON CODE FORMATTING")
         print("=" * 80)
 
         all_passed = True
 
-        # 1. Sort imports (isort)
-        isort_args = ["isort", "src", "tests", "scripts", "run.py"]
+        # 0. Fix linting issues with ruff (before other formatters)
+        # This removes unused imports, fixes simple linting issues, etc.
+        ruff_args = ["ruff", "check", "src", "tests", "scripts", "run.py", "apps"]
+        if not self.check_only:
+            ruff_args.append("--fix")
+
+        all_passed &= self.run_command(ruff_args, "Lint fixing (ruff)")
+
+        # 1. Sort imports (isort) - after ruff removes unused imports
+        isort_args = ["isort", "src", "tests", "scripts", "run.py", "apps"]
         if self.check_only:
             isort_args.append("--check-only")
 
         all_passed &= self.run_command(isort_args, "Import sorting (isort)")
 
         # 2. Format code (Black)
-        black_args = ["black", "src", "tests", "scripts", "run.py"]
+        black_args = ["black", "src", "tests", "scripts", "run.py", "apps"]
         if self.check_only:
             black_args.insert(1, "--check")
 
         all_passed &= self.run_command(black_args, "Code formatting (black)")
 
         # 3. Format docstrings (docformatter)
-        docformatter_args = ["docformatter", "-r", "src", "tests", "scripts", "run.py"]
+        docformatter_args = [
+            "docformatter",
+            "-r",
+            "src",
+            "tests",
+            "scripts",
+            "run.py",
+            "apps",
+        ]
         if self.check_only:
             docformatter_args.insert(1, "--check")
         else:
@@ -125,6 +151,23 @@ class CodeFormatter:
         all_passed &= self.run_command(
             docformatter_args, "Docstring formatting (docformatter)"
         )
+
+        # 4. Linting Fix (Ruff)
+        ruff_args = [
+            "ruff",
+            "check",
+            "--fix",
+            "src",
+            "tests",
+            "scripts",
+            "run.py",
+            "apps",
+        ]
+        if self.check_only:
+            # When checking only, we don't want to fix, just check
+            ruff_args = ["ruff", "check", "src", "tests", "scripts", "run.py", "apps"]
+
+        all_passed &= self.run_command(ruff_args, "Linting fixes (ruff)")
 
         return all_passed
 
@@ -152,28 +195,26 @@ class CodeFormatter:
             print("ℹ️  Prettier not installed - skipping frontend formatting")
             return True
 
-        # Define targets for formatting
-        targets = [
-            # Frontend Source
-            "src/static/**/*.js",
-            "src/static/**/*.css",
-            # Apps Frontend (EXCLUDED due to risk/lack of tests for now)
-            # "apps/**/static/**/*.js",
-            # "apps/**/static/**/*.css",
+        # Format with Prettier
+        # Broaden coverage to include apps and tests
+        prettier_paths = [
+            "src/static/js/**/*.js",
+            "apps/**/*.js",
+            "tests/**/*.js",
+            "src/static/css/**/*.css",
+            "apps/**/*.css",
         ]
 
-        # Format with Prettier
         prettier_args = ["npx", "prettier"]
         if self.check_only:
             prettier_args.append("--check")
         else:
             prettier_args.append("--write")
 
-        # Add targets
-        prettier_args.extend(targets)
+        prettier_args.extend(prettier_paths)
 
         all_passed &= self.run_command(
-            prettier_args, "Prettier formatting (JS/CSS/HTML)"
+            prettier_args, "JavaScript/CSS formatting (prettier)"
         )
 
         return all_passed

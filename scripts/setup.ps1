@@ -1,14 +1,22 @@
 # setup.ps1 - Enhanced mockCMMS Installation Script
 # Provides detailed feedback and error handling for Windows environments
 
+# Accept parameter to suppress header/footer when called from dev script
+param(
+    [switch]$CalledFromDev = $false
+)
+
 # Ensure we are in the project root
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $projectRoot = Split-Path -Parent $scriptPath
 Set-Location $projectRoot
 
-Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "   mockCMMS Installation Script" -ForegroundColor Cyan
-Write-Host "========================================`n" -ForegroundColor Cyan
+# Only show header if not called from dev script
+if (-not $CalledFromDev) {
+    Write-Host "`n========================================" -ForegroundColor Cyan
+    Write-Host "   mockCMMS Installation Script" -ForegroundColor Cyan
+    Write-Host "========================================`n" -ForegroundColor Cyan
+}
 
 # Error counter for final summary
 $script:ErrorCount = 0
@@ -16,7 +24,7 @@ $script:ErrorCount = 0
 # Function to refresh environment variables without restart
 function Refresh-EnvPath {
     Write-Host "   Refreshing environment variables..." -ForegroundColor Gray
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
 }
 
 # Step 1: Check Prerequisites
@@ -24,6 +32,7 @@ Write-Host "[Step 1/5] Checking prerequisites..." -ForegroundColor Yellow
 
 # Step 1.1: Check for Python
 function Check-Python {
+    # First check if python command is available
     if (Get-Command python -ErrorAction SilentlyContinue) {
         $v = python --version 2>&1
         if ($v -match "Python (\d+)\.(\d+)") {
@@ -34,47 +43,116 @@ function Check-Python {
                 Write-Host "$v" -NoNewline -ForegroundColor White
                 Write-Host " OK" -ForegroundColor Green
                 return $true
-            } else {
+            }
+            else {
                 Write-Warning "   Found: $v (Python 3.12+ recommended)"
                 return $true # Warning but proceed
             }
         }
     }
+
+    # Check common Python installation locations
+    $pythonLocations = @(
+        "${env:LOCALAPPDATA}\Programs\Python\Python312\python.exe",
+        "${env:LOCALAPPDATA}\Programs\Python\Python311\python.exe",
+        "${env:LOCALAPPDATA}\Programs\Python\Python310\python.exe",
+        "C:\Python312\python.exe",
+        "C:\Python311\python.exe",
+        "C:\Python310\python.exe"
+    )
+
+    foreach ($location in $pythonLocations) {
+        if (Test-Path $location) {
+            Write-Host "   Found Python at: $location" -ForegroundColor Yellow
+            $pythonDir = Split-Path -Parent $location
+
+            # Add to current session PATH
+            $env:Path = "$pythonDir;$pythonDir\Scripts;$env:Path"
+
+            # Add to system PATH permanently
+            try {
+                $currentPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+                if ($currentPath -notlike "*$pythonDir*") {
+                    $newPath = "$pythonDir;$pythonDir\Scripts;$currentPath"
+                    [System.Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+                    Write-Host "   Added to system PATH " -NoNewline -ForegroundColor White
+                    Write-Host "OK" -ForegroundColor Green
+                }
+                else {
+                    Write-Host "   Already in system PATH " -NoNewline -ForegroundColor White
+                    Write-Host "OK" -ForegroundColor Green
+                }
+            }
+            catch {
+                Write-Warning "   Could not add to system PATH (may require admin rights). Added to current session only."
+            }
+
+            # Re-check if command works now
+            if (Get-Command python -ErrorAction SilentlyContinue) {
+                $v = python --version 2>&1
+                Write-Host "   Version: " -NoNewline -ForegroundColor White
+                Write-Host "$v" -ForegroundColor Green
+                return $true
+            }
+        }
+    }
+
     return $false
 }
 
 if (-not (Check-Python)) {
-    Write-Warning "   Python not found. Attempting to install latest version via winget..."
+    Write-Warning "   Python not found. Attempting automatic installation via winget..."
 
     if (Get-Command winget -ErrorAction SilentlyContinue) {
         try {
-            # Attempt silent install of latest Python 3
-            Write-Host "   Installing Python..." -ForegroundColor Magenta
-            winget install -e --id Python.Python.3 --silent --accept-package-agreements --accept-source-agreements
+            # Try multiple possible Python package IDs
+            $pythonIds = @("Python.Python.3.12", "Python.Python.3.11", "Python.Python.3")
+            $installed = $false
 
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "   Python installed successfully." -ForegroundColor Green
+            foreach ($id in $pythonIds) {
+                Write-Host "   Trying package ID: $id..." -ForegroundColor Gray
+
+                # Start installation process
+                $startTime = Get-Date
+                $process = Start-Process -FilePath "winget" -ArgumentList "install -e --id $id --silent --accept-package-agreements --accept-source-agreements" -NoNewWindow -PassThru -Wait
+                $duration = (Get-Date) - $startTime
+
+                if ($process.ExitCode -eq 0) {
+                    Write-Host "   Python installed successfully (took $([int]$duration.TotalSeconds) seconds)" -ForegroundColor Green
+                    $installed = $true
+                    break
+                }
+            }
+
+            if ($installed) {
                 Refresh-EnvPath
 
                 # Re-check
                 if (-not (Check-Python)) {
-                    Write-Error "   Python installed but not found in PATH. Please restart terminal."
+                    Write-Warning "   Python installed but not found in PATH."
+                    Write-Host "   Please restart your terminal and run this script again." -ForegroundColor Yellow
                     exit 1
                 }
             }
             else {
-                Write-Error "   Failed to install Python via winget."
+                Write-Warning "   Automatic installation via winget failed."
+                Write-Host ""
+                Write-Host "   Please install Python manually:" -ForegroundColor Yellow
+                Write-Host "   1. Download from: https://www.python.org/downloads/" -ForegroundColor White
+                Write-Host "   2. Run installer and check 'Add Python to PATH'" -ForegroundColor White
+                Write-Host "   3. Restart terminal and run this script again" -ForegroundColor White
                 exit 1
             }
         }
         catch {
-             Write-Error "   An error occurred during Python installation."
-             exit 1
+            Write-Warning "   Automatic installation failed: $_"
+            Write-Host "   Please install Python manually from https://www.python.org" -ForegroundColor Yellow
+            exit 1
         }
     }
     else {
-        Write-Error "   Python is not installed and winget (App Installer) is not available."
-        Write-Error "   Please install Python 3.12+ manually from https://python.org"
+        Write-Error "   Python not found and winget not available."
+        Write-Host "   Please install Python manually from https://www.python.org" -ForegroundColor Yellow
         exit 1
     }
 }
@@ -318,31 +396,33 @@ else {
     Write-Host "OK" -ForegroundColor Green
 }
 
-# Final Summary
-Write-Host "`n========================================" -ForegroundColor Cyan
-if ($script:ErrorCount -eq 0) {
-    Write-Host "   Installation Complete!" -ForegroundColor Green
-}
-else {
-    Write-Host "   Installation completed with $($script:ErrorCount) warning(s)" -ForegroundColor Yellow
-}
-Write-Host "========================================`n" -ForegroundColor Cyan
+# Final Summary - Only show if not called from dev script
+if (-not $CalledFromDev) {
+    Write-Host "`n========================================" -ForegroundColor Cyan
+    if ($script:ErrorCount -eq 0) {
+        Write-Host "   Installation Complete!" -ForegroundColor Green
+    }
+    else {
+        Write-Host "   Installation completed with $($script:ErrorCount) warning(s)" -ForegroundColor Yellow
+    }
+    Write-Host "========================================`n" -ForegroundColor Cyan
 
 
-# Display next steps
-Write-Host ""
-Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "                        NEXT STEPS                              " -ForegroundColor Yellow
-Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "  1. Activate the virtual environment:" -ForegroundColor White
-Write-Host "     .\.venv\Scripts\Activate.ps1" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "  2. Run the application:" -ForegroundColor White
-Write-Host "     python run.py" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "  3. (Optional) Setup development environment:" -ForegroundColor White
-Write-Host "     .\scripts\setup-dev.ps1" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host ""
+    # Display next steps
+    Write-Host ""
+    Write-Host "================================================================" -ForegroundColor Cyan
+    Write-Host "                        NEXT STEPS                              " -ForegroundColor Yellow
+    Write-Host "================================================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  1. Activate the virtual environment:" -ForegroundColor White
+    Write-Host "     .\.venv\Scripts\Activate.ps1" -ForegroundColor Magenta
+    Write-Host ""
+    Write-Host "  2. Run the application:" -ForegroundColor White
+    Write-Host "     python run.py" -ForegroundColor Magenta
+    Write-Host ""
+    Write-Host "  3. (Optional) Setup development environment:" -ForegroundColor White
+    Write-Host "     .\scripts\setup-dev.ps1" -ForegroundColor Magenta
+    Write-Host ""
+    Write-Host "================================================================" -ForegroundColor Cyan
+    Write-Host ""
+}

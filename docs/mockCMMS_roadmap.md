@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated January 10, 2026_
+_Updated March 10, 2026_
 
 ---
 
@@ -88,6 +88,22 @@ _Updated January 10, 2026_
 > [!IMPORTANT] > **📋 Active Plan:** [Core Code Quality Plan](deprecated/core_code_quality_plan.md) - All 9 Phases Complete ✅
 > **🧪 Frontend Tests:** 437 Jest + 82 Playwright tests ✅ (80%+ branch coverage)
 > **📊 Backend Tests:** 261 pytest tests ✅ (88%+ coverage)
+
+---
+
+## 📋 PLANNED WORK
+
+- **[ ] Bootstrap 5 Migration** _(Priority: Medium)_
+  - **Goal:** Upgrade from Bootstrap 4.5.2 to Bootstrap 5.3.x to modernize the UI framework and improve accessibility.
+  - **Detailed Plan:** [docs/bootstrap5_upgrade_analysis.md](bootstrap5_upgrade_analysis.md)
+  - **Key Benefits:**
+    - Improved accessibility features
+    - Better responsive utilities
+    - Enhanced form controls
+    - Modern CSS architecture
+    - Better performance
+  - **Estimated Effort:** 2-3 weeks
+  - **Status:** Pending - Planning phase
 
 ---
 
@@ -213,6 +229,24 @@ The core application can be improved with the following features to support the 
     - Commit after user confirmation.
   - **Testing:** Manual testing following the `table_features_test_plan.md` methodology.
   - **Dependencies:** None (completed).
+
+- **[ ] Docker-Based Visual Regression Testing** _(Priority: High)_
+  - **Goal:** Implement containerized visual testing to eliminate cross-platform rendering inconsistencies (Windows vs. Linux).
+  - **Detailed Plan:** [docs/visual_testing_strategy.md](visual_testing_strategy.md)
+  - **Scope:**
+    - Add `npm run test:visual:docker` script
+    - Use official Playwright Docker image
+    - Remove current 5% tolerance workaround
+
+- **[ ] Infrastructure & Quality Refinement** _(Priority: Medium)_
+  - **Goal:** Consolidate and expand the robustness of the CI/CD and testing infrastructure.
+  - **Features:**
+    - **Ruff Rule Expansion:** Enable `B` (Bugbear), `I` (Isort), and `UP` (Pyupgrade) rules to catch more logic bugs and consolidate `isort` and `flake8` checks.
+    - **Coverage Threshold Alignment:** Standardize coverage requirements consistently across `pyproject.toml`, `validate_code.py`, `package.json`, and documentation to 83-85% for both backend and frontend.
+    - **Security Tool Consolidation:** Integrate `bandit` configuration directly into `pyproject.toml` to reduce configuration file sprawl.
+    - **ESLint Plugin Expansion:** Add `eslint-plugin-security` or `eslint-plugin-sonarjs` to catch frontend logic bugs and security issues.
+    - **Stylelint Standard Rule Enforcement:** Re-enable standard CSS rules (e.g., class pattern enforcement) to improve frontend architecture consistency.
+  - **Reference:** Consultation Reports (January 24, 2026)
 
 - **[ ] Frontend Architecture Decision** _(Priority: High)_
   - **Goal:** Evaluate and decide on a frontend technology stack migration strategy.
@@ -365,7 +399,22 @@ The Advanced Table component was recently completed with core functionality. The
     - Implement: Exact Date, Before, After, Between, Is Empty, Is Not Empty.
     - Use HTML5 `<input type="date">` for date inputs.
     - Auto-detect date columns in the Advanced Table.
-  - **Phase 3 - Conflicting Filter Detection (High Complexity):**
+  - **Phase 3 - Numeric Column Filtering (High Value):**
+    - Auto-detect columns that contain numeric data (e.g., ID, Quantity, Duration, Count fields).
+    - Replace text-based operators ("contains", "equals") with numeric-specific comparators:
+      - **Equals** (`= N`)
+      - **Not Equals** (`≠ N`)
+      - **Greater Than** (`> N`)
+      - **Greater Than or Equal** (`≥ N`)
+      - **Less Than** (`< N`)
+      - **Less Than or Equal** (`≤ N`)
+      - **Between** (`N₁ ≤ x ≤ N₂`) — renders two number inputs
+    - Column type detection strategy: inspect the first non-empty values in the column at runtime
+      (e.g., if all non-null values parse as numbers, treat as numeric).
+    - Ensure filter inputs use `<input type="number">` for numeric columns.
+    - Validate on the frontend that the entered value is a valid number before applying.
+    - Backend filtering logic must handle all comparators safely (no raw string injection).
+  - **Phase 4 - Conflicting Filter Detection (High Complexity):**
     - Develop an algorithm to detect conflicting filter combinations (e.g., "Status = Open" AND "Status = Closed").
     - Implement a dynamic UI to prevent conflicts:
       - Option A: Disable conflicting filter options in real-time.
@@ -373,7 +422,7 @@ The Advanced Table component was recently completed with core functionality. The
       - Option C: Auto-suggest compatible filters based on the current selection.
     - Handle conflicts across AND/OR logic groups.
     - Provide clear user feedback when filters would return no results.
-  - **Phase 4 - Advanced Filtering (Optional Enhancement):**
+  - **Phase 5 - Advanced Filtering (Optional Enhancement):**
     - Calendar date pickers with visual widgets.
     - Relative date filters ("Today", "This Week", "Last 7 Days").
     - Multi-select filters for status/team fields.
@@ -624,6 +673,22 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Ensure proper GitHub team integration.
   - **Reference:** [GitHub Issue #5](https://github.com/KirilMT/mockCMMS/issues/5)
 
+### Reports Application Enhancements
+
+> **📋 Detailed Roadmap:** See [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for complete task breakdown and implementation details.
+
+- **[ ] Team-Scoped Shift Report Filtering** _(Priority: High)_
+  - Filter handovers, breakdowns, and break activities to MOs assigned to the report team
+  - Future: support department/team categories for non-maintenance report types
+
+- **[ ] Link Reports to Core CMMS Data** _(Priority: High)_
+  - Link Shift Report sections (Breakdowns, Engineering Support, Handover) to live MO database
+  - Detailed tasks in `apps/reports/docs/reports_roadmap.md`
+
+- **[ ] Asset Dropdown Population (Select2 AJAX)** _(Priority: Medium)_
+  - Replace free-text asset entries with DB-backed API selection
+  - Larger enhancement beyond current scope
+
 - **[x] Restructure GEMINI.md Documentation** _(Priority: Low)_
   - **Status:** ✅ Completed → Verified (December 1, 2025)
   - **Goal:** Improve the documentation structure for better clarity.
@@ -686,9 +751,68 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 
 > **See:** [Planning App Roadmap](../apps/planning/docs/planning_roadmap.md) for detailed feature plans and legacy code analysis tasks.
 
+**Currently Implementing:**
+
+- **[ ] Line Conditions for Planning** _(Priority: High)_
+  - **Goal:** Standardize the line conditions needed for task planning to ensure proper execution prerequisites.
+  - **Features:**
+    - Define and track line conditions (line full/empty, part in fixture, robot position).
+    - Add a dedicated column to the planning table showing the necessary line conditions for each task.
+    - Make conditions visible to users with operations roles.
+    - Integrate condition validation into the task assignment workflow.
+  - **Reference:** [GitHub Issue #6](https://github.com/KirilMT/mockCMMS/issues/6)
+
 ### `reports` App Enhancements
 
 > **See:** [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for future reporting features.
+
+    - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training).
+    - **Workload Tracking:** Track and visualize individual technician workload over time.
+
+- **[ ] Shift Calendar Redesign** _(Priority: Medium)_
+  - **Goal:** Improve the usability of the Shift Calendar page.
+  - **Features:**
+    - **Calendar Grid View:** Redesign the interface to resemble a standard calendar (month/week view) instead of a list.
+    - **No-Scroll Layout:** Optimize the layout to fit within the viewport without requiring vertical scrolling.
+    - **Interactive Elements:** Allow clicking on days/shifts for more details without leaving the calendar view.
+
+- **[ ] Advanced Planning Algorithms** _(Priority: Medium)_
+  - **Goal:** Evolve beyond simple task assignment to holistic planning.
+  - **Features:**
+    - Develop logic for complex scheduling scenarios like multi-day shutdowns or holidays, factoring in technician availability.
+    - Create a simulation feature that can optimize schedules before finalizing them.
+
+### `reports` App Enhancements
+
+This application is intended for reporting and analytics. The following features would provide significant value.
+
+- **[ ] HMI → Reactive MO Integration for Breakdowns** _(Priority: Medium)_
+  - **Goal:** When operations press the MNTC (Maintenance) button on the HMI, automatically open a
+    Reactive Maintenance Order in the system — eliminating the manual creation gap between the
+    physical breakdown event and the digital record.
+  - **Core MO Workflow Impact:** This feature requires changes to the MO creation flow in
+    the core mockCMMS app (auto-populate asset, shift, timestamp, status = "Open").
+  - **Features:**
+    - Define an HMI → CMMS integration API contract (webhook or polling endpoint).
+    - Auto-create a generic Reactive MO with pre-filled context from the HMI signal.
+    - Allow operators/technicians to edit the MO after the fact (fault, root cause, recovery time).
+    - Ensure auto-created MOs are correctly picked up by the Reports Breakdowns section.
+  - **Note:** The Reports-side tracking (ensuring these MOs appear in Shift Reports) is in
+    `apps/reports/docs/reports_roadmap.md`.
+
+- **[ ] Automated & Specialized Reporting**
+  - **Goal:** Generate key operational reports automatically.
+  - **Features:**
+    - **Weekend Task Report:** A report summarizing all tasks planned and completed over a weekend.
+    - **Shift Production Report:** A summary of maintenance activities during a specific shift.
+    - **Technician-Submitted Reports:** A system for technicians to log ad-hoc issues like breakdowns or PLC alarms, which can then be aggregated into reports.
+
+- **[ ] Advanced Statistical Analysis**
+  - **Goal:** Provide deeper insights into maintenance operations.
+  - **Features:**
+    - Develop statistical dashboards for asset performance (e.g., Mean Time Between Failures).
+    - Analyze technician performance and skill gaps.
+    - Generate reports on spare part consumption trends.
 
 ---
 
@@ -703,6 +827,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 
 - **Line Conditions for Planning:** [See Planning Roadmap](../apps/planning/docs/planning_roadmap.md)
 - **Frontend Architecture Decision:** Evaluate migration to a modern framework (Angular/React).
+- **Docker-Based Visual Regression Testing:** Standardize visual testing with containerized runner.
 - **CI/CD Pipeline:** ✅ COMPLETE.
 - **Team Collaboration Documentation:** GitHub workflows and setup automation.
 - ✅ **Standardize Naming Conventions:** COMPLETE.
@@ -713,11 +838,13 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 
 **Medium Priority:**
 
-- **Advanced User & Technician Management:** Comprehensive user management with roles, skills, training, and manpower API integration.
+- **Advanced User & Technician Management:** Comprehensive user management with roles, skills, training, and manpower API integration (availability, workload, dynamic status).
 - **Shift Calendar Redesign:** Improve calendar UI with grid view and interactive elements.
 - **Automated, Specialized Reports:** [See Reports Roadmap](../apps/reports/docs/reports_roadmap.md)
+- **HMI → Reactive MO Integration:** Auto-create breakdown MOs from HMI MNTC button signal.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
-- **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific filter operators.
+- **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific operators, **numeric comparators (between / greater-than / less-than)** for numeric columns.
+- **Infrastructure & Quality Refinement:** Ruff expansion, ESLint/Stylelint enforcement, and global coverage alignment (85%).
 - **UI Regression Automation:** End-to-end UI testing.
 - ✅ **Data Simulation Engine:** COMPLETE.
 - ✅ **Fix GitHub Issue Templates:** COMPLETE.

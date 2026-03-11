@@ -78,7 +78,7 @@ Before you commit, apply this loop to every file you touch:
 4.  **Audit:** Self-review logic and complexity.
 5.  **Commit:** Only when 1-4 pass.
 
-_Tip: `python scripts/validate_code.py` does 1-3 for you!_
+_Tip: `python scripts/validate_code.py --quick` does 1-3 for you while honoring your `.env` settings!_
 
 **Step 3.2: Do Your Work and Commit Changes**
 

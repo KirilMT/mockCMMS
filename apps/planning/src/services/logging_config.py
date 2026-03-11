@@ -1,13 +1,15 @@
 """Enhanced logging configuration for the Weekend Planning Project."""
 
+import json
 import logging
 import os
-import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import wraps
-from flask import request, g, current_app
-from ..config import Config, ROOT_DIR
+
+from flask import current_app, g, request
+
+from ..config import ROOT_DIR, Config
 
 
 class StructuredFormatter(logging.Formatter):
@@ -98,7 +100,7 @@ class MetricsCollector:
         return {
             "requests": self.request_metrics,
             "database": self.database_metrics,
-            "collection_time": datetime.utcnow().isoformat(),
+            "collection_time": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -117,7 +119,7 @@ def performance_monitor(operation_name):
             try:
                 result = func(*args, **kwargs)
                 return result
-            except Exception as e:
+            except Exception:
                 success = False
                 raise
             finally:
@@ -133,7 +135,8 @@ def performance_monitor(operation_name):
                 # Log slow operations
                 if duration > 1.0:  # Operations taking more than 1 second
                     current_app.logger.warning(
-                        f"Slow operation detected: {operation_name} took {duration:.2f}s"
+                        f"Slow operation detected: {operation_name} "
+                        f"took {duration:.2f}s"
                     )
 
         return wrapper
@@ -170,9 +173,11 @@ class LoggingConfig:
         root_logger = logging.getLogger()
         root_logger.setLevel(log_level)
 
-        # Remove existing handlers to avoid duplicates
+        # Remove existing handlers to avoid duplicates and poisoned mocks from tests
         for handler in root_logger.handlers[:]:
-            root_logger.removeHandler(handler)
+            # Always remove if it's a mock or if we're not in debug
+            if not Config.FLASK_DEBUG or "MagicMock" in str(type(handler)):
+                root_logger.removeHandler(handler)
 
         # Console handler
         console_handler = logging.StreamHandler()
@@ -232,7 +237,8 @@ class LoggingConfig:
                 # Log slow requests
                 if duration > 2.0:  # Requests taking more than 2 seconds
                     app.logger.warning(
-                        f"Slow request: {request.method} {request.path} took {duration:.2f}s"
+                        f"Slow request: {request.method} {request.path} "
+                        f"took {duration:.2f}s"
                     )
 
                 # Add performance headers for debugging

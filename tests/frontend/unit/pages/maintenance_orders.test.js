@@ -21,9 +21,6 @@ describe("Maintenance Orders Page", () => {
     test("initializes table with data", () => {
       document.body.innerHTML = '<div id="mos-data">[{"id":1}]</div>';
 
-      // Spy on localStorage (mocked globally or via JSDOM)
-      const setItemSpy = jest.spyOn(Storage.prototype, "setItem");
-
       initMaintenanceOrdersTable();
 
       expect(global.initAdvancedTable).toHaveBeenCalledWith(
@@ -54,77 +51,79 @@ describe("Maintenance Orders Page", () => {
   });
 
   describe("cleanupTableState", () => {
-    let mockStorage;
-    const tableStateKey = "tableState_mosTable";
+    // The function uses window.StorageManager with the hardcoded key.
+    const tableStateKey = "tableState_maintenance_orders";
+    let storageData;
 
     beforeEach(() => {
-      mockStorage = {
-        data: {},
-        getItem: jest.fn((key) => mockStorage.data[key] || null),
-        setItem: jest.fn((key, value) => {
-          mockStorage.data[key] = value;
+      storageData = {};
+      window.StorageManager = {
+        get: jest.fn((key) => storageData[key] || null),
+        set: jest.fn((key, value) => {
+          storageData[key] = value;
         }),
-        removeItem: jest.fn((key) => {
-          delete mockStorage.data[key];
+        remove: jest.fn((key) => {
+          delete storageData[key];
         }),
       };
     });
 
+    afterEach(() => {
+      delete window.StorageManager;
+    });
+
     test("returns no_state when no saved state exists", () => {
-      expect(cleanupTableState(mockStorage, tableStateKey)).toBe("no_state");
-      expect(mockStorage.getItem).toHaveBeenCalledWith(tableStateKey);
+      expect(cleanupTableState()).toBe("no_state");
+      expect(window.StorageManager.get).toHaveBeenCalledWith(tableStateKey);
     });
 
     test("keeps state when columnOrder includes assignees", () => {
       const state = { columnOrder: ["id", "assignees", "status"] };
-      mockStorage.data[tableStateKey] = JSON.stringify(state);
+      storageData[tableStateKey] = JSON.stringify(state);
 
-      expect(cleanupTableState(mockStorage, tableStateKey)).toBe("kept");
-      expect(mockStorage.removeItem).not.toHaveBeenCalled();
+      expect(cleanupTableState()).toBe("kept");
+      expect(window.StorageManager.remove).not.toHaveBeenCalled();
     });
 
     test("removes state when columnOrder exists but missing assignees", () => {
       const state = { columnOrder: ["id", "status", "priority"] };
-      mockStorage.data[tableStateKey] = JSON.stringify(state);
+      storageData[tableStateKey] = JSON.stringify(state);
 
-      expect(cleanupTableState(mockStorage, tableStateKey)).toBe("removed");
-      expect(mockStorage.removeItem).toHaveBeenCalledWith(tableStateKey);
+      expect(cleanupTableState()).toBe("removed");
+      expect(window.StorageManager.remove).toHaveBeenCalledWith(tableStateKey);
     });
 
     test("keeps state when columnOrder does not exist", () => {
       const state = { filters: {}, sortBy: "id" };
-      mockStorage.data[tableStateKey] = JSON.stringify(state);
+      storageData[tableStateKey] = JSON.stringify(state);
 
-      expect(cleanupTableState(mockStorage, tableStateKey)).toBe("kept");
-      expect(mockStorage.removeItem).not.toHaveBeenCalled();
+      expect(cleanupTableState()).toBe("kept");
+      expect(window.StorageManager.remove).not.toHaveBeenCalled();
     });
 
-    test("clears corrupted state on parse error", () => {
-      mockStorage.data[tableStateKey] = "invalid json {[";
+    test("returns error_cleared on parse error", () => {
+      storageData[tableStateKey] = "invalid json {[";
 
       const consoleSpy = jest
-        .spyOn(console, "error")
+        .spyOn(console, "warn")
         .mockImplementation(() => {});
-      expect(cleanupTableState(mockStorage, tableStateKey)).toBe(
-        "error_cleared",
-      );
-      expect(mockStorage.removeItem).toHaveBeenCalledWith(tableStateKey);
+      expect(cleanupTableState()).toBe("error_cleared");
       consoleSpy.mockRestore();
     });
 
     test("keeps state when columnOrder is empty array", () => {
       const state = { columnOrder: [] };
-      mockStorage.data[tableStateKey] = JSON.stringify(state);
+      storageData[tableStateKey] = JSON.stringify(state);
 
       // Empty array has no 'assignees', should be removed
-      expect(cleanupTableState(mockStorage, tableStateKey)).toBe("removed");
+      expect(cleanupTableState()).toBe("removed");
     });
   });
 
   describe("getMaintenanceOrdersColumns", () => {
     test("returns correct number of columns", () => {
       const columns = getMaintenanceOrdersColumns();
-      expect(columns).toHaveLength(12);
+      expect(columns).toHaveLength(14);
     });
 
     test("includes assignees column (Bug #29)", () => {

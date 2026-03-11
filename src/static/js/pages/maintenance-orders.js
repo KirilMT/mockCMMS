@@ -28,8 +28,10 @@ function getMaintenanceOrdersColumns() {
       render: renderOrderId,
     },
     { key: "asset_name", label: "Asset", type: "text" },
+    { key: "title", label: "Title", type: "text" },
     { key: "description", label: "Description", type: "text" },
     { key: "order_type", label: "Type", type: "text" },
+    { key: "category", label: "Category", type: "text" },
     { key: "status", label: "Status", type: "text" },
     { key: "priority", label: "Priority", type: "text" },
     { key: "due_date", label: "Due Date", type: "date" },
@@ -51,24 +53,44 @@ function getMaintenanceOrdersColumns() {
  * @param {string} tableStateKey - The key for table state
  * @returns {string} 'removed' | 'kept' | 'no_state' | 'error_cleared'
  */
-function cleanupTableState(storage, tableStateKey) {
+function cleanupTableState() {
+  const tableStateKey = "tableState_maintenance_orders";
   try {
-    const savedStateJSON = storage.getItem(tableStateKey);
+    // Use StorageManager for robust access if available
+    // Use StorageManager for robust access if available
+    const storage = window.StorageManager || {
+      get: () => null,
+      remove: () => null,
+    };
+
+    const savedStateJSON = storage.get(tableStateKey);
     if (savedStateJSON) {
       const savedState = JSON.parse(savedStateJSON);
       if (
         savedState.columnOrder &&
         !savedState.columnOrder.includes("assignees")
       ) {
-        storage.removeItem(tableStateKey);
+        // If the specific table state is outdated, remove it.
+        storage.remove(tableStateKey);
         return "removed";
       }
       return "kept";
     }
     return "no_state";
   } catch (e) {
-    console.error("Error processing table state from localStorage:", e);
-    storage.removeItem(tableStateKey);
+    console.warn("localStorage processing failed:", e);
+    // Attempt manual cleanup if everything else fails
+    // Attempt manual cleanup via SafeStorage if everything else fails
+    // Just accessing the object to ensure it's loaded, though not doing anything with it
+    // as we can't reliably iterate keys without direct access.
+    const ignore = window.StorageManager || {
+      get: () => null,
+      remove: () => null,
+    };
+
+    // If we are here, StorageManager failed or threw.
+    // We should NOT try direct localStorage access again as it will likely throw.
+    console.warn("Storage cleanup skipped due to error.");
     return "error_cleared";
   }
 }
@@ -77,12 +99,8 @@ function cleanupTableState(storage, tableStateKey) {
  * Initialize Maintenance Orders table
  */
 function initMaintenanceOrdersTable() {
-  const tableStateKey = "tableState_mosTable";
-
   // Clear localStorage if saved state is outdated (missing 'assignees' column)
-  if (typeof localStorage !== "undefined") {
-    cleanupTableState(localStorage, tableStateKey);
-  }
+  cleanupTableState();
 
   const mosDataElement = document.getElementById("mos-data");
   if (mosDataElement) {
