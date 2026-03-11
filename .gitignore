@@ -135,6 +135,8 @@ temp/
 
 # External/sensitive configuration
 apps/planning/config/config.json
+apps/reports/config/config.json
+!apps/reports/config/config.example.json
 config/config.json
 apps/reports/config/config.json
 
