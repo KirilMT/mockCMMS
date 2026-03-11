@@ -27,7 +27,13 @@ For development (testing, linting), also run:
 .\scripts\setup-dev.ps1
 ```
 
-> **🔑 Login Credentials:** `admin` / `admin123` > _(Source: `test_data/dummy_data.json`)_
+**Configure Modular Apps:** Edit `.env` to enable/disable apps:
+```dotenv
+PLANNING_ENABLED=False  # Enable/disable Planning module
+REPORTS_ENABLED=False   # Enable/disable Reports module
+```
+
+> **🔑 Login Credentials:** `admin` / `admin123` _(Source: `test_data/dummy_data.json`)_
 
 ---
 
@@ -38,8 +44,8 @@ For development (testing, linting), also run:
 | **Backend**      | Python 3.12, Flask, SQLAlchemy, Jinja2             |
 | **Frontend**     | Vanilla JavaScript (ES6+), CSS3                    |
 | **Database**     | SQLite (dev), PostgreSQL (prod-ready)              |
-| **Testing**      | Pytest, 80%+ coverage floor                        |
-| **Linting**      | Ruff, Pylint, Flake8, Black, Mypy                  |
+| **Testing**      | Pytest (backend), Jest (frontend unit), Playwright (E2E), 80%+ coverage floor |
+| **Linting**      | Ruff, Pylint, Flake8, Black, Mypy (backend), ESLint (frontend) |
 | **Architecture** | Modular Monorepo (`src/` core, `apps/` extensions) |
 
 ---
@@ -82,6 +88,7 @@ Before complex tasks, you MUST:
 
 ### Mandatory Validation
 
+- **Auto-Format First:** Run `python scripts/format_code.py` to auto-fix formatting issues before validation.
 - **Run Validation Script:** You **MUST** run `python scripts/validate_code.py` before finishing any significant task.
 - **No Broken Windows:** Do not leave the codebase in a broken state (failing tests) at the end of a turn.
 - **Self-Correction:** If validation fails, fix it **yourself**. Do not ask the user for permission to fix your own mistakes.
@@ -122,6 +129,10 @@ Add new tests to the appropriate category. See [tests/README.md](./tests/README.
 - **ALWAYS ask user before adding bugs** to `docs/bug_tracking.md`.
 - **Forms require CSRF tokens.** Check templates before modifying.
 - **Seed data** lives in `test_data/dummy_data.json`.
+- **Visual test screenshots are SACRED:** Files in `tests/frontend/e2e/__screenshots__/` should NEVER be updated unless you intentionally modified UI/CSS. Failing visual tests = bug detected, not screenshot problem.
+- **Test config is IMMUTABLE:** NEVER modify `pytest.ini`, `pyproject.toml`, `jest.config.js`, `playwright.config.js` to make tests pass. Fix the code, not the config.
+- **Existing tests have PRIORITY:** Only modify existing tests if the code they test has changed. If tests fail but code is unchanged, the bug is elsewhere in the codebase—fix the code, not the tests. Existing tests define correct behavior.
+- **ALWAYS create tests with new code:** Every new function/class/component MUST have unit tests (Pytest for backend, Jest/Playwright for frontend). After editing all files, run `format_code.py` and `validate_code.py`. Maintaining code with tests upfront prevents costly retrofitting later. This lesson was learned the hard way.
 
 ---
 
@@ -136,6 +147,11 @@ Add new tests to the appropriate category. See [tests/README.md](./tests/README.
 | [docs/mockCMMS_roadmap.md](./docs/mockCMMS_roadmap.md)                   | Project status, active sprints.                                |
 | [docs/bug_tracking.md](./docs/bug_tracking.md)                           | Bug list (ask before adding).                                  |
 | [tests/README.md](./tests/README.md)                                     | Test suite organization.                                       |
+
+**Key Scripts:**
+- `scripts/format_code.py` - Auto-fix formatting (isort, black, docformatter, prettier)
+- `scripts/validate_code.py` - Comprehensive validation (linting, tests, coverage)
+- `scripts/release_manager.py` - Automated version bumping and changelog updates
 
 ---
 
