@@ -1,9 +1,10 @@
 import json
-import os
 import logging
+import os
 from datetime import datetime
-from src.services.db_utils import db, MaintenanceOrder
-from apps.planning.src.services.planning_models import Schedule, PlanningTask
+
+from apps.planning.src.services.planning_models import PlanningTask, Schedule
+from src.services.db_utils import MaintenanceOrder, db
 
 logger = logging.getLogger(__name__)
 
@@ -89,13 +90,27 @@ def seed_planning_data(logger=None):
 
                 # Link MOs to this schedule
                 mo_list = sched_info.get("maintenance_orders", [])
-                for mo_desc in mo_list:
-                    # Find the MO by description
+                for mo_ref in mo_list:
+                    # Prefer title matching (stable, concise), then fallback to
+                    # description exact. Keep description-prefix fallback for
+                    # backward compatibility with older seed references.
                     mo = (
                         db.session.query(MaintenanceOrder)
-                        .filter_by(description=mo_desc)
+                        .filter_by(title=mo_ref)
                         .first()
                     )
+                    if not mo:
+                        mo = (
+                            db.session.query(MaintenanceOrder)
+                            .filter_by(description=mo_ref)
+                            .first()
+                        )
+                    if not mo:
+                        mo = (
+                            db.session.query(MaintenanceOrder)
+                            .filter(MaintenanceOrder.description.startswith(mo_ref))
+                            .first()
+                        )
                     if mo:
                         # Create PlanningTask
                         pt = PlanningTask(

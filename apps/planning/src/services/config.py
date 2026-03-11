@@ -74,13 +74,12 @@ class Config:
 
     @staticmethod
     def get_fixed_datetime():
-        import os
         from datetime import datetime
 
         fixed_date = os.getenv("DEBUG_FIXED_DATE")
         if fixed_date:
             try:
                 return datetime.fromisoformat(fixed_date.replace("Z", "+00:00"))
-            except:
+            except ValueError:
                 pass
         return None

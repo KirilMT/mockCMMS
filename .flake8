@@ -18,8 +18,7 @@ exclude =
     *.egg-info,
     .pytest_cache,
     htmlcov,
-    instance,
-    apps
+    instance
 
 # Show source code for each error
 show-source = True

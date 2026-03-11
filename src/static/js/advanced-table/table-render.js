@@ -102,6 +102,8 @@ AdvancedTable.prototype.renderHeader = function () {
   return `<tr>${visibleColumns
     .map((key) => {
       const col = this.columns.find((c) => c.key === key);
+      // Skip columns that don't exist in current column definitions (stale localStorage)
+      if (!col) return "";
       const sortIcon = this.getSortIcon(key);
       return `
                 <th class="sortable" data-column="${key}">
@@ -205,6 +207,7 @@ AdvancedTable.prototype.formatCellValue = function (value, column, row) {
   if (value === null || value === undefined) value = "";
 
   const col = this.columns.find((c) => c.key === column);
+  if (!col) return value; // Column not found, return raw value
 
   if (col && col.render && typeof col.render === "function") {
     return col.render(value, row);

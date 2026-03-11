@@ -3,7 +3,9 @@ import secrets
 
 SRC_DIR = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(SRC_DIR, ".."))
-INSTANCE_DIR = os.path.join(ROOT_DIR, "instance")
+# PROJECT_ROOT is 3 levels up from apps/planning/src
+PROJECT_ROOT = os.path.abspath(os.path.join(SRC_DIR, "..", "..", ".."))
+INSTANCE_DIR = os.path.join(PROJECT_ROOT, "instance")
 
 
 class Config:
@@ -22,14 +24,16 @@ class Config:
     # Global debug mode toggle (string env values '1', 'true', 'True')
     FLASK_DEBUG = os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
 
-    # Optional separate flag just to force using test DB without enabling all debug behaviors
+    # Optional separate flag just to force using test DB
+    # without enabling all debug behaviors
     DEBUG_USE_TEST_DB = os.environ.get("PLANNING_DEBUG_USE_TEST_DB", "0").lower() in (
         "1",
         "true",
         "yes",
     )
 
-    # Optional fixed date (ISO formats e.g. '2025-04-19' or '2025-04-19T16:00:00') used by services when FLASK_DEBUG active
+    # Optional fixed date (ISO formats e.g. '2025-04-19' or '2025-04-19T16:00:00')
+    # used by services when FLASK_DEBUG active
     DEBUG_FIXED_DATE = os.environ.get("DEBUG_FIXED_DATE")  # parsed lazily where needed
 
     # --- Flask-WTF Configuration ---
@@ -53,17 +57,34 @@ class Config:
     # Determine the database filename based on environment settings.
     # Priority:
     # 1. DATABASE_FILENAME environment variable (for explicit override).
-    # 2. 'testsDB.db' if in debug mode or if test DB is forced.
-    # 3. 'weekend_planning.db' as the default production database.
+    # 2. 'planning_test.db' if in debug mode or if test DB is forced.
+    # 3. 'planning.db' as the default production database.
     if "DATABASE_FILENAME" in os.environ:
         _db_filename = os.environ["DATABASE_FILENAME"]
+    elif os.environ.get("TESTING", "0").lower() in ("1", "true", "yes"):
+        # Critical: Use in-memory DB by default during testing to prevent
+        # file persistence
+        _db_filename = ":memory:"
     elif FLASK_DEBUG or DEBUG_USE_TEST_DB:
-        _db_filename = "testsDB.db"
+        _db_filename = "planning_test.db"
     else:
         _db_filename = "planning.db"
 
     # The database is located in the instance directory.
-    DATABASE_PATH = os.path.join(INSTANCE_DIR, _db_filename)
+    # Logic for :memory: needs to handle the path join gracefully
+    if _db_filename == ":memory:":
+        DATABASE_PATH = ":memory:"
+    else:
+        DATABASE_PATH = os.path.join(INSTANCE_DIR, _db_filename)
+
+    # --- SQLAlchemy Configuration ---
+    # Planning App uses 'planning' bind for its own tables
+    # and default for shared core tables.
+    # NOTE: SQLALCHEMY_DATABASE_URI should be provided by the main app factory.
+    # This default is only used if planning app runs standalone (which it shouldn't).
+    SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI")
+    SQLALCHEMY_BINDS = {"planning": f"sqlite:///{DATABASE_PATH}"}
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # --- Paths ---
     OUTPUT_FOLDER = os.path.join(ROOT_DIR, "output")
@@ -76,9 +97,10 @@ class Config:
     )  # 16MB default
     ALLOWED_EXTENSIONS = {"xlsx", "xls", "xlsb", "csv"}
 
-    # Ensure these directories exist
-    os.makedirs(INSTANCE_DIR, exist_ok=True)
-    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    # NOTE: Directories are created lazily by the app factory, not at import time.
+    # This prevents test imports from creating directories.
+    # os.makedirs(INSTANCE_DIR, exist_ok=True)
+    # os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
     @classmethod
     def is_debug(cls):
@@ -119,11 +141,15 @@ class Config:
             errors.append("MAX_CONTENT_LENGTH seems too large (>50MB)")
 
         # Check database path accessibility
-        import os
-
-        db_dir = os.path.dirname(cls.DATABASE_PATH)
-        if not os.path.exists(db_dir):
-            errors.append(f"Database directory does not exist: {db_dir}")
+        # Skip this check in debug/testing mode to allow for lazy directory creation
+        # or in-memory databases.
+        is_testing = (
+            os.environ.get("TESTING") == "1" or cls.DEBUG_USE_TEST_DB or cls.FLASK_DEBUG
+        )
+        if not is_testing:
+            db_dir = os.path.dirname(cls.DATABASE_PATH)
+            if not os.path.exists(db_dir):
+                errors.append(f"Database directory does not exist: {db_dir}")
 
         if errors:
             raise ValueError(

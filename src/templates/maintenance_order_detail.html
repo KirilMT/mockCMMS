@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% from "macros.html" import page_header %}
 
-{% block title %}{% if mo %}Edit Maintenance Order: {{ mo.description }}{% else %}Add New Maintenance Order{% endif %}{%
+{% block title %}{% if mo %}Edit Maintenance Order: {{ mo.title or ('MO-' ~ mo.id) }}{% else %}Add New Maintenance Order{% endif %}{%
 endblock %}
 
 {% block content %}
-{% set header_title = 'Edit Maintenance Order: ' + mo.description if mo else 'Add New Maintenance Order' %}
+{% set header_title = ('Edit Maintenance Order: ' ~ (mo.title or ('MO-' ~ mo.id))) if mo else 'Add New Maintenance Order' %}
 {% set back_url = url_for('main.asset_detail', asset_id=asset_id) if return_to == 'asset' and asset_id else url_for('main.maintenance_orders') %}
 {% set back_text = 'Back to Asset Details' if return_to == 'asset' and asset_id else 'Back to Maintenance Orders' %}
 
@@ -36,6 +36,12 @@ endblock %}
                     {% endif %}
                 </div>
                 <div class="form-group">
+                    <label for="title" class="required-field">Title</label>
+                    <input type="text" class="form-control" id="title" name="title"
+                        value="{{ mo.title if mo else '' }}" required
+                        placeholder="Brief title for this maintenance order">
+                </div>
+                <div class="form-group">
                     <label for="description" class="required-field">Description</label>
                     <textarea class="form-control" id="description" name="description" rows="3"
                         required>{{ mo.description if mo else '' }}</textarea>
@@ -44,13 +50,23 @@ endblock %}
                     <label for="order_type" class="required-field">Order Type</label>
                     <select class="form-control" id="order_type" name="order_type" required>
                         <option value="">Select Type</option>
-                        <option value="PM" {% if mo and mo.order_type=='PM' %}selected{% endif %}>PM (Preventive
+                        <option value="PM" {% if mo and mo.order_type|upper == 'PM' %}selected{% endif %}>PM (Preventive
                             Maintenance)</option>
-                        <option value="reactive" {% if mo and mo.order_type=='reactive' %}selected{% endif %}>Reactive
+                        <option value="Reactive" {% if mo and mo.order_type|lower == 'reactive' %}selected{% endif %}>Reactive
                         </option>
-                        <option value="corrective" {% if mo and mo.order_type=='corrective' %}selected{% endif %}>
+                        <option value="Corrective" {% if mo and mo.order_type|lower == 'corrective' %}selected{% endif %}>
                             Corrective
                         </option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select class="form-control" id="category" name="category">
+                        <option value="">Select Category (Optional)</option>
+                        <option value="Engineering" {% if mo and mo.category == 'Engineering' %}selected{% endif %}>Engineering</option>
+                        <option value="General" {% if mo and mo.category == 'General' %}selected{% endif %}>General</option>
+                        <option value="Safety" {% if mo and mo.category == 'Safety' %}selected{% endif %}>Safety</option>
+                        <option value="Quality" {% if mo and mo.category == 'Quality' %}selected{% endif %}>Quality</option>
                     </select>
                 </div>
                 {% if mo %}
@@ -95,15 +111,33 @@ endblock %}
                     <textarea class="form-control" id="justification" name="justification" rows="3"
                         placeholder="Reason for this maintenance order">{{ mo.justification if mo else '' }}</textarea>
                 </div>
+                <!-- Breakdown-specific fields (only for Reactive MOs) -->
+                <div class="form-group breakdown-fields" style="display: none;">
+                    <label for="downtime_duration" class="required-field">Downtime Duration (minutes)</label>
+                    <input type="number" class="form-control" id="downtime_duration" name="downtime_duration"
+                        value="{{ mo.downtime_duration if mo else '' }}" min="0"
+                        placeholder="Total downtime in minutes">
+                </div>
+                <div class="form-group breakdown-fields" style="display: none;">
+                    <label for="root_cause" class="required-field">Root Cause</label>
+                    <textarea class="form-control" id="root_cause" name="root_cause" rows="2"
+                        placeholder="Root cause analysis">{{ mo.root_cause if mo else '' }}</textarea>
+                </div>
+                <div class="form-group breakdown-fields" style="display: none;">
+                    <label for="recovery" class="required-field">Recovery/Resolution</label>
+                    <textarea class="form-control" id="recovery" name="recovery" rows="2"
+                        placeholder="Recovery actions taken">{{ mo.recovery if mo else '' }}</textarea>
+                </div>
             </div>
             <div class="col-md-6">
-                <div class="form-group">
-                    <label for="schedule_name">Schedule Name</label>
+                <!-- PM-specific fields (only for PM MOs) -->
+                <div class="form-group pm-fields" style="display: none;">
+                    <label for="schedule_name" class="required-field">Schedule Name</label>
                     <input type="text" class="form-control" id="schedule_name" name="schedule_name"
                         value="{{ mo.schedule_name if mo else '' }}" placeholder="e.g., Weekly Robot PM">
                 </div>
-                <div class="form-group">
-                    <label for="frequency">Frequency</label>
+                <div class="form-group pm-fields" style="display: none;">
+                    <label for="frequency" class="required-field">Frequency</label>
                     <select class="form-control" id="frequency" name="frequency">
                         <option value="">Select Frequency</option>
                         <option value="daily" {% if mo and mo.frequency and mo.frequency.lower()=='daily' %}selected{%
@@ -122,11 +156,11 @@ endblock %}
                         </option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="estimated_completion_time" class="required-field">Estimated Time (minutes)</label>
+                <div class="form-group pm-fields" style="display: none;">
+                    <label for="estimated_completion_time" id="label_estimated_time" class="required-field">Estimated Time (minutes)</label>
                     <input type="number" class="form-control" id="estimated_completion_time"
                         name="estimated_completion_time" value="{{ mo.estimated_completion_time if mo else '' }}"
-                        min="0" required>
+                        min="0">
                 </div>
                 <div class="form-group">
                     <label for="labour_count" class="required-field">Labour Count</label>

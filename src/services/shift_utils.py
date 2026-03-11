@@ -1,5 +1,35 @@
 # src/services/shift_utils.py
 """Shift calculation utilities for the Pitman schedule."""
+from datetime import datetime, timedelta
+
+
+class ShiftUtils:
+    """Utility class for shift calculations."""
+
+    def get_shift_window(self, date_obj, shift_name):
+        """Returns start and end times for a shift.
+
+        Early: 06:00 - 18:00
+        Night: 18:00 - 06:00 (Next Day)
+        """
+        # Ensure date_obj is datetime
+        if not isinstance(date_obj, datetime):
+            # Assume date_obj is just a date or we need to combine?
+            # If it's a date object, combine with min time
+            date_obj = datetime.combine(date_obj, datetime.min.time())
+
+        start_hour, end_hour = 6, 18
+        if shift_name.lower() == "night":
+            start_hour, end_hour = 18, 6
+
+        start_time = date_obj.replace(hour=start_hour, minute=0, second=0)
+
+        if shift_name.lower() == "night":
+            end_time = (start_time + timedelta(days=1)).replace(hour=end_hour)
+        else:
+            end_time = start_time.replace(hour=end_hour)
+
+        return start_time, end_time
 
 
 def get_shift_teams(date_obj, teams):

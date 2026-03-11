@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated January 5, 2026_
+_Updated March 10, 2026_
 
 ---
 
@@ -39,26 +39,22 @@ _Updated January 5, 2026_
 ### Maintenance Rules
 
 1. **Mark Completed Items**
-
    - When a feature is completed, change `[ ]` to `[x]` in the checkbox
    - Move completed items to the "Recently Completed" section with a completion date and summary
    - Add key outcomes and technical details to help future reference
 
 2. **Add New Ideas**
-
    - New features should be added to the appropriate application section (`planning`, `reports`, `core mockCMMS`, etc.)
    - Follow the existing structure: Goal → Features → Priority → Reference (if applicable)
    - Assign a priority level: Critical, High, Medium, or Low
    - Maintain alphabetical or logical ordering within priority groups
 
 3. **Update Progress**
-
    - Add status updates to in-progress items (e.g., "Status: 60% complete - Phase 2")
    - Update the "ACTIVE WORK" section when starting new sprints
    - Keep the "Last Updated" timestamp current
 
 4. **Preserve History**
-
    - **Do not delete completed items** - move them to "Recently Completed"
    - Archive old completed items (30+ days) to the bottom or a separate archive file
    - Keep historical context for future reference and learning
@@ -92,6 +88,22 @@ _Updated January 5, 2026_
 > [!IMPORTANT] > **📋 Active Plan:** [Core Code Quality Plan](deprecated/core_code_quality_plan.md) - All 9 Phases Complete ✅
 > **🧪 Frontend Tests:** 437 Jest + 82 Playwright tests ✅ (80%+ branch coverage)
 > **📊 Backend Tests:** 261 pytest tests ✅ (88%+ coverage)
+
+---
+
+## 📋 PLANNED WORK
+
+- **[ ] Bootstrap 5 Migration** _(Priority: Medium)_
+  - **Goal:** Upgrade from Bootstrap 4.5.2 to Bootstrap 5.3.x to modernize the UI framework and improve accessibility.
+  - **Detailed Plan:** [docs/bootstrap5_upgrade_analysis.md](bootstrap5_upgrade_analysis.md)
+  - **Key Benefits:**
+    - Improved accessibility features
+    - Better responsive utilities
+    - Enhanced form controls
+    - Modern CSS architecture
+    - Better performance
+  - **Estimated Effort:** 2-3 weeks
+  - **Status:** Pending - Planning phase
 
 ---
 
@@ -178,14 +190,12 @@ The core application can be improved with the following features to support the 
 > **📋 Detailed Plan:** See [Core Code Quality Plan](deprecated/core_code_quality_plan.md) for the comprehensive audit and cleanup strategy.
 
 - **[x] Project Validation & Code Quality Audit** _(Priority: Critical)_
-
   - **Status:** ✅ Completed (November 29, 2025)
   - **Goal:** Comprehensive code quality audit and security review to ensure a professional, production-ready codebase.
   - **Outcome:** An audit report was generated with prioritized findings.
   - **Note:** The initial audit is completed. A comprehensive re-audit is planned (see Core Code Quality Plan).
 
 - **[x] Implement Code Quality & Security Fixes** _(Priority: Critical)_
-
   - **Status:** ✅ Completed (November 29, 2025)
   - **Goal:** Address critical and high-priority issues identified in the audit.
   - **Outcome:** Secured SECRET_KEY, improved logging, and cleaned up frontend code.
@@ -198,7 +208,6 @@ The core application can be improved with the following features to support the 
   - **Note:** Initial fixes are completed. A comprehensive cleanup is planned (see Core Code Quality Plan).
 
 - **[x] Core mockCMMS Code Quality Comprehensive Audit & Cleanup** _(Priority: Critical)_
-
   - **Status:** ✅ **All 9 Phases Complete** (January 5, 2026)
   - **Goal:** A systematic, comprehensive audit and cleanup of all core mockCMMS code files.
   - **Detailed Plan:** [deprecated/core_code_quality_plan.md](deprecated/core_code_quality_plan.md)
@@ -221,8 +230,25 @@ The core application can be improved with the following features to support the 
   - **Testing:** Manual testing following the `table_features_test_plan.md` methodology.
   - **Dependencies:** None (completed).
 
-- **[ ] Frontend Architecture Decision** _(Priority: High)_
+- **[ ] Docker-Based Visual Regression Testing** _(Priority: High)_
+  - **Goal:** Implement containerized visual testing to eliminate cross-platform rendering inconsistencies (Windows vs. Linux).
+  - **Detailed Plan:** [docs/visual_testing_strategy.md](visual_testing_strategy.md)
+  - **Scope:**
+    - Add `npm run test:visual:docker` script
+    - Use official Playwright Docker image
+    - Remove current 5% tolerance workaround
 
+- **[ ] Infrastructure & Quality Refinement** _(Priority: Medium)_
+  - **Goal:** Consolidate and expand the robustness of the CI/CD and testing infrastructure.
+  - **Features:**
+    - **Ruff Rule Expansion:** Enable `B` (Bugbear), `I` (Isort), and `UP` (Pyupgrade) rules to catch more logic bugs and consolidate `isort` and `flake8` checks.
+    - **Coverage Threshold Alignment:** Standardize coverage requirements consistently across `pyproject.toml`, `validate_code.py`, `package.json`, and documentation to 83-85% for both backend and frontend.
+    - **Security Tool Consolidation:** Integrate `bandit` configuration directly into `pyproject.toml` to reduce configuration file sprawl.
+    - **ESLint Plugin Expansion:** Add `eslint-plugin-security` or `eslint-plugin-sonarjs` to catch frontend logic bugs and security issues.
+    - **Stylelint Standard Rule Enforcement:** Re-enable standard CSS rules (e.g., class pattern enforcement) to improve frontend architecture consistency.
+  - **Reference:** Consultation Reports (January 24, 2026)
+
+- **[ ] Frontend Architecture Decision** _(Priority: High)_
   - **Goal:** Evaluate and decide on a frontend technology stack migration strategy.
   - **Current Stack:**
     - Flask environment with Jinja2 templates (`.html`)
@@ -238,28 +264,24 @@ The core application can be improved with the following features to support the 
   - **Reference:** [GitHub Issue #3](https://github.com/KirilMT/mockCMMS/issues/3)
 
 - **[x] Standardize Naming Conventions** _(Priority: High)_
-
   - **Status:** ✅ Completed (January 2, 2026)
   - **Goal:** Establish and enforce consistent naming conventions across the codebase.
   - **Outcome:** Audited all files in Phase 7.1 of Core Code Quality Plan.
   - **Reference:** [deprecated/core_code_quality_plan.md](deprecated/core_code_quality_plan.md)
 
 - **[x] Code Comments Cleanup & Standards** _(Priority: High)_
-
   - **Status:** ✅ Completed (January 2, 2026)
   - **Goal:** Ensure all code comments are professional, descriptive, and follow coding standards.
   - **Outcome:** Removed bug references and standardized comments in Phase 7.1 and Manual Audits.
   - **Reference:** [deprecated/core_code_quality_plan.md](deprecated/core_code_quality_plan.md)
 
 - **[x] Separation of Concerns - Code Organization** _(Priority: High)_
-
   - **Status:** ✅ Completed (January 2, 2026)
   - **Goal:** Ensure proper separation of HTML, CSS, and JavaScript code.
   - **Outcome:** Extracted inline JS/CSS in Phase 5 (Templates) and Phase 3 (Frontend).
   - **Reference:** [deprecated/core_code_quality_plan.md](deprecated/core_code_quality_plan.md)
 
 - **[x] Structured Logging & Performance Monitoring** _(Priority: High)_
-
   - **Goal:** Implement enterprise-grade logging similar to `apps/planning`.
   - **Features:**
     - **Structured JSON Logging:** For production environments (for easier parsing).
@@ -281,7 +303,6 @@ The core application can be improved with the following features to support the 
 #### Asset & Data Management
 
 - **[ ] Advanced Asset & Spares Management** _(Priority: Medium)_
-
   - **Goal:** Move beyond basic CRUD to more intelligent management.
   - **Features:**
     - **Asset Hierarchy:** Implement a full 5-level hierarchy: `Department -> Location -> Line -> Station -> Equipment` (tooling, robot, etc.). Ensure this hierarchy is enforced and visible across all application pages where assets are referenced.
@@ -297,7 +318,6 @@ The core application can be improved with the following features to support the 
 #### Testing & Quality Assurance
 
 - **[x] Comprehensive Testing & CI/CD Pipeline** _(Priority: High)_
-
   - **Status:** ✅ Completed (January 5, 2026)
     - ✅ Pre-commit hooks enabled and configured (`.pre-commit-config.yaml`)
     - ✅ Local validation script (`scripts/validate_code.py`)
@@ -319,7 +339,6 @@ The core application can be improved with the following features to support the 
 The Advanced Table component was recently completed with core functionality. The following features were identified but deferred for future development.
 
 - **[x] Sidebar Toggle Implementation Improvement** _(Priority: Medium)_
-
   - **Status:** ✅ Completed → Verified (December 1, 2025)
   - **Goal:** Improve the sidebar toggle to use a CSS class instead of DOM removal for better performance and state preservation.
   - **Current Issue:** The sidebar toggle removes/adds the element from the DOM, which:
@@ -338,7 +357,6 @@ The Advanced Table component was recently completed with core functionality. The
   - **Reference:** Identified during Test 2.1.1 execution (November 30, 2025).
 
 - **[ ] Improved Form Input Controls & Table Filtering** _(Priority: Medium)_
-
   - **Goal:** Implement proper input controls for predefined values and date-specific filtering.
   - **Phase 1 - Form Dropdowns (Critical):**
     - Replace text inputs with dropdowns for fields with predefined options (Priority, Status, Order Type, Frequency).
@@ -350,7 +368,22 @@ The Advanced Table component was recently completed with core functionality. The
     - Implement: Exact Date, Before, After, Between, Is Empty, Is Not Empty.
     - Use HTML5 `<input type="date">` for date inputs.
     - Auto-detect date columns in the Advanced Table.
-  - **Phase 3 - Conflicting Filter Detection (High Complexity):**
+  - **Phase 3 - Numeric Column Filtering (High Value):**
+    - Auto-detect columns that contain numeric data (e.g., ID, Quantity, Duration, Count fields).
+    - Replace text-based operators ("contains", "equals") with numeric-specific comparators:
+      - **Equals** (`= N`)
+      - **Not Equals** (`≠ N`)
+      - **Greater Than** (`> N`)
+      - **Greater Than or Equal** (`≥ N`)
+      - **Less Than** (`< N`)
+      - **Less Than or Equal** (`≤ N`)
+      - **Between** (`N₁ ≤ x ≤ N₂`) — renders two number inputs
+    - Column type detection strategy: inspect the first non-empty values in the column at runtime
+      (e.g., if all non-null values parse as numbers, treat as numeric).
+    - Ensure filter inputs use `<input type="number">` for numeric columns.
+    - Validate on the frontend that the entered value is a valid number before applying.
+    - Backend filtering logic must handle all comparators safely (no raw string injection).
+  - **Phase 4 - Conflicting Filter Detection (High Complexity):**
     - Develop an algorithm to detect conflicting filter combinations (e.g., "Status = Open" AND "Status = Closed").
     - Implement a dynamic UI to prevent conflicts:
       - Option A: Disable conflicting filter options in real-time.
@@ -358,7 +391,7 @@ The Advanced Table component was recently completed with core functionality. The
       - Option C: Auto-suggest compatible filters based on the current selection.
     - Handle conflicts across AND/OR logic groups.
     - Provide clear user feedback when filters would return no results.
-  - **Phase 4 - Advanced Filtering (Optional Enhancement):**
+  - **Phase 5 - Advanced Filtering (Optional Enhancement):**
     - Calendar date pickers with visual widgets.
     - Relative date filters ("Today", "This Week", "Last 7 Days").
     - Multi-select filters for status/team fields.
@@ -371,7 +404,6 @@ The Advanced Table component was recently completed with core functionality. The
     - `src/services/db_utils.py` (model constraints)
 
 - **[ ] Pagination** _(Priority: Low)_
-
   - **Goal:** Enable efficient navigation through large datasets.
   - **Features:**
     - **Page Controls:** Next/Previous buttons with page numbers.
@@ -381,7 +413,6 @@ The Advanced Table component was recently completed with core functionality. The
     - **Persist Page Settings:** Remember the page size preference in saved views.
 
 - **[ ] Bulk Operations & Selection Improvements** _(Priority: Low)_
-
   - **Goal:** Enable efficient multi-row operations and improve selection behavior.
   - **Features:**
     - **Enhanced Select All:** Fix the current page-only limitation. Options:
@@ -398,7 +429,6 @@ The Advanced Table component was recently completed with core functionality. The
     - `src/static/css/advanced-table.css` (selection indicator styling)
 
 - **[ ] Collaboration Features** _(Priority: Low)_
-
   - **Goal:** Enable team collaboration around table views and data.
   - **Features:**
     - **Share Views with Team Members:** Send saved views to other users or teams.
@@ -425,7 +455,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 ##### GitHub Best Practices Implementation
 
 - **[ ] Implement GitHub Organization Best Practices** _(Priority: High)_
-
   - **Goal:** Structure the GitHub organization, teams, and repositories following enterprise best practices.
   - **Organization Structure:**
     - Use minimal organizations (one or a few) with teams for access segmentation.
@@ -444,7 +473,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
   - **Reference:** [GitHub Guide to Organizations (PDF)](https://resources.github.com/downloads/github-guide-to-organizations.pdf)
 
 - **[ ] Implement Security & Access Control Standards** _(Priority: Critical)_
-
   - **Goal:** Enforce security best practices for authentication, tokens, and repository access.
   - **Personal Access Tokens (PAT):**
     - Always set a token expiration (avoid "No Expiry").
@@ -465,7 +493,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Use for automated review assignment.
 
 - **[x] Implement Git Workflow Standards** _(Priority: High)_
-
   - **Status:** ✅ Completed (January 5, 2026)
   - **Goal:** Establish and enforce a consistent Git workflow across all contributors.
   - **Implemented:**
@@ -492,7 +519,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
   - **Note:** Branch protection rules require repository admin access to configure in GitHub Settings > Branches.
 
 - **[x] Implement GitHub Actions CI/CD Workflow** _(Priority: High)_
-
   - **Status:** ✅ Completed (January 5, 2026)
   - **Goal:** Automate testing, code quality checks, and deployment.
   - **Implemented:**
@@ -514,7 +540,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
   - **Note:** A separate `code-quality.yml` is not needed since `ci.yml` already includes all quality checks (linting, type checking, security scanning).
 
 - **[x] Implement Local Development Scripts** _(Priority: High)_
-
   - **Status:** ✅ Completed (January 5, 2026)
     - ✅ `validate_code.py` - Comprehensive pre-commit validation script (simulates CI locally)
     - ✅ `format_code.py` - Actively formats code (Black, isort, Prettier)
@@ -534,7 +559,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
   - **Location:** Create a `scripts/` directory at the repository root.
 
 - **[ ] Implement Repository Standards & Configuration** _(Priority: Medium)_
-
   - **Goal:** Standardize repository structure, naming, and configuration.
   - **Naming Conventions:**
     - Use lowercase for repository names.
@@ -571,7 +595,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Organize functions top-down (high-level to low-level).
 
 - **[ ] Project Team Collaboration & Documentation** _(Priority: High)_
-
   - **Goal:** Create comprehensive team collaboration documentation and tools, and implement GitHub team structure best practices.
   - **Documentation & Tools:**
     - **GitHub Tutorial:** Document all GitHub features for team collaboration (issues, projects, repository rules, settings).
@@ -603,7 +626,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
   - **Reference:** [GitHub Issue #4](https://github.com/KirilMT/mockCMMS/issues/4)
 
 - **[x] Fix GitHub Issue Templates** _(Priority: Medium)_
-
   - **Status:** ✅ Completed (December 18, 2025)
   - **Goal:** Resolve the issue where GitHub issue templates are not working properly.
   - **Tasks:**
@@ -613,7 +635,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
   - **Reference:** [GitHub Issue #2](https://github.com/KirilMT/mockCMMS/issues/2)
 
 - **[ ] Update CODEOWNERS File** _(Priority: Low)_
-
   - **Goal:** Update the CODEOWNERS file with new team members and sections.
   - **Tasks:**
     - Add new users to CODEOWNERS.
@@ -621,8 +642,23 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Ensure proper GitHub team integration.
   - **Reference:** [GitHub Issue #5](https://github.com/KirilMT/mockCMMS/issues/5)
 
-- **[x] Restructure GEMINI.md Documentation** _(Priority: Low)_
+### Reports Application Enhancements
 
+> **📋 Detailed Roadmap:** See [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for complete task breakdown and implementation details.
+
+- **[ ] Team-Scoped Shift Report Filtering** _(Priority: High)_
+  - Filter handovers, breakdowns, and break activities to MOs assigned to the report team
+  - Future: support department/team categories for non-maintenance report types
+
+- **[ ] Link Reports to Core CMMS Data** _(Priority: High)_
+  - Link Shift Report sections (Breakdowns, Engineering Support, Handover) to live MO database
+  - Detailed tasks in `apps/reports/docs/reports_roadmap.md`
+
+- **[ ] Asset Dropdown Population (Select2 AJAX)** _(Priority: Medium)_
+  - Replace free-text asset entries with DB-backed API selection
+  - Larger enhancement beyond current scope
+
+- **[x] Restructure GEMINI.md Documentation** _(Priority: Low)_
   - **Status:** ✅ Completed → Verified (December 1, 2025)
   - **Goal:** Improve the documentation structure for better clarity.
   - **Changes Required:**
@@ -635,7 +671,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
   - **Reference:** [GitHub Issue #1](https://github.com/KirilMT/mockCMMS/issues/1)
 
 - **[x] Improve README Badges** _(Priority: Medium)_
-
   - **Goal:** Enhance project visibility and demonstrate code quality, security, and modular coverage.
   - **Strategy:**
 
@@ -643,7 +678,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 
     **1. Code Quality & Linting**
     Adding badges for your linting and formatting tools signals that the project follows strict coding standards.
-
     - **Ruff/Black Formatter:** Shows you use modern, automated formatting.
     - **Static Analysis:** Display `pylint` or `flake8` results using **Shields.io**.
 
@@ -653,7 +687,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     ```
 
     **2. Dependency & Security Status**
-
     - **Dependabot:** Show that Dependabot is active.
     - **Security (Safety/Bandit):** Create a custom "Security: Passing" badge.
 
@@ -663,7 +696,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 
     **3. Monorepo-Specific: Component Coverage**
     Use **Codecov Flags** to show coverage of individual applications (e.g., `planning`, `reports`) to reveal gaps hidden by overall coverage.
-
     - **Planning Module Coverage:** `[![coverage: planning](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=planning)](https://codecov.io/gh/KirilMT/mockCMMS)`
     - **Reports Module Coverage:** `[![coverage: reports](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=reports)](https://codecov.io/gh/KirilMT/mockCMMS)`
 
@@ -689,7 +721,6 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 This application already handles skill-based task assignment. The next logical steps involve deeper integration and more advanced planning management features.
 
 - **[ ] Line Conditions for Planning** _(Priority: High)_
-
   - **Goal:** Standardize the line conditions needed for task planning to ensure proper execution prerequisites.
   - **Features:**
     - Define and track line conditions (line full/empty, part in fixture, robot position).
@@ -699,7 +730,6 @@ This application already handles skill-based task assignment. The next logical s
   - **Reference:** [GitHub Issue #6](https://github.com/KirilMT/mockCMMS/issues/6)
 
 - **[ ] Advanced User & Technician Management** _(Priority: Medium)_
-
   - **Goal:** Comprehensive user management with roles, skills, training, and external manpower integration.
   - **Features:**
     - **Roles & Permissions:** Implement role-based access control (RBAC) for different user types.
@@ -714,7 +744,6 @@ This application already handles skill-based task assignment. The next logical s
     - **Workload Tracking:** Track and visualize individual technician workload over time.
 
 - **[ ] Shift Calendar Redesign** _(Priority: Medium)_
-
   - **Goal:** Improve the usability of the Shift Calendar page.
   - **Features:**
     - **Calendar Grid View:** Redesign the interface to resemble a standard calendar (month/week view) instead of a list.
@@ -731,8 +760,21 @@ This application already handles skill-based task assignment. The next logical s
 
 This application is intended for reporting and analytics. The following features would provide significant value.
 
-- **[ ] Automated & Specialized Reporting**
+- **[ ] HMI → Reactive MO Integration for Breakdowns** _(Priority: Medium)_
+  - **Goal:** When operations press the MNTC (Maintenance) button on the HMI, automatically open a
+    Reactive Maintenance Order in the system — eliminating the manual creation gap between the
+    physical breakdown event and the digital record.
+  - **Core MO Workflow Impact:** This feature requires changes to the MO creation flow in
+    the core mockCMMS app (auto-populate asset, shift, timestamp, status = "Open").
+  - **Features:**
+    - Define an HMI → CMMS integration API contract (webhook or polling endpoint).
+    - Auto-create a generic Reactive MO with pre-filled context from the HMI signal.
+    - Allow operators/technicians to edit the MO after the fact (fault, root cause, recovery time).
+    - Ensure auto-created MOs are correctly picked up by the Reports Breakdowns section.
+  - **Note:** The Reports-side tracking (ensuring these MOs appear in Shift Reports) is in
+    `apps/reports/docs/reports_roadmap.md`.
 
+- **[ ] Automated & Specialized Reporting**
   - **Goal:** Generate key operational reports automatically.
   - **Features:**
     - **Weekend Task Report:** A report summarizing all tasks planned and completed over a weekend.
@@ -758,6 +800,7 @@ This application is intended for reporting and analytics. The following features
 
 - **Line Conditions for Planning:** Standardize prerequisites for task execution.
 - **Frontend Architecture Decision:** Evaluate migration to a modern framework (Angular/React).
+- **Docker-Based Visual Regression Testing:** Standardize visual testing with containerized runner.
 - **CI/CD Pipeline:** ✅ COMPLETE.
 - **Team Collaboration Documentation:** GitHub workflows and setup automation.
 - ✅ **Standardize Naming Conventions:** COMPLETE.
@@ -770,8 +813,10 @@ This application is intended for reporting and analytics. The following features
 
 - **Advanced Technician Tracking:** Availability, workload, and dynamic status.
 - **Automated, Specialized Reports:** Shift, weekend, and technician-submitted reports.
+- **HMI → Reactive MO Integration:** Auto-create breakdown MOs from HMI MNTC button signal.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
-- **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific filter operators.
+- **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific operators, **numeric comparators (between / greater-than / less-than)** for numeric columns.
+- **Infrastructure & Quality Refinement:** Ruff expansion, ESLint/Stylelint enforcement, and global coverage alignment (85%).
 - **UI Regression Automation:** End-to-end UI testing.
 - ✅ **Data Simulation Engine:** COMPLETE.
 - ✅ **Fix GitHub Issue Templates:** COMPLETE.

@@ -97,23 +97,32 @@ test.describe("CRUD Functional Tests", () => {
     const row = page.locator("tr", { hasText: assetName });
     await row.locator("a").first().click();
 
+    // Wait for the asset form to be ready to ensure listeners are attached
+    await page.waitForSelector("#asset-form");
+
+    // Tiny wait to ensure JS event listeners are bound
+    await page.waitForTimeout(1000);
+
     // Click Delete button (opens modal)
-    await page.click('button.btn-danger:has-text("Delete")');
+    // Use :visible to avoid matching hidden elements if any
+    const deleteBtn = page.locator("button.delete-confirm-btn:visible");
+    await deleteBtn.waitFor({ state: "visible" });
+    await deleteBtn.scrollIntoViewIfNeeded();
+    await deleteBtn.click();
 
-    // Wait for modal confirm button to be visible
-    await page.waitForSelector("#confirmDeleteBtn", {
-      state: "visible",
-      timeout: 5000,
-    });
+    // Wait for modal to be visible explicitly
+    const modal = page.locator("#deleteConfirmModal");
+    await expect(modal).toBeVisible({ timeout: 5000 });
 
-    // Click confirm button via JS to ensure it registers despite overlays
-    const navigationPromise = page.waitForNavigation({
-      waitUntil: "domcontentloaded",
-    });
-    await page.evaluate(() =>
-      document.getElementById("confirmDeleteBtn").click(),
-    );
-    await navigationPromise;
+    // Wait for modal button to be visible
+    const confirmBtn = page.locator("#confirmDeleteBtn");
+    await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+
+    // Click directly with force: true to bypass visibility checks during animation
+    await Promise.all([
+      page.waitForNavigation(),
+      confirmBtn.click({ force: false }),
+    ]);
 
     // Verify deletion - should be back on list page
     await page.waitForSelector("#assetsTable table");
@@ -152,10 +161,10 @@ test.describe("CRUD Functional Tests", () => {
     await page.click("text=Add New MO");
 
     const moDesc = "MO " + Date.now();
+    await page.fill('input[name="title"]', "Test MO Title");
     await page.fill('textarea[name="description"]', moDesc);
-    await page.selectOption('select[name="order_type"]', "corrective");
+    await page.selectOption('select[name="order_type"]', "Corrective");
     await page.selectOption('select[name="priority"]', "Medium");
-    await page.fill('input[name="estimated_completion_time"]', "60");
     await page.fill('input[name="labour_count"]', "1");
 
     const assetSelect = page.locator('select[name="asset_id"]');
@@ -231,10 +240,10 @@ test.describe("CRUD Functional Tests", () => {
     await page.waitForSelector('textarea[name="description"]');
 
     const moDesc = "Delete Test MO " + Date.now();
+    await page.fill('input[name="title"]', "Delete Test Title");
     await page.fill('textarea[name="description"]', moDesc);
-    await page.selectOption('select[name="order_type"]', "corrective");
+    await page.selectOption('select[name="order_type"]', "Corrective");
     await page.selectOption('select[name="priority"]', "High");
-    await page.fill('input[name="estimated_completion_time"]', "60");
     await page.fill('input[name="labour_count"]', "1");
     // asset_id should be pre-selected since we came from asset page
 
@@ -360,8 +369,8 @@ test.describe("CRUD Functional Tests", () => {
     // Search for updated part
     await page.fill("#globalSearchInput", newDesc);
     await page.click("#applySearchBtn");
-    await page.waitForTimeout(500);
 
+    // Wait for row
     const dataRows = page.locator(
       "#sparePartsTable table tbody tr:not(:has(.table-empty))",
     );
@@ -391,11 +400,12 @@ test.describe("CRUD Functional Tests", () => {
     // Search for the created part
     await page.fill("#globalSearchInput", desc);
     await page.click("#applySearchBtn");
-    await page.waitForTimeout(1000);
 
-    // Click to go to detail
+    // Wait for row to appear
     const row = page.locator("tr", { hasText: desc });
     await expect(row).toBeVisible({ timeout: 10000 });
+
+    // Click to go to detail
     await row.locator("a").first().click();
 
     // Wait for detail page
@@ -403,17 +413,25 @@ test.describe("CRUD Functional Tests", () => {
 
     // Delete using modal confirmation (matching C6 pattern)
     await page.click('button:has-text("Delete")');
-    await page.waitForSelector("#confirmDeleteBtn", { state: "visible" });
+
+    // Wait for modal to be visible explicitly
+    const modal = page.locator("#deleteConfirmModal");
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    // Wait for modal button to be visible
+    const confirmBtn = page.locator("#confirmDeleteBtn");
+    await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+
+    // Click directly with force: true to bypass visibility checks during animation
     await Promise.all([
       page.waitForNavigation(),
-      page.evaluate(() => document.getElementById("confirmDeleteBtn").click()),
+      confirmBtn.click({ force: false }),
     ]);
 
     // Verify redirection back to list page (C6 pattern)
     await page.waitForSelector("#sparePartsTable table", { timeout: 10000 });
 
-    // Verify part is gone - wait a moment for page to update (C6 pattern)
-    await page.waitForTimeout(500);
+    // Verify part is gone
     await expect(page.locator("tr", { hasText: desc })).toHaveCount(0, {
       timeout: 5000,
     });
@@ -448,8 +466,8 @@ test.describe("CRUD Functional Tests", () => {
     // Search for updated email
     await page.fill("#globalSearchInput", newEmail);
     await page.click("#applySearchBtn");
-    await page.waitForTimeout(1000);
 
+    // Wait for row
     const dataRows = page.locator(
       "#usersTable table tbody tr:not(:has(.table-empty))",
     );
@@ -477,11 +495,12 @@ test.describe("CRUD Functional Tests", () => {
     // Search for the created user
     await page.fill("#globalSearchInput", username);
     await page.click("#applySearchBtn");
-    await page.waitForTimeout(1000);
 
-    // Click to go to detail
+    // Wait for row
     const row = page.locator("tr", { hasText: username });
     await expect(row).toBeVisible({ timeout: 10000 });
+
+    // Click to go to detail
     await row.locator("a").first().click();
 
     // Wait for detail page
@@ -489,17 +508,25 @@ test.describe("CRUD Functional Tests", () => {
 
     // Delete using modal confirmation (matching C6 pattern)
     await page.click('button:has-text("Delete")');
-    await page.waitForSelector("#confirmDeleteBtn", { state: "visible" });
+
+    // Wait for modal to be visible explicitly
+    const modal = page.locator("#deleteConfirmModal");
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    // Wait for modal button to be visible
+    const confirmBtn = page.locator("#confirmDeleteBtn");
+    await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+
+    // Click directly with force: true to bypass visibility checks during animation
     await Promise.all([
       page.waitForNavigation(),
-      page.evaluate(() => document.getElementById("confirmDeleteBtn").click()),
+      confirmBtn.click({ force: false }),
     ]);
 
     // Verify redirection back to list page (C6 pattern)
     await page.waitForSelector("#usersTable table", { timeout: 10000 });
 
-    // Verify user is gone - wait a moment for page to update (C6 pattern)
-    await page.waitForTimeout(500);
+    // Verify user is gone
     await expect(page.locator("tr", { hasText: username })).toHaveCount(0, {
       timeout: 5000,
     });

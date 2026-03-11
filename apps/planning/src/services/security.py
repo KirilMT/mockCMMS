@@ -1,9 +1,11 @@
 """Security utilities for input validation and sanitization."""
 
-from functools import wraps
-from flask import request, jsonify, current_app
 import re
-from typing import Any, Dict, List
+from functools import wraps
+from typing import Any, Dict, List, Optional
+
+from flask import current_app, jsonify, request
+
 from ..config import Config  # Import Config
 
 
@@ -11,7 +13,9 @@ class InputValidator:
     """Centralized input validation and sanitization utilities."""
 
     @staticmethod
-    def validate_integer(value: Any, min_val: int = None, max_val: int = None) -> int:
+    def validate_integer(
+        value: Any, min_val: Optional[int] = None, max_val: Optional[int] = None
+    ) -> int:
         """Validate and convert input to integer with optional range checking."""
         try:
             int_val = int(value)
@@ -24,7 +28,9 @@ class InputValidator:
             raise ValueError(f"Invalid integer value: {value}") from e
 
     @staticmethod
-    def validate_string(value: Any, max_length: int = 255, pattern: str = None) -> str:
+    def validate_string(
+        value: Any, max_length: int = 255, pattern: Optional[str] = None
+    ) -> str:
         """Validate and sanitize string input."""
         if not isinstance(value, str):
             raise ValueError(f"Expected string, got {type(value)}")
@@ -36,7 +42,7 @@ class InputValidator:
             raise ValueError(f"String too long: {len(sanitized)} > {max_length}")
 
         if pattern and not re.match(pattern, sanitized):
-            raise ValueError(f"String does not match required pattern")
+            raise ValueError("String does not match required pattern")
 
         return sanitized
 
@@ -56,7 +62,7 @@ class InputValidator:
         return InputValidator.validate_integer(level, min_val=0, max_val=4)
 
     @staticmethod
-    def validate_json_request(required_fields: List[str] = None) -> Dict:
+    def validate_json_request(required_fields: Optional[List[str]] = None) -> Dict:
         """Validate JSON request and check for required fields."""
         if not request.is_json:
             raise ValueError("Request must be JSON")

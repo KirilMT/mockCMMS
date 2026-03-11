@@ -14,8 +14,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:all": "npm test && npm run test:e2e:chromium",
-    "lint": "eslint src/static/js --report-unused-disable-directives",
-    "lint:fix": "eslint src/static/js --fix",
+    "lint": "eslint src/static/js apps tests/frontend --report-unused-disable-directives",
+    "lint:fix": "eslint src/static/js apps tests/frontend --fix",
     "validate": "python scripts/validate_code.py",
     "validate:quick": "python scripts/validate_code.py --quick",
     "validate:backend": "python scripts/validate_code.py --backend",
@@ -59,7 +59,8 @@
     "testEnvironment": "jsdom",
     "roots": [
       "<rootDir>/src/static/js/",
-      "<rootDir>/tests/frontend/unit/"
+      "<rootDir>/tests/frontend/unit/",
+      "<rootDir>/apps/"
     ],
     "testMatch": [
       "**/*.test.js"
@@ -69,7 +70,11 @@
     },
     "collectCoverageFrom": [
       "src/static/js/**/*.js",
-      "!src/static/js/**/*.test.js"
+      "apps/**/*.js",
+      "!**/tests/**",
+      "!**/*.spec.js",
+      "!**/apps/planning/src/static/js/manage_*.js",
+      "!**/apps/planning/src/static/js/index.js"
     ],
     "coverageThreshold": {
       "global": {

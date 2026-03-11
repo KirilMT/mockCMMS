@@ -74,6 +74,7 @@
   gap: 0.5rem;
   user-select: none;
   transition: background 0.2s;
+  position: relative;
 }
 
 .section-header:hover {

@@ -42,6 +42,15 @@ describe("AdvancedTable", () => {
       value: localStorageMock,
     });
 
+    // Set up StorageManager to delegate to localStorage mock so code using
+    // window.StorageManager continues to read/write from the same mock store.
+    window.StorageManager = {
+      get: (key, defaultValue = null) =>
+        localStorageMock.getItem(key) ?? defaultValue,
+      set: (key, value) => localStorageMock.setItem(key, value),
+      remove: (key) => localStorageMock.removeItem(key),
+    };
+
     // Reset mocks
     jest.clearAllMocks();
   });
@@ -220,7 +229,14 @@ describe("AdvancedTable", () => {
     };
     localStorage.getItem = jest.fn(() => JSON.stringify(savedState));
 
-    const table = new AdvancedTable("table-container");
+    // Table must have matching columns for columnOrder to be restored
+    const table = new AdvancedTable("table-container", {
+      columns: [
+        { key: "name", label: "Name" },
+        { key: "id", label: "ID" },
+        { key: "status", label: "Status" },
+      ],
+    });
     table.restoreTableState();
     expect(table.columnOrder).toEqual(savedState.columnOrder);
   });

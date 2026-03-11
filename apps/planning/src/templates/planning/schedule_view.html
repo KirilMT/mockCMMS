@@ -59,13 +59,7 @@ endblock %} {% block extra_css %}
                     type="radio"
                     name="planning_mode"
                     value="shift_break"
-                    {%
-                    if
-                    planning_mode=""
-                    ="shift_break"
-                    %}checked{%
-                    endif
-                    %}
+                    {% if planning_mode == 'shift_break' %}checked{% endif %}
                     onchange="changePlanningMode('shift_break')"
                   />
                   <i class="fas fa-clock"></i> Shift Break
@@ -77,13 +71,7 @@ endblock %} {% block extra_css %}
                     type="radio"
                     name="planning_mode"
                     value="weekend"
-                    {%
-                    if
-                    planning_mode=""
-                    ="weekend"
-                    %}checked{%
-                    endif
-                    %}
+                    {% if planning_mode == 'weekend' %}checked{% endif %}
                     onchange="changePlanningMode('weekend')"
                   />
                   <i class="fas fa-calendar-week"></i> Weekend
@@ -186,25 +174,34 @@ endblock %} {% block extra_css %}
               </small>
               <button
                 class="btn btn-sm btn-outline-primary"
-                onclick="if(window.ganttChart) window.ganttChart.changeViewMode('Quarter Day')"
+                onclick="
+                  if (window.ganttChart)
+                    window.ganttChart.changeViewMode('Quarter Day');
+                "
               >
                 <i class="fas fa-clock"></i> Quarter Day
               </button>
               <button
                 class="btn btn-sm btn-outline-primary"
-                onclick="if(window.ganttChart) window.ganttChart.changeViewMode('Half Day')"
+                onclick="
+                  if (window.ganttChart)
+                    window.ganttChart.changeViewMode('Half Day');
+                "
               >
                 <i class="fas fa-calendar-day"></i> Half Day
               </button>
               <button
                 class="btn btn-sm btn-outline-primary active"
-                onclick="if(window.ganttChart) window.ganttChart.changeViewMode('Day')"
+                onclick="
+                  if (window.ganttChart)
+                    window.ganttChart.changeViewMode('Day');
+                "
               >
                 <i class="fas fa-calendar"></i> Day
               </button>
               <button
                 class="btn btn-sm btn-outline-secondary"
-                onclick="if(window.ganttChart) window.ganttChart.refresh()"
+                onclick="if (window.ganttChart) window.ganttChart.refresh();"
               >
                 <i class="fas fa-sync-alt"></i> Refresh
               </button>

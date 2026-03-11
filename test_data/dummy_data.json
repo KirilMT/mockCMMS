@@ -44,133 +44,180 @@
       "username": "admin",
       "email": "admin@mockcmms.com",
       "password": "admin123",
-      "roles": ["Admin"]
+      "roles": [
+        "Admin"
+      ]
     },
     {
       "username": "john.manager",
       "email": "john.manager@mockcmms.com",
       "password": "manager123",
-      "roles": ["Manager", "Planner"]
+      "roles": [
+        "Manager",
+        "Planner"
+      ]
     },
     {
       "username": "sarah.supervisor",
       "email": "sarah.supervisor@mockcmms.com",
       "password": "super123",
-      "roles": ["Supervisor", "Technician"]
+      "roles": [
+        "Supervisor",
+        "Technician"
+      ]
     },
     {
       "username": "mike.tech",
       "email": "mike.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "lisa.planner",
       "email": "lisa.planner@mockcmms.com",
       "password": "plan123",
-      "roles": ["Planner", "Viewer"]
+      "roles": [
+        "Planner",
+        "Viewer"
+      ]
     },
     {
       "username": "david.tech",
       "email": "david.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "anna.viewer",
       "email": "anna.viewer@mockcmms.com",
       "password": "view123",
-      "roles": ["Viewer"]
+      "roles": [
+        "Viewer"
+      ]
     },
     {
       "username": "carlos.super",
       "email": "carlos.super@mockcmms.com",
       "password": "super123",
-      "roles": ["Supervisor"]
+      "roles": [
+        "Supervisor"
+      ]
     },
     {
       "username": "emma.tech",
       "email": "emma.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "robert.manager",
       "email": "robert.manager@mockcmms.com",
       "password": "manager123",
-      "roles": ["Manager"]
+      "roles": [
+        "Manager"
+      ]
     },
     {
       "username": "alex.tech",
       "email": "alex.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "maria.tech",
       "email": "maria.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "james.tech",
       "email": "james.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "lisa.tech",
       "email": "lisa.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "tom.tech",
       "email": "tom.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "nina.tech",
       "email": "nina.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "ryan.tech",
       "email": "ryan.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "sophia.tech",
       "email": "sophia.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "kevin.tech",
       "email": "kevin.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "olivia.tech",
       "email": "olivia.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "daniel.tech",
       "email": "daniel.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     },
     {
       "username": "grace.tech",
       "email": "grace.tech@mockcmms.com",
       "password": "tech123",
-      "roles": ["Technician"]
+      "roles": [
+        "Technician"
+      ]
     }
   ],
   "skills": [
@@ -695,7 +742,7 @@
   "maintenance_orders": [
     {
       "asset": "Paint Line Robot A1",
-      "description": "Weekly lubrication and calibration check",
+      "description": "Apply synthetic lubricant to all articulated joints, calibrate TCP (Tool Center Point) offset, verify orientation angles within \u00b10.05\u00b0, run diagnostic tool path validation",
       "order_type": "PM",
       "status": "Open",
       "priority": "Medium",
@@ -704,36 +751,72 @@
       "estimated_completion_time": 120,
       "labour_count": 2,
       "due_days_from_now": 2,
-      "required_skills": ["Robotics", "Mechanical"]
+      "required_skills": [
+        "Robotics",
+        "Mechanical"
+      ],
+      "assignees": [
+        "user:alex.tech"
+      ],
+      "title": "Paint Line Robot A1 - Weekly Maintenance",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Assembly Station B3",
-      "description": "Torque wrench calibration and tool inspection",
+      "description": "Monthly tool calibration and inspection. Verify torque values across all tool channels, recalibrate using master standard, inspect bit wear and replace as necessary, validate clutch engagement",
       "order_type": "PM",
-      "status": "In Progress",
+      "status": "Scheduled",
       "priority": "Low",
       "schedule_name": "Monthly Tool Check",
       "frequency": "Monthly",
       "estimated_completion_time": 60,
       "labour_count": 1,
+      "created_at": "2026-03-01T10:00:00+00:00",
       "due_days_from_now": 5,
-      "required_skills": ["Mechanical"]
+      "required_skills": [
+        "Mechanical"
+      ],
+      "assignees": [
+        "user:maria.tech"
+      ],
+      "title": "Assembly Station B3 - Tool Calibration",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "BIW Welding Robot C2",
-      "description": "Emergency repair - welding tip replacement",
-      "order_type": "REP",
-      "status": "In Progress",
+      "description": "URGENT: Welding tip severely degraded causing poor weld penetration and visual defects. Remove gun from manifold, replace with new copper alloy tip (Part #WG-850X), recalibrate current parameters at 450A, perform trial run on test panel",
+      "order_type": "Reactive",
+      "status": "Completed",
       "priority": "Critical",
       "estimated_completion_time": 180,
       "labour_count": 3,
       "justification": "Production line stopped due to faulty welding tip",
-      "due_days_from_now": 0,
-      "required_skills": ["Welding", "Robotics", "Electrical"]
+      "created_at": "2026-03-07T10:00:00+00:00",
+      "due_days_from_now": -2,
+      "required_skills": [
+        "Welding",
+        "Robotics",
+        "Electrical"
+      ],
+      "assignees": [
+        "user:sarah.supervisor",
+        "user:alex.tech"
+      ],
+      "title": "BIW Welding Robot C2 - Emergency Tip Replacement",
+      "category": "General",
+      "downtime_duration": 15,
+      "root_cause": "Root cause for Emergency repair - welding tip replacement",
+      "recovery": "Recovery action for Emergency repair - welding tip replacement"
     },
     {
       "asset": "Conveyor System D1",
-      "description": "Belt tension adjustment and motor inspection",
+      "description": "Adjust belt tension to specification (50-60mm deflection), inspect for lateral alignment and wear patterns, clean drive roller surfaces, measure bearing resistance and motor current",
       "order_type": "PM",
       "status": "Scheduled",
       "priority": "Medium",
@@ -742,11 +825,22 @@
       "estimated_completion_time": 90,
       "labour_count": 2,
       "due_days_from_now": 10,
-      "required_skills": ["Mechanical", "Electrical"]
+      "required_skills": [
+        "Mechanical",
+        "Electrical"
+      ],
+      "assignees": [
+        "user:james.tech"
+      ],
+      "title": "Conveyor System D1 - Belt Tension & Alignment",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Quality Control Station E1",
-      "description": "Calibration of measurement equipment",
+      "description": "Verify all measurement channels are calibrated to master standard within \u00b10.01mm tolerance using certified calibration blocks and perform daily zero-point verification",
       "order_type": "PM",
       "status": "Open",
       "priority": "High",
@@ -755,7 +849,18 @@
       "estimated_completion_time": 45,
       "labour_count": 1,
       "due_days_from_now": 3,
-      "required_skills": ["Electrical", "Controls"]
+      "required_skills": [
+        "Electrical",
+        "Controls"
+      ],
+      "assignees": [
+        "user:lisa.tech"
+      ],
+      "title": "Quality Control Station E1 - Measurement Calibration",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Paint Booth F2",
@@ -768,11 +873,21 @@
       "estimated_completion_time": 75,
       "labour_count": 1,
       "due_days_from_now": 1,
-      "required_skills": ["Paint Systems"]
+      "required_skills": [
+        "Paint Systems"
+      ],
+      "assignees": [
+        "user:tom.tech"
+      ],
+      "title": "Paint Booth F2 - Filter & Gun Maintenance",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Stamping Press G1",
-      "description": "Hydraulic system pressure check and oil change",
+      "description": "Check hydraulic fluid pressure (18-22 bar), verify pump operation at 1500 RPM, inspect hoses for leaks, top up reservoir with ISO 32 hydraulic fluid",
       "order_type": "PM",
       "status": "Completed",
       "priority": "Medium",
@@ -781,11 +896,22 @@
       "estimated_completion_time": 150,
       "labour_count": 2,
       "due_days_from_now": -5,
-      "required_skills": ["Hydraulics", "Mechanical"]
+      "required_skills": [
+        "Hydraulics",
+        "Mechanical"
+      ],
+      "assignees": [
+        "user:nina.tech"
+      ],
+      "title": "Stamping Press G1 - Hydraulic System Check",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "HVAC System H3",
-      "description": "Air filter replacement and duct cleaning",
+      "description": "Replace intake and output air filters (MERV-13), inspect ductwork for blockages, clean condenser coils, verify airflow at 2000 CFM minimum",
       "order_type": "PM",
       "status": "Open",
       "priority": "Low",
@@ -794,23 +920,47 @@
       "estimated_completion_time": 120,
       "labour_count": 2,
       "due_days_from_now": 15,
-      "required_skills": ["HVAC", "Mechanical"]
+      "required_skills": [
+        "HVAC",
+        "Mechanical"
+      ],
+      "assignees": [
+        "user:alex.tech"
+      ],
+      "title": "HVAC System H3 - Filter & Duct Maintenance",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Laser Cutting Machine I1",
-      "description": "Laser head alignment and lens replacement",
+      "description": "URGENT: Laser output power degraded, cutting precision exceeds \u00b10.3mm tolerance on test cuts. Perform lens alignment check using calibration test grid, replace focusing lens if scratched, recalibrate CO2 tube power at 80W nominal",
       "order_type": "Corrective",
-      "status": "In Progress",
+      "status": "Completed",
       "priority": "Critical",
       "estimated_completion_time": 240,
       "labour_count": 2,
       "justification": "Cutting precision out of tolerance",
-      "due_days_from_now": 1,
-      "required_skills": ["Laser Systems", "Electrical"]
+      "created_at": "2026-03-07T14:00:00+00:00",
+      "due_days_from_now": -2,
+      "required_skills": [
+        "Laser Systems",
+        "Electrical"
+      ],
+      "assignees": [
+        "user:maria.tech",
+        "user:james.tech"
+      ],
+      "title": "Laser Cutting Machine I1 - Head Alignment & Lens",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Assembly Robot J4",
-      "description": "End effector inspection and gripper calibration",
+      "description": "Comprehensive end effector inspection and gripper calibration. Detailed maintenance scope: verify gripper jaw alignment, inspect pneumatic seals for leaks, test gripper force calibration against specification, validate sensor response times, document findings, and confirm stable operation before handover.",
       "order_type": "PM",
       "status": "Scheduled",
       "priority": "Medium",
@@ -819,11 +969,22 @@
       "estimated_completion_time": 90,
       "labour_count": 1,
       "due_days_from_now": 7,
-      "required_skills": ["Robotics", "Pneumatics"]
+      "required_skills": [
+        "Robotics",
+        "Pneumatics"
+      ],
+      "assignees": [
+        "user:maria.tech"
+      ],
+      "title": "Assembly Robot J4 - Weekly End Effector Inspection",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Paint Mixing Station K1",
-      "description": "Pump maintenance and color accuracy check",
+      "description": "Pump maintenance and color accuracy check. Detailed maintenance scope: inspect pump seals and bearings, verify flow rates against specification, test color mixing ratios for accuracy, clean filters and nozzles, document findings, validate tolerances, and confirm stable operation before handover.",
       "order_type": "PM",
       "status": "Open",
       "priority": "Medium",
@@ -832,11 +993,22 @@
       "estimated_completion_time": 60,
       "labour_count": 1,
       "due_days_from_now": 4,
-      "required_skills": ["Paint Systems", "Mechanical"]
+      "required_skills": [
+        "Paint Systems",
+        "Mechanical"
+      ],
+      "assignees": [
+        "user:james.tech"
+      ],
+      "title": "Paint Mixing Station K1 - Weekly Pump Maintenance",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Spot Welding Gun L2",
-      "description": "Electrode replacement and current calibration",
+      "description": "Electrode replacement and current calibration. Detailed maintenance scope: measure electrode wear using go/no-go gauge, replace electrodes exceeding tolerance, calibrate welding current to 450A nominal, verify electrode tip geometry, perform test welds on sample material, document findings, and confirm stable operation before handover.",
       "order_type": "PM",
       "status": "Completed",
       "priority": "High",
@@ -845,11 +1017,22 @@
       "estimated_completion_time": 30,
       "labour_count": 1,
       "due_days_from_now": -1,
-      "required_skills": ["Welding", "Electrical"]
+      "required_skills": [
+        "Welding",
+        "Electrical"
+      ],
+      "assignees": [
+        "user:lisa.tech"
+      ],
+      "title": "Spot Welding Gun L2 - Daily Electrode Service",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Final Assembly Line M1",
-      "description": "Conveyor belt inspection and station alignment",
+      "description": "Conveyor belt inspection and station alignment. Detailed maintenance scope: inspect belt for wear patterns and tracking, verify station alignment using laser alignment tools, check tension and bearing condition, validate electrical interlocks, document findings, and confirm stable operation before handover.",
       "order_type": "PM",
       "status": "Open",
       "priority": "High",
@@ -858,11 +1041,23 @@
       "estimated_completion_time": 180,
       "labour_count": 3,
       "due_days_from_now": 6,
-      "required_skills": ["Mechanical", "Electrical", "Controls"]
+      "required_skills": [
+        "Mechanical",
+        "Electrical",
+        "Controls"
+      ],
+      "assignees": [
+        "user:tom.tech"
+      ],
+      "title": "Final Assembly Line M1 - Weekly Conveyor Inspection",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Paint Oven N1",
-      "description": "Temperature sensor calibration and burner check",
+      "description": "Temperature sensor calibration and burner check. Detailed maintenance scope: calibrate temperature sensors using certified reference standard, inspect burner flame pattern and ignition system, verify airflow rates, test temperature uniformity across oven zones, document findings, validate tolerances, and confirm stable operation before handover.",
       "order_type": "PM",
       "status": "Scheduled",
       "priority": "High",
@@ -871,23 +1066,47 @@
       "estimated_completion_time": 120,
       "labour_count": 2,
       "due_days_from_now": 12,
-      "required_skills": ["HVAC", "Electrical", "Controls"]
+      "required_skills": [
+        "HVAC",
+        "Electrical",
+        "Controls"
+      ],
+      "assignees": [
+        "user:nina.tech"
+      ],
+      "title": "Paint Oven N1 - Monthly Temperature Calibration",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Material Handling AGV O1",
-      "description": "Battery replacement and navigation system check",
-      "order_type": "REP",
+      "description": "Battery replacement and navigation system check. Detailed maintenance scope: test battery capacity under load, inspect charging contacts for wear, verify navigation sensor calibration, test emergency stop functionality, validate obstacle detection system, document findings, and confirm stable operation before handover.",
+      "order_type": "Reactive",
       "status": "Open",
       "priority": "Medium",
       "estimated_completion_time": 90,
       "labour_count": 1,
       "justification": "AGV showing reduced battery life",
       "due_days_from_now": 3,
-      "required_skills": ["Electrical", "Robotics"]
+      "required_skills": [
+        "Electrical",
+        "Robotics"
+      ],
+      "assignees": [
+        "user:alex.tech",
+        "user:ryan.tech"
+      ],
+      "title": "Material Handling AGV O1 - Battery Service",
+      "category": "General",
+      "downtime_duration": 15,
+      "root_cause": "Root cause for Battery replacement and navigation system check",
+      "recovery": "Recovery action for Battery replacement and navigation system check"
     },
     {
       "asset": "Paint Line Robot A1",
-      "description": "Robot safety sensor check - Quick inspection",
+      "description": "Robot safety sensor check - Quick inspection. Detailed maintenance scope: test all safety interlocks and light curtains, verify emergency stop response time, inspect safety mat functionality, validate collaborative operation modes, document findings, and confirm stable operation before handover.",
       "order_type": "PM",
       "status": "Open",
       "priority": "High",
@@ -896,11 +1115,21 @@
       "estimated_completion_time": 15,
       "labour_count": 1,
       "due_days_from_now": 0,
-      "required_skills": ["Robotics"]
+      "required_skills": [
+        "Robotics"
+      ],
+      "assignees": [
+        "user:alex.tech"
+      ],
+      "title": "Paint Line Robot A1 - Daily Safety Inspection",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Conveyor System D1",
-      "description": "Emergency stop button test",
+      "description": "Emergency stop button test. Detailed maintenance scope: actuate all emergency stop buttons along conveyor line, verify immediate motor shutdown, test reset functionality, inspect button mechanical condition, document findings, validate response times, and confirm stable operation before handover.",
       "order_type": "PM",
       "status": "Open",
       "priority": "Critical",
@@ -909,55 +1138,469 @@
       "estimated_completion_time": 10,
       "labour_count": 1,
       "due_days_from_now": 0,
-      "required_skills": ["Electrical"]
+      "required_skills": [
+        "Electrical"
+      ],
+      "assignees": [
+        "user:maria.tech"
+      ],
+      "title": "Conveyor System D1 - Daily Emergency Stop Test",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "Paint Booth F2",
-      "description": "Paint nozzle clog - Immediate cleaning required",
-      "order_type": "REP",
-      "status": "Open",
+      "description": "Weekend - Deep cleaning and filter replacement. Detailed maintenance scope: verify parameters, inspect related components, document findings, and confirm stable operation before handover.",
+      "order_type": "PM",
+      "status": "Completed",
       "priority": "High",
-      "estimated_completion_time": 25,
-      "labour_count": 1,
-      "justification": "Paint quality issues detected",
-      "due_days_from_now": 0,
-      "required_skills": ["Paint Systems"]
-    },
-    {
-      "asset": "Assembly Robot J4",
-      "description": "Gripper alignment issue - Quick adjustment",
-      "order_type": "Corrective",
-      "status": "Open",
-      "priority": "Medium",
-      "estimated_completion_time": 20,
-      "labour_count": 1,
-      "justification": "Part placement slightly off",
-      "due_days_from_now": 1,
-      "required_skills": ["Robotics", "Pneumatics"]
-    },
-    {
-      "asset": "Laser Cutting Machine I1",
-      "description": "CRITICAL - Laser power fluctuation",
-      "order_type": "REP",
-      "status": "Open",
-      "priority": "Critical",
-      "estimated_completion_time": 45,
+      "schedule_name": "Weekend Maintenance",
+      "frequency": "Weekly",
+      "estimated_completion_time": 180,
       "labour_count": 2,
-      "justification": "Safety hazard - immediate attention required",
-      "due_days_from_now": 0,
-      "required_skills": ["Laser Systems", "Electrical"]
+      "due_date": "2026-03-14T12:00:00+00:00",
+      "required_skills": [
+        "Paint Systems",
+        "HVAC"
+      ],
+      "assignees": [
+        "user:nina.tech"
+      ],
+      "title": "Weekend - Deep cleaning and filter replacement",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "BIW Welding Robot C2",
+      "description": "Weekend - Complete robot calibration. Detailed maintenance scope: verify parameters, inspect related components, document findings, and confirm stable operation before handover.",
+      "order_type": "PM",
+      "status": "Completed",
+      "priority": "High",
+      "schedule_name": "Weekend Maintenance",
+      "frequency": "Weekly",
+      "estimated_completion_time": 240,
+      "labour_count": 3,
+      "due_date": "2026-03-14T14:00:00+00:00",
+      "required_skills": [
+        "Robotics",
+        "Welding",
+        "Electrical"
+      ],
+      "assignees": [
+        "user:alex.tech"
+      ],
+      "title": "Weekend - Complete robot calibration",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
     },
     {
       "asset": "HVAC System H3",
-      "description": "Temperature sensor replacement",
+      "description": "Weekend - System overhaul and testing. Detailed maintenance scope: verify parameters, inspect related components, document findings, and confirm stable operation before handover.",
+      "order_type": "PM",
+      "status": "Completed",
+      "priority": "Medium",
+      "schedule_name": "Weekend Maintenance",
+      "frequency": "Monthly",
+      "estimated_completion_time": 300,
+      "labour_count": 2,
+      "due_date": "2026-03-15T08:00:00+00:00",
+      "required_skills": [
+        "HVAC",
+        "Electrical",
+        "Controls"
+      ],
+      "assignees": [
+        "user:maria.tech"
+      ],
+      "title": "Weekend - System overhaul and testing",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Laser Cutting Machine I1",
+      "description": "Weekend - Precision alignment and calibration. Detailed maintenance scope: verify parameters, inspect related components, document findings, and confirm stable operation before handover.",
+      "order_type": "PM",
+      "status": "Completed",
+      "priority": "High",
+      "schedule_name": "Weekend Maintenance",
+      "frequency": "Weekly",
+      "estimated_completion_time": 180,
+      "labour_count": 2,
+      "due_date": "2026-03-15T10:00:00+00:00",
+      "required_skills": [
+        "Laser Systems",
+        "Electrical"
+      ],
+      "assignees": [
+        "user:james.tech"
+      ],
+      "title": "Weekend - Precision alignment and calibration",
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Conveyor System D1",
+      "title": "Test Shift Report Night Breakdown",
+      "description": "Reactive breakdown created and completed during night shift (2026-03-09). This MO demonstrates a completed breakdown with downtime tracking and appears in the Breakdowns section.",
+      "order_type": "Reactive",
+      "status": "Completed",
+      "priority": "High",
+      "estimated_completion_time": 30,
+      "labour_count": 1,
+      "created_at": "2026-03-09T23:30:00+00:00",
+      "required_skills": [
+        "Mechanical"
+      ],
+      "assignees": [
+        "user:mike.tech"
+      ],
+      "category": "General",
+      "downtime_duration": 30,
+      "root_cause": "Conveyor drive motor bearing failure detected during operation",
+      "recovery": "Replaced worn bearing, realigned drive shaft, verified operation"
+    },
+    {
+      "asset": "HVAC System H3",
+      "title": "Test Shift Report Night Work Request",
+      "description": "Corrective work request completed during night shift. This appears in the Work Requests section as a non-reactive completed item.",
       "order_type": "Corrective",
-      "status": "Open",
+      "status": "Completed",
+      "priority": "Medium",
+      "estimated_completion_time": 45,
+      "labour_count": 1,
+      "created_at": "2026-03-10T00:45:00+00:00",
+      "required_skills": [
+        "HVAC"
+      ],
+      "assignees": [
+        "user:kevin.tech"
+      ],
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Laser Cutting Machine I1",
+      "title": "Test Shift Report Night Engineering Support",
+      "description": "Engineering diagnostic completed during night shift. This MO appears in Engineering Support section with proper MO link formatting.",
+      "order_type": "Corrective",
+      "status": "Completed",
+      "priority": "Medium",
+      "estimated_completion_time": 60,
+      "labour_count": 1,
+      "created_at": "2026-03-10T02:00:00+00:00",
+      "required_skills": [
+        "Laser Systems",
+        "Electrical"
+      ],
+      "assignees": [
+        "user:alex.tech"
+      ],
+      "category": "Engineering",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Paint Line Robot A1",
+      "title": "Test Shift Report Night Handover To Early",
+      "description": "Reactive issue started during night shift, still in progress. This MO hands over to the early shift and should appear in Handover to Next Shift section.",
+      "order_type": "Reactive",
+      "status": "In Progress",
+      "priority": "High",
+      "estimated_completion_time": 60,
+      "labour_count": 1,
+      "created_at": "2026-03-10T04:30:00+00:00",
+      "required_skills": [
+        "Robotics"
+      ],
+      "assignees": [
+        "user:mike.tech"
+      ],
+      "category": "General",
+      "downtime_duration": 15,
+      "root_cause": "Paint spray nozzle clogging intermittently",
+      "recovery": "Partial disassembly completed, awaiting replacement nozzle from stores"
+    },
+    {
+      "asset": "Assembly Station B3",
+      "title": "Test Shift Report Early Breakdown",
+      "description": "Reactive breakdown created and completed during early shift (2026-03-10). Demonstrates breakdown handling with full documentation.",
+      "order_type": "Reactive",
+      "status": "Completed",
+      "priority": "High",
+      "estimated_completion_time": 45,
+      "labour_count": 1,
+      "created_at": "2026-03-10T08:15:00+00:00",
+      "required_skills": [
+        "Mechanical"
+      ],
+      "assignees": [
+        "user:tom.tech"
+      ],
+      "category": "General",
+      "downtime_duration": 45,
+      "root_cause": "Pneumatic actuator seal failure causing air leak",
+      "recovery": "Replaced actuator seal kit, pressure tested system, resumed operation"
+    },
+    {
+      "asset": "BIW Welding Robot C2",
+      "title": "Test Shift Report Early Work Request",
+      "description": "Corrective work completed during early shift. Shows in Work Requests section as completed corrective maintenance.",
+      "order_type": "Corrective",
+      "status": "Completed",
       "priority": "Medium",
       "estimated_completion_time": 30,
       "labour_count": 1,
-      "justification": "Sensor reading erratic",
-      "due_days_from_now": 2,
-      "required_skills": ["HVAC", "Electrical"]
+      "created_at": "2026-03-10T10:00:00+00:00",
+      "required_skills": [
+        "Welding",
+        "Robotics"
+      ],
+      "assignees": [
+        "user:lisa.tech"
+      ],
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Stamping Press G1",
+      "title": "Test Shift Report Early Handover To Next",
+      "description": "Reactive issue started during early shift, ongoing. This MO should appear in Handover to Next Shift for the night shift report.",
+      "order_type": "Reactive",
+      "status": "In Progress",
+      "priority": "High",
+      "estimated_completion_time": 90,
+      "labour_count": 2,
+      "created_at": "2026-03-10T12:00:00+00:00",
+      "required_skills": [
+        "Mechanical",
+        "Hydraulics"
+      ],
+      "assignees": [
+        "user:tom.tech",
+        "user:lisa.tech"
+      ],
+      "category": "General",
+      "downtime_duration": 30,
+      "root_cause": "Hydraulic pressure fluctuation under investigation",
+      "recovery": "System diagnostics in progress, awaiting hydraulic specialist"
+    },
+    {
+      "asset": "Quality Control Station E1",
+      "title": "Test Shift Report Early Engineering Support",
+      "description": "Engineering diagnostic completed during early shift. This MO appears in Engineering Support section with proper MO link formatting.",
+      "order_type": "Corrective",
+      "status": "Completed",
+      "priority": "Medium",
+      "estimated_completion_time": 60,
+      "labour_count": 1,
+      "created_at": "2026-03-10T09:30:00+00:00",
+      "required_skills": [
+        "Electrical",
+        "Controls"
+      ],
+      "assignees": [
+        "user:sarah.supervisor"
+      ],
+      "category": "Engineering",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Paint Booth F2",
+      "title": "Test Weekend Report Night PM",
+      "description": "Preventive maintenance completed during weekend night shift (2026-03-14). This PM demonstrates weekend maintenance scheduling and appears in the PMs section.",
+      "order_type": "PM",
+      "status": "Completed",
+      "priority": "High",
+      "schedule_name": "Weekend Deep Clean",
+      "frequency": "Weekly",
+      "estimated_completion_time": 120,
+      "labour_count": 2,
+      "due_date": "2026-03-14T23:00:00+00:00",
+      "created_at": "2026-03-14T20:00:00+00:00",
+      "required_skills": [
+        "Paint Systems",
+        "HVAC"
+      ],
+      "assignees": [
+        "user:james.tech",
+        "user:nina.tech"
+      ],
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Assembly Robot J4",
+      "title": "Test Weekend Report Night MO",
+      "description": "Corrective work completed during weekend night shift. This appears in MOs/Tickets section showing weekend reactive maintenance.",
+      "order_type": "Corrective",
+      "status": "Completed",
+      "priority": "Medium",
+      "estimated_completion_time": 60,
+      "labour_count": 1,
+      "created_at": "2026-03-14T22:30:00+00:00",
+      "required_skills": [
+        "Robotics"
+      ],
+      "assignees": [
+        "user:maria.tech"
+      ],
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Final Assembly Line M1",
+      "title": "Test Weekend Report Night Additional Ticket",
+      "description": "Additional corrective ticket completed during weekend night shift. Shows in Additional Tickets section for non-PM, non-primary maintenance work.",
+      "order_type": "Corrective",
+      "status": "Completed",
+      "priority": "Low",
+      "estimated_completion_time": 30,
+      "labour_count": 1,
+      "created_at": "2026-03-15T01:00:00+00:00",
+      "required_skills": [
+        "Mechanical"
+      ],
+      "assignees": [
+        "user:tom.tech"
+      ],
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Spot Welding Gun L2",
+      "title": "Test Weekend Report Night Handover To Early",
+      "description": "Corrective issue started during weekend night shift, ongoing. This MO hands over to the early weekend shift.",
+      "order_type": "Corrective",
+      "status": "In Progress",
+      "priority": "High",
+      "estimated_completion_time": 75,
+      "labour_count": 1,
+      "created_at": "2026-03-15T04:00:00+00:00",
+      "required_skills": [
+        "Welding",
+        "Electrical"
+      ],
+      "assignees": [
+        "user:lisa.tech"
+      ],
+      "category": "General",
+      "downtime_duration": 20,
+      "root_cause": "Welding electrode holder overheating intermittently",
+      "recovery": "Cooling system inspection in progress, replacement parts ordered"
+    },
+    {
+      "asset": "BIW Welding Robot C2",
+      "title": "Test Weekend Report Early PM",
+      "description": "Preventive maintenance completed during weekend early shift (2026-03-15). Demonstrates weekend PM execution with full documentation.",
+      "order_type": "PM",
+      "status": "Completed",
+      "priority": "High",
+      "schedule_name": "Weekend Robot Calibration",
+      "frequency": "Weekly",
+      "estimated_completion_time": 90,
+      "labour_count": 1,
+      "due_date": "2026-03-15T10:00:00+00:00",
+      "created_at": "2026-03-15T07:00:00+00:00",
+      "required_skills": [
+        "Welding",
+        "Robotics"
+      ],
+      "assignees": [
+        "user:lisa.tech"
+      ],
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Stamping Press G1",
+      "title": "Test Weekend Report Early MO",
+      "description": "Corrective maintenance completed during weekend early shift. Shows in MOs/Tickets section.",
+      "order_type": "Corrective",
+      "status": "Completed",
+      "priority": "Medium",
+      "estimated_completion_time": 45,
+      "labour_count": 1,
+      "created_at": "2026-03-15T09:00:00+00:00",
+      "required_skills": [
+        "Mechanical",
+        "Hydraulics"
+      ],
+      "assignees": [
+        "user:tom.tech"
+      ],
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Paint Oven N1",
+      "title": "Test Weekend Report Early Additional Ticket",
+      "description": "Additional maintenance work completed during weekend early shift. Appears in Additional Tickets section.",
+      "order_type": "Corrective",
+      "status": "Completed",
+      "priority": "Low",
+      "estimated_completion_time": 30,
+      "labour_count": 1,
+      "created_at": "2026-03-15T11:30:00+00:00",
+      "required_skills": [
+        "HVAC",
+        "Electrical"
+      ],
+      "assignees": [
+        "user:nina.tech"
+      ],
+      "category": "General",
+      "downtime_duration": null,
+      "root_cause": null,
+      "recovery": null
+    },
+    {
+      "asset": "Material Handling AGV O1",
+      "title": "Test Weekend Report Early Handover To Next",
+      "description": "Corrective issue started during weekend early shift, ongoing. This MO should hand over to the next shift.",
+      "order_type": "Corrective",
+      "status": "In Progress",
+      "priority": "High",
+      "estimated_completion_time": 60,
+      "labour_count": 1,
+      "created_at": "2026-03-15T13:00:00+00:00",
+      "required_skills": [
+        "Electrical",
+        "Robotics"
+      ],
+      "assignees": [
+        "user:alex.tech"
+      ],
+      "category": "General",
+      "downtime_duration": 15,
+      "root_cause": "AGV battery management system error under investigation",
+      "recovery": "System diagnostics running, awaiting software update from vendor"
     }
   ],
   "spare_parts": [
@@ -1094,7 +1737,10 @@
       "task_type": "PM",
       "ticket_mo": "CMMS-101",
       "ticket_url": "http://mockcmms/tickets/CMMS-101",
-      "required_skills": ["Network", "Hardware"]
+      "required_skills": [
+        "Network",
+        "Hardware"
+      ]
     },
     {
       "scheduler_group_task": "API Endpoint Debug",
@@ -1107,7 +1753,10 @@
       "task_type": "Rep",
       "ticket_mo": "CMMS-102",
       "ticket_url": "http://mockcmms/tickets/CMMS-102",
-      "required_skills": ["Python", "Flask"]
+      "required_skills": [
+        "Python",
+        "Flask"
+      ]
     },
     {
       "scheduler_group_task": "Frontend UI Fix",
@@ -1120,7 +1769,9 @@
       "task_type": "Rep",
       "ticket_mo": "CMMS-103",
       "ticket_url": "http://mockcmms/tickets/CMMS-103",
-      "required_skills": ["Frontend"]
+      "required_skills": [
+        "Frontend"
+      ]
     },
     {
       "scheduler_group_task": "Database Optimization",
@@ -1133,7 +1784,9 @@
       "task_type": "PM",
       "ticket_mo": "CMMS-104",
       "ticket_url": "http://mockcmms/tickets/CMMS-104",
-      "required_skills": ["Database"]
+      "required_skills": [
+        "Database"
+      ]
     }
   ],
   "schedules": [
@@ -1143,14 +1796,18 @@
       "end_date": "2025-11-24T18:00:00",
       "planning_status": "Draft",
       "maintenance_orders": [
-        "Weekly lubrication and calibration check",
-        "Filter replacement and spray gun cleaning",
-        "Calibration of measurement equipment",
-        "Pump maintenance and color accuracy check",
-        "Conveyor belt inspection and station alignment",
-        "Air filter replacement and duct cleaning",
-        "Laser head alignment and lens replacement",
-        "Temperature sensor replacement"
+        "Paint Line Robot A1 - Weekly Maintenance",
+        "Paint Booth F2 - Filter & Gun Maintenance",
+        "Quality Control Station E1 - Measurement Calibration",
+        "Paint Mixing Station K1 - Weekly Pump Maintenance",
+        "Final Assembly Line M1 - Weekly Conveyor Inspection",
+        "HVAC System H3 - Filter & Duct Maintenance",
+        "Assembly Robot J4 - Weekly End Effector Inspection",
+        "Paint Line Robot A1 - Daily Safety Inspection",
+        "Conveyor System D1 - Daily Emergency Stop Test",
+        "Paint Oven N1 - Monthly Temperature Calibration",
+        "Conveyor System D1 - Belt Tension & Alignment",
+        "Assembly Station B3 - Tool Calibration"
       ]
     },
     {
@@ -1159,12 +1816,12 @@
       "end_date": "2025-11-20T10:30:00",
       "planning_status": "Draft",
       "maintenance_orders": [
-        "Robot safety sensor check - Quick inspection",
-        "Emergency stop button test",
-        "Paint nozzle clog - Immediate cleaning required",
-        "Gripper alignment issue - Quick adjustment",
-        "Electrode replacement and current calibration",
-        "Temperature sensor replacement"
+        "Paint Line Robot A1 - Daily Safety Inspection",
+        "Conveyor System D1 - Daily Emergency Stop Test",
+        "Paint Booth F2 - Filter & Gun Maintenance",
+        "Spot Welding Gun L2 - Daily Electrode Service",
+        "Material Handling AGV O1 - Battery Service",
+        "Quality Control Station E1 - Measurement Calibration"
       ]
     }
   ]

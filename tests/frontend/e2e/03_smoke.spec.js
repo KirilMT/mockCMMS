@@ -46,8 +46,13 @@ test.describe("Authentication Smoke Tests", () => {
     await expect(page).toHaveURL(/\/assets/);
     await expect(page.locator("text=Logout")).toBeVisible();
 
-    // Logout
-    await page.click("text=Logout");
+    // Logout - wait for navigation since it submits a form
+    await Promise.all([
+      page.waitForURL(/\/login/, { timeout: 10000 }),
+      page.click('button:has-text("Logout")'),
+    ]);
+
+    // Verify we're on login page
     await expect(page).toHaveURL(/\/login/);
   });
 
@@ -247,7 +252,8 @@ test.describe("Table Sidebar Tests", () => {
       localStorage.setItem("tableSidebarCollapsed", "true");
       localStorage.removeItem("tableSidebarSections");
     });
-    await page.reload();
+    // Use navigation instead of reload to avoid timeout issues on Firefox
+    await page.goto("/assets", { waitUntil: "domcontentloaded" });
     await waitForTable(page, "#assetsTable");
 
     const toggleBtn = page.locator(".btn-toggle-sidebar");
@@ -255,15 +261,11 @@ test.describe("Table Sidebar Tests", () => {
 
     // Click to open sidebar (starts collapsed)
     await toggleBtn.click();
-    await page.waitForTimeout(500);
 
     // Verify sidebar is visible and not collapsed
     const sidebar = page.locator(".table-sidebar");
     await expect(sidebar).toBeVisible();
-    const isCollapsed = await sidebar.evaluate((el) =>
-      el.classList.contains("collapsed"),
-    );
-    expect(isCollapsed).toBe(false);
+    await expect(sidebar).not.toHaveClass(/collapsed/);
   });
 
   test("SMOKE-18: Sidebar filter section expands", async ({ page }) => {
@@ -275,14 +277,14 @@ test.describe("Table Sidebar Tests", () => {
       localStorage.setItem("tableSidebarCollapsed", "true");
       localStorage.removeItem("tableSidebarSections");
     });
-    await page.reload();
+    await page.goto("/assets", { waitUntil: "domcontentloaded" });
     await waitForTable(page, "#assetsTable");
 
     // Open sidebar first
     await page.locator(".btn-toggle-sidebar").click();
-    await page.waitForTimeout(800); // Give it plenty of time to transition
 
     // Click filters section header to expand
+    // Wait for the section to improve stability
     const filtersSection = page.locator(
       '.sidebar-section[data-section="filters"]',
     );
@@ -292,15 +294,11 @@ test.describe("Table Sidebar Tests", () => {
     const header = filtersSection.locator(".section-header");
     await header.waitFor({ state: "visible" });
     await header.click();
-    await page.waitForTimeout(300);
 
     // Verify section expanded (content no longer has 'collapsed' class)
     const filtersContent = filtersSection.locator(".section-content");
     await expect(filtersContent).toBeVisible();
-    const isContentCollapsed = await filtersContent.evaluate((el) =>
-      el.classList.contains("collapsed"),
-    );
-    expect(isContentCollapsed).toBe(false);
+    await expect(filtersContent).not.toHaveClass(/collapsed/);
   });
 
   test("SMOKE-19: Sidebar columns section expands", async ({ page }) => {
@@ -312,12 +310,11 @@ test.describe("Table Sidebar Tests", () => {
       localStorage.setItem("tableSidebarCollapsed", "true");
       localStorage.removeItem("tableSidebarSections");
     });
-    await page.reload();
+    await page.goto("/assets", { waitUntil: "domcontentloaded" });
     await waitForTable(page, "#assetsTable");
 
     // Open sidebar first
     await page.locator(".btn-toggle-sidebar").click();
-    await page.waitForTimeout(800);
 
     // Click columns section header to expand
     const columnsSection = page.locator(
@@ -328,17 +325,12 @@ test.describe("Table Sidebar Tests", () => {
     const header = columnsSection.locator(".section-header");
     await header.waitFor({ state: "visible" });
     await header.click();
-    await page.waitForTimeout(300);
 
     // Verify section expanded (content no longer has 'collapsed' class)
     const columnsContent = columnsSection.locator(".section-content");
-    await expect(columnsContent).toBeVisible();
-    const isContentCollapsed = await columnsContent.evaluate((el) =>
-      el.classList.contains("collapsed"),
-    );
-    expect(isContentCollapsed).toBe(false);
-
     // Also verify column list is visible
+    await expect(columnsContent).toBeVisible();
+    await expect(columnsContent).not.toHaveClass(/collapsed/);
     await expect(columnsSection.locator("#columnList")).toBeVisible();
   });
 });
@@ -393,7 +385,6 @@ test.describe("CRUD Lifecycle Tests", () => {
     // Filter to ensure visibility
     await page.getByPlaceholder("Search all columns...").fill(assetName);
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(2000);
 
     // 5. Verify presence in table
     await expect(page.locator(`text=${assetName}`)).toBeVisible();
@@ -418,7 +409,6 @@ test.describe("CRUD Lifecycle Tests", () => {
     // Filter to ensure visibility
     await page.getByPlaceholder("Search all columns...").fill(assetName);
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(2000);
 
     // Find row with this asset
     const row = page.locator("tr", { has: page.locator(`text=${assetName}`) });
@@ -432,10 +422,10 @@ test.describe("CRUD Lifecycle Tests", () => {
     await page.click('button:has-text("Delete")');
 
     // Wait for modal and confirm
-    await page.waitForSelector("#confirmDeleteBtn", { state: "visible" });
+    await expect(page.locator("#confirmDeleteBtn")).toBeVisible();
     await Promise.all([
       page.waitForNavigation(),
-      page.evaluate(() => document.getElementById("confirmDeleteBtn").click()),
+      page.locator("#confirmDeleteBtn").click(),
     ]);
 
     // Validate removal
@@ -444,7 +434,6 @@ test.describe("CRUD Lifecycle Tests", () => {
     // Search again to verify absence
     await page.getByPlaceholder("Search all columns...").fill(assetName);
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(2000);
 
     // Confirm "No results found" message appears
     await expect(

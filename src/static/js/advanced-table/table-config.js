@@ -1,3 +1,4 @@
+/* global $ */
 // Configuration management methods
 
 /**
@@ -146,6 +147,18 @@ AdvancedTable.prototype.applyConfiguration = function (config) {
   if (config.filters) this.filters = JSON.parse(config.filters);
   if (config.sort_config) this.currentSort = JSON.parse(config.sort_config);
 
+  // Reset global search when loading a view
+  this.globalSearchTerm = "";
+  this.globalSearchDisplay = ""; // Reset display value used in render
+  this.currentPage = 1; // Also reset page
+
+  const globalSearchInput = document.getElementById("globalSearchInput");
+  if (globalSearchInput) {
+    globalSearchInput.value = "";
+    // Trigger input event to update UI states (like clear buttons)
+    globalSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
   this.render();
 };
 
@@ -176,8 +189,42 @@ AdvancedTable.prototype.apiCall = function (url, method) {
  * @param {number|string} configId - The ID of the configuration to delete.
  */
 AdvancedTable.prototype.deleteConfiguration = function (configId) {
-  if (!confirm("Are you sure you want to delete this view?")) return;
+  // Use Bootstrap modal if available, otherwise fallback to confirm
+  const modal = document.getElementById("deleteConfirmModal");
+  if (modal && typeof $ !== "undefined") {
+    // Set message
+    const msgElement = document.getElementById("deleteConfirmModalMessage");
+    if (msgElement) {
+      msgElement.textContent = "Are you sure you want to delete this view?";
+    }
 
+    // Show modal
+    $("#deleteConfirmModal").modal("show");
+
+    // Handle confirm button
+    const confirmBtn = document.getElementById("confirmDeleteBtn");
+    if (confirmBtn) {
+      // Remove any existing listeners to prevent duplicates
+      const newBtn = confirmBtn.cloneNode(true);
+      confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+      newBtn.addEventListener("click", () => {
+        $("#deleteConfirmModal").modal("hide");
+        this._performDelete(configId);
+      });
+    }
+  } else {
+    // Fallback
+    if (!confirm("Are you sure you want to delete this view?")) return;
+    this._performDelete(configId);
+  }
+};
+
+/**
+ * Internal method to execute the delete API call.
+ * @param {number|string} configId - The ID of the configuration to delete.
+ */
+AdvancedTable.prototype._performDelete = function (configId) {
   this.apiCall(`/api/table-config/${this.pageName}/${configId}`, "DELETE")
     .then((data) => {
       if (data.success) {
