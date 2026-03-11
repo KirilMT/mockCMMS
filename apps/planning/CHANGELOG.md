@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - **Planning Engine (Phase 2 & 3):**
   - **Shift Break & Weekend Modes:** Implemented distinct planning modes with specific constraints (30-min window vs. multi-day).
   - **Shift Intersection Logic:** Backend logic to correctly intersect planning windows with shift patterns.
@@ -40,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Security Audit:** Completed comprehensive audit of JavaScript assets.
 
 ### Changed
+
 - **Documentation:**
   - **Refactoring:** Split monolithic `PLANNING_MODULE_ACTION_PLAN.md` into phase-specific files in `docs/roadmap/`.
   - **Consolidation:** Moved all app-specific documentation to `apps/planning/docs/`.
@@ -49,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved separation of concerns between Domain Models and Transformation Layer.
 
 ### Fixed
+
 - **Critical:** Resolved `AttributeError: '__name__'` in `planning_engine.py` preventing server startup.
 - **Logic:** Fixed "Shift Break" planning window constraints to strictly enforce 30-minute limits.
 - **UI Bugs:**
@@ -59,11 +62,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2025-09-22
 
 ### Added
+
 - **Project Screenshots**: Added a new screenshot gallery to the `README.md` to visually showcase the application's user interface.
 - **Changelog**: Created a `CHANGELOG.md` file to track project versions and notable changes.
 - **AI-Assisted Workflow**: Established a new workflow for updating version numbers and changelogs at the end of each issue.
 
 ### Changed
+
 - **Project Structure**: Major refactoring of the project layout to follow standard conventions.
   - Renamed `wkndPlanning` directory to `src/`.
   - Moved runtime-generated directories (`logs`, `output`) to the project root.
@@ -75,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated AI instruction files (`.github/AGENT.md`, `.github/copilot-instructions.md`) to reflect the new workflow.
 
 ### Removed
+
 - **Obsolete `uploads` Directory**: Removed the unused `uploads` folder and all associated references from the code, configuration, and documentation.
 - **Redundant Documentation**: Deleted obsolete `issues.md` and `ROADMAP.md` files to establish GitHub as the single source of truth.
 

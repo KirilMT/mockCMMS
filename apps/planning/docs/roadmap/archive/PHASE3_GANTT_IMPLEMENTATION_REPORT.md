@@ -12,6 +12,7 @@
 **This document was originally written describing a Frappe Gantt implementation, but the ACTUAL implementation uses a custom-built Gantt chart.**
 
 **What Actually Exists:**
+
 - ✅ Custom JavaScript implementation (~450 lines) - `planning-gantt-custom.js`
 - ✅ Custom CSS (~200 lines) - `planning-gantt-custom.css`
 - ✅ No external Gantt library (pure vanilla JavaScript)
@@ -33,6 +34,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
 ### Decision: Custom Implementation (Not Frappe Gantt)
 
 **Actual Decision Made:**
+
 - ✅ **Built custom Gantt chart** matching original technician dashboard
 - ✅ Technician-row based layout (fixed left pane + scrollable timeline)
 - ✅ 12-hour view with 30-minute time columns
@@ -40,6 +42,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
 - ✅ Full control over behavior and styling
 
 **Why Custom Implementation:**
+
 - Original technician dashboard had proven Gantt design that users liked
 - Custom implementation gives complete control over features
 - No dependency on external libraries (better for maintenance)
@@ -47,6 +50,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
 - Easier to add planning-specific features
 
 **Files Present (Unused):**
+
 - `planning-gantt.js` exists but is NOT used (Frappe Gantt version, obsolete)
 - Template uses `planning-gantt-custom.js` instead
 
@@ -93,6 +97,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
 ## ✨ Features Implemented (ACTUAL)
 
 ### 1. Technician-Row Layout
+
 - **Fixed Left Pane:**
   - Technician names with task counts
   - Scrolls vertically with task rows
@@ -104,6 +109,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
   - Horizontal scrolling for wide timelines
 
 ### 2. Time Grid
+
 - **30-Minute Columns:**
   - Time labels every 30 minutes (08:00, 08:30, 09:00, etc.)
   - Alternating column backgrounds (#fafafa / white)
@@ -114,6 +120,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
   - Horizontal lines between technician rows
 
 ### 3. Task Bars
+
 - **Positioning:**
   - Positioned by actual planned start/end times
   - Width calculated as percentage of timeline
@@ -125,7 +132,9 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
   - White text on colored background
 
 ### 4. Color-Coded Tasks
+
 **By Priority:**
+
 - 🔴 **Critical** - Red (#dc3545)
 - 🟠 **High** - Orange (#fd7e14)
 - 🟡 **Medium** - Yellow (#ffc107)
@@ -133,11 +142,13 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
 - ⚫ **Undefined** - Gray (#6c757d)
 
 **No Status-Based Styling:**
+
 - All planned tasks shown (only status='Planned' tasks rendered)
 - No different colors for in-progress/completed
 - Simpler than original report claimed
 
 ### 5. Interactive Features
+
 - **Click Task Bar:**
   - Scrolls to corresponding table row
   - Highlights table row with yellow background (#fff3cd)
@@ -157,6 +168,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
 ## 🚫 Features NOT Implemented (Despite Document Claims)
 
 ### Missing Features:
+
 - ❌ **Resource Allocation View** - Document claims it exists, but it doesn't
   - No utilization cards
   - No technician workload summary
@@ -209,6 +221,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
 ### Key Methods
 
 **`PlanningGanttChart` class:**
+
 ```javascript
 - constructor(containerId, scheduleId, options)
 - async init()
@@ -236,6 +249,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
 ## 🎨 Styling Details
 
 ### Layout
+
 ```css
 .gantt-container {
   display: grid;
@@ -255,6 +269,7 @@ Successfully implemented a **fully functional custom Gantt chart** for the Plann
 ```
 
 ### Task Bars
+
 ```css
 position: absolute;
 left: [calculated]%;
@@ -263,7 +278,7 @@ top: 8px;
 height: 24px;
 background: [priority color];
 border-radius: 4px;
-box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 cursor: pointer;
 ```
 
@@ -271,29 +286,31 @@ cursor: pointer;
 
 ## 📊 Actual vs. Documented Features
 
-| Feature | This Document Originally Claimed | Actually Implemented |
-|---------|----------------------------------|---------------------|
-| Gantt Library | Frappe Gantt | Custom implementation |
-| Timeline View | Multiple views (Quarter/Half/Day) | Fixed 12-hour view |
-| Resource Allocation | Utilization cards with progress bars | ❌ Not implemented |
-| View Controls | Quarter Day, Half Day, Day buttons | ❌ Not implemented |
-| Task Colors | By priority AND status | By priority only |
-| Tooltips | Custom HTML popups | Basic title attribute |
-| Today Indicator | Auto-highlighting | ❌ Not implemented |
-| Drag & Drop | Commented/planned | ❌ Not implemented |
-| Column Hover | Working | ⚠️ Attempted but broken |
+| Feature             | This Document Originally Claimed     | Actually Implemented    |
+| ------------------- | ------------------------------------ | ----------------------- |
+| Gantt Library       | Frappe Gantt                         | Custom implementation   |
+| Timeline View       | Multiple views (Quarter/Half/Day)    | Fixed 12-hour view      |
+| Resource Allocation | Utilization cards with progress bars | ❌ Not implemented      |
+| View Controls       | Quarter Day, Half Day, Day buttons   | ❌ Not implemented      |
+| Task Colors         | By priority AND status               | By priority only        |
+| Tooltips            | Custom HTML popups                   | Basic title attribute   |
+| Today Indicator     | Auto-highlighting                    | ❌ Not implemented      |
+| Drag & Drop         | Commented/planned                    | ❌ Not implemented      |
+| Column Hover        | Working                              | ⚠️ Attempted but broken |
 
 ---
 
 ## 🐛 Known Issues
 
 ### Current Bugs:
+
 1. **Column Hover Highlighting Not Working** (attempted fix November 19, still broken)
    - Code exists to highlight columns on hover
    - Event listeners attached but highlighting doesn't work
    - May be CSS specificity issue
 
 ### Missing Features vs. Documentation:
+
 2. **No Resource Utilization View**
    - Document claims it exists
    - Would show technician workload/utilization
@@ -308,6 +325,7 @@ cursor: pointer;
 ## ✅ What Actually Works Well
 
 ### Strengths of Current Implementation:
+
 1. ✅ **Matches Original Dashboard** - Layout and behavior familiar to users
 2. ✅ **Clean Code** - Well-structured class-based design
 3. ✅ **Good Performance** - No external dependencies, fast rendering
@@ -321,11 +339,13 @@ cursor: pointer;
 ## 📝 Recommendations
 
 ### For Phase 4 (Cleanup):
+
 1. **Delete `planning-gantt.js`** - Unused Frappe Gantt wrapper
 2. **Delete this outdated report** OR update it (this update covers it)
 3. **Remove Frappe Gantt references** from all documentation
 
 ### For Phase 5.10 (Gantt Advanced Features):
+
 1. **Fix column hover highlighting** - Debug CSS/JavaScript issue
 2. **Add resource utilization view** - Implement or remove from docs
 3. **Add view mode controls** - Quarter Day/Half Day/Day (or remove feature)
@@ -339,12 +359,14 @@ cursor: pointer;
 ## 🎯 Conclusion
 
 **What This Report Originally Said:**
+
 - "Successfully implemented using Frappe Gantt library"
 - "Resource allocation summary with utilization metrics"
 - "View mode controls (Quarter Day, Half Day, Day)"
 - "Professional timeline visualization"
 
 **What Actually Exists:**
+
 - ✅ Custom-built Gantt chart (NO Frappe Gantt)
 - ✅ Technician-row layout matching original dashboard
 - ✅ Basic but functional timeline
@@ -368,6 +390,7 @@ The custom Gantt chart implementation is **functional and usable** for basic pla
 **Correction Date:** November 20, 2025
 
 ### 4. Interactive Features
+
 - **Click** - Shows custom popup with full task details:
   - Task description
   - Status, Priority, Type
@@ -378,6 +401,7 @@ The custom Gantt chart implementation is **functional and usable** for basic pla
 - **Hover** - Highlights task bar (built-in Frappe Gantt feature)
 
 ### 5. Resource Allocation Summary
+
 - **Technician Utilization Cards:**
   - Technician name
   - Visual progress bar (colored by utilization %)
@@ -388,13 +412,16 @@ The custom Gantt chart implementation is **functional and usable** for basic pla
   - Task count
 
 **Calculation Logic:**
+
 ```javascript
 utilization = (assigned_minutes / shift_duration) * 100
 shift_duration = 12 * 60 = 720 minutes
 ```
 
 ### 6. Legend
+
 Visual guide showing:
+
 - Priority color coding
 - Status indicators
 - Clear labels for user reference
@@ -404,7 +431,9 @@ Visual guide showing:
 ## 🔌 Integration Points
 
 ### Backend API
+
 **Endpoint:** `/planning-manager/planning/schedules/<schedule_id>/gantt-data`
+
 - Already existed from Phase 3 setup
 - Returns JSON with:
   - `schedule`: Basic schedule info
@@ -412,6 +441,7 @@ Visual guide showing:
   - `technicians`: Array of available technicians
 
 **Data Transformation:**
+
 ```javascript
 // Input: CMMS planning data
 {
@@ -440,12 +470,15 @@ Visual guide showing:
 ```
 
 ### Frontend Integration
+
 **Template Blocks:**
+
 - `{% block extra_css %}` - Loads Frappe Gantt CSS + custom CSS
 - `{% block extra_js %}` - Loads Frappe Gantt JS + custom JS
 - Conditional rendering based on `view_type == 'gantt'`
 
 **Initialization Flow:**
+
 1. DOM loads → `DOMContentLoaded` event fires
 2. Check if `initPlanningGantt` function exists (retry if not loaded)
 3. Call `initPlanningGantt(containerId, scheduleId, options)`
@@ -460,16 +493,19 @@ Visual guide showing:
 ## 🎨 UI/UX Enhancements
 
 ### Responsive Design
+
 - Gantt container scrolls horizontally for long timelines
 - Utilization cards use CSS Grid (auto-fill, responsive columns)
 - Mobile-friendly controls (buttons stack vertically on small screens)
 
 ### Loading States
+
 - Spinner animation while data loads
 - Graceful error handling with user-friendly messages
 - Empty state when no tasks available
 
 ### Consistency with App Theme
+
 - Bootstrap integration (colors, buttons, cards)
 - Font Awesome icons throughout
 - Matches existing table view styling
@@ -479,6 +515,7 @@ Visual guide showing:
 ## 🧪 Testing Notes
 
 ### Manual Testing Required:
+
 1. **Navigate to Planning → View Schedule**
 2. **Click "Gantt" view radio button**
 3. **Verify:**
@@ -489,12 +526,14 @@ Visual guide showing:
    - Legend displays correctly
 
 ### Known Limitations:
+
 1. **No drag-and-drop** (commented in code, ready for future)
 2. **No dependencies** between tasks (Frappe Gantt supports, not implemented)
 3. **No progress updates** from UI (backend only)
 4. **Fixed shift duration** (12 hours) in resource calculation
 
 ### Future Enhancements (Phase 5):
+
 - Drag-and-drop task rescheduling (role-based: Supervisor/Planner only)
 - Task dependencies visualization
 - Progress bar updates from UI
@@ -506,12 +545,14 @@ Visual guide showing:
 ## 📈 Performance Considerations
 
 ### Optimization Strategies:
+
 - Lazy loading: Gantt only initializes when view is selected
 - Data caching: Resource allocation uses same API call as Gantt
 - Minimal DOM manipulation: Frappe Gantt handles most rendering
 - CDN delivery: Frappe Gantt loaded from fast CDN
 
 ### Scalability:
+
 - **Current:** Handles 100+ tasks smoothly
 - **Tested:** Works well with 50 technicians, 200 tasks
 - **Limit:** Browser performance may degrade above 500 tasks (consider pagination)
@@ -521,11 +562,13 @@ Visual guide showing:
 ## 🔐 Security Considerations
 
 ### Implemented:
+
 - ✅ Server-side data validation (existing from backend API)
 - ✅ CSRF protection (Flask-WTF, existing)
 - ✅ No user input directly rendered (Frappe Gantt sanitizes)
 
 ### Future (Phase 3.5 - Role-Based Access):
+
 - Add permission checks for drag-and-drop
 - Hide "Run Planning" button for read-only users
 - Audit log for task reassignments
@@ -535,11 +578,13 @@ Visual guide showing:
 ## 📚 Documentation Updates
 
 ### Updated Files:
+
 1. `PLANNING_MODULE_ACTION_PLAN.md` - Marked Phase 3.4 complete
 2. `PLANNING_MODULE_STATUS.md` - Updated progress to 70%
 3. `PHASE3_GANTT_IMPLEMENTATION_REPORT.md` - **This file**
 
 ### Code Comments:
+
 - Comprehensive JSDoc-style comments in `planning-gantt.js`
 - CSS comments explaining custom overrides
 - Template comments for future developers
@@ -549,12 +594,14 @@ Visual guide showing:
 ## 🎯 Success Metrics
 
 ### Achievements:
+
 - ✅ **User Requirement:** "Gantt chart is the next critical feature" - **DELIVERED**
 - ✅ **Maintainability:** Professional library (Frappe Gantt) instead of 1400-line custom code
 - ✅ **Features:** All Phase 3.4 requirements met (timeline, interactions, resource view)
 - ✅ **Timeline:** Completed in single session (< 1 day)
 
 ### What Users Get:
+
 1. **Visual Planning:** See entire schedule at a glance
 2. **Quick Insights:** Identify overloaded technicians instantly
 3. **Flexibility:** Multiple view modes for different planning needs
@@ -565,12 +612,14 @@ Visual guide showing:
 ## 🚀 Next Steps
 
 ### Immediate (User Testing):
+
 1. Test Gantt chart with real planning data
 2. Verify colors and legend match user expectations
 3. Get feedback on view modes (which is most useful?)
 4. Identify any UX improvements needed
 
 ### Phase 3 Remaining Tasks:
+
 1. **Role-Based Access Control** (Phase 3.5) - HIGH PRIORITY
    - Different views for Planner/Supervisor/Technician
    - Permission-based feature visibility
@@ -596,6 +645,7 @@ The Gantt chart implementation successfully delivers a professional, maintainabl
 - **Future-ready** - Easy to extend with drag-and-drop, dependencies, etc.
 
 **The Planning Module now has:**
+
 - ✅ Team formation logic
 - ✅ Gantt chart visualization
 - ⏳ Role-based access (next)

@@ -654,7 +654,7 @@ def technician_detail(technician_id):
 @main_bp.route("/planning")
 @login_required
 def planning():
-    return redirect(url_for("planning.index_route"))
+    return redirect(url_for("planning.planning_index"))
 
 
 @main_bp.route("/shift_calendar")

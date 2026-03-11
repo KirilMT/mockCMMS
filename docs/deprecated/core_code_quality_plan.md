@@ -96,32 +96,27 @@ For all audit tasks, we follow a strict 5-step iterative process to ensure quali
 ### Maintenance Rules
 
 1. **Update Progress Continuously**
-
    - Mark checkboxes `[x]` when items are completed
    - Add completion dates and notes to completed items
    - Update "Last Updated" timestamp at the top
    - Update "Status" field as work progresses
 
 2. **Avoid Duplicates**
-
    - Before adding new issues, search the document to ensure it doesn't already exist
    - Consolidate related issues into single entries
    - Cross-reference related issues when necessary
 
 3. **Do Not Delete - Mark as Complete**
-
    - Never delete completed items
    - Mark items as complete with `[x]` and add resolution notes
    - Keep historical context for future reference
 
 4. **Add Details as Discovered**
-
    - When new issues are found, add them to the appropriate phase
    - Include file paths, line numbers, and severity
    - Link to issue reports when created
 
 5. **Update Metrics**
-
    - Keep "Progress Tracking" section current
    - Update issue counts as work progresses
    - Track commits and files modified
@@ -347,19 +342,16 @@ cat audit_results/*.txt > audit_results/audit_results_full.txt
 **Categorize by severity:**
 
 1. **Critical (Fix Immediately)**
-
    - Security vulnerabilities (bandit)
    - Type errors (mypy)
    - High complexity (radon CC > 15)
 
 2. **High Priority (Fix Soon)**
-
    - Code duplicates >10 lines (jscpd)
    - Low test coverage (<70%) (pytest-cov)
    - Major pylint violations (scoring < 7.0)
 
 3. **Medium Priority (Fix This Sprint)**
-
    - Style violations (ruff, pylint)
    - Medium complexity (radon CC 10-15)
    - Maintainability index < 20
@@ -2727,32 +2719,27 @@ If Step 4 resulted in NO modifications:
 ### Step-by-Step Process (Per Issue Found)
 
 1. **Analysis & Discovery**
-
    - AI identifies issue during audit phase
    - Documents finding with file location, line numbers, description
 
 2. **Proposal & Discussion**
-
    - AI presents finding to user
    - Explains the problem and impact
    - Proposes solution(s) with pros/cons
    - **WAIT FOR USER APPROVAL** before proceeding
 
 3. **Implementation**
-
    - AI implements approved solution
    - Follows coding standards and best practices
    - Updates related files if necessary
 
 4. **Testing**
-
    - Run automated tests (if applicable)
    - Perform manual testing following test plan template
    - Verify no regressions or crashes
    - **WAIT FOR USER CONFIRMATION** that tests pass
 
 5. **Documentation**
-
    - Update audit report with resolution
    - Document changes in commit message
    - Update relevant documentation files

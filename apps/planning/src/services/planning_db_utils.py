@@ -50,7 +50,10 @@ def populate_dummy_data(conn, logger):
     for line in data.get("lines", []):
         sp_id = satellite_points.get(line["satellite_point"])
         if sp_id:
-            add_line(conn, line["name"], sp_id)
+            try:
+                add_line(conn, line["name"], sp_id)
+            except sqlite3.IntegrityError:
+                pass  # Line already exists, skip
     logger.info("Populated lines.")
 
     # Populate technology_groups
@@ -102,19 +105,72 @@ def populate_dummy_data(conn, logger):
                     update_technician_skill(conn, tech_id, tech_id_for_skill, level)
     logger.info(f"Populated {len(technicians)} technicians and their skills.")
 
-    # Populate tasks and their required skills
+    # Populate default line conditions (BEFORE tasks)
+    line_condition_manager = LineConditionManager(conn)
+    default_conditions = [
+        {
+            "name": "Line Empty",
+            "description": "The production line must be empty",
+            "color_code": "red",
+        },
+        {
+            "name": "Power Off",
+            "description": "Main power must be turned off",
+            "color_code": "red",
+        },
+        {
+            "name": "Part in Fixture",
+            "description": "A part must be present in the fixture",
+            "color_code": "yellow",
+        },
+        {
+            "name": "Robot Home",
+            "description": "Robot must be at home position",
+            "color_code": "green",
+        },
+        {
+            "name": "Safety Gates Closed",
+            "description": "All safety gates must be closed",
+            "color_code": "green",
+        },
+    ]
+
+    conditions_map = {}
+    for condition in default_conditions:
+        cid = line_condition_manager.create_condition(
+            condition["name"], condition["description"], condition["color_code"]
+        )
+        if cid:
+            conditions_map[condition["name"]] = cid
+
+    if logger:
+        logger.info(f"Populated {len(default_conditions)} default line conditions.")
+
+    # Populate tasks and their required skills / conditions
     for task_data in data.get("tasks", []):
         task_name = task_data["name"]
         task_id = task_manager.get_or_create(task_name)
         tasks[task_name] = task_id
+
+        # Skills
         for skill_name in task_data.get("required_skills", []):
             skill_id = technologies.get(skill_name)
             if skill_id:
                 task_manager.add_required_skill(task_id, skill_id)
-    logger.info(f"Populated {len(tasks)} tasks and their required skills.")
+
+        # Line Conditions
+        for condition_name in task_data.get("line_conditions", []):
+            cid = conditions_map.get(condition_name)
+            if cid:
+                line_condition_manager.assign_condition_to_task(task_id, cid)
+
+    logger.info(
+        f"Populated {len(tasks)} tasks and their required skills and conditions."
+    )
 
     conn.commit()
-    logger.info("Dummy data population complete.")
+    if logger:
+        logger.info("Dummy data population complete.")
 
 
 def init_db(db_path, logger=None, debug_use_test_db=False):
@@ -440,6 +496,38 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
             ON task_required_skills (technology_id)
         """
         )
+
+        conn.commit()
+
+        # Line Conditions Table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS line_conditions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                description TEXT,
+                color_code TEXT
+            )
+        """
+        )
+        logger.info("Table 'line_conditions' ensured.") if logger else None
+
+        # Task Line Conditions Table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS task_line_conditions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id INTEGER NOT NULL,
+                condition_id INTEGER NOT NULL,
+                FOREIGN KEY(task_id)
+                    REFERENCES tasks(id) ON DELETE CASCADE,
+                FOREIGN KEY(condition_id)
+                    REFERENCES line_conditions(id) ON DELETE CASCADE,
+                UNIQUE(task_id, condition_id)
+            )
+        """
+        )
+        logger.info("Table 'task_line_conditions' ensured.") if logger else None
 
         conn.commit()
 
@@ -964,4 +1052,99 @@ class TechnicianGroupManager:
         """,
             (group_id,),
         )
+        return [dict(row) for row in self.cursor.fetchall()]
+
+
+class LineConditionManager:
+    """Manages line conditions and their assignment to tasks."""
+
+    def __init__(self, conn):
+        self.conn = conn
+        self.cursor = conn.cursor()
+
+    def create_condition(self, name, description=None, color_code="blue"):
+        """Creates a new line condition."""
+        try:
+            self.cursor.execute(
+                "INSERT INTO line_conditions "
+                "(name, description, color_code) "
+                "VALUES (?, ?, ?)",
+                (name, description, color_code),
+            )
+            self.conn.commit()
+            return self.cursor.lastrowid
+        except sqlite3.IntegrityError:
+            # Condition already exists, return its ID
+            self.cursor.execute(
+                "SELECT id FROM line_conditions WHERE name = ?", (name,)
+            )
+            row = self.cursor.fetchone()
+            if row:
+                return row[0]
+            return None
+
+    def get_all_conditions(self):
+        """Fetches all available line conditions."""
+        self.cursor.execute(
+            "SELECT id, name, description, color_code "
+            "FROM line_conditions ORDER BY name"
+        )
+        return [dict(row) for row in self.cursor.fetchall()]
+
+    def update_condition(self, condition_id, name, description=None, color_code="blue"):
+        """Updates an existing line condition."""
+        try:
+            self.cursor.execute(
+                "UPDATE line_conditions "
+                "SET name = ?, description = ?, "
+                "color_code = ? WHERE id = ?",
+                (name, description, color_code, condition_id),
+            )
+            self.conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+
+    def delete_condition(self, condition_id):
+        """Deletes a line condition.
+
+        Cascade delete handled by DB foreign key on task_line_conditions table.
+        """
+        self.cursor.execute(
+            "DELETE FROM line_conditions WHERE id = ?",
+            (condition_id,),
+        )
+        self.conn.commit()
+        return self.cursor.rowcount > 0
+
+    def assign_condition_to_task(self, task_id, condition_id):
+        """Assigns a condition to a task."""
+        try:
+            self.cursor.execute(
+                "INSERT OR IGNORE INTO task_line_conditions "
+                "(task_id, condition_id) VALUES (?, ?)",
+                (task_id, condition_id),
+            )
+            self.conn.commit()
+            return True
+        except sqlite3.Error:
+            return False
+
+    def remove_conditions_from_task(self, task_id):
+        """Removes all conditions from a task."""
+        self.cursor.execute(
+            "DELETE FROM task_line_conditions WHERE task_id = ?", (task_id,)
+        )
+        self.conn.commit()
+
+    def get_conditions_for_task(self, task_id):
+        """Fetches all conditions required for a task."""
+        query = """
+            SELECT lc.id, lc.name, lc.description, lc.color_code
+            FROM line_conditions lc
+            JOIN task_line_conditions tlc ON lc.id = tlc.condition_id
+            WHERE tlc.task_id = ?
+            ORDER BY lc.name
+        """
+        self.cursor.execute(query, (task_id,))
         return [dict(row) for row in self.cursor.fetchall()]

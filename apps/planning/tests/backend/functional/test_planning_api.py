@@ -481,6 +481,7 @@ class TestPlanningApi:
 
             mock_mo = MagicMock()
             mock_mo.id = 500
+            mock_mo.title = "Test MO"
             mock_mo.description = "Test MO"
             mock_mo.estimated_completion_time = 120
             mock_mo.priority = 1

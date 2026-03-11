@@ -67,11 +67,13 @@ This document outlines the specific implementation tasks for completing Phase 2 
 ### ⏭️ DEFERRED: SCADA Integration (4.2.3, 4.2.4)
 
 **Reason for Deferral:**
+
 - Requires external data source setup
 - Not blocking for UI development
 - Can be added as Phase 5 enhancement
 
 **Future Implementation:**
+
 - Will be part of Phase 5 (Section 7.2 - Advanced REP task assignment)
 - Will integrate with `CMMS-SCADA-Excel-DataProcessor` repository
 - Will add JSON-backed SCADA data service
@@ -81,11 +83,13 @@ This document outlines the specific implementation tasks for completing Phase 2 
 ### ⏭️ DEFERRED: Advanced Testing (4.5.2, 4.5.3)
 
 **Reason for Deferral:**
+
 - Integration tests more valuable with UI in place
 - Performance testing can happen alongside Phase 3
 - Core algorithm already has 13 passing unit tests
 
 **Future Implementation:**
+
 - Integration tests during Phase 3 development
 - Performance benchmarks before production deployment
 
@@ -260,6 +264,7 @@ Phase 2 Hybrid Implementation is complete when:
 - Documentation updates: 30 minutes
 
 **Recommended Approach:**
+
 1. Implement shift-break mode first (smaller scope)
 2. Test thoroughly
 3. Implement weekend mode

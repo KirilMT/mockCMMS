@@ -486,6 +486,7 @@ def _register_request_handlers(app):
                             g.db = sqlite3.connect(
                                 db_path, timeout=30, check_same_thread=False
                             )
+                            g.db.row_factory = sqlite3.Row
                 except sqlite3.Error as e:
                     app.logger.error(f"Failed to connect to planning database: {e}")
                     return jsonify({"error": "Database connection failed"}), 503

@@ -14,7 +14,15 @@ This document tracks all identified bugs in the mockCMMS application. Each bug i
 - **Status**: Open, In Progress, or Fixed
 - **Affected Files**: Files that need to be modified
 
-> [!NOTE] > **Document Relationship:** This document tracks bugs in existing functionality. For new features and strategic improvements, see `mockCMMS_roadmap.md`. For Planning App bugs, see `apps/planning/docs/planning_bug_tracking.md`.
+> [!NOTE]
+> **Document Relationship:** This document tracks bugs in existing functionality. For new features and strategic improvements, see `mockCMMS_roadmap.md`.
+>
+> **App-Specific Bug Tracking:**
+>
+> | Application      | Bug Tracker                                                         |
+> | :--------------- | :------------------------------------------------------------------ |
+> | **Planning App** | [See Planning Bugs](../apps/planning/docs/planning_bug_tracking.md) |
+> | **Reports App**  | [See Reports Bugs](../apps/reports/docs/reports_bug_tracking.md)    |
 
 ---
 

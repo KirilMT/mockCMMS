@@ -8,6 +8,7 @@ sample data fixtures.
 import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -96,6 +97,7 @@ def app():
             "planning": "sqlite:///:memory:",  # In-memory for planning models
             "reports": "sqlite:///:memory:",  # In-memory for reports models
         },
+        "PLANNING_ENABLED": True,  # Explicitly enable planning for tests
         "AUTO_SEED_DATABASE": False,  # Prevent seeding in tests
         "SERVER_NAME": "localhost.localdomain",  # Required for url_for to work
         # Ensure connections are properly recycled
@@ -106,7 +108,13 @@ def app():
         "DB_INITIALIZED": True,  # Ensure db.create_all() is called in create_app
     }
 
-    test_app = create_app(config_overrides)
+    # Patch OS environment variables to ensure modules are enabled during
+    # blueprint registration. This overrides the os.getenv checks in
+    # app.py's _register_blueprints and ensures consistent testing
+    # environment regardless of local .env files.
+    env_vars = {"PLANNING_ENABLED": "True", "REPORTS_ENABLED": "True"}
+    with patch.dict(os.environ, env_vars):
+        test_app = create_app(config_overrides)
 
     with test_app.app_context():
         # db.create_all() is now called within create_app

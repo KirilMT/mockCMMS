@@ -48,6 +48,7 @@ from apps.planning.src.services.extract_data import (
 from apps.planning.src.services.health_check import HealthChecker
 from apps.planning.src.services.logging_config import LoggingConfig
 from apps.planning.src.services.planning_db_utils import (
+    LineConditionManager,
     TaskManager,
     get_all_technician_skills_by_name,
 )
@@ -771,6 +772,133 @@ def technician_groups_api():
     return jsonify([]), 200
 
 
+@planning_bp.route("/settings")
+def settings_route():
+    """Planning Settings Page."""
+    return render_template("settings.html")
+
+
+@planning_bp.route("/api/conditions", methods=["GET", "POST"])
+def manage_conditions_api():
+    """Get all available line conditions or create a new one."""
+    try:
+        line_condition_manager = LineConditionManager(g.db)
+
+        if request.method == "GET":
+            conditions = line_condition_manager.get_all_conditions()
+            return jsonify(conditions), 200
+
+        elif request.method == "POST":
+            data = request.get_json()
+            name = data.get("name")
+            description = data.get("description")
+            color_code = data.get("color_code", "blue")
+
+            if not name:
+                return jsonify({"error": "Name is required"}), 400
+
+            condition_id = line_condition_manager.create_condition(
+                name, description, color_code
+            )
+            if condition_id:
+                return (
+                    jsonify({"message": "Condition created", "id": condition_id}),
+                    201,
+                )
+            else:
+                return (
+                    jsonify(
+                        {"error": "Condition with this name likely already exists"}
+                    ),
+                    409,
+                )
+
+    except Exception as e:
+        if g.db:
+            g.db.rollback()
+        current_app.logger.error(f"Error managing conditions: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
+@planning_bp.route("/api/conditions/<int:condition_id>", methods=["PUT", "DELETE"])
+def update_delete_condition_api(condition_id):
+    """Update or delete a line condition."""
+    try:
+        line_condition_manager = LineConditionManager(g.db)
+
+        if request.method == "PUT":
+            data = request.get_json()
+            name = data.get("name")
+            description = data.get("description")
+            color_code = data.get("color_code", "blue")
+
+            if not name:
+                return jsonify({"error": "Name is required"}), 400
+
+            success = line_condition_manager.update_condition(
+                condition_id, name, description, color_code
+            )
+            if success:
+                return jsonify({"message": "Condition updated"}), 200
+            else:
+                return (
+                    jsonify(
+                        {
+                            "error": "Failed to update condition "
+                            "(name might be duplicate)"
+                        }
+                    ),
+                    409,
+                )
+
+        elif request.method == "DELETE":
+            success = line_condition_manager.delete_condition(condition_id)
+            if success:
+                return jsonify({"message": "Condition deleted"}), 200
+            else:
+                return jsonify({"error": "Condition not found"}), 404
+
+    except Exception as e:
+        if g.db:
+            g.db.rollback()
+        current_app.logger.error(
+            f"Error updating/deleting condition: {e}", exc_info=True
+        )
+        return jsonify({"error": str(e)}), 500
+
+
+@planning_bp.route("/api/tasks/<int:task_id>/conditions", methods=["GET", "POST"])
+def manage_task_conditions_api(task_id):
+    """Get or update conditions for a specific task."""
+    try:
+        line_condition_manager = LineConditionManager(g.db)
+
+        if request.method == "GET":
+            conditions = line_condition_manager.get_conditions_for_task(task_id)
+            return jsonify(conditions), 200
+
+        elif request.method == "POST":
+            data = request.get_json()
+            condition_ids = data.get("condition_ids", [])
+
+            # Clear existing conditions
+            line_condition_manager.remove_conditions_from_task(task_id)
+
+            # Add new conditions
+            for condition_id in condition_ids:
+                line_condition_manager.assign_condition_to_task(
+                    task_id, int(condition_id)
+                )
+
+            return jsonify({"message": "Task conditions updated successfully"}), 200
+
+    except Exception as e:
+        if g.db:
+            g.db.rollback()
+        current_app.logger.error(f"Error managing task conditions: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
 @planning_bp.route("/api/get_technician_mappings", methods=["GET"])
 def get_technician_mappings_api():
     try:
@@ -1016,6 +1144,11 @@ def view_schedule(schedule_id):
         # Get maintenance orders for the tasks
         task_data = []
         task_data_json = []
+
+        # Initialize managers for local DB lookups
+        task_manager = TaskManager(g.db)
+        line_condition_manager = LineConditionManager(g.db)
+
         for pt in planning_tasks:
             mo = db.session.get(MaintenanceOrder, pt.maintenance_order_id)
             if mo:
@@ -1035,11 +1168,22 @@ def view_schedule(schedule_id):
                         else ""
                     )
 
+                # Fetch Line Conditions
+                # Use MO title as the task lookup key in the local planning DB
+                # (title is the concise identifier; description is long text)
+                line_conditions = []
+                task_lookup_name = mo.title or mo.description
+                if task_lookup_name:
+                    local_task_id = task_manager.get_or_create(task_lookup_name)
+                    line_conditions = line_condition_manager.get_conditions_for_task(
+                        local_task_id
+                    )
+
                 task_data_json.append(
                     {
                         "maintenance_order_id": mo.id,  # Add MO ID for table display
                         "status": pt.status,
-                        "task_description": mo.description,
+                        "task_description": mo.title or mo.description,
                         "task_type": mo.order_type,
                         "priority": mo.priority,
                         "required_skills": (
@@ -1051,6 +1195,7 @@ def view_schedule(schedule_id):
                         "team_size": mo.labour_count,
                         "assigned_to": assigned_to,
                         "assigned_to_skills": assigned_to_skills,
+                        "line_conditions": line_conditions,
                     }
                 )
 
@@ -1211,7 +1356,7 @@ def gantt_data(schedule_id):
                 task_data = {
                     "planning_task_id": pt.id,
                     "maintenance_order_id": mo.id,
-                    "task_description": mo.description or "Unnamed Task",
+                    "task_description": mo.title or mo.description or "Unnamed Task",
                     "status": pt.status,
                     "priority": mo.priority or "Undefined",
                     "task_type": mo.order_type or "N/A",

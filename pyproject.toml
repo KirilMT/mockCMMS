@@ -215,3 +215,30 @@ exclude = [
 [[tool.mypy.overrides]]
 module = "apps.*"
 ignore_errors = false
+follow_imports = "silent"
+
+# =============================================================================
+# DJLINT CONFIGURATION (Jinja2 Template Linting)
+# =============================================================================
+[tool.djlint]
+# Profile for Jinja2 (Flask uses Jinja2)
+profile = "jinja"
+
+# Indentation (matches Prettier standard)
+indent = 4
+
+# Max line length (soft limit)
+max_line_length = 88
+
+# Usage of blank lines
+blank_line_after_tag = "load,extends,include"
+blank_line_before_tag = "load,extends,include"
+
+# Ignore specific error codes if necessary
+# H006: img tag should have alt attribute (often dynamic in mock)
+# H030: meta tag (viewport) missing (handled in base.html)
+# H031: meta tag (charset) missing (handled in base.html)
+ignore = "H006,H030,H031"
+
+# Exclude patterns
+exclude = ".venv,node_modules,apps"

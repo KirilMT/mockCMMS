@@ -29,7 +29,7 @@ Each bug includes:
 | Icon   | Status      | Meaning                           |
 | ------ | ----------- | --------------------------------- |
 | (none) | Open        | Bug identified, not yet addressed |
-| ����     | In Progress | Currently being worked on         |
+| ����   | In Progress | Currently being worked on         |
 | ✅     | Resolved    | Code applied, user confirmed      |
 
 ### Document Quality Rules
@@ -37,12 +37,12 @@ Each bug includes:
 > [!CAUTION]
 > **MANDATORY:** Follow these rules to maintain document quality for AI interaction.
 
-| Rule                        | Action                                                                                              |
-| --------------------------- | --------------------------------------------------------------------------------------------------- |
-| **Update Summary Counts**   | After EVERY status change, update the Summary table                                                 |
+| Rule                        | Action                                                                                             |
+| --------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Update Summary Counts**   | After EVERY status change, update the Summary table                                                |
 | **Apply 5-Day Rule**        | After bug is FIXED for 5+ days, simplify entry (keep: status, date, 1-2 sentence summary, files)   |
-| **Avoid Duplicates**        | ALWAYS search document before adding new bug                                                        |
-| **Keep Open Bugs Detailed** | New/Open bugs MUST have: Description, Current/Expected Behavior, Possible Solution, Affected Files  |
+| **Avoid Duplicates**        | ALWAYS search document before adding new bug                                                       |
+| **Keep Open Bugs Detailed** | New/Open bugs MUST have: Description, Current/Expected Behavior, Possible Solution, Affected Files |
 
 ---
 
@@ -73,6 +73,7 @@ those existing, working flows.
 - Expected: button should read **"Back to Report"** and navigate back to `/reports/shift/5`.
 
 **The same issue applies to:**
+
 - Clicking `ASSET_CODE` → navigates to Asset detail → back button says "Back to Assets".
 - Clicking a Spare Part link → navigates to Spare Part detail → back button says "Back to Spare Parts".
 - Clicking "Edit" on an MO element in the shift report that is linked to the MOs DB → back button incorrect.
@@ -166,4 +167,3 @@ implementation as a baseline.
 ---
 
 _This document tracks bugs for the Reports (`apps/reports`) application._
-

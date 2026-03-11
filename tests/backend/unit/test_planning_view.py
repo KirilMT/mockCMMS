@@ -61,24 +61,42 @@ def test_view_schedule_passes_config(app):
             # reloaded by other tests
             from apps.planning.src.routes.planning import view_schedule
 
-            # Call the view function directly
-            # We need to mock request args
             with app.test_request_context("/planning/schedules/1?mode=shift_break"):
-                # Use patch on current_app to capture errors
-                with patch(
-                    "apps.planning.src.routes.planning.current_app"
-                ) as mock_current_app:
+                with (
+                    patch("apps.planning.src.routes.planning.Schedule") as MockSchedule,
+                    patch(
+                        "apps.planning.src.routes.planning.render_template"
+                    ) as mock_render,
+                    patch(
+                        "apps.planning.src.routes.planning.load_shift_config"
+                    ) as mock_load_config,
+                    patch(
+                        "apps.planning.src.routes.planning.PlanningTask"
+                    ) as MockPlanningTask,
+                    patch("apps.planning.src.routes.planning.MaintenanceOrder"),
+                    patch("apps.planning.src.routes.planning.TaskManager"),
+                    patch("apps.planning.src.routes.planning." "LineConditionManager"),
+                    patch("apps.planning.src.routes.planning.g") as mock_g,
+                ):
+                    mock_schedule = MagicMock()
+                    MockSchedule.query.get_or_404.return_value = mock_schedule
+
+                    mock_config = {
+                        "shift_durations": {
+                            "shift_break": 10,
+                            "weekend": 20,
+                        }
+                    }
+                    mock_load_config.return_value = mock_config
+
+                    mock_query = MockPlanningTask.query
+                    task_query = mock_query.filter_by.return_value
+                    task_query.all.return_value = []
+
+                    mock_g.db = MagicMock()
+
                     view_schedule(1)
 
-                    # Verify no errors occurred
-                    if mock_current_app.logger.error.called:
-                        pytest.fail(
-                            f"view_schedule failed with error: "
-                            f"{mock_current_app.logger.error.call_args}"
-                        )
-
-                # Check if render_template was called with shift_config
-                assert mock_render.called
-                args, kwargs = mock_render.call_args
-                assert "shift_config" in kwargs
-                assert kwargs["shift_config"] == mock_config
+                    args, kwargs = mock_render.call_args
+                    assert "shift_config" in kwargs
+                    assert kwargs["shift_config"] == mock_config

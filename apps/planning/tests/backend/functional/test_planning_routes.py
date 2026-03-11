@@ -353,7 +353,8 @@ class TestPlanningRoutes:
                 # Setup MO
                 mo = MagicMock()
                 mo.id = 101
-                mo.description = "Test Order"
+                mo.title = "Test Order"
+                mo.description = "Test Order Description"
                 mo.order_type = "PM"
                 mo.priority = 1
                 mo.estimated_completion_time = 60

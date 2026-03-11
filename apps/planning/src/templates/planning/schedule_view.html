@@ -736,6 +736,19 @@ endblock %} {% block extra_css %}
                                  '<span data-toggle="tooltip" title="Skills: ' + skills + '">' + tech + '</span></div>';
                       }).join('');
                   }
+              },
+              {
+                  key: 'line_conditions',
+                  label: 'Conditions',
+                  type: 'text',
+                  render: function(val) {
+                      if (!val || val.length === 0) return '';
+                      return val.map(condition => {
+                          const color = condition.color_code || 'secondary';
+                          const badgeClass = `badge badge-${color === 'red' ? 'danger' : (color === 'yellow' ? 'warning' : (color === 'green' ? 'success' : 'secondary'))}`;
+                          return `<span class="${badgeClass} mr-1" title="${condition.description || ''}">${condition.name}</span>`;
+                      }).join(' ');
+                  }
               }
           ];
 

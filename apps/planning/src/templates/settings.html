@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Planning Settings - Mock CMMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-container {
+        padding: 20px;
+    }
+    .settings-nav {
+        margin-bottom: 20px;
+    }
+    .color-badge {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 5px;
+        vertical-align: middle;
+        border: 1px solid #ccc;
+    }
+    .color-blue { background-color: #007bff; }
+    .color-green { background-color: #28a745; }
+    .color-red { background-color: #dc3545; }
+    .color-yellow { background-color: #ffc107; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1><i class="fas fa-cogs"></i> Planning Settings</h1>
+            <p class="text-muted">Configure global settings for the planning module.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Settings Navigation (Tabs) -->
+        <div class="col-md-3">
+            <div class="nav flex-column nav-pills settings-nav" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <a class="nav-link active" id="v-pills-conditions-tab" data-toggle="pill" href="#v-pills-conditions" role="tab" aria-controls="v-pills-conditions" aria-selected="true">
+                    <i class="fas fa-traffic-light mr-2"></i> Line Conditions
+                </a>
+                <a class="nav-link disabled" id="v-pills-other-tab" data-toggle="pill" href="#v-pills-other" role="tab" aria-controls="v-pills-other" aria-selected="false">
+                    <i class="fas fa-tools mr-2"></i> General Settings (Coming Soon)
+                </a>
+            </div>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="col-md-9">
+            <div class="tab-content" id="v-pills-tabContent">
+
+                <!-- Line Conditions Tab -->
+                <div class="tab-pane fade show active" id="v-pills-conditions" role="tabpanel" aria-labelledby="v-pills-conditions-tab">
+                    <div class="card">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Line Conditions</h5>
+                            <button class="btn btn-primary btn-sm" onclick="openConditionModal()">
+                                <i class="fas fa-plus"></i> Add Condition
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small">Define required states for production lines before maintenance tasks can start (e.g., "Line Empty", "Power Off").</p>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="conditionsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Color</th>
+                                            <th class="text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="conditionsTableBody">
+                                        <!-- Populated via JS -->
+                                        <tr><td colspan="4" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Placeholder for future tabs -->
+                <div class="tab-pane fade" id="v-pills-other" role="tabpanel" aria-labelledby="v-pills-other-tab">
+                    <div class="alert alert-info">More settings configuration options coming soon.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Condition Modal -->
+<div class="modal fade" id="conditionModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="conditionModalTitle">Add Line Condition</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="conditionForm">
+                    <input type="hidden" id="conditionId">
+                    <div class="form-group">
+                        <label for="conditionName">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="conditionName" required maxlength="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="conditionDescription">Description</label>
+                        <textarea class="form-control" id="conditionDescription" rows="2" maxlength="100"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="conditionColor">Color Code</label>
+                        <select class="form-control" id="conditionColor">
+                            <option value="blue">Blue (Info)</option>
+                            <option value="green">Green (Safe/Ready)</option>
+                            <option value="yellow">Yellow (Warning/Caution)</option>
+                            <option value="red">Red (Danger/Stop)</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCondition()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Wrapper for ToastNotification to match showToast(type, message) signature used in this file
+    function showToast(type, message) {
+        if (typeof ToastNotification !== 'undefined') {
+            ToastNotification.show(message, type);
+        } else {
+            console.warn('ToastNotification not found, falling back to alert');
+            alert(message);
+        }
+    }
+
+    // Load conditions on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadConditions();
+    });
+
+    function loadConditions() {
+        const tbody = document.getElementById('conditionsTableBody');
+
+        fetch('{{ url_for("planning.manage_conditions_api") }}')
+            .then(response => response.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No conditions found. Add one to get started.</td></tr>';
+                    return;
+                }
+
+                data.forEach(condition => {
+                    const row = document.createElement('tr');
+
+                    // Determine badge class for visual display
+                    let badgeClass = 'secondary'; // Default gray
+                    if (condition.color_code === 'blue') badgeClass = 'primary';
+                    if (condition.color_code === 'green') badgeClass = 'success';
+                    if (condition.color_code === 'yellow') badgeClass = 'warning';
+                    if (condition.color_code === 'red') badgeClass = 'danger';
+
+                    // Using simple color circle instead of badge for cleaner look if preferred, or badge
+                    // Reusing the color-badge css
+
+                    row.innerHTML = `
+                        <td><strong>${condition.name}</strong></td>
+                        <td>${condition.description || '-'}</td>
+                        <td>
+                            <span class="color-badge color-${condition.color_code}"></span>
+                            ${condition.color_code.charAt(0).toUpperCase() + condition.color_code.slice(1)}
+                        </td>
+                        <td class="text-right">
+                            <button class="btn btn-sm btn-outline-primary mr-1" onclick="editCondition(${condition.id}, '${condition.name}', '${condition.description || ''}', '${condition.color_code}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCondition(${condition.id}, '${condition.name}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading conditions:', error);
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading conditions.</td></tr>';
+            });
+    }
+
+    function openConditionModal() {
+        document.getElementById('conditionModalTitle').innerText = 'Add Line Condition';
+        document.getElementById('conditionId').value = '';
+        document.getElementById('conditionName').value = '';
+        document.getElementById('conditionDescription').value = '';
+        document.getElementById('conditionColor').value = 'blue';
+        $('#conditionModal').modal('show');
+    }
+
+    function editCondition(id, name, description, color) {
+        document.getElementById('conditionModalTitle').innerText = 'Edit Line Condition';
+        document.getElementById('conditionId').value = id;
+        document.getElementById('conditionName').value = name;
+        document.getElementById('conditionDescription').value = description;
+        document.getElementById('conditionColor').value = color;
+        $('#conditionModal').modal('show');
+    }
+
+    function saveCondition() {
+        const id = document.getElementById('conditionId').value;
+        const name = document.getElementById('conditionName').value.trim();
+        const description = document.getElementById('conditionDescription').value.trim();
+        const color_code = document.getElementById('conditionColor').value;
+
+        if (!name) {
+            alert('Name is required');
+            return;
+        }
+
+        const data = { name, description, color_code };
+        let url = '{{ url_for("planning.manage_conditions_api") }}';
+        let method = 'POST';
+
+        if (id) {
+            url += `/${id}`;
+            method = 'PUT';
+        }
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                $('#conditionModal').modal('hide');
+                loadConditions();
+                showToast('success', id ? 'Condition updated successfully' : 'Condition created successfully');
+            } else {
+                return response.json().then(err => { throw new Error(err.error || 'Failed to save'); });
+            }
+        })
+        .catch(error => {
+            alert(error.message);
+        });
+    }
+
+    function deleteCondition(id, name) {
+        const message = `Are you sure you want to delete filter condition "${name}"? It will be removed from all associated tasks.`;
+
+        showDeleteConfirm(null, message, function() {
+            fetch(`{{ url_for("planning.manage_conditions_api") }}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadConditions();
+                    showToast('info', 'Condition deleted');
+                } else {
+                    return response.json().then(err => { throw new Error(err.error || 'Failed to delete'); });
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        });
+    }
+</script>
+{% endblock %}

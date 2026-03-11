@@ -606,7 +606,7 @@ class PlanningEngine:
 
         Weekend planning focuses on:
         - Scheduled PMs (Weekly, Monthly frequency)
-        - Outstanding REP tasks
+        - Outstanding Reactive/Corrective tasks
         - Deferred maintenance
         - Any tasks not dependent on production line being active
 
@@ -656,22 +656,23 @@ class PlanningEngine:
                 self._log("debug", f"MO-{mo.id}: Included (PM without frequency)")
                 continue
 
-            # Include outstanding REP/Corrective tasks
-            if mo.order_type in ["REP", "Corrective"]:
+            # Include outstanding Reactive/Corrective tasks
+            if mo.order_type in ["Reactive", "Corrective"]:
                 if mo.status in ["Open", "In Progress"]:
                     weekend_tasks.append((task, mo))
                     self._log(
                         "debug",
-                        f"MO-{mo.id}: Included (REP/Corrective, status={mo.status})",
+                        f"MO-{mo.id}: Included "
+                        f"(Reactive/Corrective, status={mo.status})",
                     )
                     continue
                 else:
                     filtered_count += 1
-                    reason = f"REP/Corrective with status {mo.status}"
+                    reason = f"Reactive/Corrective with status {mo.status}"
                     filter_reasons[reason] = filter_reasons.get(reason, 0) + 1
                     self._log(
                         "debug",
-                        f"MO-{mo.id}: Filtered out (REP/Corrective, "
+                        f"MO-{mo.id}: Filtered out (Reactive/Corrective, "
                         f"status={mo.status})",
                     )
                     continue
@@ -742,18 +743,23 @@ class PlanningEngine:
         """Sort tasks by priority based on planning mode.
 
         Priority order for shift_break mode:
-        1. Task type FIRST (REP > Corrective > PM > Project) - Reactive focus
+        1. Task type FIRST (Reactive > Corrective > PM > Project) - Reactive focus
         2. Then by priority level within type (Critical > High > Medium > Low)
 
         Priority order for weekend mode:
-        1. Task type FIRST (PM > REP > Corrective > Project) - Preventive focus
+        1. Task type FIRST (PM > Reactive > Corrective > Project) - Preventive focus
         2. Then by priority level within type (Critical > High > Medium > Low)
         """
         priority_map = {"Critical": 1, "High": 2, "Medium": 3, "Low": 4, "Undefined": 5}
 
-        type_priority_shift_break = {"REP": 1, "Corrective": 2, "PM": 3, "Project": 4}
+        type_priority_shift_break = {
+            "Reactive": 1,
+            "Corrective": 2,
+            "PM": 3,
+            "Project": 4,
+        }
 
-        type_priority_weekend = {"PM": 1, "REP": 2, "Corrective": 3, "Project": 4}
+        type_priority_weekend = {"PM": 1, "Reactive": 2, "Corrective": 3, "Project": 4}
 
         type_map = (
             type_priority_shift_break
@@ -767,7 +773,7 @@ class PlanningEngine:
             type_val = type_map.get(mo.order_type, 99)
 
             # Both modes: Type FIRST, then priority
-            # Shift-break: REP-first (reactive)
+            # Shift-break: Reactive-first
             # Weekend: PM-first (preventive)
             return (type_val, priority_val, mo.id)
 
@@ -881,7 +887,7 @@ class PlanningEngine:
         assignment = TaskAssignment(
             planning_task_id=cast(int, task.id),
             maintenance_order_id=cast(int, mo.id),
-            task_description=cast(str, mo.description),
+            task_description=cast(str, mo.title or mo.description),
             assigned_technician_ids=[cast(int, t.id) for t in selected_technicians],
             assigned_technician_names=[
                 cast(str, t.username) for t in selected_technicians
@@ -1300,7 +1306,7 @@ class PlanningEngine:
         return UnassignedTask(
             planning_task_id=cast(int, task.id),
             maintenance_order_id=cast(int, mo.id),
-            task_description=cast(str, mo.description),
+            task_description=cast(str, mo.title or mo.description),
             reason=reason,
             reason_detail=detail,
             required_skills=required_skills,

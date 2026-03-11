@@ -13,6 +13,7 @@ A modular reports application for mockCMMS that provides comprehensive reporting
 ## Installation
 
 1. Install the reports app in editable mode:
+
    ```bash
    pip install -e apps/reports
    ```
@@ -59,12 +60,14 @@ apps/reports/
 ## Report Types
 
 ### Reactive Production Reports
+
 - Filters maintenance orders by type "Reactive"
 - Optional date range filtering
 - Optional priority filtering
 - Useful for tracking production disruptions
 
 ### Weekend Completion Reports
+
 - Shows maintenance orders completed during weekends
 - Automatically calculates weekend dates from selected week
 - Useful for weekend maintenance summaries
@@ -72,6 +75,7 @@ apps/reports/
 ## Integration
 
 The reports app integrates with the main mockCMMS application through:
+
 - Shared database models (Report, MaintenanceOrder, Asset, User)
 - Common authentication system
 - Templates extend main app's base template for consistent UI/UX

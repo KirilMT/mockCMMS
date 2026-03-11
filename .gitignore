@@ -212,5 +212,8 @@ jest_*.txt
 jscpd-report/
 .jscpd/
 
+# Temporary Diff Output (AI Workflow)
+temp_diff_output.txt
+
 # isort temporary files
 *.py.isorted

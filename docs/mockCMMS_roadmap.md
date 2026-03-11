@@ -291,6 +291,14 @@ The core application can be improved with the following features to support the 
     - **Separated Log Files:** Use distinct files for application, error, and performance logs.
   - **Reference:** `apps/planning/src/services/logging_config.py`
 
+- **[ ] Global Settings Integration** _(Priority: High)_
+  - **Goal:** Implement a consistent "Settings" interface across all major modules (Assets, MOs, Users, Spare Parts) to manage configuration data.
+  - **Concept:** A dedicated settings page or modal for each module where administrators can configure dropdown options and reference data.
+  - **Scope:**
+    - **Configurable Topics:** Asset Types, Cost Centers, Asset Status, Maintenance Order Types, Priorities, Frequencies, Manufacturers, User Roles, Shift Teams, Satellite Points, etc.
+    - **Implementation:** Replace hardcoded options or JSON configuration files with database-driven settings manageable via the UI.
+    - **Location:** Access settings from the main list/dashboard pages of each module (not detail pages).
+
 - **[ ] Integration & Cleanup (Maintenance Grid & Tickets)** _(Priority: Medium)_
   - **Goal:** Review and properly implement or deprecate the integration stub pages (`maintenance_grid.html`, `ticket.html`).
   - **Scope:**
@@ -314,6 +322,29 @@ The core application can be improved with the following features to support the 
     - **High-Volume Random Data Generation:** Generate large datasets (thousands of items per table) with realistic, randomized values to mimic production environments.
     - **Data Simulation Service:** Build a service that can generate realistic mock data (PMs, MOs, technician logs) for stress-testing and demonstration purposes.
     - **User Input Simulation:** Create a UI for simulating user inputs, such as manually triggering a breakdown alarm or reporting a technician as absent, to test the system's dynamic response.
+
+#### User & Calendar Management
+
+- **[ ] Advanced User & Technician Management** _(Priority: Medium)_
+  - **Goal:** Comprehensive user management with roles, skills, training, and external manpower integration.
+  - **Features:**
+    - **Roles & Permissions:** Implement role-based access control (RBAC) for different user types.
+    - **Skills Management:** Track and manage technician skills and certifications.
+    - **Training Tracking:** Record and monitor training completion and requirements.
+    - **Manpower API Integration:** Connect to an external manpower management system via an API to track:
+      - Onsite presence
+      - Sick leave status
+      - Vacation schedules
+      - Real-time availability
+    - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training).
+    - **Workload Tracking:** Track and visualize individual technician workload over time.
+
+- **[ ] Shift Calendar Redesign** _(Priority: Medium)_
+  - **Goal:** Improve the usability of the Shift Calendar page.
+  - **Features:**
+    - **Calendar Grid View:** Redesign the interface to resemble a standard calendar (month/week view) instead of a list.
+    - **No-Scroll Layout:** Optimize the layout to fit within the viewport without requiring vertical scrolling.
+    - **Interactive Elements:** Allow clicking on days/shifts for more details without leaving the calendar view.
 
 #### Testing & Quality Assurance
 
@@ -718,7 +749,9 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
 
 ### `planning` App Enhancements
 
-This application already handles skill-based task assignment. The next logical steps involve deeper integration and more advanced planning management features.
+> **See:** [Planning App Roadmap](../apps/planning/docs/planning_roadmap.md) for detailed feature plans and legacy code analysis tasks.
+
+**Currently Implementing:**
 
 - **[ ] Line Conditions for Planning** _(Priority: High)_
   - **Goal:** Standardize the line conditions needed for task planning to ensure proper execution prerequisites.
@@ -729,17 +762,10 @@ This application already handles skill-based task assignment. The next logical s
     - Integrate condition validation into the task assignment workflow.
   - **Reference:** [GitHub Issue #6](https://github.com/KirilMT/mockCMMS/issues/6)
 
-- **[ ] Advanced User & Technician Management** _(Priority: Medium)_
-  - **Goal:** Comprehensive user management with roles, skills, training, and external manpower integration.
-  - **Features:**
-    - **Roles & Permissions:** Implement role-based access control (RBAC) for different user types.
-    - **Skills Management:** Track and manage technician skills and certifications.
-    - **Training Tracking:** Record and monitor training completion and requirements.
-    - **Manpower API Integration:** Connect to an external manpower management system via an API to track:
-      - Onsite presence
-      - Sick leave status
-      - Vacation schedules
-      - Real-time availability
+### `reports` App Enhancements
+
+> **See:** [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for future reporting features.
+
     - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training).
     - **Workload Tracking:** Track and visualize individual technician workload over time.
 
@@ -795,10 +821,11 @@ This application is intended for reporting and analytics. The following features
 **Critical Priority:**
 
 - ✅ **Core mockCMMS Code Quality Comprehensive Audit & Cleanup:** COMPLETE ([Detailed Plan](deprecated/core_code_quality_plan.md))
+- 🔴 **Legacy Code Analysis & Cleanup Decision (Planning App):** SUPER CRITICAL - [See Planning Roadmap](../apps/planning/docs/planning_roadmap.md)
 
 **High Priority:**
 
-- **Line Conditions for Planning:** Standardize prerequisites for task execution.
+- **Line Conditions for Planning:** [See Planning Roadmap](../apps/planning/docs/planning_roadmap.md)
 - **Frontend Architecture Decision:** Evaluate migration to a modern framework (Angular/React).
 - **Docker-Based Visual Regression Testing:** Standardize visual testing with containerized runner.
 - **CI/CD Pipeline:** ✅ COMPLETE.
@@ -811,8 +838,9 @@ This application is intended for reporting and analytics. The following features
 
 **Medium Priority:**
 
-- **Advanced Technician Tracking:** Availability, workload, and dynamic status.
-- **Automated, Specialized Reports:** Shift, weekend, and technician-submitted reports.
+- **Advanced User & Technician Management:** Comprehensive user management with roles, skills, training, and manpower API integration (availability, workload, dynamic status).
+- **Shift Calendar Redesign:** Improve calendar UI with grid view and interactive elements.
+- **Automated, Specialized Reports:** [See Reports Roadmap](../apps/reports/docs/reports_roadmap.md)
 - **HMI → Reactive MO Integration:** Auto-create breakdown MOs from HMI MNTC button signal.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
 - **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific operators, **numeric comparators (between / greater-than / less-than)** for numeric columns.

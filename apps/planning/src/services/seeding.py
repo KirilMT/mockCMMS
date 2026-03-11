@@ -3,6 +3,12 @@ import logging
 import os
 from datetime import datetime
 
+from flask import current_app
+
+from apps.planning.src.services.planning_db_utils import get_db_connection, init_db
+from apps.planning.src.services.planning_db_utils import (
+    populate_dummy_data as populate_planning_dummy_data,
+)
 from apps.planning.src.services.planning_models import PlanningTask, Schedule
 from src.services.db_utils import MaintenanceOrder, db
 
@@ -50,6 +56,23 @@ def seed_planning_data(logger=None):
     """Seeds the Planning App data if not already present."""
     if logger is None:
         logger = logging.getLogger(__name__)
+
+    # Ensure planning DB table structure exists (raw SQLite)
+    try:
+        planning_bind = current_app.config.get("SQLALCHEMY_BINDS", {}).get("planning")
+        if planning_bind and planning_bind.startswith("sqlite:///"):
+            db_path = planning_bind.replace("sqlite:///", "")
+            # Ensure tables exist (including 'tasks')
+            init_db(db_path, logger=logger)
+
+            # Optionally populate raw dummy data for satellite points, etc.
+            # This is safe as it uses get_or_create logic
+            conn = get_db_connection(db_path)
+            populate_planning_dummy_data(conn, logger)
+            conn.close()
+
+    except Exception as e:
+        logger.error(f"Error initializing Planning App raw DB structure: {e}")
 
     logger.info("Checking if Planning database needs to be populated.")
     try:

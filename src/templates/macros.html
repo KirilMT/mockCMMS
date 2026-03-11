@@ -1,38 +1,44 @@
 {% macro page_header(title, back_url, back_text) %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h1>{{ title }}</h1>
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>{{ title }}</h1>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{{ back_url }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> {{ back_text }}
+            </a>
+        </div>
     </div>
-    <div class="col-md-4 text-right">
-        <a href="{{ back_url }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> {{ back_text }}
-        </a>
-    </div>
-</div>
 {% endmacro %}
-
 {% macro modal(id, title, body_content=None, confirm_btn_id='confirmBtn', confirm_btn_text='Confirm', confirm_btn_class='btn-primary') %}
-<div class="modal fade" id="{{ id }}" tabindex="-1" role="dialog" aria-labelledby="{{ id }}Label" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="{{ id }}Label">{{ title }}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="{{ id }}Message">
-                {% if body_content %}
-                    {{ body_content | safe }}
-                {% else %}
-                    {{ caller() if caller else '' }}
-                {% endif %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn {{ confirm_btn_class }}" id="{{ confirm_btn_id }}">{{ confirm_btn_text }}</button>
+    <div class="modal fade"
+         id="{{ id }}"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="{{ id }}Label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="{{ id }}Label">{{ title }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="{{ id }}Message">
+                    {% if body_content %}
+                        {{ body_content | safe }}
+                    {% else %}
+                        {{ caller() if caller else '' }}
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button"
+                            class="btn {{ confirm_btn_class }}"
+                            id="{{ confirm_btn_id }}">{{ confirm_btn_text }}</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 {% endmacro %}

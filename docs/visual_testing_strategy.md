@@ -7,6 +7,7 @@
 ## Problem Statement
 
 Visual regression tests (snapshots) inherently depend on the rendering engine of the operating system. Fonts, anti-aliasing, and pixel rounding differ significantly between:
+
 - Windows (Local Developer Environment)
 - Linux (GitHub Actions CI Environment)
 - macOS (Some Developers)
@@ -26,7 +27,7 @@ To ensure consistency, visual tests should ALWAYS run in the arguably "same" com
 
 2.  **Visual Verification (Strict, Docker):**
     - Developers run a special command (`npm run test:visual:docker`) before committing.
-    - This spins up the *official Playwright Docker image*.
+    - This spins up the _official Playwright Docker image_.
     - It runs the tests inside Linux.
     - Snapshots are generated/compared against the Linux baseline.
 
@@ -38,6 +39,7 @@ To ensure consistency, visual tests should ALWAYS run in the arguably "same" com
 ### 2. Implementation Plan
 
 #### Step 1: Create Docker Compose Setup
+
 Create `docker-compose.test.yml` in the root:
 
 ```yaml
@@ -53,6 +55,7 @@ services:
 ```
 
 #### Step 2: Add Convenience Scripts
+
 Add scripts to `package.json`:
 
 ```json
@@ -63,6 +66,7 @@ Add scripts to `package.json`:
 ```
 
 #### Step 3: Standardize Config
+
 In `playwright.config.js`, detect the environment:
 
 ```javascript
@@ -75,7 +79,7 @@ module.exports = {
     toHaveScreenshot: {
       // 1% tolerance for CI/Docker (Strict)
       // 5% or skip for local Windows (Loose)
-      maxDiffPixelRatio: (isCI || isDocker) ? 0.01 : 0.05,
+      maxDiffPixelRatio: isCI || isDocker ? 0.01 : 0.05,
     },
   },
 };

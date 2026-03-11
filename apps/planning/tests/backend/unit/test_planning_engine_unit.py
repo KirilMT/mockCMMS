@@ -258,7 +258,7 @@ class TestPlanningEngine:
         task = MagicMock(id=1)
         mo = MagicMock(
             id=501,
-            order_type="REP",
+            order_type="Reactive",
             priority="High",
             labour_count=1,
             estimated_completion_time=30,
