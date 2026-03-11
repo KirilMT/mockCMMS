@@ -1,128 +1,115 @@
 {
   "reports": [
     {
-      "title": "Shift Report - Seeded",
+      "title": "Shift Report - Seeded (Night)",
       "report_type": "shift_report",
       "parameters": {
-        "date": "2026-02-08",
-        "shift": "Early"
+        "date": "2026-03-09",
+        "shift": "Night"
       },
       "data": {
-        "team_name": "Team A",
         "team_color": "#3498db",
         "attendance": "3",
         "ehs_incidents": "0",
         "vigel": "7",
         "mds": "1",
-        "shift_info": {
-          "shift": "Early",
-          "date": "2026-02-08",
-          "team_name": "Team A",
-          "handover_from_previous": [
-            {
-              "asset": "AST-0001",
-              "title": "Reduced Speed Operation",
-              "description": "Line 1 running at reduced speed due to vibration. Maintenance scheduled for next shift."
-            },
-            {
-              "asset": "AST-0005",
-              "title": "Sensor Calibration Needed",
-              "description": "Optical sensor on Line 3 requires recalibration. No production impact currently."
-            }
-          ],
-          "handover_to_next": [
-            {
-              "asset": "AST-0002",
-              "title": "Noise Investigation Required",
-              "description": "Investigate unusual noise on Line 2 conveyor belt. Possibly bearing issue. Monitor closely during operation."
-            },
-            {
-              "asset": "AST-0001",
-              "title": "Parts Ordered - Robot 1",
-              "description": "Replacement arm actuator ordered (PO#12345). Expected delivery Tuesday. Schedule installation during next maintenance window."
-            }
-          ]
+        "report_info": {
+          "shift": "Night",
+          "date": "2026-03-09",
+          "team_name": "Team B",
+          "handover_from_previous": [],
+          "handover_to_next": []
         },
-        "breakdowns": [
-          {
-            "equipment_line": "Line 1",
-            "asset": "AST-0001",
-            "description": "Seed Breakdown 1 - Robot Arm Stuck. Related to MO #101.",
-            "timestamp": "08:30",
-            "duration": "45",
-            "root_cause": "Sensor malfunction causing position feedback error",
-            "resolution_notes": "Reset controller and recalibrated position sensors"
-          },
-          {
-            "equipment_line": "Line 2",
-            "asset": "AST-0002",
-            "description": "Seed Breakdown 2 - Conveyor Halt",
-            "timestamp": "10:15",
-            "duration": "30",
-            "root_cause": "Belt misalignment due to worn tensioner",
-            "resolution_notes": "Parts ordered, temporary adjustment made to maintain operation"
-          }
-        ],
-        "break_activities": [
-          {
-            "type": "flux_ticket",
-            "asset": "Conveyor C1",
-            "mo_id": "MO-2345",
-            "title": "Belt Replacement",
-            "description": "Replaced worn belt segment on Conveyor C1 due to excessive wear. Tensioner adjusted and alignment verified.",
-            "status": "Completed"
-          },
-          {
-            "type": "flux_ticket",
-            "asset": "Sensor S2",
-            "mo_id": "MO-2346",
-            "title": "Optical Sensor Maintenance",
-            "description": "Cleaned optical lens and recalibrated sensor S2. Replaced protective cover that was cracked.",
-            "status": "In Progress"
-          }
-        ],
-        "engineering_support": [
-          {
-            "asset": "AST-0007",
-            "title": "Vibration Analysis",
-            "description": "Engineering team conducted vibration analysis on Line 2. Found bearing misalignment. Replacement scheduled for next maintenance window. Full report available in shared drive."
-          },
-          {
-            "asset": "AST-0008",
-            "title": "Noise Investigation",
-            "description": "Investigated unusual noise on packaging line. Identified loose mounting bracket. Tightened and verified operation."
-          }
-        ]
+        "breakdowns": [],
+        "break_activities": [],
+        "engineering_support": []
       }
     },
     {
-      "title": "Weekend Report - Seeded",
-      "report_type": "weekend_report",
+      "title": "Shift Report - Seeded (Early)",
+      "report_type": "shift_report",
       "parameters": {
-        "weekend_date": "2026-02-07"
+        "date": "2026-03-10",
+        "shift": "Early"
       },
       "data": {
-        "weekend_info": {
-          "date": "2026-02-07"
+        "team_color": "#3498db",
+        "attendance": "3",
+        "ehs_incidents": "0",
+        "vigel": "7",
+        "mds": "1",
+        "report_info": {
+          "shift": "Early",
+          "date": "2026-03-10",
+          "team_name": "Team A",
+          "handover_from_previous": [],
+          "handover_to_next": []
         },
-        "pms": [
-          {
-            "asset": "Asset A",
-            "description": "Weekly Inspection",
-            "status": "Completed"
-          }
-        ],
-        "mos": [
-           {
-            "asset": "Asset B",
-            "description": "Repair Ticket #123",
-            "status": "In Progress"
-          }
-        ],
-        "handover_instructions": [
-            "Verify Asset A calibration on Monday morning.",
-            "Check conveyor tension."
-        ]
+        "breakdowns": [],
+        "break_activities": [],
+        "engineering_support": []
+      }
+    },
+    {
+      "title": "Weekend Report - Seeded (Night)",
+      "report_type": "weekend_report",
+      "parameters": {
+        "weekend_date": "2026-03-14",
+        "shift": "Night"
+      },
+      "data": {
+        "attendance": "18",
+        "ehs_incidents": 0,
+        "vigel": 8,
+        "mds": 12,
+        "shift": "Night",
+        "team_name": "Team C",
+        "team_color": "#2ecc71",
+        "report_info": {
+          "date": "2026-03-14",
+          "shift": "Night",
+          "team_name": "Team C",
+          "team_color": "#2ecc71",
+          "attendance_total": 20,
+          "vigel_total": 10,
+          "mds_total": 15,
+          "handover_from_previous": []
+        },
+        "pms": [],
+        "mos_tickets": [],
+        "additional_tickets": [],
+        "handover_to_next": []
+      }
+    },
+    {
+      "title": "Weekend Report - Seeded (Early)",
+      "report_type": "weekend_report",
+      "parameters": {
+        "weekend_date": "2026-03-15",
+        "shift": "Early"
+      },
+      "data": {
+        "attendance": "18",
+        "ehs_incidents": 0,
+        "vigel": 8,
+        "mds": 12,
+        "shift": "Early",
+        "team_name": "Team D",
+        "team_color": "#2ecc71",
+        "report_info": {
+          "date": "2026-03-15",
+          "shift": "Early",
+          "team_name": "Team D",
+          "team_color": "#2ecc71",
+          "attendance_total": 20,
+          "vigel_total": 10,
+          "mds_total": 15,
+          "handover_from_previous": []
+        },
+        "pms": [],
+        "mos_tickets": [],
+        "additional_tickets": [],
+        "handover_to_next": []
       }
     }
   ]

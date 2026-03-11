@@ -12,13 +12,13 @@ class TestReportsDataAggregatorIntegration:
         db.session.flush()  # Get the ID
         now = datetime.now()
         start = now.replace(hour=6, minute=0, second=0)
-        # Breakdown (Reactive)
+        # Breakdown (Reactive) - must be Completed to appear in breakdowns
         breakdown = MaintenanceOrder(
             asset_id=test_asset.id,
             description="Belt snapped - Broken Belt",
             order_type="Reactive",
             priority="High",
-            status="In Progress",
+            status="Completed",
             created_at=start + timedelta(hours=1),  # Inside shift
         )
         db.session.add(breakdown)

@@ -18,11 +18,28 @@
   cursor: pointer;
 }
 
+.report-header .team-badge {
+  display: inline;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  background: none;
+  font-weight: inherit;
+  font-size: 1em;
+  vertical-align: baseline;
+  margin-left: 0;
+  text-decoration: inherit;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .report-header:hover {
   background-color: #fff3cd;
 }
 
 /* Removed hardcoded team color to support dynamic project colors */
+
 /* .report-header .team-name { color: #e74c3c; } */
 
 /* Section Headers */
@@ -135,11 +152,18 @@
   padding: 1rem;
   border-radius: 4px;
   margin-bottom: 1.5rem;
+  width: 100%;
 }
 
-.metadata-label {
-  color: #e67e22;
-  font-weight: bold;
+.metadata-row > .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.metadata-row .col-md-3 {
+  text-align: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 /* Editable Fields */
@@ -234,4 +258,17 @@
   left: 0;
   font-weight: bold;
   color: #7cb342;
+}
+
+.report-page {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.report-actions-row {
+  margin-top: 0;
+}
+
+.report-actions-row .col-12 {
+  padding-top: 0;
 }

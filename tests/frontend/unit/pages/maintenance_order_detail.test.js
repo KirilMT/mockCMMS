@@ -102,6 +102,10 @@ describe("Maintenance Order Detail Page", () => {
     // Expose mocks for assertions
     global.mockInputEl = mockInputEl;
     global.mockSelect2 = mockSelect2;
+
+    // Expose internals so specific branch conditions can be toggled in tests
+    global.mockSelectionEl = mockSelectionEl;
+    global.mockDropdownEl = mockDropdownEl;
   });
 
   afterEach(() => {
@@ -115,39 +119,45 @@ describe("Maintenance Order Detail Page", () => {
 
   describe("Frequency Field Logic", () => {
     beforeEach(() => {
+      // Include pm-fields container so querySelectorAll('.pm-fields') finds elements.
+      // The frequency input lives inside a pm-fields div for PM orders.
       document.body.innerHTML = `
                 <select id="order_type">
                     <option value="Corrective">Corrective</option>
                     <option value="PM">PM</option>
+                    <option value="Reactive">Reactive</option>
                 </select>
-                <input id="frequency" />
-                <label for="frequency">Frequency</label>
+                <div class="pm-fields">
+                  <input id="frequency" />
+                  <label for="frequency">Frequency</label>
+                  <input id="schedule_name" />
+                  <input id="estimated_completion_time" />
+                </div>
+                <div class="breakdown-fields">
+                  <input id="downtime_duration" />
+                  <input id="root_cause" />
+                  <input id="recovery" />
+                </div>
             `;
     });
 
-    test("disables frequency field for Corrective orders initially", () => {
+    test("makes frequency field optional for Corrective orders initially", () => {
       document.getElementById("order_type").value = "Corrective";
       loadScript();
 
       const frequency = document.getElementById("frequency");
-      expect(frequency.disabled).toBe(true);
+      // Corrective: pm-fields hidden, frequency not required, value cleared
       expect(frequency.required).toBe(false);
       expect(frequency.value).toBe("");
-
-      const label = document.querySelector('label[for="frequency"]');
-      expect(label.classList.contains("required-field")).toBe(false);
     });
 
-    test("enables frequency field for PM orders initially", () => {
+    test("makes frequency field required for PM orders initially", () => {
       document.getElementById("order_type").value = "PM";
       loadScript();
 
       const frequency = document.getElementById("frequency");
-      expect(frequency.disabled).toBe(false);
+      // PM: pm-fields shown, frequency is required
       expect(frequency.required).toBe(true);
-
-      const label = document.querySelector('label[for="frequency"]');
-      expect(label.classList.contains("required-field")).toBe(true);
     });
 
     test("updates frequency field when order type changes to PM", () => {
@@ -159,7 +169,6 @@ describe("Maintenance Order Detail Page", () => {
       orderType.dispatchEvent(new Event("change"));
 
       const frequency = document.getElementById("frequency");
-      expect(frequency.disabled).toBe(false);
       expect(frequency.required).toBe(true);
     });
 
@@ -173,7 +182,7 @@ describe("Maintenance Order Detail Page", () => {
       orderType.dispatchEvent(new Event("change"));
 
       const frequency = document.getElementById("frequency");
-      expect(frequency.disabled).toBe(true);
+      // Corrective: frequency not required and value cleared
       expect(frequency.required).toBe(false);
       expect(frequency.value).toBe(""); // Should be cleared
     });
@@ -283,6 +292,220 @@ describe("Maintenance Order Detail Page", () => {
       global.triggerEvent("assigneesSelect", "select2:unselect", {});
       jest.runAllTimers();
       expect(global.mockInputEl.prop).toHaveBeenCalledWith("tabIndex", 0);
+    });
+
+    test("handles missing inline input safely", () => {
+      global.mockInputEl.length = 0;
+
+      expect(() => {
+        global.triggerEvent("assigneesSelect", "select2:open");
+        global.triggerEvent("assigneesSelect", "select2:close");
+      }).not.toThrow();
+    });
+
+    test("blurs inline input when closing and it is active", () => {
+      global.triggerEvent("assigneesSelect", "select2:open");
+
+      Object.defineProperty(document, "activeElement", {
+        configurable: true,
+        get: () => global.mockInputEl[0],
+      });
+
+      global.triggerEvent("assigneesSelect", "select2:close");
+      expect(global.mockInputEl.blur).toHaveBeenCalled();
+    });
+
+    test("keeps caret visible on select event while open", () => {
+      global.triggerEvent("assigneesSelect", "select2:open");
+      global.triggerEvent("assigneesSelect", "select2:select");
+
+      jest.runAllTimers();
+      expect(global.mockInputEl.prop).toHaveBeenCalledWith("tabIndex", 0);
+    });
+
+    test("does not attempt to close dropdown on outside click when already closed", () => {
+      mockSelect2.mockClear();
+
+      global.triggerEvent("document", "mousedown.select2Close", {
+        target: document.body,
+      });
+
+      expect(mockSelect2).not.toHaveBeenCalledWith("close");
+    });
+  });
+
+  describe("Order Type Specific Logic", () => {
+    beforeEach(() => {
+      document.body.innerHTML = `
+                <select id="order_type">
+                    <option value="Corrective">Corrective</option>
+                    <option value="PM">PM</option>
+                    <option value="Reactive">Reactive</option>
+                </select>
+                <div class="pm-fields">
+                  <input id="frequency" />
+                  <label for="frequency">Frequency</label>
+                  <input id="schedule_name" />
+                  <input id="estimated_completion_time" />
+                </div>
+                <div class="breakdown-fields">
+                  <input id="downtime_duration" />
+                  <input id="root_cause" />
+                  <input id="recovery" />
+                </div>
+            `;
+    });
+
+    test("hides breakdown fields for PM orders", () => {
+      document.getElementById("order_type").value = "PM";
+      loadScript();
+
+      const breakdownSection = document.querySelector(".breakdown-fields");
+      expect(breakdownSection.style.display).toBe("none");
+    });
+
+    test("shows and requires breakdown fields for Reactive orders", () => {
+      document.getElementById("order_type").value = "Reactive";
+      loadScript();
+
+      const downtime = document.getElementById("downtime_duration");
+      const rootCause = document.getElementById("root_cause");
+      const recovery = document.getElementById("recovery");
+
+      expect(downtime.required).toBe(true);
+      expect(rootCause.required).toBe(true);
+      expect(recovery.required).toBe(true);
+    });
+
+    test("hides breakdown requirements when switching from Reactive to PM", () => {
+      document.getElementById("order_type").value = "Reactive";
+      loadScript();
+
+      const orderType = document.getElementById("order_type");
+      orderType.value = "PM";
+      orderType.dispatchEvent(new Event("change"));
+
+      const downtime = document.getElementById("downtime_duration");
+      const rootCause = document.getElementById("root_cause");
+      const recovery = document.getElementById("recovery");
+
+      expect(downtime.required).toBe(false);
+      expect(rootCause.required).toBe(false);
+      expect(recovery.required).toBe(false);
+    });
+  });
+
+  describe("Guard Clauses and Missing Elements", () => {
+    test("does not crash when order_type/frequency fields are missing", () => {
+      document.body.innerHTML = "";
+      expect(() => loadScript()).not.toThrow();
+    });
+
+    test("skips Select2 logic when assignees element is unavailable", () => {
+      const original$ = global.$;
+      global.$ = jest.fn((selector) => {
+        if (selector === "#assignees") return { length: 0 };
+        if (selector === document) return { on: jest.fn() };
+        return {
+          length: 0,
+          is: jest.fn(() => false),
+          has: jest.fn(() => ({ length: 0 })),
+        };
+      });
+
+      document.body.innerHTML = `
+        <select id="order_type"><option value="Corrective">Corrective</option></select>
+        <input id="frequency" />
+      `;
+
+      expect(() => loadScript()).not.toThrow();
+      global.$ = original$;
+    });
+
+    test("handles missing optional PM/Reactive fields without throwing", () => {
+      document.body.innerHTML = `
+        <select id="order_type">
+          <option value="PM">PM</option>
+          <option value="Reactive">Reactive</option>
+        </select>
+        <input id="frequency" />
+        <span id="label_estimated_time"></span>
+      `;
+
+      expect(() => loadScript()).not.toThrow();
+      const orderType = document.getElementById("order_type");
+      orderType.value = "Reactive";
+      orderType.dispatchEvent(new Event("change"));
+      orderType.value = "PM";
+      orderType.dispatchEvent(new Event("change"));
+      expect(true).toBe(true);
+    });
+  });
+
+  describe("Select2 Conditional Paths", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      document.body.innerHTML = '<select id="assignees"></select>';
+      loadScript();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    test("does not re-open/adjust caret when unselect has params.data", () => {
+      global.mockInputEl.prop.mockClear();
+      global.triggerEvent("assigneesSelect", "select2:unselect", {
+        params: { data: { id: 1 } },
+      });
+      jest.runAllTimers();
+      expect(global.mockInputEl.prop).not.toHaveBeenCalledWith("tabIndex", 0);
+      expect(global.mockInputEl.prop).not.toHaveBeenCalledWith("tabIndex", -1);
+    });
+
+    test("does not prevent opening when not in removalWhileClosed state", () => {
+      const event = { preventDefault: jest.fn() };
+      global.triggerEvent("assigneesSelect", "select2:opening", event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    test("does not prevent closing when no close prevention reason is armed", () => {
+      const event = { preventDefault: jest.fn() };
+      global.triggerEvent("assigneesSelect", "select2:closing", event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    test("select event while closed does not arm close prevention", () => {
+      const event = { preventDefault: jest.fn() };
+      global.triggerEvent("assigneesSelect", "select2:select");
+      global.triggerEvent("assigneesSelect", "select2:closing", event);
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    test("does not close dropdown when click is inside selection", () => {
+      global.triggerEvent("assigneesSelect", "select2:open");
+      mockSelect2.mockClear();
+      global.mockSelectionEl.is.mockReturnValue(true);
+
+      global.triggerEvent("document", "mousedown.select2Close", {
+        target: document.body,
+      });
+
+      expect(mockSelect2).not.toHaveBeenCalledWith("close");
+      global.mockSelectionEl.is.mockReturnValue(false);
+    });
+
+    test("does not close dropdown when click is inside open dropdown", () => {
+      global.triggerEvent("assigneesSelect", "select2:open");
+      mockSelect2.mockClear();
+      global.mockDropdownEl.is.mockReturnValue(true);
+
+      global.triggerEvent("document", "mousedown.select2Close", {
+        target: document.body,
+      });
+
+      expect(mockSelect2).not.toHaveBeenCalledWith("close");
+      global.mockDropdownEl.is.mockReturnValue(false);
     });
   });
 });

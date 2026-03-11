@@ -109,6 +109,7 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Title</th>
                 <th>Description</th>
                 <th>Type</th>
                 <th>Status</th>
@@ -119,9 +120,9 @@
         <tbody>
             {% for mo in asset.maintenance_orders %}
             <tr>
-                <td>{{ mo.id }}</td>
-                <td><a href="{{ url_for('main.mo_detail', mo_id=mo.id, asset_id=asset.id) }}">{{ mo.description }}</a>
-                </td>
+                <td><a href="{{ url_for('main.mo_detail', mo_id=mo.id, asset_id=asset.id) }}">{{ mo.id }}</a></td>
+                <td>{{ mo.title or 'N/A' }}</td>
+                <td>{{ mo.description }}</td>
                 <td>{{ mo.order_type }}</td>
                 <td>{{ mo.status }}</td>
                 <td>{{ mo.due_date.strftime('%Y-%m-%d') if mo.due_date else 'N/A' }}</td>

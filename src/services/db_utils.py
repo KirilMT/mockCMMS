@@ -1,6 +1,7 @@
 # src/services/db_utils.py
 """Database models and utilities for mockCMMS."""
 
+import json
 from datetime import datetime, timezone
 
 from flask_sqlalchemy import SQLAlchemy
@@ -240,16 +241,22 @@ class MaintenanceOrder(db.Model):  # type: ignore
 
     id = Column(Integer, primary_key=True)
     asset_id = Column(Integer, ForeignKey("asset.id"), nullable=False)
+    title = Column(String(255), nullable=True)  # Added for reports
     description = Column(Text, nullable=False)
     order_type = Column(String(50), nullable=False)
+    category = Column(String(50), nullable=True)  # Added for engineering support
     status = Column(String(50), default="Open")
     due_date = Column(DateTime, nullable=True)
-    priority = Column(String(20), default="Undefined")
-    schedule_name = Column(String(255), nullable=True)
+    priority = Column(String(50), default="Undefined")
+    schedule_name = Column(String(100), nullable=True)
     frequency = Column(String(50), nullable=True)
     estimated_completion_time = Column(Integer, nullable=True)
     labour_count = Column(Integer, default=1)
     justification = Column(Text, nullable=True)
+    # Breakdown-specific fields (for Reactive MOs)
+    downtime_duration = Column(Integer, nullable=True)  # Duration in minutes
+    root_cause = Column(Text, nullable=True)  # Root cause analysis
+    recovery = Column(Text, nullable=True)  # Recovery/resolution notes
     created_by = Column(Integer, ForeignKey("user.id"), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     modified_by = Column(Integer, ForeignKey("user.id"), nullable=True)
@@ -268,13 +275,43 @@ class MaintenanceOrder(db.Model):  # type: ignore
         backref="assigned_maintenance_orders",
     )
 
+    def _get_assignee_display(self):
+        """Return assignee display text from relationship or legacy JSON."""
+        if self.assignees:
+            return ", ".join(user.username for user in self.assignees if user.username)
+
+        raw_assignees_json = self.assignees_json
+        if not raw_assignees_json or not isinstance(raw_assignees_json, str):
+            return ""
+
+        try:
+            payload = json.loads(raw_assignees_json)
+        except (TypeError, json.JSONDecodeError):
+            return ""
+
+        display_values = []
+        for item in payload if isinstance(payload, list) else []:
+            if not isinstance(item, str):
+                continue
+            token = item.strip()
+            if token.startswith("user:"):
+                display_values.append(token.split(":", 1)[1])
+            elif token.startswith("team:"):
+                display_values.append(token.split(":", 1)[1])
+            elif token:
+                display_values.append(token)
+
+        return ", ".join(display_values)
+
     def to_dict(self):
         """Serialize MaintenanceOrder to dictionary."""
         return {
             "id": self.id,
             "asset_id": self.asset_id,
             "asset_name": self.asset.name if self.asset else "N/A",
+            "title": self.title,
             "description": self.description,
+            "category": self.category,
             "order_type": self.order_type,
             "status": self.status,
             "due_date": self.due_date.strftime("%Y-%m-%d") if self.due_date else None,
@@ -282,8 +319,11 @@ class MaintenanceOrder(db.Model):  # type: ignore
             "schedule_name": self.schedule_name,
             "frequency": self.frequency,
             "estimated_completion_time": self.estimated_completion_time,
-            "assignees": ", ".join(u.username for u in self.assignees),
+            "assignees": self._get_assignee_display(),
             "labour_count": self.labour_count,
+            "downtime_duration": self.downtime_duration,
+            "root_cause": self.root_cause,
+            "recovery": self.recovery,
             "created_by": self.creator.username if self.creator else "N/A",
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M"),
         }

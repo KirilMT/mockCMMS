@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated February 8, 2026_
+_Updated March 10, 2026_
 
 ---
 
@@ -368,7 +368,22 @@ The Advanced Table component was recently completed with core functionality. The
     - Implement: Exact Date, Before, After, Between, Is Empty, Is Not Empty.
     - Use HTML5 `<input type="date">` for date inputs.
     - Auto-detect date columns in the Advanced Table.
-  - **Phase 3 - Conflicting Filter Detection (High Complexity):**
+  - **Phase 3 - Numeric Column Filtering (High Value):**
+    - Auto-detect columns that contain numeric data (e.g., ID, Quantity, Duration, Count fields).
+    - Replace text-based operators ("contains", "equals") with numeric-specific comparators:
+      - **Equals** (`= N`)
+      - **Not Equals** (`≠ N`)
+      - **Greater Than** (`> N`)
+      - **Greater Than or Equal** (`≥ N`)
+      - **Less Than** (`< N`)
+      - **Less Than or Equal** (`≤ N`)
+      - **Between** (`N₁ ≤ x ≤ N₂`) — renders two number inputs
+    - Column type detection strategy: inspect the first non-empty values in the column at runtime
+      (e.g., if all non-null values parse as numbers, treat as numeric).
+    - Ensure filter inputs use `<input type="number">` for numeric columns.
+    - Validate on the frontend that the entered value is a valid number before applying.
+    - Backend filtering logic must handle all comparators safely (no raw string injection).
+  - **Phase 4 - Conflicting Filter Detection (High Complexity):**
     - Develop an algorithm to detect conflicting filter combinations (e.g., "Status = Open" AND "Status = Closed").
     - Implement a dynamic UI to prevent conflicts:
       - Option A: Disable conflicting filter options in real-time.
@@ -376,7 +391,7 @@ The Advanced Table component was recently completed with core functionality. The
       - Option C: Auto-suggest compatible filters based on the current selection.
     - Handle conflicts across AND/OR logic groups.
     - Provide clear user feedback when filters would return no results.
-  - **Phase 4 - Advanced Filtering (Optional Enhancement):**
+  - **Phase 5 - Advanced Filtering (Optional Enhancement):**
     - Calendar date pickers with visual widgets.
     - Relative date filters ("Today", "This Week", "Last 7 Days").
     - Multi-select filters for status/team fields.
@@ -627,6 +642,22 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Ensure proper GitHub team integration.
   - **Reference:** [GitHub Issue #5](https://github.com/KirilMT/mockCMMS/issues/5)
 
+### Reports Application Enhancements
+
+> **📋 Detailed Roadmap:** See [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for complete task breakdown and implementation details.
+
+- **[ ] Team-Scoped Shift Report Filtering** _(Priority: High)_
+  - Filter handovers, breakdowns, and break activities to MOs assigned to the report team
+  - Future: support department/team categories for non-maintenance report types
+
+- **[ ] Link Reports to Core CMMS Data** _(Priority: High)_
+  - Link Shift Report sections (Breakdowns, Engineering Support, Handover) to live MO database
+  - Detailed tasks in `apps/reports/docs/reports_roadmap.md`
+
+- **[ ] Asset Dropdown Population (Select2 AJAX)** _(Priority: Medium)_
+  - Replace free-text asset entries with DB-backed API selection
+  - Larger enhancement beyond current scope
+
 - **[x] Restructure GEMINI.md Documentation** _(Priority: Low)_
   - **Status:** ✅ Completed → Verified (December 1, 2025)
   - **Goal:** Improve the documentation structure for better clarity.
@@ -729,6 +760,20 @@ This application already handles skill-based task assignment. The next logical s
 
 This application is intended for reporting and analytics. The following features would provide significant value.
 
+- **[ ] HMI → Reactive MO Integration for Breakdowns** _(Priority: Medium)_
+  - **Goal:** When operations press the MNTC (Maintenance) button on the HMI, automatically open a
+    Reactive Maintenance Order in the system — eliminating the manual creation gap between the
+    physical breakdown event and the digital record.
+  - **Core MO Workflow Impact:** This feature requires changes to the MO creation flow in
+    the core mockCMMS app (auto-populate asset, shift, timestamp, status = "Open").
+  - **Features:**
+    - Define an HMI → CMMS integration API contract (webhook or polling endpoint).
+    - Auto-create a generic Reactive MO with pre-filled context from the HMI signal.
+    - Allow operators/technicians to edit the MO after the fact (fault, root cause, recovery time).
+    - Ensure auto-created MOs are correctly picked up by the Reports Breakdowns section.
+  - **Note:** The Reports-side tracking (ensuring these MOs appear in Shift Reports) is in
+    `apps/reports/docs/reports_roadmap.md`.
+
 - **[ ] Automated & Specialized Reporting**
   - **Goal:** Generate key operational reports automatically.
   - **Features:**
@@ -768,8 +813,9 @@ This application is intended for reporting and analytics. The following features
 
 - **Advanced Technician Tracking:** Availability, workload, and dynamic status.
 - **Automated, Specialized Reports:** Shift, weekend, and technician-submitted reports.
+- **HMI → Reactive MO Integration:** Auto-create breakdown MOs from HMI MNTC button signal.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
-- **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific filter operators.
+- **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific operators, **numeric comparators (between / greater-than / less-than)** for numeric columns.
 - **Infrastructure & Quality Refinement:** Ruff expansion, ESLint/Stylelint enforcement, and global coverage alignment (85%).
 - **UI Regression Automation:** End-to-end UI testing.
 - ✅ **Data Simulation Engine:** COMPLETE.

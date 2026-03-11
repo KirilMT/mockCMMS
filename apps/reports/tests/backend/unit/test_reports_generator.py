@@ -68,7 +68,7 @@ class TestReportGenerator:
             "test_report", "My PDF Title", parameters, "PDF", 1, data=sample_data
         )
         assert os.path.exists(path)
-        assert path.endswith(".txt")
+        assert path.endswith(".pdf")
         with open(path, "r") as f:
             content = f.read()
             assert "Report: My PDF Title" in content  # Actual behavior
@@ -200,9 +200,9 @@ class TestReportGenerator:
     def test_generate_shift_report_text_full_data(self, mock_file, generator):
         """Test shift report text generation with complete data."""
         data = {
-            "shift_info": {
-                "shift_date": "2023-01-15",
-                "shift_name": "Early",
+            "report_info": {
+                "date": "2023-01-15",
+                "shift": "Early",
                 "team_name": "Team A",
                 "attendance": 5,
                 "ehs_incidents": 0,
@@ -248,7 +248,7 @@ class TestReportGenerator:
     @patch("builtins.open", new_callable=mock_open)
     def test_generate_shift_report_text_minimal_data(self, mock_file, generator):
         """Test shift report with minimal/missing data."""
-        data = {"shift_info": {"shift_date": "2023-01-15"}}
+        data = {"report_info": {"date": "2023-01-15"}}
 
         generator._generate_shift_report_text(mock_file(), data, "Shift Report")
         assert mock_file().write.called
@@ -257,8 +257,8 @@ class TestReportGenerator:
     def test_generate_weekend_report_text_full(self, mock_file, generator):
         """Test weekend report text with full data."""
         data = {
-            "weekend_info": {
-                "weekend_date": "2023-01-14",
+            "report_info": {
+                "date": "2023-01-14",
                 "team_name": "Team B",
                 "breakdowns": [
                     {
@@ -292,9 +292,9 @@ class TestReportGenerator:
     def test_generate_shift_report_markdown_full(self, mock_file, generator):
         """Test shift report markdown generation."""
         data = {
-            "shift_info": {
-                "shift_date": "2023-01-15",
-                "shift_name": "Night",
+            "report_info": {
+                "date": "2023-01-15",
+                "shift": "Night",
                 "team_name": "Team C",
                 "attendance": 4,
                 "ehs_incidents": 1,
@@ -337,8 +337,8 @@ class TestReportGenerator:
     def test_generate_weekend_report_markdown_full(self, mock_file, generator):
         """Test weekend report markdown generation."""
         data = {
-            "weekend_info": {
-                "weekend_date": "2023-01-21",
+            "report_info": {
+                "date": "2023-01-21",
                 "team_name": "Team D",
                 "breakdowns": [],
             },
@@ -456,7 +456,7 @@ class TestReportGenerator:
                 {},
                 "txt",
                 1,
-                data={"shift_info": {}},
+                data={"report_info": {}},
             )
             assert result is not None
             assert ".txt" in result
@@ -480,7 +480,7 @@ class TestReportGenerator:
                 {},
                 "txt",
                 1,
-                data={"shift_info": {}},
+                data={"report_info": {}},
             )
             # Verify makedirs was called
             mock_makedirs.assert_called_once()
@@ -569,9 +569,13 @@ class TestReportGenerator:
     def test_generate_text_report_branches(self, mock_file, generator):
         """Test different branches of _generate_text_report."""
         # Shift info branch
-        generator._generate_text_report({"shift_info": {}}, "T", "f.txt")
+        generator._generate_text_report(
+            {"report_info": {"shift": "Early"}}, "T", "f.txt"
+        )
         # Weekend info branch
-        generator._generate_text_report({"weekend_info": {}}, "T", "f.txt")
+        generator._generate_text_report(
+            {"report_info": {"date": "2023-01-15"}}, "T", "f.txt"
+        )
         # Generic branch
         generator._generate_text_report({"other": {}}, "T", "f.txt")
 
@@ -628,9 +632,9 @@ class TestReportGenerator:
     def test_generate_shift_report_text_empty_breakdowns(self, mock_file, generator):
         """Test shift report text with empty breakdowns list."""
         data = {
-            "shift_info": {
-                "shift_date": "2023-01-15",
-                "shift_name": "Early",
+            "report_info": {
+                "date": "2023-01-15",
+                "shift": "Early",
                 "team_name": "Team A",
             },
             "breakdowns": [],
@@ -645,7 +649,7 @@ class TestReportGenerator:
     ):
         """Test breakdown formatting with different field names."""
         data = {
-            "shift_info": {},
+            "report_info": {},
             "breakdowns": [
                 {
                     "equipment_line": "Line 1",
@@ -684,7 +688,7 @@ class TestReportGenerator:
     def test_generate_weekend_report_text_empty_sections(self, mock_file, generator):
         """Test weekend report text with empty sections."""
         data = {
-            "weekend_info": {"weekend_date": "2023-01-14", "breakdowns": []},
+            "report_info": {"date": "2023-01-14", "breakdowns": []},
             "break_activities": [],
             "handover_instructions": [],
         }
@@ -695,7 +699,7 @@ class TestReportGenerator:
     def test_generate_weekend_markdown_empty_activities(self, mock_file, generator):
         """Test weekend markdown with no FLUX tickets or engineering support."""
         data = {
-            "weekend_info": {"weekend_date": "2023-01-14"},
+            "report_info": {"date": "2023-01-14"},
             "break_activities": [],
             "handover_instructions": [],
         }
@@ -732,7 +736,7 @@ class TestReportGenerator:
     @patch("builtins.open", new_callable=mock_open)
     def test_text_report_shift_info_branch(self, mock_file, generator):
         """Test _generate_text_report with shift_info key."""
-        data = {"shift_info": {"shift_date": "2023-01-15"}}
+        data = {"report_info": {"shift": "Night"}}
         result = generator._generate_text_report(data, "Shift", "test.txt")
         assert result == "test.txt"
         assert mock_file().write.called
@@ -740,7 +744,7 @@ class TestReportGenerator:
     @patch("builtins.open", new_callable=mock_open)
     def test_text_report_weekend_info_branch(self, mock_file, generator):
         """Test _generate_text_report with weekend_info key."""
-        data = {"weekend_info": {"weekend_date": "2023-01-14"}}
+        data = {"report_info": {"date": "2023-01-14"}, "report_type": "weekend_report"}
         result = generator._generate_text_report(data, "Weekend", "test.txt")
         assert result == "test.txt"
         assert mock_file().write.called
@@ -748,7 +752,7 @@ class TestReportGenerator:
     @patch("builtins.open", new_callable=mock_open)
     def test_markdown_report_shift_info_branch(self, mock_file, generator):
         """Test _generate_markdown_report with shift_info key."""
-        data = {"shift_info": {"shift_date": "2023-01-15"}}
+        data = {"report_info": {"shift": "Early"}}
         result = generator._generate_markdown_report(data, "Shift", "test.md")
         assert result == "test.md"
         assert mock_file().write.called
@@ -756,10 +760,103 @@ class TestReportGenerator:
     @patch("builtins.open", new_callable=mock_open)
     def test_markdown_report_weekend_info_branch(self, mock_file, generator):
         """Test _generate_markdown_report with weekend_info key."""
-        data = {"weekend_info": {"weekend_date": "2023-01-14"}}
+        data = {"report_info": {"date": "2023-01-14"}, "report_type": "weekend_report"}
         result = generator._generate_markdown_report(data, "Weekend", "test.md")
         assert result == "test.md"
         assert mock_file().write.called
+
+    def test_generate_report_uses_report_info_shift_in_filename(
+        self, generator, sample_data, tmp_path
+    ):
+        data = {
+            **sample_data,
+            "report_info": {"date": "2026-03-10", "shift": "Night"},
+        }
+        generator._reports_dir = str(tmp_path)
+
+        path = generator.generate_report(
+            "shift_report", "Shift Title", {}, "json", 1, data=data
+        )
+
+        assert os.path.exists(path)
+        assert "2026-03-10_Night" in os.path.basename(path)
+
+    def test_clean_field_removes_labels_and_prefix(self, generator):
+        assert generator._clean_field("Start Time: 08:00") == "08:00"
+        assert generator._clean_field("Duration Pump 45", prefix="Pump") == "45"
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test_generate_weekend_report_text_mixed_handover_entries(
+        self, mock_file, generator
+    ):
+        data = {
+            "report_info": {
+                "date": "2026-03-10",
+                "shift": "Early",
+                "team_name": "Weekend Team",
+            },
+            "handover_from_previous": [
+                {"asset": "AST-1", "title": "Issue", "description": "Details"},
+                "Plain note",
+            ],
+            "handover_instructions": [
+                {"asset": "AST-2", "title": "Next", "description": "Watch"},
+                "String instruction",
+            ],
+        }
+
+        generator._generate_weekend_report_text(mock_file(), data, "Weekend")
+
+        writes = "".join(call.args[0] for call in mock_file().write.call_args_list)
+        assert "AST-1 - Issue: Details" in writes
+        assert "Plain note" in writes
+        assert "AST-2 - Next: Watch" in writes
+        assert "String instruction" in writes
+
+    @patch("builtins.open", new_callable=mock_open)
+    def test_generate_weekend_report_markdown_mixed_handover_entries(
+        self, mock_file, generator
+    ):
+        data = {
+            "report_info": {
+                "date": "2026-03-10",
+                "shift": "Night",
+                "team_name": "Weekend Team",
+            },
+            "handover_from_previous": [
+                {"asset": "AST-3", "title": "Carry", "description": "Forward"},
+                "Manual note",
+            ],
+            "handover_to_next": [
+                {"asset": "AST-4", "title": "Next", "description": "Continue"},
+                "Plain instruction",
+            ],
+            "additional_tickets": [{"asset": "AST-5", "description": "Extra"}],
+        }
+
+        generator._generate_weekend_report_markdown(mock_file(), data, "Weekend")
+
+        writes = "".join(call.args[0] for call in mock_file().write.call_args_list)
+        assert "- **AST-3** - Carry: Forward" in writes
+        assert "- Manual note" in writes
+        assert "- **AST-4** - Next: Continue" in writes
+        assert "- Plain instruction" in writes
+        assert "- **AST-5** - Extra" in writes
+
+    def test_generate_summary_stats_ignores_non_dict_items(self, generator):
+        stats = generator.generate_summary_stats(
+            {
+                "tasks": [
+                    {"status": "Completed"},
+                    "not-a-dict",
+                    {"status": "Open"},
+                ]
+            }
+        )
+
+        assert stats["total_count"] == 3
+        assert stats["completed_count"] == 1
+        assert stats["open_count"] == 2
 
 
 class TestReportGeneratorDBIntegration:
@@ -913,9 +1010,9 @@ class TestReportGeneratorBranchCoverage:
     def test_shift_text_with_engineering_support(self, generator, tmp_path):
         """Cover engineering_support branch in _generate_shift_report_text."""
         data = {
-            "shift_info": {
-                "shift_date": "2023-01-15",
-                "shift_name": "Morning",
+            "report_info": {
+                "date": "2023-01-15",
+                "shift": "Morning",
                 "team_name": "Team A",
                 "attendance": 3,
                 "breakdowns": [],
@@ -937,7 +1034,7 @@ class TestReportGeneratorBranchCoverage:
     def test_weekend_report_text_with_data(self, generator, tmp_path):
         """Cover all branches in _generate_weekend_report_text."""
         data = {
-            "weekend_info": {"date": "2023-01-14"},
+            "report_info": {"date": "2023-01-14"},
             "shift": "Late",
             "attendance": 5,
             "ehs_incidents": 2,
@@ -961,7 +1058,7 @@ class TestReportGeneratorBranchCoverage:
     def test_weekend_report_text_mos_tickets_fallback(self, generator, tmp_path):
         """Test mos_tickets fallback when mos is empty."""
         data = {
-            "weekend_info": {"date": "2023-01-14"},
+            "report_info": {"date": "2023-01-14"},
             "mos": [],
             "mos_tickets": [{"asset": "TICKET-001", "description": "Ticket"}],
             "pms": [],
@@ -978,7 +1075,7 @@ class TestReportGeneratorBranchCoverage:
     def test_weekend_markdown_with_full_data(self, generator, tmp_path):
         """Cover all branches in _generate_weekend_report_markdown."""
         data = {
-            "weekend_info": {"date": "2023-01-14"},
+            "report_info": {"date": "2023-01-14"},
             "shift": "Night",
             "attendance": 4,
             "ehs_incidents": 0,
@@ -1003,7 +1100,7 @@ class TestReportGeneratorBranchCoverage:
     def test_weekend_markdown_mos_tickets_fallback(self, generator, tmp_path):
         """Test mos_tickets fallback in markdown generation."""
         data = {
-            "weekend_info": {"date": "2023-01-14"},
+            "report_info": {"date": "2023-01-14"},
             "mos": [],
             "mos_tickets": [{"asset": "T-001", "description": "Ticket Desc"}],
             "pms": [],
@@ -1020,7 +1117,7 @@ class TestReportGeneratorBranchCoverage:
     def test_shift_markdown_with_string_handover(self, generator, tmp_path):
         """Test shift markdown with string handover items."""
         data = {
-            "shift_info": {
+            "report_info": {
                 "date": "2023-01-15",
                 "shift": "Early",
                 "handover_from_previous": ["String handover from"],
@@ -1046,7 +1143,7 @@ class TestReportGeneratorBranchCoverage:
     def test_shift_markdown_breakdown_variations(self, generator, tmp_path):
         """Cover breakdown field name variations in markdown."""
         data = {
-            "shift_info": {
+            "report_info": {
                 "date": "2023-01-15",
                 "shift": "Late",
                 "handover_from_previous": [],
@@ -1083,7 +1180,7 @@ class TestReportGeneratorBranchCoverage:
     def test_shift_text_with_string_handover(self, generator, tmp_path):
         """Test shift text with string handover items."""
         data = {
-            "shift_info": {
+            "report_info": {
                 "date": "2023-01-15",
                 "shift": "Early",
                 "team_name": "Team C",
@@ -1109,7 +1206,7 @@ class TestReportGeneratorBranchCoverage:
     def test_shift_text_with_flux_tickets(self, generator, tmp_path):
         """Test shift text with flux tickets in break_activities."""
         data = {
-            "shift_info": {
+            "report_info": {
                 "date": "2023-01-15",
                 "handover_from_previous": [],
                 "handover_to_next": [],
@@ -1150,7 +1247,7 @@ class TestReportGeneratorBranchCoverage:
     def test_shift_markdown_with_flux_tickets(self, generator, tmp_path):
         """Test shift markdown with flux tickets."""
         data = {
-            "shift_info": {
+            "report_info": {
                 "date": "2023-01-15",
                 "shift": "Night",
                 "handover_from_previous": [
@@ -1268,19 +1365,19 @@ class TestReportGeneratorBranchCoverage:
 
     def test_generate_report_pdf_format(self, generator):
         """Test PDF format redirects to text."""
-        data = {"shift_info": {"date": "2023-01-15"}}
+        data = {"report_info": {"date": "2023-01-15"}}
         with patch("os.makedirs"):
             with patch("builtins.open", mock_open()) as m:
                 path = generator.generate_report(
                     "test", "PDF Test", {}, "pdf", 1, data=data
                 )
-                assert ".txt" in path
+                assert ".pdf" in path
                 m.assert_called()
 
     def test_shift_text_dict_handover_from(self, generator, tmp_path):
         """Test shift text with dict handover from items."""
         data = {
-            "shift_info": {
+            "report_info": {
                 "date": "2023-01-15",
                 "handover_from_previous": [
                     {"asset": "A1", "title": "T1", "description": "D1"}

@@ -1,7 +1,12 @@
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
-from src.routes.main import _get_technicians_and_teams, _process_mo_form
+from src.routes.main import (
+    _get_selected_assignees_for_form,
+    _get_technicians_and_teams,
+    _process_mo_form,
+    _resolve_assignees_from_tokens,
+)
 from src.services.db_utils import MaintenanceOrder
 
 
@@ -13,9 +18,7 @@ class TestMainRouteHelpers:
                 "asset_id": "1",
                 "description": "Test",
                 "order_type": "PM",
-                # Missing frequency
             }
-            # Should return False and flash message
             with patch("src.routes.main.flash") as mock_flash:
                 result = _process_mo_form(mo, form_data)
                 assert result is False
@@ -23,6 +26,48 @@ class TestMainRouteHelpers:
                     "Frequency is required for PM (Preventive Maintenance) orders.",
                     "error",
                 )
+
+    def test_process_mo_form_pm_missing_schedule_name(self, app):
+        with app.test_request_context():
+            mo = MaintenanceOrder()
+            form_data = {
+                "asset_id": "1",
+                "description": "PM Test",
+                "order_type": "PM",
+                "frequency": "weekly",
+                "estimated_completion_time": "30",
+                "schedule_name": "",
+            }
+
+            with patch("src.routes.main.flash") as mock_flash:
+                result = _process_mo_form(mo, form_data)
+
+            assert result is False
+            mock_flash.assert_called_with(
+                "Schedule Name is required for PM (Preventive Maintenance) orders.",
+                "error",
+            )
+
+    def test_process_mo_form_pm_missing_estimated_time(self, app):
+        with app.test_request_context():
+            mo = MaintenanceOrder()
+            form_data = {
+                "asset_id": "1",
+                "description": "PM Test",
+                "order_type": "PM",
+                "frequency": "weekly",
+                "schedule_name": "Weekly PM",
+                "estimated_completion_time": "",
+            }
+
+            with patch("src.routes.main.flash") as mock_flash:
+                result = _process_mo_form(mo, form_data)
+
+            assert result is False
+            mock_flash.assert_called_with(
+                "Estimated Time is required for PM (Preventive Maintenance) orders.",
+                "error",
+            )
 
     def test_process_mo_form_success(self, app):
         with app.test_request_context():
@@ -48,7 +93,6 @@ class TestMainRouteHelpers:
                 assert "User1" in mo.assignees_json
 
     def test_process_mo_form_invalid_time(self, app):
-        """Test processing MO form with invalid time format."""
         with app.test_request_context():
             mo = MagicMock()
             form_data = {
@@ -62,6 +106,52 @@ class TestMainRouteHelpers:
                 result = _process_mo_form(mo, form_data)
                 assert result is True
                 assert mo.estimated_completion_time is None
+
+    def test_resolve_assignees_from_tokens_user_and_team(self, app):
+        with app.app_context():
+            with (
+                patch("src.routes.main.User") as mock_user,
+                patch("src.routes.main.Team") as mock_team,
+            ):
+                user_direct = MagicMock(id=1)
+                user_team_1 = MagicMock(id=2)
+                user_team_2 = MagicMock(id=3)
+
+                mock_user.query.filter_by.return_value.first.return_value = user_direct
+                mock_team.query.filter_by.return_value.first.return_value = MagicMock(
+                    id=99
+                )
+                mock_user.query.filter_by.return_value.all.return_value = [
+                    user_team_1,
+                    user_team_2,
+                ]
+
+                users = _resolve_assignees_from_tokens(
+                    ["user:alex", "team:Team A", "", None, "user:alex"]
+                )
+
+                assert [u.id for u in users] == [1, 2, 3]
+
+    def test_get_selected_assignees_from_relationship_fallback(self):
+        mo = MagicMock()
+        mo.assignees_json = None
+        mo.assignees = [
+            MagicMock(username="alex.tech"),
+            MagicMock(username="maria.tech"),
+        ]
+
+        selected = _get_selected_assignees_for_form(mo)
+
+        assert selected == ["user:alex.tech", "user:maria.tech"]
+
+    def test_get_selected_assignees_handles_invalid_json(self):
+        mo = MagicMock()
+        mo.assignees_json = "{invalid-json}"
+        mo.assignees = []
+
+        selected = _get_selected_assignees_for_form(mo)
+
+        assert selected == []
 
     def test_user_detail_route(self, client, app):
         with app.app_context():
@@ -82,13 +172,12 @@ class TestMainRouteHelpers:
 
                 mock_db.get_or_404.return_value = mock_user
 
-                # Access the route
                 response = client.get("/users/1")
 
                 assert response.status_code == 200
                 mock_db.get_or_404.assert_called_with(MockUser, 1)
                 assert mock_render.called
-                args, kwargs = mock_render.call_args
+                _, kwargs = mock_render.call_args
                 assert kwargs["is_technician"] is True
                 assert kwargs["user"] == mock_user
 
@@ -96,10 +185,8 @@ class TestMainRouteHelpers:
         with app.app_context():
             with patch("src.routes.main.Role.query.filter_by") as mock_filter:
                 mock_filter.return_value.first.return_value = None
-                techs, teams = _get_technicians_and_teams()
+                techs, _ = _get_technicians_and_teams()
                 assert techs == []
-                # Teams should still be fetched
-                # (Assuming Team.query.all() works and returns mocked list or empty)
 
     def test_ticket_page(self, client):
         response = client.get("/tickets/T123")
@@ -177,8 +264,6 @@ class TestMainRouteHelpers:
                 mock_delete.side_effect = Exception("Delete Error")
                 response = client.post(f"/maintenance_orders/{mo_id}/delete")
                 assert response.status_code == 302
-                # Flash message check (mocking flash is better but let's check
-                # session or follow-up)
 
     def test_spare_part_routes_validations(self, client, app, sample_user):
         with app.app_context():
@@ -198,10 +283,8 @@ class TestMainRouteHelpers:
                 sess["user_id"] = sample_user.id
                 sess["last_active"] = datetime.now(timezone.utc).timestamp()
 
-            # Detail
             assert client.get(f"/spare_parts/{part_id}").status_code == 200
 
-            # Edit POST
             data = {
                 "description": "Updated",
                 "manufacturer": "M2",
@@ -211,9 +294,10 @@ class TestMainRouteHelpers:
                 "min_quantity": "10",
             }
             assert (
-                client.post(f"/spare_parts/{part_id}/edit", data=data).status_code
+                client.post(
+                    f"/spare_parts/{part_id}/edit",
+                    data=data,
+                ).status_code
                 == 302
             )
-
-            # Delete
             assert client.post(f"/spare_parts/{part_id}/delete").status_code == 302

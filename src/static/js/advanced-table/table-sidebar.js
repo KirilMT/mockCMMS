@@ -9,12 +9,25 @@ class TableSidebar {
    */
   constructor(advancedTable) {
     this.table = advancedTable;
-    this.sidebarCollapsed =
-      localStorage.getItem("tableSidebarCollapsed") === "true";
-    // Default to all collapsed, but respect user's saved preferences
-    this.expandedSections = JSON.parse(
-      localStorage.getItem("tableSidebarSections") || "[]",
-    );
+    // Use global StorageManager or a safe dummy if not available
+    const SafeStorage = window.StorageManager || {
+      get: () => null,
+      set: () => {},
+      remove: () => {},
+    };
+
+    let collapsed = "false";
+    let sections = "[]";
+
+    collapsed = SafeStorage.get("tableSidebarCollapsed", "false");
+    sections = SafeStorage.get("tableSidebarSections", "[]");
+    this.sidebarCollapsed = collapsed === "true";
+    try {
+      this.expandedSections = JSON.parse(sections) || [];
+    } catch (_) {
+      // Ignore error
+      this.expandedSections = [];
+    }
   }
 
   /**
@@ -228,7 +241,12 @@ class TableSidebar {
     }
 
     // Save state
-    localStorage.setItem("tableSidebarCollapsed", this.sidebarCollapsed);
+    const SafeStorage = window.StorageManager || {
+      get: () => null,
+      set: () => {},
+      remove: () => {},
+    };
+    SafeStorage.set("tableSidebarCollapsed", this.sidebarCollapsed);
 
     // Trigger resize to adjust table width after sidebar toggle
     setTimeout(() => {
@@ -268,7 +286,19 @@ class TableSidebar {
     }
 
     // Save state
-    localStorage.setItem(
+    this.saveExpandedSections();
+  }
+
+  /**
+   * Saves the current state of expanded sections to localStorage.
+   */
+  saveExpandedSections() {
+    const SafeStorage = window.StorageManager || {
+      get: () => null,
+      set: () => {},
+      remove: () => {},
+    };
+    SafeStorage.set(
       "tableSidebarSections",
       JSON.stringify(this.expandedSections),
     );

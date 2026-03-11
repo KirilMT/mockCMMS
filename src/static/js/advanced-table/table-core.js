@@ -74,9 +74,14 @@ class AdvancedTable {
       timestamp: Date.now(),
     };
 
+    const key = `tableState_${this.pageName}`;
     try {
-      const key = `tableState_${this.pageName}`;
-      localStorage.setItem(key, JSON.stringify(state));
+      const SafeStorage = window.StorageManager || {
+        get: () => null,
+        set: () => {},
+        remove: () => {},
+      };
+      SafeStorage.set(key, JSON.stringify(state));
     } catch (e) {
       console.warn("Failed to save table state:", e);
     }
@@ -86,31 +91,38 @@ class AdvancedTable {
    * Restore the table state from localStorage.
    */
   restoreTableState() {
+    const key = `tableState_${this.pageName}`;
     try {
-      const key = `tableState_${this.pageName}`;
-      const savedState = localStorage.getItem(key);
+      const SafeStorage = window.StorageManager || {
+        get: () => null,
+        set: () => {},
+        remove: () => {},
+      };
+
+      const savedState = SafeStorage.get(key);
 
       if (!savedState) return;
 
       const state = JSON.parse(savedState);
 
-      // Check if state is too old (older than 24 hours)
+      // Discard state older than 24 hours to avoid stale data.
       const maxAge = 24 * 60 * 60 * 1000;
       if (state.timestamp && Date.now() - state.timestamp > maxAge) {
-        localStorage.removeItem(key);
+        SafeStorage.remove(key);
         return;
       }
 
-      // Restore state
-      if (state.currentSort) {
-        this.currentSort = state.currentSort;
-      }
-      if (state.filters && Array.isArray(state.filters)) {
-        this.filters = state.filters;
-      }
+      // Restore basic properties
+      this.currentSort = state.currentSort || this.currentSort;
+      this.filters = state.filters || this.filters;
+      this.currentPage = state.currentPage || 1;
+      this.globalSearchTerm = state.globalSearchTerm || "";
+      this.selectedConfigId = state.selectedConfigId || null;
+
       if (state.hiddenColumns && Array.isArray(state.hiddenColumns)) {
         this.hiddenColumns = new Set(state.hiddenColumns);
       }
+
       if (state.columnOrder && Array.isArray(state.columnOrder)) {
         // Filter out stale column keys that don't exist in current columns
         const validKeys = this.columns.map((c) => c.key);
@@ -124,15 +136,6 @@ class AdvancedTable {
           }
         });
         this.columnOrder = filteredOrder;
-      }
-      if (state.currentPage) {
-        this.currentPage = state.currentPage;
-      }
-      if (state.globalSearchTerm !== undefined) {
-        this.globalSearchTerm = state.globalSearchTerm;
-      }
-      if (state.selectedConfigId) {
-        this.selectedConfigId = state.selectedConfigId;
       }
     } catch (e) {
       console.warn("Failed to restore table state:", e);

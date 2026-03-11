@@ -10,7 +10,7 @@ class TestDataAggregatorWithRealDB:
     """Test DataAggregator with real database (app fixture provides DB)."""
 
     def test_get_shift_incidents_with_reactive_mo(self, app):
-        """Test _get_shift_incidents retrieves reactive MOs."""
+        """Test _get_shift_incidents retrieves Completed Reactive MOs."""
         with app.app_context():
             # Create test data
             asset = Asset(name="Line 1", asset_code="AST-001")
@@ -21,9 +21,10 @@ class TestDataAggregatorWithRealDB:
                 description="Test breakdown",
                 order_type="Reactive",
                 priority="High",
-                status="Open",
+                status="Completed",  # Must be Completed to appear in breakdowns
                 asset_id=asset.id,
-                created_at=datetime(2026, 2, 8, 10, 30, tzinfo=timezone.utc),
+                # Use naive datetime - SQLite stores without timezone
+                created_at=datetime(2026, 2, 8, 10, 30),
             )
             db.session.add(mo)
             db.session.commit()
@@ -44,7 +45,7 @@ class TestDataAggregatorWithRealDB:
             assert found
 
     def test_get_shift_incidents_no_asset(self, app):
-        """Test _get_shift_incidents handles MO with minimal asset info."""
+        """Test _get_shift_incidents handles Completed MO with minimal asset info."""
         with app.app_context():
             # Asset_id is NOT NULL, so create minimal asset
             asset = Asset(name="Unknown Asset", asset_code="UNK-000")
@@ -53,11 +54,12 @@ class TestDataAggregatorWithRealDB:
 
             mo = MaintenanceOrder(
                 description="Test without full asset details",
-                order_type="Corrective",
+                order_type="Reactive",
                 priority="Medium",
-                status="Open",
+                status="Completed",  # Must be Completed to appear in breakdowns
                 asset_id=asset.id,
-                created_at=datetime(2026, 2, 8, 11, 0, tzinfo=timezone.utc),
+                # Use naive datetime - SQLite stores without timezone
+                created_at=datetime(2026, 2, 8, 11, 0),
             )
             db.session.add(mo)
             db.session.commit()
@@ -137,7 +139,7 @@ class TestDataAggregatorWithRealDB:
             assert isinstance(data, dict)
 
     def test_get_shift_incidents_multiple_mos(self, app):
-        """Test _get_shift_incidents with multiple MOs."""
+        """Test _get_shift_incidents only returns Completed Reactive MOs."""
         with app.app_context():
             asset1 = Asset(name="Line X", asset_code="AST-X")
             asset2 = Asset(name="Line Y", asset_code="AST-Y")
@@ -148,17 +150,18 @@ class TestDataAggregatorWithRealDB:
                 description="First breakdown",
                 order_type="Reactive",
                 priority="High",
-                status="Open",
+                status="Completed",  # Completed Reactive → appears in breakdowns
                 asset_id=asset1.id,
-                created_at=datetime(2026, 2, 9, 10, 0, tzinfo=timezone.utc),
+                # Use naive datetime - SQLite stores without timezone
+                created_at=datetime(2026, 2, 9, 10, 0),
             )
             mo2 = MaintenanceOrder(
                 description="Second breakdown",
                 order_type="Corrective",
                 priority="Medium",
-                status="In Progress",
+                status="In Progress",  # Non-Reactive and non-Completed → excluded
                 asset_id=asset2.id,
-                created_at=datetime(2026, 2, 9, 12, 0, tzinfo=timezone.utc),
+                created_at=datetime(2026, 2, 9, 12, 0),
             )
             db.session.add_all([mo1, mo2])
             db.session.commit()
@@ -171,7 +174,7 @@ class TestDataAggregatorWithRealDB:
 
             ids_found = [inc["id"] for inc in incidents]
             assert mo1.id in ids_found
-            assert mo2.id in ids_found
+            assert mo2.id not in ids_found
 
     def test_data_aggregator_initialization(self, app):
         """Test DataAggregator can be instantiated."""

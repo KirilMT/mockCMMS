@@ -161,10 +161,10 @@ test.describe("CRUD Functional Tests", () => {
     await page.click("text=Add New MO");
 
     const moDesc = "MO " + Date.now();
+    await page.fill('input[name="title"]', "Test MO Title");
     await page.fill('textarea[name="description"]', moDesc);
-    await page.selectOption('select[name="order_type"]', "corrective");
+    await page.selectOption('select[name="order_type"]', "Corrective");
     await page.selectOption('select[name="priority"]', "Medium");
-    await page.fill('input[name="estimated_completion_time"]', "60");
     await page.fill('input[name="labour_count"]', "1");
 
     const assetSelect = page.locator('select[name="asset_id"]');
@@ -240,10 +240,10 @@ test.describe("CRUD Functional Tests", () => {
     await page.waitForSelector('textarea[name="description"]');
 
     const moDesc = "Delete Test MO " + Date.now();
+    await page.fill('input[name="title"]', "Delete Test Title");
     await page.fill('textarea[name="description"]', moDesc);
-    await page.selectOption('select[name="order_type"]', "corrective");
+    await page.selectOption('select[name="order_type"]', "Corrective");
     await page.selectOption('select[name="priority"]', "High");
-    await page.fill('input[name="estimated_completion_time"]', "60");
     await page.fill('input[name="labour_count"]', "1");
     // asset_id should be pre-selected since we came from asset page
 

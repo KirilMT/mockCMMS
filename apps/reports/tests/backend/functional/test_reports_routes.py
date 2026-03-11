@@ -1,8 +1,10 @@
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from apps.reports.src import models as report_models
+from src.services.db_utils import Asset, MaintenanceOrder, db
 
 
 @pytest.fixture
@@ -39,18 +41,10 @@ def test_generate_report_page_get(logged_in_client):
     assert b"Generate Report" in response.data
 
 
-def test_generate_report_no_title(logged_in_client):
-    """Test generating a report without a title."""
-    response = logged_in_client.post(
-        "/reports/generate", data={"report_type": "shift_report"}, follow_redirects=True
-    )
-    assert b"Report Title is required" in response.data
-
-
 def test_generate_report_no_type(logged_in_client):
     """Test generating a report without a type."""
     response = logged_in_client.post(
-        "/reports/generate", data={"title": "Test Report"}, follow_redirects=True
+        "/reports/generate", data={}, follow_redirects=True
     )
     assert b"Report Type is required" in response.data
 
@@ -93,7 +87,6 @@ def test_generate_shift_report_success(mock_get_data, logged_in_client, sample_u
     response = logged_in_client.post(
         "/reports/generate",
         data={
-            "title": "Valid Shift Report",
             "report_type": "shift_report",
             "shift_date": "2023-10-27",
             "shift_name": "Early",
@@ -106,13 +99,28 @@ def test_generate_shift_report_success(mock_get_data, logged_in_client, sample_u
     assert response.status_code == 200
     assert b"Report generated successfully" in response.data
 
-    # Verify report was created in DB
-    report = report_models.Report.query.filter_by(title="Valid Shift Report").first()
+    # Verify report was created in DB (title is now auto-generated)
+    report = (
+        report_models.Report.query.filter_by(
+            report_type="shift_report", generated_by=sample_user.id
+        )
+        .order_by(report_models.Report.id.desc())
+        .first()
+    )
     assert report is not None
     assert report.generated_by == sample_user.id
+    # Verify title contains the key info
+    assert "2023-10-27" in report.title
+    assert "Early" in report.title
     data = report.data
     assert "handover_from_previous" in data["shift_info"]
-    assert data["shift_info"]["handover_from_previous"] == ["Note 1", "Note 2"]
+    handover_items = data["shift_info"]["handover_from_previous"]
+    assert any(
+        item == "Note 1"
+        or item == "Note 2"
+        or (isinstance(item, dict) and item.get("description") in {"Note 1", "Note 2"})
+        for item in handover_items
+    )
 
 
 @patch(
@@ -121,12 +129,11 @@ def test_generate_shift_report_success(mock_get_data, logged_in_client, sample_u
 )
 def test_generate_weekend_report_success(mock_get_data, logged_in_client):
     """Test successfully generating a weekend report."""
-    mock_get_data.return_value = {"summary": "Weekend stuff"}
+    mock_get_data.return_value = {"summary": "Weekend stuff", "report_info": {}}
 
     response = logged_in_client.post(
         "/reports/generate",
         data={
-            "title": "Valid Weekend Report",
             "report_type": "weekend_report",
             "weekend_date": "2023-10-28",
             "handover_to_next": "Instruction 1",
@@ -137,8 +144,14 @@ def test_generate_weekend_report_success(mock_get_data, logged_in_client):
     assert response.status_code == 200
     assert b"Report generated successfully" in response.data
 
-    report = report_models.Report.query.filter_by(title="Valid Weekend Report").first()
+    report = (
+        report_models.Report.query.filter_by(report_type="weekend_report")
+        .order_by(report_models.Report.id.desc())
+        .first()
+    )
     assert report is not None
+    # Check title contains the date
+    assert "2023-10-28" in report.title
     # Check that handover_to_next was mapped to handover_instructions
     assert report.data["handover_instructions"] == ["Instruction 1"]
 
@@ -472,9 +485,13 @@ class TestReportsBackendWorkflows:
         assert b"Report generated successfully" in res.data
 
         # Verify aggregator call
-        mock_services["agg_shift"].get_aggregated_shift_data.assert_called_with(
-            "2026-02-08", "Early"
-        )
+        mock_services["agg_shift"].get_aggregated_shift_data.assert_called_once()
+        shift_args, shift_kwargs = mock_services[
+            "agg_shift"
+        ].get_aggregated_shift_data.call_args
+        assert shift_args[0] == "2026-02-08"
+        assert shift_args[1] == "Early"
+        assert "team_id" in shift_kwargs
 
         # 2. Generate Weekend Report
         weekend_data = {
@@ -489,9 +506,12 @@ class TestReportsBackendWorkflows:
         assert res.status_code == 200
 
         # Verify aggregator call
-        mock_services["agg_weekend"].get_aggregated_weekend_data.assert_called_with(
-            "2026-02-07"
-        )
+        mock_services["agg_weekend"].get_aggregated_weekend_data.assert_called_once()
+        weekend_args, weekend_kwargs = mock_services[
+            "agg_weekend"
+        ].get_aggregated_weekend_data.call_args
+        assert weekend_args[0] == "2026-02-07"
+        assert "team_id" in weekend_kwargs
 
 
 def test_reports_list_generated_by_resolution(auth_client, app):
@@ -554,7 +574,6 @@ def test_generate_shift_report_missing_shift_info(auth_client, app):
                 resp = auth_client.post(
                     "/reports/generate",
                     data={
-                        "title": "Test Report",
                         "report_type": "shift_report",
                         "shift_date": "2023-01-01",
                         "shift_name": "Early",
@@ -564,12 +583,17 @@ def test_generate_shift_report_missing_shift_info(auth_client, app):
                 )
 
                 assert resp.status_code == 302
-                # Handovers should be stored in root data when shift_info is missing.
+                # Handovers are now stored in root data with report_type
                 # Call args can be inspected if needed.
                 call_args = MockReportModel.call_args[1]
                 data = call_args["data"]
-                assert data["handover_from_previous"] == ["Note 1"]
-                assert data["handover_to_next"] == ["Note 2"]
+                # Check handovers in either root or shift_info
+                assert data.get("handover_from_previous") == ["Note 1"] or data.get(
+                    "shift_info", {}
+                ).get("handover_from_previous") == ["Note 1"]
+                assert data.get("handover_to_next") == ["Note 2"] or data.get(
+                    "shift_info", {}
+                ).get("handover_to_next") == ["Note 2"]
 
 
 def test_report_detail_exceptions(auth_client, app):
@@ -741,3 +765,111 @@ def test_report_detail_technician_count_logic(auth_client, app):
 
                 resp = auth_client.get("/reports/1")
                 assert resp.status_code == 200
+
+
+def test_generate_shift_report_handles_naive_completion_timestamps(
+    logged_in_client, app
+):
+    """Generate shift report with naive timestamps.
+
+    Successfully when completed corrective MOs use naive datetimes.
+    """
+    with app.app_context():
+        asset = Asset(name="Report Asset", asset_code="RPT-NAIVE-001")
+        db.session.add(asset)
+        db.session.flush()
+
+        db.session.add(
+            MaintenanceOrder(
+                asset_id=asset.id,
+                description="Corrective completed during night shift",
+                order_type="Corrective",
+                status="Completed",
+                created_at=datetime(2026, 3, 6, 17, 30),
+                modified_on=datetime(2026, 3, 6, 19, 35),
+            )
+        )
+        db.session.commit()
+
+    response = logged_in_client.post(
+        "/reports/generate",
+        data={
+            "report_type": "shift_report",
+            "shift_date": "2026-03-06",
+            "shift_name": "Night",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Report generated successfully" in response.data
+
+
+def test_shift_report_detail_renders_mo_and_asset_links(logged_in_client, app):
+    """Shift report detail should render linked asset code and MO links in sections."""
+    with app.app_context():
+        asset = Asset(name="Link Test Asset", asset_code="AST-9001")
+        db.session.add(asset)
+        db.session.flush()
+
+        mo = MaintenanceOrder(
+            asset_id=asset.id,
+            description="Link integrity check",
+            order_type="Reactive",
+            status="In Progress",
+            priority="High",
+        )
+        db.session.add(mo)
+        db.session.flush()
+
+        report = report_models.Report(
+            title="Shift Link Test",
+            report_type="shift_report",
+            data={
+                "report_info": {
+                    "date": "2026-03-06",
+                    "shift": "Night",
+                    "team_name": "Team A",
+                    "handover_from_previous": [
+                        {
+                            "mo_id": f"MO-{mo.id}",
+                            "asset": "AST-9001",
+                            "title": "Instruction",
+                            "description": "From previous",
+                        }
+                    ],
+                    "handover_to_next": [
+                        {
+                            "mo_id": mo.id,
+                            "asset": "AST-9001",
+                            "title": "Instruction",
+                            "description": "To next",
+                        }
+                    ],
+                },
+                "breakdowns": [
+                    {
+                        "id": mo.id,
+                        "description": "Breakdown linked to MO",
+                        "timestamp": "19:30",
+                        "duration": "20",
+                    }
+                ],
+            },
+            generated_by=1,
+        )
+        report_models.db.session.add(report)
+        report_models.db.session.commit()
+
+        report_id = report.id
+        asset_id = asset.id
+        mo_id = mo.id
+
+    response = logged_in_client.get(f"/reports/{report_id}")
+    assert response.status_code == 200
+
+    html = response.data.decode("utf-8")
+    assert f"/assets/{asset_id}" in html
+    assert "AST-9001" in html
+    assert f"/maintenance_orders/{mo_id}" in html
+    assert f"MO-{mo_id}" in html

@@ -21,13 +21,26 @@ class Report(db.Model):  # type: ignore
     generated_by = db.Column(db.Integer)  # User ID, loosely coupled
 
     def to_dict(self):
-        # Extract shift from parameters
+        # Extract shift from parameters (primary), then report data/title fallback
         shift = None
         if self.parameters:
             params = self.parameters if isinstance(self.parameters, dict) else {}
             shift = params.get("shift")
 
-        return {
+        data_payload = self.data if isinstance(self.data, dict) else {}
+        report_info = data_payload.get("report_info") or {}
+        if not shift:
+            shift = report_info.get("shift") or data_payload.get("shift")
+
+        if not shift and self.title:
+            title_match = (
+                "Night"
+                if " - Night" in self.title
+                else ("Early" if " - Early" in self.title else None)
+            )
+            shift = title_match
+
+        data = {
             "id": self.id,
             "title": self.title,
             "report_type": self.report_type,
@@ -40,3 +53,9 @@ class Report(db.Model):  # type: ignore
             "file_path": self.file_path,
             "generated_by": self.generated_by,
         }
+
+        # Include dynamically added attributes like generated_by_name
+        if hasattr(self, "generated_by_name"):
+            data["generated_by_name"] = self.generated_by_name
+
+        return data

@@ -9,59 +9,52 @@ test.describe("Shift Report", () => {
     await page.waitForLoadState("networkidle");
   });
 
-  test("should generate shift report", async ({ page }) => {
-    await page.goto("/reports/shift/");
-    await expect(
-      page.getByRole("heading", { name: /Shift Production Report/i }),
-    ).toBeVisible();
+  test("should generate shift report from reports modal", async ({ page }) => {
+    await page.goto("/reports/");
 
-    // Select Shift
-    // Use fixed date matching seeding if available, otherwise today
-    // Force set date to avoid UI issues
-    await page.waitForSelector('input[name="date"]');
-    await page.evaluate(() => {
-      const d = document.querySelector('input[name="date"]');
-      d.value = "2026-01-21";
-      d.dispatchEvent(new Event("input", { bubbles: true }));
-      d.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-    await expect(page.locator('input[name="date"]')).toHaveValue("2026-01-21");
+    await page.click('button[data-target="#generateReportModal"]');
+    await expect(page.locator("#generateReportModal")).toBeVisible();
 
-    await page.selectOption('select[name="shift"]', "Morning");
-    await page.getByRole("button", { name: /View Report/i }).click();
+    await page.selectOption("#report_type", "shift_report");
+    await page.fill("#shift_date", "2026-01-21");
+    await page.selectOption("#shift_name", "Early");
 
-    // Check for either table OR "No activities found" alert
-    const table = page.locator("table");
-    const alert = page.locator(".alert.alert-info", {
-      hasText: "No tasks found",
-    });
-
-    await expect(table.or(alert)).toBeVisible({ timeout: 15000 });
-
-    if (await table.isVisible()) {
-      // Expect table to have content or at least be initialized
-      await expect(page.locator("table tbody")).toBeVisible();
-    } else {
-      await expect(alert).toBeVisible();
+    const teamOptions = page.locator("#team_id option[value]");
+    const count = await teamOptions.count();
+    if (count > 0) {
+      const value = await teamOptions.nth(0).getAttribute("value");
+      if (value) {
+        await page.selectOption("#team_id", value);
+      }
     }
+
+    await page.click('#generateReportModal button[type="submit"]');
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveURL(/\/reports\/?$/);
+
+    const firstReportLink = page
+      .locator('#reportsTable a[href^="/reports/"]')
+      .first();
+    await expect(firstReportLink).toBeVisible({ timeout: 15000 });
+    await firstReportLink.click();
+
+    await expect(page).toHaveURL(/\/reports\/\d+$/);
+    await expect(page.locator(".report-header")).toBeVisible();
+    await expect(page.locator("#report-content")).toBeVisible();
   });
 
-  test("should allow exporting to PDF/Print", async ({ page }) => {
-    await page.goto("/reports/shift/");
-    // Check for Export PDF button
-    // Assuming it's a link "Export PDF" or similar
-    // Note: PDF generation might be backend handled or browser print
-    // If it's backend, it returns a file.
-    // Checking for button existence is good enough for now
-    const exportBtn = page.getByText(/Export PDF/i);
-    if (await exportBtn.isVisible()) {
-      const downloadPromise = page.waitForEvent("download");
-      await exportBtn.click();
-      const download = await downloadPromise;
-      expect(download.suggestedFilename()).toContain(".pdf");
-    } else {
-      // console.log('Export PDF button not found, skipping PDF download test');
-      // skipping
-    }
+  test("should show export controls in shift report detail", async ({
+    page,
+  }) => {
+    await page.goto("/reports/");
+    const firstReportLink = page
+      .locator('#reportsTable a[href^="/reports/"]')
+      .first();
+    await expect(firstReportLink).toBeVisible({ timeout: 15000 });
+    await firstReportLink.click();
+
+    await expect(page.locator('button:has-text("Export")')).toBeVisible();
+    await page.click('button:has-text("Export")');
+    await expect(page.locator(".dropdown-menu")).toBeVisible();
   });
 });

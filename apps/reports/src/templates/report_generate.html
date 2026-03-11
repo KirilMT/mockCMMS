@@ -40,7 +40,7 @@ block content %}
           <input type="hidden" name="format" value="html">
 
           <!-- Shift Report Parameters -->
-          <div id="shift_params" class="report-params d-none">
+          <div id="shift_params" class="report-params" style="display: none;">
             <div class="mb-3">
               <label for="shift_date" class="form-label">Shift Date</label>
               <input
@@ -101,6 +101,13 @@ block content %}
               <small class="form-text text-muted"
                 >Select any date in the week to get the weekend report</small
               >
+            </div>
+            <div class="mb-3">
+              <label for="weekend_shift" class="form-label">Shift</label>
+              <select class="form-select" id="weekend_shift" name="weekend_shift">
+                <option value="Night">Night (18:00 - 06:00)</option>
+                <option value="Early">Early (06:00 - 18:00)</option>
+              </select>
             </div>
           </div>
 

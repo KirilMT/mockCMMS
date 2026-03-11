@@ -5,6 +5,8 @@ from src.services.db_seeding import (
     _assign_technician_teams,
     _create_maintenance_orders,
     _get_or_create,
+    _resolve_mo_assignees,
+    get_seeding_base_date,
     populate_dummy_data,
 )
 from src.services.db_utils import Asset, MaintenanceOrder, Role, Skill, Team, User, db
@@ -114,3 +116,81 @@ class TestDBSeeding:
             db.session.refresh(user)
             assert user.team.name == "SeedingTeam"
             assert user.skills[0].skill.name == "SkillX"
+
+    def test_create_maintenance_orders_with_assignees(self, app):
+        """Assignees from dummy data tokens should populate relationship and JSON."""
+        with app.app_context():
+            unique_description = "Seeded with assignee unique"
+            asset = Asset(name="AssigneeAsset", asset_code="AA-001")
+            team = Team(name="AssigneeTeam")
+            user = User(username="assignee.user", email="assignee@example.com")
+            user.set_password("pass")
+            user.team = team
+            db.session.add_all([asset, team, user])
+            db.session.commit()
+
+            orders_data = [
+                {
+                    "asset": "AssigneeAsset",
+                    "description": unique_description,
+                    "order_type": "Reactive",
+                    "status": "In Progress",
+                    "priority": "High",
+                    "assignees": ["user:assignee.user"],
+                }
+            ]
+
+            _create_maintenance_orders(
+                orders_data, {"AssigneeAsset": asset}, {}, MagicMock()
+            )
+            db.session.commit()
+
+            mo = (
+                MaintenanceOrder.query.filter_by(description=unique_description)
+                .order_by(MaintenanceOrder.id.desc())
+                .first()
+            )
+            assert mo is not None
+            assert mo.assignees_json is not None
+            assert "user:assignee.user" in mo.assignees_json
+            assert len(mo.assignees) == 1
+            assert mo.assignees[0].username == "assignee.user"
+
+    def test_get_seeding_base_date_with_invalid_env_falls_back_to_now(
+        self, app, monkeypatch
+    ):
+        with app.app_context():
+            monkeypatch.setenv("FIXED_DATE_SEEDING", "not-a-date")
+            base_date = get_seeding_base_date()
+            assert base_date.tzinfo is not None
+
+    def test_get_seeding_base_date_with_valid_env(self, app, monkeypatch):
+        with app.app_context():
+            monkeypatch.setenv("FIXED_DATE_SEEDING", "2026-03-09")
+            base_date = get_seeding_base_date()
+            assert base_date.strftime("%Y-%m-%d %H:%M") == "2026-03-09 12:00"
+
+    def test_resolve_mo_assignees_user_and_team_tokens(self, app):
+        with app.app_context():
+            with (
+                patch("src.services.db_seeding.User") as mock_user,
+                patch("src.services.db_seeding.Team") as mock_team,
+            ):
+                direct_user = MagicMock(id=11)
+                team_user_a = MagicMock(id=21)
+                team_user_b = MagicMock(id=22)
+
+                mock_user.query.filter_by.return_value.first.return_value = direct_user
+                mock_team.query.filter_by.return_value.first.return_value = MagicMock(
+                    id=5
+                )
+                mock_user.query.filter_by.return_value.all.return_value = [
+                    team_user_a,
+                    team_user_b,
+                ]
+
+                resolved = _resolve_mo_assignees(
+                    ["user:direct.user", "team:Team C", "", None]
+                )
+
+                assert [u.id for u in resolved] == [11, 21, 22]

@@ -42,6 +42,15 @@ describe("AdvancedTable", () => {
       value: localStorageMock,
     });
 
+    // Set up StorageManager to delegate to localStorage mock so code using
+    // window.StorageManager continues to read/write from the same mock store.
+    window.StorageManager = {
+      get: (key, defaultValue = null) =>
+        localStorageMock.getItem(key) ?? defaultValue,
+      set: (key, value) => localStorageMock.setItem(key, value),
+      remove: (key) => localStorageMock.removeItem(key),
+    };
+
     // Reset mocks
     jest.clearAllMocks();
   });

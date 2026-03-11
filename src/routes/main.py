@@ -49,38 +49,130 @@ def _get_technicians_and_teams():
     return technicians or [], teams or []
 
 
+def _resolve_assignees_from_tokens(assignee_tokens):
+    """Resolve user:/team: assignee tokens to User records."""
+    users = []
+    seen_ids = set()
+
+    for token in assignee_tokens or []:
+        if not isinstance(token, str):
+            continue
+        value = token.strip()
+        if not value:
+            continue
+
+        if value.startswith("user:"):
+            username = value.split(":", 1)[1].strip()
+            user = User.query.filter_by(username=username).first()
+            if user and user.id not in seen_ids:
+                users.append(user)
+                seen_ids.add(user.id)
+            continue
+
+        if value.startswith("team:"):
+            team_name = value.split(":", 1)[1].strip()
+            team = Team.query.filter_by(name=team_name).first()
+            if not team:
+                continue
+            for user in User.query.filter_by(team_id=team.id).all():
+                if user.id not in seen_ids:
+                    users.append(user)
+                    seen_ids.add(user.id)
+
+    return users
+
+
+def _get_selected_assignees_for_form(mo):
+    """Build selected assignee tokens for MO form prefill."""
+    selected = []
+
+    if mo.assignees_json:
+        try:
+            parsed = json.loads(mo.assignees_json)
+            if isinstance(parsed, list):
+                selected.extend(str(item) for item in parsed if item)
+        except (TypeError, json.JSONDecodeError):
+            selected = []
+
+    if not selected and getattr(mo, "assignees", None):
+        selected = [f"user:{user.username}" for user in mo.assignees if user.username]
+
+    return selected
+
+
 # --- Form Processing Helper for Maintenance Orders ---
 def _process_mo_form(mo, form_data):
     """Processes form data for creating or updating a MaintenanceOrder."""
     mo.asset_id = form_data.get("asset_id")
+    mo.title = form_data.get("title")  # New field
     mo.description = form_data.get("description")
-    mo.order_type = form_data.get("order_type")
+    mo.category = form_data.get("category")  # New field
+
+    order_type_raw = (form_data.get("order_type") or "").strip()
+    order_type_map = {
+        "pm": "PM",
+        "reactive": "Reactive",
+        "corrective": "Corrective",
+    }
+    mo.order_type = order_type_map.get(order_type_raw.lower(), order_type_raw)
     mo.priority = form_data.get("priority")
+
+    # Get estimated_time early for PM validation
+    estimated_time = form_data.get("estimated_completion_time", "")
 
     # PM-specific fields
     schedule_name = form_data.get("schedule_name", "")
     frequency = form_data.get("frequency", "")
-    if mo.order_type == "PM" and not frequency:
-        flash("Frequency is required for PM (Preventive Maintenance) orders.", "error")
-        return False
+    if mo.order_type == "PM":
+        if not frequency:
+            flash(
+                "Frequency is required for PM (Preventive Maintenance) orders.",
+                "error",
+            )
+            return False
+        if not schedule_name:
+            flash(
+                "Schedule Name is required for PM (Preventive Maintenance) orders.",
+                "error",
+            )
+            return False
+        if not estimated_time:
+            flash(
+                "Estimated Time is required for PM (Preventive Maintenance) orders.",
+                "error",
+            )
+            return False
 
     mo.schedule_name = schedule_name if schedule_name else None
     mo.frequency = frequency if frequency else None
 
     # Optional & other fields
-    estimated_time = form_data.get("estimated_completion_time", "")
     mo.estimated_completion_time = (
         int(estimated_time) if estimated_time and estimated_time.isdigit() else None
     )
-    mo.labour_count = int(form_data.get("labour_count", 0))
 
-    assignees_list = request.form.getlist(
-        "assignees"
-    )  # Use request directly for getlist
+    labour_count = form_data.get("labour_count", "1")
+    mo.labour_count = int(labour_count) if labour_count.isdigit() else 1
+
+    assignees_list = request.form.getlist("assignees")
     mo.assignees_json = json.dumps(assignees_list) if assignees_list else None
+    mo.assignees = _resolve_assignees_from_tokens(assignees_list)
 
     justification = form_data.get("justification", "")
     mo.justification = justification if justification else None
+
+    # Breakdown-specific fields (Reactive MOs can leave these blank)
+    downtime_duration = form_data.get("downtime_duration", "")
+    root_cause = form_data.get("root_cause", "")
+    recovery = form_data.get("recovery", "")
+
+    mo.downtime_duration = (
+        int(downtime_duration)
+        if downtime_duration and downtime_duration.isdigit()
+        else None
+    )
+    mo.root_cause = root_cause if root_cause else None
+    mo.recovery = recovery if recovery else None
 
     due_date_str = form_data.get("due_date", "")
     mo.due_date = datetime.strptime(due_date_str, "%Y-%m-%d") if due_date_str else None
@@ -261,7 +353,7 @@ def mo_detail(mo_id):
     mo = db.get_or_404(MaintenanceOrder, mo_id)
     technicians, teams = _get_technicians_and_teams()
     assets = Asset.query.all()
-    selected_assignees = json.loads(mo.assignees_json) if mo.assignees_json else []
+    selected_assignees = _get_selected_assignees_for_form(mo)
     asset_id = request.args.get("asset_id")
 
     return render_template(
@@ -294,7 +386,7 @@ def edit_mo(mo_id):
             return redirect(url_for("main.maintenance_orders"))
         # If processing fails, fall through to render the form again
 
-    selected_assignees = json.loads(mo.assignees_json) if mo.assignees_json else []
+    selected_assignees = _get_selected_assignees_for_form(mo)
     return render_template(
         "maintenance_order_detail.html",
         mo=mo,

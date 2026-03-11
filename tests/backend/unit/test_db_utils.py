@@ -399,3 +399,57 @@ class TestEnhancedDatabaseUtilities:
             db.session.delete(mo)
             db.session.commit()
             assert len(asset.maintenance_orders) == 0
+
+    def test_maintenance_order_assignee_display_relationship_and_json(self, app):
+        """Cover assignee display from relationship and legacy token JSON."""
+        with app.app_context():
+            asset = Asset(asset_code="ASG-001", name="Assignee Asset")
+            user = User(username="display.user", email="display@example.com")
+            user.set_password("password")
+            db.session.add_all([asset, user])
+            db.session.commit()
+
+            mo_rel = MaintenanceOrder(
+                asset_id=asset.id,
+                description="Rel display",
+                order_type="Corrective",
+                assignees=[user],
+            )
+            db.session.add(mo_rel)
+            db.session.commit()
+            assert mo_rel._get_assignee_display() == "display.user"
+
+            mo_json = MaintenanceOrder(
+                asset_id=asset.id,
+                description="JSON display",
+                order_type="Corrective",
+                assignees_json='["user:alex", "team:Team A", "legacy"]',
+            )
+            db.session.add(mo_json)
+            db.session.commit()
+            assert mo_json._get_assignee_display() == "alex, Team A, legacy"
+
+    def test_maintenance_order_assignee_display_invalid_or_non_string_json(self, app):
+        """Cover assignee display fallbacks for invalid/non-string assignees_json."""
+        with app.app_context():
+            asset = Asset(asset_code="ASG-002", name="Assignee Asset 2")
+            db.session.add(asset)
+            db.session.commit()
+
+            mo_invalid = MaintenanceOrder(
+                asset_id=asset.id,
+                description="Invalid JSON",
+                order_type="Corrective",
+                assignees_json="{invalid}",
+            )
+            mo_non_string = MaintenanceOrder(
+                asset_id=asset.id,
+                description="Non-string JSON",
+                order_type="Corrective",
+            )
+            mo_non_string.assignees_json = None
+            db.session.add_all([mo_invalid, mo_non_string])
+            db.session.commit()
+
+            assert mo_invalid._get_assignee_display() == ""
+            assert mo_non_string._get_assignee_display() == ""

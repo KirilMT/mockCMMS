@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 
 /**
- * Reports App CRUD Tests (Incidents)
+ * Reports App CRUD Tests (current UI)
  */
 
 const login = async (page) => {
@@ -12,27 +12,45 @@ const login = async (page) => {
   await page.waitForLoadState("networkidle");
 };
 
+async function createShiftReport(page) {
+  await page.goto("/reports/");
+  await page.waitForLoadState("networkidle");
+
+  await page.click('button[data-target="#generateReportModal"]');
+  await expect(page.locator("#generateReportModal")).toBeVisible();
+
+  await page.selectOption("#report_type", "shift_report");
+  await page.fill("#shift_date", "2026-01-21");
+  await page.selectOption("#shift_name", "Early");
+
+  // Select first available team option that has a value
+  const teamOptions = page.locator("#team_id option[value]");
+  const count = await teamOptions.count();
+  if (count > 0) {
+    const value = await teamOptions.nth(0).getAttribute("value");
+    if (value) {
+      await page.selectOption("#team_id", value);
+    }
+  }
+
+  await page.click('#generateReportModal button[type="submit"]');
+  await page.waitForLoadState("networkidle");
+  await expect(page).toHaveURL(/\/reports\/?$/);
+}
+
 test.describe("Reports App CRUD Tests", () => {
-  test("E2E-R01: Create Incident", async ({ page }) => {
+  test("E2E-R01: Create Shift Report and Open Detail", async ({ page }) => {
     await login(page);
+    await createShiftReport(page);
 
-    await page.goto("/reports/incidents/new");
-    await page.waitForLoadState("networkidle");
+    // Advanced table renders links to report detail; open newest one.
+    const firstReportLink = page
+      .locator('#reportsTable a[href^="/reports/"]')
+      .first();
+    await expect(firstReportLink).toBeVisible({ timeout: 15000 });
+    await firstReportLink.click();
 
-    const desc = "Test Incident " + Date.now();
-
-    // Fill form - using actual values from incident_form.html
-    await page.selectOption('select[name="incident_type"]', "Safety Issue");
-    await page.fill('input[name="equipment_line"]', "Test Line 1");
-    await page.fill('textarea[name="description"]', desc);
-    await page.selectOption('select[name="severity"]', "Medium");
-
-    // Submit
-    await page.click('button:has-text("Submit Incident")');
-    await page.waitForLoadState("networkidle");
-
-    // Verify redirect to incident list (successful submission)
-    // If we get here without a CSRF error, the form submission worked
-    await expect(page).toHaveURL(/\/reports\/incidents\/?/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/reports\/\d+$/);
+    await expect(page.locator("#report-content")).toBeVisible();
   });
 });
