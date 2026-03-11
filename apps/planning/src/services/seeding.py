@@ -92,7 +92,8 @@ def seed_planning_data(logger=None):
                 mo_list = sched_info.get("maintenance_orders", [])
                 for mo_ref in mo_list:
                     # Prefer title matching (stable, concise), then fallback to
-                    # description exact and description prefix for backward compatibility.
+                    # description exact. Keep description-prefix fallback for
+                    # backward compatibility with older seed references.
                     mo = (
                         db.session.query(MaintenanceOrder)
                         .filter_by(title=mo_ref)
@@ -107,9 +108,7 @@ def seed_planning_data(logger=None):
                     if not mo:
                         mo = (
                             db.session.query(MaintenanceOrder)
-                            .filter(
-                                MaintenanceOrder.description.startswith(mo_ref)
-                            )
+                            .filter(MaintenanceOrder.description.startswith(mo_ref))
                             .first()
                         )
                     if mo:

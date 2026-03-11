@@ -95,9 +95,7 @@ test.describe("Visual Regression - Planning App", () => {
     await expect(page).toHaveScreenshot("planning-schedule-detail.png", {
       fullPage: true,
       maxDiffPixelRatio: 0.02,
-      mask: [
-        page.locator('input[name="csrf_token"]'),
-      ],
+      mask: [page.locator('input[name="csrf_token"]')],
     });
   });
 });
