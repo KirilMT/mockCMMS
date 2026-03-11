@@ -135,7 +135,10 @@ temp/
 
 # External/sensitive configuration
 apps/planning/config/config.json
+apps/reports/config/config.json
+!apps/reports/config/config.example.json
 config/config.json
+apps/reports/config/config.json
 
 # IDE specific files
 .vscode/
@@ -162,20 +165,6 @@ Thumbs.db
 ~$*.xlsx
 ~$*.xls
 ~$*.xlsb
-
-# Runtime artifacts (new structure)
-# Main app runtime artifacts
-instance/*.db
-logs/
-
-# planning runtime artifacts
-apps/planning/instance/*.db
-apps/planning/logs/
-apps/planning/output/
-
-# reports runtime artifacts
-apps/reports/instance/reports/*
-!apps/reports/instance/reports/.gitkeep
 
 # Sensitive files
 .env
@@ -222,3 +211,9 @@ jest_*.txt
 # JSCPD duplicate detector
 jscpd-report/
 .jscpd/
+
+# Temporary Diff Output (AI Workflow)
+temp_diff_output.txt
+
+# isort temporary files
+*.py.isorted

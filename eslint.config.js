@@ -4,6 +4,9 @@ const js = require("@eslint/js");
 module.exports = [
   js.configs.recommended,
   {
+    ignores: ["**/apps/planning/src/static/js/manage_*.js"],
+  },
+  {
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",

@@ -5,36 +5,50 @@ Do not invest in new features here - file will be deleted.
 See: apps/planning/docs/roadmap/05_PHASE_4_CLEANUP.md section 6.2
 """
 
-import pandas as pd
-from datetime import datetime, timedelta
 import re
-import requests
+from datetime import datetime, timedelta
+
+import pandas as pd
+import requests  # type: ignore
 
 # Import the main Flask Config class
 from apps.planning.src.config import Config as FlaskConfig
 
-
 # Define the mockCMMS API URL
 MOCK_CMMS_API_URL = "http://127.0.0.1:5001/api/v1/tasks"
+
+
+class WeekMismatchError(Exception):
+    """Exception raised when the week in the Excel file does not match the current
+    week."""
+
+    def __init__(self, message, expected_week, actual_week):
+        super().__init__(message)
+        self.expected_week = expected_week
+        self.actual_week = actual_week
 
 
 def _fetch_data_from_api():
     """Fetches task data from the mockCMMS API."""
     try:
         response = requests.get(MOCK_CMMS_API_URL, timeout=5)
-        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
-
+        # Raise an exception for bad status codes (4xx or 5xx)
+        response.raise_for_status()
         api_data = response.json()
 
-        # The API returns data in a format that is already very close to what's needed.
-        # We just need to ensure the keys match what the rest of the application expects.
-        # The `to_dict()` method in the mockCMMS Task model was designed for this.
-        # No complex validation is done here, assuming the API is a trusted source.
+        # The API returns data in a format close to what is needed.
+        # We ensure the keys match what the application expects.
+        # The `to_dict()` method in mockCMMS Task model was designed for this.
+        # No complex validation, assuming API is a trusted source.
 
         return api_data, []  # Return data and an empty list for errors
 
     except requests.exceptions.RequestException as e:
-        error_message = f"Could not connect to mockCMMS API at {MOCK_CMMS_API_URL}. Please ensure the mockCMMS server is running. Error: {e}"
+        error_message = (
+            f"Could not connect to mockCMMS API at {MOCK_CMMS_API_URL}. "
+            "Please ensure the mockCMMS server is running. "
+            f"Error: {e}"
+        )
         return [], [error_message]
     except Exception as e:
         return [], [f"An unexpected error occurred while fetching data from API: {e}"]
@@ -47,7 +61,6 @@ def _extract_data_from_excel(excel_file_object):
         sheet_name = get_current_week()[0]
         current_day = get_current_day()
         current_shift = get_current_shift()
-        current_week = get_current_week_number()
 
         original_filename = getattr(excel_file_object, "filename", "").lower()
         engine_to_use = "pyxlsb" if original_filename.endswith(".xlsb") else "openpyxl"
@@ -84,20 +97,20 @@ def _extract_data_from_excel(excel_file_object):
                     column_indices[col_name] = matching_columns.index[0]
             else:
                 normalized_search_header = re.sub(
-                    r"\\s+", " ", header_text.lower().replace("\\n", " ").strip()
+                    r"\s+", " ", header_text.lower().replace("\n", " ").strip()
                 )
                 normalized_search_header = re.sub(
-                    r"\\s*/\\s*", "/", normalized_search_header
+                    r"\s*/\s*", "/", normalized_search_header
                 )
 
                 excel_headers_normalized = headers.str.lower().str.replace(
-                    "\\n", " ", regex=False
+                    "\n", " ", regex=False
                 )
                 excel_headers_normalized = excel_headers_normalized.str.replace(
-                    r"\\s*/\\s*", "/", regex=True
+                    r"\s*/\s*", "/", regex=True
                 )
                 excel_headers_normalized = excel_headers_normalized.str.replace(
-                    r"\\s+", " ", regex=True
+                    r"\s+", " ", regex=True
                 ).str.strip()
 
                 matching_columns = headers[
@@ -146,14 +159,14 @@ def _extract_data_from_excel(excel_file_object):
             row_data["quantity"] = filtered_df.iloc[i, target_col]
 
             # --- VALIDATIONS ---
-            # (Simplified for brevity, original validation logic can be retained or adapted)
             val_scheduler_group_task = str(row_data.get("scheduler", "")).strip()
             if (
                 not val_scheduler_group_task
                 or val_scheduler_group_task.lower() == "nan"
             ):
                 error_messages.append(
-                    f"Excel Row {filtered_df.index[i] + 1}: Scheduler Group / Task cannot be blank."
+                    f"Excel Row {filtered_df.index[i] + 1}: "
+                    "Scheduler Group / Task cannot be blank."
                 )
                 continue
 
@@ -167,7 +180,9 @@ def _extract_data_from_excel(excel_file_object):
                 and ticket_mo.lower() != "nan"
             ):
                 try:
-                    from config import Config as ServicesConfig
+                    from apps.planning.src.services.config import (
+                        Config as ServicesConfig,
+                    )
 
                     config = ServicesConfig()
                     if len(ticket_mo) <= 6:
@@ -209,7 +224,7 @@ def extract_data(excel_file_object=None):
     If DATA_SOURCE is 'api', it fetches from the mockCMMS API. If DATA_SOURCE is
     'excel', it uses the provided excel_file_object.
     """
-    if FlaskConfig and FlaskConfig.DATA_SOURCE == "api":
+    if FlaskConfig.DATA_SOURCE == "api":
         return _fetch_data_from_api()
     elif excel_file_object:
         return _extract_data_from_excel(excel_file_object)
@@ -222,13 +237,12 @@ def extract_data(excel_file_object=None):
 
 def _now():
     """Return debug fixed datetime if configured, else real current datetime."""
-    if FlaskConfig:
-        try:
-            fixed = FlaskConfig.get_fixed_datetime()
-            if fixed:
-                return fixed
-        except Exception:
-            pass
+    try:
+        fixed = FlaskConfig.get_fixed_datetime()
+        if fixed:
+            return fixed
+    except Exception:
+        pass
     return datetime.now()
 
 
@@ -300,8 +314,6 @@ def find_and_filter_data(df, current_day, current_shift):
     filtered_df = filtered_df[filtered_df.index >= 9]
 
     if filtered_df.empty:
-        raise ValueError(
-            f"No data rows found with quantity >= 1 for the current shift."
-        )
+        raise ValueError("No data rows found with quantity >= 1 for the current shift.")
 
     return filtered_df, target_col

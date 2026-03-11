@@ -46,6 +46,7 @@ class TestPerformance:
             "SQLALCHEMY_BINDS": {"planning": "sqlite:///:memory:"},
             "AUTO_SEED_DATABASE": False,
             "SERVER_NAME": "localhost.localdomain",
+            "DB_INITIALIZED": True,  # Ensure db.create_all() is called in create_app
             # High limit for performance tests
             "RATELIMIT_TEST_LIMIT": "10000 per minute",
             "SQLALCHEMY_ENGINE_OPTIONS": {

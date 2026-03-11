@@ -9,8 +9,9 @@ New to the project? Follow this learning path to get up to speed:
 
 ### Step 1: Understand the Big Picture (1-2 hours)
 
-1.  Read the **[mockCMMS Roadmap](docs/mockCMMS_roadmap.md)** to understand the project's vision.
-2.  Read this **CONTRIBUTING guide** in its entirety.
+1.  Read the **[mockCMMS Roadmap](../docs/mockCMMS_roadmap.md)** to understand the project's vision.
+2.  If working on a specific app, read its roadmap in `apps/<app_name>/docs/`.
+3.  Read this **CONTRIBUTING guide** in its entirety.
 
 ### Step 2: Set Up Your Environment (2-3 hours)
 
@@ -138,8 +139,8 @@ We provide automated scripts to make your life easier. Use them!
 **Simulates the CI pipeline locally.** Runs all linters, formatters, and tests.
 
 ```bash
-python scripts/validate_code.py            # Run EVERYTHING
-python scripts/validate_code.py --quick    # Skip slow E2E tests
+python scripts/validate_code.py            # Health Mode: Force all apps ENABLED
+python scripts/validate_code.py --quick    # Developer Mode: Honors .env, skips slow tests
 python scripts/validate_code.py --backend  # Python only
 python scripts/validate_code.py --frontend # JS/CSS only
 ```
@@ -256,6 +257,13 @@ Tests are organized in 6 categories:
 - Test success cases, failure cases, and edge cases
 - **Target**: 80-85% overall coverage (current: 82.99%)
 - **Critical paths**: 90%+ coverage (auth, API, database)
+
+#### Modular App Testing
+
+MockCMMS uses a **Smart Collector** logic. Tests for apps in `apps/` (Planning, Reports, etc.) are dynamically skipped if disabled via environment variables.
+
+- **Development Speed:** Use `$env:PLANNING_ENABLED="false"` to skip tests for modules you aren't changing.
+- **Stability Enforcement:** The validation script default (Health Mode) overrides these flags to ensure 100% project health before PR submission.
 
 #### Avoiding Test Duplicates
 

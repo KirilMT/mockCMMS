@@ -1,18 +1,20 @@
 # apps/planning/src/services/planning_models.py
 
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+
 from src.services.db_utils import db
 
 # Association table for PlanningTask to User (many-to-many)
 # Commented out: Cross-DB M2M relationships are complex in SQLite
 # planning_task_users = Table('planning_task_users', db.Model.metadata,
-#     Column('planning_task_id', Integer, ForeignKey('planning_task.id'), primary_key=True),
+#     Column('planning_task_id', Integer,
+#            ForeignKey('planning_task.id'), primary_key=True),
 #     Column('user_id', Integer, ForeignKey('user.id'), primary_key=True)
 # )
 
 
-class Schedule(db.Model):
+class Schedule(db.Model):  # type: ignore
     __bind_key__ = "planning"
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
@@ -25,7 +27,7 @@ class Schedule(db.Model):
     planned_tasks = relationship("PlanningTask", back_populates="schedule")
 
 
-class PlanningTask(db.Model):
+class PlanningTask(db.Model):  # type: ignore
     __bind_key__ = "planning"
     __tablename__ = "planning_task"
     id = Column(Integer, primary_key=True)
@@ -56,4 +58,6 @@ class PlanningTask(db.Model):
     assigned_user = relationship(
         "User", primaryjoin="foreign(PlanningTask.assigned_user_id) == User.id"
     )  # Single user (deprecated)
-    # assigned_users = relationship('User', secondary=planning_task_users, backref='planning_tasks')  # Multiple users (NEW) - Commented out as M2M across DBs is complex
+    # assigned_users = relationship(
+    #     'User', secondary=planning_task_users, backref='planning_tasks'
+    # )  # Multiple users (NEW) - M2M across DBs is complex

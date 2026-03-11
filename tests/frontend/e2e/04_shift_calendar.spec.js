@@ -106,10 +106,15 @@ test.describe("Shift Calendar Tests", () => {
     if ((await todayCell.count()) > 0) {
       await expect(todayCell).toBeVisible();
 
-      // Verify date matches today (from data-date attribute)
-       const now = new Date();
-       const dateStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
-       await expect(todayCell).toHaveAttribute("data-date", dateStr);
+      // Use local date format YYYY-MM-DD (not UTC which can be off by a day)
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const dateStr = `${year}-${month}-${day}`;
+      await expect(todayCell).toHaveAttribute("data-date", dateStr);
     }
+    // If today's date is not in the calendar at all (e.g., viewing different month),
+    // the test passes as there's nothing to verify
   });
 });

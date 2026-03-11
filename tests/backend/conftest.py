@@ -6,15 +6,14 @@ sample data fixtures.
 """
 
 import os
-import sys
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
-# Add the project root to the Python path
+# Project root calculation needed for cleanup fixtures
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
 
 from src.app import create_app  # noqa: E402
 from src.services.db_utils import (  # noqa: E402
@@ -27,6 +26,54 @@ from src.services.db_utils import (  # noqa: E402
     User,
     db,
 )
+
+
+def _cleanup_test_databases():
+    """Clean up E2E test databases only.
+
+    This function removes ONLY E2E databases (*_e2e.db) that may be left over from
+    Playwright tests. It does NOT touch production-named databases (planning.db,
+    reports.db, mockcmms.db) since we cannot safely determine if they were created by
+    tests or are legitimate production databases.
+
+    The test isolation tests (test_db_isolation_proof.py) will catch if tests are
+    incorrectly creating production databases.
+    """
+    root = Path(project_root)
+    apps_dir = root / "apps"
+
+    # E2E databases to clean up - these are ALWAYS test artifacts
+    e2e_dbs = [
+        root / "instance" / "mockcmms_e2e.db",
+        apps_dir / "planning" / "instance" / "planning_e2e.db",
+        apps_dir / "reports" / "instance" / "reports_e2e.db",
+    ]
+
+    for db_path in e2e_dbs:
+        if db_path.exists():
+            try:
+                db_path.unlink()
+            except PermissionError:
+                pass  # File is locked, skip
+
+    # Clean up empty instance directories (but only if truly empty)
+    instance_dirs = [
+        apps_dir / "planning" / "instance",
+        apps_dir / "reports" / "instance",
+    ]
+    for instance_dir in instance_dirs:
+        try:
+            if instance_dir.exists() and not any(instance_dir.iterdir()):
+                instance_dir.rmdir()
+        except (OSError, PermissionError):
+            pass
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_databases_after_tests():
+    """Session-scoped fixture that cleans up test databases after all tests."""
+    yield  # Run all tests first
+    _cleanup_test_databases()
 
 
 @pytest.fixture(scope="function")
@@ -47,8 +94,10 @@ def app():
         "WTF_CSRF_ENABLED": False,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "SQLALCHEMY_BINDS": {
-            "planning": "sqlite:///:memory:"  # In-memory for planning models
+            "planning": "sqlite:///:memory:",  # In-memory for planning models
+            "reports": "sqlite:///:memory:",  # In-memory for reports models
         },
+        "PLANNING_ENABLED": True,  # Explicitly enable planning for tests
         "AUTO_SEED_DATABASE": False,  # Prevent seeding in tests
         "SERVER_NAME": "localhost.localdomain",  # Required for url_for to work
         # Ensure connections are properly recycled
@@ -56,9 +105,16 @@ def app():
             "pool_pre_ping": True,
             "pool_recycle": 300,
         },
+        "DB_INITIALIZED": True,  # Ensure db.create_all() is called in create_app
     }
 
-    test_app = create_app(config_overrides)
+    # Patch OS environment variables to ensure modules are enabled during
+    # blueprint registration. This overrides the os.getenv checks in
+    # app.py's _register_blueprints and ensures consistent testing
+    # environment regardless of local .env files.
+    env_vars = {"PLANNING_ENABLED": "True", "REPORTS_ENABLED": "True"}
+    with patch.dict(os.environ, env_vars):
+        test_app = create_app(config_overrides)
 
     with test_app.app_context():
         # db.create_all() is now called within create_app
@@ -68,15 +124,20 @@ def app():
         # 1. Remove all scoped sessions (returns connections to pool)
         db.session.remove()
 
-        # 2. Close all checked-out connections
+        # 2. Drop all tables (cleanup)
+        db.drop_all()
+
+        # 3. Dispose of all engines (including binds)
+        # to ensure SQLite connections are closed
+        for engine in db.engines.values():
+            if hasattr(engine, "pool"):
+                engine.pool.dispose()
+            engine.dispose()
+
+        # 4. Dispose of the main engine
         if hasattr(db.engine, "pool"):
             db.engine.pool.dispose()
-
-        # 3. Dispose of the engine (closes all connections)
         db.engine.dispose()
-
-        # 4. Drop all tables (cleanup)
-        db.drop_all()
 
 
 @pytest.fixture(scope="function")
@@ -119,20 +180,7 @@ def db_session(app):
         Session: SQLAlchemy database session
     """
     with app.app_context():
-        # Start a transaction
-        connection = db.engine.connect()
-        transaction = connection.begin()
-
-        # Bind session to the connection
-        session = db.create_scoped_session(options={"bind": connection, "binds": {}})
-        db.session = session
-
-        yield session
-
-        # Rollback transaction and close connection
-        transaction.rollback()
-        connection.close()
-        session.remove()
+        yield db.session
 
 
 @pytest.fixture(scope="function")
@@ -457,7 +505,8 @@ def cleanup_test_artifacts():
     """Clean up test database files after entire test session completes.
 
     IMPORTANT: Only clean up TEST database files, never production data.
-    The mockcmms.db is the production database and must NEVER be deleted by tests.
+    The mockcmms.db and planning.db are production databases and must
+    NEVER be deleted by tests.
 
     Also runs explicit garbage collection to ensure all SQLite connections
     are properly closed before pytest checks for resource leaks.
@@ -465,26 +514,128 @@ def cleanup_test_artifacts():
     yield
 
     # Force garbage collection to clean up any remaining SQLite connections
-    # This prevents ResourceWarning about unclosed database connections
     import gc
 
     gc.collect()
 
-    # Only clean up TEST database files - NEVER touch production mockcmms.db
-    test_db = os.path.join("instance", "mockcmms_test.db")
+    # Define test database files to clean up (E2E and test DBs only)
+    instance_dir = os.path.join(project_root, "instance")
+    planning_instance_dir = os.path.join(project_root, "apps", "planning", "instance")
+    reports_instance_dir = os.path.join(project_root, "apps", "reports", "instance")
 
-    if os.path.exists(test_db):
-        try:
-            os.remove(test_db)
-        except PermissionError:
-            pass
+    # Test DB files to clean (E2E and test DBs only)
+    test_db_files = [
+        os.path.join(instance_dir, "mockcmms_test.db"),
+        os.path.join(instance_dir, "mockcmms_test.db-journal"),
+        os.path.join(instance_dir, "mockcmms_e2e.db"),
+        os.path.join(instance_dir, "mockcmms_e2e.db-journal"),
+        # Explicitly target apps/planning/instance/planning_test.db
+        os.path.join(planning_instance_dir, "planning_test.db"),
+        os.path.join(planning_instance_dir, "planning_test.db-journal"),
+        os.path.join(planning_instance_dir, "planning_e2e.db"),
+        os.path.join(planning_instance_dir, "planning_e2e.db-journal"),
+        os.path.join(planning_instance_dir, "testsDB.db"),
+        os.path.join(planning_instance_dir, "testsDB.db-journal"),
+    ]
 
-    # Remove instance directory ONLY if it's empty
-    # This ensures we never delete the directory if mockcmms.db exists
-    if os.path.exists("instance"):
+    import time
+
+    def force_delete_file(filepath):
+        if not os.path.exists(filepath):
+            return
+
+        # Try up to 5 times
+        for i in range(5):
+            try:
+                os.remove(filepath)
+                return
+            except (PermissionError, OSError):
+                # Force GC and wait
+                gc.collect()
+                time.sleep(0.2 * (i + 1))
+
+        # Final attempt warning
+        if os.path.exists(filepath):
+            print(f"WARNING: Failed to delete test artifact: {filepath}")
+
+    # Clean up Files
+    for db_file in test_db_files:
+        force_delete_file(db_file)
+
+    # Remove instance directories ONLY if they're empty
+    # This ensures we never delete directories with production DBs
+    # We do a recursive check to handle any subdirs (like apps/reports/instance/reports)
+    for dir_path in [instance_dir, planning_instance_dir, reports_instance_dir]:
+        if os.path.exists(dir_path):
+            try:
+                # Walk bottom-up to remove empty leaf directories
+                for root, dirs, files in os.walk(dir_path, topdown=False):
+                    for name in dirs:
+                        full_path = os.path.join(root, name)
+                        try:
+                            if not os.listdir(full_path):
+                                os.rmdir(full_path)
+                        except (OSError, PermissionError):
+                            pass
+
+                # Finally try to remove the root dir itself if empty
+                if not os.listdir(dir_path):
+                    os.rmdir(dir_path)
+            except (OSError, PermissionError):
+                pass
+
+
+@pytest.fixture(autouse=True)
+def ensure_clean_models():
+    """Ensure database models are not Mocks before each test.
+
+    This fixture detects if key SQLAlchemy models have been replaced by Mocks (test
+    pollution) and reloads the modules to restore the real classes.
+    """
+    import sys
+    import unittest.mock
+
+    # We use a try-import because if the module isn't loaded yet, it can't be polluted
+    if "src.services.db_utils" not in sys.modules:
+        return
+
+    import src.services.db_utils as db_utils_module
+
+    # Check key models for pollution from unittest.mock
+    affected_models = ["SparePart", "MaintenanceOrder", "Asset", "User"]
+    reload_needed = False
+
+    for model_name in affected_models:
+        current_attr = getattr(db_utils_module, model_name, None)
+        if current_attr and (
+            isinstance(current_attr, unittest.mock.Mock)
+            or isinstance(current_attr, unittest.mock.MagicMock)
+            or hasattr(current_attr, "assert_called")
+        ):
+            reload_needed = True
+            break
+
+    if reload_needed:
         try:
-            # os.rmdir only succeeds if directory is empty - safe operation
-            if not os.listdir("instance"):
-                os.rmdir("instance")
-        except (OSError, PermissionError):
+            db_instance = db_utils_module.db
+            real_models = {}
+
+            if hasattr(db_instance.Model, "registry"):
+                for mapper in db_instance.Model.registry.mappers:
+                    model = mapper.class_
+                    real_models[model.__name__] = model
+            elif hasattr(db_instance.Model, "_decl_class_registry"):
+                real_models = db_instance.Model._decl_class_registry
+
+            for model_name in affected_models:
+                current_attr = getattr(db_utils_module, model_name, None)
+                if current_attr and (
+                    isinstance(current_attr, unittest.mock.Mock)
+                    or isinstance(current_attr, unittest.mock.MagicMock)
+                    or hasattr(current_attr, "assert_called")
+                ):
+                    if model_name in real_models:
+                        setattr(db_utils_module, model_name, real_models[model_name])
+        except Exception:
             pass
+    yield

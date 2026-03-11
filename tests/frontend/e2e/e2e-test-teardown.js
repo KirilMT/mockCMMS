@@ -15,7 +15,7 @@ const { execSync } = require("child_process");
 
 // Configuration - must match e2e-test-setup.js
 const TEST_PORT = 5001;
-const PROJECT_ROOT = path.resolve(__dirname, "../..");
+const PROJECT_ROOT = path.resolve(__dirname, "../../..");
 const INSTANCE_DIR = path.join(PROJECT_ROOT, "instance");
 const TEST_DB_PATH = path.join(INSTANCE_DIR, "mockcmms_e2e.db");
 
@@ -25,21 +25,30 @@ const TEST_DB_PATH = path.join(INSTANCE_DIR, "mockcmms_e2e.db");
 function killProcessOnPort(port) {
   try {
     if (process.platform === "win32") {
+      // Use pipe correctly to filter for port
       const output = execSync(`netstat -ano | findstr :${port}`).toString();
       const lines = output.trim().split("\n");
-      if (lines.length > 0) {
-        const parts = lines[0].trim().split(/\s+/);
-        const pid = parts[parts.length - 1];
-        if (pid) {
-          console.log(`🔌 Killing server on port ${port} (PID: ${pid})`);
-          try {
-            execSync(`taskkill /PID ${pid} /F`);
-          } catch (err) {
-            // Process might have already exited
+      let killed = false;
+
+      for (const line of lines) {
+        // Only target LISTENING processes to avoid killing clients or TIME_WAIT
+        if (line.includes(`:${port}`) && line.includes("LISTENING")) {
+          const parts = line.trim().split(/\s+/);
+          // PID is the last column
+          const pid = parts[parts.length - 1];
+
+          if (pid && /^\d+$/.test(pid) && pid !== "0") {
+            console.warn(`🛑 Killing server on port ${port} (PID: ${pid})`);
+            try {
+              execSync(`taskkill /PID ${pid} /F`);
+              killed = true;
+            } catch (_err) {
+              // Process might have already exited
+            }
           }
-          return true;
         }
       }
+      return killed;
     } else {
       // Linux/Mac fallback (lsof)
       const pid = execSync(`lsof -t -i:${port}`).toString().trim();
@@ -48,16 +57,39 @@ function killProcessOnPort(port) {
         return true;
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Ignore errors (no process found)
   }
   return false;
 }
 
+async function tryDeleteFile(filePath, retries = 5) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.warn(`✅ Removed test database: ${filePath}`);
+      }
+      return true;
+    } catch (error) {
+      if (i === retries - 1) {
+        console.warn(
+          `⚠️  Could not remove test database (likely locked): ${error.message}`,
+        );
+      } else {
+        console.warn(
+          `   Delete failed (attempt ${i + 1}/${retries}), retrying in 1s...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+  }
+}
+
 /**
  * Global teardown function called by Playwright after all tests complete
  */
-async function globalTeardown(config) {
+async function globalTeardown() {
   console.log("\n🧹 E2E Test Global Teardown Starting...\n");
 
   // Kill the server to release DB file lock.
@@ -68,38 +100,69 @@ async function globalTeardown(config) {
   // Wait for process to fully release file handles
   await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  // Step 1: Remove test database if it exists
-  if (fs.existsSync(TEST_DB_PATH)) {
-    try {
-      fs.unlinkSync(TEST_DB_PATH);
-      console.log(`✅ Removed test database: ${TEST_DB_PATH}`);
-    } catch (error) {
-      console.log(
-        `⚠️  Could not remove test database (likely locked): ${error.message}`,
-      );
-      // Do not throw here - allow graceful exit. Setup will clean it next time.
+  // Modular App DB Paths
+  const PLANNING_DB_PATH = path.join(
+    PROJECT_ROOT,
+    "apps",
+    "planning",
+    "instance",
+    "planning_e2e.db",
+  );
+  const REPORTS_DB_PATH = path.join(
+    PROJECT_ROOT,
+    "apps",
+    "reports",
+    "instance",
+    "reports_e2e.db",
+  );
+
+  // Step 1: Remove test databases if they exist
+  const dbs = [TEST_DB_PATH, PLANNING_DB_PATH, REPORTS_DB_PATH];
+
+  for (const dbPath of dbs) {
+    if (fs.existsSync(dbPath)) {
+      console.log(`   Found database to delete: ${dbPath}`);
+      await tryDeleteFile(dbPath);
+    } else {
+      console.log(`   No test database to clean up: ${path.basename(dbPath)}`);
     }
-  } else {
-    console.log("   No test database to clean up.");
   }
 
-  // Step 2: Remove instance directory ONLY if it's empty
-  // This ensures we never delete the directory if mockcmms.db exists
-  if (fs.existsSync(INSTANCE_DIR)) {
-    try {
-      const files = fs.readdirSync(INSTANCE_DIR);
-      if (files.length === 0) {
-        fs.rmdirSync(INSTANCE_DIR);
-        console.log(`✅ Removed empty instance directory: ${INSTANCE_DIR}`);
-      } else {
-        console.log(
-          `   Instance directory not empty, keeping: ${files.join(", ")}`,
+  // Step 2: Remove instance directories ONLY if they are empty
+  const instanceDirs = [
+    INSTANCE_DIR,
+    path.dirname(PLANNING_DB_PATH),
+    path.dirname(REPORTS_DB_PATH),
+  ];
+
+  for (const dir of instanceDirs) {
+    if (fs.existsSync(dir)) {
+      try {
+        const files = fs.readdirSync(dir);
+        if (files.length === 0) {
+          fs.rmdirSync(dir);
+          console.log(`✅ Removed empty instance directory: ${dir}`);
+        } else {
+          // Check if valid production DBs exist to avoid confusing logs
+          const prodFiles = files.filter(
+            (f) =>
+              f.endsWith(".db") && !f.includes("_test") && !f.includes("_e2e"),
+          );
+          if (prodFiles.length > 0) {
+            console.log(
+              `   Keeping instance directory (Production DBs present): ${path.basename(dir)}`,
+            );
+          } else {
+            console.log(
+              `   Instance directory not empty, keeping: ${path.basename(dir)} (${files.length} files)`,
+            );
+          }
+        }
+      } catch (error) {
+        console.warn(
+          `⚠️  Could not check/remove instance directory: ${error.message}`,
         );
       }
-    } catch (error) {
-      console.log(
-        `⚠️  Could not check/remove instance directory: ${error.message}`,
-      );
     }
   }
 

@@ -4,51 +4,106 @@
 document.addEventListener("DOMContentLoaded", function () {
   const orderTypeField = document.getElementById("order_type");
   const frequencyField = document.getElementById("frequency");
+  const scheduleNameField = document.getElementById("schedule_name");
   const frequencyLabel = document.querySelector('label[for="frequency"]');
+  const estimatedTimeField = document.getElementById(
+    "estimated_completion_time",
+  );
+  const estimatedTimeLabel = document.getElementById("label_estimated_time");
+  const breakdownFields = document.querySelectorAll(".breakdown-fields");
+  const pmFields = document.querySelectorAll(".pm-fields");
 
-  function updateFrequencyField() {
+  // Reactive field elements
+  const downtimeField = document.getElementById("downtime_duration");
+  const rootCauseField = document.getElementById("root_cause");
+  const recoveryField = document.getElementById("recovery");
+
+  function updateFieldsBasedOnType() {
     const isPM = orderTypeField.value === "PM";
+    const isReactive = orderTypeField.value === "Reactive";
+    const label =
+      (estimatedTimeField && estimatedTimeField.previousElementSibling) ||
+      estimatedTimeLabel;
 
     if (isPM) {
-      // Enable and require the field for PM orders
-      frequencyField.disabled = false;
-      frequencyField.required = true;
-      // Add required-field class to show red asterisk
-      if (
-        frequencyLabel &&
-        !frequencyLabel.classList.contains("required-field")
-      ) {
-        frequencyLabel.classList.add("required-field");
+      // Show and require PM-specific fields
+      pmFields.forEach((field) => {
+        field.style.display = "block";
+      });
+
+      // Make PM fields required
+      if (scheduleNameField) scheduleNameField.required = true;
+      if (frequencyField) frequencyField.required = true;
+      if (estimatedTimeField) estimatedTimeField.required = true;
+
+      // Hide breakdown fields for PM
+      breakdownFields.forEach((field) => {
+        field.style.display = "none";
+      });
+
+      // Make Reactive fields optional
+      if (downtimeField) downtimeField.required = false;
+      if (rootCauseField) rootCauseField.required = false;
+      if (recoveryField) recoveryField.required = false;
+    } else if (isReactive) {
+      // Hide PM fields for Reactive
+      pmFields.forEach((field) => {
+        field.style.display = "none";
+      });
+
+      // Make PM fields optional
+      if (scheduleNameField) {
+        scheduleNameField.required = false;
+        scheduleNameField.value = "";
       }
-      // Don't touch the value - let the HTML 'selected' attribute handle it
+      if (frequencyField) {
+        frequencyField.required = false;
+        frequencyField.value = "";
+      }
+      if (estimatedTimeField) estimatedTimeField.required = false;
+
+      // Show and require breakdown fields for Reactive
+      breakdownFields.forEach((field) => {
+        field.style.display = "block";
+      });
+
+      // Make Reactive fields required
+      if (downtimeField) downtimeField.required = true;
+      if (rootCauseField) rootCauseField.required = true;
+      if (recoveryField) recoveryField.required = true;
     } else {
-      // Disable, clear, and make optional for non-PM orders
-      frequencyField.disabled = true;
-      frequencyField.required = false;
-      frequencyField.value = "";
-      // Remove required-field class
-      if (frequencyLabel) {
-        frequencyLabel.classList.remove("required-field");
+      // Corrective or other types
+      // Hide both PM and breakdown fields
+      pmFields.forEach((field) => {
+        field.style.display = "none";
+      });
+      breakdownFields.forEach((field) => {
+        field.style.display = "none";
+      });
+
+      // Make all conditional fields optional
+      if (scheduleNameField) {
+        scheduleNameField.required = false;
+        scheduleNameField.value = "";
       }
+      if (frequencyField) {
+        frequencyField.required = false;
+        frequencyField.value = "";
+      }
+      if (estimatedTimeField) estimatedTimeField.required = false;
+      if (downtimeField) downtimeField.required = false;
+      if (rootCauseField) rootCauseField.required = false;
+      if (recoveryField) recoveryField.required = false;
     }
   }
 
   // Set initial state on page load
   if (orderTypeField && frequencyField) {
-    updateFrequencyField();
+    updateFieldsBasedOnType();
 
     // Update when user changes the order type
     orderTypeField.addEventListener("change", function () {
-      const isPM = orderTypeField.value === "PM";
-
-      if (!isPM) {
-        // Only clear the value when user switches FROM PM to non-PM
-        frequencyField.value = "";
-      }
-      // If switching TO PM, leave the value alone (it will be empty for new MOs,
-      // or keep the existing value for edited MOs)
-
-      updateFrequencyField();
+      updateFieldsBasedOnType();
     });
   }
 

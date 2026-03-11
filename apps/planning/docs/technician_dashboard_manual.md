@@ -1,9 +1,11 @@
 # TECHNICIAN DASHBOARD
+
 ## User Manual
 
-***
+---
 
 ## Table of Contents
+
 1. [Introduction](#introduction)
 2. [Main Dashboard Components](#main-dashboard-components)
    - [Task Table](#task-table)
@@ -15,7 +17,7 @@
 4. [System Integration](#system-integration)
 5. [Support Information](#support-information)
 
-***
+---
 
 ## Introduction
 
@@ -86,11 +88,11 @@ The dashboard provides additional information when you interact with it:
 
 2. **Gantt Chart Interactions**:
    - Hovering over a task block shows a popup with complete task details including:
-     * Task description
-     * Start and end times
-     * Assigned technicians
-     * Required tools and materials
-     * Completion percentage
+     - Task description
+     - Start and end times
+     - Assigned technicians
+     - Required tools and materials
+     - Completion percentage
    - Hovering over the red time line shows the current time
    - Clicking on a task selects it and highlights the matching row in the table
 
@@ -139,7 +141,7 @@ This automatic assignment process helps ensure that the right technicians are as
 
 This manual explains how to use the Technician Dashboard. If you need help, have questions, or want to request changes, please contact the Technical Support team.
 
-***
+---
 
 Document Version: 1.0
 Last Updated: [Current Date]

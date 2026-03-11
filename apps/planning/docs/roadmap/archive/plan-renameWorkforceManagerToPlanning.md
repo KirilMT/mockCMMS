@@ -20,95 +20,106 @@
 ### Refactoring Checklist
 
 #### ✅ 1. **Verify Database Schema**
-  - [x] 1.1. Confirm that `planning_models.py` uses generic table names (`planning_task`, `schedule`) with no "planning" references.
-  - **Result:** ✅ Verified. No database migration is required.
+
+- [x] 1.1. Confirm that `planning_models.py` uses generic table names (`planning_task`, `schedule`) with no "planning" references.
+- **Result:** ✅ Verified. No database migration is required.
 
 #### ✅ 2. **Rename Directory and Package**
-  - [x] 2.1. Use `git mv apps/workforceManager apps/planning` to preserve file history.
-  - [x] 2.2. Update the `name` in `apps/planning/setup.py` from `workforceManager` to `planning`.
-  - [x] 2.3. Re-install the package in editable mode: `pip install -e apps/planning`.
-  - [x] 2.4. Remove old `workforceManager.egg-info/` directory.
+
+- [x] 2.1. Use `git mv apps/workforceManager apps/planning` to preserve file history.
+- [x] 2.2. Update the `name` in `apps/planning/setup.py` from `workforceManager` to `planning`.
+- [x] 2.3. Re-install the package in editable mode: `pip install -e apps/planning`.
+- [x] 2.4. Remove old `workforceManager.egg-info/` directory.
 
 #### ✅ 3. **Update Configuration**
-  - [x] 3.1. In `.env.example` and `.env`, rename `WORKFORCE_MANAGER_ENABLED` to `PLANNING_ENABLED`.
-  - [x] 3.2. In `src/app.py`, update the environment variable check to use `PLANNING_ENABLED`.
-  - [x] 3.3. In `src/app.py`, update the `inject_config` context processor to use `PLANNING_ENABLED`.
-  - [x] 3.4. In `.env`, update `WORKFORCE_MANAGER_DEBUG_USE_TEST_DB` to `PLANNING_DEBUG_USE_TEST_DB`.
-  - [x] 3.5. Update `.gitignore` to reference `planning` instead of `workforce`.
+
+- [x] 3.1. In `.env.example` and `.env`, rename `WORKFORCE_MANAGER_ENABLED` to `PLANNING_ENABLED`.
+- [x] 3.2. In `src/app.py`, update the environment variable check to use `PLANNING_ENABLED`.
+- [x] 3.3. In `src/app.py`, update the `inject_config` context processor to use `PLANNING_ENABLED`.
+- [x] 3.4. In `.env`, update `WORKFORCE_MANAGER_DEBUG_USE_TEST_DB` to `PLANNING_DEBUG_USE_TEST_DB`.
+- [x] 3.5. Update `.gitignore` to reference `planning` instead of `workforce`.
 
 #### ✅ 4. **Update Python Imports (55+ files)**
-  - [x] 4.1. Change all `from apps.workforceManager...` imports to `from apps.planning...` in:
-    - `src/app.py`
-    - `src/services/db_utils.py`
-    - All test files in `apps/planning/tests/`
-    - All service files in `apps/planning/src/services/`
-    - `apps/planning/src/routes/planning.py`
-    - All other Python files
+
+- [x] 4.1. Change all `from apps.workforceManager...` imports to `from apps.planning...` in:
+  - `src/app.py`
+  - `src/services/db_utils.py`
+  - All test files in `apps/planning/tests/`
+  - All service files in `apps/planning/src/services/`
+  - `apps/planning/src/routes/planning.py`
+  - All other Python files
 
 #### ✅ 5. **Update Flask Blueprint and Routing**
-  - [x] 5.1. In `apps/planning/src/routes/`, ensure file is named `planning.py`.
-  - [x] 5.2. In `planning.py`, rename `workforce_manager_bp` to `planning_bp`.
-  - [x] 5.3. In `planning.py`, update URL prefix from `/workforce-manager` to `/planning`.
-  - [x] 5.4. In `src/app.py`, update the blueprint import and registration to use `planning_bp`.
-  - [x] 5.5. In `src/app.py`, add URL redirects from `/workforce-manager/*` to `/planning/*` for backward compatibility.
+
+- [x] 5.1. In `apps/planning/src/routes/`, ensure file is named `planning.py`.
+- [x] 5.2. In `planning.py`, rename `workforce_manager_bp` to `planning_bp`.
+- [x] 5.3. In `planning.py`, update URL prefix from `/workforce-manager` to `/planning`.
+- [x] 5.4. In `src/app.py`, update the blueprint import and registration to use `planning_bp`.
+- [x] 5.5. In `src/app.py`, add URL redirects from `/workforce-manager/*` to `/planning/*` for backward compatibility.
 
 #### ✅ 6. **Update Templates (23 url_for() fixes)**
-  - [x] 6.1. Update all `url_for('workforce_manager.*)` to `url_for('planning.*)` in:
-    - `apps/planning/src/templates/index.html` (2 fixes)
-    - `apps/planning/src/templates/manage_mappings.html` (10 fixes)
-    - `apps/planning/src/templates/planning/index.html` (1 fix)
-    - `apps/planning/src/templates/planning/schedule_view.html` (7 fixes)
-  - [x] 6.2. Update sidebar in `src/templates/base.html`:
-    - Check for `PLANNING_ENABLED` instead of `WORKFORCE_MANAGER_ENABLED`
-    - Link to `/planning/` instead of `/workforce-manager/`
-  - [x] 6.3. Update `src/templates/planning.html` heading from "Planning & Workforce Management" to "Planning".
+
+- [x] 6.1. Update all `url_for('workforce_manager.*)` to `url_for('planning.*)` in:
+  - `apps/planning/src/templates/index.html` (2 fixes)
+  - `apps/planning/src/templates/manage_mappings.html` (10 fixes)
+  - `apps/planning/src/templates/planning/index.html` (1 fix)
+  - `apps/planning/src/templates/planning/schedule_view.html` (7 fixes)
+- [x] 6.2. Update sidebar in `src/templates/base.html`:
+  - Check for `PLANNING_ENABLED` instead of `WORKFORCE_MANAGER_ENABLED`
+  - Link to `/planning/` instead of `/workforce-manager/`
+- [x] 6.3. Update `src/templates/planning.html` heading from "Planning & Workforce Management" to "Planning".
 
 #### ✅ 7. **Update Frontend Code (12 JavaScript files)**
-  - [x] 7.1. Replace all API fetch calls from `/workforce-manager/...` to `/planning/...` in:
-    - `planning-gantt.js`
-    - `planning-gantt-custom.js`
-    - `manage_mappings_satellite_lines.js`
-    - `manage_mappings_technician_groups.js`
-    - `manage_mappings_technician_data.js`
-    - `manage_mappings_technologies.js`
-    - `manage_mappings_utils.js`
-    - `manage_mappings_globals.js`
-    - `manage_mappings_task_technology.js`
-    - `manage_mappings_technician_skills.js` (3 URLs)
-    - Other JavaScript files
+
+- [x] 7.1. Replace all API fetch calls from `/workforce-manager/...` to `/planning/...` in:
+  - `planning-gantt.js`
+  - `planning-gantt-custom.js`
+  - `manage_mappings_satellite_lines.js`
+  - `manage_mappings_technician_groups.js`
+  - `manage_mappings_technician_data.js`
+  - `manage_mappings_technologies.js`
+  - `manage_mappings_utils.js`
+  - `manage_mappings_globals.js`
+  - `manage_mappings_task_technology.js`
+  - `manage_mappings_technician_skills.js` (3 URLs)
+  - Other JavaScript files
 
 #### ✅ 8. **Update Documentation (15+ files)**
-  - [x] 8.1. Update root documentation:
-    - `README.md` - All "Workforce Manager" → "Planning"
-    - `GEMINI.md` - All references updated
-    - `CHANGELOG.md` - "Workforce Manager Integration" → "Planning Integration"
-    - `requirements.txt` - Comment updated
-  - [x] 8.2. Update planning module documentation:
-    - `apps/planning/README.md` - Title and all descriptions
-    - `apps/planning/CHANGELOG.md` - Feature names
-  - [x] 8.3. Update GitHub configuration:
-    - `.github/copilot-instructions.md` - All instructions and references
-  - [x] 8.4. Update roadmap documentation:
-    - `apps/planning/docs/roadmap/00_OVERVIEW_AND_STATUS.md`
-    - `apps/planning/docs/roadmap/archive/*.md` - All archive files
-  - [x] 8.5. Update root docs:
-    - `docs/**/*.md` - All markdown files
+
+- [x] 8.1. Update root documentation:
+  - `README.md` - All "Workforce Manager" → "Planning"
+  - `GEMINI.md` - All references updated
+  - `CHANGELOG.md` - "Workforce Manager Integration" → "Planning Integration"
+  - `requirements.txt` - Comment updated
+- [x] 8.2. Update planning module documentation:
+  - `apps/planning/README.md` - Title and all descriptions
+  - `apps/planning/CHANGELOG.md` - Feature names
+- [x] 8.3. Update GitHub configuration:
+  - `.github/copilot-instructions.md` - All instructions and references
+- [x] 8.4. Update roadmap documentation:
+  - `apps/planning/docs/roadmap/00_OVERVIEW_AND_STATUS.md`
+  - `apps/planning/docs/roadmap/archive/*.md` - All archive files
+- [x] 8.5. Update root docs:
+  - `docs/**/*.md` - All markdown files
 
 #### ✅ 9. **Update Test Files**
-  - [x] 9.1. Update `apps/planning/tests/test_core.py` - Comments
-  - [x] 9.2. Update `apps/planning/tests/test_integration.py` - All references
-  - [x] 9.3. Update `apps/planning/tests/test_health.py` - All references and URLs
+
+- [x] 9.1. Update `apps/planning/tests/test_core.py` - Comments
+- [x] 9.2. Update `apps/planning/tests/test_integration.py` - All references
+- [x] 9.3. Update `apps/planning/tests/test_health.py` - All references and URLs
 
 #### ✅ 10. **Update Code Comments and Docstrings**
-  - [x] 10.1. Update docstrings in `apps/planning/src/routes/planning.py`
-  - [x] 10.2. Update comments in all service files
-  - [x] 10.3. Update legacy annotations (marked for Phase 4 deletion)
+
+- [x] 10.1. Update docstrings in `apps/planning/src/routes/planning.py`
+- [x] 10.2. Update comments in all service files
+- [x] 10.3. Update legacy annotations (marked for Phase 4 deletion)
 
 ---
 
 ## 🎯 Complete List of All Fixes Applied (8 Rounds)
 
 ### **Round 1: Initial Core Refactoring**
+
 1. ✅ Directory renamed: `apps/workforceManager` → `apps/planning` (git mv)
 2. ✅ Package name: `setup.py` → `name='planning'`
 3. ✅ All Python imports: `apps.workforceManager` → `apps.planning` (55+ files)
@@ -119,16 +130,19 @@
 8. ✅ Database filename: `workforce_manager.db` → `planning.db`
 
 ### **Round 2: Template & JavaScript Fixes**
+
 9. ✅ All `url_for('workforce_manager.*)` → `url_for('planning.*)` (23 fixes)
 10. ✅ Sidebar template: `PLANNING_ENABLED` check
 11. ✅ Sidebar link: `/planning/`
 12. ✅ JavaScript URLs: All `/workforce-manager/` → `/planning/` (12 files)
 
 ### **Round 3: Configuration Files**
+
 13. ✅ `.env.example` → `PLANNING_ENABLED`
 14. ✅ `.env` → `PLANNING_DEBUG_USE_TEST_DB`
 
 ### **Round 4: Documentation - "Workforce Manager" Text**
+
 15. ✅ `README.md` - All "Workforce Manager" → "Planning"
 16. ✅ `GEMINI.md` - All references updated
 17. ✅ `CHANGELOG.md` - Feature names updated
@@ -137,18 +151,22 @@
 20. ✅ `.github/copilot-instructions.md` - All instructions
 
 ### **Round 5: Package Metadata**
+
 21. ✅ Removed `workforceManager.egg-info/` directory
 
 ### **Round 6: Code Comments & Docstrings**
+
 22. ✅ `planning.py` - Updated docstrings
 23. ✅ `test_integration.py` - Updated comments
 
 ### **Round 7: All "workforce" Text (Lowercase)**
+
 24. ✅ `.gitignore` - All references
 25. ✅ All production `.md` files
 26. ✅ All production `.py` files
 
 ### **Round 8: Final Sweep - Remaining Files**
+
 27. ✅ `requirements.txt` - Comment updated
 28. ✅ `apps/planning/tests/test_core.py` - Comments
 29. ✅ `apps/planning/tests/test_integration.py` - All references
@@ -162,6 +180,7 @@
 ## 📊 Final Verification Results
 
 ### Production Code (Zero References):
+
 ```
 ✅ workforceManager:           0 references
 ✅ workforce_manager:          0 references
@@ -173,6 +192,7 @@
 ### Files Modified (Complete List - 65+ files):
 
 **Core Application (10 files):**
+
 - `src/app.py`
 - `src/templates/base.html`
 - `src/templates/index.html`
@@ -186,6 +206,7 @@
 - `requirements.txt`
 
 **Planning Module (18 files):**
+
 - `apps/planning/setup.py`
 - `apps/planning/README.md`
 - `apps/planning/CHANGELOG.md`
@@ -198,15 +219,18 @@
 - `apps/planning/src/templates/*.html` (5 files)
 
 **JavaScript (10 files):**
+
 - All files in `apps/planning/src/static/js/`
 
 **Test Files (10+ files):**
+
 - `apps/planning/tests/test_core.py`
 - `apps/planning/tests/test_integration.py`
 - `apps/planning/tests/test_health.py`
 - Other test files
 
 **Documentation (15+ files):**
+
 - `.github/copilot-instructions.md`
 - `apps/planning/docs/roadmap/*.md`
 - `docs/**/*.md`
@@ -232,6 +256,7 @@
 - [x] Legacy redirect works: /workforce-manager/ → /planning/
 
 **Testing Notes:**
+
 - All functionality verified working correctly
 - No breaking changes detected
 - Application runs smoothly with new naming convention
@@ -297,6 +322,7 @@ BREAKING CHANGE: Environment variable WORKFORCE_MANAGER_ENABLED renamed to PLANN
 **Commit:** ✅ **READY** (Message template provided above)
 
 **Final Verification (November 21, 2025):**
+
 - ✅ Zero references to: workforceManager, workforce_manager, planningManager, planning_manager
 - ✅ Zero references to: Workforce Manager, WORKFORCE_MANAGER, PLANNING_MANAGER
 - ✅ All 240+ files successfully renamed with git history preserved

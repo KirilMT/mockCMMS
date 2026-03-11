@@ -7,6 +7,7 @@
 **📋 Implementation Roadmap:** See `docs/phase2_hybrid_roadmap.md` for detailed implementation plan
 
 **✅ Hybrid Approach Completed:**
+
 - ✅ **Priority 1: Shift-break mode** - 30-minute window + REP-first priority (4.2.1, 4.2.2)
 - ✅ **Priority 2: Weekend mode** - PM frequency filtering + PM-first priority (4.3.1, 4.3.2)
 - ⏭️ **Deferred: SCADA integration** - Phase 5 enhancement (4.2.3, 4.2.4)
@@ -15,6 +16,7 @@
 **Implementation Summary:**
 
 **Core Components Created:**
+
 1. **`planning_result.py`** - Comprehensive result data structures
    - `PlanningResult` - Main container for all planning outcomes
    - `TaskAssignment` - Successfully assigned tasks with details
@@ -34,6 +36,7 @@
    - Comprehensive logging and error handling
 
 **Algorithm Features:**
+
 - ✅ Filters tasks by spare parts availability
 - ✅ Validates task data completeness
 - ✅ Matches technicians based on required skills
@@ -46,6 +49,7 @@
 - ✅ Persists assignments to PlanningTask records
 
 **Test Coverage (13 tests - all passing ✅):**
+
 - Skill-based matching (single skill)
 - Multi-skill task matching
 - No matching skills → unassigned
@@ -59,6 +63,7 @@
 - Planning result statistics calculation
 
 **Key Differences from Legacy:**
+
 - ❌ NO Excel dependencies
 - ❌ NO raw SQLite queries
 - ✅ Uses SQLAlchemy ORM throughout
@@ -68,12 +73,14 @@
 - ✅ Comprehensive result objects
 
 **Implementation Strategy:**
+
 - Create NEW planning engine service (`planning_engine.py`) using domain models
 - Extract reusable algorithms from legacy `task_assigner.py`
 - Replace Excel/SQLite data structures with SQLAlchemy models
 - Implement test-driven development for each component
 
 **Key Files:**
+
 - `apps/planning/src/services/planning_engine.py` - NEW assignment engine ✅
 - `apps/planning/src/services/planning_result.py` - NEW result structure ✅
 - `apps/planning/tests/test_planning_engine.py` - NEW comprehensive tests ✅

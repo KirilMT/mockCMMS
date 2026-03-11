@@ -1,24 +1,19 @@
 {% extends "base.html" %}
 
 {% block title %}Spare Parts{% endblock %}
-
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1>Spare Parts</h1>
-  <a href="{{ url_for('main.add_spare_part') }}" class="btn btn-primary">
-    <i class="fas fa-plus"></i> Add New Spare Part
-  </a>
-</div>
-
-<div id="sparePartsTable" class="page-full-height"></div>
-
-{# Pass data to JS via hidden script tag #}
-<script type="application/json" id="spare-parts-data">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Spare Parts</h1>
+        <a href="{{ url_for('main.add_spare_part') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Spare Part
+        </a>
+    </div>
+    <div id="sparePartsTable" class="page-full-height"></div>
+    {# Pass data to JS via hidden script tag #}
+    <script type="application/json" id="spare-parts-data">
   {{ spare_parts | tojson }}
-</script>
-
+    </script>
 {% endblock %}
-
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/pages/spare-parts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pages/spare-parts.js') }}"></script>
 {% endblock %}

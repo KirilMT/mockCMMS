@@ -1,10 +1,11 @@
 from flask import g
+
+from .services.config_manager import load_app_config
 from .services.planning_db_utils import (
+    ensure_skill_update_log_table,
     get_db_connection,
     init_db,
-    ensure_skill_update_log_table,
 )
-from .services.config_manager import load_app_config
 
 
 class DatabaseManager:

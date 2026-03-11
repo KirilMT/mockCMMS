@@ -1,24 +1,17 @@
 {% extends "base.html" %}
 
 {% block title %}Maintenance Orders{% endblock %}
-
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1>Maintenance Orders</h1>
-  <a href="{{ url_for('main.add_mo') }}" class="btn btn-primary">
-    <i class="fas fa-plus"></i> Add New MO
-  </a>
-</div>
-
-<div id="mosTable" class="page-full-height"></div>
-
-{# Pass data to JS via hidden script tag #}
-<script type="application/json" id="mos-data">
-  {{ mos | tojson }}
-</script>
-
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Maintenance Orders</h1>
+        <a href="{{ url_for('main.add_mo') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New MO
+        </a>
+    </div>
+    <div id="mosTable" class="page-full-height"></div>
+    {# Pass data to JS via hidden script tag #}
+    <script type="application/json" id="mos-data">{{ mos | tojson }}</script>
 {% endblock %}
-
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/pages/maintenance-orders.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pages/maintenance-orders.js') }}"></script>
 {% endblock %}

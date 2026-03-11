@@ -86,6 +86,7 @@ This document describes the data flow architecture for the Planning module integ
 ### 1. Data Ingestion (Phase 1 - Complete)
 
 **Source:** mockCMMS Database
+
 - `MaintenanceOrder` table contains all PM, REP, and corrective tasks
 - `Technician` table contains planning information
 - `Skill` table defines available competencies
@@ -93,6 +94,7 @@ This document describes the data flow architecture for the Planning module integ
 - `Asset` table defines equipment
 
 **Process:**
+
 1. Planning module queries MaintenanceOrder records based on criteria:
    - Schedule date ranges
    - Order types (PM/REP/Corrective)
@@ -111,6 +113,7 @@ This document describes the data flow architecture for the Planning module integ
 ### 2. Constraint Checking (Phase 1 - Complete)
 
 **Spare Parts Constraint:**
+
 ```python
 # For each MaintenanceOrder
 is_available, details = check_spare_parts_availability(mo)
@@ -120,6 +123,7 @@ is_available, details = check_spare_parts_availability(mo)
 ```
 
 **Technician Availability:**
+
 ```python
 # Check technician status
 technician.availability_status  # "Available", "On Leave", "Sick", "Vacation"
@@ -127,6 +131,7 @@ technician.shift  # Shift assignment with times
 ```
 
 **Skill Requirements:**
+
 ```python
 # Task requirements
 task.required_skills  # List of Skill objects
@@ -139,11 +144,13 @@ technician.skills  # List of TechnicianSkill with skill_level
 ### 3. Planning Engine (Phase 2 - To Be Implemented)
 
 **Input:**
+
 - List of PlanningTask objects (filtered for parts availability)
 - List of available Technician objects (filtered by availability_status)
 - Schedule parameters (shift times, date range, mode)
 
 **Algorithm Flow:**
+
 ```
 1. Filter plannable tasks
    ├─ Exclude tasks with insufficient parts
@@ -177,6 +184,7 @@ technician.skills  # List of TechnicianSkill with skill_level
 ### 4. Result Persistence (Phase 2)
 
 **Storage Strategy:**
+
 - Update `PlanningTask` records with:
   - `schedule_id` → Links to Schedule
   - `assigned_technician_id` → Links to Technician
@@ -188,6 +196,7 @@ technician.skills  # List of TechnicianSkill with skill_level
   - Tracks all PlanningTasks for a planning period
 
 **Query Pattern:**
+
 ```python
 # Retrieve a complete plan
 schedule = Schedule.query.get(schedule_id)
@@ -202,6 +211,7 @@ for task in tasks:
 ### 5. UI Presentation (Phase 3 - To Be Implemented)
 
 **Table View Data:**
+
 ```json
 {
   "task_id": 123,
@@ -219,6 +229,7 @@ for task in tasks:
 ```
 
 **Gantt Chart Data:**
+
 ```json
 {
   "tasks": [
@@ -250,17 +261,20 @@ for task in tasks:
 ### Shift-Break Planning Mode
 
 **Characteristics:**
+
 - 30-minute planning window per shift
 - Focus on urgent/critical tasks
 - Limited time for execution
 
 **Priority Order:**
+
 1. Critical tasks affecting production
 2. REP/corrective tasks (high occurrence/downtime)
 3. Quick PMs that fit the window
 4. Project tasks (if time permits)
 
 **Flow:**
+
 ```
 CMMS Tasks → Filter by urgency → Check parts →
 → Assign to available shift techs → 30-min windows → UI
@@ -269,17 +283,20 @@ CMMS Tasks → Filter by urgency → Check parts →
 ### Weekend Planning Mode
 
 **Characteristics:**
+
 - Multi-day planning window (Saturday-Sunday)
 - Focus on scheduled maintenance
 - More technician availability
 
 **Priority Order:**
+
 1. Frequency-based PMs due this period
 2. Outstanding REP tasks
 3. Deferred maintenance
 4. Project work
 
 **Flow:**
+
 ```
 CMMS Tasks → Filter by schedule/frequency → Check parts →
 → Assign to weekend crew → Multi-hour blocks → UI
@@ -290,6 +307,7 @@ CMMS Tasks → Filter by schedule/frequency → Check parts →
 ## Integration Points
 
 ### 1. API Routes (Phase 3)
+
 ```
 GET  /planning/schedules          # List all schedules
 POST /planning/schedules          # Create new schedule
@@ -300,11 +318,13 @@ POST /planning/assign             # Run planning algorithm
 ```
 
 ### 2. Report Integration
+
 ```
 Planning Results → reports module → PDF/Excel export
 ```
 
 ### 3. Future: SCADA Integration
+
 ```
 SCADA Data → Asset downtime/occurrence → REP task prioritization
 ```
@@ -314,11 +334,13 @@ SCADA Data → Asset downtime/occurrence → REP task prioritization
 ## Security & Access Control
 
 **Role-Based Access:**
+
 - **Technician:** Read-only access to assigned tasks
 - **Supervisor:** View all plans, adjust assignments, add ad-hoc tasks
 - **Planner:** Full access, can run planning algorithm, lock schedules
 
 **Data Flow:**
+
 ```
 User Login → Role Check → UI Permissions → API Access Control
 ```
@@ -328,11 +350,13 @@ User Login → Role Check → UI Permissions → API Access Control
 ## Performance Considerations
 
 **Expected Load:**
+
 - ~100-200 tasks per planning run
 - ~20-30 technicians
 - Response time target: <5 seconds for assignment algorithm
 
 **Optimization Strategies:**
+
 - Cache technician skill data
 - Index on schedule_id, assigned_technician_id
 - Batch database updates
@@ -343,12 +367,14 @@ User Login → Role Check → UI Permissions → API Access Control
 ## Monitoring & Observability
 
 **Key Metrics:**
+
 - Planning algorithm execution time
 - Assignment success rate (% of tasks assigned)
 - Constraint violation frequency
 - User engagement (views per role)
 
 **Logging Points:**
+
 - Data transformation errors
 - Constraint check failures
 - Assignment algorithm decisions
@@ -359,6 +385,7 @@ User Login → Role Check → UI Permissions → API Access Control
 ## Future Enhancements
 
 **Phase 5 and Beyond:**
+
 1. **Real-time SCADA integration** - Dynamic task reprioritization
 2. **Predictive maintenance** - ML-based task suggestion
 3. **Automatic spare parts ordering** - Trigger orders for upcoming tasks

@@ -1,3 +1,4 @@
+/* global Gantt */
 /**
  * Gantt Chart Implementation for Planning Module
  * Using Frappe Gantt library for simplicity and maintainability
@@ -28,7 +29,7 @@ class PlanningGanttChart {
   }
 
   async init() {
-    console.log("[Gantt] Initializing Gantt chart...");
+    console.warn("[Gantt] Initializing Gantt chart...");
     await this.loadData();
     this.render();
   }
@@ -36,13 +37,13 @@ class PlanningGanttChart {
   async loadData() {
     try {
       const response = await fetch(
-        `/planning/planning/schedules/${this.scheduleId}/gantt-data`,
+        `/planning/schedules/${this.scheduleId}/gantt-data`,
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("[Gantt] Loaded data:", data);
+      console.warn("[Gantt] Loaded data:", data);
 
       // Transform data to Frappe Gantt format
       this.tasks = this.transformToGanttFormat(data);
@@ -180,7 +181,7 @@ class PlanningGanttChart {
       return;
     }
 
-    console.log("[Gantt] Rendering chart with tasks:", this.tasks);
+    console.warn("[Gantt] Rendering chart with tasks:", this.tasks);
 
     // Create Gantt instance
     try {
@@ -189,17 +190,17 @@ class PlanningGanttChart {
         date_format: "YYYY-MM-DD HH:mm",
         popup_trigger: "click",
         on_click: (task) => {
-          console.log("[Gantt] Task clicked:", task);
+          console.warn("[Gantt] Task clicked:", task);
           if (this.onTaskClick && task._originalData) {
             this.onTaskClick(task._originalData);
           }
         },
         on_date_change: (task, start, end) => {
-          console.log("[Gantt] Task dates changed:", task, start, end);
+          console.warn("[Gantt] Task dates changed:", task, start, end);
           // TODO: Implement drag-and-drop reschedule (Supervisor/Planner only)
         },
         on_progress_change: (task, progress) => {
-          console.log("[Gantt] Task progress changed:", task, progress);
+          console.warn("[Gantt] Task progress changed:", task, progress);
           // TODO: Implement progress update
         },
         custom_popup_html: (task) => {
@@ -241,7 +242,7 @@ class PlanningGanttChart {
         },
       });
 
-      console.log("[Gantt] Chart rendered successfully");
+      console.warn("[Gantt] Chart rendered successfully");
     } catch (error) {
       console.error("[Gantt] Error rendering chart:", error);
       this.container.innerHTML = `
@@ -261,7 +262,7 @@ class PlanningGanttChart {
     if (this.ganttInstance) {
       this.ganttInstance.change_view_mode(mode);
       this.viewMode = mode;
-      console.log("[Gantt] View mode changed to:", mode);
+      console.warn("[Gantt] View mode changed to:", mode);
     }
   }
 
@@ -269,14 +270,14 @@ class PlanningGanttChart {
     /**
      * Refresh Gantt chart with latest data
      */
-    console.log("[Gantt] Refreshing chart...");
+    console.warn("[Gantt] Refreshing chart...");
     this.loadData().then(() => this.render());
   }
 }
 
 // Initialize Gantt chart helper function
 function initPlanningGantt(containerId, scheduleId, options = {}) {
-  console.log("[Gantt] initPlanningGantt called:", containerId, scheduleId);
+  console.warn("[Gantt] initPlanningGantt called:", containerId, scheduleId);
 
   // Check if Frappe Gantt library is loaded
   if (typeof Gantt === "undefined") {
@@ -300,5 +301,12 @@ function initPlanningGantt(containerId, scheduleId, options = {}) {
 }
 
 // Make globally available
-window.PlanningGanttChart = PlanningGanttChart;
-window.initPlanningGantt = initPlanningGantt;
+if (typeof window !== "undefined") {
+  window.PlanningGanttChart = PlanningGanttChart;
+  window.initPlanningGantt = initPlanningGantt;
+}
+
+// Export for testing
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { PlanningGanttChart, initPlanningGantt };
+}

@@ -1,0 +1,41 @@
+@media print {
+  body {
+    background-color: white !important;
+  }
+
+  .navbar,
+  .sidebar,
+  .btn-primary,
+  .btn-outline-secondary,
+  .btn-outline-success,
+  .btn-outline-danger,
+  form {
+    display: none !important;
+  }
+
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  table {
+    width: 100% !important;
+  }
+}
+
+.report-stats {
+  margin-bottom: 2rem;
+}
+
+.report-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}

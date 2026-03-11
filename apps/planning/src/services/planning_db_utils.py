@@ -1,12 +1,12 @@
 # src/db_utils.py
-import os
 import json
+import os
 import sqlite3
 
 
 # --- Database Helper Functions ---
 def get_db_connection(database_path):
-    conn = sqlite3.connect(database_path)
+    conn = sqlite3.connect(database_path, timeout=30)
     conn.row_factory = sqlite3.Row  # Access columns by name
     return conn
 
@@ -50,8 +50,11 @@ def populate_dummy_data(conn, logger):
     for line in data.get("lines", []):
         sp_id = satellite_points.get(line["satellite_point"])
         if sp_id:
-            add_line(conn, line["name"], sp_id)
-    logger.info(f"Populated lines.")
+            try:
+                add_line(conn, line["name"], sp_id)
+            except sqlite3.IntegrityError:
+                pass  # Line already exists, skip
+    logger.info("Populated lines.")
 
     # Populate technology_groups
     for group_name in data.get("technology_groups", []):
@@ -84,7 +87,8 @@ def populate_dummy_data(conn, logger):
         tech_name = tech_data["name"]
         sp_id = satellite_points.get(tech_data["satellite_point"])
         cursor.execute(
-            "INSERT OR IGNORE INTO technicians (name, satellite_point_id) VALUES (?, ?)",
+            "INSERT OR IGNORE INTO technicians (name, satellite_point_id) "
+            "VALUES (?, ?)",
             (tech_name, sp_id),
         )
         cursor.execute("SELECT id FROM technicians WHERE name = ?", (tech_name,))
@@ -101,327 +105,438 @@ def populate_dummy_data(conn, logger):
                     update_technician_skill(conn, tech_id, tech_id_for_skill, level)
     logger.info(f"Populated {len(technicians)} technicians and their skills.")
 
-    # Populate tasks and their required skills
+    # Populate default line conditions (BEFORE tasks)
+    line_condition_manager = LineConditionManager(conn)
+    default_conditions = [
+        {
+            "name": "Line Empty",
+            "description": "The production line must be empty",
+            "color_code": "red",
+        },
+        {
+            "name": "Power Off",
+            "description": "Main power must be turned off",
+            "color_code": "red",
+        },
+        {
+            "name": "Part in Fixture",
+            "description": "A part must be present in the fixture",
+            "color_code": "yellow",
+        },
+        {
+            "name": "Robot Home",
+            "description": "Robot must be at home position",
+            "color_code": "green",
+        },
+        {
+            "name": "Safety Gates Closed",
+            "description": "All safety gates must be closed",
+            "color_code": "green",
+        },
+    ]
+
+    conditions_map = {}
+    for condition in default_conditions:
+        cid = line_condition_manager.create_condition(
+            condition["name"], condition["description"], condition["color_code"]
+        )
+        if cid:
+            conditions_map[condition["name"]] = cid
+
+    if logger:
+        logger.info(f"Populated {len(default_conditions)} default line conditions.")
+
+    # Populate tasks and their required skills / conditions
     for task_data in data.get("tasks", []):
         task_name = task_data["name"]
         task_id = task_manager.get_or_create(task_name)
         tasks[task_name] = task_id
+
+        # Skills
         for skill_name in task_data.get("required_skills", []):
             skill_id = technologies.get(skill_name)
             if skill_id:
                 task_manager.add_required_skill(task_id, skill_id)
-    logger.info(f"Populated {len(tasks)} tasks and their required skills.")
+
+        # Line Conditions
+        for condition_name in task_data.get("line_conditions", []):
+            cid = conditions_map.get(condition_name)
+            if cid:
+                line_condition_manager.assign_condition_to_task(task_id, cid)
+
+    logger.info(
+        f"Populated {len(tasks)} tasks and their required skills and conditions."
+    )
 
     conn.commit()
-    logger.info("Dummy data population complete.")
+    if logger:
+        logger.info("Dummy data population complete.")
 
 
 def init_db(db_path, logger=None, debug_use_test_db=False):
     db_exists = os.path.exists(db_path)
 
     conn = get_db_connection(db_path)
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    # Create satellite_points table
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS satellite_points (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL
-        )
-    """
-    )
-    logger.info("Table 'satellite_points' ensured.") if logger else None
-
-    # Add a default satellite point if the table is empty and not in test mode
-    if not debug_use_test_db:
-        cursor.execute("SELECT COUNT(*) FROM satellite_points")
-        if cursor.fetchone()[0] == 0:
-            cursor.execute(
-                "INSERT INTO satellite_points (name) VALUES (?)",
-                ("Default Satellite Point",),
-            )
-            conn.commit()  # Commit immediately for critical default data
-            if logger:
-                logger.info(
-                    "Added 'Default Satellite Point' as no satellite points were found."
-                )
-
-    # Create lines table
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS lines (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            satellite_point_id INTEGER,
-            FOREIGN KEY(satellite_point_id) REFERENCES satellite_points(id),
-            UNIQUE(name, satellite_point_id)
-        )
-    """
-    )
-    logger.info("Table 'lines' ensured.") if logger else None
-
-    # --- Technicians Table Logic ---
-    # Check if the technicians table exists
-    cursor.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='technicians'"
-    )
-    table_exists = cursor.fetchone()
-
-    recreate_table = False
-    existing_technicians_simple = []
-
-    if table_exists:
-        # If it exists, check if it has the old schema that needs updating
-        cursor.execute("PRAGMA table_info(technicians)")
-        columns = [column[1] for column in cursor.fetchall()]
-        if (
-            "sattelite_point" in columns
-            or "lines" in columns
-            or "satellite_point_id" not in columns
-        ):
-            recreate_table = True
-            (
-                logger.info(
-                    "Old 'technicians' table structure found. Preparing to recreate with new schema."
-                )
-                if logger
-                else None
-            )
-            # Back up existing data before dropping the table
-            cursor.execute("SELECT id, name FROM technicians")
-            existing_technicians_simple = cursor.fetchall()
-            cursor.execute("DROP TABLE technicians")
-            logger.info("Dropped old 'technicians' table.") if logger else None
-    else:
-        # If table doesn't exist, it needs to be created
-        recreate_table = True
-
-    if recreate_table:
-        # Create the table with the new, correct schema
+        # Create satellite_points table
         cursor.execute(
             """
-            CREATE TABLE technicians (
+            CREATE TABLE IF NOT EXISTS satellite_points (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT UNIQUE NOT NULL,
-                satellite_point_id INTEGER,
-                FOREIGN KEY(satellite_point_id) REFERENCES satellite_points(id)
+                name TEXT UNIQUE NOT NULL
             )
         """
         )
-        (
-            logger.info(
-                "Table 'technicians' created with new schema (satellite_point_id)."
-            )
-            if logger
-            else None
-        )
+        logger.info("Table 'satellite_points' ensured.") if logger else None
 
-        # Restore basic data if any was backed up from an old table version
-        if existing_technicians_simple:
-            cursor.executemany(
-                "INSERT INTO technicians (id, name) VALUES (?, ?)",
-                existing_technicians_simple,
+        # Add a default satellite point if the table is empty and not in test mode
+        if not debug_use_test_db:
+            cursor.execute("SELECT COUNT(*) FROM satellite_points")
+            if cursor.fetchone()[0] == 0:
+                cursor.execute(
+                    "INSERT INTO satellite_points (name) VALUES (?)",
+                    ("Default Satellite Point",),
+                )
+                conn.commit()  # Commit immediately for critical default data
+                if logger:
+                    logger.info(
+                        "Added 'Default Satellite Point' as no "
+                        "satellite points were found."
+                    )
+
+        # Create lines table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS lines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                satellite_point_id INTEGER,
+                FOREIGN KEY(satellite_point_id) REFERENCES satellite_points(id),
+                UNIQUE(name, satellite_point_id)
+            )
+        """
+        )
+        logger.info("Table 'lines' ensured.") if logger else None
+
+        # Create shift_team table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS shift_team (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL
+            )
+        """
+        )
+        logger.info("Table 'shift_team' ensured.") if logger else None
+
+        # --- Technicians Table Logic ---
+        # Check if the technicians table exists
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='technicians'"
+        )
+        table_exists = cursor.fetchone()
+
+        recreate_table = False
+        existing_technicians_simple = []
+
+        if table_exists:
+            # If it exists, check if it has the old schema that needs updating
+            cursor.execute("PRAGMA table_info(technicians)")
+            columns = [column[1] for column in cursor.fetchall()]
+            if (
+                "sattelite_point" in columns
+                or "lines" in columns
+                or "satellite_point_id" not in columns
+                or "shift_team_id" not in columns
+            ):
+                recreate_table = True
+                (
+                    logger.info(
+                        "Old 'technicians' table structure found. "
+                        "Preparing to recreate with new schema."
+                    )
+                    if logger
+                    else None
+                )
+                # Back up existing data before dropping the table
+                cursor.execute("SELECT id, name FROM technicians")
+                existing_technicians_simple = cursor.fetchall()
+                cursor.execute("DROP TABLE technicians")
+                logger.info("Dropped old 'technicians' table.") if logger else None
+        else:
+            # If table doesn't exist, it needs to be created
+            recreate_table = True
+
+        if recreate_table:
+            # Create the table with the new, correct schema
+            cursor.execute(
+                """
+                CREATE TABLE technicians (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT UNIQUE NOT NULL,
+                    satellite_point_id INTEGER,
+                    shift_team_id INTEGER,
+                    FOREIGN KEY(satellite_point_id) REFERENCES satellite_points(id),
+                    FOREIGN KEY(shift_team_id) REFERENCES shift_team(id)
+                )
+
+            """
             )
             (
                 logger.info(
-                    f"Restored {len(existing_technicians_simple)} technicians (name/id only) to new table structure."
+                    "Table 'technicians' created with new schema (satellite_point_id)."
                 )
                 if logger
                 else None
             )
-    else:
-        logger.info("Table 'technicians' already up-to-date.") if logger else None
 
-    # Technologies Table
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS technologies (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL, -- Removed UNIQUE constraint
-            group_id INTEGER,
-            parent_id INTEGER, -- Added for hierarchy
-            FOREIGN KEY (group_id) REFERENCES technology_groups (id),
-            FOREIGN KEY (parent_id) REFERENCES technologies (id) -- Self-referencing for hierarchy
-        )
-    """
-    )
-    # Add group_id column to technologies if it doesn't exist (for existing dbs)
-    try:
-        cursor.execute("PRAGMA table_info(technologies)")
-        columns = [column[1] for column in cursor.fetchall()]
-        if "group_id" not in columns:
-            cursor.execute(
-                "ALTER TABLE technologies ADD COLUMN group_id INTEGER REFERENCES technology_groups(id)"
+            # Restore basic data if any was backed up from an old table version
+            if existing_technicians_simple:
+                cursor.executemany(
+                    "INSERT INTO technicians (id, name) VALUES (?, ?)",
+                    existing_technicians_simple,
+                )
+                (
+                    logger.info(
+                        f"Restored {len(existing_technicians_simple)} technicians "
+                        "(name/id only) to new table structure."
+                    )
+                    if logger
+                    else None
+                )
+        else:
+            logger.info("Table 'technicians' already up-to-date.") if logger else None
+
+        # Technologies Table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS technologies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL, -- Removed UNIQUE constraint
+                group_id INTEGER,
+                parent_id INTEGER, -- Added for hierarchy
+                FOREIGN KEY (group_id) REFERENCES technology_groups (id),
+                FOREIGN KEY (parent_id) REFERENCES technologies (id)
             )
+        """
+        )
+        # Add group_id column to technologies if it doesn't exist (for existing dbs)
+        try:
+            cursor.execute("PRAGMA table_info(technologies)")
+            columns = [column[1] for column in cursor.fetchall()]
+            if "group_id" not in columns:
+                cursor.execute(
+                    "ALTER TABLE technologies ADD COLUMN group_id "
+                    "INTEGER REFERENCES technology_groups(id)"
+                )
+                if logger:
+                    logger.info("Added group_id column to technologies table.")
+            if "parent_id" not in columns:  # Check and add parent_id
+                cursor.execute(
+                    "ALTER TABLE technologies ADD COLUMN parent_id "
+                    "INTEGER REFERENCES technologies(id)"
+                )
+                if logger:
+                    logger.info("Added parent_id column to technologies table.")
+        except sqlite3.Error as e:
             if logger:
-                logger.info("Added group_id column to technologies table.")
-        if "parent_id" not in columns:  # Check and add parent_id
-            cursor.execute(
-                "ALTER TABLE technologies ADD COLUMN parent_id INTEGER REFERENCES technologies(id)"
+                logger.error(
+                    f"Error checking/adding group_id or parent_id to technologies: {e}"
+                )
+
+        # Technology Groups Table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS technology_groups (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL
             )
-            if logger:
-                logger.info("Added parent_id column to technologies table.")
-    except sqlite3.Error as e:
-        if logger:
-            logger.error(
-                f"Error checking/adding group_id or parent_id to technologies: {e}"
+        """
+        )
+
+        # Tasks Table (new schema)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL
+                -- Tasks can have multiple skills via task_required_skills
+                -- FOREIGN KEY (technology_id) REFERENCES technologies (id)
             )
-
-    # Technology Groups Table
-    cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS technology_groups (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL
         )
-    """
-    )
 
-    # Tasks Table (new schema)
-    cursor.execute(
+        # Technician Technology Skills Table (using skill_level 0-4 as per your file)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS technician_technology_skills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                technician_id INTEGER NOT NULL,
+                technology_id INTEGER NOT NULL,
+                skill_level INTEGER CHECK(skill_level IN (0, 1, 2, 3, 4)),
+                FOREIGN KEY (technician_id) REFERENCES technicians (id),
+                FOREIGN KEY (technology_id) REFERENCES technologies (id),
+                UNIQUE (technician_id, technology_id)
+            )
         """
-        CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL
-            -- technology_id INTEGER, -- Removed: Tasks can have multiple skills via task_required_skills
-            -- FOREIGN KEY (technology_id) REFERENCES technologies (id) -- Removed
         )
-    """
-    )
 
-    # Technician Technology Skills Table (using skill_level 0-4 as per your file)
-    cursor.execute(
+        # Ensure 'technician_task_assignments' table exists with the new schema
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS technician_task_assignments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                technician_id INTEGER NOT NULL,
+                task_id INTEGER NOT NULL,
+                FOREIGN KEY (technician_id) REFERENCES technicians (id),
+                FOREIGN KEY (task_id) REFERENCES tasks (id)
+            )
         """
-        CREATE TABLE IF NOT EXISTS technician_technology_skills (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            technician_id INTEGER NOT NULL,
-            technology_id INTEGER NOT NULL,
-            skill_level INTEGER CHECK(skill_level IN (0, 1, 2, 3, 4)),
-            FOREIGN KEY (technician_id) REFERENCES technicians (id),
-            FOREIGN KEY (technology_id) REFERENCES technologies (id),
-            UNIQUE (technician_id, technology_id)
         )
-    """
-    )
 
-    # Ensure 'technician_task_assignments' table exists with the new schema
-    cursor.execute(
+        # New Table: Task Required Skills
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS task_required_skills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id INTEGER,
+                technology_id INTEGER,
+                FOREIGN KEY(task_id) REFERENCES tasks(id)
+                ON DELETE CASCADE,
+                FOREIGN KEY(technology_id) REFERENCES technologies(id)
+                ON DELETE CASCADE,
+                UNIQUE(task_id, technology_id)
+            )
         """
-        CREATE TABLE IF NOT EXISTS technician_task_assignments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            technician_id INTEGER NOT NULL,
-            task_id INTEGER NOT NULL,
-            FOREIGN KEY (technician_id) REFERENCES technicians (id),
-            FOREIGN KEY (task_id) REFERENCES tasks (id)
         )
-    """
-    )
+        logger.info("Table 'task_required_skills' ensured.") if logger else None
 
-    # New Table: Task Required Skills
-    cursor.execute(
+        # Technician Groups Table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS technician_groups (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL
+            )
         """
-        CREATE TABLE IF NOT EXISTS task_required_skills (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            task_id INTEGER,
-            technology_id INTEGER,
-            FOREIGN KEY(task_id) REFERENCES tasks(id) ON DELETE CASCADE,
-            FOREIGN KEY(technology_id) REFERENCES technologies(id) ON DELETE CASCADE,
-            UNIQUE(task_id, technology_id)
         )
-    """
-    )
-    logger.info("Table 'task_required_skills' ensured.") if logger else None
+        logger.info("Table 'technician_groups' ensured.") if logger else None
 
-    # Technician Groups Table
-    cursor.execute(
+        # Technician Group Members Table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS technician_group_members (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                technician_id INTEGER NOT NULL,
+                group_id INTEGER NOT NULL,
+                FOREIGN KEY (technician_id) REFERENCES technicians (id)
+                ON DELETE CASCADE,
+                FOREIGN KEY (group_id) REFERENCES technician_groups (id)
+                ON DELETE CASCADE,
+                UNIQUE (technician_id, group_id)
+            )
         """
-        CREATE TABLE IF NOT EXISTS technician_groups (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL
         )
-    """
-    )
-    logger.info("Table 'technician_groups' ensured.") if logger else None
+        logger.info("Table 'technician_group_members' ensured.") if logger else None
 
-    # Technician Group Members Table
-    cursor.execute(
+        # 3. Create Indexes (idempotently)
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_technician_task_assignments_technician_id
+            ON technician_task_assignments (technician_id)
         """
-        CREATE TABLE IF NOT EXISTS technician_group_members (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            technician_id INTEGER NOT NULL,
-            group_id INTEGER NOT NULL,
-            FOREIGN KEY (technician_id) REFERENCES technicians (id) ON DELETE CASCADE,
-            FOREIGN KEY (group_id) REFERENCES technician_groups (id) ON DELETE CASCADE,
-            UNIQUE (technician_id, group_id)
         )
-    """
-    )
-    logger.info("Table 'technician_group_members' ensured.") if logger else None
+        # Index for new task_id column
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_technician_task_assignments_task_id
+            ON technician_task_assignments (task_id)
+        """
+        )
+        # Indexes for technician_technology_skills
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_technician_technology_skills_technician_id
+            ON technician_technology_skills (technician_id)
+        """
+        )
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_technician_technology_skills_technology_id
+            ON technician_technology_skills (technology_id)
+        """
+        )
+        # Index for technology group_id
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_technologies_group_id
+            ON technologies (group_id)
+        """
+        )
+        # Index for parent_id
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_technologies_parent_id
+            ON technologies (parent_id)
+        """
+        )
 
-    # 3. Create Indexes (idempotently)
-    cursor.execute(
+        # Indexes for task_required_skills
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_task_required_skills_task_id
+            ON task_required_skills (task_id)
         """
-        CREATE INDEX IF NOT EXISTS idx_technician_task_assignments_technician_id
-        ON technician_task_assignments (technician_id)
-    """
-    )
-    # Index for new task_id column
-    cursor.execute(
+        )
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_task_required_skills_technology_id
+            ON task_required_skills (technology_id)
         """
-        CREATE INDEX IF NOT EXISTS idx_technician_task_assignments_task_id
-        ON technician_task_assignments (task_id)
-    """
-    )
-    # Indexes for technician_technology_skills
-    cursor.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_technician_technology_skills_technician_id
-        ON technician_technology_skills (technician_id)
-    """
-    )
-    cursor.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_technician_technology_skills_technology_id
-        ON technician_technology_skills (technology_id)
-    """
-    )
-    # Index for technology group_id
-    cursor.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_technologies_group_id
-        ON technologies (group_id)
-    """
-    )
-    # Index for parent_id
-    cursor.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_technologies_parent_id
-        ON technologies (parent_id)
-    """
-    )
+        )
 
-    # Indexes for task_required_skills
-    cursor.execute(
+        conn.commit()
+
+        # Line Conditions Table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS line_conditions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                description TEXT,
+                color_code TEXT
+            )
         """
-        CREATE INDEX IF NOT EXISTS idx_task_required_skills_task_id
-        ON task_required_skills (task_id)
-    """
-    )
-    cursor.execute(
+        )
+        logger.info("Table 'line_conditions' ensured.") if logger else None
+
+        # Task Line Conditions Table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS task_line_conditions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id INTEGER NOT NULL,
+                condition_id INTEGER NOT NULL,
+                FOREIGN KEY(task_id)
+                    REFERENCES tasks(id) ON DELETE CASCADE,
+                FOREIGN KEY(condition_id)
+                    REFERENCES line_conditions(id) ON DELETE CASCADE,
+                UNIQUE(task_id, condition_id)
+            )
         """
-        CREATE INDEX IF NOT EXISTS idx_task_required_skills_technology_id
-        ON task_required_skills (technology_id)
-    """
-    )
+        )
+        logger.info("Table 'task_line_conditions' ensured.") if logger else None
 
-    conn.commit()
+        conn.commit()
 
-    # Populate with dummy data if the DB was just created and we are in debug mode
-    if not db_exists and debug_use_test_db:
-        populate_dummy_data(conn, logger)
+        # Populate with dummy data if the DB was just created and we are in debug mode
+        if not db_exists and debug_use_test_db:
+            populate_dummy_data(conn, logger)
 
-    conn.close()
+    finally:
+        conn.close()
 
 
 def get_or_create_satellite_point(conn, name):
@@ -466,7 +581,10 @@ def delete_satellite_point(conn, point_id):
         "SELECT COUNT(*) FROM lines WHERE satellite_point_id = ?", (point_id,)
     )
     if cursor.fetchone()[0] > 0:
-        return False, "Satellite point is associated with lines and cannot be deleted."
+        return (
+            False,
+            "Satellite point is associated with lines and cannot be deleted.",
+        )
 
     # Check if any technicians are associated with this satellite point
     cursor.execute(
@@ -494,7 +612,8 @@ def add_line(conn, name, satellite_point_id):
     )
     if cursor.fetchone():
         raise sqlite3.IntegrityError(
-            f"Line with name '{name}' already exists for satellite point ID {satellite_point_id}."
+            f"Line with name '{name}' already exists for "
+            f"satellite point ID {satellite_point_id}."
         )
 
     cursor.execute(
@@ -555,9 +674,11 @@ def update_line(conn, line_id, new_name, new_satellite_point_id):
         if not cursor.fetchone():
             return False, "Invalid satellite point ID."
 
-        # Check for duplicate line name within the same satellite point (optional, depends on requirements)
-        # For now, allowing duplicate line names if they are under different satellite points, or even same.
-        # If unique constraint (name, satellite_point_id) is desired, it should be added to DB schema.
+        # Check for duplicate line name within the same satellite point
+        # For now, allowing duplicate line names if they are under
+        # different satellite points, or even same.
+        # If unique constraint (name, satellite_point_id) is desired,
+        # it should be added to DB schema.
 
         cursor.execute(
             "UPDATE lines SET name = ?, satellite_point_id = ? WHERE id = ?",
@@ -567,16 +688,16 @@ def update_line(conn, line_id, new_name, new_satellite_point_id):
         if cursor.rowcount == 0:
             return False, "Line not found or data unchanged."
         return True, "Line updated successfully."
-    except (
-        sqlite3.Error
-    ) as e:  # Catch any potential SQLite errors, like FK issues if SP ID was invalid (though checked)
+    except sqlite3.Error as e:
+        # Catch any potential SQLite errors
         return False, f"Database error: {e}"
 
 
 def delete_line(conn, line_id):
     """Deletes a line by its ID."""
     cursor = conn.cursor()
-    # No direct dependencies on the lines table from other tables that would prevent deletion by default FK constraints.
+    # No direct dependencies on the lines table that would
+    # prevent deletion by default FK constraints.
     # Technicians are linked via satellite_point_id, not directly to lines.
     # If there were other direct dependencies, checks would be needed here.
     cursor.execute("DELETE FROM lines WHERE id = ?", (line_id,))
@@ -667,7 +788,8 @@ class TaskManager:
         """Adds a required technology/skill to a task."""
         try:
             self.cursor.execute(
-                "INSERT OR IGNORE INTO task_required_skills (task_id, technology_id) VALUES (?, ?)",
+                "INSERT OR IGNORE INTO task_required_skills "
+                "(task_id, technology_id) VALUES (?, ?)",
                 (task_id, technology_id),
             )
             self.conn.commit()
@@ -738,10 +860,32 @@ def update_technician_skill(conn, technician_id, technology_id, skill_level):
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT OR REPLACE INTO technician_technology_skills (technician_id, technology_id, skill_level)
+        INSERT OR REPLACE INTO technician_technology_skills
+        (technician_id, technology_id, skill_level)
         VALUES (?, ?, ?)
     """,
         (technician_id, technology_id, skill_level),
+    )
+    conn.commit()
+
+
+def delete_technician_skill(conn, technician_id, technology_id):
+    """Deletes a specific skill for a technician."""
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM technician_technology_skills "
+        "WHERE technician_id = ? AND technology_id = ?",
+        (technician_id, technology_id),
+    )
+    conn.commit()
+
+
+def clear_technician_skills(conn, technician_id):
+    """Removes all skills for a technician."""
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM technician_technology_skills WHERE technician_id = ?",
+        (technician_id,),
     )
     conn.commit()
 
@@ -762,6 +906,34 @@ def get_technician_skills_by_id(conn, technician_id):
     for row in cursor.fetchall():
         skills[row["technology_id"]] = row["skill_level"]
     return skills
+
+
+def get_all_technicians(conn):
+    """Fetches all technicians."""
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, satellite_point_id FROM technicians ORDER BY name")
+    return [dict(row) for row in cursor.fetchall()]
+
+
+def get_technician_by_id(conn, technician_id):
+    """Fetches a technician by ID."""
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, name, satellite_point_id FROM technicians WHERE id = ?",
+        (technician_id,),
+    )
+    row = cursor.fetchone()
+    return dict(row) if row else None
+
+
+def delete_technician(conn, technician_id):
+    """Deletes a technician by ID."""
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM technicians WHERE id = ?", (technician_id,))
+    conn.commit()
+    if cursor.rowcount == 0:
+        return False, "Technician not found."
+    return True, "Technician deleted successfully."
 
 
 def ensure_skill_update_log_table(conn):
@@ -796,7 +968,8 @@ def log_technician_skill_update(
     cursor.execute(
         """
         INSERT INTO technician_skill_update_log (
-            technician_id, technology_id, task_id, previous_skill_level, new_skill_level, message
+            technician_id, technology_id, task_id, previous_skill_level,
+            new_skill_level, message
         ) VALUES (?, ?, ?, ?, ?, ?)
     """,
         (
@@ -853,7 +1026,8 @@ class TechnicianGroupManager:
 
     def add_member(self, group_id, technician_id):
         self.cursor.execute(
-            "INSERT OR IGNORE INTO technician_group_members (group_id, technician_id) VALUES (?, ?)",
+            "INSERT OR IGNORE INTO technician_group_members "
+            "(group_id, technician_id) VALUES (?, ?)",
             (group_id, technician_id),
         )
         self.conn.commit()
@@ -861,7 +1035,8 @@ class TechnicianGroupManager:
 
     def remove_member(self, group_id, technician_id):
         self.cursor.execute(
-            "DELETE FROM technician_group_members WHERE group_id = ? AND technician_id = ?",
+            "DELETE FROM technician_group_members "
+            "WHERE group_id = ? AND technician_id = ?",
             (group_id, technician_id),
         )
         self.conn.commit()
@@ -877,4 +1052,99 @@ class TechnicianGroupManager:
         """,
             (group_id,),
         )
+        return [dict(row) for row in self.cursor.fetchall()]
+
+
+class LineConditionManager:
+    """Manages line conditions and their assignment to tasks."""
+
+    def __init__(self, conn):
+        self.conn = conn
+        self.cursor = conn.cursor()
+
+    def create_condition(self, name, description=None, color_code="blue"):
+        """Creates a new line condition."""
+        try:
+            self.cursor.execute(
+                "INSERT INTO line_conditions "
+                "(name, description, color_code) "
+                "VALUES (?, ?, ?)",
+                (name, description, color_code),
+            )
+            self.conn.commit()
+            return self.cursor.lastrowid
+        except sqlite3.IntegrityError:
+            # Condition already exists, return its ID
+            self.cursor.execute(
+                "SELECT id FROM line_conditions WHERE name = ?", (name,)
+            )
+            row = self.cursor.fetchone()
+            if row:
+                return row[0]
+            return None
+
+    def get_all_conditions(self):
+        """Fetches all available line conditions."""
+        self.cursor.execute(
+            "SELECT id, name, description, color_code "
+            "FROM line_conditions ORDER BY name"
+        )
+        return [dict(row) for row in self.cursor.fetchall()]
+
+    def update_condition(self, condition_id, name, description=None, color_code="blue"):
+        """Updates an existing line condition."""
+        try:
+            self.cursor.execute(
+                "UPDATE line_conditions "
+                "SET name = ?, description = ?, "
+                "color_code = ? WHERE id = ?",
+                (name, description, color_code, condition_id),
+            )
+            self.conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+
+    def delete_condition(self, condition_id):
+        """Deletes a line condition.
+
+        Cascade delete handled by DB foreign key on task_line_conditions table.
+        """
+        self.cursor.execute(
+            "DELETE FROM line_conditions WHERE id = ?",
+            (condition_id,),
+        )
+        self.conn.commit()
+        return self.cursor.rowcount > 0
+
+    def assign_condition_to_task(self, task_id, condition_id):
+        """Assigns a condition to a task."""
+        try:
+            self.cursor.execute(
+                "INSERT OR IGNORE INTO task_line_conditions "
+                "(task_id, condition_id) VALUES (?, ?)",
+                (task_id, condition_id),
+            )
+            self.conn.commit()
+            return True
+        except sqlite3.Error:
+            return False
+
+    def remove_conditions_from_task(self, task_id):
+        """Removes all conditions from a task."""
+        self.cursor.execute(
+            "DELETE FROM task_line_conditions WHERE task_id = ?", (task_id,)
+        )
+        self.conn.commit()
+
+    def get_conditions_for_task(self, task_id):
+        """Fetches all conditions required for a task."""
+        query = """
+            SELECT lc.id, lc.name, lc.description, lc.color_code
+            FROM line_conditions lc
+            JOIN task_line_conditions tlc ON lc.id = tlc.condition_id
+            WHERE tlc.task_id = ?
+            ORDER BY lc.name
+        """
+        self.cursor.execute(query, (task_id,))
         return [dict(row) for row in self.cursor.fetchall()]

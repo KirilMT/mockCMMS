@@ -113,28 +113,36 @@ class CodeFormatter:
 
         # 0. Fix linting issues with ruff (before other formatters)
         # This removes unused imports, fixes simple linting issues, etc.
-        ruff_args = ["ruff", "check", "src", "tests", "scripts", "run.py"]
+        ruff_args = ["ruff", "check", "src", "tests", "scripts", "run.py", "apps"]
         if not self.check_only:
             ruff_args.append("--fix")
 
         all_passed &= self.run_command(ruff_args, "Lint fixing (ruff)")
 
         # 1. Sort imports (isort) - after ruff removes unused imports
-        isort_args = ["isort", "src", "tests", "scripts", "run.py"]
+        isort_args = ["isort", "src", "tests", "scripts", "run.py", "apps"]
         if self.check_only:
             isort_args.append("--check-only")
 
         all_passed &= self.run_command(isort_args, "Import sorting (isort)")
 
         # 2. Format code (Black)
-        black_args = ["black", "src", "tests", "scripts", "run.py"]
+        black_args = ["black", "src", "tests", "scripts", "run.py", "apps"]
         if self.check_only:
             black_args.insert(1, "--check")
 
         all_passed &= self.run_command(black_args, "Code formatting (black)")
 
         # 3. Format docstrings (docformatter)
-        docformatter_args = ["docformatter", "-r", "src", "tests", "scripts", "run.py"]
+        docformatter_args = [
+            "docformatter",
+            "-r",
+            "src",
+            "tests",
+            "scripts",
+            "run.py",
+            "apps",
+        ]
         if self.check_only:
             docformatter_args.insert(1, "--check")
         else:
@@ -144,17 +152,27 @@ class CodeFormatter:
             docformatter_args, "Docstring formatting (docformatter)"
         )
 
+        # 4. Linting Fix (Ruff)
+        ruff_args = [
+            "ruff",
+            "check",
+            "--fix",
+            "src",
+            "tests",
+            "scripts",
+            "run.py",
+            "apps",
+        ]
+        if self.check_only:
+            # When checking only, we don't want to fix, just check
+            ruff_args = ["ruff", "check", "src", "tests", "scripts", "run.py", "apps"]
+
+        all_passed &= self.run_command(ruff_args, "Linting fixes (ruff)")
+
         return all_passed
 
-    def format_javascript(self) -> bool:
-        """Format JavaScript code using Prettier (if configured)."""
-        print("\n" + "=" * 80)
-        print("JAVASCRIPT CODE FORMATTING")
-        print("=" * 80)
-
-        all_passed = True
-
-        # Check if Prettier is available
+    def _check_prettier(self) -> bool:
+        """Check if Prettier is installed."""
         use_shell = sys.platform == "win32"
         prettier_check = subprocess.run(
             ["npm", "list", "prettier"],
@@ -163,23 +181,98 @@ class CodeFormatter:
             shell=use_shell,
             check=False,
         )
+        return prettier_check.returncode == 0
 
-        if prettier_check.returncode != 0:
-            print("ℹ️  Prettier not installed - skipping JavaScript formatting")
+    def format_frontend(self) -> bool:
+        """Format Frontend code (JS, CSS, HTML) using Prettier."""
+        print("\n" + "=" * 80)
+        print("FRONTEND CODE FORMATTING")
+        print("=" * 80)
+
+        all_passed = True
+
+        if not self._check_prettier():
+            print("ℹ️  Prettier not installed - skipping frontend formatting")
             return True
+
+        # Format with Prettier
+        # Broaden coverage to include apps and tests
+        prettier_paths = [
+            "src/static/js/**/*.js",
+            "apps/**/*.js",
+            "tests/**/*.js",
+            "src/static/css/**/*.css",
+            "apps/**/*.css",
+        ]
+
+        prettier_args = ["npx", "prettier"]
+        if self.check_only:
+            prettier_args.append("--check")
+        else:
+            prettier_args.append("--write")
+
+        prettier_args.extend(prettier_paths)
+
+        all_passed &= self.run_command(
+            prettier_args, "JavaScript/CSS formatting (prettier)"
+        )
+
+        return all_passed
+
+    def format_docs(self) -> bool:
+        """Format Documentation (MD, JSON) using Prettier."""
+        print("\n" + "=" * 80)
+        print("DOCUMENTATION FORMATTING")
+        print("=" * 80)
+
+        all_passed = True
+
+        if not self._check_prettier():
+            print("ℹ️  Prettier not installed - skipping documentation formatting")
+            return True
+
+        # Define targets for formatting
+        targets = [
+            # Documentation
+            "docs/**/*.md",
+            "*.md",  # Root markdown
+            "apps/**/*.md",  # App documentation
+            # Context Configuration
+            "*.json",
+            ".github/**/*.md",
+        ]
 
         # Format with Prettier
         prettier_args = ["npx", "prettier"]
         if self.check_only:
-            prettier_args.extend(["--check", "src/static/js/**/*.js"])
+            prettier_args.append("--check")
         else:
-            prettier_args.extend(["--write", "src/static/js/**/*.js"])
+            prettier_args.append("--write")
 
-        all_passed &= self.run_command(
-            prettier_args, "JavaScript formatting (prettier)"
-        )
+        # Add targets
+        prettier_args.extend(targets)
+
+        all_passed &= self.run_command(prettier_args, "Prettier formatting (MD/JSON)")
 
         return all_passed
+
+    def format_templates(self) -> bool:
+        """Format Jinja2 templates using djlint."""
+        print("\n" + "=" * 80)
+        print("JINJA2 TEMPLATE FORMATTING")
+        print("=" * 80)
+
+        # Exclude apps/ templates for now due to risk
+        template_paths = ["src/templates"]
+        # template_paths = ["src/templates", "apps/**/templates"]
+        djlint_args = ["djlint"] + template_paths
+
+        if self.check_only:
+            djlint_args.insert(1, "--check")
+        else:
+            djlint_args.insert(1, "--reformat")
+
+        return self.run_command(djlint_args, "Template formatting (djlint)")
 
     def print_summary(self) -> None:
         """Print formatting summary."""
@@ -207,7 +300,10 @@ def main() -> int:
         "--backend", action="store_true", help="Format Python code only"
     )
     parser.add_argument(
-        "--frontend", action="store_true", help="Format JavaScript code only"
+        "--frontend", action="store_true", help="Format JavaScript/CSS/HTML code only"
+    )
+    parser.add_argument(
+        "--docs", action="store_true", help="Format Documentation/JSON code only"
     )
     parser.add_argument(
         "--check", action="store_true", help="Check formatting without applying changes"
@@ -216,8 +312,12 @@ def main() -> int:
     args = parser.parse_args()
 
     # Determine what to format
-    format_backend = args.backend or not args.frontend
-    format_frontend = args.frontend or not args.backend
+    # If no specific flags are set, run ALL.
+    run_all = not (args.backend or args.frontend or args.docs)
+
+    format_backend = args.backend or run_all
+    format_frontend = args.frontend or run_all
+    format_docs = args.docs or run_all
 
     # Update pre-commit hooks first (keeps versions in sync)
     print("\n" + "=" * 80)
@@ -251,7 +351,11 @@ def main() -> int:
         all_passed &= formatter.format_python()
 
     if format_frontend:
-        all_passed &= formatter.format_javascript()
+        all_passed &= formatter.format_frontend()
+        all_passed &= formatter.format_templates()  # Should run alongside frontend
+
+    if format_docs:
+        all_passed &= formatter.format_docs()
 
     # Print summary
     formatter.print_summary()

@@ -44,12 +44,24 @@ const localStorageMock = (() => {
     setItem: jest.fn((key, value) => {
       store[key] = value.toString();
     }),
+    removeItem: jest.fn((key) => {
+      delete store[key];
+    }),
     clear: jest.fn(() => {
       store = {};
     }),
   };
 })();
 Object.defineProperty(window, "localStorage", { value: localStorageMock });
+
+// Set up StorageManager to delegate to localStorage mock so sidebar code
+// using window.StorageManager continues to read/write from the same mock store.
+window.StorageManager = {
+  get: (key, defaultValue = null) =>
+    localStorageMock.getItem(key) ?? defaultValue,
+  set: (key, value) => localStorageMock.setItem(key, value),
+  remove: (key) => localStorageMock.removeItem(key),
+};
 
 describe("TableSidebar", () => {
   let table;
@@ -793,13 +805,13 @@ describe("TableSidebar", () => {
   });
 
   test("TS-6.6: generateHTML respects expanded sections state", () => {
-    // Case 1: All expanded
+    // Case 1: All expanded - all section-headers should have 'expanded' class
+    // and no section-content should have 'collapsed' class
     sidebar.expandedSections = ["filters", "columns", "configs"];
     let html = sidebar.generateHTML();
-    expect(html).toContain("collapsed"); // The main sidebar itself might default to something
-    // Use regex or simple includes to check specific section class
-    // We want to see 'expanded' class on headers
     expect(html.match(/section-header expanded/g).length).toBe(3);
+    // No section-content should be collapsed when all sections are expanded
+    expect(html).not.toContain("section-content collapsed");
 
     // Case 2: None expanded
     sidebar.expandedSections = [];
