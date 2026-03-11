@@ -1796,14 +1796,18 @@
       "end_date": "2025-11-24T18:00:00",
       "planning_status": "Draft",
       "maintenance_orders": [
-        "Weekly lubrication and calibration check",
-        "Filter replacement and spray gun cleaning",
-        "Calibration of measurement equipment",
-        "Pump maintenance and color accuracy check",
-        "Conveyor belt inspection and station alignment",
-        "Air filter replacement and duct cleaning",
-        "Laser head alignment and lens replacement",
-        "Temperature sensor replacement"
+        "Paint Line Robot A1 - Weekly Maintenance",
+        "Paint Booth F2 - Filter & Gun Maintenance",
+        "Quality Control Station E1 - Measurement Calibration",
+        "Paint Mixing Station K1 - Weekly Pump Maintenance",
+        "Final Assembly Line M1 - Weekly Conveyor Inspection",
+        "HVAC System H3 - Filter & Duct Maintenance",
+        "Assembly Robot J4 - Weekly End Effector Inspection",
+        "Paint Line Robot A1 - Daily Safety Inspection",
+        "Conveyor System D1 - Daily Emergency Stop Test",
+        "Paint Oven N1 - Monthly Temperature Calibration",
+        "Conveyor System D1 - Belt Tension & Alignment",
+        "Assembly Station B3 - Tool Calibration"
       ]
     },
     {
@@ -1812,12 +1816,12 @@
       "end_date": "2025-11-20T10:30:00",
       "planning_status": "Draft",
       "maintenance_orders": [
-        "Robot safety sensor check - Quick inspection",
-        "Emergency stop button test",
-        "Paint nozzle clog - Immediate cleaning required",
-        "Gripper alignment issue - Quick adjustment",
-        "Electrode replacement and current calibration",
-        "Temperature sensor replacement"
+        "Paint Line Robot A1 - Daily Safety Inspection",
+        "Conveyor System D1 - Daily Emergency Stop Test",
+        "Paint Booth F2 - Filter & Gun Maintenance",
+        "Spot Welding Gun L2 - Daily Electrode Service",
+        "Material Handling AGV O1 - Battery Service",
+        "Quality Control Station E1 - Measurement Calibration"
       ]
     }
   ]

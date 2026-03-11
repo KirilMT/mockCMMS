@@ -184,7 +184,10 @@ class PlanningGanttChart {
           queryDate.setDate(queryDate.getDate() - 1);
         }
 
-        const dateStr = queryDate.toISOString().split("T")[0];
+        const qy = queryDate.getFullYear();
+        const qm = String(queryDate.getMonth() + 1).padStart(2, "0");
+        const qd = String(queryDate.getDate()).padStart(2, "0");
+        const dateStr = `${qy}-${qm}-${qd}`;
         const scheduleEntry = this.shiftSchedule.find((entry) =>
           entry.date.startsWith(dateStr),
         );
@@ -208,16 +211,29 @@ class PlanningGanttChart {
       let lastShift = null;
 
       while (currentTime < latestTime) {
-        const currentDay = currentTime.toDateString();
+        // Use deterministic YYYY-MM-DD key (not toDateString which is locale-dependent)
+        const y = currentTime.getFullYear();
+        const m = String(currentTime.getMonth() + 1).padStart(2, "0");
+        const d = String(currentTime.getDate()).padStart(2, "0");
+        const currentDay = `${y}-${m}-${d}`;
         const currentShift = getShiftInfo(currentTime);
 
         let dayLabel = "";
         let isNewDay = false;
 
         if (currentDay !== lastDay) {
-          dayLabel = currentTime.toLocaleDateString("en-US", {
-            weekday: "long",
-          });
+          // Use deterministic day-of-week formatting (not locale/timezone dependent)
+          // This ensures identical rendering on all OS/CI environments
+          const WEEKDAYS = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ];
+          dayLabel = WEEKDAYS[currentTime.getDay()];
           isNewDay = true;
           lastDay = currentDay;
         }
@@ -526,11 +542,11 @@ class PlanningGanttChart {
   }
 
   formatHour(date) {
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
+    // Use deterministic formatting (not locale/timezone dependent)
+    // This ensures identical rendering on all OS/CI environments
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
   }
 
   addInteractivity() {

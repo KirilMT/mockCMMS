@@ -75,29 +75,28 @@ test.describe("Visual Regression - Planning App", () => {
       .filter({ hasText: /Run Planning/i });
     if (await runPlanningBtn.isVisible({ timeout: 5000 })) {
       await runPlanningBtn.click();
-      // Wait for planning to complete
-      await page.waitForTimeout(3000);
+      // Wait for planning to complete and toast to disappear (auto-dismisses after 5s)
+      await page.waitForTimeout(6000);
     }
 
     // Ensure gantt chart container and planning tasks table are visible
-    // The actual selectors in schedule_view.html are:
-    // - #gantt-container for the Gantt chart
-    // - #planningTasksTable for the tasks table
     await expect(page.locator("#gantt-container")).toBeVisible({
       timeout: 15000,
     });
     await expect(page.locator("#planningTasksTable")).toBeVisible();
 
-    // Wait for data to fully render
+    // Wait for all async rendering (resource allocation, gantt) to finish
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 
+    // Gantt JS now uses deterministic formatting (no toLocaleDateString/toLocaleTimeString).
+    // All task times are relative to schedule.start_date (2025-11-23) — always fixed.
+    // Only the CSRF hidden input is masked (invisible but consistent across runs).
     await expect(page).toHaveScreenshot("planning-schedule-detail.png", {
       fullPage: true,
-      maxDiffPixelRatio: 0.05, // Allow 5% tolerance for font rendering (Masks handle dynamic content)
+      maxDiffPixelRatio: 0.02,
       mask: [
         page.locator('input[name="csrf_token"]'),
-        page.locator(".alert-success"), // Mask success toast with dynamic task count
       ],
     });
   });
