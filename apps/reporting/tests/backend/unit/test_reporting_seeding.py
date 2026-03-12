@@ -1,8 +1,9 @@
+import logging
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from apps.reporting.src.services.seeding import seed_reporting_data
+from apps.reporting.src.services.db_seeding import seed_reporting_data
 
 
 class TestReportingSeeding:
@@ -28,20 +29,48 @@ class TestReportingSeeding:
     ):
         """Test seeding skips if Report table has data."""
         mock_report_query.first.return_value = MagicMock()  # Data exists
+        mock_logger = MagicMock()
 
         # Call function
-        seed_reporting_data()
+        seed_reporting_data(mock_logger)
 
         # Verify no add or commit
         mock_db_session.add.assert_not_called()
         mock_db_session.commit.assert_not_called()
+        mock_logger.log.assert_any_call(
+            logging.INFO,
+            "[SEED][REPORTING] Checking if Reporting database needs to be populated.",
+        )
+        mock_logger.log.assert_any_call(
+            logging.INFO,
+            "[SEED][REPORTING] Reporting database already contains data. "
+            "Skipping main population.",
+        )
+
+    def test_seed_reporting_data_logs_prefixed_warning_when_file_missing(
+        self, mock_report_query, mock_db_session
+    ):
+        """Missing reporting seed file should produce a prefixed warning."""
+        mock_report_query.first.return_value = None
+        mock_logger = MagicMock()
+
+        with patch(
+            "apps.reporting.src.services.db_seeding.os.path.exists", return_value=False
+        ):
+            seed_reporting_data(mock_logger)
+
+        assert any(
+            call.args[0] == logging.WARNING
+            and "[SEED][REPORTING] Reporting dummy data not found:" in call.args[1]
+            for call in mock_logger.log.call_args_list
+        )
 
     def test_seed_reporting_data_no_file(self, mock_report_query, mock_db_session):
         """Test seeding handles missing file gracefully."""
         mock_report_query.first.return_value = None  # Empty table
 
         with patch(
-            "apps.reporting.src.services.seeding.os.path.exists", return_value=False
+            "apps.reporting.src.services.db_seeding.os.path.exists", return_value=False
         ):
             seed_reporting_data()
 
@@ -64,10 +93,11 @@ class TestReportingSeeding:
         }
 
         with patch(
-            "apps.reporting.src.services.seeding.os.path.exists", return_value=True
+            "apps.reporting.src.services.db_seeding.os.path.exists", return_value=True
         ):
             with patch(
-                "apps.reporting.src.services.seeding.json.load", return_value=dummy_data
+                "apps.reporting.src.services.db_seeding.json.load",
+                return_value=dummy_data,
             ):
                 with patch("builtins.open", mock_open(read_data="{}")):
                     seed_reporting_data()
@@ -84,10 +114,10 @@ class TestReportingSeeding:
         mock_db_session.commit.side_effect = Exception("DB error")
 
         with patch(
-            "apps.reporting.src.services.seeding.os.path.exists", return_value=True
+            "apps.reporting.src.services.db_seeding.os.path.exists", return_value=True
         ):
             with patch(
-                "apps.reporting.src.services.seeding.json.load",
+                "apps.reporting.src.services.db_seeding.json.load",
                 return_value={
                     "reporting": [
                         {"title": "T", "report_type": "t", "parameters": {}, "data": {}}
@@ -109,30 +139,30 @@ class TestReportingSeeding:
         mock_db_session.add.assert_not_called()
 
 
-class TestLoadDummyData:
+class TestReportingLoadDummyData:
     """Test _load_dummy_data function."""
 
     def test_load_dummy_data_file_not_found(self):
         """Test _load_dummy_data returns None when file not found."""
-        from apps.reporting.src.services.seeding import _load_dummy_data
+        from apps.reporting.src.services.db_seeding import _load_dummy_data
 
         with patch(
-            "apps.reporting.src.services.seeding.os.path.exists", return_value=False
+            "apps.reporting.src.services.db_seeding.os.path.exists", return_value=False
         ):
             result = _load_dummy_data()
             assert result is None
 
     def test_load_dummy_data_success(self):
         """Test _load_dummy_data returns data when file exists."""
-        from apps.reporting.src.services.seeding import _load_dummy_data
+        from apps.reporting.src.services.db_seeding import _load_dummy_data
 
         test_data = {"reporting": [{"title": "Test"}]}
         with patch(
-            "apps.reporting.src.services.seeding.os.path.exists", return_value=True
+            "apps.reporting.src.services.db_seeding.os.path.exists", return_value=True
         ):
             with patch("builtins.open", mock_open(read_data="{}")):
                 with patch(
-                    "apps.reporting.src.services.seeding.json.load",
+                    "apps.reporting.src.services.db_seeding.json.load",
                     return_value=test_data,
                 ):
                     result = _load_dummy_data()
@@ -140,10 +170,10 @@ class TestLoadDummyData:
 
     def test_load_dummy_data_exception(self):
         """Test _load_dummy_data returns None on exception."""
-        from apps.reporting.src.services.seeding import _load_dummy_data
+        from apps.reporting.src.services.db_seeding import _load_dummy_data
 
         with patch(
-            "apps.reporting.src.services.seeding.os.path.exists", return_value=True
+            "apps.reporting.src.services.db_seeding.os.path.exists", return_value=True
         ):
             with patch("builtins.open", side_effect=Exception("File error")):
                 result = _load_dummy_data()

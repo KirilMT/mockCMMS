@@ -1,5 +1,6 @@
 """Consolidated tests for planning_db_utils.py."""
 
+import logging
 import sqlite3
 from unittest.mock import MagicMock, mock_open, patch
 
@@ -158,6 +159,14 @@ class TestDbUtils:
             populate_dummy_data(db_conn, logger)
 
         assert db_conn.execute("SELECT COUNT(*) FROM technologies").fetchone()[0] == 2
+        logger.log.assert_any_call(
+            logging.INFO,
+            "[SEED][PLANNING][RAW_DB] Populating database with dummy data.",
+        )
+        logger.log.assert_any_call(
+            logging.INFO,
+            "[SEED][PLANNING][RAW_DB] Dummy data population complete.",
+        )
 
     def test_init_db_restore(self, temp_db):
         """Test init_db branch where technicians are backed up."""

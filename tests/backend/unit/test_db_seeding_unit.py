@@ -39,6 +39,26 @@ class TestDBSeeding:
 
             assert c1 == c2
 
+    def test_populate_dummy_data_uses_core_seed_prefix_when_skipping(self, app):
+        """Core seeding logs should include the standard prefix."""
+        with app.app_context():
+            mock_logger = MagicMock()
+            existing_role = Role(name="ExistingSeedRole")
+            db.session.add(existing_role)
+            db.session.commit()
+
+            populate_dummy_data(mock_logger)
+
+            mock_logger.log.assert_any_call(
+                logging.INFO,
+                "[SEED][CORE] Checking if database needs to be populated.",
+            )
+            mock_logger.log.assert_any_call(
+                logging.INFO,
+                "[SEED][CORE] Database already contains data. "
+                "Skipping main population.",
+            )
+
     def test_load_dummy_data_graceful_error(self, app):
         """Test handling of missing dummy data file (graceful skip)."""
         with app.app_context():
@@ -51,7 +71,10 @@ class TestDBSeeding:
                 mock_logger = MagicMock()
                 populate_dummy_data(mock_logger)
                 # Verify logger was called on error but didn't crash
-                assert mock_logger.error.called
+                mock_logger.log.assert_any_call(
+                    logging.ERROR,
+                    "[SEED][CORE] Dummy data file not found",
+                )
 
     def test_get_or_create_existing(self, app):
         """Test _get_or_create returns existing instance."""

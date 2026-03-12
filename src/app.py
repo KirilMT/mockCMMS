@@ -260,16 +260,18 @@ def create_app(config_overrides=None):
 
         should_seed = app.config.get("AUTO_SEED_DATABASE", True) and should_init_db
         if should_seed:
+            app.logger.info("[SEED][CORE] Startup seeding phase started.")
             try:
                 # In E2E mode, we must ensure data exists immediately
                 if is_e2e or get_env_bool("AUTO_SEED_DATABASE", "true"):
                     populate_dummy_data(app.logger)
-                    app.logger.info("Dummy data populated successfully.")
+                    app.logger.info("[SEED][CORE] Dummy data populated successfully.")
             except Exception as e:
-                app.logger.error("Database seeding failed: %s", e)
+                app.logger.error("[SEED][CORE] Database seeding failed: %s", e)
 
             if get_env_bool("PLANNING_ENABLED", "true"):
                 try:
+                    app.logger.info("[SEED][PLANNING] Startup app seeding started.")
                     from apps.planning.src.services.planning_db_utils import init_db
 
                     planning_db_path = app.config.get("DATABASE_PATH")
@@ -291,19 +293,26 @@ def create_app(config_overrides=None):
                                 "AUTO_SEED_DATABASE", True
                             ),
                         )
-                    from apps.planning.src.services.seeding import seed_planning_data
+                    from apps.planning.src.services.db_seeding import seed_planning_data
 
                     seed_planning_data(app.logger)
+                    app.logger.info("[SEED][PLANNING] Startup app seeding completed.")
                 except Exception as e:
-                    app.logger.error("Planning App seeding failed: %s", e)
+                    app.logger.error("[SEED][PLANNING] App seeding failed: %s", e)
 
             if is_reporting_enabled("false"):
                 try:
-                    from apps.reporting.src.services.seeding import seed_reporting_data
+                    app.logger.info("[SEED][REPORTING] Startup app seeding started.")
+                    from apps.reporting.src.services.db_seeding import (
+                        seed_reporting_data,
+                    )
 
                     seed_reporting_data(app.logger)
+                    app.logger.info("[SEED][REPORTING] Startup app seeding completed.")
                 except Exception as e:
-                    app.logger.error("Reporting App seeding failed: %s", e)
+                    app.logger.error("[SEED][REPORTING] App seeding failed: %s", e)
+        else:
+            app.logger.info("[SEED][CORE] Startup seeding skipped by configuration.")
     finally:
         app_ctx.__exit__(None, None, None)
 

@@ -149,8 +149,8 @@ class TestAppFactory:
     @patch("src.app.db.create_all")
     @patch("src.app.db.init_app")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
-    @patch("apps.reporting.src.services.seeding.seed_reporting_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
+    @patch("apps.reporting.src.services.db_seeding.seed_reporting_data")
     @patch("apps.planning.src.services.planning_db_utils.init_db")
     @patch("src.app.os.makedirs")
     @patch("builtins.print")  # Suppress print to avoid encoding issues
@@ -210,8 +210,8 @@ class TestAppFactory:
             with (
                 patch.object(db, "create_all"),
                 patch("src.app.populate_dummy_data"),
-                patch("apps.planning.src.services.seeding.seed_planning_data"),
-                patch("apps.reporting.src.services.seeding.seed_reporting_data"),
+                patch("apps.planning.src.services.db_seeding.seed_planning_data"),
+                patch("apps.reporting.src.services.db_seeding.seed_reporting_data"),
                 patch("apps.planning.src.services.planning_db_utils.init_db"),
                 patch("src.app.os.makedirs"),
             ):
@@ -362,7 +362,7 @@ class TestAppFactory:
             patch("src.app.populate_dummy_data"),
             patch("src.app.db.create_all"),
             patch(
-                "apps.reporting.src.services.seeding.seed_reporting_data",
+                "apps.reporting.src.services.db_seeding.seed_reporting_data",
                 side_effect=Exception("Reporting BOOM"),
             ),
             patch("src.app.LoggingConfig.setup_logging"),
@@ -422,7 +422,7 @@ class TestBlueprintConditionalLoading:
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
     def test_planning_blueprint_enabled(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
@@ -459,7 +459,7 @@ class TestBlueprintConditionalLoading:
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
     def test_reporting_blueprint_enabled(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
@@ -500,7 +500,7 @@ class TestEnhancedAppConfiguration:
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
     def test_app_reporting_module_enabled(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
@@ -540,7 +540,7 @@ class TestEnhancedAppConfiguration:
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
     def test_app_planning_module_enabled(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
@@ -671,7 +671,7 @@ class TestAppErrorHandling:
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
     def test_planning_blueprint_registration_error(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
@@ -787,7 +787,9 @@ class TestCoverageImprovements:
         with patch.dict(os.environ, {"PLANNING_ENABLED": "True", "E2E_TEST": "True"}):
             with patch.object(db, "create_all"):
                 with patch("src.app.populate_dummy_data"):
-                    with patch("apps.planning.src.services.seeding.seed_planning_data"):
+                    with patch(
+                        "apps.planning.src.services.db_seeding.seed_planning_data"
+                    ):
                         with patch("src.app.os.makedirs"):
                             # Pass in-memory URIs to prevent file creation
                             app = create_app(
@@ -856,8 +858,8 @@ class TestCoverageImprovements:
                 patch("src.app.os.makedirs"),
                 patch("src.app.db.create_all"),
                 patch("src.app.populate_dummy_data"),
-                patch("apps.planning.src.services.seeding.seed_planning_data"),
-                patch("apps.reporting.src.services.seeding.seed_reporting_data"),
+                patch("apps.planning.src.services.db_seeding.seed_planning_data"),
+                patch("apps.reporting.src.services.db_seeding.seed_reporting_data"),
             ):
 
                 # We don't use the app variable, just checking side effects
@@ -897,7 +899,7 @@ class TestCoverageImprovements:
                 with patch("src.app.db.create_all"):
                     with patch("src.app.populate_dummy_data"):
                         with patch(
-                            "apps.planning.src.services.seeding.seed_planning_data"
+                            "apps.planning.src.services.db_seeding.seed_planning_data"
                         ):  # Skip seeding
                             # Should log error but not crash
                             # We need to trigger a file-based DB to reach the
@@ -967,8 +969,8 @@ class TestCoverageImprovements:
             patch("src.app.get_env_bool", side_effect=mock_get_env_bool),
             patch("src.app.db.create_all"),
             patch("src.app.populate_dummy_data"),
-            patch("apps.planning.src.services.seeding.seed_planning_data"),
-            patch("apps.reporting.src.services.seeding.seed_reporting_data"),
+            patch("apps.planning.src.services.db_seeding.seed_planning_data"),
+            patch("apps.reporting.src.services.db_seeding.seed_reporting_data"),
             patch("apps.planning.src.services.planning_db_utils.init_db"),
             patch("src.app.load_dotenv"),
             patch("src.app.os.makedirs"),  # Prevent directory creation

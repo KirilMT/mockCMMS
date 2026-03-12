@@ -15,10 +15,35 @@ from src.services.db_utils import MaintenanceOrder, db
 logger = logging.getLogger(__name__)
 
 
-def _load_dummy_data():
+_PLANNING_SEED_PREFIX = "[SEED][PLANNING]"
+
+
+class _PlanningSeedLoggerAdapter(logging.LoggerAdapter):
+    """Attach a stable planning seeding prefix to log messages."""
+
+    def process(self, msg, kwargs):
+        return f"{self.extra['seed_prefix']} {msg}", kwargs
+
+
+def _get_planning_seed_logger(base_logger):
+    """Return a logger that prefixes planning seeding messages consistently."""
+    if (
+        isinstance(base_logger, logging.LoggerAdapter)
+        and base_logger.extra.get("seed_prefix") == _PLANNING_SEED_PREFIX
+    ):
+        return base_logger
+    return _PlanningSeedLoggerAdapter(
+        base_logger,
+        {"seed_prefix": _PLANNING_SEED_PREFIX},
+    )
+
+
+def _load_dummy_data(log=None):
     """Load and parse the dummy data JSON file."""
+    log = _get_planning_seed_logger(log or logger)
+    dummy_data_path = ""
     try:
-        # Assuming we are in apps/planning/src/services/seeding.py
+        # Assuming we are in apps/planning/src/services/db_seeding.py
         # Test data is at root/test_data/dummy_data.json
         current_dir = os.path.dirname(os.path.abspath(__file__))
         # Go up: services -> src -> planning -> apps -> root
@@ -34,11 +59,11 @@ def _load_dummy_data():
         with open(dummy_data_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        logger.error(f"Dummy data file not found at {dummy_data_path}")
+        log.error(f"Dummy data file not found at {dummy_data_path}")
     except json.JSONDecodeError:
-        logger.error(f"Error decoding JSON from {dummy_data_path}")
+        log.error(f"Error decoding JSON from {dummy_data_path}")
     except Exception as e:
-        logger.error(f"Unexpected error loading dummy data: {e}")
+        log.error(f"Unexpected error loading dummy data: {e}")
     return None
 
 
@@ -54,8 +79,8 @@ def _get_or_create(model, **kwargs):
 
 def seed_planning_data(logger=None):
     """Seeds the Planning App data if not already present."""
-    if logger is None:
-        logger = logging.getLogger(__name__)
+    base_logger = logger or logging.getLogger(__name__)
+    log = _get_planning_seed_logger(base_logger)
 
     # Ensure planning DB table structure exists (raw SQLite)
     try:
@@ -63,34 +88,34 @@ def seed_planning_data(logger=None):
         if planning_bind and planning_bind.startswith("sqlite:///"):
             db_path = planning_bind.replace("sqlite:///", "")
             # Ensure tables exist (including 'tasks')
-            init_db(db_path, logger=logger)
+            init_db(db_path, logger=base_logger)
 
             # Optionally populate raw dummy data for satellite points, etc.
             # This is safe as it uses get_or_create logic
             conn = get_db_connection(db_path)
-            populate_planning_dummy_data(conn, logger)
+            populate_planning_dummy_data(conn, base_logger)
             conn.close()
 
     except Exception as e:
-        logger.error(f"Error initializing Planning App raw DB structure: {e}")
+        log.error(f"Error initializing Planning App raw DB structure: {e}")
 
-    logger.info("Checking if Planning database needs to be populated.")
+    log.info("Checking if Planning database needs to be populated.")
     try:
         if Schedule.query.first():
-            logger.info(
+            log.info(
                 "Planning database already contains data. Skipping main population."
             )
             return  # Already seeded
 
-        logger.info("Populating Planning database with dummy data.")
-        data = _load_dummy_data()
+        log.info("Populating Planning database with dummy data.")
+        data = _load_dummy_data(log)
         if not data:
-            logger.warning("No dummy data found for Planning App.")
+            log.warning("No dummy data found for Planning App.")
             return
 
         schedules_data = data.get("schedules", [])
         if not schedules_data:
-            logger.warning("No schedules data found in dummy_data.json.")
+            log.warning("No schedules data found in dummy_data.json.")
             return
 
         schedule_count = 0
@@ -146,9 +171,9 @@ def seed_planning_data(logger=None):
 
         db.session.commit()
 
-        logger.info(f"Loaded {schedule_count} schedules.")
-        logger.info(f"Processed {task_count} planning tasks.")
-        logger.info("Planning App dummy data population complete.")
+        log.info(f"Loaded {schedule_count} schedules.")
+        log.info(f"Processed {task_count} planning tasks.")
+        log.info("Planning App dummy data population complete.")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error seeding Planning App data: {e}", exc_info=True)
+        log.error(f"Error seeding Planning App data: {e}", exc_info=True)

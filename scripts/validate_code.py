@@ -24,11 +24,12 @@ Smart --quick mode (three-tier priority):
 import argparse
 import io
 import os
+import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Import cleanup utilities (located in the same scripts/ directory)
 sys.path.insert(0, str(Path(__file__).parent))
@@ -41,13 +42,15 @@ if sys.stderr.encoding != "utf-8":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # Load .env variables so validata_code.py knows about local configuration
+_load_dotenv: Optional[Callable[..., bool]]
 try:
-    from dotenv import load_dotenv
-
-    load_dotenv()
+    from dotenv import load_dotenv as _load_dotenv
 except ImportError:
-    pass  # python-dotenv might not be installed in base env,
-    # but validation usually happens in venv
+    _load_dotenv = None  # python-dotenv might not be installed in base env.
+    # Validation usually happens inside the project venv.
+
+if _load_dotenv is not None:
+    _load_dotenv()
 
 # Fix for Windows UnicodeEncodeError when printing special characters
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
@@ -104,6 +107,138 @@ def print_warning(message: str) -> None:
 # Pytest writes 800+ individual test lines before the summary; showing only
 # the tail ensures the failure details / coverage table are always visible.
 _MAX_FAILURE_OUTPUT_LINES = 150
+_FAILURE_HEAD_LINES = 20
+_FAILURE_TAIL_LINES = 40
+_PYTEST_SECTION_HEADER_RE = re.compile(
+    r"=+\s*(FAILURES|ERRORS|warnings summary|short test summary info)\s*=+",
+    re.IGNORECASE,
+)
+
+
+def _dedupe_output_blocks(*blocks: str) -> List[str]:
+    """Return non-empty output blocks with duplicates removed, preserving order."""
+    seen = set()
+    unique_blocks: List[str] = []
+    for block in blocks:
+        normalized = block.strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            unique_blocks.append(normalized)
+    return unique_blocks
+
+
+def _find_pytest_section_ranges(lines: List[str]) -> Dict[str, Tuple[int, int]]:
+    """Return pytest section name -> (start, end) line ranges for known headings."""
+    matches: List[Tuple[str, int]] = []
+    for index, line in enumerate(lines):
+        match = _PYTEST_SECTION_HEADER_RE.match(line.strip())
+        if match:
+            matches.append((match.group(1).lower(), index))
+
+    section_ranges: Dict[str, Tuple[int, int]] = {}
+    for idx, (name, start) in enumerate(matches):
+        end = matches[idx + 1][1] if idx + 1 < len(matches) else len(lines)
+        section_ranges[name] = (start, end)
+    return section_ranges
+
+
+def _extract_coverage_block(lines: List[str]) -> str:
+    """Extract coverage-related failure details from pytest output when present."""
+    coverage_markers = [
+        idx
+        for idx, line in enumerate(lines)
+        if "coverage:" in line.lower() or "required test coverage" in line.lower()
+    ]
+    if not coverage_markers:
+        return ""
+
+    start = max(coverage_markers[0] - 2, 0)
+    end = min(len(lines), coverage_markers[-1] + 20)
+    return "\n".join(lines[start:end]).strip()
+
+
+def _truncate_generic_failure_output(lines: List[str]) -> str:
+    """Return a readable generic failure report when no pytest sections exist."""
+    total = len(lines)
+    if total <= _MAX_FAILURE_OUTPUT_LINES:
+        return "\n".join(lines).strip()
+
+    hidden = total - (_FAILURE_HEAD_LINES + _FAILURE_TAIL_LINES)
+    head = "\n".join(lines[:_FAILURE_HEAD_LINES]).strip()
+    tail = "\n".join(lines[-_FAILURE_TAIL_LINES:]).strip()
+    return (
+        "First lines:\n"
+        f"{head}\n\n"
+        f"... [{hidden} lines omitted for brevity] ...\n\n"
+        "Last lines:\n"
+        f"{tail}"
+    ).strip()
+
+
+def format_failure_output(stdout: str, stderr: str) -> str:
+    """Format command failure output to surface the actionable error first.
+
+    For pytest/testmon failures, this extracts the failure section, short summary, and
+    coverage details before appending a short raw tail for context. For other tools, it
+    falls back to a compact head/tail view.
+    """
+    blocks = _dedupe_output_blocks(stdout, stderr)
+    if not blocks:
+        return ""
+
+    combined_output = "\n\n".join(blocks)
+    lines = combined_output.splitlines()
+    section_ranges = _find_pytest_section_ranges(lines)
+
+    if not section_ranges and not any(
+        marker in combined_output.lower()
+        for marker in ("test session starts", "short test summary info", "failed ")
+    ):
+        return _truncate_generic_failure_output(lines)
+
+    report_sections: List[str] = []
+
+    short_summary_range = section_ranges.get("short test summary info")
+    if short_summary_range:
+        start, end = short_summary_range
+        report_sections.append(
+            "Pytest short summary:\n" + "\n".join(lines[start:end]).strip()
+        )
+
+    for section_name in ("failures", "errors"):
+        section_range = section_ranges.get(section_name)
+        if section_range:
+            start, end = section_range
+            title = "Failure details" if section_name == "failures" else "Error details"
+            report_sections.append(f"{title}:\n" + "\n".join(lines[start:end]).strip())
+
+    coverage_block = _extract_coverage_block(lines)
+    if coverage_block:
+        report_sections.append("Coverage details:\n" + coverage_block)
+
+    tail_lines = lines[-_FAILURE_TAIL_LINES:]
+    tail_block = "\n".join(tail_lines).strip()
+    if tail_block:
+        report_sections.append("Raw output tail:\n" + tail_block)
+
+    deduped_sections: List[str] = []
+    seen = set()
+    for section in report_sections:
+        normalized = section.strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            deduped_sections.append(normalized)
+
+    return "\n\n".join(deduped_sections)
+
+
+def _print_failure_output(stdout: str, stderr: str) -> None:
+    """Print formatted failure details for a failed command."""
+    formatted_output = format_failure_output(stdout, stderr)
+    if not formatted_output:
+        return
+    print(f"\n{Colors.FAIL}Failure details:{Colors.ENDC}")
+    print(formatted_output)
 
 
 def _print_output_tail(output: str, label: str, color: str) -> None:
@@ -208,14 +343,12 @@ def run_command(
             return True, result.stdout
         else:
             print_error(f"{description} failed")
-            _print_output_tail(result.stdout, "Output:", Colors.WARNING)
-            _print_output_tail(result.stderr, "Errors:", Colors.FAIL)
+            _print_failure_output(result.stdout, result.stderr)
             return False, result.stderr or result.stdout
 
     except subprocess.CalledProcessError as e:
         print_error(f"{description} failed with return code {e.returncode}")
-        _print_output_tail(e.stdout, "Output:", Colors.WARNING)
-        _print_output_tail(e.stderr, "Errors:", Colors.FAIL)
+        _print_failure_output(e.stdout, e.stderr)
         return False, e.stderr or e.stdout
     except FileNotFoundError:
         print_error(f"{description} failed - command not found: {command[0]}")

@@ -34,7 +34,7 @@ class TestRunEntry:
             # Feature-specific patches to prevent DB/Seeding side effects in unit tests
             patch("src.app.db.create_all"),
             patch("src.app.populate_dummy_data"),
-            patch("apps.planning.src.services.seeding.seed_planning_data"),
+            patch("apps.planning.src.services.db_seeding.seed_planning_data"),
             patch("src.app.os.makedirs"),
         ):
             # Setup successful environment check
