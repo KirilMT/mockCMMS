@@ -187,7 +187,8 @@ htmlcov/
 coverage.xml
 *.cover
 .pytest_cache/
-.testmondata          # pytest-testmon coverage DB (local smart-test cache)
+# pytest-testmon coverage DB (local smart-test cache — never commit)
+.testmondata
 
 # Node modules (for local jscpd)
 node_modules/
