@@ -306,8 +306,22 @@ def run_command(
             "CI": "true",  # Simulate CI environment for absolute parity
         }
 
-        # Whitelist other system-essential variables
-        for key in ["APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "USERPROFILE", "COMSPEC"]:
+        # Whitelist other system-essential variables, including Windows path roots
+        # used by browsers and OS APIs (Playwright/Chromium relies on these).
+        for key in [
+            "APPDATA",
+            "LOCALAPPDATA",
+            "PROGRAMDATA",
+            "SYSTEMDRIVE",
+            "HOMEDRIVE",
+            "HOMEPATH",
+            "TEMP",
+            "TMP",
+            "USERPROFILE",
+            "COMSPEC",
+            "PATHEXT",
+            "WINDIR",
+        ]:
             if key in os.environ:
                 ironclad_env[key] = os.environ[key]
 
@@ -326,6 +340,10 @@ def run_command(
         # Pass E2E_TEST if set (important for quick mode skipping E2E)
         if "E2E_TEST" in os.environ:
             ironclad_env["E2E_TEST"] = os.environ["E2E_TEST"]
+
+        # Allow caller-provided overrides for command-specific execution context.
+        if env:
+            ironclad_env.update(env)
 
         result = subprocess.run(
             command,

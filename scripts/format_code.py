@@ -460,6 +460,11 @@ def main() -> int:
     parser.add_argument(
         "--check", action="store_true", help="Check formatting without applying changes"
     )
+    parser.add_argument(
+        "--update-hooks",
+        action="store_true",
+        help="Run 'pre-commit autoupdate' before formatting (opt-in)",
+    )
 
     args = parser.parse_args()
 
@@ -471,27 +476,31 @@ def main() -> int:
     format_frontend = args.frontend or run_all
     format_docs = args.docs or run_all
 
-    # Update pre-commit hooks first (keeps versions in sync)
-    print("\n" + "=" * 80)
-    print("UPDATING PRE-COMMIT HOOKS")
-    print("=" * 80)
-    use_shell = sys.platform == "win32"
-    try:
-        result = subprocess.run(
-            ["pre-commit", "autoupdate"],
-            capture_output=True,
-            text=True,
-            shell=use_shell,
-            check=False,
-        )
-        if result.returncode == 0:
-            print("✅ Pre-commit hooks are up-to-date")
-            if result.stdout.strip():
-                print(result.stdout)
-        else:
-            print("⚠️  Could not update pre-commit hooks (non-critical)")
-    except FileNotFoundError:
-        print("⚠️  pre-commit not installed - skipping hook update")
+    # Updating hook revisions can modify tracked files and often requires network/SSL,
+    # so keep this as an explicit maintenance action instead of a default format step.
+    if args.update_hooks:
+        print("\n" + "=" * 80)
+        print("UPDATING PRE-COMMIT HOOKS")
+        print("=" * 80)
+        use_shell = sys.platform == "win32"
+        try:
+            result = subprocess.run(
+                ["pre-commit", "autoupdate"],
+                capture_output=True,
+                text=True,
+                shell=use_shell,
+                check=False,
+            )
+            if result.returncode == 0:
+                print("✅ Pre-commit hooks are up-to-date")
+                if result.stdout.strip():
+                    print(result.stdout)
+            else:
+                print("⚠️  Could not update pre-commit hooks (non-critical)")
+                if result.stderr.strip():
+                    print(result.stderr, file=sys.stderr)
+        except FileNotFoundError:
+            print("⚠️  pre-commit not installed - skipping hook update")
 
     # Create formatter
     formatter = CodeFormatter(check_only=args.check)

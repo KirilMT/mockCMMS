@@ -1,6 +1,7 @@
 """Tests for validation script failure-output formatting."""
 
 import importlib.util
+import os
 from pathlib import Path
 
 
@@ -91,3 +92,64 @@ def test_format_failure_output_falls_back_to_compact_generic_view():
     assert "... [160 lines omitted for brevity] ..." in formatted
     assert "line 0" in formatted
     assert "line 219" in formatted
+
+
+def test_run_command_merges_explicit_env_overrides(monkeypatch):
+    """run_command should apply explicit env overrides on top of ironclad defaults."""
+
+    captured = {}
+
+    class _Result:
+        returncode = 0
+        stdout = "ok"
+        stderr = ""
+
+    def _fake_run(*_args, **kwargs):
+        captured["env"] = kwargs["env"]
+        return _Result()
+
+    monkeypatch.setattr(validate_code.subprocess, "run", _fake_run)
+
+    success, _ = validate_code.run_command(
+        ["python", "-V"],
+        "python version",
+        check=False,
+        env={"E2E_TEST": "true", "CUSTOM_FLAG": "enabled"},
+    )
+
+    assert success is True
+    assert captured["env"]["E2E_TEST"] == "true"
+    assert captured["env"]["CUSTOM_FLAG"] == "enabled"
+
+
+def test_run_command_preserves_windows_root_env_vars(monkeypatch):
+    """run_command should propagate SYSTEMDRIVE/PROGRAMDATA into subprocess env."""
+
+    captured = {}
+
+    class _Result:
+        returncode = 0
+        stdout = "ok"
+        stderr = ""
+
+    def _fake_run(*_args, **kwargs):
+        captured["env"] = kwargs["env"]
+        return _Result()
+
+    monkeypatch.setattr(validate_code.subprocess, "run", _fake_run)
+    monkeypatch.setenv("SYSTEMDRIVE", "C:")
+    monkeypatch.setenv("PROGRAMDATA", r"C:\ProgramData")
+    monkeypatch.setenv("HOMEDRIVE", "C:")
+    monkeypatch.setenv("HOMEPATH", r"\Users\tester")
+
+    success, _ = validate_code.run_command(
+        ["python", "-V"],
+        "python version",
+        check=False,
+    )
+
+    assert success is True
+    assert captured["env"]["SYSTEMDRIVE"] == os.environ["SYSTEMDRIVE"]
+    assert captured["env"]["PROGRAMDATA"] == os.environ["PROGRAMDATA"]
+    assert captured["env"]["HOMEDRIVE"] == os.environ["HOMEDRIVE"]
+    assert captured["env"]["HOMEPATH"] == os.environ["HOMEPATH"]
