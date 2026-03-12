@@ -198,6 +198,10 @@ playwright-report/
 blob-report/
 .playwright-artifacts/
 
+# ESLint cache
+.eslintcache
+**/.eslintcache
+
 # Ruff linter cache
 .ruff_cache/
 

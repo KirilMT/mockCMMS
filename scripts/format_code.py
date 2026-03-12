@@ -21,6 +21,10 @@ import sys
 from pathlib import Path
 from typing import List
 
+# Import cleanup utilities (located in the same scripts/ directory)
+sys.path.insert(0, str(Path(__file__).parent))
+from cleanup import clean_caches  # noqa: E402
+
 # Configure UTF-8 encoding for stdout/stderr to handle unicode on Windows
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
@@ -359,6 +363,16 @@ def main() -> int:
 
     # Print summary
     formatter.print_summary()
+
+    # Remove __pycache__ and other bytecode left behind by the formatters
+    print("\n" + "=" * 80)
+    print("CLEANUP")
+    print("=" * 80)
+    count = clean_caches(dry_run=False)
+    if count:
+        print(f"\n✅ Removed {count} cache artifact(s) — repo is clean.")
+    else:
+        print("\n✨ Nothing to clean — repo is already clean.")
 
     return 0 if all_passed else 1
 

@@ -20,6 +20,10 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+# Import cleanup utilities (located in the same scripts/ directory)
+sys.path.insert(0, str(Path(__file__).parent))
+from cleanup import clean_default  # noqa: E402
+
 # Fix Windows console encoding for emoji output from tools like black
 if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -410,7 +414,7 @@ def validate_javascript_frontend(
     checks = []
 
     # 1. ESLint - JavaScript linting (SHOULD be in CI but currently missing)
-    print_section("Step 1/4: JavaScript Linting (eslint)")
+    print_section("Step 1/3: JavaScript Linting (eslint)")
     success, _ = run_command(
         [
             "npx",
@@ -426,7 +430,7 @@ def validate_javascript_frontend(
     checks.append(("ESLint", success))
 
     # 2. JavaScript tests (Jest) with coverage - MATCHES CI
-    print_section("Step 2/4: JavaScript Tests (jest)")
+    print_section("Step 2/3: JavaScript Tests (jest)")
     success, _ = run_command(
         [
             "npm",
@@ -478,7 +482,7 @@ def validate_configuration() -> bool:
     checks = []
 
     # Validate JSON files
-    print_section("Validating JSON Configuration Files")
+    print_section("Step 1/2: Validating JSON Configuration Files")
     json_files = [
         "src/config/dropdown_options.json",
         "package.json",
@@ -497,7 +501,7 @@ def validate_configuration() -> bool:
             print_warning(f"File not found: {json_file}")
 
     # Validate YAML files (if yamllint is available)
-    print_section("Validating YAML Configuration Files")
+    print_section("Step 2/2: Validating YAML Configuration Files")
     yaml_files = list(Path(".github/workflows").glob("*.yml"))
 
     if yaml_files:
@@ -522,6 +526,16 @@ def validate_configuration() -> bool:
             print_error(f"{check_name}")
 
     return all_passed
+
+
+def _run_cleanup() -> None:
+    """Remove generated test artifacts and coverage reports after validation."""
+    print_header("CLEANUP")
+    count = clean_default(dry_run=False)
+    if count:
+        print_success(f"Removed {count} generated artifact(s) — repo is clean.")
+    else:
+        print_success("Nothing to clean — repo is already clean.")
 
 
 def main():
@@ -619,6 +633,7 @@ Examples:
     if all_passed:
         print_success("All validation checks passed!")
         print(f"{Colors.OKGREEN}You can safely commit your changes.{Colors.ENDC}")
+        _run_cleanup()
         return 0
     else:
         print_error("Some validation checks failed!")
@@ -634,6 +649,7 @@ Examples:
             f"{Colors.WARNING}  4. Do NOT update visual test screenshots "
             f"(unless UI was intentionally changed){Colors.ENDC}"
         )
+        _run_cleanup()
         return 1
 
 

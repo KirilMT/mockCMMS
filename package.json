@@ -21,7 +21,10 @@
     "validate:backend": "python scripts/validate_code.py --backend",
     "validate:frontend": "python scripts/validate_code.py --frontend",
     "format": "python scripts/format_code.py",
-    "format:check": "python scripts/format_code.py --check"
+    "format:check": "python scripts/format_code.py --check",
+    "clean": "python scripts/cleanup.py",
+    "clean:all": "python scripts/cleanup.py --all",
+    "clean:dry": "python scripts/cleanup.py --dry-run"
   },
   "repository": {
     "type": "git",
