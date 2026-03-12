@@ -24,7 +24,7 @@ describe("Spare Parts Page - Render Functions", () => {
         "sparePartsTable",
         [{ id: 1 }],
         expect.any(Array),
-        25,
+        0,
       );
     });
 

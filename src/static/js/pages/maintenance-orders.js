@@ -105,7 +105,7 @@ function initMaintenanceOrdersTable() {
   const mosDataElement = document.getElementById("mos-data");
   if (mosDataElement) {
     const mosData = JSON.parse(mosDataElement.textContent);
-    initAdvancedTable("mosTable", mosData, getMaintenanceOrdersColumns(), 25);
+    initAdvancedTable("mosTable", mosData, getMaintenanceOrdersColumns(), 0);
   }
 }
 

@@ -22,7 +22,10 @@ class AdvancedTable {
     this.hiddenColumns = new Set();
     this.columnOrder = [...this.columns.map((col) => col.key)];
     this.currentPage = 1;
-    this.pageSize = options.pageSize || 25;
+    this.pageSize =
+      options.pageSize !== undefined && options.pageSize !== null
+        ? options.pageSize
+        : 0;
 
     this.savedConfigs = [];
     this.selectedConfigId = null; // Current active view (matches config exactly)

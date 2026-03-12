@@ -30,7 +30,7 @@ describe("Users Page - Render Functions", () => {
         "usersTable",
         [{ id: 1, username: "test" }],
         expect.any(Array),
-        25,
+        0,
       );
     });
 

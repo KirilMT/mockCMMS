@@ -43,7 +43,7 @@ function initAssetsTable() {
   const assetsDataElement = document.getElementById("assets-data");
   if (assetsDataElement) {
     const assetsData = JSON.parse(assetsDataElement.textContent);
-    initAdvancedTable("assetsTable", assetsData, getAssetsColumns(), 25);
+    initAdvancedTable("assetsTable", assetsData, getAssetsColumns(), 0);
   }
 }
 
