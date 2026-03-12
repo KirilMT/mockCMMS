@@ -44,7 +44,7 @@ _Updated March 12, 2026_
    - Add key outcomes and technical details to help future reference
 
 2. **Add New Ideas**
-   - New features should be added to the appropriate application section (`planning`, `reports`, `core mockCMMS`, etc.)
+   - New features should be new features should be added to the appropriate application section (`planning`, `reporting`, `core mockCMMS`, etc.) mockCMMS`, etc.)
    - Follow the existing structure: Goal → Features → Priority → Reference (if applicable)
    - Assign a priority level: Critical, High, Medium, or Low
    - Maintain alphabetical or logical ordering within priority groups
@@ -246,7 +246,7 @@ The core application can be improved with the following features to support the 
     - **Security Tool Consolidation:** Integrate `bandit` configuration directly into `pyproject.toml` to reduce configuration file sprawl.
     - **ESLint Plugin Expansion:** Add `eslint-plugin-security` or `eslint-plugin-sonarjs` to catch frontend logic bugs and security issues.
     - **Stylelint Standard Rule Enforcement:** Re-enable standard CSS rules (e.g., class pattern enforcement) to improve frontend architecture consistency.
-  - **Reference:** Consultation Reports (January 24, 2026)
+  - **Reference:** Consultation Reporting (January 24, 2026)
 
 - **[ ] Frontend Architecture Decision** _(Priority: High)_
   - **Goal:** Evaluate and decide on a frontend technology stack migration strategy.
@@ -478,7 +478,7 @@ The Advanced Table component was recently completed with core functionality. The
   - **Goal:** Automate repetitive tasks and reporting.
   - **Features:**
     - **Scheduled Exports:** Configure automatic CSV exports on a schedule (daily, weekly, monthly).
-    - **Email Reports:** Automatically email filtered data or reports to stakeholders.
+    - **Email Reporting:** Automatically email filtered data or reporting to stakeholders.
     - **Integration with External Tools:** Connect table data to external systems (Slack notifications, webhook triggers).
     - **Data Change Notifications:** Alert users when filtered data changes or meets certain conditions.
 
@@ -680,17 +680,17 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Ensure proper GitHub team integration.
   - **Reference:** [GitHub Issue #5](https://github.com/KirilMT/mockCMMS/issues/5)
 
-### Reports Application Enhancements
+### Reporting Application Enhancements
 
-> **📋 Detailed Roadmap:** See [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for complete task breakdown and implementation details.
+> **📋 Detailed Roadmap:** See [Reporting App Roadmap](../apps/reporting/docs/reporting_roadmap.md) for complete task breakdown and implementation details.
 
 - **[ ] Team-Scoped Shift Report Filtering** _(Priority: High)_
   - Filter handovers, breakdowns, and break activities to MOs assigned to the report team
   - Future: support department/team categories for non-maintenance report types
 
-- **[ ] Link Reports to Core CMMS Data** _(Priority: High)_
+- **[ ] Link Reporting to Core CMMS Data** _(Priority: High)_
   - Link Shift Report sections (Breakdowns, Engineering Support, Handover) to live MO database
-  - Detailed tasks in `apps/reports/docs/reports_roadmap.md`
+  - Detailed tasks in `apps/reporting/docs/reporting_roadmap.md`
 
 - **[ ] Asset Dropdown Population (Select2 AJAX)** _(Priority: Medium)_
   - Replace free-text asset entries with DB-backed API selection
@@ -704,7 +704,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Create a new structure:
       - 3.1 Detailed Directory Structure
       - 3.2 apps/workforceManager
-      - 3.3 apps/reports
+      - 3.3 apps/reporting
     - Verify README.md for consistency.
   - **Reference:** [GitHub Issue #1](https://github.com/KirilMT/mockCMMS/issues/1)
 
@@ -733,9 +733,9 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     ```
 
     **3. Monorepo-Specific: Component Coverage**
-    Use **Codecov Flags** to show coverage of individual applications (e.g., `planning`, `reports`) to reveal gaps hidden by overall coverage.
+    Use **Codecov Flags** to show coverage of individual applications (e.g., `planning`, `reporting`) to reveal gaps hidden by overall coverage.
     - **Planning Module Coverage:** `[![coverage: planning](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=planning)](https://codecov.io/gh/KirilMT/mockCMMS)`
-    - **Reports Module Coverage:** `[![coverage: reports](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=reports)](https://codecov.io/gh/KirilMT/mockCMMS)`
+    - **Reporting Module Coverage:** `[![coverage: reporting](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=reporting)](https://codecov.io/gh/KirilMT/mockCMMS)`
 
     **Recommended Layout:**
     Group badges by category at the top of `README.md`:
@@ -751,7 +751,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     [![License: MIT](...)](...)
 
     [![Planning Coverage](...)](...)
-    [![Reports Coverage](...)](...)
+    [![Reporting Coverage](...)](...)
     ```
 
 ### `planning` App Enhancements
@@ -769,9 +769,9 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Integrate condition validation into the task assignment workflow.
   - **Reference:** [GitHub Issue #6](https://github.com/KirilMT/mockCMMS/issues/6)
 
-### `reports` App Enhancements
+### `reporting` App Enhancements
 
-> **See:** [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for future reporting features.
+> **See:** [Reporting App Roadmap](../apps/reporting/docs/reporting_roadmap.md) for future reporting features.
 
     - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training).
     - **Workload Tracking:** Track and visualize individual technician workload over time.
@@ -789,7 +789,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Develop logic for complex scheduling scenarios like multi-day shutdowns or holidays, factoring in technician availability.
     - Create a simulation feature that can optimize schedules before finalizing them.
 
-### `reports` App Enhancements
+### `reporting` App Enhancements
 
 This application is intended for reporting and analytics. The following features would provide significant value.
 
@@ -803,23 +803,23 @@ This application is intended for reporting and analytics. The following features
     - Define an HMI → CMMS integration API contract (webhook or polling endpoint).
     - Auto-create a generic Reactive MO with pre-filled context from the HMI signal.
     - Allow operators/technicians to edit the MO after the fact (fault, root cause, recovery time).
-    - Ensure auto-created MOs are correctly picked up by the Reports Breakdowns section.
-  - **Note:** The Reports-side tracking (ensuring these MOs appear in Shift Reports) is in
-    `apps/reports/docs/reports_roadmap.md`.
+    - Ensure auto-created MOs are correctly picked up by the Reporting Breakdowns section.
+  - **Note:** The Reporting-side tracking (ensuring these MOs appear in Shift Reporting) is in
+    `apps/reporting/docs/reporting_roadmap.md`.
 
 - **[ ] Automated & Specialized Reporting**
-  - **Goal:** Generate key operational reports automatically.
+  - **Goal:** Generate key operational reporting automatically.
   - **Features:**
     - **Weekend Task Report:** A report summarizing all tasks planned and completed over a weekend.
     - **Shift Production Report:** A summary of maintenance activities during a specific shift.
-    - **Technician-Submitted Reports:** A system for technicians to log ad-hoc issues like breakdowns or PLC alarms, which can then be aggregated into reports.
+    - **Technician-Submitted Reporting:** A system for technicians to log ad-hoc issues like breakdowns or PLC alarms, which can then be aggregated into reporting.
 
 - **[ ] Advanced Statistical Analysis**
   - **Goal:** Provide deeper insights into maintenance operations.
   - **Features:**
     - Develop statistical dashboards for asset performance (e.g., Mean Time Between Failures).
     - Analyze technician performance and skill gaps.
-    - Generate reports on spare part consumption trends.
+    - Generate reporting on spare part consumption trends.
 
 ---
 
@@ -847,7 +847,7 @@ This application is intended for reporting and analytics. The following features
 
 - **Advanced User & Technician Management:** Comprehensive user management with roles, skills, training, and manpower API integration (availability, workload, dynamic status).
 - **Shift Calendar Redesign:** Improve calendar UI with grid view and interactive elements.
-- **Automated, Specialized Reports:** [See Reports Roadmap](../apps/reports/docs/reports_roadmap.md)
+- **Automated, Specialized Reporting:** [See Reporting Roadmap](../apps/reporting/docs/reporting_roadmap.md)
 - **HMI → Reactive MO Integration:** Auto-create breakdown MOs from HMI MNTC button signal.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
 - **Bulk Data Generator Team-Based Labor Scaling:** Add team headcount batching (100 MOs per complete team profile) and optional MO `labour_count` auto-alignment to assigned team size.

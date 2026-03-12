@@ -135,7 +135,7 @@ This path is designed to help you get up to speed with the project structure, go
 
 **What it verifies:** Code style, syntax, complexity, security
 **Tools:** ruff, pylint, mypy, radon, bandit, jscpd
-**Deliverable:** Automated analysis reports + fixes
+**Deliverable:** Automated analysis reporting + fixes
 
 **Purpose:**
 

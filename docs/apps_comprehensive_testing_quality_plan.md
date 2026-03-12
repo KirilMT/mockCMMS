@@ -3,7 +3,7 @@
 **Created:** January 17, 2026
 **Last Updated:** March 12, 2026
 **Status:** 🟡 **NEARLY COMPLETE** — ~23 tests remaining
-**Scope:** `apps/planning/` and `apps/reports/`
+**Scope:** `apps/planning/` and `apps/reporting/`
 
 ---
 
@@ -27,11 +27,11 @@
 - Legacy files (`extract_data.py`, `dashboard.py`, `data_processing.py`) omitted from coverage — their tests removed.
 - Tests organized in `unit/`, `functional/`, `integration/` subdirectories.
 
-**Reports App:** Built and refactored. The Incidents module was removed during architecture redesign.
+**Reporting App:** Built and refactored. The Incidents module was removed during architecture redesign.
 
 - Report storage is now database-driven (JSON column), not file-based.
 - Unified Shift + Weekend report rendering pipeline.
-- `test_reports_validation.py` (security) was removed and not replaced.
+- `test_reporting_validation.py` (security) was removed and not replaced.
 
 ---
 
@@ -48,7 +48,7 @@
 | Frontend Playwright (E2E) | 4 spec files | ~7 tests                        |
 | **Total**                 | **25**       | **~252 backend + ~41 frontend** |
 
-### Reports App
+### Reporting App
 
 | Layer                     | Files        | Test Functions                  |
 | :------------------------ | :----------- | :------------------------------ |
@@ -68,11 +68,11 @@
 
 ### Phase 0 — Prerequisites & Environment
 
-- [x] Apps load at `/planning` and `/reports` without errors
+- [x] Apps load at `/planning` and `/reporting` without errors without errors
 - [x] DB tables exist (`Schedule`, `PlanningTask`, `Report`)
 - [x] Core models accessible (`User`, `UserSkill`, `MaintenanceOrder`, `Asset`)
 - [x] `conftest.py` with in-memory SQLite DB isolation (no production DB touched during tests)
-- [x] Dynamic test skipping via `PLANNING_ENABLED` / `REPORTS_ENABLED` env vars
+- [x] Dynamic test skipping via `PLANNING_ENABLED` / `REPORTING_ENABLED` env vars
 - [x] Playwright, Jest, pytest all configured and working
 
 ---
@@ -143,34 +143,34 @@ apps/planning/tests/frontend/
 
 ---
 
-### Phase 2 — Reports App
+### Phase 2 — Reporting App
 
 #### 2.1 Backend Test Files
 
 ```
-apps/reports/tests/
+apps/reporting/tests/
 ├── conftest.py
 ├── backend/
 │   ├── conftest.py
 │   ├── functional/
-│   │   ├── test_reports_routes.py
-│   │   ├── test_reports_routes_exceptions_core.py
-│   │   ├── test_reports_routes_exceptions_io.py
-│   │   ├── test_reports_routes_exceptions_updates.py
+│   │   ├── test_reporting_routes.py
+│   │   ├── test_reporting_routes_exceptions_core.py
+│   │   ├── test_reporting_routes_exceptions_io.py
+│   │   ├── test_reporting_routes_exceptions_updates.py
 │   │   └── test_shift_weekend_routes.py
 │   └── unit/
 │       ├── test_data_aggregator.py
-│       ├── test_reports_generator.py
-│       └── test_reports_seeding.py
+│       ├── test_reporting_generator.py
+│       └── test_reporting_seeding.py
 ```
 
 #### 2.2 Frontend Tests
 
 ```
-apps/reports/tests/frontend/
+apps/reporting/tests/frontend/
 ├── unit/
 │   ├── report_interactions.test.js
-│   └── reports.test.js
+│   └── reporting.test.js
 └── e2e/
     ├── 00_visual.spec.js
     ├── 02_crud.spec.js
@@ -209,16 +209,16 @@ apps/reports/tests/frontend/
 
 ---
 
-### Gap 2 — Reports Security Tests (10 tests)
+### Gap 2 — Reporting Security Tests (10 tests)
 
-**File to create:** `apps/reports/tests/backend/security/test_reports_security.py`
+**File to create:** `apps/reporting/tests/backend/security/test_reporting_security.py`
 
 | Test                                    | Description                                    |
 | :-------------------------------------- | :--------------------------------------------- |
 | `test_xss_prevention_in_report_fields`  | HTML entities escaped in report output         |
 | `test_sql_injection_prevention`         | Parameterized queries block injection attempts |
 | `test_authentication_required`          | All report routes return 302/401 without login |
-| `test_authorization_role_check`         | Non-admin roles cannot delete reports          |
+| `test_authorization_role_check`         | Non-admin roles cannot delete reporting        |
 | `test_report_input_validation`          | Missing required fields return 400             |
 | `test_date_range_validation`            | Invalid date formats rejected                  |
 | `test_shift_parameter_validation`       | Invalid shift values rejected                  |
@@ -228,9 +228,9 @@ apps/reports/tests/frontend/
 
 ---
 
-### Gap 3 — Reports Integration Tests (5 tests)
+### Gap 3 — Reporting Integration Tests (5 tests)
 
-**File to create:** `apps/reports/tests/backend/integration/test_reports_workflows.py`
+**File to create:** `apps/reporting/tests/backend/integration/test_reporting_workflows.py`
 
 | Test                                    | Description                                           |
 | :-------------------------------------- | :---------------------------------------------------- |
@@ -244,33 +244,33 @@ apps/reports/tests/frontend/
 
 ## 📈 Progress Summary
 
-| Phase                               | Status         | Notes                          |
-| :---------------------------------- | :------------- | :----------------------------- |
-| Phase 0 — Prerequisites             | ✅ Complete    | All infra set up               |
-| Phase 1.1 — Planning test rewrite   | ✅ Complete    | Old models fully replaced      |
-| Phase 1.2 — Planning backend tests  | ✅ Complete    | 252 tests (target: 101)        |
-| Phase 1.3 — Planning frontend tests | ✅ Complete    | Jest + Playwright in place     |
-| Phase 1.4 — Planning code quality   | ✅ Complete    | All linting/formatting passing |
-| Phase 2.1 — Reports backend tests   | ✅ Complete    | 198 tests (target: 76)         |
-| Phase 2.2 — Reports frontend tests  | ✅ Complete    | Jest + Playwright in place     |
-| Phase 2.3 — Reports code quality    | ✅ Complete    | All linting/formatting passing |
-| **Gap 1** — Planning performance    | ❌ Not started | 8 tests needed                 |
-| **Gap 2** — Reports security        | ❌ Not started | 10 tests needed                |
-| **Gap 3** — Reports integration     | ❌ Not started | 5 tests needed                 |
+| Phase                                | Status         | Notes                          |
+| :----------------------------------- | :------------- | :----------------------------- |
+| Phase 0 — Prerequisites              | ✅ Complete    | All infra set up               |
+| Phase 1.1 — Planning test rewrite    | ✅ Complete    | Old models fully replaced      |
+| Phase 1.2 — Planning backend tests   | ✅ Complete    | 252 tests (target: 101)        |
+| Phase 1.3 — Planning frontend tests  | ✅ Complete    | Jest + Playwright in place     |
+| Phase 1.4 — Planning code quality    | ✅ Complete    | All linting/formatting passing |
+| Phase 2.1 — Reporting backend tests  | ✅ Complete    | 198 tests (target: 76)         |
+| Phase 2.2 — Reporting frontend tests | ✅ Complete    | Jest + Playwright in place     |
+| Phase 2.3 — Reporting code quality   | ✅ Complete    | All linting/formatting passing |
+| **Gap 1** — Planning performance     | ❌ Not started | 8 tests needed                 |
+| **Gap 2** — Reporting security       | ❌ Not started | 10 tests needed                |
+| **Gap 3** — Reporting integration    | ❌ Not started | 5 tests needed                 |
 
 ---
 
 ## 🏆 Success Criteria
 
-| Metric                    | Target | Current       |
-| :------------------------ | :----- | :------------ |
-| Overall coverage          | ≥ 80%  | **89.97%** ✅ |
-| Test pass rate            | 100%   | **100%** ✅   |
-| Ruff issues               | 0      | **0** ✅      |
-| Mypy errors               | 0      | **0** ✅      |
-| Bandit high/critical      | 0      | **0** ✅      |
-| Planning backend tests    | ≥ 101  | **252** ✅    |
-| Reports backend tests     | ≥ 76   | **198** ✅    |
-| Performance tests         | 8      | **0** ❌      |
-| Reports security tests    | 10     | **0** ❌      |
-| Reports integration tests | 5      | **0** ❌      |
+| Metric                      | Target | Current       |
+| :-------------------------- | :----- | :------------ |
+| Overall coverage            | ≥ 80%  | **89.97%** ✅ |
+| Test pass rate              | 100%   | **100%** ✅   |
+| Ruff issues                 | 0      | **0** ✅      |
+| Mypy errors                 | 0      | **0** ✅      |
+| Bandit high/critical        | 0      | **0** ✅      |
+| Planning backend tests      | ≥ 101  | **252** ✅    |
+| Reporting backend tests     | ≥ 76   | **198** ✅    |
+| Performance tests           | 8      | **0** ❌      |
+| Reporting security tests    | 10     | **0** ❌      |
+| Reporting integration tests | 5      | **0** ❌      |

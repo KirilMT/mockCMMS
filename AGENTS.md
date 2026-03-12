@@ -31,7 +31,7 @@ For development (testing, linting), also run:
 
 ```dotenv
 PLANNING_ENABLED=False  # Enable/disable Planning module
-REPORTS_ENABLED=False   # Enable/disable Reports module
+REPORTING_ENABLED=False   # Enable/disable Reporting module
 ```
 
 > **🔑 Login Credentials:** `admin` / `admin123` _(Source: `test_data/dummy_data.json`)_

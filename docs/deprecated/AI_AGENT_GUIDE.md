@@ -348,7 +348,7 @@ Focus on application factory pattern:
 - [ ] Review blueprint registration logic
 - [ ] Check error handler registration
 - [ ] Verify logging configuration
-- [ ] Review module loading for apps/planning and apps/reports
+- [ ] Review module loading for apps/planning and apps/reporting
 
 **Step 5: Document & Loop (If Changes Made)**
 If Step 4 resulted in modifications:

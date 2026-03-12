@@ -32,7 +32,7 @@ function loadEnvFile() {
  * Check if a module is enabled based on .env configuration.
  * Follows same logic as backend tests: default to true unless explicitly disabled.
  *
- * @param {string} moduleName - The module name (e.g., 'PLANNING', 'REPORTS')
+ * @param {string} moduleName - The module name (e.g., 'PLANNING', 'REPORTING')
  * @returns {boolean} - Whether the module is enabled
  */
 function isModuleEnabled(moduleName) {
@@ -47,7 +47,7 @@ function isModuleEnabled(moduleName) {
  * Use this at the top of modular app test files.
  *
  * @param {import('@playwright/test').test} test - The Playwright test object
- * @param {string} moduleName - The module name (e.g., 'PLANNING', 'REPORTS')
+ * @param {string} moduleName - The module name (e.g., 'PLANNING', 'REPORTING')
  * @returns {boolean} - Whether tests should run
  */
 function skipIfModuleDisabled(test, moduleName) {

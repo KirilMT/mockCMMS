@@ -241,7 +241,7 @@ class MaintenanceOrder(db.Model):  # type: ignore
 
     id = Column(Integer, primary_key=True)
     asset_id = Column(Integer, ForeignKey("asset.id"), nullable=False)
-    title = Column(String(255), nullable=True)  # Added for reports
+    title = Column(String(255), nullable=True)  # Added for reporting
     description = Column(Text, nullable=False)
     order_type = Column(String(50), nullable=False)
     category = Column(String(50), nullable=True)  # Added for engineering support

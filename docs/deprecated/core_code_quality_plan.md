@@ -114,7 +114,7 @@ For all audit tasks, we follow a strict 5-step iterative process to ensure quali
 4. **Add Details as Discovered**
    - When new issues are found, add them to the appropriate phase
    - Include file paths, line numbers, and severity
-   - Link to issue reports when created
+   - Link to issue reporting when created
 
 5. **Update Metrics**
    - Keep "Progress Tracking" section current
@@ -145,7 +145,7 @@ For all audit tasks, we follow a strict 5-step iterative process to ensure quali
 
 ## 📁 Scope: Files to Audit
 
-> **Note:** This audit covers the entire mockCMMS repository EXCEPT the `apps/` directory (planning, reports modules are excluded).
+> **Note:** This audit covers the entire mockCMMS repository EXCEPT the `apps/` directory (planning, reporting modules are excluded).
 >
 > **Future Phases:** At a later stage, we will perform auditing of **ALL** python files, including `run.py` and the `tests/` directory. For now, focus on `src/`.
 

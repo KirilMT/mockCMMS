@@ -218,7 +218,7 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
     - Assert `main_bp` is registered
     - Assert `api_bp` is registered
     - Assert `planning_bp` is registered (if enabled)
-    - Assert `reports_bp` is registered (if enabled)
+    - Assert `reporting_bp` is registered (if enabled)
 
 5.  **[x] `test_secret_key_from_env`** ✅
     - Set `SECRET_KEY` in environment
@@ -258,8 +258,8 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 14. `test_instance_folder_created`
 15. `test_planning_blueprint_enabled`
 16. `test_planning_blueprint_disabled`
-17. `test_reports_blueprint_enabled`
-18. `test_reports_blueprint_disabled`
+17. `test_reporting_blueprint_enabled`
+18. `test_reporting_blueprint_disabled`
 
 **Estimated Tests:** 10 (Actual: 18)
 
@@ -962,7 +962,7 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
     - Assert concurrent access is handled
     - Assert data integrity maintained
 
-9.  **[x] `test_reports_integration`** ✅
+9.  **[x] `test_reporting_integration`** ✅
     - Create MOs with different statuses
     - Generate report
     - Assert report contains correct data
@@ -1195,17 +1195,17 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 **Test Cases:**
 
-1.  **[x] `test_app_reports_module_enabled`** ✅
-    - Set REPORTS_ENABLED=True in environment
+1.  **[x] `test_app_reporting_module_enabled`** ✅
+    - Set REPORTING_ENABLED=True in environment
     - Create app instance
-    - Verify reports blueprint registered
-    - Test /reports route exists
+    - Verify reporting blueprint registered
+    - Test /reporting route exists
 
-2.  **[x] `test_app_reports_module_disabled`** ✅
-    - Set REPORTS_ENABLED=False in environment
+2.  **[x] `test_app_reporting_module_disabled`** ✅
+    - Set REPORTING_ENABLED=False in environment
     - Create app instance
-    - Verify reports blueprint NOT registered
-    - Test /reports route returns 404
+    - Verify reporting blueprint NOT registered
+    - Test /reporting route returns 404
 
 3.  **[x] `test_app_planning_module_enabled`** ✅
     - Set PLANNING_ENABLED=True in environment
@@ -1246,7 +1246,7 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 9.  **[x] `test_app_context_processor_variables`** ✅
     - Test PLANNING_ENABLED injected into templates
-    - Test REPORTS_ENABLED injected into templates
+    - Test REPORTING_ENABLED injected into templates
     - Verify values match environment variables
 
 10. **[x] `test_app_csrf_protection`** ✅
@@ -1493,11 +1493,11 @@ Testing is just **Phase 1 of 4** in a complete code verification strategy:
 
 **Location:** `tests/unit/test_app.py` - New class `TestAppErrorHandling`
 
-1.  **[x] `test_reports_blueprint_registration_error`** ✅
-    - Mock reports blueprint import to raise ImportError
-    - Create app with REPORTS_ENABLED=True
+1.  **[x] `test_reporting_blueprint_registration_error`** ✅
+    - Mock reporting blueprint import to raise ImportError
+    - Create app with REPORTING_ENABLED=True
     - Assert app creates successfully despite error
-    - Assert reports blueprint NOT registered
+    - Assert reporting blueprint NOT registered
     - **Lines Covered:** 50-52 (error handling in blueprint registration)
 
 2.  **[x] `test_planning_blueprint_registration_error`** ✅
@@ -1806,7 +1806,7 @@ testpaths = [
 
 **Added to `tests/unit/test_app.py` (5 tests):**
 
-1. `test_reports_blueprint_registration_error` - Blueprint import failure handling
+1. `test_reporting_blueprint_registration_error` - Blueprint import failure handling
 2. `test_planning_blueprint_registration_error` - Blueprint import failure handling
 3. `test_before_planning_request_database_error` - Database connection error handling
 4. `test_close_db_teardown` - Database cleanup on request end

@@ -52,12 +52,12 @@ mockCMMS/
 │   │   ├── instance/        # SQLite databases
 │   │   ├── tests/           # Test suite
 │   │   └── README.md        # Module documentation
-│   └── reports/             # Reports and analytics module
+│   └── reporting/           # Reporting and analytics module
 │       ├── src/             # Application source code
 │       │   ├── routes/      # Flask blueprints
 │       │   ├── services/    # Report generation logic
 │       │   └── templates/   # HTML templates
-│       ├── instance/        # Generated reports storage
+│       ├── instance/        # Generated reporting storage
 │       ├── setup.py         # Package configuration
 │       └── README.md        # Module documentation
 ├── config/                  # Main app configuration
@@ -84,7 +84,7 @@ mockCMMS/
 - **[Planning](apps/planning/README.md):** Intelligent maintenance planning
   system with custom Gantt charts, shift-based scheduling, and skill-based task
   assignment
-- **[Reports](apps/reports/README.md):** Comprehensive reporting and analytics
+- **[Reporting](apps/reporting/README.md):** Comprehensive reporting and analytics
   system with PDF/Markdown export capabilities
 - **Future Apps:** Additional modules can be easily integrated following the
   same pattern
@@ -147,12 +147,12 @@ To install testing tools and development dependencies (like Playwright, Jest, et
 
 ### Environment Variables
 
-| Variable           | Description                    | Default        |
-| ------------------ | ------------------------------ | -------------- |
-| `SECRET_KEY`       | Flask secret key for sessions  | Auto-generated |
-| `FLASK_DEBUG`      | Enable debug mode (1/true/yes) | 0              |
-| `PLANNING_ENABLED` | Enable Planning app            | False          |
-| `REPORTS_ENABLED`  | Enable Reports app             | True           |
+| Variable            | Description                    | Default        |
+| ------------------- | ------------------------------ | -------------- |
+| `SECRET_KEY`        | Flask secret key for sessions  | Auto-generated |
+| `FLASK_DEBUG`       | Enable debug mode (1/true/yes) | 0              |
+| `PLANNING_ENABLED`  | Enable Planning app            | False          |
+| `REPORTING_ENABLED` | Enable Reporting app           | True           |
 
 ### App Management
 

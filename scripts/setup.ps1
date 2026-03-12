@@ -320,16 +320,16 @@ else {
     Write-Host "   Planning app not found (skipping)" -ForegroundColor Gray
 }
 
-if (Test-Path "apps/reports/setup.py") {
-    # Check if reports is already installed
-    $reportsCheck = & $pipPath show reports 2>$null
+if (Test-Path "apps/reporting/setup.py") {
+    # Check if reporting is already installed
+    $reportingCheck = & $pipPath show reporting 2>$null
 
-    if ($reportsCheck -match "Name: reports") {
+    if ($reportingCheck -match "Name: reporting") {
         # Editable packages need to be reinstalled to update links, but we can do it quietly
         Write-Host "   " -NoNewline
-        Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+        Write-Host "Reporting app" -NoNewline -ForegroundColor Magenta
         Write-Host " (re-linking)..." -NoNewline -ForegroundColor White
-        & $pipPath install -e apps/reports --quiet 2>&1 | Out-Null
+        & $pipPath install -e apps/reporting --quiet 2>&1 | Out-Null
 
         if ($LASTEXITCODE -eq 0) {
             Write-Host " OK" -ForegroundColor Green
@@ -342,16 +342,16 @@ if (Test-Path "apps/reports/setup.py") {
     }
     else {
         Write-Host "`n   Installing " -NoNewline -ForegroundColor White
-        Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+        Write-Host "Reporting app" -NoNewline -ForegroundColor Magenta
         Write-Host "..." -ForegroundColor White
         Write-Host ""
 
-        & $pipPath install -e apps/reports
+        & $pipPath install -e apps/reporting
 
         if ($LASTEXITCODE -eq 0) {
             Write-Host ""
             Write-Host "   " -NoNewline
-            Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+            Write-Host "Reporting app" -NoNewline -ForegroundColor Magenta
             Write-Host " installed " -NoNewline -ForegroundColor White
             Write-Host "OK" -ForegroundColor Green
             $appsInstalled++
@@ -359,7 +359,7 @@ if (Test-Path "apps/reports/setup.py") {
         else {
             Write-Host ""
             Write-Host "   " -NoNewline
-            Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+            Write-Host "Reporting app" -NoNewline -ForegroundColor Magenta
             Write-Host " installation " -NoNewline -ForegroundColor White
             Write-Host "FAILED" -ForegroundColor Red
             Write-Warning "Check the output above for errors."
@@ -368,7 +368,7 @@ if (Test-Path "apps/reports/setup.py") {
     }
 }
 else {
-    Write-Host "   Reports app not found (skipping)" -ForegroundColor Gray
+    Write-Host "   Reporting app not found (skipping)" -ForegroundColor Gray
 }
 
 

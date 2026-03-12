@@ -23,7 +23,7 @@ def planning_app(tmp_path):
                 "SQLALCHEMY_DATABASE_URI": f"sqlite:///{core_db}",
                 "SQLALCHEMY_BINDS": {
                     "planning": f"sqlite:///{test_db}",
-                    "reports": "sqlite:///:memory:",
+                    "reporting": "sqlite:///:memory:",
                 },
                 "WTF_CSRF_ENABLED": False,
                 "SQLALCHEMY_TRACK_MODIFICATIONS": False,
@@ -67,7 +67,7 @@ class TestAppFactory:
                 "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
                 "SQLALCHEMY_BINDS": {
                     "planning": f"sqlite:///{test_db}",
-                    "reports": "sqlite:///:memory:",
+                    "reporting": "sqlite:///:memory:",
                 },
             }
         )
@@ -93,6 +93,63 @@ class TestAppFactory:
 
         with pytest.raises(ValueError, match="Invalid Config"):
             create_app(config_overrides={"TESTING": True})
+
+    @patch("apps.planning.src.app.LoggingConfig.setup_logging")
+    @patch("apps.planning.src.app.Config.validate_config")
+    @patch("apps.planning.src.app.db.create_all")
+    @patch("apps.planning.src.app.db_manager.init_app")
+    def test_create_app_adds_reporting_and_legacy_binds_in_non_testing(
+        self,
+        _mock_db_manager_init,
+        mock_create_all,
+        mock_validate,
+        mock_setup_logging,
+    ):
+        """Ensure non-testing app config auto-adds reporting binds."""
+        from apps.planning.src.app import create_app
+
+        mock_setup_logging.return_value = MagicMock()
+
+        app = create_app(
+            config_overrides={
+                "TESTING": False,
+                "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+                "SQLALCHEMY_BINDS": {"planning": "sqlite:///:memory:"},
+            }
+        )
+
+        binds = app.config.get("SQLALCHEMY_BINDS", {})
+        assert "reporting" in binds
+        assert "reporting" in binds
+        assert "reporting" in binds
+
+    @patch("apps.planning.src.app.LoggingConfig.setup_logging")
+    @patch("apps.planning.src.app.Config.validate_config")
+    @patch("apps.planning.src.app.db.create_all")
+    @patch("apps.planning.src.app.db_manager.init_app")
+    def test_create_app_adds_reporting_bind_in_testing_when_missing(
+        self,
+        _mock_db_manager_init,
+        _mock_create_all,
+        _mock_validate,
+        mock_setup_logging,
+    ):
+        """Ensure TESTING mode auto-adds in-memory reporting bind when absent."""
+        from apps.planning.src.app import create_app
+
+        mock_setup_logging.return_value = MagicMock()
+
+        app = create_app(
+            config_overrides={
+                "TESTING": True,
+                "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+                "SQLALCHEMY_BINDS": {"planning": "sqlite:///:memory:"},
+            }
+        )
+
+        binds = app.config.get("SQLALCHEMY_BINDS", {})
+        assert binds["reporting"] == "sqlite:///:memory:"
+        assert "reporting" in binds
 
     def test_app_error_handlers(self, planning_client):
         """Test custom error handlers in the app."""

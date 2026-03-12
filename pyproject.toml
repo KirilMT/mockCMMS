@@ -67,7 +67,7 @@ env = [
     "TESTING=1",
     "DATABASE_FILENAME=:memory:",
     "PLANNING_ENABLED=true",
-    "REPORTS_ENABLED=true",
+    "REPORTING_ENABLED=true",
 ]
 
 

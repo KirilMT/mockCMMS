@@ -1248,20 +1248,20 @@ mockCMMS/
 │   │   ├── test_core.py           # Core functionality tests
 │   │   └── test_integration.py    # Integration tests
 │   ├── logs/                      # Application logs (generated)
-│   ├── output/                    # Generated reports and dashboards
+│   ├── output/                    # Generated reporting and dashboards
 │   └── README.md                  # Module-specific documentation
-├── apps/reports/                  # ⭐ Reports and analytics module
+├── apps/reporting/                  # ⭐ Reporting and analytics module
 │   ├── src/                       # Application source code
 │   │   ├── routes/                # Flask blueprints
-│   │   │   └── reports.py         # Main blueprint with all endpoints
+│   │   │   └── reporting.py         # Main blueprint with all endpoints
 │   │   ├── services/              # Core business logic
 │   │   │   └── report_generator.py    # Report generation and export logic
 │   │   └── templates/             # HTML templates
-│   │       ├── reports.html           # Reports listing page with advanced table
+│   │       ├── reporting.html           # Reporting listing page with advanced table
 │   │       ├── report_generate.html   # Report generation interface
 │   │       └── report_detail.html     # Report detail view
-│   ├── instance/                  # Generated reports storage
-│   │   └── reports/               # Report files directory
+│   ├── instance/                  # Generated reporting storage
+│   │   └── reporting/               # Report files directory
 │   ├── setup.py                   # Package configuration
 │   └── README.md                  # Module-specific documentation
 ├── config/                        # Main app configuration
@@ -1313,13 +1313,13 @@ skill-based system** for task assignments.
 - **Run tests:** From the repository root, execute `pytest tests/` for main app
   tests or `pytest apps/planning/tests/` for planning tests.
 
-### 3.3. `apps/reports`
+### 3.3. `apps/reporting`
 
 #### Overview
 
-The `reports` is a Flask-based web application for generating comprehensive
-maintenance reports and analytics. Its core purpose is to provide PDF and
-Markdown export capabilities for reactive production reports and weekend
+The `reporting` is a Flask-based web application for generating comprehensive
+maintenance reporting and analytics. Its core purpose is to provide PDF and
+Markdown export capabilities for reactive production reporting and weekend
 completion summaries.
 
 #### Key Technologies
@@ -1333,9 +1333,9 @@ completion summaries.
 #### Core Features
 
 - **Modular Architecture:** Completely separate Flask blueprint app
-- **Environment Control:** Enable/disable via `REPORTS_ENABLED` environment
+- **Environment Control:** Enable/disable via `REPORTING_ENABLED` environment
   variable
-- **Report Types:** Reactive production reports, weekend completion summaries
+- **Report Types:** Reactive production reporting, weekend completion summaries
 - **Export Capabilities:** Multiple format support with file management
 - **Database Integration:** Uses shared mockCMMS database models
 
@@ -1348,7 +1348,7 @@ completion summaries.
 
     ```dotenv
     PLANNING_ENABLED=True
-    REPORTS_ENABLED=True
+    REPORTING_ENABLED=True
     DATA_SOURCE=api
     ```
 

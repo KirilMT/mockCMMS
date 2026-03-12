@@ -260,7 +260,7 @@ Tests are organized in 6 categories:
 
 #### Modular App Testing
 
-MockCMMS uses a **Smart Collector** logic. Tests for apps in `apps/` (Planning, Reports, etc.) are dynamically skipped if disabled via environment variables.
+MockCMMS uses a **Smart Collector** logic. Tests for apps in `apps/` (Planning, Reporting, etc.) are dynamically skipped if disabled via environment variables.
 
 - **Development Speed:** Use `$env:PLANNING_ENABLED="false"` to skip tests for modules you aren't changing.
 - **Stability Enforcement:** The validation script default (Health Mode) overrides these flags to ensure 100% project health before PR submission.
@@ -357,9 +357,9 @@ PAT.
 Commit messages for this repository follow the conventions below. Here is an
 example:
 
-''' feat(reports): add PDF export functionality
+''' feat(reporting): add PDF export functionality
 
-A PDF export feature is added to the reports package, which generates
+A PDF export feature is added to the reporting package, which generates
 maintenance reports in PDF format. The feature supports both reactive production
 reports and weekend completion summaries.
 
@@ -378,7 +378,7 @@ https://www.conventionalcommits.org/en/v1.0.0/#summary.
 #### scope
 
 The name of the package or component affected by the change (e.g., `planning`,
-`reports`, `mockCMMS`, `advanced-table`, `ci`, `docs`), and should be provided
+`reporting`, `mockCMMS`, `advanced-table`, `ci`, `docs`), and should be provided
 in parentheses before the colon.
 
 #### description

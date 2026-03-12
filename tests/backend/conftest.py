@@ -33,7 +33,7 @@ def _cleanup_test_databases():
 
     This function removes ONLY E2E databases (*_e2e.db) that may be left over from
     Playwright tests. It does NOT touch production-named databases (planning.db,
-    reports.db, mockcmms.db) since we cannot safely determine if they were created by
+    reporting.db, mockcmms.db) since we cannot safely determine if they were created by
     tests or are legitimate production databases.
 
     The test isolation tests (test_db_isolation_proof.py) will catch if tests are
@@ -46,7 +46,7 @@ def _cleanup_test_databases():
     e2e_dbs = [
         root / "instance" / "mockcmms_e2e.db",
         apps_dir / "planning" / "instance" / "planning_e2e.db",
-        apps_dir / "reports" / "instance" / "reports_e2e.db",
+        apps_dir / "reporting" / "instance" / "reporting_e2e.db",
     ]
 
     for db_path in e2e_dbs:
@@ -59,7 +59,7 @@ def _cleanup_test_databases():
     # Clean up empty instance directories (but only if truly empty)
     instance_dirs = [
         apps_dir / "planning" / "instance",
-        apps_dir / "reports" / "instance",
+        apps_dir / "reporting" / "instance",
     ]
     for instance_dir in instance_dirs:
         try:
@@ -95,7 +95,7 @@ def app():
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "SQLALCHEMY_BINDS": {
             "planning": "sqlite:///:memory:",  # In-memory for planning models
-            "reports": "sqlite:///:memory:",  # In-memory for reports models
+            "reporting": "sqlite:///:memory:",  # In-memory for reporting models
         },
         "PLANNING_ENABLED": True,  # Explicitly enable planning for tests
         "AUTO_SEED_DATABASE": False,  # Prevent seeding in tests
@@ -112,7 +112,7 @@ def app():
     # blueprint registration. This overrides the os.getenv checks in
     # app.py's _register_blueprints and ensures consistent testing
     # environment regardless of local .env files.
-    env_vars = {"PLANNING_ENABLED": "True", "REPORTS_ENABLED": "True"}
+    env_vars = {"PLANNING_ENABLED": "True", "REPORTING_ENABLED": "True"}
     with patch.dict(os.environ, env_vars):
         test_app = create_app(config_overrides)
 
@@ -521,7 +521,7 @@ def cleanup_test_artifacts():
     # Define test database files to clean up (E2E and test DBs only)
     instance_dir = os.path.join(project_root, "instance")
     planning_instance_dir = os.path.join(project_root, "apps", "planning", "instance")
-    reports_instance_dir = os.path.join(project_root, "apps", "reports", "instance")
+    reporting_instance_dir = os.path.join(project_root, "apps", "reporting", "instance")
 
     # Test DB files to clean (E2E and test DBs only)
     test_db_files = [
@@ -564,8 +564,8 @@ def cleanup_test_artifacts():
 
     # Remove instance directories ONLY if they're empty
     # This ensures we never delete directories with production DBs
-    # We do a recursive check to handle any subdirs (like apps/reports/instance/reports)
-    for dir_path in [instance_dir, planning_instance_dir, reports_instance_dir]:
+    # We do a recursive check to handle nested subdirectories.
+    for dir_path in [instance_dir, planning_instance_dir, reporting_instance_dir]:
         if os.path.exists(dir_path):
             try:
                 # Walk bottom-up to remove empty leaf directories

@@ -1,0 +1,8 @@
+{
+  "metadata_totals": {
+    "equipment_1_total": "<int, e.g. 8>",
+    "equipment_2_total": "<int, e.g. 2>",
+    "description": "Total numbers for each equipment or technology type in shift reporting. Replace with your own values as needed."
+  }
+}
+

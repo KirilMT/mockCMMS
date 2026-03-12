@@ -100,6 +100,36 @@ def print_warning(message: str) -> None:
     print(f"{Colors.WARNING}[WARN] {message}{Colors.ENDC}")
 
 
+# Maximum lines to display when a command produces long output on failure.
+# Pytest writes 800+ individual test lines before the summary; showing only
+# the tail ensures the failure details / coverage table are always visible.
+_MAX_FAILURE_OUTPUT_LINES = 150
+
+
+def _print_output_tail(output: str, label: str, color: str) -> None:
+    """Print the tail of *output*, truncating the head when it is very long.
+
+    When the output has more than ``_MAX_FAILURE_OUTPUT_LINES`` lines only
+    the last ``_MAX_FAILURE_OUTPUT_LINES`` are printed so that failure
+    summaries and error details (which pytest writes at the very end) are
+    always visible, even inside IDE run consoles with limited scroll buffers.
+    """
+    if not output:
+        return
+    lines = output.splitlines()
+    total = len(lines)
+    print(f"\n{color}{label}{Colors.ENDC}")
+    if total > _MAX_FAILURE_OUTPUT_LINES:
+        hidden = total - _MAX_FAILURE_OUTPUT_LINES
+        print(
+            f"{Colors.WARNING}... [{hidden} lines hidden — showing last "
+            f"{_MAX_FAILURE_OUTPUT_LINES} of {total}] ...{Colors.ENDC}"
+        )
+        print("\n".join(lines[-_MAX_FAILURE_OUTPUT_LINES:]))
+    else:
+        print(output)
+
+
 def run_command(
     command: List[str],
     description: str,
@@ -150,13 +180,13 @@ def run_command(
         if force_all_apps:
             # CI/Full Validation Mode: Force enable all apps
             ironclad_env["PLANNING_ENABLED"] = "true"
-            ironclad_env["REPORTS_ENABLED"] = "true"
+            ironclad_env["REPORTING_ENABLED"] = "true"
         else:
             # Local/Quick Mode: Respect local .env configuration
             if "PLANNING_ENABLED" in os.environ:
                 ironclad_env["PLANNING_ENABLED"] = os.environ["PLANNING_ENABLED"]
-            if "REPORTS_ENABLED" in os.environ:
-                ironclad_env["REPORTS_ENABLED"] = os.environ["REPORTS_ENABLED"]
+            if "REPORTING_ENABLED" in os.environ:
+                ironclad_env["REPORTING_ENABLED"] = os.environ["REPORTING_ENABLED"]
 
         # Pass E2E_TEST if set (important for quick mode skipping E2E)
         if "E2E_TEST" in os.environ:
@@ -178,21 +208,14 @@ def run_command(
             return True, result.stdout
         else:
             print_error(f"{description} failed")
-            print(f"\n{Colors.WARNING}Output:{Colors.ENDC}")
-            print(result.stdout)
-            if result.stderr:
-                print(f"\n{Colors.FAIL}Errors:{Colors.ENDC}")
-                print(result.stderr)
+            _print_output_tail(result.stdout, "Output:", Colors.WARNING)
+            _print_output_tail(result.stderr, "Errors:", Colors.FAIL)
             return False, result.stderr or result.stdout
 
     except subprocess.CalledProcessError as e:
         print_error(f"{description} failed with return code {e.returncode}")
-        print(f"\n{Colors.WARNING}Output:{Colors.ENDC}")
-        if e.stdout:
-            print(e.stdout)
-        if e.stderr:
-            print(f"\n{Colors.FAIL}Errors:{Colors.ENDC}")
-            print(e.stderr)
+        _print_output_tail(e.stdout, "Output:", Colors.WARNING)
+        _print_output_tail(e.stderr, "Errors:", Colors.FAIL)
         return False, e.stderr or e.stdout
     except FileNotFoundError:
         print_error(f"{description} failed - command not found: {command[0]}")
@@ -231,14 +254,14 @@ _BACKEND_MAP: List[Tuple[str, List[str]]] = [
     ("apps/planning/src/templates/", []),  # frontend-only
     ("apps/planning/src/", ["apps/planning/tests"]),
     ("apps/planning/", ["apps/planning/tests"]),
-    ("apps/reports/src/static/", []),  # frontend-only
-    ("apps/reports/src/templates/", []),  # frontend-only
-    ("apps/reports/src/", ["apps/reports/tests"]),
-    ("apps/reports/", ["apps/reports/tests"]),
+    ("apps/reporting/src/static/", []),  # frontend-only
+    ("apps/reporting/src/templates/", []),  # frontend-only
+    ("apps/reporting/src/", ["apps/reporting/tests"]),
+    ("apps/reporting/", ["apps/reporting/tests"]),
     # Test files themselves → run their own directory
     ("tests/backend/", ["tests/backend"]),
     ("apps/planning/tests/", ["apps/planning/tests"]),
-    ("apps/reports/tests/", ["apps/reports/tests"]),
+    ("apps/reporting/tests/", ["apps/reporting/tests"]),
 ]
 
 # Maps source-file path prefixes → relevant frontend test directories.
@@ -247,7 +270,7 @@ _FRONTEND_MAP: List[Tuple[str, List[str]]] = [
     ("src/static/css/", ["tests/frontend/unit"]),
     ("src/templates/", ["tests/frontend/unit"]),
     ("apps/planning/src/static/", ["tests/frontend/unit"]),
-    ("apps/reports/src/static/", ["tests/frontend/unit"]),
+    ("apps/reporting/src/static/", ["tests/frontend/unit"]),
     ("tests/frontend/", ["tests/frontend/unit"]),
 ]
 
@@ -765,7 +788,7 @@ def validate_configuration() -> bool:
 
 
 def _run_cleanup() -> None:
-    """Remove generated test artifacts and coverage reports after validation."""
+    """Remove generated test artifacts and coverage reporting after validation."""
     print_header("CLEANUP")
     count = clean_default(dry_run=False)
     if count:

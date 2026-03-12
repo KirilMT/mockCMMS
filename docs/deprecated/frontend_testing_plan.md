@@ -479,7 +479,7 @@ jobs:
 
 - [x] Jest tests running in CI
 - [x] Playwright tests running in CI
-- [ ] Coverage reports uploaded to Codecov
+- [ ] Coverage reporting uploaded to Codecov
 - [ ] Test failures block PR merges
 - [x] Playwright failure artifacts preserved
 
