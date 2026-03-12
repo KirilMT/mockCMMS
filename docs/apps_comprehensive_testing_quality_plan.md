@@ -39,24 +39,24 @@
 
 ### Planning App
 
-| Layer | Files | Test Functions |
-| :---- | :---- | :------------ |
-| Backend unit | 15 files | ~190 tests |
-| Backend functional | 3 files | ~45 tests |
-| Backend integration | 1 file | ~17 tests |
-| Frontend Jest (unit) | 2 files | ~34 tests |
-| Frontend Playwright (E2E) | 4 spec files | ~7 tests |
-| **Total** | **25** | **~252 backend + ~41 frontend** |
+| Layer                     | Files        | Test Functions                  |
+| :------------------------ | :----------- | :------------------------------ |
+| Backend unit              | 15 files     | ~190 tests                      |
+| Backend functional        | 3 files      | ~45 tests                       |
+| Backend integration       | 1 file       | ~17 tests                       |
+| Frontend Jest (unit)      | 2 files      | ~34 tests                       |
+| Frontend Playwright (E2E) | 4 spec files | ~7 tests                        |
+| **Total**                 | **25**       | **~252 backend + ~41 frontend** |
 
 ### Reports App
 
-| Layer | Files | Test Functions |
-| :---- | :---- | :------------ |
-| Backend unit | 3 files | ~80 tests |
-| Backend functional | 5 files | ~118 tests |
-| Frontend Jest (unit) | 2 files | ~55 tests |
-| Frontend Playwright (E2E) | 6 spec files | ~13 tests |
-| **Total** | **16** | **~198 backend + ~68 frontend** |
+| Layer                     | Files        | Test Functions                  |
+| :------------------------ | :----------- | :------------------------------ |
+| Backend unit              | 3 files      | ~80 tests                       |
+| Backend functional        | 5 files      | ~118 tests                      |
+| Frontend Jest (unit)      | 2 files      | ~55 tests                       |
+| Frontend Playwright (E2E) | 6 spec files | ~13 tests                       |
+| **Total**                 | **16**       | **~198 backend + ~68 frontend** |
 
 ### Overall Coverage
 
@@ -196,16 +196,16 @@ apps/reports/tests/frontend/
 
 **File to create:** `apps/planning/tests/backend/performance/test_planning_performance.py`
 
-| Test | Description |
-| :--- | :---------- |
-| `test_large_dataset_planning` | Plan with 100+ tasks completes without error |
-| `test_planning_engine_performance` | 50-task plan completes in < 5 seconds |
-| `test_gantt_rendering_performance` | Gantt endpoint responds in < 2 seconds |
-| `test_database_query_optimization` | No N+1 queries on schedule fetch |
+| Test                                | Description                                        |
+| :---------------------------------- | :------------------------------------------------- |
+| `test_large_dataset_planning`       | Plan with 100+ tasks completes without error       |
+| `test_planning_engine_performance`  | 50-task plan completes in < 5 seconds              |
+| `test_gantt_rendering_performance`  | Gantt endpoint responds in < 2 seconds             |
+| `test_database_query_optimization`  | No N+1 queries on schedule fetch                   |
 | `test_concurrent_planning_requests` | Two simultaneous plan requests don't corrupt state |
-| `test_memory_usage_large_schedules` | Memory stays bounded on 200-task schedule |
-| `test_excel_parsing_performance` | Large Excel file parsed in < 3 seconds |
-| `test_dashboard_load_time` | Dashboard endpoint responds in < 2 seconds |
+| `test_memory_usage_large_schedules` | Memory stays bounded on 200-task schedule          |
+| `test_excel_parsing_performance`    | Large Excel file parsed in < 3 seconds             |
+| `test_dashboard_load_time`          | Dashboard endpoint responds in < 2 seconds         |
 
 ---
 
@@ -213,18 +213,18 @@ apps/reports/tests/frontend/
 
 **File to create:** `apps/reports/tests/backend/security/test_reports_security.py`
 
-| Test | Description |
-| :--- | :---------- |
-| `test_xss_prevention_in_report_fields` | HTML entities escaped in report output |
-| `test_sql_injection_prevention` | Parameterized queries block injection attempts |
-| `test_authentication_required` | All report routes return 302/401 without login |
-| `test_authorization_role_check` | Non-admin roles cannot delete reports |
-| `test_report_input_validation` | Missing required fields return 400 |
-| `test_date_range_validation` | Invalid date formats rejected |
-| `test_shift_parameter_validation` | Invalid shift values rejected |
-| `test_export_path_traversal_prevention` | `../` in export filename blocked |
-| `test_csv_injection_prevention` | Formulas (=CMD) stripped from CSV export |
-| `test_report_data_sanitization` | Unsafe characters sanitized before storage |
+| Test                                    | Description                                    |
+| :-------------------------------------- | :--------------------------------------------- |
+| `test_xss_prevention_in_report_fields`  | HTML entities escaped in report output         |
+| `test_sql_injection_prevention`         | Parameterized queries block injection attempts |
+| `test_authentication_required`          | All report routes return 302/401 without login |
+| `test_authorization_role_check`         | Non-admin roles cannot delete reports          |
+| `test_report_input_validation`          | Missing required fields return 400             |
+| `test_date_range_validation`            | Invalid date formats rejected                  |
+| `test_shift_parameter_validation`       | Invalid shift values rejected                  |
+| `test_export_path_traversal_prevention` | `../` in export filename blocked               |
+| `test_csv_injection_prevention`         | Formulas (=CMD) stripped from CSV export       |
+| `test_report_data_sanitization`         | Unsafe characters sanitized before storage     |
 
 ---
 
@@ -232,45 +232,45 @@ apps/reports/tests/frontend/
 
 **File to create:** `apps/reports/tests/backend/integration/test_reports_workflows.py`
 
-| Test | Description |
-| :--- | :---------- |
-| `test_complete_shift_report_workflow` | Create → populate → export shift report end-to-end |
-| `test_complete_weekend_report_workflow` | Create → populate → export weekend report end-to-end |
-| `test_report_with_core_app_data` | Report aggregates live MO/User data from core app |
-| `test_cross_report_data_consistency` | Same MO appears consistently across shift and weekend |
-| `test_report_update_and_retrieve` | Update report data, verify persisted on re-fetch |
+| Test                                    | Description                                           |
+| :-------------------------------------- | :---------------------------------------------------- |
+| `test_complete_shift_report_workflow`   | Create → populate → export shift report end-to-end    |
+| `test_complete_weekend_report_workflow` | Create → populate → export weekend report end-to-end  |
+| `test_report_with_core_app_data`        | Report aggregates live MO/User data from core app     |
+| `test_cross_report_data_consistency`    | Same MO appears consistently across shift and weekend |
+| `test_report_update_and_retrieve`       | Update report data, verify persisted on re-fetch      |
 
 ---
 
 ## 📈 Progress Summary
 
-| Phase | Status | Notes |
-| :---- | :----- | :---- |
-| Phase 0 — Prerequisites | ✅ Complete | All infra set up |
-| Phase 1.1 — Planning test rewrite | ✅ Complete | Old models fully replaced |
-| Phase 1.2 — Planning backend tests | ✅ Complete | 252 tests (target: 101) |
-| Phase 1.3 — Planning frontend tests | ✅ Complete | Jest + Playwright in place |
-| Phase 1.4 — Planning code quality | ✅ Complete | All linting/formatting passing |
-| Phase 2.1 — Reports backend tests | ✅ Complete | 198 tests (target: 76) |
-| Phase 2.2 — Reports frontend tests | ✅ Complete | Jest + Playwright in place |
-| Phase 2.3 — Reports code quality | ✅ Complete | All linting/formatting passing |
-| **Gap 1** — Planning performance | ❌ Not started | 8 tests needed |
-| **Gap 2** — Reports security | ❌ Not started | 10 tests needed |
-| **Gap 3** — Reports integration | ❌ Not started | 5 tests needed |
+| Phase                               | Status         | Notes                          |
+| :---------------------------------- | :------------- | :----------------------------- |
+| Phase 0 — Prerequisites             | ✅ Complete    | All infra set up               |
+| Phase 1.1 — Planning test rewrite   | ✅ Complete    | Old models fully replaced      |
+| Phase 1.2 — Planning backend tests  | ✅ Complete    | 252 tests (target: 101)        |
+| Phase 1.3 — Planning frontend tests | ✅ Complete    | Jest + Playwright in place     |
+| Phase 1.4 — Planning code quality   | ✅ Complete    | All linting/formatting passing |
+| Phase 2.1 — Reports backend tests   | ✅ Complete    | 198 tests (target: 76)         |
+| Phase 2.2 — Reports frontend tests  | ✅ Complete    | Jest + Playwright in place     |
+| Phase 2.3 — Reports code quality    | ✅ Complete    | All linting/formatting passing |
+| **Gap 1** — Planning performance    | ❌ Not started | 8 tests needed                 |
+| **Gap 2** — Reports security        | ❌ Not started | 10 tests needed                |
+| **Gap 3** — Reports integration     | ❌ Not started | 5 tests needed                 |
 
 ---
 
 ## 🏆 Success Criteria
 
-| Metric | Target | Current |
-| :----- | :----- | :------ |
-| Overall coverage | ≥ 80% | **89.97%** ✅ |
-| Test pass rate | 100% | **100%** ✅ |
-| Ruff issues | 0 | **0** ✅ |
-| Mypy errors | 0 | **0** ✅ |
-| Bandit high/critical | 0 | **0** ✅ |
-| Planning backend tests | ≥ 101 | **252** ✅ |
-| Reports backend tests | ≥ 76 | **198** ✅ |
-| Performance tests | 8 | **0** ❌ |
-| Reports security tests | 10 | **0** ❌ |
-| Reports integration tests | 5 | **0** ❌ |
+| Metric                    | Target | Current       |
+| :------------------------ | :----- | :------------ |
+| Overall coverage          | ≥ 80%  | **89.97%** ✅ |
+| Test pass rate            | 100%   | **100%** ✅   |
+| Ruff issues               | 0      | **0** ✅      |
+| Mypy errors               | 0      | **0** ✅      |
+| Bandit high/critical      | 0      | **0** ✅      |
+| Planning backend tests    | ≥ 101  | **252** ✅    |
+| Reports backend tests     | ≥ 76   | **198** ✅    |
+| Performance tests         | 8      | **0** ❌      |
+| Reports security tests    | 10     | **0** ❌      |
+| Reports integration tests | 5      | **0** ❌      |
