@@ -1,8 +1,8 @@
 # Tier 2 Implementation: File Locking System
 
-**Timeline:** 40-60 hours (1-2 sprints)  
-**Impact:** 70-80% reduction in merge conflicts  
-**Effort:** Medium (custom Flask service + hooks)  
+**Timeline:** 40-60 hours (1-2 sprints)
+**Impact:** 70-80% reduction in merge conflicts
+**Effort:** Medium (custom Flask service + hooks)
 **Value:** Scales to 8-10+ developers without additional work
 
 ---
@@ -61,22 +61,22 @@
 CREATE TABLE IF NOT EXISTS file_locks (
     -- Primary Key
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    
+
     -- File Information
     file_path TEXT UNIQUE NOT NULL,
-    
+
     -- Developer Information
     developer_id TEXT NOT NULL,
     developer_email TEXT,
-    
+
     -- Lock Information
     lock_token TEXT UNIQUE NOT NULL,
-    
+
     -- Timestamps
     acquired_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     expires_at DATETIME NOT NULL,
     released_at DATETIME,
-    
+
     -- Metadata
     branch_name TEXT,
     reason TEXT,
@@ -130,7 +130,7 @@ Base = declarative_base()
 class FileLock(Base):
     """File lock record in database."""
     __tablename__ = 'file_locks'
-    
+
     id = Column(Integer, primary_key=True)
     file_path = Column(String(512), unique=True, nullable=False, index=True)
     developer_id = Column(String(100), nullable=False, index=True)
@@ -143,10 +143,10 @@ class FileLock(Base):
     reason = Column(String(512))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def __repr__(self):
         return f"<FileLock {self.file_path} by {self.developer_id}>"
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return {
@@ -162,12 +162,12 @@ class FileLock(Base):
             'reason': self.reason,
             'is_active': self.is_active(),
         }
-    
+
     def is_active(self) -> bool:
         """Check if lock is currently active."""
-        return (self.released_at is None and 
+        return (self.released_at is None and
                 self.expires_at > datetime.utcnow())
-    
+
     def is_expired(self) -> bool:
         """Check if lock is expired."""
         return self.expires_at <= datetime.utcnow()
@@ -179,30 +179,30 @@ class FileLock(Base):
 
 class LockManager:
     """Manages file locks for collaborative development."""
-    
+
     def __init__(self, db_path: Optional[str] = None):
         """Initialize lock manager.
-        
+
         Args:
             db_path: Path to SQLite database (defaults to instance/locks.db)
         """
         if db_path is None:
             db_path = os.path.join(
-                os.path.dirname(__file__), 
+                os.path.dirname(__file__),
                 '../../instance/locks.db'
             )
-        
+
         self.db_path = db_path
         self.engine = create_engine(f'sqlite:///{db_path}')
         self.SessionLocal = sessionmaker(bind=self.engine)
-        
+
         # Create tables
         Base.metadata.create_all(self.engine)
-    
+
     # ========================================================================
     # Lock Operations
     # ========================================================================
-    
+
     def acquire_lock(
         self,
         file_path: str,
@@ -213,7 +213,7 @@ class LockManager:
         expires_minutes: int = 480,  # 8 hours default
     ) -> Tuple[bool, Dict]:
         """Acquire a lock on a file.
-        
+
         Args:
             file_path: Path to file to lock (e.g., 'src/services/db_utils.py')
             developer_id: Username of developer acquiring lock
@@ -221,14 +221,14 @@ class LockManager:
             branch_name: Git branch name (for context)
             reason: Reason for lock (for visibility)
             expires_minutes: How many minutes until lock auto-expires
-        
+
         Returns:
             (success: bool, response: Dict)
             - If success: {'status': 'acquired', 'lock_token': '...', ...}
             - If failed: {'status': 'conflict', 'locked_by': '...', ...}
         """
         session = self.SessionLocal()
-        
+
         try:
             # Check for existing lock
             existing = session.query(FileLock).filter(
@@ -238,7 +238,7 @@ class LockManager:
                     FileLock.expires_at > datetime.utcnow()
                 )
             ).first()
-            
+
             if existing:
                 return False, {
                     'status': 'conflict',
@@ -248,7 +248,7 @@ class LockManager:
                     'locked_at': existing.acquired_at.isoformat(),
                     'expires_at': existing.expires_at.isoformat(),
                 }
-            
+
             # Create new lock
             lock_token = str(uuid.uuid4())
             new_lock = FileLock(
@@ -260,79 +260,79 @@ class LockManager:
                 reason=reason,
                 expires_at=datetime.utcnow() + timedelta(minutes=expires_minutes),
             )
-            
+
             session.add(new_lock)
             session.commit()
-            
+
             return True, {
                 'status': 'acquired',
                 'message': 'Lock acquired successfully',
                 **new_lock.to_dict()
             }
-        
+
         except Exception as e:
             session.rollback()
             return False, {
                 'status': 'error',
                 'message': str(e),
             }
-        
+
         finally:
             session.close()
-    
+
     def release_lock(self, lock_token: str) -> Tuple[bool, Dict]:
         """Release a lock.
-        
+
         Args:
             lock_token: Token from lock acquisition
-        
+
         Returns:
             (success: bool, response: Dict)
         """
         session = self.SessionLocal()
-        
+
         try:
             lock = session.query(FileLock).filter(
                 FileLock.lock_token == lock_token
             ).first()
-            
+
             if not lock:
                 return False, {
                     'status': 'error',
                     'message': 'Lock token not found',
                 }
-            
+
             if lock.released_at is not None:
                 return False, {
                     'status': 'error',
                     'message': 'Lock already released',
                 }
-            
+
             lock.released_at = datetime.utcnow()
             session.commit()
-            
+
             return True, {
                 'status': 'released',
                 'message': 'Lock released successfully',
                 'file_path': lock.file_path,
             }
-        
+
         except Exception as e:
             session.rollback()
             return False, {
                 'status': 'error',
                 'message': str(e),
             }
-        
+
         finally:
             session.close()
-    
+
     def get_lock_status(self, file_path: str) -> Dict:
         """Get lock status for a file.
-        
+
         Args:
             file_path: Path to file to check
-        
+
         Returns:
             {
                 'file_path': str,
@@ -344,7 +344,7 @@ class LockManager:
             }
         """
         session = self.SessionLocal()
-        
+
         try:
             lock = session.query(FileLock).filter(
                 and_(
@@ -353,7 +353,7 @@ class LockManager:
                     FileLock.expires_at > datetime.utcnow()
                 )
             ).first()
-            
+
             if lock:
                 return {
                     'file_path': file_path,
@@ -372,14 +372,14 @@ class LockManager:
                     'expires_at': None,
                     'can_edit': True,
                 }
-        
+
         finally:
             session.close()
-    
+
     def get_active_locks(self) -> List[Dict]:
         """Get all active locks."""
         session = self.SessionLocal()
-        
+
         try:
             locks = session.query(FileLock).filter(
                 and_(
@@ -387,28 +387,28 @@ class LockManager:
                     FileLock.expires_at > datetime.utcnow()
                 )
             ).order_by(FileLock.acquired_at.desc()).all()
-            
+
             return [lock.to_dict() for lock in locks]
-        
+
         finally:
             session.close()
-    
+
     def cleanup_expired_locks(self) -> int:
         """Remove expired locks. Call periodically via cron job.
-        
+
         Returns:
             Number of locks cleaned up
         """
         session = self.SessionLocal()
-        
+
         try:
             count = session.query(FileLock).filter(
                 FileLock.expires_at <= datetime.utcnow()
             ).delete()
-            
+
             session.commit()
             return count
-        
+
         finally:
             session.close()
 
@@ -425,16 +425,16 @@ lock_manager = LockManager()
 def acquire():
     """Acquire a lock on a file."""
     data = request.get_json()
-    
+
     file_path = data.get('file_path')
     developer_id = data.get('developer_id')
-    
+
     if not file_path or not developer_id:
         return jsonify({
             'status': 'error',
             'message': 'Missing file_path or developer_id'
         }), 400
-    
+
     success, response = lock_manager.acquire_lock(
         file_path=file_path,
         developer_id=developer_id,
@@ -443,7 +443,7 @@ def acquire():
         reason=data.get('reason'),
         expires_minutes=data.get('expires_minutes', 480),
     )
-    
+
     return jsonify(response), (200 if success else 409)
 
 
@@ -452,15 +452,15 @@ def release():
     """Release a lock."""
     data = request.get_json()
     lock_token = data.get('lock_token')
-    
+
     if not lock_token:
         return jsonify({
             'status': 'error',
             'message': 'Missing lock_token'
         }), 400
-    
+
     success, response = lock_manager.release_lock(lock_token)
-    
+
     return jsonify(response), (200 if success else 404)
 
 
@@ -468,13 +468,13 @@ def release():
 def status():
     """Check lock status for a file."""
     file_path = request.args.get('file_path')
-    
+
     if not file_path:
         return jsonify({
             'status': 'error',
             'message': 'Missing file_path parameter'
         }), 400
-    
+
     status_info = lock_manager.get_lock_status(file_path)
     return jsonify(status_info), 200
 
@@ -483,7 +483,7 @@ def status():
 def active():
     """Get all active locks."""
     locks = lock_manager.get_active_locks()
-    
+
     return jsonify({
         'status': 'ok',
         'count': len(locks),
@@ -495,7 +495,7 @@ def active():
 def cleanup():
     """Cleanup expired locks (admin only)."""
     cleaned = lock_manager.cleanup_expired_locks()
-    
+
     return jsonify({
         'status': 'ok',
         'cleaned': cleaned,
@@ -518,12 +518,12 @@ from src.services.lock_manager import init_locks
 
 def create_app(config_name='development'):
     app = Flask(__name__)
-    
+
     # ... existing setup ...
-    
+
     # Initialize lock service
     init_locks(app)
-    
+
     return app
 ```
 
@@ -577,21 +577,21 @@ while IFS= read -r FILE; do
     if ! git diff --cached --name-only --diff-filter=d | grep -q "^$FILE$"; then
         continue
     fi
-    
+
     # Check lock status
     RESPONSE=$(curl -s --max-time $LOCK_TIMEOUT \
         "${LOCK_SERVER_URL}/api/locks/status?file_path=${FILE}" 2>/dev/null || echo "")
-    
+
     if [ -z "$RESPONSE" ]; then
         echo -e "${YELLOW}⚠️  Lock server unavailable, skipping lock check${NC}"
         FAILED=$((FAILED + 1))
         continue
     fi
-    
+
     # Parse response (basic JSON parsing)
     IS_LOCKED=$(echo "$RESPONSE" | grep -o '"is_locked":\s*\(true\|false\)' | grep -o '\(true\|false\)' || echo "false")
     LOCKED_BY=$(echo "$RESPONSE" | grep -o '"locked_by":"[^"]*"' | cut -d'"' -f4 || echo "")
-    
+
     if [ "$IS_LOCKED" = "true" ] && [ "$LOCKED_BY" != "$DEVELOPER_ID" ]; then
         echo -e "${RED}❌ ERROR: File locked by $LOCKED_BY: $FILE${NC}"
         CONFLICTS=$((CONFLICTS + 1))
@@ -639,109 +639,109 @@ chmod +x .git/hooks/pre-commit
 ### File: `src/templates/admin/lock_dashboard.html`
 
 ```html
-{% extends "base.html" %}
-
-{% block title %}File Lock Dashboard{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}File Lock Dashboard{% endblock %} {%
+block content %}
 <div class="container mt-4">
-    <h1>🔒 File Lock Dashboard</h1>
-    
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Active Locks</h5>
-                    <small class="text-muted">
-                        Locks auto-expire after 8 hours of inactivity
-                    </small>
-                </div>
-                
-                <div class="card-body">
-                    <table class="table table-striped" id="locksTable">
-                        <thead>
-                            <tr>
-                                <th>File Path</th>
-                                <th>Developer</th>
-                                <th>Acquired</th>
-                                <th>Expires</th>
-                                <th>Branch</th>
-                                <th>Reason</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="locksBody">
-                            <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  <h1>🔒 File Lock Dashboard</h1>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Active Locks</h5>
+          <small class="text-muted">
+            Locks auto-expire after 8 hours of inactivity
+          </small>
         </div>
+
+        <div class="card-body">
+          <table class="table table-striped" id="locksTable">
+            <thead>
+              <tr>
+                <th>File Path</th>
+                <th>Developer</th>
+                <th>Acquired</th>
+                <th>Expires</th>
+                <th>Branch</th>
+                <th>Reason</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="locksBody">
+              <tr>
+                <td colspan="7" class="text-center text-muted">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-async function loadLocks() {
+  async function loadLocks() {
     try {
-        const response = await fetch('/api/locks/active');
-        const data = await response.json();
-        
-        const tbody = document.getElementById('locksBody');
-        tbody.innerHTML = '';
-        
-        if (data.locks.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No active locks</td></tr>';
-            return;
-        }
-        
-        data.locks.forEach(lock => {
-            const row = document.createElement('tr');
-            const expiresDate = new Date(lock.expires_at);
-            const minutesLeft = Math.round((expiresDate - new Date()) / 60000);
-            
-            row.innerHTML = `
+      const response = await fetch("/api/locks/active");
+      const data = await response.json();
+
+      const tbody = document.getElementById("locksBody");
+      tbody.innerHTML = "";
+
+      if (data.locks.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="7" class="text-center text-muted">No active locks</td></tr>';
+        return;
+      }
+
+      data.locks.forEach((lock) => {
+        const row = document.createElement("tr");
+        const expiresDate = new Date(lock.expires_at);
+        const minutesLeft = Math.round((expiresDate - new Date()) / 60000);
+
+        row.innerHTML = `
                 <td><code>${lock.file_path}</code></td>
                 <td>${lock.developer_id}</td>
                 <td><small>${new Date(lock.acquired_at).toLocaleString()}</small></td>
-                <td><small>${minutesLeft > 0 ? minutesLeft + ' min' : 'Expired'}</small></td>
-                <td>${lock.branch_name || '-'}</td>
-                <td>${lock.reason || '-'}</td>
+                <td><small>${minutesLeft > 0 ? minutesLeft + " min" : "Expired"}</small></td>
+                <td>${lock.branch_name || "-"}</td>
+                <td>${lock.reason || "-"}</td>
                 <td>
                     <button class="btn btn-sm btn-danger" onclick="releaseLock('${lock.lock_token}')">
                         Release
                     </button>
                 </td>
             `;
-            tbody.appendChild(row);
-        });
+        tbody.appendChild(row);
+      });
     } catch (error) {
-        console.error('Error loading locks:', error);
-        document.getElementById('locksBody').innerHTML = 
-            '<tr><td colspan="7" class="text-danger">Error loading locks</td></tr>';
+      console.error("Error loading locks:", error);
+      document.getElementById("locksBody").innerHTML =
+        '<tr><td colspan="7" class="text-danger">Error loading locks</td></tr>';
     }
-}
+  }
 
-async function releaseLock(lockToken) {
-    if (!confirm('Release this lock?')) return;
-    
+  async function releaseLock(lockToken) {
+    if (!confirm("Release this lock?")) return;
+
     try {
-        const response = await fetch('/api/locks/release', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lock_token: lockToken })
-        });
-        
-        if (response.ok) {
-            loadLocks();  // Refresh
-        }
-    } catch (error) {
-        console.error('Error releasing lock:', error);
-    }
-}
+      const response = await fetch("/api/locks/release", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lock_token: lockToken }),
+      });
 
-// Load locks on page load and refresh every 10 seconds
-loadLocks();
-setInterval(loadLocks, 10000);
+      if (response.ok) {
+        loadLocks(); // Refresh
+      }
+    } catch (error) {
+      console.error("Error releasing lock:", error);
+    }
+  }
+
+  // Load locks on page load and refresh every 10 seconds
+  loadLocks();
+  setInterval(loadLocks, 10000);
 </script>
 {% endblock %}
 ```
@@ -761,10 +761,10 @@ from typing import Optional, Tuple
 
 class LockClient:
     """Client for acquiring and releasing file locks."""
-    
+
     def __init__(self, server_url: str = "http://localhost:5000"):
         self.server_url = server_url.rstrip('/')
-    
+
     def acquire(
         self,
         file_path: str,
@@ -775,7 +775,7 @@ class LockClient:
         expires_minutes: int = 480,
     ) -> Tuple[bool, str]:
         """Acquire a lock.
-        
+
         Returns:
             (success: bool, lock_token_or_error: str)
         """
@@ -792,20 +792,20 @@ class LockClient:
                 },
                 timeout=5,
             )
-            
+
             if response.status_code == 200:
                 data = response.json()
                 return True, data.get('lock_token', '')
             else:
                 data = response.json()
                 return False, data.get('message', 'Unknown error')
-        
+
         except requests.RequestException as e:
             return False, str(e)
-    
+
     def release(self, lock_token: str) -> Tuple[bool, str]:
         """Release a lock.
-        
+
         Returns:
             (success: bool, message: str)
         """
@@ -815,16 +815,16 @@ class LockClient:
                 json={'lock_token': lock_token},
                 timeout=5,
             )
-            
+
             if response.status_code == 200:
                 return True, "Lock released"
             else:
                 data = response.json()
                 return False, data.get('message', 'Unknown error')
-        
+
         except requests.RequestException as e:
             return False, str(e)
-    
+
     def status(self, file_path: str) -> dict:
         """Check lock status for a file."""
         try:
@@ -833,7 +833,7 @@ class LockClient:
                 params={'file_path': file_path},
                 timeout=5,
             )
-            
+
             if response.status_code == 200:
                 return response.json()
             else:
@@ -841,7 +841,7 @@ class LockClient:
                     'is_locked': False,
                     'error': response.json().get('message', 'Unknown error')
                 }
-        
+
         except requests.RequestException:
             return {'is_locked': False, 'error': 'Cannot contact lock server'}
 
@@ -849,21 +849,21 @@ class LockClient:
 # Usage example
 if __name__ == '__main__':
     client = LockClient()
-    
+
     # Acquire lock
     success, token = client.acquire(
         file_path='src/services/db_utils.py',
         developer_id='kmartineztamayo',
         branch_name='feat/skill-matching'
     )
-    
+
     if success:
         print(f"Lock acquired: {token}")
-        
+
         # Check status
         status = client.status('src/services/db_utils.py')
         print(f"Lock status: {status}")
-        
+
         # Release lock
         success, msg = client.release(token)
         print(f"Lock released: {msg}")
@@ -876,6 +876,7 @@ if __name__ == '__main__':
 ## Implementation Phases
 
 ### Phase 1: Setup (Week 1)
+
 - [ ] Create database schema
 - [ ] Implement Flask lock service
 - [ ] Create API endpoints
@@ -883,6 +884,7 @@ if __name__ == '__main__':
 - [ ] Write unit tests
 
 ### Phase 2: Integration (Week 2)
+
 - [ ] Create pre-commit hook
 - [ ] Test with 2 developers
 - [ ] Document workflow
@@ -890,6 +892,7 @@ if __name__ == '__main__':
 - [ ] Monitor for issues
 
 ### Phase 3: Refinement (Week 3)
+
 - [ ] Optimize lock timeout
 - [ ] Add metrics/logging
 - [ ] Create admin CLI tools
@@ -920,6 +923,7 @@ if __name__ == '__main__':
 ```
 
 **Cron entry:**
+
 ```bash
 # Run cleanup every hour
 0 * * * * cd /path/to/mockCMMS && python scripts/cleanup_locks.py >> logs/lock_cleanup.log 2>&1
@@ -947,7 +951,7 @@ def test_acquire_lock(lock_manager):
         file_path='src/test.py',
         developer_id='test_user'
     )
-    
+
     assert success
     assert response['status'] == 'acquired'
     assert 'lock_token' in response
@@ -956,10 +960,10 @@ def test_cannot_acquire_locked_file(lock_manager):
     """Test that locked files cannot be re-locked."""
     # First lock
     lock_manager.acquire_lock('src/test.py', 'user1')
-    
+
     # Try to lock same file
     success, response = lock_manager.acquire_lock('src/test.py', 'user2')
-    
+
     assert not success
     assert response['status'] == 'conflict'
 
@@ -967,9 +971,9 @@ def test_release_lock(lock_manager):
     """Test releasing a lock."""
     _, response1 = lock_manager.acquire_lock('src/test.py', 'user1')
     token = response1['lock_token']
-    
+
     success, response2 = lock_manager.release_lock(token)
-    
+
     assert success
     assert response2['status'] == 'released'
 
@@ -980,7 +984,7 @@ def test_lock_expiration(lock_manager):
         'user1',
         expires_minutes=0  # Expire immediately
     )
-    
+
     status = lock_manager.get_lock_status('src/test.py')
     assert status['is_locked'] is False
 ```
@@ -992,6 +996,7 @@ def test_lock_expiration(lock_manager):
 ### For Developers
 
 1. **Acquire lock early**
+
    ```bash
    # Before starting work
    curl -X POST http://localhost:5000/api/locks/acquire \
@@ -1002,6 +1007,7 @@ def test_lock_expiration(lock_manager):
 2. **Keep commits small** (reduces lock hold time)
 
 3. **Release lock immediately after push**
+
    ```bash
    git push
    # Lock is automatically released after push
@@ -1030,16 +1036,19 @@ def test_lock_expiration(lock_manager):
 ## Migration Path
 
 ### Week 1: Parallel Operation
+
 - Run Tier 1 (branch protection) + Tier 2 (optional)
 - Lock service is available but not required
 - Developers can opt-in
 
 ### Week 2: Soft Enforcement
+
 - Strongly recommend using locks
 - Track compliance in metrics
 - Fix any issues
 
 ### Week 3: Hard Enforcement
+
 - Pre-commit hook blocks non-locked edits
 - Dashboard shows compliance
 - Training complete
@@ -1048,21 +1057,20 @@ def test_lock_expiration(lock_manager):
 
 ## Summary
 
-| Component | Lines | Effort | Impact |
-|-----------|-------|--------|--------|
-| Lock service API | ~300 | 4 hrs | High |
-| Database model | ~50 | 1 hr | High |
-| Pre-commit hook | ~100 | 2 hrs | Medium |
-| Dashboard | ~200 | 3 hrs | Low (visualization) |
-| Client library | ~150 | 2 hrs | Medium |
-| Tests | ~200 | 4 hrs | Medium |
-| **Total** | ~1000 | **16-20 hrs** | **High** |
+| Component        | Lines | Effort        | Impact              |
+| ---------------- | ----- | ------------- | ------------------- |
+| Lock service API | ~300  | 4 hrs         | High                |
+| Database model   | ~50   | 1 hr          | High                |
+| Pre-commit hook  | ~100  | 2 hrs         | Medium              |
+| Dashboard        | ~200  | 3 hrs         | Low (visualization) |
+| Client library   | ~150  | 2 hrs         | Medium              |
+| Tests            | ~200  | 4 hrs         | Medium              |
+| **Total**        | ~1000 | **16-20 hrs** | **High**            |
 
 **Expected Result:** 70-80% reduction in merge conflicts, scales to 8-10+ developers
 
 ---
 
-**Last Updated:** March 12, 2026  
-**Status:** Ready for implementation  
+**Last Updated:** March 12, 2026
+**Status:** Ready for implementation
 **Estimated Timeline:** 1-2 sprints
-

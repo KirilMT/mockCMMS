@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
-"""Code Formatting Script.
+"""Code Formatting Script — Single Source of Truth for ALL formatting.
 
 Actively formats code using configured formatters:
+- Whitespace: trailing whitespace removal, EOF newline normalization (ALL text files)
 - Python: ruff (lint fixing), isort (imports), black (code), docformatter (docstrings)
-- JavaScript: prettier
+- JavaScript/CSS: prettier
+- Documentation: prettier (Markdown, JSON)
+- Templates: djlint (Jinja2)
 
-This script APPLIES changes, unlike validate_code.py which only checks.
+ARCHITECTURE:
+    format_code.py  = the ONLY tool that MODIFIES files (formatter).
+    pre-commit hooks = CHECK-ONLY gate (--check mode, never modify files).
+
+    This separation prevents stash conflicts during commit/amend workflows.
 
 Usage:
     python scripts/format_code.py              # Format all code
     python scripts/format_code.py --backend    # Format Python only
-    python scripts/format_code.py --frontend   # Format JavaScript only
-    python scripts/format_code.py --check      # Check without applying changes
+    python scripts/format_code.py --frontend   # Format JS only
+    python scripts/format_code.py --check      # Check only (pre-commit)
 """
 
 import argparse
@@ -99,6 +106,144 @@ class CodeFormatter:
             print(f"❌ {description} - Error: {e}")
             self.errors.append(f"{description} ({e})")
             return False
+
+    # Text file extensions eligible for whitespace / EOF normalization.
+    # Covers every tracked file type that language-specific formatters may miss.
+    TEXT_EXTENSIONS: frozenset = frozenset(
+        {
+            # Code
+            ".py",
+            ".js",
+            ".ts",
+            ".jsx",
+            ".tsx",
+            ".css",
+            ".html",
+            ".htm",
+            # Config
+            ".json",
+            ".yaml",
+            ".yml",
+            ".toml",
+            ".ini",
+            ".cfg",
+            ".env",
+            # Documentation
+            ".md",
+            ".txt",
+            ".rst",
+            # Shell / Scripts
+            ".sh",
+            ".bash",
+            ".ps1",
+            ".bat",
+            ".cmd",
+            # Other
+            ".sql",
+            ".xml",
+            ".csv",
+        }
+    )
+
+    def format_whitespace(self) -> bool:
+        """Normalize trailing whitespace and EOF newlines for ALL tracked text files.
+
+        Runs BEFORE language-specific formatters to ensure a clean baseline. Covers
+        every file type that black/prettier/djlint do NOT handle (e.g., .ps1, .toml,
+        .yaml, nested .json).
+        """
+        print("\n" + "=" * 80)
+        print("WHITESPACE & EOF NORMALIZATION")
+        print("=" * 80)
+
+        # Use git to enumerate tracked files (respects .gitignore automatically)
+        try:
+            proc = subprocess.run(
+                ["git", "ls-files"],
+                cwd=self.root_dir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+            )
+            tracked_files = [f for f in proc.stdout.strip().split("\n") if f]
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("⚠️  Could not list git-tracked files — skipping whitespace check")
+            return True
+
+        dirty_files: List[str] = []
+
+        for rel_path in tracked_files:
+            filepath = self.root_dir / rel_path
+
+            if filepath.suffix.lower() not in self.TEXT_EXTENSIONS:
+                continue
+
+            if not filepath.is_file():
+                continue
+
+            try:
+                raw = filepath.read_bytes()
+            except OSError:
+                continue
+
+            # Skip empty or binary files (null bytes indicate binary)
+            if not raw or b"\x00" in raw:
+                continue
+
+            fixed = self._normalize_whitespace(raw)
+
+            if fixed == raw:
+                continue
+
+            dirty_files.append(rel_path)
+
+            if not self.check_only:
+                filepath.write_bytes(fixed)
+
+        if not dirty_files:
+            print("✅ Whitespace & EOF — all files clean")
+            return True
+
+        if self.check_only:
+            print(f"❌ {len(dirty_files)} file(s) have whitespace/EOF issues:")
+            for f in dirty_files:
+                print(f"  - {f}")
+            print("\nℹ️  Run 'python scripts/format_code.py' to fix automatically.")
+            self.errors.append("Whitespace/EOF normalization")
+            return False
+
+        print(f"✅ Fixed whitespace/EOF in {len(dirty_files)} file(s):")
+        for f in dirty_files:
+            print(f"  - {f}")
+        return True
+
+    @staticmethod
+    def _normalize_whitespace(content: bytes) -> bytes:
+        """Strip trailing whitespace per line and ensure a single trailing newline.
+
+        Preserves the original line-ending style (CRLF vs LF).
+        """
+        uses_crlf = b"\r\n" in content
+
+        # Normalize to LF for uniform processing
+        normalized = content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+        # Strip trailing spaces / tabs from every line
+        lines = normalized.split(b"\n")
+        stripped = [line.rstrip(b" \t") for line in lines]
+
+        result = b"\n".join(stripped)
+
+        # Ensure exactly one trailing newline
+        result = result.rstrip(b"\n") + b"\n"
+
+        # Restore CRLF if the original used it
+        if uses_crlf:
+            result = result.replace(b"\n", b"\r\n")
+
+        return result
 
     def format_python(self) -> bool:
         """Format Python code using ruff, isort, black, and docformatter.
@@ -291,8 +436,11 @@ class CodeFormatter:
             print(f"\n❌ {len(self.errors)} operation(s) failed:")
             for error in self.errors:
                 print(f"  - {error}")
-            print("\nℹ️  To apply fixes automatically, run:")
-            print("    python scripts/format_code.py")
+            if self.check_only:
+                print("\nℹ️  To fix all issues automatically, run:")
+                print("    python scripts/format_code.py")
+            else:
+                print("\nℹ️  Review errors above and fix manually if needed.")
 
 
 def main() -> int:
@@ -350,6 +498,9 @@ def main() -> int:
 
     # Run formatting
     all_passed = True
+
+    # Whitespace & EOF normalization ALWAYS runs first (covers all file types)
+    all_passed &= formatter.format_whitespace()
 
     if format_backend:
         all_passed &= formatter.format_python()

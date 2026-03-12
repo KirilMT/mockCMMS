@@ -1,11 +1,13 @@
 # .pre-commit-config.yaml
+#
+# ARCHITECTURE: Pre-commit hooks are CHECK-ONLY (verify, never modify files).
+# Formatting is done EXCLUSIVELY by: python scripts/format_code.py
+# This prevents stash conflicts during commit/amend workflows.
 repos:
-  # Basic file checks (fast, non-redundant)
+  # Check-only hooks (NEVER modify files)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
       - id: check-yaml
       - id: check-json
       - id: check-merge-conflict
@@ -14,12 +16,12 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-symlinks
 
-  # Local hooks using project scripts
+  # Local hooks using project scripts (CHECK-ONLY mode)
   - repo: local
     hooks:
-      - id: format-code
-        name: Format Code (isort, black, docformatter, prettier, djlint + docs)
-        entry: python scripts/format_code.py
+      - id: format-check
+        name: Format Check (whitespace, EOF, imports, style, docs)
+        entry: python scripts/format_code.py --check
         language: system
         pass_filenames: false
         always_run: true

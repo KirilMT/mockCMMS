@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated March 12, 2026_ (Collaborative Development task added)
+_Updated March 12, 2026_ (Pre-commit hooks automation + Collaborative Development)
 
 ---
 
@@ -97,7 +97,7 @@ _Updated March 12, 2026_ (Collaborative Development task added)
   - **Goal:** Enable synchronized development across multiple developers with real-time visibility and automatic conflict prevention (similar to Siemens TIA Portal Server Projects).
   - **Problem Solved:** Eliminates merge conflicts by implementing file locking and live updates to show who's working on what.
   - **Implementation Strategy:** Tiered approach with quick-win (Tier 1) followed by comprehensive solution (Tier 2).
-  
+
   **📚 Documentation:**
   - **[COLLABORATIVE_DEVELOPMENT_INDEX.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_INDEX.md)** - Navigation hub for all docs
   - **[COLLABORATIVE_DEVELOPMENT_QUICK_START.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_QUICK_START.md)** - Decision guide (15 min read)
@@ -105,7 +105,7 @@ _Updated March 12, 2026_ (Collaborative Development task added)
   - **[COLLABORATIVE_DEVELOPMENT_ANALYSIS.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_ANALYSIS.md)** - Complete option analysis
   - **[TIER1_GIT_PROTECTION.md](./COLLABORATIVE_DEVELOPMENT/TIER1_GIT_PROTECTION.md)** - GitHub branch protection setup (2-4 hours)
   - **[TIER2_FILE_LOCKING_SYSTEM.md](./COLLABORATIVE_DEVELOPMENT/TIER2_FILE_LOCKING_SYSTEM.md)** - File locking implementation guide (40-60 hours)
-  
+
   **Tier 1: Git Protection (Quick Win)**
   - [ ] Phase 1.1: Enable GitHub branch protection rules
   - [ ] Phase 1.2: Configure CODEOWNERS and code review requirements
@@ -114,7 +114,7 @@ _Updated March 12, 2026_ (Collaborative Development task added)
   - [ ] Phase 1.5: Create shared "Currently Working On" document
   - **Timeline:** 2-4 hours (this week)
   - **Expected Impact:** 40-50% fewer merge conflicts
-  
+
   **Tier 2: File Locking System (Main Implementation)**
   - [ ] Phase 2.1: Design database schema (locks table)
   - [ ] Phase 2.2: Build Flask lock service with REST API
@@ -127,11 +127,11 @@ _Updated March 12, 2026_ (Collaborative Development task added)
   - [ ] Phase 2.9: Full team rollout & training (Phase 3)
   - **Timeline:** 40-60 hours (1-2 sprints)
   - **Expected Impact:** 70-80% fewer merge conflicts
-  
+
   **Success Metrics:**
   - After Tier 1: 0 direct commits to main, 100% of changes require PR, 40-50% conflict reduction
   - After Tier 2: Automatic file locking, dashboard shows active work, 70-80% conflict reduction
-  
+
   **Key Features:**
   - Automatic file locking prevents simultaneous editing
   - Real-time visibility dashboard
@@ -139,7 +139,7 @@ _Updated March 12, 2026_ (Collaborative Development task added)
   - Auto-release with 8-hour timeout
   - Production-ready Python/Flask code included
   - Scales to 8-10+ developers
-  
+
   **Dependencies:** None
   - **Status:** Pending - Tier 1 can start immediately
 
@@ -158,6 +158,13 @@ _Updated March 12, 2026_ (Collaborative Development task added)
 ---
 
 ## ✅ RECENTLY COMPLETED
+
+### Pre-Commit Hooks Automation (March 12, 2026)
+
+- ✅ **Permanent Solution:** Added automatic pre-commit hook installation to `scripts/setup-dev.ps1`.
+- ✅ **Developer Experience:** New developers now automatically get pre-commit and pre-push hooks installed when running setup-dev.ps1.
+- ✅ **Safe Amend Workflow:** Added `scripts/safe-amend.ps1` to prevent pre-commit stash rollback conflicts during `git commit --amend`.
+- ✅ **Git Alias:** `git safe-amend` configured automatically via setup-dev.ps1.
 
 ### Phase 6: Root-Level & Configuration Files (January 2, 2026)
 

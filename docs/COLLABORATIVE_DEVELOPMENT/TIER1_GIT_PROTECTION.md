@@ -1,7 +1,7 @@
 # Tier 1 Implementation: Git Branch Protection + Communication
 
-**Timeline:** 2-4 hours to setup  
-**Impact:** 40-50% reduction in merge conflicts  
+**Timeline:** 2-4 hours to setup
+**Impact:** 40-50% reduction in merge conflicts
 **Effort:** Low (mostly GitHub configuration)
 
 ---
@@ -11,6 +11,7 @@
 ### 1. GitHub Branch Protection Rules
 
 #### Step 1: Access Repository Settings
+
 1. Go to your GitHub repo
 2. Settings → Branches → Branch protection rules
 3. Add rule for `main` branch
@@ -18,6 +19,7 @@
 #### Step 2: Configure Protection Rule
 
 **Minimum Settings:**
+
 ```
 ✅ Require a pull request before merging
    └─ Require approvals: 1 (or 2 for teams > 5)
@@ -47,6 +49,7 @@
 **File:** `.github/CODEOWNERS` (already exists)
 
 **Current Setup:** Verify it looks like this
+
 ```bash
 # Global owners
 * @kmartineztamayo
@@ -64,6 +67,7 @@ docs/ @kmartineztamayo
 ```
 
 **Add if multi-developer:**
+
 ```bash
 # If Developer 2 joins
 apps/planning/ @kmartineztamayo @developer2
@@ -92,16 +96,16 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
-      
+          python-version: "3.12"
+
       - name: Install dependencies
         run: pip install -r requirements.txt -r requirements-dev.txt
-      
+
       - name: Run validation
         run: python scripts/validate_code.py
         timeout-minutes: 30
@@ -126,6 +130,7 @@ jobs:
 5. In repo: Settings → Integrations & services → Slack
 
 **Configure in your Slack channel:**
+
 ```
 /github subscribe owner/repo pulls
 
@@ -138,6 +143,7 @@ jobs:
 #### Option B: GitHub Webhook (Manual Setup)
 
 **Create webhook:**
+
 1. Settings → Webhooks → Add webhook
 2. Payload URL: `https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK`
 3. Content type: `application/json`
@@ -154,13 +160,14 @@ jobs:
 
 Last Updated: March 12, 2026
 
-| Developer | Branch | Files | Status | ETA |
-|-----------|--------|-------|--------|-----|
-| kmartineztamayo | `feat/planning-skills` | `src/services/task_assigner.py`, `apps/planning/src/services/db_utils.py` | In Progress | March 15 |
-| developer2 | `fix/ui-bugs` | `src/templates/assets.html`, `src/static/css/main.css` | Code Review | March 13 |
-| developer3 | `docs/update-readme` | `README.md`, `docs/` | Waiting for Approval | March 12 |
+| Developer       | Branch                 | Files                                                                     | Status               | ETA      |
+| --------------- | ---------------------- | ------------------------------------------------------------------------- | -------------------- | -------- |
+| kmartineztamayo | `feat/planning-skills` | `src/services/task_assigner.py`, `apps/planning/src/services/db_utils.py` | In Progress          | March 15 |
+| developer2      | `fix/ui-bugs`          | `src/templates/assets.html`, `src/static/css/main.css`                    | Code Review          | March 13 |
+| developer3      | `docs/update-readme`   | `README.md`, `docs/`                                                      | Waiting for Approval | March 12 |
 
 ## Rules:
+
 - Update THIS DOCUMENT before starting work
 - Include branch name, files you're touching, and expected completion date
 - Check this before starting work to see if someone else is already touching your files
@@ -169,6 +176,7 @@ Last Updated: March 12, 2026
 ```
 
 **Location Options:**
+
 - GitHub Discussions (built-in, free)
 - Notion (shared workspace)
 - Google Docs (everyone can edit)
@@ -202,6 +210,7 @@ exit 0
 ```
 
 **Install hook:**
+
 ```bash
 # Copy to .git/hooks/ and make executable
 chmod +x .git/hooks/pre-push
@@ -212,6 +221,7 @@ chmod +x .git/hooks/pre-push
 ### 7. Git Tips to Minimize Conflicts
 
 #### Daily Sync
+
 ```bash
 # Every morning or before starting work
 git fetch origin
@@ -222,6 +232,7 @@ git rebase origin/main
 ```
 
 #### Logical Commits
+
 ```bash
 # Bad: Large commit touching many files
 git commit -m "work"
@@ -237,6 +248,7 @@ git commit -m "test: add coverage for skill matching edge cases"
 ```
 
 #### Use Feature Flags Instead of Long-Lived Branches
+
 ```python
 # Instead of 2-week branch editing multiple files,
 # use feature flags:
@@ -255,6 +267,7 @@ else:
 ## Expected Results
 
 ### Before Tier 1:
+
 - ❌ Developers push directly to main
 - ❌ No validation on commits
 - ❌ Conflicts discovered during merge (too late to fix)
@@ -262,6 +275,7 @@ else:
 - ❌ Duplicate work possible
 
 ### After Tier 1:
+
 - ✅ All changes go through PR + review
 - ✅ All tests must pass before merge
 - ✅ Code owners must approve
@@ -270,6 +284,7 @@ else:
 - ✅ Much easier coordination
 
 ### Conflict Reduction:
+
 - **Team < 3 people:** 60% reduction
 - **Team 3-5 people:** 40-50% reduction
 - **Team 5+ people:** 30-40% reduction (need Tier 2)
@@ -279,6 +294,7 @@ else:
 ## When to Upgrade to Tier 2
 
 If after 2 weeks of Tier 1 you still have:
+
 - ❌ Merge conflicts > 2 per week
 - ❌ Multiple developers blocked on same files
 - ❌ Frequent "sorry I was working on that" moments
@@ -324,6 +340,7 @@ echo "   docs/TIER1_GIT_PROTECTION.md"
 ```
 
 **Run:**
+
 ```bash
 chmod +x scripts/setup-git-protection.sh
 ./scripts/setup-git-protection.sh
@@ -333,15 +350,15 @@ chmod +x scripts/setup-git-protection.sh
 
 ## Summary
 
-| Step | Effort | Impact | When |
-|------|--------|--------|------|
-| 1. Branch protection | 5 min | High | Now |
-| 2. CODEOWNERS review | 5 min | Medium | Now |
-| 3. GitHub Actions CI | 15 min | High | Today |
-| 4. Slack notifications | 10 min | Medium | Today |
-| 5. Shared "Working On" doc | 10 min | Low | Today |
-| 6. Pre-push hook | 5 min | Medium | Today |
-| 7. Team training | 30 min | High | This week |
+| Step                       | Effort | Impact | When      |
+| -------------------------- | ------ | ------ | --------- |
+| 1. Branch protection       | 5 min  | High   | Now       |
+| 2. CODEOWNERS review       | 5 min  | Medium | Now       |
+| 3. GitHub Actions CI       | 15 min | High   | Today     |
+| 4. Slack notifications     | 10 min | Medium | Today     |
+| 5. Shared "Working On" doc | 10 min | Low    | Today     |
+| 6. Pre-push hook           | 5 min  | Medium | Today     |
+| 7. Team training           | 30 min | High   | This week |
 
 **Total:** ~1.5 hours of setup + 30 min team training
 
@@ -349,7 +366,6 @@ chmod +x scripts/setup-git-protection.sh
 
 ---
 
-**Last Updated:** March 12, 2026  
-**Created By:** GitHub Copilot  
+**Last Updated:** March 12, 2026
+**Created By:** GitHub Copilot
 **Status:** Ready for implementation
-

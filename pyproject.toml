@@ -253,4 +253,3 @@ exclude = ".venv,node_modules,apps"
 [tool.testmon]
 # Store the coverage DB in the project root (default; explicit for clarity)
 testmon_datafile = ".testmondata"
-

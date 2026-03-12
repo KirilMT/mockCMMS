@@ -428,6 +428,80 @@ else {
     }
 }
 
+# ============================================================================
+# STEP 3: PRE-COMMIT HOOKS SETUP
+# ============================================================================
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host "   PRE-COMMIT HOOKS SETUP" -ForegroundColor Magenta
+Write-Host "========================================`n" -ForegroundColor Magenta
+
+Write-Host "[Dev Step 3/3] Setting up pre-commit hooks..." -ForegroundColor Yellow
+
+# Check if pre-commit is available
+if (Get-Command pre-commit -ErrorAction SilentlyContinue) {
+    Write-Host "   Found: " -NoNewline -ForegroundColor White
+    $preCommitVersion = pre-commit --version 2>&1
+    Write-Host "$preCommitVersion " -NoNewline -ForegroundColor White
+    Write-Host "OK" -ForegroundColor Green
+
+    # Install pre-commit hooks
+    Write-Host "   Installing " -NoNewline -ForegroundColor White
+    Write-Host "pre-commit hooks" -NoNewline -ForegroundColor Magenta
+    Write-Host "..." -ForegroundColor White
+
+    try {
+        # Install pre-commit hooks (commits)
+        pre-commit install 2>&1 | Out-Null
+
+        # Install pre-push hooks
+        pre-commit install --hook-type pre-push 2>&1 | Out-Null
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host ""
+            Write-Host "   Pre-commit hooks installed " -NoNewline -ForegroundColor White
+            Write-Host "OK" -ForegroundColor Green
+            Write-Host "   Enabled:" -ForegroundColor White
+            Write-Host "     - Pre-commit: Code formatting & validation" -ForegroundColor Gray
+            Write-Host "     - Pre-push: Full validation & auto-release" -ForegroundColor Gray
+
+            # Configure repo-local alias for conflict-safe amend workflow.
+            $safeAmendAlias = '!pwsh -NoProfile -ExecutionPolicy Bypass -File "$(git rev-parse --show-toplevel)/scripts/safe-amend.ps1" amend'
+            git config --local alias.safe-amend $safeAmendAlias 2>&1 | Out-Null
+
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "   Git alias configured: " -NoNewline -ForegroundColor White
+                Write-Host "git safe-amend" -ForegroundColor Magenta
+                Write-Host "   Git alias configured: " -NoNewline -ForegroundColor White
+                Write-Host "git safe-amend cleanup" -ForegroundColor Magenta
+            }
+            else {
+                Write-Host "   Git alias setup " -NoNewline -ForegroundColor White
+                Write-Host "FAILED" -ForegroundColor Yellow
+                Write-Host "   (You can still run: pwsh -File scripts/safe-amend.ps1)" -ForegroundColor Gray
+                $script:ErrorCount++
+            }
+        }
+        else {
+            Write-Host ""
+            Write-Host "   Pre-commit hook install " -NoNewline -ForegroundColor White
+            Write-Host "FAILED" -ForegroundColor Red
+            $script:ErrorCount++
+        }
+    }
+    catch {
+        Write-Host ""
+        Write-Host "   Pre-commit hook install " -NoNewline -ForegroundColor White
+        Write-Host "FAILED" -ForegroundColor Red
+        Write-Host "   Error: $_" -ForegroundColor Red
+        $script:ErrorCount++
+    }
+}
+else {
+    Write-Host "   Pre-commit not found " -NoNewline -ForegroundColor White
+    Write-Host "SKIPPED" -ForegroundColor Yellow
+    Write-Host "   (Will be installed via requirements.txt when activated)" -ForegroundColor Gray
+}
+
 
 # Final Summary
 Write-Host "`n========================================" -ForegroundColor Cyan
