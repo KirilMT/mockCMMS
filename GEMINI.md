@@ -100,6 +100,20 @@ Every code change must follow this strict process for EACH file or module:
 - `python scripts/validate_code.py --backend` - Backend only.
 - `python scripts/validate_code.py --frontend` - Frontend only.
 
+**Test Generation:**
+
+When writing new code, generate test stubs automatically:
+
+```bash
+python scripts/generate_tests.py src/services/new_module.py --dry-run  # Preview
+python scripts/generate_tests.py src/services/new_module.py           # Create
+python scripts/generate_tests.py --scan                               # Find untested
+```
+
+Generated tests follow repository standards (fixtures, AAA pattern, docstrings). You add assertions and test logic.
+
+**For detailed documentation:** See `docs/test_generator.md`
+
 ### 1.2. Reliability, Security & Performance
 
 - **Error Handling:** Include robust error handling appropriate for the language

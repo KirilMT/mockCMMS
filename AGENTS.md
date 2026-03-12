@@ -153,6 +153,7 @@ Add new tests to the appropriate category. See [tests/README.md](./tests/README.
 
 - `scripts/format_code.py` - Auto-fix formatting (isort, black, docformatter, prettier)
 - `scripts/validate_code.py` - Comprehensive validation (linting, tests, coverage)
+- `scripts/generate_tests.py` - Generate test stubs (preview with `--dry-run`, scan with `--scan`)
 - `scripts/release_manager.py` - Automated version bumping and changelog updates
 
 ---

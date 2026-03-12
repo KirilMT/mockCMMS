@@ -180,6 +180,8 @@ The application will start in development mode by default. Access it at
 | :---------------------------------------- | :------------------------------------------------- |
 | `python scripts/validate_code.py`         | **Run BEFORE Commit** (Lint + Test + Format Check) |
 | `python scripts/validate_code.py --quick` | Fast validation (skips E2E)                        |
+| `python scripts/generate_tests.py <file>` | Generate test stubs (Arrange-Act-Assert pattern)   |
+| `python scripts/generate_tests.py --scan` | Find untested modules in `src/`                    |
 | `python run.py`                           | Run local dev server                               |
 | `pytest`                                  | Run backend tests manually                         |
 

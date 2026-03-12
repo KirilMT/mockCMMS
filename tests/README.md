@@ -355,4 +355,48 @@ If you see `*.db` files after running tests:
 
 ---
 
+## 🔧 Test Generation Tool
+
+Generate test stubs automatically with the `generate_tests.py` script:
+
+```bash
+# Generate test stubs for a module
+python scripts/generate_tests.py src/services/new_module.py
+
+# Preview before creating (always do this first!)
+python scripts/generate_tests.py src/services/new_module.py --dry-run
+
+# Find all untested modules
+python scripts/generate_tests.py --scan
+
+# Overwrite existing test file
+python scripts/generate_tests.py src/services/module.py --force
+```
+
+**Generated tests include:**
+- Proper imports following repo conventions
+- Class and function organization
+- Docstrings for all test methods
+- Arrange-Act-Assert (AAA) pattern
+- TODO comments for test logic
+- Fixtures as needed
+
+**You write:** Test logic, assertions, mock setup, edge cases.
+
+**Important limitations:**
+- Generated tests are scaffolding, not complete/production-ready assertions.
+- Review and harden all generated tests before commit.
+- Private functions (prefixed with `_`) are intentionally skipped.
+
+**Category detection (auto):**
+- `api.py`, `routes.py` -> `tests/backend/functional/`
+- `services/`, `utils.py`, `models.py` -> `tests/backend/unit/`
+- default -> `tests/backend/unit/`
+
+Use `--category` to override when needed.
+
+**Time savings:** ~60% of boilerplate test writing time per module.
+
+---
+
 **For detailed test specifications, see:** `docs/comprehensive_testing_plan.md`
