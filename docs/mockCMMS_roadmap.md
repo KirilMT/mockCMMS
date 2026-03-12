@@ -93,6 +93,22 @@ _Updated March 12, 2026_ (Pre-commit hooks automation + Collaborative Developmen
 
 ## 📋 PLANNED WORK
 
+- **[ ] Troubleshooting App Creation (New Modular App)** _(Priority: High)_
+  - **Goal:** Build a new fully modular `Troubleshooting` app inspired by the `Troubleshooting-Wizard` concept and integrate it into the mockCMMS monorepo without coupling it to core app internals.
+  - **Concept Scope (from Troubleshooting-Wizard):**
+    - Technology-based troubleshooting entry point (select system/technology first)
+    - Error code lookup workflows (PDF/manual references + structured database lookup)
+    - Configuration-driven resource mapping (manuals, guides, and troubleshooting paths)
+  - **Monorepo Standards (non-negotiable):**
+    - App lives in `apps/troubleshooting/` with isolated `src/`, `tests/`, `docs/`, and `config/`
+    - App enablement via environment flag (planned: `TROUBLESHOOTING_ENABLED=True|False`)
+    - Conditional registration in core app factory (no unconditional module-level imports from `apps/*` in `src/`)
+    - Dedicated roadmap/bug tracking in app docs (no task duplication in core roadmap)
+  - **Planning Docs:**
+    - [Troubleshooting App Roadmap](./Troubleshooting app/troubleshooting_roadmap.md)
+    - [Troubleshooting App Concept & Modular Architecture](./Troubleshooting app/troubleshooting_concept_and_modular_architecture.md)
+  - **Status:** Discovery + architecture definition
+
 - **[ ] Collaborative Development: Live Synchronization & File Locking** _(Priority: High)_
   - **Goal:** Enable synchronized development across multiple developers with real-time visibility and automatic conflict prevention (similar to Siemens TIA Portal Server Projects).
   - **Problem Solved:** Eliminates merge conflicts by implementing file locking and live updates to show who's working on what.
@@ -878,6 +894,22 @@ This application is intended for reporting and analytics. The following features
     - Analyze technician performance and skill gaps.
     - Generate reporting on spare part consumption trends.
 
+### `troubleshooting` App (Planned New Module)
+
+> **See:** [Troubleshooting App Roadmap](./Troubleshooting app/troubleshooting_roadmap.md) for phased implementation tasks.
+
+- **[ ] Build Troubleshooting Module Foundation** _(Priority: High)_
+  - Scaffold `apps/troubleshooting` as an isolated Flask module with blueprint registration, config, and test suite.
+  - Keep strict boundary from core app and other apps; integrate only through controlled app registration and shared APIs.
+
+- **[ ] Implement Troubleshooting Knowledge Workflows** _(Priority: High)_
+  - Add technology selector and troubleshooting decision flow.
+  - Support error-code-centric diagnosis with configurable references to manuals/knowledge entries.
+
+- **[ ] Add Config-Driven Data and Resource Management** _(Priority: Medium)_
+  - Store troubleshooting mappings in app-specific config and/or dedicated app tables.
+  - Ensure secure handling of local/manual resource paths and separation from repository-sensitive data.
+
 ---
 
 ## Summary of Key Unimplemented Features
@@ -890,6 +922,7 @@ This application is intended for reporting and analytics. The following features
 **High Priority:**
 
 - **Line Conditions for Planning:** [See Planning Roadmap](../apps/planning/docs/planning_roadmap.md)
+- **Troubleshooting App Creation (New Modular App):** [See Troubleshooting Roadmap](./Troubleshooting app/troubleshooting_roadmap.md)
 - **Frontend Architecture Decision:** Evaluate migration to a modern framework (Angular/React).
 - **Docker-Based Visual Regression Testing:** Standardize visual testing with containerized runner.
 - **CI/CD Pipeline:** ✅ COMPLETE.
