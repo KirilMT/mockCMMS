@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated March 12, 2026_ (Pre-commit hooks automation + Collaborative Development)
+_Updated March 12, 2026_ (Monitoring App planning added)
 
 ---
 
@@ -107,6 +107,28 @@ _Updated March 12, 2026_ (Pre-commit hooks automation + Collaborative Developmen
   - **Planning Docs:**
     - [Troubleshooting App Roadmap](./Troubleshooting app/troubleshooting_roadmap.md)
     - [Troubleshooting App Concept & Modular Architecture](./Troubleshooting app/troubleshooting_concept_and_modular_architecture.md)
+  - **Status:** Discovery + architecture definition
+
+- **[ ] Monitoring App Creation (New Modular App)** _(Priority: High)_
+  - **Goal:** Build a real-time **Production Re-Start Status Monitoring** application that provides visual oversight of plant floor readiness after Break Activities periods or weekend maintenance tasks.
+  - **Core Features:**
+    - **Plant Layout Visualization:** Spatial representation of production floor matching physical arrangement
+    - **Real-Time Status Tracking:** Live status indicators (green/yellow/red/blue) for each station and task type
+    - **MO-Asset Integration:** Automatic status updates based on Maintenance Order completion
+    - **Interactive Drill-Down:** Click stations to view detailed task lists and linked MOs/Assets
+    - **Production Readiness Dashboard:** At-a-glance view of which lines are ready for production restart
+  - **Use Cases:**
+    - Post-weekend readiness verification (operations managers check line status before production restart)
+    - Break period status monitoring (track maintenance progress during shutdowns)
+    - Cross-team coordination (shared visual reference for maintenance, operations, production teams)
+  - **Monorepo Standards (non-negotiable):**
+    - App lives in `apps/monitoring/` with isolated `src/`, `tests/`, `docs/`, and `config/`
+    - App enablement via environment flag (planned: `MONITORING_ENABLED=True|False`)
+    - Conditional registration in core app factory (no unconditional module-level imports from `apps/*` in `src/`)
+    - Dedicated roadmap/bug tracking in app docs (no task duplication in core roadmap)
+  - **Planning Docs:**
+    - [Monitoring App Roadmap](./Monitoring app/monitoring_roadmap.md)
+    - [Monitoring App Concept & Modular Architecture](./Monitoring app/monitoring_concept_and_modular_architecture.md)
   - **Status:** Discovery + architecture definition
 
 - **[ ] Collaborative Development: Live Synchronization & File Locking** _(Priority: High)_
@@ -923,6 +945,7 @@ This application is intended for reporting and analytics. The following features
 
 - **Line Conditions for Planning:** [See Planning Roadmap](../apps/planning/docs/planning_roadmap.md)
 - **Troubleshooting App Creation (New Modular App):** [See Troubleshooting Roadmap](./Troubleshooting app/troubleshooting_roadmap.md)
+- **Monitoring App Creation (New Modular App):** [See Monitoring Roadmap](./Monitoring app/monitoring_roadmap.md)
 - **Frontend Architecture Decision:** Evaluate migration to a modern framework (Angular/React).
 - **Docker-Based Visual Regression Testing:** Standardize visual testing with containerized runner.
 - **CI/CD Pipeline:** ✅ COMPLETE.
