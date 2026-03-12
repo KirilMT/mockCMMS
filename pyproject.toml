@@ -242,3 +242,15 @@ ignore = "H006,H030,H031"
 
 # Exclude patterns
 exclude = ".venv,node_modules,apps"
+
+# =============================================================================
+# PYTEST-TESTMON CONFIGURATION
+# Tracks which tests cover which source lines so --quick only reruns tests
+# whose covered code actually changed (Tier 1 of smart test targeting).
+# The .testmondata file is local-only — it is listed in .gitignore.
+# Seed it once with: pytest --testmon  (or any full suite run)
+# =============================================================================
+[tool.testmon]
+# Store the coverage DB in the project root (default; explicit for clarity)
+testmon_datafile = ".testmondata"
+

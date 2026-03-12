@@ -5,10 +5,20 @@ This script runs all validation checks that should pass before committing code.
 It simulates the CI pipeline locally to catch issues early.
 
 Usage:
-    python scripts/validate_code.py              # Run all checks
+    python scripts/validate_code.py              # Run all checks (full suite)
     python scripts/validate_code.py --backend    # Only backend checks
     python scripts/validate_code.py --frontend   # Only frontend checks
-    python scripts/validate_code.py --quick      # Skip slow tests
+    python scripts/validate_code.py --quick      # Smart mode: targeted tests only
+
+Smart --quick mode (three-tier priority):
+    Tier 1 — testmon:   .testmondata exists → reruns ONLY tests whose covered
+                        source lines actually changed (most precise, fastest).
+                        Seed once with: pytest --testmon
+    Tier 2 — git-diff:  No testmon DB → maps changed files to their test dirs
+                        and runs only those directories.
+    Tier 3 — fallback:  No changes detected or global file changed → runs the
+                        full suite without coverage (fast, safe).
+    Skip    — no-op:    No backend/frontend changes in that category → skipped.
 """
 
 import argparse
@@ -18,7 +28,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Import cleanup utilities (located in the same scripts/ directory)
 sys.path.insert(0, str(Path(__file__).parent))
@@ -190,6 +200,144 @@ def run_command(
         return False, f"Command not found: {command[0]}"
 
 
+# =============================================================================
+# SMART TEST SCOPE DETECTION  (used by --quick mode)
+# =============================================================================
+
+# Any change to these files invalidates the scope map — run the full suite.
+_FULL_SUITE_FILENAMES: frozenset = frozenset(
+    [
+        "conftest.py",
+        "pyproject.toml",
+        "run.py",
+        ".env",
+        "requirements.txt",
+        "requirements-dev.txt",
+    ]
+)
+_FULL_SUITE_PREFIXES: tuple = ("scripts/", ".github/")
+
+# Maps source-file path prefixes → relevant backend test directories.
+# More-specific prefixes must come before their parents.
+# An empty list [] means "frontend-only — explicitly skip backend mapping."
+_BACKEND_MAP: List[Tuple[str, List[str]]] = [
+    ("src/routes/", ["tests/backend/functional", "tests/backend/integration"]),
+    ("src/services/", ["tests/backend/unit", "tests/backend/integration"]),
+    # Static assets and templates are frontend concerns — skip backend tests
+    ("src/static/", []),
+    ("src/templates/", []),
+    ("src/", ["tests/backend"]),  # catch-all for other src/ Python files
+    ("apps/planning/src/static/", []),  # frontend-only
+    ("apps/planning/src/templates/", []),  # frontend-only
+    ("apps/planning/src/", ["apps/planning/tests"]),
+    ("apps/planning/", ["apps/planning/tests"]),
+    ("apps/reports/src/static/", []),  # frontend-only
+    ("apps/reports/src/templates/", []),  # frontend-only
+    ("apps/reports/src/", ["apps/reports/tests"]),
+    ("apps/reports/", ["apps/reports/tests"]),
+    # Test files themselves → run their own directory
+    ("tests/backend/", ["tests/backend"]),
+    ("apps/planning/tests/", ["apps/planning/tests"]),
+    ("apps/reports/tests/", ["apps/reports/tests"]),
+]
+
+# Maps source-file path prefixes → relevant frontend test directories.
+_FRONTEND_MAP: List[Tuple[str, List[str]]] = [
+    ("src/static/js/", ["tests/frontend/unit"]),
+    ("src/static/css/", ["tests/frontend/unit"]),
+    ("src/templates/", ["tests/frontend/unit"]),
+    ("apps/planning/src/static/", ["tests/frontend/unit"]),
+    ("apps/reports/src/static/", ["tests/frontend/unit"]),
+    ("tests/frontend/", ["tests/frontend/unit"]),
+]
+
+
+def _get_changed_files() -> List[str]:
+    """Return all changed files (staged, unstaged, untracked) from git.
+
+    Returns normalized forward-slash paths, or an empty list when git is unavailable or
+    the working tree is clean.
+    """
+    changed: set = set()
+    git_cmds = [
+        ["git", "diff", "--name-only", "HEAD"],  # unstaged changes vs HEAD
+        ["git", "diff", "--name-only", "--cached"],  # staged changes
+        ["git", "ls-files", "--others", "--exclude-standard"],  # untracked
+    ]
+    for cmd in git_cmds:
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=False,
+                encoding="utf-8",
+            )
+            if result.returncode == 0:
+                for line in result.stdout.splitlines():
+                    line = line.strip()
+                    if line:
+                        # Normalize to forward slashes for consistent matching
+                        changed.add(line.replace("\\", "/"))
+        except (FileNotFoundError, OSError):
+            return []  # git not available
+    return sorted(changed)
+
+
+def detect_changed_scopes() -> Dict[str, Any]:
+    """Analyze git changes and return smart test scopes for --quick mode.
+
+    Returns a dict with:
+      - ``"full_suite"`` (bool): True → global file changed or no git info,
+        run the full suite.
+      - ``"backend"`` (list[str]): Backend test dirs to run.  Empty list means
+        no backend-relevant files changed — skip backend tests.
+      - ``"frontend"`` (list[str]): Frontend test dirs to run.  Empty list means
+        no frontend-relevant files changed — skip frontend tests.
+    """
+    files = _get_changed_files()
+
+    # No changes or git unavailable → default to full suite (safest fallback)
+    if not files:
+        return {"full_suite": True, "backend": [], "frontend": []}
+
+    # Any global config/infrastructure change invalidates targeted scope
+    for f in files:
+        basename = f.rsplit("/", 1)[-1]
+        if basename in _FULL_SUITE_FILENAMES:
+            print_warning(f"Global config changed ({f!r}) — full suite required.")
+            return {"full_suite": True, "backend": [], "frontend": []}
+        if any(f.startswith(p) for p in _FULL_SUITE_PREFIXES):
+            print_warning(f"Infrastructure file changed ({f!r}) — full suite required.")
+            return {"full_suite": True, "backend": [], "frontend": []}
+
+    backend: set = set()
+    frontend: set = set()
+
+    for f in files:
+        # Backend mapping (first match wins per file; [] = frontend-only, skip)
+        for prefix, dirs in _BACKEND_MAP:
+            if f.startswith(prefix):
+                if dirs:  # Empty list means "frontend-only — no backend tests"
+                    backend.update(dirs)
+                break  # Always break so the generic src/ catch-all is not reached
+        # Frontend mapping (independent — a file can affect both)
+        for prefix, dirs in _FRONTEND_MAP:
+            if f.startswith(prefix):
+                frontend.update(dirs)
+                break
+
+    return {
+        "full_suite": False,
+        # Keep only directories that actually exist in this repo
+        "backend": [d for d in sorted(backend) if Path(d).exists()],
+        "frontend": [d for d in sorted(frontend) if Path(d).exists()],
+    }
+
+
+# =============================================================================
+
+
 def validate_python_backend(quick: bool = False, force_all_apps: bool = True) -> bool:
     """Run all Python backend validation checks."""
     print_header("BACKEND VALIDATION")
@@ -260,12 +408,79 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     # 8. Running Tests
     print_section("Step 8/10: Running Tests with Coverage")
     if quick:
-        print_warning("Quick mode: Skipping full test suite")
-        success, _ = run_command(
-            ["pytest", "-c", "pyproject.toml", "-x", "--tb=short"],
-            "Quick test run",
-            force_all_apps=force_all_apps,
-        )
+        print_warning("Quick mode: Smart test targeting enabled")
+        scopes = detect_changed_scopes()
+        testmon_db = Path(".testmondata")
+
+        if scopes["full_suite"]:
+            # Global change detected — run everything quickly without coverage
+            print_warning(
+                "Quick mode [full scope]: Global/infra file changed, "
+                "running all tests without coverage."
+            )
+            success, _ = run_command(
+                [
+                    "pytest",
+                    "-c",
+                    "pyproject.toml",
+                    "--no-cov",  # override addopts --cov (no threshold in quick mode)
+                    "-x",
+                    "--tb=short",
+                ],
+                "Quick test run (full scope, no coverage)",
+                force_all_apps=force_all_apps,
+            )
+
+        elif testmon_db.exists():
+            # Tier 1 — testmon: reruns only tests whose covered lines changed.
+            # --no-cov prevents pytest-cov from conflicting with testmon's tracer.
+            print_warning(
+                "Quick mode [Tier 1 — testmon]: Coverage DB found. "
+                "Running only tests affected by your changes."
+            )
+            success, _ = run_command(
+                [
+                    "pytest",
+                    "-c",
+                    "pyproject.toml",
+                    "--testmon",
+                    "--no-cov",
+                    "-x",
+                    "--tb=short",
+                ],
+                "Smart test run (testmon — affected tests only)",
+                force_all_apps=force_all_apps,
+            )
+
+        elif scopes["backend"]:
+            # Tier 2 — git-diff: run only directories mapped from changed files.
+            scope_str = " ".join(scopes["backend"])
+            print_warning(
+                f"Quick mode [Tier 2 — git-diff]: Scoping backend tests to: "
+                f"{scope_str}"
+            )
+            success, _ = run_command(
+                [
+                    "pytest",
+                    "-c",
+                    "pyproject.toml",
+                    "--no-cov",
+                    "-x",
+                    "--tb=short",
+                ]
+                + scopes["backend"],
+                f"Scoped test run ({scope_str})",
+                force_all_apps=force_all_apps,
+            )
+
+        else:
+            # Tier 3 — no backend changes detected: skip entirely.
+            print_warning(
+                "Quick mode [Tier 3 — skip]: No backend-relevant changes "
+                "detected — skipping backend tests."
+            )
+            success = True
+
         checks.append(("Tests", success))
     else:
         success, _ = run_command(
@@ -431,18 +646,39 @@ def validate_javascript_frontend(
 
     # 2. JavaScript tests (Jest) with coverage - MATCHES CI
     print_section("Step 2/3: JavaScript Tests (jest)")
-    success, _ = run_command(
-        [
-            "npm",
-            "test",
-            "--",
-            "--coverage",
-            "--coverageReporters=text",
-            "--coverageReporters=lcov",
-        ],
-        "Jest tests with coverage",
-        force_all_apps=force_all_apps,
-    )
+    if quick:
+        _scopes = detect_changed_scopes()
+        if _scopes["full_suite"] or _scopes["frontend"]:
+            success, _ = run_command(
+                [
+                    "npm",
+                    "test",
+                    "--",
+                    "--coverage",
+                    "--coverageReporters=text",
+                    "--coverageReporters=lcov",
+                ],
+                "Jest tests with coverage",
+                force_all_apps=force_all_apps,
+            )
+        else:
+            print_warning(
+                "Quick mode: No JS/CSS/template changes detected — skipping Jest."
+            )
+            success = True
+    else:
+        success, _ = run_command(
+            [
+                "npm",
+                "test",
+                "--",
+                "--coverage",
+                "--coverageReporters=text",
+                "--coverageReporters=lcov",
+            ],
+            "Jest tests with coverage",
+            force_all_apps=force_all_apps,
+        )
     checks.append(("Jest Tests", success))
 
     # 3. E2E tests (Playwright) - MATCHES CI
