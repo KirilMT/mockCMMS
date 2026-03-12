@@ -158,7 +158,10 @@ class TestGenerator:
                     f"        # result = {func_name}(...)",
                     "",
                     "        # Assert",
-                    "        pytest.skip(\"TODO: add assertions for this generated test\")",
+                    (
+                        '        pytest.skip("TODO: add assertions '
+                        'for this generated test")'
+                    ),
                     "",
                 ]
             )

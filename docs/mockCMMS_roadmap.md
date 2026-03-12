@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated March 10, 2026_
+_Updated March 12, 2026_
 
 ---
 
@@ -322,6 +322,13 @@ The core application can be improved with the following features to support the 
     - **High-Volume Random Data Generation:** Generate large datasets (thousands of items per table) with realistic, randomized values to mimic production environments.
     - **Data Simulation Service:** Build a service that can generate realistic mock data (PMs, MOs, technician logs) for stress-testing and demonstration purposes.
     - **User Input Simulation:** Create a UI for simulating user inputs, such as manually triggering a breakdown alarm or reporting a technician as absent, to test the system's dynamic response.
+  - **Follow-up Enhancement Pending:** Add team-aware labor scaling for bulk-generated MOs so generated staffing better reflects assigned team headcount.
+
+- **[ ] Bulk Data Generator Team-Based Labor Scaling** _(Priority: Medium)_
+  - **Goal:** Keep generated maintenance order labor demand aligned with real team capacity.
+  - **Acceptance Criteria:**
+    - **Team Headcount Batching:** In bulk generation flows, each block of 100 generated MOs should represent one complete team profile (example: team headcount = 10 technicians, configurable by team).
+    - **Adaptive MO Labor Count Option:** When assigning a generated MO to a team, provide an option to auto-set MO `labour_count` to the assigned team's headcount.
 
 #### User & Calendar Management
 
@@ -843,6 +850,7 @@ This application is intended for reporting and analytics. The following features
 - **Automated, Specialized Reports:** [See Reports Roadmap](../apps/reports/docs/reports_roadmap.md)
 - **HMI → Reactive MO Integration:** Auto-create breakdown MOs from HMI MNTC button signal.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
+- **Bulk Data Generator Team-Based Labor Scaling:** Add team headcount batching (100 MOs per complete team profile) and optional MO `labour_count` auto-alignment to assigned team size.
 - **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific operators, **numeric comparators (between / greater-than / less-than)** for numeric columns.
 - **Infrastructure & Quality Refinement:** Ruff expansion, ESLint/Stylelint enforcement, and global coverage alignment (85%).
 - **UI Regression Automation:** End-to-end UI testing.
