@@ -521,7 +521,7 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     checks = []
 
     # 1. Import sorting (PEP 8)
-    print_section("Step 1/10: Import Sorting (isort)")
+    print_section("Step 1/11: Import Sorting (isort)")
     success, _ = run_command(
         ["isort", "src", "apps", "tests", "scripts", "run.py", "--check-only"],
         "Import sorting check",
@@ -530,7 +530,7 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     checks.append(("Import Sorting", success))
 
     # 2. Code formatting (Black)
-    print_section("Step 2/10: Code Formatting (black)")
+    print_section("Step 2/11: Code Formatting (black)")
     success, _ = run_command(
         ["black", "--check", "src", "apps", "tests", "scripts", "run.py"],
         "Code formatting check",
@@ -539,7 +539,7 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     checks.append(("Code Formatting", success))
 
     # 3. Docstring formatting (PEP 257)
-    print_section("Step 3/10: Docstring Formatting (docformatter)")
+    print_section("Step 3/11: Docstring Formatting (docformatter)")
     success, _ = run_command(
         ["docformatter", "--check", "-r", "src", "apps", "tests", "scripts", "run.py"],
         "Docstring formatting check",
@@ -548,7 +548,7 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     checks.append(("Docstring Formatting", success))
 
     # 4. Linting (Ruff - fast, comprehensive)
-    print_section("Step 4/10: Linting (ruff)")
+    print_section("Step 4/11: Linting (ruff)")
     success, _ = run_command(
         ["ruff", "check", "src", "apps", "tests", "scripts", "run.py"],
         "Ruff linting",
@@ -556,19 +556,43 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     )
     checks.append(("Ruff Linting", success))
 
-    # 5. Type checking (Validation)
-    print_section("Step 5/10: Type Checking (mypy)")
-    success, _ = run_command(["mypy"], "Type checking")
+    # 5. Additional linting (Flake8)
+    print_section("Step 5/11: Additional Linting (flake8)")
+    exclude_dirs = (
+        ".venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report"
+    )
+    success, _ = run_command(
+        [
+            "flake8",
+            ".",
+            f"--exclude={exclude_dirs}",
+            "--count",
+            "--show-source",
+            "--statistics",
+            "--max-line-length=88",
+        ],
+        "Flake8 linting",
+        force_all_apps=True,
+    )
+    checks.append(("Flake8 Linting", success))
+
+    # 6. Type checking (mypy)
+    print_section("Step 6/11: Type Checking (mypy)")
+    success, _ = run_command(
+        ["mypy", "src", "apps", "tests", "scripts", "run.py"],
+        "Type checking",
+        force_all_apps=True,
+    )
     checks.append(("Type Checking", success))
 
-    # 6. Security scanning (Bandit)
-    print_section("Step 6/10: Security Scanning (bandit)")
+    # 7. Security scanning (Bandit)
+    print_section("Step 7/11: Security Scanning (bandit)")
     # -ll: report only medium and high severity issues
     success, _ = run_command(["bandit", "-r", "src/", "-ll"], "Security scanning")
     checks.append(("Security Scanning", success))
 
-    # 7. Template Linting (djlint)
-    print_section("Step 7/10: Template Linting (djlint)")
+    # 8. Template Linting (djlint)
+    print_section("Step 8/11: Template Linting (djlint)")
     # Apps templates excluded due to risk/lack of tests
     template_paths = ["src/templates"]
     success, _ = run_command(
@@ -581,8 +605,8 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     else:
         checks.append(("Template Linting", success))
 
-    # 8. Running Tests
-    print_section("Step 8/10: Running Tests with Coverage")
+    # 9. Running Tests
+    print_section("Step 9/11: Running Tests with Coverage")
     if quick:
         print_warning("Quick mode: Smart test targeting enabled")
         scopes = detect_changed_scopes()
@@ -675,9 +699,9 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
         )
         checks.append(("Full Discovery Suite", success))
 
-    # 9. Coverage validation (Total >= 82%)
+    # 10. Coverage validation (Total >= 82%)
     if not quick:
-        print_section("Step 9/10: Total Coverage Validation")
+        print_section("Step 10/11: Total Coverage Validation")
         success, _ = run_command(
             [
                 "pytest",
@@ -693,8 +717,8 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
         )
         checks.append(("Total Coverage Threshold", success))
 
-        # 10. Diff Coverage validation (New Code >= 92%)
-        print_section("Step 10/10: Diff (Patch) Coverage")
+        # 11. Diff Coverage validation (New Code >= 92%)
+        print_section("Step 11/11: Diff (Patch) Coverage")
         # Ensure we have coverage.xml
         if not os.path.exists("coverage.xml"):
             print_warning("coverage.xml not found, skipping diff-cover")

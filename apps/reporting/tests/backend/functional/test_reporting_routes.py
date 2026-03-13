@@ -74,7 +74,8 @@ def test_generate_weekend_report_missing_date(logged_in_client):
 
 
 @patch(
-    "apps.reporting.src.services.data_aggregator.DataAggregator.get_aggregated_shift_data"
+    "apps.reporting.src.services.data_aggregator.DataAggregator."
+    "get_aggregated_shift_data"
 )
 def test_generate_shift_report_success(mock_get_data, logged_in_client, sample_user):
     """Test successfully generating a shift report."""

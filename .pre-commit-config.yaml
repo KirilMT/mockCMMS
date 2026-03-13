@@ -50,3 +50,13 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        name: Flake8 Linting
+        additional_dependencies: []
+        args: [--count, --exclude=.venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report, --show-source, --statistics, --max-line-length=88]
+        language_version: python3
+        stages: [pre-commit]
