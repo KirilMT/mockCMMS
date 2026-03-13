@@ -27,7 +27,10 @@ from pathlib import Path
 
 # Configuration
 PYTHON_VERSION = "3.12.1"
-PYTHON_EMBED_URL = f"https://www.python.org/ftp/python/{PYTHON_VERSION}/python-{PYTHON_VERSION}-embed-amd64.zip"
+PYTHON_EMBED_URL = (
+    f"https://www.python.org/ftp/python/{PYTHON_VERSION}/"
+    f"python-{PYTHON_VERSION}-embed-amd64.zip"
+)
 APP_VERSION = "1.2.0"  # Update this with each release
 
 # Directories
