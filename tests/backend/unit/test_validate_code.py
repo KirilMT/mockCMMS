@@ -3,6 +3,7 @@
 import importlib.util
 import os
 from pathlib import Path
+from unittest.mock import MagicMock
 
 
 def _load_validate_code_module():
@@ -153,3 +154,103 @@ def test_run_command_preserves_windows_root_env_vars(monkeypatch):
     assert captured["env"]["PROGRAMDATA"] == os.environ["PROGRAMDATA"]
     assert captured["env"]["HOMEDRIVE"] == os.environ["HOMEDRIVE"]
     assert captured["env"]["HOMEPATH"] == os.environ["HOMEPATH"]
+
+
+class TestValidateCodeRobust:
+    """Robust tests for validate_code.py logic and environment management."""
+
+    def test_dedupe_output_blocks_handles_none_and_whitespace(self):
+        """Verify _dedupe_output_blocks is resilient to various inputs."""
+        inputs = ["block1", None, "  ", "block1", "block2\n", "block2"]
+        # normalized "block2\n" is "block2", so it's a duplicate
+        expected = ["block1", "block2"]
+        assert validate_code._dedupe_output_blocks(*inputs) == expected
+
+    def test_extract_coverage_block_variations(self):
+        """Test coverage extraction with different output patterns."""
+        lines = [
+            "some output",
+            "TOTAL                                              100     10  90%",
+            "coverage: platform win32",
+            "more lines",
+            "Required test coverage of 85% reached.",
+        ]
+        extracted = validate_code._extract_coverage_block(lines)
+        assert "TOTAL" in extracted
+        assert "90%" in extracted
+
+        # Empty case
+        assert validate_code._extract_coverage_block(["no coverage info"]) == ""
+
+    def test_run_command_environment_sanitization(self, monkeypatch):
+        """Verify that ironclad environment sanitizes sensitive variables."""
+        captured_env = {}
+
+        def mock_run(cmd, **kwargs):
+            captured_env.update(kwargs.get("env", {}))
+            return MagicMock(returncode=0, stdout="success", stderr="")
+
+        monkeypatch.setattr(validate_code.subprocess, "run", mock_run)
+
+        # Set a "poison" variable in current environment
+        monkeypatch.setenv("PORTABLE_DISTRIBUTION", "true")
+
+        validate_code.run_command(["ls"], "test")
+
+        # Ironclad should have forced it to false
+        assert captured_env["PORTABLE_DISTRIBUTION"] == "false"
+        assert captured_env["CI"] == "true"
+        assert captured_env["TESTING"] == "1"
+
+    def test_format_failure_output_max_lines_limit(self):
+        """Test truncation logic for very long generic failure output."""
+        long_output = "\n".join([f"line {i}" for i in range(500)])
+        formatted = validate_code.format_failure_output(long_output, "")
+
+        assert "First lines:" in formatted
+        assert "Last lines:" in formatted
+        assert "line 0" in formatted
+        assert "line 499" in formatted
+        assert "lines omitted for brevity" in formatted
+
+    def test_pytest_section_parsing_complex(self):
+        """Test parsing of multiple pytest sections."""
+        output = [
+            "============================= FAILURES =============================",
+            "fail1",
+            "============================= ERRORS ===============================",
+            "error1",
+            "====================== short test summary info ======================",
+            "summary1",
+        ]
+        ranges = validate_code._find_pytest_section_ranges(output)
+        assert "failures" in ranges
+        assert "errors" in ranges
+        assert "short test summary info" in ranges
+
+        assert ranges["failures"] == (0, 2)
+        assert ranges["errors"] == (2, 4)
+        assert ranges["short test summary info"] == (4, 6)
+
+    def test_run_command_shell_selection(self, monkeypatch):
+        """Verify shell=True is only used for npm/npx on Windows."""
+        captured = []
+
+        def mock_run(cmd, **kwargs):
+            captured.append(kwargs.get("shell", False))
+            return MagicMock(returncode=0)
+
+        monkeypatch.setattr(validate_code.subprocess, "run", mock_run)
+
+        # Mocking Windows
+        monkeypatch.setattr(validate_code.sys, "platform", "win32")
+        validate_code.run_command(["npm", "test"], "npm test")
+        assert captured[-1] is True
+
+        validate_code.run_command(["python", "run.py"], "python")
+        assert captured[-1] is False
+
+        # Mocking Linux
+        monkeypatch.setattr(validate_code.sys, "platform", "linux")
+        validate_code.run_command(["npm", "test"], "npm test")
+        assert captured[-1] is False

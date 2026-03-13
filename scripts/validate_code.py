@@ -120,6 +120,8 @@ def _dedupe_output_blocks(*blocks: str) -> List[str]:
     seen = set()
     unique_blocks: List[str] = []
     for block in blocks:
+        if block is None:
+            continue
         normalized = block.strip()
         if normalized and normalized not in seen:
             seen.add(normalized)
@@ -296,14 +298,13 @@ def run_command(
         # Blocks local shell variables from masking configuration gaps.
         ironclad_env = {
             "PATH": os.environ.get("PATH", ""),
-            "PYTHONPATH": os.environ.get("PYTHONPATH", "."),
-            "SYSTEMROOT": os.environ.get(
-                "SYSTEMROOT", ""
-            ),  # Essential for Windows subprocess
+            "PYTHONPATH": os.environ.get("PYTHONPATH", str(Path.cwd())),
+            "SYSTEMROOT": os.environ.get("SYSTEMROOT", ""),
             "PYTHONIOENCODING": "utf-8",
             "TESTING": "1",
             "DATABASE_FILENAME": ":memory:",
-            "CI": "true",  # Simulate CI environment for absolute parity
+            "CI": "true",
+            "PORTABLE_DISTRIBUTION": "false",  # Disable portable mode by default
         }
 
         # Whitelist other system-essential variables, including Windows path roots
@@ -349,20 +350,21 @@ def run_command(
             command,
             capture_output=True,
             text=True,
-            encoding="utf-8",  # Explicitly use UTF-8 to handle emojis
-            errors="replace",  # Replace undecodable bytes instead of crashing
-            shell=use_shell,  # Use shell on Windows for npm/npx
-            check=check,
-            env=ironclad_env,  # Use isolated minimal environment
+            encoding="utf-8",
+            errors="replace",
+            shell=use_shell,
+            check=False,
+            env=ironclad_env,
         )
 
         if result.returncode == 0:
             print_success(f"{description} passed")
-            return True, result.stdout
+            return True, result.stdout or ""
         else:
             print_error(f"{description} failed")
-            _print_failure_output(result.stdout, result.stderr)
-            return False, result.stderr or result.stdout
+            if not ignore_failure:
+                _print_failure_output(result.stdout or "", result.stderr or "")
+            return False, result.stderr or result.stdout or ""
 
     except subprocess.CalledProcessError as e:
         print_error(f"{description} failed with return code {e.returncode}")
@@ -570,7 +572,7 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     # Apps templates excluded due to risk/lack of tests
     template_paths = ["src/templates"]
     success, _ = run_command(
-        ["djlint", "--check"] + template_paths,
+        [sys.executable, "-m", "djlint", "--check"] + template_paths,
         "Jinja2 template linting",
     )
     if not success:

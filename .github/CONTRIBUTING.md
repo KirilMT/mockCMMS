@@ -177,6 +177,16 @@ git commit -m "chore: updates [release]"            # Defaults to patch
 
 The `auto_release_hook.py` pre-push hook detects the `[release]` tag and automatically runs `release_manager.py`.
 
+### 3. `scripts/build_portable.py` (The Packager)
+
+**Generates a zero-installation, portable ZIP distribution of the app.** Use this when you need to send a demo version to management, stakeholders, or testers who don't have Python or Git installed.
+
+```bash
+python scripts/build_portable.py
+```
+
+It automatically embeds a Python 3.12 interpreter, pre-seeds a fresh database, isolates dependencies, and scripts a one-click `START_mockCMMS.bat` browser-opening interface.
+
 ## 🏆 Critical Best Practices (Do's and Don'ts)
 
 ### ✅ Do's

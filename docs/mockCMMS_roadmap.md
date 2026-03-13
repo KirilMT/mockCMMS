@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated March 12, 2026_ (Monitoring App planning added)
+_Updated March 12, 2026_ (Portable Windows Distribution added)
 
 ---
 
@@ -196,6 +196,12 @@ _Updated March 12, 2026_ (Monitoring App planning added)
 ---
 
 ## ✅ RECENTLY COMPLETED
+
+### Portable Windows Distribution Package (March 13, 2026)
+
+- ✅ **Zero-Installation App:** Created a portable distribution of mockCMMS for non-technical users to access the application via a simple `.zip` file.
+- ✅ **Automated Build:** Implemented `scripts/build_portable.py` to seamlessly bundle embedded Python 3.12, dependencies, databases, and code.
+- ✅ **Refined UX/UI:** Built `START_mockCMMS.bat` which launches an immersive console spinner and seamlessly directs the user to their local browser once the background server goes fully alive.
 
 ### Pre-Commit Hooks Automation (March 12, 2026)
 
@@ -441,8 +447,9 @@ The core application can be improved with the following features to support the 
     - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training).
     - **Workload Tracking:** Track and visualize individual technician workload over time.
 
-- **[ ] Shift Calendar Redesign** _(Priority: Medium)_
+- **[X] Shift Calendar Redesign** _(Priority: Medium)_
   - **Goal:** Improve the usability of the Shift Calendar page.
+  - **Status:** ✅ Completed
   - **Features:**
     - **Calendar Grid View:** Redesign the interface to resemble a standard calendar (month/week view) instead of a list.
     - **No-Scroll Layout:** Optimize the layout to fit within the viewport without requiring vertical scrolling.

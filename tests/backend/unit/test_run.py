@@ -1,6 +1,6 @@
 import os
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
@@ -117,3 +117,161 @@ class TestRunEntry:
         importlib.reload(run)
         # With lazy initialization, get_app() returns the mocked app
         assert run.get_app() is mock_env["app"]
+
+
+class TestRunRobust:
+    """Robust tests for run.py covering various configurations and edge cases."""
+
+    def setup_method(self):
+        """Ensure run module is not in sys.modules so it re-executes."""
+        if "run" in sys.modules:
+            del sys.modules["run"]
+
+    def teardown_method(self):
+        """Clean up run module from sys.modules."""
+        if "run" in sys.modules:
+            del sys.modules["run"]
+
+    @pytest.fixture
+    def base_patches(self):
+        """Common patches for robust run tests."""
+        with (
+            patch("src.app.create_app"),
+            patch("src.app.Flask"),
+            patch("dotenv.load_dotenv"),
+            patch("os.path.exists", return_value=True),
+            patch("src.app.db.create_all"),
+            patch("src.app.populate_dummy_data"),
+            patch("src.app.os.makedirs"),
+            patch("urllib.request.urlopen"),
+            patch("webbrowser.open"),
+            patch("threading.Thread") as mock_thread,
+            patch("builtins.open", mock_open()),
+        ):
+            yield {"thread": mock_thread}
+
+    def test_portable_detection_variations(self, base_patches):
+        """Test that is_portable correctly detects various env var values."""
+        # Test truthy values
+        for val in ["true", "1", "yes", "TRUE", "Yes"]:
+            with patch.dict(os.environ, {"PORTABLE_DISTRIBUTION": val}):
+                if "run" in sys.modules:
+                    del sys.modules["run"]
+                import run
+
+                assert run.is_portable is True
+
+        # Test falsy values
+        for val in ["false", "0", "no", "", "None"]:
+            with patch.dict(os.environ, {"PORTABLE_DISTRIBUTION": val}):
+                if "run" in sys.modules:
+                    del sys.modules["run"]
+                import run
+
+                assert run.is_portable is False
+
+    def test_utf8_reconfigure_failure(self, base_patches):
+        """Test that UTF-8 reconfiguration handles failures gracefully."""
+        mock_stdout = MagicMock()
+        mock_stdout.reconfigure.side_effect = ValueError("Mock failure")
+
+        with (
+            patch.object(sys, "platform", "win32"),
+            patch.object(sys, "stdout", mock_stdout),
+        ):
+            if "run" in sys.modules:
+                del sys.modules["run"]
+            import run
+
+            # Should not raise exception
+            assert run.script_dir is not None
+
+    def test_portable_startup_sequence_success(self, base_patches):
+        """Test the portable startup sequence when server becomes ready."""
+        if "run" in sys.modules:
+            del sys.modules["run"]
+        import run
+
+        # Mock urlopen to succeed immediately
+        with (
+            patch("urllib.request.urlopen") as mock_url,
+            patch("webbrowser.open") as mock_browser,
+            patch("time.sleep"),
+        ):
+            run._portable_startup_sequence()
+
+            mock_url.assert_called()
+            mock_browser.assert_called_with(
+                "http://127.0.0.1:5000", new=0, autoraise=True
+            )
+
+    def test_check_setup_exit_cases(self, base_patches):
+        """Test check_setup logic more deeply."""
+        import importlib
+
+        import run
+
+        # Case 1: In E2E_TEST -> bypasses
+        with (
+            patch.dict(os.environ, {"E2E_TEST": "true"}),
+            patch("sys.exit") as mock_exit,
+        ):
+            importlib.reload(run)
+            run.check_setup()
+            mock_exit.assert_not_called()
+
+        # Case 2: Not in CI/E2E/Portable, .venv exists -> passes
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "CI": "",
+                    "E2E_TEST": "false",
+                    "PORTABLE_DISTRIBUTION": "false",
+                },
+            ),
+            patch("os.path.exists", return_value=True),
+            patch("sys.exit") as mock_exit,
+        ):
+            importlib.reload(run)
+            # Manually force False just in case reload missed something
+            run.is_portable = False
+            run.check_setup()
+            mock_exit.assert_not_called()
+
+        # Case 3: Not in CI/E2E/Portable, .venv MISSING -> exits
+        with (
+            patch.dict(
+                os.environ,
+                {"CI": "", "E2E_TEST": "", "PORTABLE_DISTRIBUTION": "false"},
+            ),
+            patch("os.path.exists", return_value=False),
+            patch("sys.exit") as mock_exit,
+        ):
+            importlib.reload(run)
+            run.is_portable = False
+            run.check_setup()
+            mock_exit.assert_called_with(1)
+
+    def test_get_app_debug_logic(self, base_patches):
+        """Test debug mode logic in get_app()."""
+        import importlib
+
+        import run
+
+        with patch("src.app.create_app") as mock_create:
+            # Case 1: Portable -> debug False
+            with patch.dict(os.environ, {"PORTABLE_DISTRIBUTION": "true"}):
+                importlib.reload(run)
+                run._app = None
+                run.get_app()
+                mock_create.assert_called_with(config_overrides={"DEBUG": False})
+
+            # Case 2: Development -> debug True
+            with patch.dict(
+                os.environ, {"FLASK_DEBUG": "1", "PORTABLE_DISTRIBUTION": "false"}
+            ):
+                importlib.reload(run)
+                run._app = None
+                run.get_app()
+                mock_create.assert_called_with(config_overrides={"DEBUG": True})

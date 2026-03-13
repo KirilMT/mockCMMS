@@ -414,12 +414,12 @@ class CodeFormatter:
         # Exclude apps/ templates for now due to risk
         template_paths = ["src/templates"]
         # template_paths = ["src/templates", "apps/**/templates"]
-        djlint_args = ["djlint"] + template_paths
+        djlint_args = [sys.executable, "-m", "djlint"] + template_paths
 
         if self.check_only:
-            djlint_args.insert(1, "--check")
+            djlint_args.insert(3, "--check")
         else:
-            djlint_args.insert(1, "--reformat")
+            djlint_args.insert(3, "--reformat")
 
         return self.run_command(djlint_args, "Template formatting (djlint)")
 

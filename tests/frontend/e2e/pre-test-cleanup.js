@@ -42,9 +42,9 @@ function sleep(ms) {
 function killPythonProcesses() {
   console.log("🔪 Killing Python processes...");
   try {
-    // Kill any python process running run.py
+    // Kill any python process running run.py (specific match to avoid killing shell)
     execSync(
-      "wmic process where \"CommandLine like '%run.py%'\" call terminate",
+      "wmic process where \"Name='python.exe' and CommandLine like '%run.py%'\" call terminate",
       {
         stdio: "ignore",
       },
