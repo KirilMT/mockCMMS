@@ -12,6 +12,16 @@ and this project adheres to
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## [1.2.0] - 2026-03-14
+
+### Added
+
 - **Advanced Table Enhancements:**
   - **Column Resizing Polish:** Excel-like column resizing with sub-pixel
     precision
