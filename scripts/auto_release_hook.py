@@ -14,6 +14,7 @@ If no [release] tag is found, the hook passes silently.
 import re
 import subprocess
 import sys
+from pathlib import Path
 from typing import Optional
 
 
@@ -64,9 +65,19 @@ def main() -> int:
         print(f"\n🚀 [release:{release_type}] detected in commit message")
         print(f"Running release manager with bump type: {release_type}\n")
 
+        # Use venv python if available
+        root_dir = Path(__file__).parent.parent
+        scripts_dir = "Scripts" if sys.platform == "win32" else "bin"
+        py_name = "python.exe" if sys.platform == "win32" else "python"
+        python_exe = root_dir / ".venv" / scripts_dir / py_name
+
+        if not python_exe.exists():
+            python_exe = Path(sys.executable)
+
         # Run release manager
         result = subprocess.run(
-            ["python", "scripts/release_manager.py", release_type],
+            [str(python_exe), "scripts/release_manager.py", release_type],
+            cwd=str(root_dir),
             check=False,
         )
 

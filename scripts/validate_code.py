@@ -296,9 +296,17 @@ def run_command(
 
         # IRONCLAD MODE: Fresh, minimal env to mirror CI clean state.
         # Blocks local shell variables from masking configuration gaps.
+        # Auto-detect and prepend local .venv if it exists (robustness for pre-commit)
+        current_path = os.environ.get("PATH", "")
+        scripts_dir = "Scripts" if sys.platform == "win32" else "bin"
+        project_root = Path(__file__).parent.parent
+        venv_scripts = project_root / ".venv" / scripts_dir
+        if venv_scripts.exists():
+            current_path = f"{venv_scripts}{os.pathsep}{current_path}"
+
         ironclad_env = {
-            "PATH": os.environ.get("PATH", ""),
-            "PYTHONPATH": os.environ.get("PYTHONPATH", str(Path.cwd())),
+            "PATH": current_path,
+            "PYTHONPATH": os.environ.get("PYTHONPATH", str(project_root)),
             "SYSTEMROOT": os.environ.get("SYSTEMROOT", ""),
             "PYTHONIOENCODING": "utf-8",
             "TESTING": "1",

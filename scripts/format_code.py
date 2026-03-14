@@ -77,6 +77,13 @@ class CodeFormatter:
 
         try:
             env = os.environ.copy()
+            # Auto-detect and prepend local .venv for robustness
+            scripts_dir = "Scripts" if sys.platform == "win32" else "bin"
+            venv_scripts = self.root_dir / ".venv" / scripts_dir
+            if venv_scripts.exists():
+                path = env.get("PATH", "")
+                env["PATH"] = f"{venv_scripts}{os.pathsep}{path}"
+
             env["PYTHONIOENCODING"] = "utf-8"
             use_shell = sys.platform == "win32" and cmd[0] in ("npm", "npx")
             result = subprocess.run(

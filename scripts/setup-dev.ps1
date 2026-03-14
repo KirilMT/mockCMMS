@@ -56,7 +56,7 @@ function Refresh-EnvPath {
 }
 
 # Step 1: Check for Node.js (only dev requirement)
-Write-Host "[Dev Step 1/3] Checking Node.js..." -ForegroundColor Yellow
+Write-Host "[Dev Step 1/5] Checking Node.js..." -ForegroundColor Yellow
 
 # Step 1.1: Check for Node.js
 function Check-Node {
@@ -186,7 +186,7 @@ if (-not (Check-Node)) {
 }
 
 # Step 2: Check for GitHub CLI
-Write-Host "`n[Dev Step 2/4] Checking GitHub CLI..." -ForegroundColor Yellow
+Write-Host "`n[Dev Step 2/5] Checking GitHub CLI..." -ForegroundColor Yellow
 
 function Check-GitHubCLI {
     # First check if gh command is available
@@ -281,7 +281,7 @@ if (-not (Check-GitHubCLI)) {
 }
 
 # Step 3: Python Development Tools
-Write-Host "`n[Dev Step 3/4] Installing Python development tools..." -ForegroundColor Yellow
+Write-Host "`n[Dev Step 3/5] Installing Python development tools..." -ForegroundColor Yellow
 
 # Use correct Windows path (venv already exists from setup.ps1)
 $pipPath = ".\.venv\Scripts\pip.exe"
@@ -333,7 +333,7 @@ else {
 
 
 # Step 4: JavaScript Development Tools
-Write-Host "`n[Dev Step 4/4] Setting up JavaScript development tools..." -ForegroundColor Yellow
+Write-Host "`n[Dev Step 4/5] Setting up JavaScript development tools..." -ForegroundColor Yellow
 
 if (-not (Test-Path "package.json")) {
     Write-Host "   Initializing " -NoNewline -ForegroundColor White
@@ -431,53 +431,68 @@ else {
 # ============================================================================
 # STEP 3: PRE-COMMIT HOOKS SETUP
 # ============================================================================
+Write-Host ""
 Write-Host "========================================" -ForegroundColor Magenta
 Write-Host "   PRE-COMMIT HOOKS SETUP" -ForegroundColor Magenta
-Write-Host "========================================`n" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host ""
 
-Write-Host "[Dev Step 3/3] Setting up pre-commit hooks..." -ForegroundColor Yellow
+Write-Host "[Dev Step 5/5] Setting up pre-commit hooks..." -ForegroundColor Yellow
 
-# Check if pre-commit is available
-if (Get-Command pre-commit -ErrorAction SilentlyContinue) {
-    Write-Host "   Found: " -NoNewline -ForegroundColor White
-    $preCommitVersion = pre-commit --version 2>&1
+# Use pre-commit from venv prioritized, then PATH
+$preCommitExe = ".\.venv\Scripts\pre-commit.exe"
+$hasPreCommit = $false
+
+if (Test-Path $preCommitExe) {
+    $hasPreCommit = $true
+}
+elseif (Get-Command pre-commit -ErrorAction SilentlyContinue) {
+    $preCommitExe = "pre-commit"
+    $hasPreCommit = $true
+}
+
+if ($hasPreCommit) {
+    Write-Host "   Using: " -NoNewline -ForegroundColor White
+    $preCommitVersion = & $preCommitExe --version 2>&1
     Write-Host "$preCommitVersion " -NoNewline -ForegroundColor White
     Write-Host "OK" -ForegroundColor Green
 
     # Install pre-commit hooks
-    Write-Host "   Installing " -NoNewline -ForegroundColor White
-    Write-Host "pre-commit hooks" -NoNewline -ForegroundColor Magenta
-    Write-Host "..." -ForegroundColor White
+    Write-Host "   Installing pre-commit hooks..." -ForegroundColor Yellow
 
     try {
         # Install pre-commit hooks (commits)
-        pre-commit install 2>&1 | Out-Null
+        & $preCommitExe install 2>&1 | Out-Null
 
         # Install pre-push hooks
-        pre-commit install --hook-type pre-push 2>&1 | Out-Null
+        & $preCommitExe install --hook-type pre-push 2>&1 | Out-Null
 
         if ($LASTEXITCODE -eq 0) {
-            Write-Host ""
             Write-Host "   Pre-commit hooks installed " -NoNewline -ForegroundColor White
             Write-Host "OK" -ForegroundColor Green
             Write-Host "   Enabled:" -ForegroundColor White
             Write-Host "     - Pre-commit: Code formatting & validation" -ForegroundColor Gray
             Write-Host "     - Pre-push: Full validation & auto-release" -ForegroundColor Gray
 
-            # Configure repo-local alias for conflict-safe amend workflow.
-            $safeAmendAlias = '!pwsh -NoProfile -ExecutionPolicy Bypass -File "$(git rev-parse --show-toplevel)/scripts/safe-amend.ps1" amend'
-            git config --local alias.safe-amend $safeAmendAlias 2>&1 | Out-Null
+            # Configure repo-local aliases for conflict-safe amend workflow.
+            $safeAmendScript = Join-Path $projectRoot "scripts\safe-amend.ps1"
+            $safeAmendScript = $safeAmendScript.Replace("/", "\")
+            $safeAmendBase = "!pwsh -NoProfile -ExecutionPolicy Bypass -File `"$safeAmendScript`""
 
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "   Git alias configured: " -NoNewline -ForegroundColor White
-                Write-Host "git safe-amend" -ForegroundColor Magenta
-                Write-Host "   Git alias configured: " -NoNewline -ForegroundColor White
-                Write-Host "git safe-amend cleanup" -ForegroundColor Magenta
+            try {
+                $err1 = git config --local alias.safe-amend "$safeAmendBase amend" 2>&1
+                if ($LASTEXITCODE -ne 0) { throw $err1 }
+
+                $err2 = git config --local alias.safe-amend-cleanup "$safeAmendBase cleanup" 2>&1
+                if ($LASTEXITCODE -ne 0) { throw $err2 }
+
+                Write-Host "   Git aliases configured: " -NoNewline -ForegroundColor White
+                Write-Host "git safe-amend, git safe-amend-cleanup" -ForegroundColor Magenta
             }
-            else {
+            catch {
                 Write-Host "   Git alias setup " -NoNewline -ForegroundColor White
                 Write-Host "FAILED" -ForegroundColor Yellow
-                Write-Host "   (You can still run: pwsh -File scripts/safe-amend.ps1)" -ForegroundColor Gray
+                Write-Host "   Error: $_" -ForegroundColor Gray
                 $script:ErrorCount++
             }
         }
@@ -499,7 +514,7 @@ if (Get-Command pre-commit -ErrorAction SilentlyContinue) {
 else {
     Write-Host "   Pre-commit not found " -NoNewline -ForegroundColor White
     Write-Host "SKIPPED" -ForegroundColor Yellow
-    Write-Host "   (Will be installed via requirements.txt when activated)" -ForegroundColor Gray
+    Write-Host "   (Will be installed via requirements-dev.txt later)" -ForegroundColor Gray
 }
 
 

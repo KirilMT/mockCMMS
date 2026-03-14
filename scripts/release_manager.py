@@ -241,6 +241,17 @@ class ReleaseManager:
         if not self.update_readme(new_version):
             return 1
 
+        # Format files after update to satisfy pre-commit hooks
+        print("\n" + "-" * 40)
+        print("Formatting files...")
+        formatter_path = self.root_dir / "scripts" / "format_code.py"
+        subprocess.run(
+            [sys.executable, str(formatter_path), "--docs"],
+            cwd=self.root_dir,
+            check=False,
+        )
+        print("-" * 40 + "\n")
+
         # Git operations
         if not self.git_commit_and_tag(new_version):
             return 1
