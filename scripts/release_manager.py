@@ -76,14 +76,7 @@ class ReleaseManager:
             raise ValueError(f"Invalid bump type: {bump_type}")
 
     def update_changelog(self, new_version: str) -> bool:
-        """Update CHANGELOG.md with new version.
-
-        Args:
-            new_version: New version string
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Update CHANGELOG.md with new version, auto-populating sections from commits."""
         if not self.changelog_path.exists():
             print("❌ CHANGELOG.md not found")
             return False
@@ -91,38 +84,42 @@ class ReleaseManager:
         content = self.changelog_path.read_text(encoding="utf-8")
         today = datetime.now().strftime("%Y-%m-%d")
 
-        # Replace [Unreleased] with new version
-        new_header = f"## [{new_version}] - {today}"
+        # Get categorized commit messages
+        commits = self.get_commits_since_last_tag()
+        sections = self.parse_commits_for_changelog(commits)
 
-        # Find the Unreleased section
-        unreleased_pattern = r"## \[Unreleased\]"
+        def format_section(name):
+            items = sections.get(name, [])
+            if not items:
+                return ""
+            return "\n" + "\n".join(f"- {msg}" for msg in items) + "\n"
 
-        if not re.search(unreleased_pattern, content):
+        # Build new version section
+        new_version_section = f"## [{new_version}] - {today}\n"
+        for sec in ["Added", "Changed", "Fixed", "Removed"]:
+            new_version_section += f"\n### {sec}\n"
+            new_version_section += format_section(sec)
+
+        # Find the [Unreleased] section and move its content down
+        unreleased_pattern = r"## \[Unreleased\](.*?)(?=^## |\Z)"
+        unreleased_match = re.search(unreleased_pattern, content, re.DOTALL | re.MULTILINE)
+        if not unreleased_match:
             print("❌ Could not find [Unreleased] section in CHANGELOG.md")
             return False
 
-        # Replace [Unreleased] with new version and add new [Unreleased] section
-        new_unreleased = f"""## [Unreleased]
-
-### Added
-
-### Changed
-
-### Fixed
-
-### Removed
-
-{new_header}"""
-
-        updated_content = re.sub(unreleased_pattern, new_unreleased, content, count=1)
+        # Insert new [Unreleased] section at the top
+        new_unreleased = "## [Unreleased]\n\n### Added\n\n### Changed\n\n### Fixed\n\n### Removed\n\n"
+        # Place new version section after new [Unreleased]
+        updated_content = re.sub(unreleased_pattern, new_unreleased + new_version_section, content, count=1)
 
         if self.dry_run:
             print("\n[DRY RUN] Would update CHANGELOG.md:")
             print(f"  - Add new version: {new_version}")
             print(f"  - Date: {today}")
+            print(f"  - Commits: {commits}")
         else:
             self.changelog_path.write_text(updated_content, encoding="utf-8")
-            print(f"✅ Updated CHANGELOG.md with version {new_version}")
+            print(f"✅ Updated CHANGELOG.md with version {new_version} and auto-populated sections")
 
         return True
 
@@ -205,6 +202,51 @@ class ReleaseManager:
         except subprocess.CalledProcessError as e:
             print(f"\n❌ Git operation failed: {e}")
             return False
+
+    def get_commits_since_last_tag(self) -> list:
+        """Get commit messages since the last version tag."""
+        # Find the last version tag
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0"],
+            cwd=self.root_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        last_tag = result.stdout.strip() if result.returncode == 0 else None
+        if not last_tag:
+            # No tags found, get all commits
+            range_ref = "HEAD"
+        else:
+            range_ref = f"{last_tag}..HEAD"
+        # Get commit messages in range
+        log_result = subprocess.run(
+            ["git", "log", range_ref, "--pretty=%s"],
+            cwd=self.root_dir,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        commits = [msg.strip() for msg in log_result.stdout.splitlines() if msg.strip()]
+        return commits
+
+    def parse_commits_for_changelog(self, commits: list) -> dict:
+        """Categorize commit messages into changelog sections using conventional commits."""
+        sections = {"Added": [], "Changed": [], "Fixed": [], "Removed": []}
+        for msg in commits:
+            lowered = msg.lower()
+            if lowered.startswith("feat"):
+                sections["Added"].append(msg)
+            elif lowered.startswith("fix"):
+                sections["Fixed"].append(msg)
+            elif lowered.startswith("chore") or lowered.startswith("refactor") or lowered.startswith("perf"):
+                sections["Changed"].append(msg)
+            elif lowered.startswith("remove") or lowered.startswith("revert"):
+                sections["Removed"].append(msg)
+            else:
+                # Default to Changed if not matched
+                sections["Changed"].append(msg)
+        return sections
 
     def release(self, bump_type: str) -> int:
         """Execute the release process.
