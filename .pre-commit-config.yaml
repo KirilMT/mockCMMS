@@ -57,6 +57,6 @@ repos:
       - id: flake8
         name: Flake8 Linting
         additional_dependencies: []
-        args: [--count, --exclude=.venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report, --show-source, --statistics, --max-line-length=88]
+        args: ["--count", "--exclude=.venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report", "--show-source", "--statistics", "--max-line-length=88"]
         language_version: python3
         stages: [pre-commit]
