@@ -320,4 +320,4 @@ coding standards, and submission guidelines.
 
 ---
 
-**Version:** 1.2.2 | **Last Updated:** December 17, 2025
+**Version:** 1.2.3 | **Last Updated:** December 17, 2025
