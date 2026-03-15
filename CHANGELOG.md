@@ -8,6 +8,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - use safe_print for Unicode-safe output; improve git commit message formatting and args - 2026-03-15
+
+### Added
+
+This is a detailed test of the changelog population logic.
+
+- This should appear as a bullet point in the changelog.
+- This is a second bullet point.
+
+## Subheader Example
+
+Further explanation and details for the release.
+BREAKING CHANGE: This is a breaking change example for testing.
+
+### Changed
+
+- Replace print statements with safe_print to handle UnicodeEncodeError gracefully
+- Update git_commit_and_tag to accept bump_type and use Conventional Commit message with release tag
+- Ensure consistent Unicode-safe output across release operations
+
+- Add detailed commit message and release automation requirements to CONTRIBUTING.md, SKILL.md, and GIT_WORKFLOW.md
+- Introduce .gitmessage template for standardized commit messages
+- Update setup-dev.ps1 to configure commit template and commit-msg hook
+- Refactor release_manager.py to improve changelog parsing and formatting
+- Remove [Unreleased] section from CHANGELOG.md to align with automated workflow
+
 ## [1.2.0] - 2026-03-14
 
 ### Added
