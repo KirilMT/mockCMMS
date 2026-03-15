@@ -56,7 +56,7 @@ function Refresh-EnvPath {
 }
 
 # Step 1: Check for Node.js (only dev requirement)
-Write-Host "[Dev Step 1/5] Checking Node.js..." -ForegroundColor Yellow
+Write-Host "[Dev Step 1/6] Checking Node.js..." -ForegroundColor Yellow
 
 # Step 1.1: Check for Node.js
 function Check-Node {
@@ -186,7 +186,7 @@ if (-not (Check-Node)) {
 }
 
 # Step 2: Check for GitHub CLI
-Write-Host "`n[Dev Step 2/5] Checking GitHub CLI..." -ForegroundColor Yellow
+Write-Host "`n[Dev Step 2/6] Checking GitHub CLI..." -ForegroundColor Yellow
 
 function Check-GitHubCLI {
     # First check if gh command is available
@@ -281,7 +281,7 @@ if (-not (Check-GitHubCLI)) {
 }
 
 # Step 3: Python Development Tools
-Write-Host "`n[Dev Step 3/5] Installing Python development tools..." -ForegroundColor Yellow
+Write-Host "`n[Dev Step 3/6] Installing Python development tools..." -ForegroundColor Yellow
 
 # Use correct Windows path (venv already exists from setup.ps1)
 $pipPath = ".\.venv\Scripts\pip.exe"
@@ -333,7 +333,7 @@ else {
 
 
 # Step 4: JavaScript Development Tools
-Write-Host "`n[Dev Step 4/5] Setting up JavaScript development tools..." -ForegroundColor Yellow
+Write-Host "`n[Dev Step 4/6] Setting up JavaScript development tools..." -ForegroundColor Yellow
 
 if (-not (Test-Path "package.json")) {
     Write-Host "   Initializing " -NoNewline -ForegroundColor White
@@ -429,7 +429,35 @@ else {
 }
 
 # ============================================================================
-# STEP 3: PRE-COMMIT HOOKS SETUP
+# STEP 5: GIT COMMIT TEMPLATE & HOOKS
+# ============================================================================
+
+Write-Host "`n[Dev Step 5/6] Setting up Conventional Commit template and commit-msg hook..." -ForegroundColor Yellow
+
+$gitDir = Join-Path $projectRoot ".git"
+$hookDir = Join-Path $gitDir "hooks"
+$hookFile = Join-Path $hookDir "commit-msg"
+$templateFile = Join-Path $projectRoot ".gitmessage"
+
+# Set commit template
+if (Test-Path $templateFile) {
+    git config --local commit.template .gitmessage
+    Write-Host "   [OK] .gitmessage set as commit template" -ForegroundColor Green
+} else {
+    Write-Host "   [WARN] .gitmessage not found, skipping commit template setup" -ForegroundColor Yellow
+}
+
+# Install commit-msg hook
+if (Test-Path $hookFile) {
+    Write-Host "   [OK] commit-msg hook installed" -ForegroundColor Green
+    # Set permissions (Windows)
+    icacls $hookFile /grant Everyone:RX | Out-Null
+} else {
+    Write-Host "   [WARN] commit-msg hook not found, skipping hook setup" -ForegroundColor Yellow
+}
+
+# ============================================================================
+# STEP 6: PRE-COMMIT HOOKS SETUP
 # ============================================================================
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Magenta
@@ -437,7 +465,7 @@ Write-Host "   PRE-COMMIT HOOKS SETUP" -ForegroundColor Magenta
 Write-Host "========================================" -ForegroundColor Magenta
 Write-Host ""
 
-Write-Host "[Dev Step 5/5] Setting up pre-commit hooks..." -ForegroundColor Yellow
+Write-Host "[Dev Step 6/6] Setting up pre-commit hooks..." -ForegroundColor Yellow
 
 # Use pre-commit from venv prioritized, then PATH
 $preCommitExe = ".\.venv\Scripts\pre-commit.exe"

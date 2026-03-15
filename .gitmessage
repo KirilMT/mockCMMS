@@ -1,0 +1,53 @@
+# Supported commit types: feat, fix, chore, refactor, perf, remove, revert, docs, test, style, build, ci
+# Example: feat(core): add new feature [release:minor]
+
+# Conventional Commit (international standard: conventionalcommits.org)
+# Use English type keywords only (global convention for tooling)
+
+<type>[scope][!]: <short summary>
+
+# Common types (English – required by the spec):
+#   feat      → minor version
+#   fix       → patch version
+#   docs      → documentation only
+#   style     → formatting, no code change
+#   refactor  → code change, no behavior change
+#   perf      → performance improvement
+#   test      → adding/fixing tests
+#   build     → build system or dependencies
+#   ci        → CI configuration
+#   chore     → maintenance (no user impact)
+#   revert    → revert previous commit
+#
+# Add ! after type/scope for breaking changes (major version)
+# Example: feat(api)!: or fix!:
+
+<detailed body – WHAT + WHY + HOW>
+Use Markdown freely. Structure exactly like your favorite commits.
+
+## ✅ Key Accomplishments / Issues Resolved
+- Bullet 1
+- Bullet 2
+
+## 🔧 Technical Changes
+- ...
+
+## 📝 Documentation
+- ...
+
+## Files Modified
+- src/...
+- docs/...
+
+## Status
+- Tests: X/X passing (100%)
+- Ready for production: ✅
+
+## New Requirements Added (if any)
+- Phase X: ...
+
+BREAKING CHANGE: <clear explanation if any – or remove section>
+
+# Optional git trailers (standard)
+Co-authored-by: Name <email@example.com>
+Closes #123

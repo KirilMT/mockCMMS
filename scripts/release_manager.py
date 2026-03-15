@@ -76,7 +76,8 @@ class ReleaseManager:
             raise ValueError(f"Invalid bump type: {bump_type}")
 
     def update_changelog(self, new_version: str) -> bool:
-        """Update CHANGELOG.md with new version, auto-populating sections from commits."""
+        """Update CHANGELOG.md with new version, auto-populating sections from
+        commits."""
         if not self.changelog_path.exists():
             print("❌ CHANGELOG.md not found")
             return False
@@ -87,53 +88,67 @@ class ReleaseManager:
         # Get categorized commit messages
         commits = self.get_commits_since_last_tag()
         sections = self.parse_commits_for_changelog(commits)
+        version_title = self.get_version_title(commits)
 
         def format_section(name):
             items = sections.get(name, [])
             if not items:
                 return ""
-            return "\n" + "\n".join(f"- {msg}" for msg in items) + "\n"
+            # Render each item as a raw Markdown block (no bullet)
+            return f"\n### {name}\n" + "\n\n".join(items)
 
-        # Build new version section
-        new_version_section = f"## [{new_version}] - {today}\n"
+        # Build new version section with only non-empty sections and title
+        new_version_section = f"## [{new_version}] - {version_title} - {today}\n"
         for sec in ["Added", "Changed", "Fixed", "Removed"]:
-            new_version_section += f"\n### {sec}\n"
-            new_version_section += format_section(sec)
+            sec_block = format_section(sec)
+            if sec_block:
+                new_version_section += sec_block + "\n"
 
-        # Find the [Unreleased] section and move its content down
+        # Remove [Unreleased] section entirely after release
         unreleased_pattern = r"## \[Unreleased\](.*?)(?=^## |\Z)"
-        unreleased_match = re.search(unreleased_pattern, content, re.DOTALL | re.MULTILINE)
-        if not unreleased_match:
-            print("❌ Could not find [Unreleased] section in CHANGELOG.md")
-            return False
+        updated_content = re.sub(
+            unreleased_pattern,
+            "",
+            content,
+            count=1,
+            flags=re.DOTALL | re.MULTILINE,
+        )
 
-        # Insert new [Unreleased] section at the top
-        new_unreleased = "## [Unreleased]\n\n### Added\n\n### Changed\n\n### Fixed\n\n### Removed\n\n"
-        # Place new version section after new [Unreleased]
-        updated_content = re.sub(unreleased_pattern, new_unreleased + new_version_section, content, count=1)
+        # Insert new version section at the top after the header
+        header_pattern = r"(#[^\n]*Changelog[^\n]*\n.*?\n)(?=## |\Z)"
+        match = re.search(header_pattern, updated_content, re.DOTALL | re.IGNORECASE)
+        if match:
+            insert_at = match.end(1)
+            updated_content = (
+                updated_content[:insert_at]
+                + new_version_section
+                + "\n"
+                + updated_content[insert_at:]
+            )
+        else:
+            updated_content = new_version_section + "\n" + updated_content
 
         if self.dry_run:
             print("\n[DRY RUN] Would update CHANGELOG.md:")
             print(f"  - Add new version: {new_version}")
             print(f"  - Date: {today}")
             print(f"  - Commits: {commits}")
+            print("\n--- Changelog Preview ---\n")
+            print(new_version_section)
+            print("\n------------------------\n")
         else:
             self.changelog_path.write_text(updated_content, encoding="utf-8")
-            print(f"✅ Updated CHANGELOG.md with version {new_version} and auto-populated sections")
+            print(
+                f"✅ Updated CHANGELOG.md with version {new_version}\n"
+                f"and auto-populated sections"
+            )
 
         return True
 
     def update_readme(self, new_version: str) -> bool:
-        """Update README.md with new version.
-
-        Args:
-            new_version: New version string
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Update README.md with new version, and show preview in dry-run."""
         if not self.readme_path.exists():
-            print("⚠️  README.md not found - skipping")
+            print("\u26a0\ufe0f  README.md not found - skipping")
             return True
 
         content = self.readme_path.read_text(encoding="utf-8")
@@ -143,16 +158,22 @@ class ReleaseManager:
         version_pattern = r"(\*\*Version:\*\*|Version:)\s+\d+\.\d+\.\d+"
 
         if not re.search(version_pattern, content):
-            print("⚠️  Version line not found in README.md - skipping")
+            print("\u26a0\ufe0f  Version line not found in README.md - skipping")
             return True
 
         updated_content = re.sub(version_pattern, rf"\1 {new_version}", content)
 
         if self.dry_run:
-            print(f"\n[DRY RUN] Would update README.md version to {new_version}")
+            print("\n--- README Preview ---\n")
+            # Show only the changed line(s)
+            for old, new in zip(content.splitlines(), updated_content.splitlines()):
+                if old != new:
+                    print(f"- {old}")
+                    print(f"+ {new}")
+            print("\n------------------------\n")
         else:
             self.readme_path.write_text(updated_content, encoding="utf-8")
-            print(f"✅ Updated README.md with version {new_version}")
+            print(f"\u2705 Updated README.md with version {new_version}")
 
         return True
 
@@ -204,8 +225,7 @@ class ReleaseManager:
             return False
 
     def get_commits_since_last_tag(self) -> list:
-        """Get commit messages since the last version tag."""
-        # Find the last version tag
+        """Get full commit messages (subject + body) since the last version tag."""
         result = subprocess.run(
             ["git", "describe", "--tags", "--abbrev=0"],
             cwd=self.root_dir,
@@ -215,38 +235,108 @@ class ReleaseManager:
         )
         last_tag = result.stdout.strip() if result.returncode == 0 else None
         if not last_tag:
-            # No tags found, get all commits
             range_ref = "HEAD"
         else:
             range_ref = f"{last_tag}..HEAD"
-        # Get commit messages in range
+        # Get full commit messages (subject + body, separated by \x1e)
         log_result = subprocess.run(
-            ["git", "log", range_ref, "--pretty=%s"],
+            ["git", "log", range_ref, "--pretty=%B%x1e"],
             cwd=self.root_dir,
             capture_output=True,
             text=True,
             check=True,
         )
-        commits = [msg.strip() for msg in log_result.stdout.splitlines() if msg.strip()]
+        # Split on \x1e (record separator)
+        commits = [
+            msg.strip() for msg in log_result.stdout.split("\x1e") if msg.strip()
+        ]
         return commits
 
-    def parse_commits_for_changelog(self, commits: list) -> dict:
-        """Categorize commit messages into changelog sections using conventional commits."""
-        sections = {"Added": [], "Changed": [], "Fixed": [], "Removed": []}
+    def parse_commits_for_changelog(self, commits: list) -> dict[str, list[str]]:
+        """Categorize commit messages into changelog sections using conventional
+        commits.
+
+        Use only the full body as section content (no extra bullet).
+        """
+        sections: dict[str, list[str]] = {
+            "Added": [],
+            "Changed": [],
+            "Fixed": [],
+            "Removed": [],
+        }
+        # Explicit mapping of commit types to changelog sections
+        type_to_section = {
+            "feat": "Added",
+            "fix": "Fixed",
+            "chore": "Changed",
+            "refactor": "Changed",
+            "perf": "Changed",
+            "build": "Changed",
+            "ci": "Changed",
+            "remove": "Removed",
+            "revert": "Removed",
+            # The following types are mapped to 'Changed' for now, but can be split out
+            # if changelog sections are expanded in the future.
+            "docs": "Changed",
+            "test": "Changed",
+            "style": "Changed",
+        }
         for msg in commits:
-            lowered = msg.lower()
-            if lowered.startswith("feat"):
-                sections["Added"].append(msg)
-            elif lowered.startswith("fix"):
-                sections["Fixed"].append(msg)
-            elif lowered.startswith("chore") or lowered.startswith("refactor") or lowered.startswith("perf"):
-                sections["Changed"].append(msg)
-            elif lowered.startswith("remove") or lowered.startswith("revert"):
-                sections["Removed"].append(msg)
+            # Remove [release:...] and [release] tags
+            msg = re.sub(r"\[release(:\w+)?]", "", msg, flags=re.IGNORECASE).strip()
+            # Split into lines: first line is type/title, rest is body
+            lines = msg.splitlines()
+            if not lines:
+                continue
+            # Parse type from first line (support optional scope: feat(scope): ...)
+            match = re.match(
+                r"(feat|fix|chore|refactor|perf|remove|revert|docs|test|style|build|ci)"
+                r"(\([^)]*\))?:?\s*(.*)",
+                lines[0],
+                re.IGNORECASE,
+            )
+            if match:
+                type_ = match.group(1).lower()
             else:
-                # Default to Changed if not matched
-                sections["Changed"].append(msg)
+                type_ = None
+            # Body is everything after the first line, joined and stripped
+            body = "\n".join(lines[1:]).strip()
+            # Section content: use body only (skip if empty)
+            if not body:
+                continue
+            if type_ in type_to_section:
+                section = type_to_section[type_]
+                sections[section].append(body)
+            else:
+                # Unknown type: log a warning and skip (could also map to 'Changed')
+                print(
+                    f"[release_manager] WARNING: Unknown commit type '{type_}' "
+                    f"in message: {lines[0]}"
+                )
+                continue
         return sections
+
+    def get_version_title(self, commits: list) -> str:
+        """Return the first commit message's first line (without tags/prefixes) as the
+        version title."""
+        if not commits:
+            return ""
+        # Remove [release:...] and [release] tags, and type prefix (with optional scope)
+        lines = commits[0].splitlines()
+        if not lines:
+            return ""
+        first_line = re.sub(
+            r"\[release(:\w+)?]", "", lines[0], flags=re.IGNORECASE
+        ).strip()
+        # Remove type and optional scope (e.g., feat(test): ...)
+        first_line = re.sub(
+            r"^(feat|fix|chore|refactor|perf|remove|revert|docs|test|style|build|ci)"
+            r"(\([^)]*\))?:?\s*",
+            "",
+            first_line,
+            flags=re.IGNORECASE,
+        )
+        return first_line.strip()
 
     def release(self, bump_type: str) -> int:
         """Execute the release process.
