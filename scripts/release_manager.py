@@ -11,7 +11,9 @@ Usage:
     python scripts/release_manager.py --dry-run  # Preview changes without applying
 """
 
+
 import argparse
+import builtins
 import re
 import subprocess
 import sys
@@ -19,17 +21,29 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+# Store the original print function
+_original_print = print
 
-def safe_print(msg: str, fallback: Optional[str] = None):
-    """Print with emoji if possible, fallback to plain text if UnicodeEncodeError
-    occurs."""
+
+def safe_print(*args, **kwargs):
+    """Unicode-safe print: fallback to ASCII if UnicodeEncodeError occurs."""
     try:
-        print(msg)
+        _original_print(*args, **kwargs)
     except UnicodeEncodeError:
-        if fallback is not None:
-            print(fallback)
-        else:
-            print(msg.encode("ascii", errors="ignore").decode())
+        # Try to convert all args to ASCII-safe strings
+        ascii_args = []
+        for arg in args:
+            if isinstance(arg, str):
+                ascii_args.append(arg.encode("ascii", errors="ignore").decode())
+            else:
+                ascii_args.append(arg)
+        _original_print(*ascii_args, **kwargs)
+
+
+builtins.print = safe_print
+# Monkey-patch print globally for this script
+
+builtins.print = safe_print
 
 
 class ReleaseManager:
