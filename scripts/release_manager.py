@@ -20,6 +20,18 @@ from pathlib import Path
 from typing import Optional
 
 
+def safe_print(msg: str, fallback: Optional[str] = None):
+    """Print with emoji if possible, fallback to plain text if UnicodeEncodeError
+    occurs."""
+    try:
+        print(msg)
+    except UnicodeEncodeError:
+        if fallback is not None:
+            print(fallback)
+        else:
+            print(msg.encode("ascii", errors="ignore").decode())
+
+
 class ReleaseManager:
     """Manages version bumping and release process."""
 
@@ -41,7 +53,7 @@ class ReleaseManager:
             Current version string (e.g., "1.2.3") or None if not found
         """
         if not self.changelog_path.exists():
-            print("❌ CHANGELOG.md not found")
+            safe_print("❌ CHANGELOG.md not found", "CHANGELOG.md not found")
             return None
 
         content = self.changelog_path.read_text(encoding="utf-8")
@@ -51,7 +63,10 @@ class ReleaseManager:
         if match:
             return match.group(1)
 
-        print("❌ Could not find version in CHANGELOG.md")
+        safe_print(
+            "❌ Could not find version in CHANGELOG.md",
+            "Could not find version in CHANGELOG.md",
+        )
         return None
 
     def bump_version(self, current: str, bump_type: str) -> str:
@@ -79,7 +94,7 @@ class ReleaseManager:
         """Update CHANGELOG.md with new version, auto-populating sections from
         commits."""
         if not self.changelog_path.exists():
-            print("❌ CHANGELOG.md not found")
+            safe_print("❌ CHANGELOG.md not found", "CHANGELOG.md not found")
             return False
 
         content = self.changelog_path.read_text(encoding="utf-8")
@@ -138,7 +153,7 @@ class ReleaseManager:
             print("\n------------------------\n")
         else:
             self.changelog_path.write_text(updated_content, encoding="utf-8")
-            print(
+            safe_print(
                 f"✅ Updated CHANGELOG.md with version {new_version}\n"
                 f"and auto-populated sections"
             )
@@ -173,22 +188,29 @@ class ReleaseManager:
             print("\n------------------------\n")
         else:
             self.readme_path.write_text(updated_content, encoding="utf-8")
-            print(f"\u2705 Updated README.md with version {new_version}")
+            safe_print(
+                f"\u2705 Updated README.md with version {new_version}",
+                f"Updated README.md with version {new_version}",
+            )
 
         return True
 
-    def git_commit_and_tag(self, version: str) -> bool:
+    def git_commit_and_tag(self, version: str, bump_type: str) -> bool:
         """Create git commit and tag for the release.
 
         Args:
             version: Version string for the tag
+            bump_type: Type of version bump ("major", "minor", or "patch")
 
         Returns:
             True if successful, False otherwise
         """
         if self.dry_run:
             print("\n[DRY RUN] Would create git commit and tag:")
-            print(f"  - Commit: 'chore: Release version {version}'")
+            commit_msg = (
+                f"chore(release): release version {version} " f"[release:{bump_type}]"
+            )
+            print(f"  - Commit: '{commit_msg}'")
             print(f"  - Tag: v{version}")
             return True
 
@@ -200,9 +222,12 @@ class ReleaseManager:
                 check=True,
             )
 
-            # Commit
+            # Commit (Conventional Commits + release tag)
+            commit_msg = (
+                f"chore(release): release version {version} [release:{bump_type}]"
+            )
             subprocess.run(
-                ["git", "commit", "-m", f"chore: Release version {version}"],
+                ["git", "commit", "-m", commit_msg],
                 cwd=self.root_dir,
                 check=True,
             )
@@ -214,14 +239,17 @@ class ReleaseManager:
                 check=True,
             )
 
-            print(f"\n✅ Created git commit and tag v{version}")
+            safe_print(
+                f"\n✅ Created git commit and tag v{version}",
+                f"Created git commit and tag v{version}",
+            )
             print("\nℹ️  To push to remote:")
             print(f"    git push origin main v{version}")
 
             return True
 
         except subprocess.CalledProcessError as e:
-            print(f"\n❌ Git operation failed: {e}")
+            safe_print(f"\n❌ Git operation failed: {e}", f"Git operation failed: {e}")
             return False
 
     def get_commits_since_last_tag(self) -> list:
@@ -385,7 +413,7 @@ class ReleaseManager:
         print("-" * 40 + "\n")
 
         # Git operations
-        if not self.git_commit_and_tag(new_version):
+        if not self.git_commit_and_tag(new_version, bump_type):
             return 1
 
         # Summary
