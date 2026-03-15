@@ -52,6 +52,19 @@ def extract_release_type(commit_msg: str) -> Optional[str]:
     return "patch"
 
 
+def safe_print(msg: str, fallback: Optional[str] = None):
+    """Print with emoji if possible, fallback to plain text if UnicodeEncodeError
+    occurs."""
+    try:
+        print(msg)
+    except UnicodeEncodeError:
+        if fallback is not None:
+            print(fallback)
+        else:
+            # Remove all non-ascii characters
+            print(msg.encode("ascii", errors="ignore").decode())
+
+
 def main() -> int:
     """Main entry point."""
     try:
@@ -62,8 +75,11 @@ def main() -> int:
             # No [release] tag found - skip silently
             return 0
 
-        print(f"\n🚀 [release:{release_type}] detected in commit message")
-        print(f"Running release manager with bump type: {release_type}\n")
+        safe_print(
+            f"\n🚀 [release:{release_type}] detected in commit message",
+            f"\n[release:{release_type}] detected in commit message",
+        )
+        safe_print(f"Running release manager with bump type: {release_type}\n")
 
         # Use venv python if available
         root_dir = Path(__file__).parent.parent
@@ -82,18 +98,22 @@ def main() -> int:
         )
 
         if result.returncode != 0:
-            print("\n❌ Release failed!")
-            print(
+            safe_print("\n❌ Release failed!", "\nRelease failed!")
+            safe_print(
                 "Fix the issue and try again, or remove [release] from commit message"
             )
             return 1
 
-        print("\n✅ Release created successfully!")
-        print("The release commit and tag will be pushed automatically")
+        safe_print(
+            "\n✅ Release created successfully!", "\nRelease created successfully!"
+        )
+        safe_print("The release commit and tag will be pushed automatically")
         return 0
 
     except Exception as e:
-        print(f"\n❌ Auto-release hook error: {e}")
+        safe_print(
+            f"\n❌ Auto-release hook error: {e}", f"\nAuto-release hook error: {e}"
+        )
         return 1
 
 
