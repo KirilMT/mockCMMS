@@ -19,6 +19,14 @@ are properly managed.
 >
 > **Why?** Pushing a new branch without a PR leaves orphan branches on GitHub with no review process.
 
+## Supported Commit Types
+
+The following commit types are supported for release automation and changelog generation:
+
+- feat, fix, chore, refactor, perf, remove, revert, docs, test, style, build, ci
+
+Use only these types in your commit messages for releases.
+
 ### 1. Initial Setup (First Time on a New Machine)
 
 If you are starting on a new computer or don't have the project locally, you
@@ -396,3 +404,32 @@ git branch -d new-feature-name
 
 This completes the workflow. You are now ready to start on the next task by
 creating a new branch from your up-to-date `master`.
+
+---
+
+## Commit Message Enforcement & Template
+
+All commits must use the Conventional Commits format. This is enforced by a `commit-msg` hook and a `.gitmessage` template, both set up automatically by `scripts/setup-dev.ps1`.
+
+- **Format Example:**
+
+  ```
+  feat(module): add new feature [release:minor]
+
+  Detailed body describing the change.
+  [release:minor]
+  ```
+
+## Release Automation: Commit Message Requirements
+
+- To trigger the release automation, your commit message **must**:
+  - Follow the Conventional Commits standard (e.g., `feat(core): add feature ...`).
+  - Include a `[release:patch]`, `[release:minor]`, or `[release:major]` tag.
+- If the commit message does **not** include a `[release:...]` tag, the release will **not** run.
+- Always use the commit template or follow the Conventional Commits standard for release automation.
+- If the release commit fails due to hooks, fix the issues and re-commit.
+
+- **Release Automation:**
+  - If your commit message includes `[release:patch]`, `[release:minor]`, `[release:major]`, or `[release]`, the release manager will run automatically on push, bumping the version and updating the changelog.
+
+See `.github/CONTRIBUTING.md` for more details and examples.

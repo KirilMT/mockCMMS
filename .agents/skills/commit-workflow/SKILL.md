@@ -149,3 +149,43 @@ git branch -vv
 
 - **NEVER** use `git checkout` or `git restore` — uncommitted work will be lost.
 - Only `git commit` and `git push` require user approval. Everything else auto-runs.
+
+---
+
+## Release Automation: Commit Message Requirements
+
+To trigger the release automation (auto_release_hook and release_manager), your commit message **must**:
+- Follow the Conventional Commits standard (e.g., `feat(core): add feature ...`).
+- Include a `[release:patch]`, `[release:minor]`, or `[release:major]` tag.
+- If the commit message does **not** include a `[release:...]` tag, the release will **not** run.
+- Always use the commit template or follow the Conventional Commits standard for release automation.
+- If the release commit fails due to hooks, fix the issues and re-commit.
+
+**Examples:**
+- `git commit -m "fix: bug fix [release:patch]"`        # 1.0.0 → 1.0.1
+- `git commit -m "feat: new feature [release:minor]"`   # 1.0.0 → 1.1.0
+- `git commit -m "feat!: breaking [release:major]"`     # 1.0.0 → 2.0.0
+- `git commit -m "chore: updates [release]"`            # Defaults to patch
+
+The `auto_release_hook.py` pre-push hook detects `[release]` and runs `release_manager.py` automatically.
+
+> **Note:** Always check commit messages for the correct format before pushing. This is required for the release workflow to function.
+
+# Supported Commit Types (Conventional Commits)
+
+The following commit types are supported and recognized by release automation and changelog generation:
+
+- feat
+- fix
+- chore
+- refactor
+- perf
+- remove
+- revert
+- docs
+- test
+- style
+- build
+- ci
+
+**Use only these types in your commit messages for release automation.**
