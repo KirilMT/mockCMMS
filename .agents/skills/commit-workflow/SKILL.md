@@ -18,17 +18,20 @@ description: Use when staging, reviewing, and committing changes. Covers the ful
 
 ---
 
-## Step 1: Pre-Commit Selection & Validation
+## Step 1: Pre-Commit Formatting & Validation
 
-**MANDATORY** — never commit without passing validation. However, the pre-commit hook now handles **targeted validation** automatically on your staged files.
+**MANDATORY** — never commit without formatting and passing validation.
 
-**Manual full validation (recommended before push):**
+**Format first, validate second:**
 ```bash
+python scripts/format_code.py      # Format ALL code (must be the LAST edit before commit)
 python scripts/validate_code.py    # Full repo scan (lint + test + coverage)
 ```
 
+> ⚠️ **CRITICAL RULE:** `format_code.py` must be the **very last thing** you run before `git add` and `git commit`. If you edit ANY file after formatting, you MUST re-run `format_code.py` before committing. The pre-commit hook will catch unformatted code and reject the commit.
+
 **What the pre-commit hook does automatically:**
-- Runs `validate_code.py --quick` on only your **staged** files.
+- Runs `validate_code.py --quick` on only your **staged** files (with `require_serial: true` for clean output).
 - Ensures your specific changes pass lint/test even if other stashed files are messy.
 
 ## Step 2: Review All Changed Files
@@ -114,6 +117,8 @@ Body text here..."
 
 **NOTE:** `git commit` requires user approval — do NOT set `SafeToAutoRun=true`.
 
+**Commit-msg hook enforcement:** The `.git/hooks/commit-msg` hook will reject commits that don't follow Conventional Commits format. All commits must start with `type(scope): description`.
+
 ## Step 8: Clean Up
 
 ```bash
@@ -139,12 +144,13 @@ git branch -vv
 
 ## Pre-Commit Checklist
 
-- [ ] `format_code.py` passed
+- [ ] All code changes are complete — no more edits after this point
+- [ ] `format_code.py` passed (run LAST, after all edits)
 - [ ] `validate_code.py` passed
 - [ ] All related files staged
 - [ ] No unrelated changes staged
 - [ ] No debug/temporary code included
-- [ ] Commit message follows conventional format
+- [ ] Commit message follows Conventional Commits: `type(scope): description`
 - [ ] Documentation updated if applicable
 
 ## Safety
@@ -156,7 +162,11 @@ git branch -vv
 
 ## Release Process (Do Not Trigger)
 
-Releases are handled automatically by Google Release Please via the CI/CD pipeline (`release.yml`). AI agents should **never** embed release tags in commit messages, update `CHANGELOG.md`, or trigger releases manually. Release Please generates all changelogs and version tags automatically based on Conventional Commits.
+Releases are handled automatically by Google Release Please via the CI/CD pipeline (`release.yml`). AI agents should **never** trigger releases manually, update `CHANGELOG.md`, or modify version tags. Release Please generates all changelogs and version bumps automatically based on Conventional Commit types (`feat` → minor, `fix` → patch).
+
+## Commit-Msg Hook
+
+The `.git/hooks/commit-msg` hook enforces Conventional Commits format. It accepts all standard types: `feat`, `fix`, `chore`, `refactor`, `perf`, `remove`, `revert`, `docs`, `test`, `style`, `build`, `ci`.
 
 ## Supported Commit Types (Conventional Commits)
 

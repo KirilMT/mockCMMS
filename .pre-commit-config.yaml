@@ -25,6 +25,7 @@ repos:
         entry: python scripts/validate_code.py --quick --backend --frontend
         language: system
         pass_filenames: true
+        require_serial: true  # All files in one call — prevents repeated output
         stages: [pre-commit]
 
       - id: pre-push-validation
