@@ -90,9 +90,9 @@ REPORTING_ENABLED=True   # apps/reporting
 | ---------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
 | `scripts/format_code.py`           | Auto-fix all formatting (isort, black, docformatter, prettier) | `python scripts/format_code.py`                        |
 | `scripts/validate_code.py`         | Full CI simulation (lint, test, coverage)                      | `python scripts/validate_code.py`                      |
-| `scripts/validate_code.py --quick` | Fast mode: honors `.env`, skips slow tests                     | `python scripts/validate_code.py --quick`              |
+| `scripts/validate_code.py --quick` | Fast mode: honors `.env`, targeted tests, skips slow checks    | `python scripts/validate_code.py --quick`              |
+| `scripts/validate_code.py <files>` | Targeted Mode: Validates only specific staged files (fast)     | `python scripts/validate_code.py src/app.py`           |
 | `scripts/generate_tests.py`        | Generate test stubs for new modules                            | `python scripts/generate_tests.py src/services/foo.py` |
-| `scripts/release_manager.py`       | Semantic version bump + changelog                              | `python scripts/release_manager.py minor`              |
 
 ---
 
@@ -110,9 +110,11 @@ npm test                                        # Jest unit tests
 npm run test:coverage                           # Jest with coverage
 npm run test:e2e                                # Playwright E2E
 
-# Full validation (recommended before commit)
-python scripts/format_code.py                   # Step 1: auto-fix formatting
-python scripts/validate_code.py                 # Step 2: lint + test + coverage
+# Full validation (total health check)
+python scripts/validate_code.py                 # Full suite: lint + test + coverage
+
+# Targeted validation (automatic via pre-commit)
+python scripts/validate_code.py --quick <files> # Rapid check for staged files
 ```
 
 ### Coverage Thresholds (IMMUTABLE)
@@ -195,7 +197,7 @@ Or just run: `python scripts/format_code.py`
 - **Feature branches:** Never commit to `main`. Use `type/feature-name`.
 - **New branches:** Always use `gh pr create` to push. NEVER `git push -u`.
 - **Tracked branches:** Use `git push` normally.
-- **Pre-commit hooks** are enabled: isort, black, docformatter, ruff, prettier.
+- **Pre-commit hooks** are enabled: Unified validation (format + lint + targeted tests).
 
 > For the full commit workflow procedure, see **Skill: `commit-workflow`**.
 
@@ -221,7 +223,7 @@ Or just run: `python scripts/format_code.py`
 
 - Complete the **full scope**. If asked for A, B, and C — do all three.
 - No partial submissions unless fully blocked.
-- Always run `python scripts/format_code.py` then `python scripts/validate_code.py` before finishing any significant task.
+- Always run `python scripts/validate_code.py` (Full Mode) before pushing or finishing a major task to ensure global repository health.
 
 ### File Safety
 
@@ -231,18 +233,7 @@ Or just run: `python scripts/format_code.py`
 
 ### Version Management
 
-Use `python scripts/release_manager.py <patch|minor|major>` after significant changes.
-
-**Automated release via commit message** — include `[release:TYPE]` in your commit:
-
-```bash
-git commit -m "feat: new feature [release:minor]"   # 1.0.0 → 1.1.0
-git commit -m "fix: bug fix [release:patch]"         # 1.0.0 → 1.0.1
-git commit -m "feat!: breaking [release:major]"      # 1.0.0 → 2.0.0
-git commit -m "chore: updates [release]"             # Defaults to patch
-```
-
-The `auto_release_hook.py` pre-push hook detects `[release]` and runs `release_manager.py` automatically.
+Releases are automatically managed by **Google Release Please**. AI agents should **never** trigger releases directly, nor should they modify `CHANGELOG.md` or version tags. Release Please automatically opens a "Release PR", and the release is cut unconditionally when this PR is merged.
 
 See `.github/CONTRIBUTING.md` and `.github/GIT_WORKFLOW.md` for full details.
 

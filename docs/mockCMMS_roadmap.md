@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated March 12, 2026_ (Portable Windows Distribution added)
+_Updated March 17, 2026_ (Targeted CI Validation & Pre-Commit Refinement)
 
 ---
 
@@ -196,6 +196,12 @@ _Updated March 12, 2026_ (Portable Windows Distribution added)
 ---
 
 ## ✅ RECENTLY COMPLETED
+
+### CI Validation & Pre-Commit Refinement (March 17, 2026)
+
+- ✅ **Targeted Pre-Commit:** Updated `.pre-commit-config.yaml` and `scripts/validate_code.py` to only validate staged files during commits, drastically reducing false positives from unstaged debt.
+- ✅ **Conditional Sectioning:** Refined `validate_code.py` output to only show relevant tool headers (Bandit, DjLint) when applicable files are staged.
+- ✅ **Windows DB Locking Solved:** Migrated modular app tests (Planning) to strict in-memory SQLite to eliminate `PermissionError` (WinError 32) during parallel test execution.
 
 ### AI Instruction Consolidation (March 14, 2026)
 
@@ -657,7 +663,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
       - Conventional commits format: `type(scope): subject`
       - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
       - Issue linking with closing keywords
-    - ✅ **Automated Release:** Commit message triggers via `[release:TYPE]`
+    - ✅ **Automated Release:** CI/CD pipeline via `workflow_dispatch`
   - **Pending (GitHub Settings):**
     - ⚠️ **Branch Protection Rules:** Must be configured in GitHub repository settings
       - Protect `main` branch from direct pushes
@@ -679,12 +685,12 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
       - Security scanning (bandit)
       - Diff coverage (90% threshold for new code)
       - Codecov integration
-    - ✅ **Release Workflow (`release.yml`):** Manual workflow dispatch from GitHub UI
-      - Choose version bump type (patch/minor/major)
-      - Runs `release_manager.py` automatically
-      - Creates GitHub release with changelog
-    - ✅ **Local Scripts:** `format_code.py`, `validate_code.py`, `release_manager.py`, `auto_release_hook.py`
-    - ✅ **Pre-commit Hooks:** Automated formatting, validation, and optional release on push
+    - ✅ **Release Workflow (`release.yml`):** Automatically runs Google Release Please
+      - Assumes control of versioning based on Conventional Commits
+      - Automatically opens "Release PRs" and updates CHANGELOG.md
+      - Creates GitHub release natively upon merging Release PR
+    - ✅ **Local Scripts:** `format_code.py`, `validate_code.py`
+    - ✅ **Pre-commit Hooks:** Automated formatting and validation checks
   - **Note:** A separate `code-quality.yml` is not needed since `ci.yml` already includes all quality checks (linting, type checking, security scanning).
 
 - **[x] Implement Local Development Scripts** _(Priority: High)_
@@ -692,14 +698,12 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - ✅ `validate_code.py` - Comprehensive pre-commit validation script (simulates CI locally)
     - ✅ `format_code.py` - Actively formats code (Black, isort, Prettier)
     - ✅ `test_workflow.py` - Deprecated (CI pipeline `ci.yml` is the source of truth)
-    - ✅ `release_manager.py` - Release management script implemented
   - **Goal:** Create utility scripts for local development workflow, adapted from Troubleshooting-Wizard.
   - **Reference:** [Troubleshooting-Wizard scripts/](https://github.com/KirilMT/Troubleshooting-Wizard/tree/main/scripts)
   - **Scripts to Implement:**
     - **`validate_code.py`:** ✅ COMPLETED - Comprehensive validation script that runs all checks (linting, formatting, tests, coverage, security) before committing. Simulates CI pipeline locally.
     - **`format_code.py`:** ✅ COMPLETED - Actively formats Python code (not just check). Applies Black, isort, and other formatters.
     - **`test_workflow.py`:** 🚫 DEPRECATED - CI/CD pipeline handles full validation.
-    - **`release_manager.py`:** ✅ COMPLETED - Handles version bumping, changelog updates, and git tagging for releases.
     - **`setup_environment.py`:** Not required for current scope.
   - **Key Requirements:**
     - Scripts must be modular and reusable across the mockCMMS ecosystem.

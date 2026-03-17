@@ -522,91 +522,166 @@ def detect_changed_scopes() -> Dict[str, Any]:
 # =============================================================================
 
 
-def validate_python_backend(quick: bool = False, force_all_apps: bool = True) -> bool:
+def validate_python_backend(
+    quick: bool = False, force_all_apps: bool = True, files: Optional[List[str]] = None
+) -> bool:
     """Run all Python backend validation checks."""
-    print_header("BACKEND VALIDATION")
+    # Filter files for Python targets
+    python_targets = []
+    template_targets = []
+    bandit_targets = []
+    test_targets = []
 
+    if files:
+        # Avoid hidden files like .gitmessage
+        clean_files = [f for f in files if not Path(f).name.startswith(".")]
+
+        # 1. Python targets
+        python_targets = [
+            f for f in clean_files if f.endswith(".py") or Path(f).name == "run.py"
+        ]
+        # 2. Template targets
+        template_targets = [
+            f for f in clean_files if f.endswith(".html") and "templates" in f
+        ]
+        # 3. Bandit targets
+        bandit_targets = [f for f in clean_files if f.startswith("src/")]
+        # 4. Test targets
+        test_targets = [f for f in clean_files if "tests" in f and f.endswith(".py")]
+
+        # Early Exit: Return True silently if no backend work found
+        if not any([python_targets, template_targets, bandit_targets, test_targets]):
+            return True
+
+    print_header("BACKEND VALIDATION")
     checks = []
 
+    # Full run (no specific files provided)
+    if not files:
+        python_targets = ["src", "apps", "tests", "scripts", "run.py"]
+        # template_targets, bandit_targets, test_targets will be handled by defaults
+        # inside the respective sections below.
+
     # 1. Import sorting (PEP 8)
-    print_section("Step 1/11: Import Sorting (isort)")
-    success, _ = run_command(
-        ["isort", "src", "apps", "tests", "scripts", "run.py", "--check-only"],
-        "Import sorting check",
-        force_all_apps=True,
-    )
-    checks.append(("Import Sorting", success))
+    if python_targets:
+        print_section("Step 1/11: Import Sorting (isort)")
+        success, _ = run_command(
+            ["isort"] + python_targets + ["--check-only"],
+            "Import sorting check",
+            force_all_apps=True,
+        )
+        checks.append(("Import Sorting", success))
 
     # 2. Code formatting (Black)
-    print_section("Step 2/11: Code Formatting (black)")
-    success, _ = run_command(
-        ["black", "--check", "src", "apps", "tests", "scripts", "run.py"],
-        "Code formatting check",
-        force_all_apps=True,
-    )
-    checks.append(("Code Formatting", success))
+    if python_targets:
+        print_section("Step 2/11: Code Formatting (black)")
+        success, _ = run_command(
+            ["black", "--check"] + python_targets,
+            "Code formatting check",
+            force_all_apps=True,
+        )
+        checks.append(("Code Formatting", success))
 
     # 3. Docstring formatting (PEP 257)
-    print_section("Step 3/11: Docstring Formatting (docformatter)")
-    success, _ = run_command(
-        ["docformatter", "--check", "-r", "src", "apps", "tests", "scripts", "run.py"],
-        "Docstring formatting check",
-        force_all_apps=True,
-    )
-    checks.append(("Docstring Formatting", success))
+    if python_targets:
+        print_section("Step 3/11: Docstring Formatting (docformatter)")
+        success, _ = run_command(
+            ["docformatter", "--check", "-r"] + python_targets,
+            "Docstring formatting check",
+            force_all_apps=True,
+        )
+        checks.append(("Docstring Formatting", success))
 
     # 4. Linting (Ruff - fast, comprehensive)
-    print_section("Step 4/11: Linting (ruff)")
-    success, _ = run_command(
-        ["ruff", "check", "src", "apps", "tests", "scripts", "run.py"],
-        "Ruff linting",
-        force_all_apps=True,
-    )
-    checks.append(("Ruff Linting", success))
+    if python_targets:
+        print_section("Step 4/11: Linting (ruff)")
+        success, _ = run_command(
+            ["ruff", "check"] + python_targets,
+            "Ruff linting",
+            force_all_apps=True,
+        )
+        checks.append(("Ruff Linting", success))
 
     # 5. Additional linting (Flake8)
-    print_section("Step 5/11: Additional Linting (flake8)")
-    exclude_dirs = (
-        ".venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report"
-    )
-    success, _ = run_command(
-        [
-            "flake8",
-            ".",
-            f"--exclude={exclude_dirs}",
-            "--count",
-            "--show-source",
-            "--statistics",
-            "--max-line-length=88",
-        ],
-        "Flake8 linting",
-        force_all_apps=True,
-    )
-    checks.append(("Flake8 Linting", success))
+    if python_targets:
+        print_section("Step 5/11: Additional Linting (flake8)")
+        exclude_dirs = (
+            ".venv,node_modules,__pycache__,.git,"
+            ".pytest_cache,htmlcov,playwright-report"
+        )
+        flake8_cmd = (
+            ["flake8"]
+            + python_targets
+            + [
+                f"--exclude={exclude_dirs}",
+                "--count",
+                "--show-source",
+                "--statistics",
+                "--max-line-length=88",
+            ]
+        )
+        success, _ = run_command(
+            flake8_cmd,
+            "Flake8 linting",
+            force_all_apps=True,
+        )
+        checks.append(("Flake8 Linting", success))
 
     # 6. Type checking (mypy)
-    print_section("Step 6/11: Type Checking (mypy)")
-    success, _ = run_command(
-        ["mypy", "src", "apps", "tests", "scripts", "run.py"],
-        "Type checking",
-        force_all_apps=True,
-    )
-    checks.append(("Type Checking", success))
+    if python_targets:
+        print_section("Step 6/11: Type Checking (mypy)")
+        success, _ = run_command(
+            ["mypy"] + python_targets,
+            "Type checking",
+            force_all_apps=True,
+        )
+        checks.append(("Type Checking", success))
 
-    # 7. Security scanning (Bandit)
+    # 7. Security scanning (bandit)
     print_section("Step 7/11: Security Scanning (bandit)")
-    # -ll: report only medium and high severity issues
-    success, _ = run_command(["bandit", "-r", "src/", "-ll"], "Security scanning")
-    checks.append(("Security Scanning", success))
+    if files:
+        if bandit_targets:
+            success, _ = run_command(
+                ["bandit"] + bandit_targets + ["-ll"],
+                "Security scanning",
+            )
+        else:
+            msg = (
+                f"{Colors.OKCYAN}[INFO] No files in src/ targeted — "
+                f"skipping.{Colors.ENDC}"
+            )
+            print(msg)
+            success = True
+    else:
+        success, _ = run_command(["bandit", "-r", "src/", "-ll"], "Security scanning")
+
+    if success and files and not [f for f in files if f.startswith("src/")]:
+        checks.append(("Security Scanning", True))
+    else:
+        checks.append(("Security Scanning", success))
 
     # 8. Template Linting (djlint)
     print_section("Step 8/11: Template Linting (djlint)")
-    # Apps templates excluded due to risk/lack of tests
-    template_paths = ["src/templates"]
-    success, _ = run_command(
-        [sys.executable, "-m", "djlint", "--check"] + template_paths,
-        "Jinja2 template linting",
-    )
+    if files:
+        if template_targets:
+            success, _ = run_command(
+                [sys.executable, "-m", "djlint", "--check"] + template_targets,
+                "Jinja2 template linting",
+            )
+        else:
+            msg = (
+                f"{Colors.OKCYAN}[INFO] No templates targeted — "
+                f"skipping.{Colors.ENDC}"
+            )
+            print(msg)
+            success = True
+    else:
+        template_paths = ["src/templates"]
+        success, _ = run_command(
+            [sys.executable, "-m", "djlint", "--check"] + template_paths,
+            "Jinja2 template linting",
+        )
+
     if not success:
         print_warning("DjLint found issues (soft failure for now)")
         checks.append(("Template Linting", True))
@@ -614,83 +689,107 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
         checks.append(("Template Linting", success))
 
     # 9. Running Tests
-    print_section("Step 9/11: Running Tests with Coverage")
     if quick:
+        print_section("Step 9/11: Targeted Tests (No Coverage)")
         print_warning("Quick mode: Smart test targeting enabled")
-        scopes = detect_changed_scopes()
-        testmon_db = Path(".testmondata")
 
-        if scopes["full_suite"]:
-            # Global change detected — run everything quickly without coverage
-            print_warning(
-                "Quick mode [full scope]: Global/infra file changed, "
-                "running all tests without coverage."
-            )
-            success, _ = run_command(
-                [
-                    "pytest",
-                    "-c",
-                    "pyproject.toml",
-                    "--no-cov",  # override addopts --cov (no threshold in quick mode)
-                    "-x",
-                    "--tb=short",
-                ],
-                "Quick test run (full scope, no coverage)",
-                force_all_apps=force_all_apps,
-            )
-
-        elif testmon_db.exists():
-            # Tier 1 — testmon: reruns only tests whose covered lines changed.
-            # --no-cov prevents pytest-cov from conflicting with testmon's tracer.
-            print_warning(
-                "Quick mode [Tier 1 — testmon]: Coverage DB found. "
-                "Running only tests affected by your changes."
-            )
-            success, _ = run_command(
-                [
-                    "pytest",
-                    "-c",
-                    "pyproject.toml",
-                    "--testmon",
-                    "--no-cov",
-                    "-x",
-                    "--tb=short",
-                ],
-                "Smart test run (testmon — affected tests only)",
-                force_all_apps=force_all_apps,
-            )
-
-        elif scopes["backend"]:
-            # Tier 2 — git-diff: run only directories mapped from changed files.
-            scope_str = " ".join(scopes["backend"])
-            print_warning(
-                f"Quick mode [Tier 2 — git-diff]: Scoping backend tests to: "
-                f"{scope_str}"
-            )
-            success, _ = run_command(
-                [
-                    "pytest",
-                    "-c",
-                    "pyproject.toml",
-                    "--no-cov",
-                    "-x",
-                    "--tb=short",
-                ]
-                + scopes["backend"],
-                f"Scoped test run ({scope_str})",
-                force_all_apps=force_all_apps,
-            )
-
+        # Priority 1: Specifically passed files (pre-commit)
+        if files:
+            if test_targets:
+                print_warning(
+                    f"Quick mode [Targeted Files]: Running {len(test_targets)} test(s)"
+                )
+                success, _ = run_command(
+                    [
+                        "pytest",
+                        "-c",
+                        "pyproject.toml",
+                        "--no-cov",
+                        "-x",
+                        "--tb=short",
+                    ]
+                    + test_targets,
+                    "Targeted test run",
+                    force_all_apps=force_all_apps,
+                )
+            else:
+                # No specific test files in staged changes, use smart discovery
+                scopes = detect_changed_scopes()
+                if scopes["full_suite"]:
+                    print_warning(
+                        "Quick mode [Full Scope]: Global changes — running all tests."
+                    )
+                    success, _ = run_command(
+                        [
+                            "pytest",
+                            "-c",
+                            "pyproject.toml",
+                            "--no-cov",
+                            "-x",
+                            "--tb=short",
+                        ],
+                        "Quick test run (full scope)",
+                        force_all_apps=force_all_apps,
+                    )
+                elif scopes["backend"]:
+                    scope_str = " ".join(scopes["backend"])
+                    print_warning(f"Quick mode [Smart Scoping]: Running: {scope_str}")
+                    success, _ = run_command(
+                        [
+                            "pytest",
+                            "-c",
+                            "pyproject.toml",
+                            "--no-cov",
+                            "-x",
+                            "--tb=short",
+                        ]
+                        + scopes["backend"],
+                        "Smart test run",
+                        force_all_apps=force_all_apps,
+                    )
+                else:
+                    print_warning("Quick mode: No relevant changes — skipping tests.")
+                    success = True
         else:
-            # Tier 3 — no backend changes detected: skip entirely.
-            print_warning(
-                "Quick mode [Tier 3 — skip]: No backend-relevant changes "
-                "detected — skipping backend tests."
-            )
-            success = True
+            # Normal quick mode without specific files
+            scopes = detect_changed_scopes()
+            if scopes["full_suite"]:
+                success, _ = run_command(
+                    ["pytest", "-c", "pyproject.toml", "--no-cov", "-x", "--tb=short"],
+                    "Quick test run (full scope)",
+                    force_all_apps=force_all_apps,
+                )
+            elif scopes["backend"]:
+                success, _ = run_command(
+                    ["pytest", "-c", "pyproject.toml", "--no-cov", "-x", "--tb=short"]
+                    + scopes["backend"],
+                    "Smart test run",
+                    force_all_apps=force_all_apps,
+                )
+            else:
+                success = True
 
         checks.append(("Tests", success))
+
+        # Explicitly mention skipped steps 10 and 11 in quick mode
+        print_section("Step 10/11: Total Coverage Validation")
+        msg10 = (
+            f"{Colors.OKCYAN}[INFO] Quick mode: Skipping overall coverage "
+            f"threshold check.{Colors.ENDC}"
+        )
+        print(msg10)
+        checks.append(("Total Coverage Threshold", True))
+
+        print_section("Step 11/11: Diff (Patch) Coverage")
+        msg11 = (
+            f"{Colors.OKCYAN}[INFO] Quick mode: Skipping diff coverage "
+            f"check.{Colors.ENDC}"
+        )
+        print(msg11)
+        checks.append(("Diff Coverage", True))
+
     else:
+        print_section("Step 9/11: Full Test Suite with Coverage")
         success, _ = run_command(
             [
                 "pytest",
@@ -729,7 +828,11 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
         print_section("Step 11/11: Diff (Patch) Coverage")
         # Ensure we have coverage.xml
         if not os.path.exists("coverage.xml"):
-            print_warning("coverage.xml not found, skipping diff-cover")
+            msg_cov = (
+                f"{Colors.OKCYAN}[INFO] coverage.xml not found, skipping "
+                f"diff-cover.{Colors.ENDC}"
+            )
+            print(msg_cov)
             checks.append(("Diff Coverage", True))  # Soft fail if missing
         else:
             # Check if diff-cover is installed
@@ -748,10 +851,11 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
                 )
                 checks.append(("Diff Coverage", success))
             else:
-                print_warning(
-                    "diff-cover not installed. Run 'pip install diff-cover' "
-                    "to enable patch checks."
+                msg_dc = (
+                    f"{Colors.OKCYAN}[INFO] diff-cover not installed. Run "
+                    f"'pip install diff-cover' to enable patch checks.{Colors.ENDC}"
                 )
+                print(msg_dc)
                 # Soft fail if tool is missing to allow environment flexibility
                 checks.append(("Diff Coverage", True))
 
@@ -767,21 +871,35 @@ def validate_python_backend(quick: bool = False, force_all_apps: bool = True) ->
     return all_passed
 
 
-def validate_others() -> bool:
-    """Run validation checks for documentation and other files."""
-    print_header("OTHERS VALIDATION")
+def validate_others(files: Optional[List[str]] = None) -> bool:
+    """Run validation for other files (documentation, config, etc.)."""
+    # Filter files for Documentation targets
+    doc_paths = []
+    if files:
+        doc_paths = [
+            f
+            for f in files
+            if f.endswith((".md", ".json", ".yml", ".yaml"))
+            and not f.startswith(".venv")
+            and not Path(f).name.startswith(".")
+        ]
+        if not doc_paths:
+            return True
 
+    print_header("OTHERS VALIDATION")
     checks = []
 
-    # Documentation linting (Prettier)
     print_section("Step 1/1: Documentation Linting (prettier)")
-    doc_paths = [
-        "docs/**/*.md",
-        "*.md",  # Root markdown
-        "apps/**/*.md",  # App documentation
-        "*.json",
-        ".github/**/*.md",
-    ]
+    if not doc_paths:
+        # Full run default paths
+        doc_paths = [
+            "docs/**/*.md",
+            "*.md",
+            "apps/**/*.md",
+            "*.json",
+            ".github/**/*.md",
+        ]
+
     # Check if Prettier is installed first
     try:
         use_shell = sys.platform == "win32"
@@ -799,11 +917,19 @@ def validate_others() -> bool:
             )
             checks.append(("Documentation Linting", success))
         else:
-            print_warning("Prettier not installed - skipping documentation linting")
+            msg_pr = (
+                f"{Colors.OKCYAN}[INFO] Prettier not installed - skipping "
+                f"documentation linting.{Colors.ENDC}"
+            )
+            print(msg_pr)
             # Not a failure, just skipped
             checks.append(("Documentation Linting", True))
     except Exception:
-        print_warning("Error checking for Prettier - skipping documentation linting")
+        msg_err = (
+            f"{Colors.OKCYAN}[INFO] Error checking for Prettier - skipping "
+            f"documentation linting.{Colors.ENDC}"
+        )
+        print(msg_err)
         checks.append(("Documentation Linting", True))
 
     # Print summary
@@ -819,62 +945,124 @@ def validate_others() -> bool:
 
 
 def validate_javascript_frontend(
-    quick: bool = False, force_all_apps: bool = True
+    quick: bool = False, force_all_apps: bool = True, files: Optional[List[str]] = None
 ) -> bool:
     """Run all JavaScript frontend validation checks."""
-    print_header("JAVASCRIPT FRONTEND VALIDATION")
-
     # Check if npm is available
     npm_available = shutil.which("npm") is not None
 
     if not npm_available:
-        print_warning(
-            "[WARN] npm not found - frontend validation will be skipped locally\n"
-            "   This is OK if you didn't modify any .js/.css/.html files\n"
-            "   GitHub Actions will run frontend tests with Node.js installed"
+        msg_npm = (
+            f"{Colors.OKCYAN}[INFO] npm not found - frontend validation "
+            f"will be skipped locally.\n"
+            f"       This is OK if you didn't modify any .js/.css/.html "
+            f"files.\n"
+            f"       GitHub Actions will run frontend tests with Node.js "
+            f"installed.{Colors.ENDC}"
         )
+        print(msg_npm)
+        return True
 
+    # Filter files for Frontend tools
+    eslint_targets = []
+    html_targets = []
+    jest_targets = []
+
+    if files:
+        # 1. ESLint targets
+        eslint_targets = [
+            f
+            for f in files
+            if f.endswith((".js", ".jsx", ".ts", ".tsx"))
+            and (
+                f.startswith("src/static/js")
+                or f.startswith("apps")
+                or f.startswith("tests/frontend")
+            )
+        ]
+        # 2. Template targets
+        html_targets = [f for f in files if f.endswith(".html")]
+        # 3. Test targets
+        jest_targets = [f for f in files if f.endswith(".test.js")]
+
+        # Early Exit if no frontend files
+        if not any([eslint_targets, html_targets, jest_targets]):
+            return True
+
+    print_header("JAVASCRIPT FRONTEND VALIDATION")
     checks = []
 
-    # 1. ESLint - JavaScript linting (SHOULD be in CI but currently missing)
-    print_section("Step 1/3: JavaScript Linting (eslint)")
-    success, _ = run_command(
-        [
-            "npx",
-            "eslint",
-            "src/static/js",
-            "apps",
-            "tests/frontend",
-            "--report-unused-disable-directives",
-        ],
-        "ESLint check",
-        force_all_apps=force_all_apps,
-    )
-    checks.append(("ESLint", success))
-
-    # 2. JavaScript tests (Jest) with coverage - MATCHES CI
-    print_section("Step 2/3: JavaScript Tests (jest)")
-    if quick:
-        _scopes = detect_changed_scopes()
-        if _scopes["full_suite"] or _scopes["frontend"]:
-            success, _ = run_command(
-                [
-                    "npm",
-                    "test",
-                    "--",
-                    "--coverage",
-                    "--coverageReporters=text",
-                    "--coverageReporters=lcov",
-                ],
-                "Jest tests with coverage",
+    # 1. ESLint targets check
+    if files:
+        if eslint_targets:
+            print_section("Step 1/3: JavaScript Linting (eslint)")
+            eslint_success, _ = run_command(
+                ["npx", "eslint"]
+                + eslint_targets
+                + ["--report-unused-disable-directives"],
+                "ESLint check",
                 force_all_apps=force_all_apps,
             )
         else:
-            print_warning(
-                "Quick mode: No JS/CSS/template changes detected — skipping Jest."
-            )
-            success = True
+            eslint_success = True
     else:
+        print_section("Step 1/3: JavaScript Linting (eslint)")
+        eslint_success, _ = run_command(
+            [
+                "npx",
+                "eslint",
+                "src/static/js",
+                "apps",
+                "tests/frontend",
+                "--report-unused-disable-directives",
+            ],
+            "ESLint check",
+            force_all_apps=force_all_apps,
+        )
+    checks.append(("ESLint", eslint_success))
+
+    # 2. JavaScript tests (Jest)
+    if quick:
+        # Priority 1: Specifically passed test files
+        if files:
+            jest_targets = [f for f in files if f.endswith(".test.js")]
+            if jest_targets:
+                print_section("Step 2/3: JavaScript Tests (jest)")
+                print_warning(
+                    f"Quick mode [Targeted Files]: Running {len(jest_targets)} test(s)"
+                )
+                success, _ = run_command(
+                    ["npm", "test", "--"] + jest_targets,
+                    "Targeted Jest run",
+                    force_all_apps=force_all_apps,
+                )
+            else:
+                # Priority 2: Smart scoping from all staged changes
+                scopes = detect_changed_scopes()
+                if scopes["full_suite"] or scopes["frontend"]:
+                    print_section("Step 2/3: JavaScript Tests (jest)")
+                    print_warning("Quick mode [Smart Scoping]: Running frontend tests")
+                    success, _ = run_command(
+                        ["npm", "test"],
+                        "Smart Jest run",
+                        force_all_apps=force_all_apps,
+                    )
+                else:
+                    success = True
+        else:
+            # Normal quick mode without specific files
+            scopes = detect_changed_scopes()
+            if scopes["full_suite"] or scopes["frontend"]:
+                print_section("Step 2/3: JavaScript Tests (jest)")
+                success, _ = run_command(
+                    ["npm", "test"],
+                    "Quick Jest run",
+                    force_all_apps=force_all_apps,
+                )
+            else:
+                success = True
+    else:
+        print_section("Step 2/3: JavaScript Tests (jest)")
         success, _ = run_command(
             [
                 "npm",
@@ -1019,6 +1207,7 @@ Examples:
         action="store_true",
         help="Quick mode: Skip slow tests (E2E, visual regression)",
     )
+    parser.add_argument("files", nargs="*", help="Specific files to validate")
 
     args = parser.parse_args()
 
@@ -1032,25 +1221,72 @@ Examples:
     run_frontend = args.frontend or run_all
     run_docs = args.docs or run_all
     run_config = args.configuration or run_all
+
+    # Targeted validation: Skip categories that have no work
+    if args.files:
+        # Resolve which flags should actually be active based on staged files
+        # We reuse the filtering logic to see if a category would return True early
+        has_backend = any(
+            [
+                [
+                    f
+                    for f in args.files
+                    if (f.endswith(".py") or Path(f).name == "run.py")
+                    and not Path(f).name.startswith(".")
+                ],
+                [f for f in args.files if f.endswith(".html") and "templates" in f],
+                [f for f in args.files if f.startswith("src/")],
+            ]
+        )
+        has_frontend = any(
+            [
+                [f for f in args.files if f.endswith((".js", ".jsx", ".ts", ".tsx"))],
+                [f for f in args.files if f.endswith(".html")],
+                [f for f in args.files if f.endswith(".test.js")],
+            ]
+        )
+        has_docs = any(
+            [
+                f
+                for f in args.files
+                if f.endswith((".md", ".json", ".yml", ".yaml"))
+                and not Path(f).name.startswith(".")
+            ]
+        )
+
+        run_backend = run_backend and has_backend
+        run_frontend = run_frontend and has_frontend
+        run_docs = run_docs and has_docs
+        # Config is rare, let it run if run_all or specifically asked
+
+        if not any([run_backend, run_frontend, run_docs, run_config]):
+            return 0
+
     # Force enable all apps for full validation (unless quick mode is used locally)
     force_all_apps = not args.quick
 
     print_header("MOCKCMMS CODE VALIDATION")
-    print(f"{Colors.OKCYAN}This script simulates the CI pipeline locally.{Colors.ENDC}")
-    print(f"{Colors.OKCYAN}All checks must pass before committing code.{Colors.ENDC}\n")
+    msg1 = f"{Colors.OKCYAN}This script simulates the CI pipeline locally.{Colors.ENDC}"
+    msg2 = f"{Colors.OKCYAN}All checks must pass before committing code.{Colors.ENDC}"
+    print(msg1)
+    print(msg2 + "\n")
 
     results = []
 
     # Run validations
     if run_backend:
         backend_passed = validate_python_backend(
-            quick=args.quick, force_all_apps=force_all_apps
+            quick=args.quick,
+            force_all_apps=force_all_apps,
+            files=args.files if args.files else None,
         )
         results.append(("Backend", backend_passed))
 
     if run_frontend:
         frontend_passed = validate_javascript_frontend(
-            quick=args.quick, force_all_apps=force_all_apps
+            quick=args.quick,
+            force_all_apps=force_all_apps,
+            files=args.files if args.files else None,
         )
         results.append(("Frontend", frontend_passed))
 
@@ -1059,7 +1295,7 @@ Examples:
         results.append(("Configuration", config_passed))
 
     if run_docs:
-        docs_passed = validate_others()
+        docs_passed = validate_others(files=args.files if args.files else None)
         results.append(("Others", docs_passed))
 
     # Final summary

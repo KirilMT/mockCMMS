@@ -49,10 +49,19 @@ MAGENTA = "\033[95m"
 class CodeFormatter:
     """Handles code formatting with colored, professional, numbered output."""
 
-    def __init__(self, check_only: bool = False):
+    def __init__(self, check_only: bool = False, files: Optional[list[str]] = None):
         self.check_only = check_only
+        self.files = files
         self.root_dir = Path(__file__).parent.parent
         self.errors: list[str] = []
+
+    def _get_targets(
+        self, extensions: tuple[str, ...], default: list[str]
+    ) -> list[str]:
+        """Return files filtered by extension if provided, else return default dirs."""
+        if not self.files:
+            return default
+        return [f for f in self.files if f.lower().endswith(extensions)]
 
     def run_command(
         self,
@@ -169,19 +178,22 @@ class CodeFormatter:
         print(f"{BOLD}WHITESPACE & EOF NORMALIZATION{RESET}")
         print("=" * 80)
 
-        try:
-            proc = subprocess.run(
-                ["git", "ls-files"],
-                cwd=self.root_dir,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                check=True,
-            )
-            tracked_files = [f for f in proc.stdout.strip().split("\n") if f]
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            print("   ⚠️  Could not list git files — skipping whitespace")
-            return True
+        if self.files:
+            tracked_files = self.files
+        else:
+            try:
+                proc = subprocess.run(
+                    ["git", "ls-files"],
+                    cwd=self.root_dir,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    check=True,
+                )
+                tracked_files = [f for f in proc.stdout.strip().split("\n") if f]
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                print("   ⚠️  Could not list git files — skipping whitespace")
+                return True
 
         issues: list[str] = []
         fix = not self.check_only
@@ -235,11 +247,17 @@ class CodeFormatter:
 
     def format_python(self) -> bool:
         """Python formatting with numbered steps (restored) + clean output."""
+        targets = self._get_targets(
+            (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+        )
+        if not targets:
+            return True
+
         print("\n" + "=" * 80)
         print(f"{BOLD}PYTHON CODE FORMATTING{RESET}")
         print("=" * 80)
 
-        ruff_cmd = ["ruff", "check", "src", "tests", "scripts", "run.py", "apps"]
+        ruff_cmd = ["ruff", "check"] + targets
         if not self.check_only:
             ruff_cmd.extend(["--fix", "--unsafe-fixes"])
 
@@ -247,37 +265,28 @@ class CodeFormatter:
             ("Ruff linting & fixing", ruff_cmd),
             (
                 "Import sorting (isort)",
-                [
-                    "isort",
-                    "src",
-                    "tests",
-                    "scripts",
-                    "run.py",
-                    "apps",
-                ]
-                + (["--check-only"] if self.check_only else []),
+                ["isort"] + targets + (["--check-only"] if self.check_only else []),
             ),
             (
                 "Code formatting (black)",
-                ["black"]
-                + (["--check"] if self.check_only else [])
-                + ["src", "tests", "scripts", "run.py", "apps"],
+                ["black"] + (["--check"] if self.check_only else []) + targets,
             ),
             (
                 "Docstring formatting (docformatter)",
                 ["docformatter"]
                 + (["--check"] if self.check_only else ["--in-place"])
-                + ["-r", "src", "tests", "scripts", "run.py", "apps"],
+                + ["-r"]
+                + targets,
             ),
             (
                 "Final linting (flake8)",
                 [
                     "flake8",
-                    ".",
-                    (
-                        "--exclude=.venv,node_modules,__pycache__,.git,.pytest_cache,"
-                        "htmlcov,playwright-report"
-                    ),
+                ]
+                + targets
+                + [
+                    "--exclude=.venv,node_modules,__pycache__,.git,.pytest_cache,"
+                    "htmlcov,playwright-report",
                     "--count",
                     "--show-source",
                     "--statistics",
@@ -305,6 +314,19 @@ class CodeFormatter:
 
     def format_frontend(self) -> bool:
         """Frontend formatting — quiet in format mode (no 100+ unchanged lines)."""
+        targets = self._get_targets(
+            (".js", ".jsx", ".ts", ".tsx", ".css", ".scss"),
+            [
+                "src/static/js/**/*.js",
+                "apps/**/*.js",
+                "tests/**/*.js",
+                "src/static/css/**/*.css",
+                "apps/**/*.css",
+            ],
+        )
+        if not targets:
+            return True
+
         print("\n" + "=" * 80)
         print(f"{BOLD}FRONTEND CODE FORMATTING{RESET}")
         print("=" * 80)
@@ -313,25 +335,30 @@ class CodeFormatter:
             print("   ℹ️  Prettier not installed — skipping frontend")
             return True
 
-        paths = [
-            "src/static/js/**/*.js",
-            "apps/**/*.js",
-            "tests/**/*.js",
-            "src/static/css/**/*.css",
-            "apps/**/*.css",
-        ]
-
         args = ["npx", "prettier"]
         if self.check_only:
             args.append("--check")
         else:
             args.extend(["--write", "--log-level", "silent"])  # ← quiet mode
 
-        args.extend(paths)
+        args.extend(targets)
         return self.run_command(args, "JavaScript/CSS (prettier)")
 
     def format_docs(self) -> bool:
         """Documentation formatting — quiet in format mode."""
+        targets = self._get_targets(
+            (".md", ".json", ".yaml", ".yml"),
+            [
+                "docs/**/*.md",
+                "*.md",
+                "apps/**/*.md",
+                "*.json",
+                ".github/**/*.md",
+            ],
+        )
+        if not targets:
+            return True
+
         print("\n" + "=" * 80)
         print(f"{BOLD}DOCUMENTATION FORMATTING{RESET}")
         print("=" * 80)
@@ -339,14 +366,6 @@ class CodeFormatter:
         if not self._check_prettier():
             print("   ℹ️  Prettier not installed — skipping docs")
             return True
-
-        targets = [
-            "docs/**/*.md",
-            "*.md",
-            "apps/**/*.md",
-            "*.json",
-            ".github/**/*.md",
-        ]
 
         args = ["npx", "prettier"]
         if self.check_only:
@@ -359,15 +378,19 @@ class CodeFormatter:
 
     def format_templates(self) -> bool:
         """Jinja2 templates with djlint (clean + --quiet in format mode)."""
+        targets = self._get_targets((".html", ".htm"), ["src/templates"])
+        if not targets:
+            return True
+
         print("\n" + "=" * 80)
         print(f"{BOLD}JINJA2 TEMPLATE FORMATTING{RESET}")
         print("=" * 80)
 
         python = sys.executable
         if self.check_only:
-            cmd = [python, "-m", "djlint", "src/templates", "--check"]
+            cmd = [python, "-m", "djlint"] + targets + ["--check"]
         else:
-            cmd = [python, "-m", "djlint", "src/templates", "--reformat", "--quiet"]
+            cmd = [python, "-m", "djlint"] + targets + ["--reformat", "--quiet"]
 
         return self.run_command(cmd, "Jinja2 templates (djlint)")
 
@@ -405,6 +428,7 @@ def main() -> int:
     parser.add_argument(
         "--update-hooks", action="store_true", help="pre-commit autoupdate"
     )
+    parser.add_argument("files", nargs="*", help="Specific files to format")
 
     args = parser.parse_args()
 
@@ -419,7 +443,9 @@ def main() -> int:
         print("=" * 80)
         subprocess.run(["pre-commit", "autoupdate"], capture_output=True, check=False)
 
-    formatter = CodeFormatter(check_only=args.check)
+    formatter = CodeFormatter(
+        check_only=args.check, files=args.files if args.files else None
+    )
 
     all_passed = True
 
