@@ -447,13 +447,19 @@ if (Test-Path $templateFile) {
     Write-Host "   [WARN] .gitmessage not found, skipping commit template setup" -ForegroundColor Yellow
 }
 
+$hookTemplate = Join-Path $projectRoot ".githooks\commit-msg"
+
 # Install commit-msg hook
-if (Test-Path $hookFile) {
-    Write-Host "   [OK] commit-msg hook installed" -ForegroundColor Green
+if (Test-Path $hookTemplate) {
+    if (-not (Test-Path $hookDir)) {
+        New-Item -ItemType Directory -Force -Path $hookDir | Out-Null
+    }
+    Copy-Item -Path $hookTemplate -Destination $hookFile -Force
+    Write-Host "   [OK] commit-msg hook installed from .githooks template" -ForegroundColor Green
     # Set permissions (Windows)
     icacls $hookFile /grant Everyone:RX | Out-Null
 } else {
-    Write-Host "   [WARN] commit-msg hook not found, skipping hook setup" -ForegroundColor Yellow
+    Write-Host "   [WARN] .githooks/commit-msg template not found, skipping hook setup" -ForegroundColor Yellow
 }
 
 # ============================================================================
