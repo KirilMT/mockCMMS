@@ -19,29 +19,13 @@ repos:
   # Local hooks using project scripts (CHECK-ONLY mode)
   - repo: local
     hooks:
-      - id: format-check
-        name: Format Check (whitespace, EOF, imports, style, docs)
-        entry: python scripts/format_code.py --check
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
-
       - id: validate-code
         name: Validate Code (lint, type-check, tests)
-        entry: python scripts/validate_code.py --quick
+        # Only run backend/frontend on staged files. Config/Docs are handled by other hooks.
+        entry: python scripts/validate_code.py --quick --backend --frontend
         language: system
-        pass_filenames: false
-        always_run: true
+        pass_filenames: true
         stages: [pre-commit]
-
-      - id: auto-release
-        name: Auto-Release (if commit contains [release])
-        entry: python scripts/auto_release_hook.py
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
 
       - id: pre-push-validation
         name: Pre-Push Full Validation
@@ -50,13 +34,3 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
-    hooks:
-      - id: flake8
-        name: Flake8 Linting
-        additional_dependencies: []
-        args: ["--count", "--exclude=.venv,node_modules,__pycache__,.git,.pytest_cache,htmlcov,playwright-report", "--show-source", "--statistics", "--max-line-length=88"]
-        language_version: python3
-        stages: [pre-commit]

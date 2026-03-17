@@ -1,14 +1,14 @@
-# Supported commit types: feat, fix, chore, refactor, perf, remove, revert, docs, test, style, build, ci
-# Example: feat(core): add new feature [release:minor]
-
-# Conventional Commit (international standard: conventionalcommits.org)
-# Use English type keywords only (global convention for tooling)
+# Supported types: feat, fix, chore, refactor, perf, remove, revert, docs, test, style, build, ci
+# Example: feat(core): add user authentication
 
 <type>[scope][!]: <short summary>
 
-# Common types (English – required by the spec):
-#   feat      → minor version
-#   fix       → patch version
+# Conventional Commit (international standard: conventionalcommits.org)
+# Use English type keywords only (global convention for tooling)
+#
+# Common types:
+#   feat      → new feature (minor version bump)
+#   fix       → bug fix (patch version bump)
 #   docs      → documentation only
 #   style     → formatting, no code change
 #   refactor  → code change, no behavior change
@@ -18,36 +18,15 @@
 #   ci        → CI configuration
 #   chore     → maintenance (no user impact)
 #   revert    → revert previous commit
+#   remove    → removed functionality
 #
-# Add ! after type/scope for breaking changes (major version)
-# Example: feat(api)!: or fix!:
+# Add ! after type/scope for breaking changes (major version bump)
+# Example: feat(api)!: remove deprecated endpoints
 
-<detailed body – WHAT + WHY + HOW>
-Use Markdown freely. Structure exactly like your favorite commits.
+<body – WHAT changed and WHY>
 
-## ✅ Key Accomplishments / Issues Resolved
-- Bullet 1
-- Bullet 2
+BREAKING CHANGE: <explanation if applicable – or delete this line>
 
-## 🔧 Technical Changes
-- ...
-
-## 📝 Documentation
-- ...
-
-## Files Modified
-- src/...
-- docs/...
-
-## Status
-- Tests: X/X passing (100%)
-- Ready for production: ✅
-
-## New Requirements Added (if any)
-- Phase X: ...
-
-BREAKING CHANGE: <clear explanation if any – or remove section>
-
-# Optional git trailers (standard)
-Co-authored-by: Name <email@example.com>
-Closes #123
+# Standard git trailers:
+# Co-authored-by: Name <email@example.com>
+# Closes #123

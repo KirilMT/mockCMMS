@@ -1,20 +1,14 @@
-import os
 import sqlite3
 
 import pytest
 
 from apps.planning.src.services.planning_db_utils import LineConditionManager
 
-# Use a separate test database for this test file to avoid conflicts
-TEST_DB_PATH = "apps/planning/test_planning_conditions.db"
-
 
 @pytest.fixture
 def db_connection():
-    if os.path.exists(TEST_DB_PATH):
-        os.remove(TEST_DB_PATH)
-
-    conn = sqlite3.connect(TEST_DB_PATH)
+    # Use in-memory database to follow project standards and avoid Windows file locking
+    conn = sqlite3.connect(":memory:")
     # Use Row factory to match app behavior (access columns by name)
     conn.row_factory = sqlite3.Row
 
@@ -47,8 +41,6 @@ def db_connection():
     conn.commit()
     yield conn
     conn.close()
-    if os.path.exists(TEST_DB_PATH):
-        os.remove(TEST_DB_PATH)
 
 
 def test_create_and_get_conditions(db_connection):

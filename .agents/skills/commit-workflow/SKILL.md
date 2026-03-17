@@ -18,16 +18,18 @@ description: Use when staging, reviewing, and committing changes. Covers the ful
 
 ---
 
-## Step 1: Pre-Commit Validation
+## Step 1: Pre-Commit Selection & Validation
 
-**MANDATORY** — never commit without passing validation.
+**MANDATORY** — never commit without passing validation. However, the pre-commit hook now handles **targeted validation** automatically on your staged files.
 
+**Manual full validation (recommended before push):**
 ```bash
-python scripts/format_code.py      # Auto-fix formatting
-python scripts/validate_code.py    # Full lint + test + coverage
+python scripts/validate_code.py    # Full repo scan (lint + test + coverage)
 ```
 
-Both must pass before proceeding.
+**What the pre-commit hook does automatically:**
+- Runs `validate_code.py --quick` on only your **staged** files.
+- Ensures your specific changes pass lint/test even if other stashed files are messy.
 
 ## Step 2: Review All Changed Files
 
@@ -99,7 +101,7 @@ Testing:
 - How changes were verified
 ```
 
-**Types:** `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`, `perf`, `ci`
+**Types:** `feat`, `fix`, `chore`, `refactor`, `perf`, `remove`, `revert`, `docs`, `test`, `style`, `build`, `ci`
 **Scopes:** `ui`, `api`, `db`, `planning`, `reporting`, `auth`, `config`
 
 ## Step 7: Commit
@@ -152,40 +154,14 @@ git branch -vv
 
 ---
 
-## Release Automation: Commit Message Requirements
+## Release Process (Do Not Trigger)
 
-To trigger the release automation (auto_release_hook and release_manager), your commit message **must**:
-- Follow the Conventional Commits standard (e.g., `feat(core): add feature ...`).
-- Include a `[release:patch]`, `[release:minor]`, or `[release:major]` tag.
-- If the commit message does **not** include a `[release:...]` tag, the release will **not** run.
-- Always use the commit template or follow the Conventional Commits standard for release automation.
-- If the release commit fails due to hooks, fix the issues and re-commit.
+Releases are handled automatically by Google Release Please via the CI/CD pipeline (`release.yml`). AI agents should **never** embed release tags in commit messages, update `CHANGELOG.md`, or trigger releases manually. Release Please generates all changelogs and version tags automatically based on Conventional Commits.
 
-**Examples:**
-- `git commit -m "fix: bug fix [release:patch]"`        # 1.0.0 → 1.0.1
-- `git commit -m "feat: new feature [release:minor]"`   # 1.0.0 → 1.1.0
-- `git commit -m "feat!: breaking [release:major]"`     # 1.0.0 → 2.0.0
-- `git commit -m "chore: updates [release]"`            # Defaults to patch
+## Supported Commit Types (Conventional Commits)
 
-The `auto_release_hook.py` pre-push hook detects `[release]` and runs `release_manager.py` automatically.
+The following commit types are supported and recognized by changelog generation:
 
-> **Note:** Always check commit messages for the correct format before pushing. This is required for the release workflow to function.
+- feat, fix, chore, refactor, perf, remove, revert, docs, test, style, build, ci
 
-# Supported Commit Types (Conventional Commits)
-
-The following commit types are supported and recognized by release automation and changelog generation:
-
-- feat
-- fix
-- chore
-- refactor
-- perf
-- remove
-- revert
-- docs
-- test
-- style
-- build
-- ci
-
-**Use only these types in your commit messages for release automation.**
+**Use only these types in your commit messages.**

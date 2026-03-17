@@ -210,8 +210,9 @@ python scripts/format_code.py
 # Step 2: Full validation (lint + test + coverage)
 python scripts/validate_code.py
 
-# Options:
-python scripts/validate_code.py --quick      # Fast: honors .env, skips slow tests
+# Options for faster iteration:
+python scripts/validate_code.py --quick      # Fast: honors .env, targeted tests, skips slow checks
+python scripts/validate_code.py <files>      # Targeted: Validates ONLY specific files (simulates pre-commit)
 python scripts/validate_code.py --backend    # Python only
 python scripts/validate_code.py --frontend   # JS only
 ```

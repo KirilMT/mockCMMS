@@ -25,24 +25,27 @@ All commits must follow the [Conventional Commits](https://www.conventionalcommi
 #### Format Example
 
 ```
-feat(module): add new feature [release:minor]
+feat(module): add new feature
 
 This is a detailed description of the change.
 - Bullet 1
 - Bullet 2
-[release:minor]
 ```
 
-### Release Automation Requirements
+### Release Process
 
-- To trigger the release automation, your commit message **must**:
-  - Follow the Conventional Commits standard (e.g., `feat(core): add feature ...`).
-  - Include a `[release:patch]`, `[release:minor]`, or `[release:major]` tag.
-- If the commit message does **not** include a `[release:...]` tag, the release will **not** run.
-- Always use the commit template or follow the Conventional Commits standard for release automation.
-- If the release commit fails due to hooks, fix the issues and re-commit.
+Releases are managed through the **CI/CD pipeline** using Google Release Please:
 
-See also: `.github/GIT_WORKFLOW.md` for workflow details.
+1. Merge your changes to `main` via a pull request.
+2. The Release Please GitHub Action automatically opens (or updates) a "Release PR" titled "chore(main): release x.y.z".
+3. This automated PR gathers all your Conventional Commits and generates the `CHANGELOG.md` and version bumps in `pyproject.toml` and `README.md`.
+4. When you are ready to cut a release, simply **merge the Release PR**.
+5. GitHub Actions will then automatically tag the commit and create a GitHub Release.
+
+See also: `.github/GIT_WORKFLOW.md` for workflow details (including "Why a Two-PR Workflow?").
+
+> [!NOTE]
+> Why the extra PR? Release Please uses a **Two-PR Workflow** (an industry standard used by Google, Node.js, etc.). Instead of cutting a new release instantly every single time a developer merges code, it gathers all changes into a "Release PR" batch. Maintainers can review the drafted changelog there, and release them all at once whenever they are ready.
 
 ### Commit Message Structure
 
@@ -219,8 +222,6 @@ Good comments are crucial for explaining the "why" behind the code.
 
 - **Explain Intent, Not Implementation:** Code should be self-explanatory.
   Comments should clarify complex business logic, algorithms, or non-obvious
-- **Explain Intent, Not Implementation:** Code should be self-explanatory.
-  Comments should clarify complex business logic, algorithms, or non-obvious
   decisions.
 - **No Issue References:** Do not reference bug or issue numbers in code
   comments (e.g., `// Fix for #123`). Use commit messages for this.
@@ -241,38 +242,6 @@ python scripts/validate_code.py --quick    # Developer Mode: Honors .env, skips 
 python scripts/validate_code.py --backend  # Python only
 python scripts/validate_code.py --frontend # JS/CSS only
 ```
-
-### 2. `scripts/release_manager.py` (The Releaser)
-
-**Automates versioning and tags.**
-
-```bash
-python scripts/release_manager.py patch --dry-run  # Preview bump
-python scripts/release_manager.py minor            # New features
-python scripts/release_manager.py major            # Breaking changes
-```
-
-**Automated Release via Pre-Push Hook:**
-
-You can trigger automatic releases by including `[release:TYPE]` in your commit message:
-
-```bash
-# Regular commit (no release)
-git commit -m "feat: add new feature"
-git push  # Just validates, no release
-
-# Automatic release on push
-git commit -m "feat: feature complete [release:minor]"
-git push  # Validates + Creates release automatically
-
-# Available release types
-git commit -m "fix: bug fix [release:patch]"        # 1.0.0 -> 1.0.1
-git commit -m "feat: new feature [release:minor]"   # 1.0.0 -> 1.1.0
-git commit -m "feat!: breaking [release:major]"     # 1.0.0 -> 2.0.0
-git commit -m "chore: updates [release]"            # Defaults to patch
-```
-
-The `auto_release_hook.py` pre-push hook detects the `[release]` tag and automatically runs `release_manager.py`.
 
 ### 3. `scripts/build_portable.py` (The Packager)
 
