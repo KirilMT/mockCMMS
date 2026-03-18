@@ -37,6 +37,7 @@ yamllint==1.37.1        # YAML file validation
 # Pre-commit hooks (OPTIONAL - Configure later)
 # Run 'pre-commit install' only when ready to use
 pre-commit==4.3.0
+conventional-pre-commit==4.0.0
 
 # HTML/Template Linting
 djlint>=1.36.4
