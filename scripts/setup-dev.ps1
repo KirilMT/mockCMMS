@@ -295,38 +295,54 @@ if (-not (Test-Path $pipPath)) {
 }
 
 
-# Install dev requirements
+# Install or update dev requirements efficiently
 if (Test-Path "requirements-dev.txt") {
-    # Check if a key dev dependency is already installed
-    $blackCheck = & $pipPath show black 2>$null
-
-    if ($blackCheck -match "Name: black") {
-        Write-Host "   Dev dependencies already installed " -NoNewline -ForegroundColor White
-        Write-Host "OK" -ForegroundColor Green
-    }
-    else {
-        Write-Host "   Installing " -NoNewline -ForegroundColor White
-        Write-Host "requirements-dev.txt" -NoNewline -ForegroundColor Magenta
-        Write-Host "..." -ForegroundColor White
+    Write-Host "   Ensuring all dev dependencies are installed and up-to-date..." -ForegroundColor White
+    & $pipPath install --upgrade --upgrade-strategy only-if-needed -r requirements-dev.txt > $null 2>&1
+    if ($LASTEXITCODE -eq 0) {
         Write-Host ""
-
-        # Show installation progress (filter noise)
-        & $pipPath install -r requirements-dev.txt 2>&1 | Where-Object { $_ -notmatch "^ERROR:" -and $_ -notmatch "planning .* requires" }
-
-        if ($LASTEXITCODE -eq 0) {
+        # Robust check for all required dev tool executables
+        $devTools = @{
+            'conventional-pre-commit.exe' = 'conventional-pre-commit'
+            'pre-commit.exe' = 'pre-commit'
+            'black.exe' = 'black'
+            'isort.exe' = 'isort'
+            'docformatter.exe' = 'docformatter'
+            'flake8.exe' = 'flake8'
+            'ruff.exe' = 'ruff'
+            'pylint.exe' = 'pylint'
+            'mypy.exe' = 'mypy'
+            'pytest.exe' = 'pytest'
+            'yamllint.exe' = 'yamllint'
+        }
+        $missingTools = @()
+        foreach ($exe in $devTools.Keys) {
+            $exePath = ".venv\Scripts\$exe"
+            if (-not (Test-Path $exePath)) {
+                Write-Host "   $exe missing, attempting to (re)install $($devTools[$exe])..." -ForegroundColor Yellow
+                & $pipPath install --force-reinstall $($devTools[$exe]) > $null 2>&1
+                if (Test-Path $exePath) {
+                    Write-Host "   $exe installed successfully." -ForegroundColor Green
+                } else {
+                    Write-Host "   WARNING: $exe still missing after install!" -ForegroundColor Red
+                    $missingTools += $exe
+                }
+            }
+        }
+        if ($missingTools.Count -eq 0) {
             Write-Host ""
-            Write-Host "   Python dev dependencies installed " -NoNewline -ForegroundColor White
+            Write-Host "   Python dev dependencies are present and up-to-date " -NoNewline -ForegroundColor White
             Write-Host "OK" -ForegroundColor Green
+        } else {
+            Write-Host "   WARNING: Some dev tool executables are still missing: $($missingTools -join ', ')" -ForegroundColor Red
         }
-        else {
-            Write-Host ""
-            Write-Host "   Installation " -NoNewline -ForegroundColor White
-            Write-Host "FAILED" -ForegroundColor Red
-            $script:ErrorCount++
-        }
+    } else {
+        Write-Host ""
+        Write-Host "   Installation " -NoNewline -ForegroundColor White
+        Write-Host "FAILED" -ForegroundColor Red
+        $script:ErrorCount++
     }
-}
-else {
+} else {
     Write-Warning "   requirements-dev.txt not found."
     $script:ErrorCount++
 }

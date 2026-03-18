@@ -1,3 +1,4 @@
+---
 name: Release
 
 on:
@@ -20,13 +21,18 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      - name: Format Release PR
+      - name: Format Release PR (Python/JS standards)
         if: ${{ steps.release.outputs.pr }}
         run: |
-          npm ci
-          npx prettier --write CHANGELOG.md README.md
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          npm ci || npm install
+          python scripts/format_code.py
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md README.md
-          git commit -m "chore: format documentation for release" || exit 0
-          git push origin ${{ steps.release.outputs.pr.branch }}
+          git add .
+          git commit -m "chore: auto-format with format_code.py \
+            (Release Please PR)" || exit 0
+          git push origin \
+            ${{ steps.release.outputs.pr.branch }}
