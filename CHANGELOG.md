@@ -1,5 +1,6 @@
 <!-- markdownlint-disable MD024 -->
 
+<!-- prettier-ignore -->
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -10,11 +11,10 @@ and this project adheres to
 
 ## [2.1.0](https://github.com/KirilMT/mockCMMS/compare/v2.0.0...v2.1.0) (2026-03-18)
 
-
 ### Features
 
-* test release automation and readme sync ([7838f04](https://github.com/KirilMT/mockCMMS/commit/7838f043d58728260ce499be136f0f7373100213))
-* test release automation and readme sync ([949ddcf](https://github.com/KirilMT/mockCMMS/commit/949ddcfcbf0ddd5719f2af88702b518a72b71d31))
+- test release automation and readme sync ([7838f04](https://github.com/KirilMT/mockCMMS/commit/7838f043d58728260ce499be136f0f7373100213))
+- test release automation and readme sync ([949ddcf](https://github.com/KirilMT/mockCMMS/commit/949ddcfcbf0ddd5719f2af88702b518a72b71d31))
 
 ## [2.0.0](https://github.com/KirilMT/mockCMMS/compare/v1.2.3...v2.0.0) (2026-03-18)
 

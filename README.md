@@ -180,4 +180,4 @@ Contributions are welcome! See [Contributing documentation](.github/CONTRIBUTING
 
 ---
 
-**Version:** [2.0.0](https://github.com/KirilMT/mockCMMS/compare/v1.2.3...v2.0.0) (2026-03-18)
+**Version:** 2.1.0
