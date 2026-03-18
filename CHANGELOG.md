@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0](https://github.com/KirilMT/mockCMMS/compare/v2.2.0...v2.3.0) (2026-03-18)
+
+
+### Features
+
+* **chore:** release manager, format_code.py and setup-dev.py improvements ([04bee96](https://github.com/KirilMT/mockCMMS/commit/04bee965b35568e4cdce95749b5a4ea996e7d622))
+
 ## [2.2.0](https://github.com/KirilMT/mockCMMS/compare/v2.1.0...v2.2.0) (2026-03-18)
 
 ### Features
