@@ -23,6 +23,15 @@ repos:
         stages: [commit-msg]
         args: [] # Optional: add custom types here
 
+  - repo: local
+    hooks:
+      - id: check-commit-msg-length
+        name: Check Commit Message Length
+        entry: python scripts/check_commit_msg.py
+        language: python
+        stages: [commit-msg]
+        always_run: true
+
   # Local hooks using project scripts (CHECK-ONLY mode)
   - repo: local
     hooks:

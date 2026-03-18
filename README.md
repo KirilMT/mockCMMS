@@ -180,4 +180,4 @@ Contributions are welcome! See [Contributing documentation](.github/CONTRIBUTING
 
 ---
 
-**Version:** 1.2.3 | **Last Updated:** March 17, 2026
+**Version:** 2.0.0
