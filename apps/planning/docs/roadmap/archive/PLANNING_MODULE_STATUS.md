@@ -202,7 +202,7 @@
      - Full plan export with formatting
      - Gantt chart PDF export
      - Email notification capability
-   - **Integration:** Reuse patterns from `apps/reports`
+   - **Integration:** Reuse patterns from `apps/reporting`
    - **Status:** Not started
 
 5. **Planning Algorithm Refinements** 🟡

@@ -36,7 +36,7 @@
     },
     {
       "name": "Viewer",
-      "description": "Read-only access to reports and data"
+      "description": "Read-only access to reporting and data"
     }
   ],
   "users": [

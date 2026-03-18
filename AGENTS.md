@@ -1,162 +1,264 @@
-# AGENTS.md - mockCMMS Repository Instructions
+# AGENTS.md — mockCMMS
 
-> **For AI Agents (Google Jules, Gemini Code Assist, etc.)**
-
----
-
-## Identity & Persona
-
-You are an **Elite Principal Software Engineer** working on a Flask-based CMMS (Computerized Maintenance Management System).
-
-Your goal is to deliver **robust, scalable, and maintainable solutions**. You value correctness over speed, clarity over cleverness, and stability over experimental features.
+> Single source of truth for all AI coding assistants (Antigravity, Gemini CLI, Claude Code, GitHub Copilot, Jules).
+> Tool-specific overrides live in `GEMINI.md`, `CLAUDE.md`, `.github/copilot-instructions.md`.
+> Workflow-heavy procedures live in `.agents/skills/`.
 
 ---
 
-## 1. Environment Setup
+## Project Overview
 
-Run the setup script, then start the server:
+mockCMMS is a **Computerized Maintenance Management System** — a Flask web app for tracking maintenance orders, assets, and users. It uses a modular monorepo architecture: core CMMS in `src/`, optional apps in `apps/`.
+
+**Login:** `admin` / `admin123` (source: `test_data/dummy_data.json`)
+
+---
+
+## Stack
+
+| Layer             | Technology                                     | Version            |
+| ----------------- | ---------------------------------------------- | ------------------ |
+| Language          | Python                                         | 3.12 (target ≥3.9) |
+| Framework         | Flask, SQLAlchemy, Jinja2                      | —                  |
+| Frontend          | Vanilla JS (ES6+), CSS3                        | —                  |
+| Database          | SQLite (dev), PostgreSQL (prod-ready)          | —                  |
+| Python Linting    | Ruff, Flake8, Mypy, Pylint                     | —                  |
+| Python Formatting | isort → Black → docformatter (strict order)    | —                  |
+| JS Linting        | ESLint 9                                       | —                  |
+| JS/CSS Formatting | Prettier, Stylelint                            | —                  |
+| Backend Tests     | Pytest (coverage ≥85%)                         | —                  |
+| Frontend Tests    | Jest 30 (coverage ≥80%), Playwright (E2E)      | —                  |
+| Package Managers  | pip (`requirements.txt`), npm (`package.json`) | —                  |
+
+---
+
+## Repository Structure
+
+```
+mockCMMS/
+├── src/                        # Core CMMS application
+│   ├── app.py                  # Flask factory (entry point for config)
+│   ├── routes/                 # API (api.py) and web routes (main.py)
+│   ├── services/               # Business logic (db_utils.py, seed.py)
+│   ├── static/                 # CSS, JS, images
+│   ├── templates/              # Jinja2 templates
+│   └── config/                 # App configuration
+├── apps/                       # Modular extensions (each is a Flask blueprint)
+│   ├── planning/               # Skill-based technician task assignment
+│   └── reporting/              # Report generation (PDF, Markdown)
+├── tests/
+│   ├── backend/                # Pytest: unit/, functional/, integration/,
+│   │                           #         security/, performance/, reliability/
+│   └── frontend/               # Jest unit tests + Playwright E2E
+├── scripts/                    # Automation (see Key Scripts below)
+├── docs/                       # Project documentation
+├── test_data/                  # Fixtures, dummy_data.json
+├── run.py                      # Application entry point
+├── pyproject.toml              # Python tooling config (pytest, ruff, black, mypy)
+├── package.json                # JS tooling config (jest, eslint, prettier)
+├── .env                        # Environment config (PLANNING_ENABLED, REPORTING_ENABLED)
+└── .pre-commit-config.yaml     # Pre-commit hooks
+```
+
+---
+
+## Setup
 
 ```powershell
+# Production dependencies + venv
 .\scripts\setup.ps1
+
+# Dev dependencies (testing, linting)
+.\scripts\setup-dev.ps1
+
+# Start the server
 python run.py
 ```
 
-For development (testing, linting), also run:
-
-```powershell
-.\scripts\setup-dev.ps1
-```
-
-**Configure Modular Apps:** Edit `.env` to enable/disable apps:
+**Modular apps** — toggle in `.env`:
 
 ```dotenv
-PLANNING_ENABLED=False  # Enable/disable Planning module
-REPORTS_ENABLED=False   # Enable/disable Reports module
+PLANNING_ENABLED=True    # apps/planning
+REPORTING_ENABLED=True   # apps/reporting
 ```
 
-> **🔑 Login Credentials:** `admin` / `admin123` _(Source: `test_data/dummy_data.json`)_
+---
+
+## Key Scripts
+
+| Script                             | Purpose                                                        | Usage                                                  |
+| ---------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
+| `scripts/format_code.py`           | Auto-fix all formatting (isort, black, docformatter, prettier) | `python scripts/format_code.py`                        |
+| `scripts/validate_code.py`         | Full CI simulation (lint, test, coverage)                      | `python scripts/validate_code.py`                      |
+| `scripts/validate_code.py --quick` | Fast mode: honors `.env`, targeted tests, skips slow checks    | `python scripts/validate_code.py --quick`              |
+| `scripts/validate_code.py <files>` | Targeted Mode: Validates only specific staged files (fast)     | `python scripts/validate_code.py src/app.py`           |
+| `scripts/generate_tests.py`        | Generate test stubs for new modules                            | `python scripts/generate_tests.py src/services/foo.py` |
 
 ---
 
-## 2. Tech Stack
+## Testing
 
-| Category         | Technologies                                                                  |
-| :--------------- | :---------------------------------------------------------------------------- |
-| **Backend**      | Python 3.12, Flask, SQLAlchemy, Jinja2                                        |
-| **Frontend**     | Vanilla JavaScript (ES6+), CSS3                                               |
-| **Database**     | SQLite (dev), PostgreSQL (prod-ready)                                         |
-| **Testing**      | Pytest (backend), Jest (frontend unit), Playwright (E2E), 80%+ coverage floor |
-| **Linting**      | Ruff, Pylint, Flake8, Black, Mypy (backend), ESLint (frontend)                |
-| **Architecture** | Modular Monorepo (`src/` core, `apps/` extensions)                            |
+### Commands
 
----
+```bash
+# Backend
+pytest tests/backend                           # Run all backend tests
+pytest --cov=src --cov=apps tests/backend      # With coverage
 
-## 3. Core Operating Rules
+# Frontend
+npm test                                        # Jest unit tests
+npm run test:coverage                           # Jest with coverage
+npm run test:e2e                                # Playwright E2E
 
-### Communication
+# Full validation (total health check)
+python scripts/validate_code.py                 # Full suite: lint + test + coverage
 
-- **Be Concise:** No pleasantries. Go straight to the solution.
-- **Clarify Ambiguity:** Ask questions _before_ generating code.
-- **Explain "Why":** Briefly explain trade-offs when making decisions.
+# Targeted validation (automatic via pre-commit)
+python scripts/validate_code.py --quick <files> # Rapid check for staged files
+```
 
-### Planning Phase
+### Coverage Thresholds (IMMUTABLE)
 
-Before complex tasks, you MUST:
+- **Backend (pytest):** ≥85% (`pyproject.toml` → `--cov-fail-under=85`)
+- **Frontend (jest):** ≥80% branches, functions, lines, statements (`package.json`)
+- 80% is the **floor**. If coverage drops even to 79.9%, it is a failure.
+- Fix by adding tests, not by lowering thresholds.
 
-1.  **Analyze:** State your understanding of the problem.
-2.  **Plan:** Outline the step-by-step approach.
-3.  **Verify:** Check against project constraints before coding.
+### Test Organization
+
+Tests live in `tests/backend/` organized by category: `unit/`, `functional/`, `integration/`, `security/`, `performance/`, `reliability/`. See `tests/README.md`.
 
 ### Test-Driven Development
 
-- Write tests FIRST, then implement code.
-- Maintain > 80% coverage: `pytest --cov=src tests/`
-- Test edge cases: nulls, empty arrays, boundaries.
-
-### Commits & Branching
-
-- **Conventional Commits:** `type(scope): description`
-- **Feature Branches:** Never commit to `main`. Use `type/feature-name`.
-- **New Branches:** ALWAYS use `gh pr create` to push. NEVER use `git push -u`.
-
-## 4. Execution Protocol (CRITICAL)
-
-### Task Completion Integrity
-
-- **Complete THE FULL SCOPE:** If a prompt asks for Tasks A, B, and C, do **NOT** stop after A.
-- **No Partial Submission:** Do not ask for user feedback halfway through a clear list of tasks unless fully blocked.
-- **Verify Progress:** Check your plan continuously to ensure no steps are skipped.
-
-### Mandatory Validation
-
-- **Auto-Format First:** Run `python scripts/format_code.py` to auto-fix formatting issues before validation.
-- **Run Validation Script:** You **MUST** run `python scripts/validate_code.py` before finishing any significant task.
-- **No Broken Windows:** Do not leave the codebase in a broken state (failing tests) at the end of a turn.
-- **Self-Correction:** If validation fails, fix it **yourself**. Do not ask the user for permission to fix your own mistakes.
-- **Strict Coverage:** 80% is the FLOOR, not a suggestion. If `npm run test:coverage` shows 79.9%, you have FAILED. Improve current tests (more robust tests) or add more tests. We need to be efficient and optimized. Avoid duplicates or redundancies in tests.
+1. Write/update tests **before** implementing code.
+2. Run tests before AND after changes.
+3. If a test fails after a code change: fix the **code** (tests define correct behavior), unless requirements genuinely changed.
+4. Search for existing tests before creating new ones to avoid duplicates.
 
 ---
 
-## 5. Coding Standards
+## Code Conventions
 
-- **SOLID, DRY, KISS:** No over-engineering.
-- **Separation of Concerns:** JS in `.js`, CSS in `.css`, HTML in `.html`.
-- **No Silent Failures:** Catch, log, and handle errors.
-- **Docstrings:** All public functions/classes.
-- **No Hardcoded Secrets:** Use `.env`.
-- **Python Formatting (STRICT):** `isort` → `black` → `docformatter`. Run in this exact order.
-
----
-
-## 6. Testing Structure
-
-```
-tests/
-├── unit/          # Isolated component tests
-├── functional/    # API/route tests
-├── integration/   # E2E workflows
-├── security/      # Auth, validation
-├── performance/   # Scalability
-└── reliability/   # Error handling
-```
-
-Add new tests to the appropriate category. See [tests/README.md](./tests/README.md).
-
----
-
-## 7. ⚠️ Project-Specific Rules
+### Architecture
 
 - **NEVER import `apps/*` at module level in `src/`.** Use conditional imports inside functions to avoid `UnboundExecutionError`.
-- **ALWAYS ask user before adding bugs** to `docs/bug_tracking.md`.
-- **Forms require CSRF tokens.** Check templates before modifying.
-- **Seed data** lives in `test_data/dummy_data.json`.
-- **Visual test screenshots are SACRED:** Files in `tests/frontend/e2e/__screenshots__/` should NEVER be updated unless you intentionally modified UI/CSS. Failing visual tests = bug detected, not screenshot problem.
-- **Test config is IMMUTABLE:** NEVER modify `pytest.ini`, `pyproject.toml`, `jest.config.js`, `playwright.config.js` to make tests pass. Fix the code, not the config.
-- **Existing tests have PRIORITY:** Only modify existing tests if the code they test has changed. If tests fail but code is unchanged, the bug is elsewhere in the codebase—fix the code, not the tests. Existing tests define correct behavior.
-- **ALWAYS create tests with new code:** Every new function/class/component MUST have unit tests (Pytest for backend, Jest/Playwright for frontend). After editing all files, run `format_code.py` and `validate_code.py`. Maintaining code with tests upfront prevents costly retrofitting later. This lesson was learned the hard way.
+- Separation of concerns: JS in `.js`, CSS in `.css`, HTML in `.html`. No inline styles, scripts, or event handlers.
+- SOLID, DRY, KISS. No over-engineering.
+- Comments explain **why**, not what. Never reference bug/issue numbers in comments.
+- All public functions/classes must have docstrings.
+- No hardcoded secrets — use `.env`.
+
+### Formatting (STRICT ORDER for Python)
+
+1. `isort` — sort imports
+2. `black` — format code
+3. `docformatter` — format docstrings
+
+Or just run: `python scripts/format_code.py`
+
+### Error Handling
+
+- No silent failures. Catch, log, and handle errors.
+- CSRF tokens required on all forms — check templates before modifying.
 
 ---
 
-## 8. Key Documentation
+## Key Boundaries (DO NOT TOUCH)
 
-| Document                                                                 | Purpose                                                        |
-| :----------------------------------------------------------------------- | :------------------------------------------------------------- |
-| [GEMINI.md](./GEMINI.md)                                                 | **Master AI standards** - All coding rules and workflows.      |
-| [docs/deprecated/AI_AGENT_GUIDE.md](./docs/deprecated/AI_AGENT_GUIDE.md) | (Deprecated) 49 detailed prompts for Code Quality Audit tasks. |
-| [.github/CONTRIBUTING.md](./.github/CONTRIBUTING.md)                     | Commit conventions, testing philosophy.                        |
-| [.github/GIT_WORKFLOW.md](./.github/GIT_WORKFLOW.md)                     | Branching strategy, PR workflow.                               |
-| [docs/mockCMMS_roadmap.md](./docs/mockCMMS_roadmap.md)                   | Project status, active sprints.                                |
-| [docs/bug_tracking.md](./docs/bug_tracking.md)                           | Bug list (ask before adding).                                  |
-| [tests/README.md](./tests/README.md)                                     | Test suite organization.                                       |
-
-**Key Scripts:**
-
-- `scripts/format_code.py` - Auto-fix formatting (isort, black, docformatter, prettier)
-- `scripts/validate_code.py` - Comprehensive validation (linting, tests, coverage)
-- `scripts/release_manager.py` - Automated version bumping and changelog updates
+| Item                                                                                                    | Rule                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `tests/frontend/e2e/__screenshots__/`                                                                   | **SACRED.** Never update unless you intentionally modified UI/CSS. Failing visual tests = bug in code, not in screenshots. |
+| `pyproject.toml`, `jest.config.js`, `playwright.config.js`, `pytest.ini`, `.flake8`, `eslint.config.js` | **IMMUTABLE.** Never modify to make tests pass. Fix the code, not the config.                                              |
+| `.github/workflows/`                                                                                    | **IMMUTABLE.** Never modify CI to skip failing checks.                                                                     |
+| `docs/bug_tracking.md`                                                                                  | **ASK user** before adding bugs. Never add without confirmation.                                                           |
+| `test_data/dummy_data.json`                                                                             | Seed data source. Do not remove or restructure without approval.                                                           |
 
 ---
 
-## 9. Final Instruction
+## Documentation Structure (Modular)
 
-If you see code that violates these standards, **point it out and suggest a fix**—even if not asked. Always leave the codebase **cleaner than you found it**.
+- **Core docs:** `docs/mockCMMS_roadmap.md`, `docs/bug_tracking.md`
+- **App docs:** `apps/<name>/docs/<name>_roadmap.md`, `apps/<name>/docs/<name>_bug_tracking.md`
+- Core docs link to app docs — never duplicate content.
+- Documentation must be clean, current, and concise. Remove outdated content.
+
+### Living Document Rules
+
+- Mark items as `[x]` when complete — never delete historical entries.
+- Before adding new items, search to avoid duplicates.
+- Update timestamps and status fields when progress changes.
+- Synchronize related docs (e.g., roadmap ↔ bug tracker) when phases complete.
+
+---
+
+## Git & Commit Standards
+
+- **Conventional Commits:** `type(scope): description` (e.g., `fix(ui): resolve overflow in MO modal`)
+- **Feature branches:** Never commit to `main`. Use `type/feature-name`.
+- **New branches:** Always use `gh pr create` to push. NEVER `git push -u`.
+- **Tracked branches:** Use `git push` normally.
+- **Pre-commit hooks** are enabled: Unified validation (format + lint + targeted tests).
+
+> For the full commit workflow procedure, see **Skill: `commit-workflow`**.
+
+---
+
+## Agent Behavior Rules
+
+### Autonomy
+
+- Operate autonomously until the final `git commit`. The user should be able to leave for 20+ minutes and return to completed work.
+- `SafeToAutoRun=true` for ALL standard operations: python, pytest, npm, ruff, black, isort, mypy, prettier, eslint, PowerShell.
+- Only `git commit` and `git push` require user approval.
+- Never pause for "Should I proceed?" during lint/format/test loops.
+
+### Decision Making
+
+- Verify things yourself before asking the user.
+- Ask only when genuinely blocked: missing requirements, design decisions, user preferences.
+- If validation fails, self-correct up to 3 attempts before reporting to the user.
+- **When unsure what to do next:** Run tests first. If tests pass, audit code quality. If quality is good, look at the roadmap for the next task.
+
+### Task Completion
+
+- Complete the **full scope**. If asked for A, B, and C — do all three.
+- No partial submissions unless fully blocked.
+- Always run `python scripts/validate_code.py` (Full Mode) before pushing or finishing a major task to ensure global repository health.
+
+### File Safety
+
+- **NEVER** use `git checkout` or `git restore` to fix corrupted files — uncommitted work will be lost.
+- Make small, targeted edits. For large files (>1000 lines), split into modules first.
+- Never create temporary files in the project directory — use artifacts or `/tmp/`.
+
+### Version Management
+
+Releases are automatically managed by **Google Release Please**. AI agents should **never** trigger releases directly, nor should they modify `CHANGELOG.md` or version tags. Release Please automatically opens a "Release PR", and the release is cut unconditionally when this PR is merged.
+
+See `.github/CONTRIBUTING.md` and `.github/GIT_WORKFLOW.md` for full details.
+
+---
+
+## Key References
+
+| Document                   | Purpose                                               |
+| -------------------------- | ----------------------------------------------------- |
+| `.github/CONTRIBUTING.md`  | Contribution process, commit conventions, PR workflow |
+| `.github/GIT_WORKFLOW.md`  | Branching strategy, push vs PR rules                  |
+| `tests/README.md`          | Test suite organization and strategy                  |
+| `docs/mockCMMS_roadmap.md` | Project status and active sprints                     |
+
+---
+
+## Skills (Workflow Procedures)
+
+Complex, multi-step workflows are documented as Skills in `.agents/skills/`:
+
+| Skill              | Trigger                                               |
+| ------------------ | ----------------------------------------------------- |
+| `testing-workflow` | Writing tests, debugging coverage, running validation |
+| `commit-workflow`  | Staging, reviewing, and committing changes            |
+| `bug-tracking`     | Discovering, reporting, and fixing bugs               |
+| `new-feature`      | Scaffolding a new feature or modular app              |
+
+> **To use a Skill:** Read `.agents/skills/<name>/SKILL.md` before starting the workflow.

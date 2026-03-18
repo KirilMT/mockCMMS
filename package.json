@@ -21,7 +21,10 @@
     "validate:backend": "python scripts/validate_code.py --backend",
     "validate:frontend": "python scripts/validate_code.py --frontend",
     "format": "python scripts/format_code.py",
-    "format:check": "python scripts/format_code.py --check"
+    "format:check": "python scripts/format_code.py --check",
+    "clean": "python scripts/cleanup.py",
+    "clean:all": "python scripts/cleanup.py --all",
+    "clean:dry": "python scripts/cleanup.py --dry-run"
   },
   "repository": {
     "type": "git",
@@ -48,8 +51,8 @@
     "babel-jest": "^30.2.0",
     "eslint": "^9.39.2",
     "globals": "^16.5.0",
-    "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
     "jscpd": "^4.0.8",
     "prettier": "^3.7.4",
     "stylelint": "^16.26.1",

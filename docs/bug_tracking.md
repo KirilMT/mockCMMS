@@ -19,10 +19,10 @@ This document tracks all identified bugs in the mockCMMS application. Each bug i
 >
 > **App-Specific Bug Tracking:**
 >
-> | Application      | Bug Tracker                                                         |
-> | :--------------- | :------------------------------------------------------------------ |
-> | **Planning App** | [See Planning Bugs](../apps/planning/docs/planning_bug_tracking.md) |
-> | **Reports App**  | [See Reports Bugs](../apps/reports/docs/reports_bug_tracking.md)    |
+> | Application       | Bug Tracker                                                            |
+> | :---------------- | :--------------------------------------------------------------------- |
+> | **Planning App**  | [See Planning Bugs](../apps/planning/docs/planning_bug_tracking.md)    |
+> | **Reporting App** | [See Reporting Bugs](../apps/reporting/docs/reporting_bug_tracking.md) |
 
 ---
 
@@ -174,7 +174,7 @@ When navigating to the Assets page, a warning toast appears with the message: "C
 **Identified:** March 11, 2026
 
 **Description:**
-In the Reports app, edit and delete buttons currently appear for all report items (breakdowns, handovers, activities, tasks), regardless of whether they were automatically imported from Maintenance Orders or manually added by users. Since items linked to MOs are dependent on those MOs, they should not be editable or deletable within the report interface.
+In the Reporting app, edit and delete buttons currently appear for all report items (breakdowns, handovers, activities, tasks), regardless of whether they were automatically imported from Maintenance Orders or manually added by users. Since items linked to MOs are dependent on those MOs, they should not be editable or deletable within the report interface.
 
 **Current Behavior:**
 
@@ -188,8 +188,8 @@ In the Reports app, edit and delete buttons currently appear for all report item
 - Edit and delete buttons should **only appear** for items that were manually added using the "+" button
 - Items automatically imported from MOs should be read-only (no edit/delete buttons)
 - This distinction should apply to all report types:
-  - Shift Reports: breakdowns, handovers, activities, tasks
-  - Weekend Reports: breakdowns, handovers, activities, tasks
+  - Shift Reporting: breakdowns, handovers, activities, tasks
+  - Weekend Reporting: breakdowns, handovers, activities, tasks
 - Users should understand which items are system-generated vs. user-added
 
 **Possible Solution:**
@@ -201,12 +201,12 @@ In the Reports app, edit and delete buttons currently appear for all report item
 
 **Affected Files:**
 
-- `apps/reports/src/templates/shift_report_detail.html` (conditional button display)
-- `apps/reports/src/templates/weekend_report_detail.html` (conditional button display)
-- `apps/reports/src/services/report_generator.py` (add source metadata to items)
-- `apps/reports/src/services/data_aggregator.py` (track item source during aggregation)
-- `apps/reports/src/static/js/report-interactions.js` (update edit/delete handlers)
-- `apps/reports/src/routes/reports.py` (validate source before allowing edits/deletes)
+- `apps/reporting/src/templates/shift_report_detail.html` (conditional button display)
+- `apps/reporting/src/templates/weekend_report_detail.html` (conditional button display)
+- `apps/reporting/src/services/report_generator.py` (add source metadata to items)
+- `apps/reporting/src/services/data_aggregator.py` (track item source during aggregation)
+- `apps/reporting/src/static/js/report-interactions.js` (update edit/delete handlers)
+- `apps/reporting/src/routes/reporting.py` (validate source before allowing edits/deletes)
 
 ---
 

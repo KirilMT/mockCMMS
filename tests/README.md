@@ -164,9 +164,9 @@ The mockCMMS monorepo uses a **Smart Collector** logic to optimize development s
 
 ### 1. Dynamic Test Discovery
 
-Modular apps in `apps/` (e.g., `Planning`, `Reports`) have their tests dynamically skipped if the app is disabled via environment variables.
+Modular apps in `apps/` (e.g., `Planning`, `Reporting`) have their tests dynamically skipped if the app is disabled via environment variables.
 
-- **How it works:** Pytest checks your `.env` for variables like `PLANNING_ENABLED` or `REPORTS_ENABLED`.
+- **How it works:** Pytest checks your `.env` for variables like `PLANNING_ENABLED` or `REPORTING_ENABLED`.
 - **Developer Benefit:** You only run tests for the apps you are currently developing.
 - **Default:** New apps are considered ENABLED (to ensure tests are written) unless explicitly set to `false`.
 
@@ -248,8 +248,8 @@ Add to appropriate category in `tests/frontend/`:
 
 | Database Type | Example | Created By | When |
 |--------------|---------|------------|------|
-| **Production** | `planning.db`, `reports.db`, `mockcmms.db` | `run.py` | Running the app normally |
-| **E2E** | `planning_e2e.db`, `reports_e2e.db`, `mockcmms_e2e.db` | Playwright tests | E2E tests with `E2E_TEST=true` |
+| **Production** | `planning.db`, `reporting.db`, `mockcmms.db` | `run.py` | Running the app normally |
+| **E2E** | `planning_e2e.db`, `reporting_e2e.db`, `mockcmms_e2e.db` | Playwright tests | E2E tests with `E2E_TEST=true` |
 | **In-Memory** | `sqlite:///:memory:` | pytest | ALL backend unit/functional/integration tests |
 
 ### ⚠️ Common Mistake: Testing E2E Configuration
@@ -270,7 +270,7 @@ with patch.dict(os.environ, {"E2E_TEST": "True"}):
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "SQLALCHEMY_BINDS": {
             "planning": "sqlite:///:memory:",
-            "reports": "sqlite:///:memory:",
+            "reporting": "sqlite:///:memory:",
         },
     })
 ```
@@ -287,7 +287,7 @@ config_overrides = {
     "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
     "SQLALCHEMY_BINDS": {
         "planning": "sqlite:///:memory:",  # ← REQUIRED
-        "reports": "sqlite:///:memory:",   # ← REQUIRED
+        "reporting": "sqlite:///:memory:",   # ← REQUIRED
         # Add ALL new app binds here when creating new modules
     },
 }
@@ -301,7 +301,7 @@ When adding a new app (e.g., `apps/inventory/`):
 2. **Update ALL conftest.py files** - Add `"inventory": "sqlite:///:memory:"`
    - `tests/backend/conftest.py`
    - `apps/planning/tests/backend/conftest.py`
-   - `apps/reports/tests/backend/conftest.py`
+   - `apps/reporting/tests/backend/conftest.py`
    - Your new `apps/inventory/tests/backend/conftest.py`
 3. **Update E2E teardown** - Add to `tests/frontend/e2e/e2e-test-teardown.js`
 4. **Update isolation tests** - Add to `tests/backend/security/test_db_isolation_proof.py`
@@ -352,6 +352,50 @@ If you see `*.db` files after running tests:
 5. **Keep performance tests separate** - Don't slow down regular runs
 6. **Run tests before commits** - Both backend and frontend
 7. **Update snapshots intentionally** - Review visual changes
+
+---
+
+## 🔧 Test Generation Tool
+
+Generate test stubs automatically with the `generate_tests.py` script:
+
+```bash
+# Generate test stubs for a module
+python scripts/generate_tests.py src/services/new_module.py
+
+# Preview before creating (always do this first!)
+python scripts/generate_tests.py src/services/new_module.py --dry-run
+
+# Find all untested modules
+python scripts/generate_tests.py --scan
+
+# Overwrite existing test file
+python scripts/generate_tests.py src/services/module.py --force
+```
+
+**Generated tests include:**
+- Proper imports following repo conventions
+- Class and function organization
+- Docstrings for all test methods
+- Arrange-Act-Assert (AAA) pattern
+- TODO comments for test logic
+- Fixtures as needed
+
+**You write:** Test logic, assertions, mock setup, edge cases.
+
+**Important limitations:**
+- Generated tests are scaffolding, not complete/production-ready assertions.
+- Review and harden all generated tests before commit.
+- Private functions (prefixed with `_`) are intentionally skipped.
+
+**Category detection (auto):**
+- `api.py`, `routes.py` -> `tests/backend/functional/`
+- `services/`, `utils.py`, `models.py` -> `tests/backend/unit/`
+- default -> `tests/backend/unit/`
+
+Use `--category` to override when needed.
+
+**Time savings:** ~60% of boilerplate test writing time per module.
 
 ---
 

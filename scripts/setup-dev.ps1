@@ -56,7 +56,7 @@ function Refresh-EnvPath {
 }
 
 # Step 1: Check for Node.js (only dev requirement)
-Write-Host "[Dev Step 1/3] Checking Node.js..." -ForegroundColor Yellow
+Write-Host "[Dev Step 1/6] Checking Node.js..." -ForegroundColor Yellow
 
 # Step 1.1: Check for Node.js
 function Check-Node {
@@ -186,7 +186,7 @@ if (-not (Check-Node)) {
 }
 
 # Step 2: Check for GitHub CLI
-Write-Host "`n[Dev Step 2/4] Checking GitHub CLI..." -ForegroundColor Yellow
+Write-Host "`n[Dev Step 2/6] Checking GitHub CLI..." -ForegroundColor Yellow
 
 function Check-GitHubCLI {
     # First check if gh command is available
@@ -281,7 +281,7 @@ if (-not (Check-GitHubCLI)) {
 }
 
 # Step 3: Python Development Tools
-Write-Host "`n[Dev Step 3/4] Installing Python development tools..." -ForegroundColor Yellow
+Write-Host "`n[Dev Step 3/6] Installing Python development tools..." -ForegroundColor Yellow
 
 # Use correct Windows path (venv already exists from setup.ps1)
 $pipPath = ".\.venv\Scripts\pip.exe"
@@ -333,7 +333,7 @@ else {
 
 
 # Step 4: JavaScript Development Tools
-Write-Host "`n[Dev Step 4/4] Setting up JavaScript development tools..." -ForegroundColor Yellow
+Write-Host "`n[Dev Step 4/6] Setting up JavaScript development tools..." -ForegroundColor Yellow
 
 if (-not (Test-Path "package.json")) {
     Write-Host "   Initializing " -NoNewline -ForegroundColor White
@@ -426,6 +426,129 @@ else {
         Write-Host "FAILED" -ForegroundColor Red
         $script:ErrorCount++
     }
+}
+
+# ============================================================================
+# STEP 5: GIT COMMIT TEMPLATE & HOOKS
+# ============================================================================
+
+Write-Host "`n[Dev Step 5/6] Setting up Conventional Commit template and commit-msg hook..." -ForegroundColor Yellow
+
+$gitDir = Join-Path $projectRoot ".git"
+$hookDir = Join-Path $gitDir "hooks"
+$hookFile = Join-Path $hookDir "commit-msg"
+$templateFile = Join-Path $projectRoot ".gitmessage"
+
+# Set commit template
+if (Test-Path $templateFile) {
+    git config --local commit.template .gitmessage
+    Write-Host "   [OK] .gitmessage set as commit template" -ForegroundColor Green
+} else {
+    Write-Host "   [WARN] .gitmessage not found, skipping commit template setup" -ForegroundColor Yellow
+}
+
+$hookTemplate = Join-Path $projectRoot ".githooks\commit-msg"
+
+# Install commit-msg hook
+if (Test-Path $hookTemplate) {
+    if (-not (Test-Path $hookDir)) {
+        New-Item -ItemType Directory -Force -Path $hookDir | Out-Null
+    }
+    Copy-Item -Path $hookTemplate -Destination $hookFile -Force
+    Write-Host "   [OK] commit-msg hook installed from .githooks template" -ForegroundColor Green
+    # Set permissions (Windows)
+    icacls $hookFile /grant Everyone:RX | Out-Null
+} else {
+    Write-Host "   [WARN] .githooks/commit-msg template not found, skipping hook setup" -ForegroundColor Yellow
+}
+
+# ============================================================================
+# STEP 6: PRE-COMMIT HOOKS SETUP
+# ============================================================================
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host "   PRE-COMMIT HOOKS SETUP" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host ""
+
+Write-Host "[Dev Step 6/6] Setting up pre-commit hooks..." -ForegroundColor Yellow
+
+# Use pre-commit from venv prioritized, then PATH
+$preCommitExe = ".\.venv\Scripts\pre-commit.exe"
+$hasPreCommit = $false
+
+if (Test-Path $preCommitExe) {
+    $hasPreCommit = $true
+}
+elseif (Get-Command pre-commit -ErrorAction SilentlyContinue) {
+    $preCommitExe = "pre-commit"
+    $hasPreCommit = $true
+}
+
+if ($hasPreCommit) {
+    Write-Host "   Using: " -NoNewline -ForegroundColor White
+    $preCommitVersion = & $preCommitExe --version 2>&1
+    Write-Host "$preCommitVersion " -NoNewline -ForegroundColor White
+    Write-Host "OK" -ForegroundColor Green
+
+    # Install pre-commit hooks
+    Write-Host "   Installing pre-commit hooks..." -ForegroundColor Yellow
+
+    try {
+        # Install pre-commit hooks (commits)
+        & $preCommitExe install 2>&1 | Out-Null
+
+        # Install pre-push hooks
+        & $preCommitExe install --hook-type pre-push 2>&1 | Out-Null
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "   Pre-commit hooks installed " -NoNewline -ForegroundColor White
+            Write-Host "OK" -ForegroundColor Green
+            Write-Host "   Enabled:" -ForegroundColor White
+            Write-Host "     - Pre-commit: Code formatting & validation" -ForegroundColor Gray
+            Write-Host "     - Pre-push: Full validation & auto-release" -ForegroundColor Gray
+
+            # Configure repo-local aliases for conflict-safe amend workflow.
+            $safeAmendScript = Join-Path $projectRoot "scripts\safe-amend.ps1"
+            $safeAmendScript = $safeAmendScript.Replace("/", "\")
+            $safeAmendBase = "!pwsh -NoProfile -ExecutionPolicy Bypass -File `"$safeAmendScript`""
+
+            try {
+                $err1 = git config --local alias.safe-amend "$safeAmendBase amend" 2>&1
+                if ($LASTEXITCODE -ne 0) { throw $err1 }
+
+                $err2 = git config --local alias.safe-amend-cleanup "$safeAmendBase cleanup" 2>&1
+                if ($LASTEXITCODE -ne 0) { throw $err2 }
+
+                Write-Host "   Git aliases configured: " -NoNewline -ForegroundColor White
+                Write-Host "git safe-amend, git safe-amend-cleanup" -ForegroundColor Magenta
+            }
+            catch {
+                Write-Host "   Git alias setup " -NoNewline -ForegroundColor White
+                Write-Host "FAILED" -ForegroundColor Yellow
+                Write-Host "   Error: $_" -ForegroundColor Gray
+                $script:ErrorCount++
+            }
+        }
+        else {
+            Write-Host ""
+            Write-Host "   Pre-commit hook install " -NoNewline -ForegroundColor White
+            Write-Host "FAILED" -ForegroundColor Red
+            $script:ErrorCount++
+        }
+    }
+    catch {
+        Write-Host ""
+        Write-Host "   Pre-commit hook install " -NoNewline -ForegroundColor White
+        Write-Host "FAILED" -ForegroundColor Red
+        Write-Host "   Error: $_" -ForegroundColor Red
+        $script:ErrorCount++
+    }
+}
+else {
+    Write-Host "   Pre-commit not found " -NoNewline -ForegroundColor White
+    Write-Host "SKIPPED" -ForegroundColor Yellow
+    Write-Host "   (Will be installed via requirements-dev.txt later)" -ForegroundColor Gray
 }
 
 

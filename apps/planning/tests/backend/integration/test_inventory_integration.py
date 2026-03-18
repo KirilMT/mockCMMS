@@ -24,7 +24,7 @@ def app_context_inventory():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_BINDS"] = {
         "planning": "sqlite:///:memory:",
-        "reports": "sqlite:///:memory:",
+        "reporting": "sqlite:///:memory:",
     }
     db.init_app(app)
 

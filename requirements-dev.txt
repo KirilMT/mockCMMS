@@ -1,3 +1,4 @@
+-r requirements.txt
 # Development and Code Quality Tools
 # Install with: pip install -r requirements-dev.txt
 
@@ -21,7 +22,12 @@ pytest==8.4.2
 pytest-cov==6.3.0
 pytest-mock==3.15.1
 pytest-env==1.1.5
+pytest-testmon>=2.1.0   # Smart test selection: only re-runs tests affected by code changes
 diff-cover>=9.0.0
+iniconfig==2.1.0
+pandas-stubs==2.2.3.250527
+pluggy==1.6.0
+types-pytz==2025.2.0.20251108
 
 # Code Quality Analysis (OPTIONAL - Run periodically)
 bandit==1.8.6

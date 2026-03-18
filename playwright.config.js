@@ -37,7 +37,7 @@ function isModuleEnabled(envVars, moduleName) {
 // Load .env settings
 const envVars = loadEnvFile();
 const planningEnabled = isModuleEnabled(envVars, "PLANNING");
-const reportsEnabled = isModuleEnabled(envVars, "REPORTS");
+const reportingEnabled = isModuleEnabled(envVars, "REPORTING");
 
 // Dynamically build testMatch based on enabled modules
 const testMatch = ["tests/frontend/e2e/**/*.spec.js"];
@@ -49,10 +49,10 @@ if (planningEnabled) {
   testIgnore.push("**/apps/planning/**");
 }
 
-if (reportsEnabled) {
-  testMatch.push("apps/reports/tests/frontend/e2e/**/*.spec.js");
+if (reportingEnabled) {
+  testMatch.push("apps/reporting/tests/frontend/e2e/**/*.spec.js");
 } else {
-  testIgnore.push("**/apps/reports/**");
+  testIgnore.push("**/apps/reporting/**");
 }
 
 /**
@@ -63,7 +63,7 @@ if (reportsEnabled) {
  * - Sets E2E_TEST=true for test database isolation
  * - Global setup ensures clean test environment
  * - Retries for flaky test resilience
- * - Respects .env settings for PLANNING_ENABLED and REPORTS_ENABLED (like backend tests)
+ * - Respects .env settings for PLANNING_ENABLED and REPORTING_ENABLED (like backend tests)
  *   NOTE: Test files in apps/ should use test.skip() based on process.env to skip when disabled
  */
 
@@ -142,7 +142,7 @@ module.exports = defineConfig({
       FLASK_RUN_PORT: "5001",
       // Pass through module settings from .env (follows backend test pattern)
       PLANNING_ENABLED: planningEnabled ? "true" : "false",
-      REPORTS_ENABLED: reportsEnabled ? "true" : "false",
+      REPORTING_ENABLED: reportingEnabled ? "true" : "false",
       FIXED_DATE_SEEDING: "2026-01-21", // Seed DB with this fixed date for consistent visual tests
     },
     url: "http://127.0.0.1:5001",

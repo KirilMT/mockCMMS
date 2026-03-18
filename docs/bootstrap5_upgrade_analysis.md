@@ -79,7 +79,7 @@
 1. **Templates** (~15 files):
    - `src/templates/base.html`
    - `src/templates/*.html`
-   - `apps/reports/src/templates/*.html`
+   - `apps/reporting/src/templates/*.html`
    - `apps/planning/src/templates/*.html`
 
 2. **JavaScript** (~10 files):

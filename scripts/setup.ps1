@@ -157,6 +157,63 @@ if (-not (Check-Python)) {
     }
 }
 
+# Step 1.2: Check for Git
+function Check-Git {
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        $v = git --version
+        Write-Host "   Found: " -NoNewline -ForegroundColor White
+        Write-Host "$v" -NoNewline -ForegroundColor White
+        Write-Host " OK" -ForegroundColor Green
+        return $true
+    }
+    return $false
+}
+
+if (-not (Check-Git)) {
+    Write-Warning "   Git not found. Attempting automatic installation via winget..."
+
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        try {
+            Write-Host "   Trying package ID: Git.Git..." -ForegroundColor Gray
+
+            # Start installation process
+            $startTime = Get-Date
+            $process = Start-Process -FilePath "winget" -ArgumentList "install -e --id Git.Git --silent --accept-package-agreements --accept-source-agreements" -NoNewWindow -PassThru -Wait
+            $duration = (Get-Date) - $startTime
+
+            if ($process.ExitCode -eq 0) {
+                Write-Host "   Git installed successfully (took $([int]$duration.TotalSeconds) seconds)" -ForegroundColor Green
+                Refresh-EnvPath
+
+                # Re-check
+                if (-not (Check-Git)) {
+                    Write-Warning "   Git installed but not found in PATH."
+                    Write-Host "   Please restart your terminal and run this script again." -ForegroundColor Yellow
+                    exit 1
+                }
+            }
+            else {
+                Write-Warning "   Automatic installation via winget failed."
+                Write-Host ""
+                Write-Host "   Please install Git manually:" -ForegroundColor Yellow
+                Write-Host "   1. Download from: https://git-scm.com/downloads" -ForegroundColor White
+                Write-Host "   2. Restart terminal and run this script again" -ForegroundColor White
+                exit 1
+            }
+        }
+        catch {
+            Write-Warning "   Automatic installation failed: $_"
+            Write-Host "   Please install Git manually from https://git-scm.com" -ForegroundColor Yellow
+            exit 1
+        }
+    }
+    else {
+        Write-Error "   Git not found and winget not available."
+        Write-Host "   Please install Git manually from https://git-scm.com" -ForegroundColor Yellow
+        exit 1
+    }
+}
+
 
 # Step 2: Create Virtual Environment
 Write-Host "`n[Step 2/5] Setting up virtual environment..." -ForegroundColor Yellow
@@ -320,16 +377,16 @@ else {
     Write-Host "   Planning app not found (skipping)" -ForegroundColor Gray
 }
 
-if (Test-Path "apps/reports/setup.py") {
-    # Check if reports is already installed
-    $reportsCheck = & $pipPath show reports 2>$null
+if (Test-Path "apps/reporting/setup.py") {
+    # Check if reporting is already installed
+    $reportingCheck = & $pipPath show reporting 2>$null
 
-    if ($reportsCheck -match "Name: reports") {
+    if ($reportingCheck -match "Name: reporting") {
         # Editable packages need to be reinstalled to update links, but we can do it quietly
         Write-Host "   " -NoNewline
-        Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+        Write-Host "Reporting app" -NoNewline -ForegroundColor Magenta
         Write-Host " (re-linking)..." -NoNewline -ForegroundColor White
-        & $pipPath install -e apps/reports --quiet 2>&1 | Out-Null
+        & $pipPath install -e apps/reporting --quiet 2>&1 | Out-Null
 
         if ($LASTEXITCODE -eq 0) {
             Write-Host " OK" -ForegroundColor Green
@@ -342,16 +399,16 @@ if (Test-Path "apps/reports/setup.py") {
     }
     else {
         Write-Host "`n   Installing " -NoNewline -ForegroundColor White
-        Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+        Write-Host "Reporting app" -NoNewline -ForegroundColor Magenta
         Write-Host "..." -ForegroundColor White
         Write-Host ""
 
-        & $pipPath install -e apps/reports
+        & $pipPath install -e apps/reporting
 
         if ($LASTEXITCODE -eq 0) {
             Write-Host ""
             Write-Host "   " -NoNewline
-            Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+            Write-Host "Reporting app" -NoNewline -ForegroundColor Magenta
             Write-Host " installed " -NoNewline -ForegroundColor White
             Write-Host "OK" -ForegroundColor Green
             $appsInstalled++
@@ -359,7 +416,7 @@ if (Test-Path "apps/reports/setup.py") {
         else {
             Write-Host ""
             Write-Host "   " -NoNewline
-            Write-Host "Reports app" -NoNewline -ForegroundColor Magenta
+            Write-Host "Reporting app" -NoNewline -ForegroundColor Magenta
             Write-Host " installation " -NoNewline -ForegroundColor White
             Write-Host "FAILED" -ForegroundColor Red
             Write-Warning "Check the output above for errors."
@@ -368,7 +425,7 @@ if (Test-Path "apps/reports/setup.py") {
     }
 }
 else {
-    Write-Host "   Reports app not found (skipping)" -ForegroundColor Gray
+    Write-Host "   Reporting app not found (skipping)" -ForegroundColor Gray
 }
 
 

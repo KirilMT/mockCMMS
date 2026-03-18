@@ -3,6 +3,106 @@
 We'd love to accept your patches and contributions to this project. There are
 just a few small guidelines you need to follow.
 
+## Commit Message & Release Automation
+
+To ensure high-quality releases and clear project history, all commits and releases must follow these rules:
+
+### Supported Commit Types
+
+The following commit types are supported for release automation and changelog generation:
+
+- feat, fix, chore, refactor, perf, remove, revert, docs, test, style, build, ci
+
+Use only these types in your commit messages for releases.
+
+### Commit Message Standards & Enforcement
+
+All commits must follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format. This is enforced by a `commit-msg` hook and a pre-filled `.gitmessage` template, which are set up automatically by `scripts/setup-dev.ps1`.
+
+- **Template:** When you run `git commit`, the `.gitmessage` template will be loaded in your editor.
+- **Enforcement:** Commits that do not follow the required format will be rejected.
+
+#### Format Example
+
+```
+feat(module): add new feature
+
+This is a detailed description of the change.
+- Bullet 1
+- Bullet 2
+```
+
+### Release Process
+
+Releases are managed through the **CI/CD pipeline** using Google Release Please:
+
+1. Merge your changes to `main` via a pull request.
+2. The Release Please GitHub Action automatically opens (or updates) a "Release PR" titled "chore(main): release x.y.z".
+3. This automated PR gathers all your Conventional Commits and generates the `CHANGELOG.md` and version bumps in `pyproject.toml` and `README.md`.
+4. When you are ready to cut a release, simply **merge the Release PR**.
+5. GitHub Actions will then automatically tag the commit and create a GitHub Release.
+
+See also: `.github/GIT_WORKFLOW.md` for workflow details (including "Why a Two-PR Workflow?").
+
+> [!NOTE]
+> Why the extra PR? Release Please uses a **Two-PR Workflow** (an industry standard used by Google, Node.js, etc.). Instead of cutting a new release instantly every single time a developer merges code, it gathers all changes into a "Release PR" batch. Maintainers can review the drafted changelog there, and release them all at once whenever they are ready.
+
+### Commit Message Structure
+
+#### First line
+
+The first line of the change description is a short one-line summary of the change, following the structure `type(scope): description`:
+
+- **type:** One of the supported commit types above.
+- **scope:** The name of the package or component affected by the change (e.g., `planning`, `reporting`, `mockCMMS`, `advanced-table`, `ci`, `docs`), provided in parentheses before the colon.
+- **description:** A short summary, written to complete the sentence "This change modifies the codebase to ..." (no capital letter, not a complete sentence, no trailing period).
+
+Keep the first line as short as possible (preferably under 76 characters). Follow the first line by a blank line.
+
+#### Main content
+
+The rest of the commit message should provide context for the change and explain what it does. Write in complete sentences with correct punctuation. Don't use HTML, Markdown, or any other markup language. Add any relevant information, such as benchmark data if the change affects performance.
+
+#### Referencing issues
+
+To automatically close an issue when a pull request (PR) is merged on GitHub, include a **Closing Keyword** followed immediately by the issue number in the PR's description or a commit message.
+
+**Supported Closing Keywords:**
+
+| Keyword      | Example        |
+| :----------- | :------------- |
+| **Close**    | `Close #12`    |
+| **Closes**   | `Closes #12`   |
+| **Closed**   | `Closed #12`   |
+| **Fix**      | `Fix #12`      |
+| **Fixes**    | `Fixes #12`    |
+| **Fixed**    | `Fixed #12`    |
+| **Resolve**  | `Resolve #12`  |
+| **Resolves** | `Resolves #12` |
+| **Resolved** | `Resolved #12` |
+
+**Important Rules:**
+
+1.  **Strict Syntax:** The keyword must be followed by the issue number (e.g., `#12`).
+2.  **Multiple Issues:** To close multiple issues, repeat the keyword for each one.
+    - ✅ **Correct:** `Closes #1, Closes #2, Fixes #3`
+    - ❌ **Incorrect:** `Closes #1, #2, #3`
+3.  **Real Issue IDs:** Use the integer ID assigned by GitHub (e.g., `#42`), not custom references (e.g., `#R1` or `Bug #42`).
+4.  **No "Fix:" Prefix:** The conventional commit type `fix:` does **not** trigger a close. You must still include `Fixes #12` in the body or footer.
+
+**Common Pitfalls (Why your issue didn't close):**
+
+- Using `fix: Bug #12` (The `fix:` prefix is for humans/changelogs, not GitHub automation).
+- Using `#R1` instead of `#1`.
+- Putting text between the keyword and number: `Fixes critical bug #12` (Will not work).
+
+If the change is a partial step towards the resolution of the issue, write "For `#12345`" instead. This will leave a comment in the issue linking back to the pull request, but it will not close the issue when the change is applied.
+
+## How to Contribute
+
+We'd love to accept your patches and contributions to this project. There are
+just a few small guidelines you need to follow.
+
 ## 🚀 Getting Started (Onboarding)
 
 New to the project? Follow this learning path to get up to speed:
@@ -122,8 +222,6 @@ Good comments are crucial for explaining the "why" behind the code.
 
 - **Explain Intent, Not Implementation:** Code should be self-explanatory.
   Comments should clarify complex business logic, algorithms, or non-obvious
-- **Explain Intent, Not Implementation:** Code should be self-explanatory.
-  Comments should clarify complex business logic, algorithms, or non-obvious
   decisions.
 - **No Issue References:** Do not reference bug or issue numbers in code
   comments (e.g., `// Fix for #123`). Use commit messages for this.
@@ -145,37 +243,15 @@ python scripts/validate_code.py --backend  # Python only
 python scripts/validate_code.py --frontend # JS/CSS only
 ```
 
-### 2. `scripts/release_manager.py` (The Releaser)
+### 3. `scripts/build_portable.py` (The Packager)
 
-**Automates versioning and tags.**
-
-```bash
-python scripts/release_manager.py patch --dry-run  # Preview bump
-python scripts/release_manager.py minor            # New features
-python scripts/release_manager.py major            # Breaking changes
-```
-
-**Automated Release via Pre-Push Hook:**
-
-You can trigger automatic releases by including `[release:TYPE]` in your commit message:
+**Generates a zero-installation, portable ZIP distribution of the app.** Use this when you need to send a demo version to management, stakeholders, or testers who don't have Python or Git installed.
 
 ```bash
-# Regular commit (no release)
-git commit -m "feat: add new feature"
-git push  # Just validates, no release
-
-# Automatic release on push
-git commit -m "feat: feature complete [release:minor]"
-git push  # Validates + Creates release automatically
-
-# Available release types
-git commit -m "fix: bug fix [release:patch]"        # 1.0.0 -> 1.0.1
-git commit -m "feat: new feature [release:minor]"   # 1.0.0 -> 1.1.0
-git commit -m "feat!: breaking [release:major]"     # 1.0.0 -> 2.0.0
-git commit -m "chore: updates [release]"            # Defaults to patch
+python scripts/build_portable.py
 ```
 
-The `auto_release_hook.py` pre-push hook detects the `[release]` tag and automatically runs `release_manager.py`.
+It automatically embeds a Python 3.12 interpreter, pre-seeds a fresh database, isolates dependencies, and scripts a one-click `START_mockCMMS.bat` browser-opening interface.
 
 ## 🏆 Critical Best Practices (Do's and Don'ts)
 
@@ -260,7 +336,7 @@ Tests are organized in 6 categories:
 
 #### Modular App Testing
 
-MockCMMS uses a **Smart Collector** logic. Tests for apps in `apps/` (Planning, Reports, etc.) are dynamically skipped if disabled via environment variables.
+MockCMMS uses a **Smart Collector** logic. Tests for apps in `apps/` (Planning, Reporting, etc.) are dynamically skipped if disabled via environment variables.
 
 - **Development Speed:** Use `$env:PLANNING_ENABLED="false"` to skip tests for modules you aren't changing.
 - **Stability Enforcement:** The validation script default (Health Mode) overrides these flags to ensure 100% project health before PR submission.
@@ -351,101 +427,6 @@ command-line access to GitHub.
 
 When prompted for a password while using Git on the command line, paste your
 PAT.
-
-## Commit messages
-
-Commit messages for this repository follow the conventions below. Here is an
-example:
-
-''' feat(reports): add PDF export functionality
-
-A PDF export feature is added to the reports package, which generates
-maintenance reports in PDF format. The feature supports both reactive production
-reports and weekend completion summaries.
-
-Resolves #12345 '''
-
-### First line
-
-The first line of the change description is a short one-line summary of the
-change, following the structure `type(scope): description`:
-
-#### type
-
-A structural element defined by the conventions at
-https://www.conventionalcommits.org/en/v1.0.0/#summary.
-
-#### scope
-
-The name of the package or component affected by the change (e.g., `planning`,
-`reports`, `mockCMMS`, `advanced-table`, `ci`, `docs`), and should be provided
-in parentheses before the colon.
-
-#### description
-
-A short one-line summary of the change, that should be written to complete the
-sentence "This change modifies the codebase to ..." That means it does not start
-with a capital letter, is not a complete sentence, and actually summarizes the
-result of the change. Note that the verb after the colon is lowercase, and there
-is no trailing period
-
-The first line should be kept as short as possible (many git viewing tools
-prefer under ~76 characters). Follow the first line by a blank line.
-
-### Main content
-
-The rest of the commit message should provide context for the change and explain
-what it does. Write in complete sentences with correct punctuation. Don't use
-HTML, Markdown, or any other markup language.
-
-Add any relevant information, such as benchmark data if the change affects
-performance. The benchstat tool is conventionally used to format benchmark data
-for change descriptions.
-
-### Referencing issues
-
-To automatically close an issue when a pull request (PR) is merged on GitHub,
-you need to include a specific **Closing Keyword** followed immediately by the
-issue number in the PR's description or a commit message.
-
-**Supported Closing Keywords:**
-
-| Keyword      | Example        |
-| :----------- | :------------- |
-| **Close**    | `Close #12`    |
-| **Closes**   | `Closes #12`   |
-| **Closed**   | `Closed #12`   |
-| **Fix**      | `Fix #12`      |
-| **Fixes**    | `Fixes #12`    |
-| **Fixed**    | `Fixed #12`    |
-| **Resolve**  | `Resolve #12`  |
-| **Resolves** | `Resolves #12` |
-| **Resolved** | `Resolved #12` |
-
-**Important Rules:**
-
-1.  **Strict Syntax:** The keyword must be followed by the issue number (e.g.,
-    `#12`).
-2.  **Multiple Issues:** To close multiple issues, you must repeat the keyword
-    for each one.
-    - ✅ **Correct:** `Closes #1, Closes #2, Fixes #3`
-    - ❌ **Incorrect:** `Closes #1, #2, #3`
-3.  **Real Issue IDs:** Use the integer ID assigned by GitHub (e.g., `#42`),
-    not custom references (e.g., `#R1` or `Bug #42`).
-4.  **No "Fix:" Prefix:** The conventional commit type `fix:` does **not**
-    trigger a close. You must still include `Fixes #12` in the body or footer.
-
-**Common Pitfalls (Why your issue didn't close):**
-
-- Using `fix: Bug #12` (The `fix:` prefix is for humans/changelogs, not GitHub
-  automation).
-- Using `#R1` instead of `#1`.
-- Putting text between the keyword and number: `Fixes critical bug #12` (Will
-  not work).
-
-If the change is a partial step towards the resolution of the issue, write "For
-`#12345`" instead. This will leave a comment in the issue linking back to the
-pull request, but it will not close the issue when the change is applied.
 
 ## The review process
 

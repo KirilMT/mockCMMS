@@ -650,11 +650,11 @@ class TestIntegration:
             assert asset.asset_code == "CONCURRENT-001"
 
     @pytest.mark.skipif(
-        os.getenv("REPORTS_ENABLED", "true").lower() not in ("true", "1", "t"),
-        reason="Reports module is disabled (REPORTS_ENABLED=False)",
+        os.getenv("REPORTING_ENABLED", "true").lower() not in ("true", "1", "t"),
+        reason="Reporting module is disabled (REPORTING_ENABLED=False)",
     )
-    def test_reports_integration(self, client, app, admin_user):
-        """Test reports integration with MO data.
+    def test_reporting_integration(self, client, app, admin_user):
+        """Test reporting integration with MO data.
 
         Workflow:
         1. Create MOs with different statuses
@@ -666,7 +666,7 @@ class TestIntegration:
         - Different statuses are handled
         - List view works correctly
 
-        Note: Full reports integration requires reports module.
+        Note: Full reporting integration requires the reporting module.
         This test validates the foundation for reporting.
         """
         # Login as admin

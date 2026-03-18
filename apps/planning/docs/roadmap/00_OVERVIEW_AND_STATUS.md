@@ -59,7 +59,7 @@ Out of scope for the initial phases: full SCADA integration, fully automated REP
 3. **🔴 Documentation Mismatch** - Gantt chart documentation doesn't match implementation
    - Docs claim Frappe Gantt library, actual code is custom implementation
    - Resource utilization features documented but not implemented
-   - **Impact:** Confusion, misleading status reports
+   - **Impact:** Confusion, misleading status reporting
    - **Action Required:** Update documentation to match reality
 
 ### Phase Status Breakdown:
@@ -127,7 +127,7 @@ Out of scope for the initial phases: full SCADA integration, fully automated REP
 1. **🔴 CRITICAL - Fix Test Suite** (Phase 1.6)
    - Fix import errors in test files
    - Verify actual test count
-   - Update status reports with reality
+   - Update status reporting with reality
    - **Timeline:** Before any other work
 
 2. **🔴 CRITICAL - Security Audit** (Phase 6.5.4)

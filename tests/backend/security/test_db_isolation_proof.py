@@ -9,7 +9,7 @@ from production data. It asserts that:
 1. The testing environment variable is active.
 2. The database URI points to a safe test database (memory or test file).
 3. Tests do NOT create production database files.
-4. All database binds (planning, reports, etc.) use in-memory databases.
+4. All database binds (planning, reporting, etc.) use in-memory databases.
 
 IMPORTANT: These tests are designed to work in ALL scenarios:
 - Tests running alone (no production)
@@ -32,7 +32,7 @@ _PRE_EXISTING_DBS = set()
 # Production database paths to check
 _PRODUCTION_DBS = [
     PROJECT_ROOT / "apps" / "planning" / "instance" / "planning.db",
-    PROJECT_ROOT / "apps" / "reports" / "instance" / "reports.db",
+    PROJECT_ROOT / "apps" / "reporting" / "instance" / "reporting.db",
     PROJECT_ROOT / "instance" / "mockcmms.db",
 ]
 
@@ -80,7 +80,7 @@ def _cleanup_e2e_test_dbs():
     e2e_dbs = [
         PROJECT_ROOT / "instance" / "mockcmms_e2e.db",
         PROJECT_ROOT / "apps" / "planning" / "instance" / "planning_e2e.db",
-        PROJECT_ROOT / "apps" / "reports" / "instance" / "reports_e2e.db",
+        PROJECT_ROOT / "apps" / "reporting" / "instance" / "reporting_e2e.db",
     ]
 
     for db_path in e2e_dbs:
@@ -123,7 +123,7 @@ class TestDBIsolationProof:
 
         # Explicitly forbid production DB usage
         assert "planning.db" not in uri
-        assert "reports.db" not in uri
+        assert "reporting.db" not in uri
         assert "mockcmms.db" not in uri
 
     def test_all_binds_use_memory_in_testing(self, app):
@@ -162,27 +162,27 @@ class TestDBIsolationProof:
             f"Tests should use in-memory databases only."
         )
 
-    def test_no_reports_db_created(self, app):
-        """Verify tests don't CREATE reports.db (pre-existing/locked DBs allowed)."""
-        reports_db = PROJECT_ROOT / "apps" / "reports" / "instance" / "reports.db"
+    def test_no_reporting_db_created(self, app):
+        """Verify tests don't CREATE reporting.db (pre-existing/locked DBs allowed)."""
+        reporting_db = PROJECT_ROOT / "apps" / "reporting" / "instance" / "reporting.db"
 
         # If DB doesn't exist, test passes (tests didn't create it)
-        if not reports_db.exists():
+        if not reporting_db.exists():
             return
 
         # If DB existed before tests started, test passes (pre-existing)
-        if _was_preexisting(reports_db):
+        if _was_preexisting(reporting_db):
             return
 
         # If DB exists and is LOCKED, test passes (production owns it)
-        if _is_file_locked_or_in_use(reports_db):
+        if _is_file_locked_or_in_use(reporting_db):
             return
 
         # DB exists, was NOT pre-existing, and is NOT locked
         # This means tests created it - VIOLATION!
         pytest.fail(
-            f"CRITICAL: reports.db was created during testing!\n"
-            f"Path: {reports_db}\n"
+            f"CRITICAL: reporting.db was created during testing!\n"
+            f"Path: {reporting_db}\n"
             f"This indicates a database isolation violation.\n"
             f"Tests should use in-memory databases only."
         )
@@ -250,7 +250,7 @@ class TestDBIsolationProof:
         e2e_dbs = [
             PROJECT_ROOT / "instance" / "mockcmms_e2e.db",
             PROJECT_ROOT / "apps" / "planning" / "instance" / "planning_e2e.db",
-            PROJECT_ROOT / "apps" / "reports" / "instance" / "reports_e2e.db",
+            PROJECT_ROOT / "apps" / "reporting" / "instance" / "reporting_e2e.db",
         ]
 
         for db_path in e2e_dbs:
@@ -279,12 +279,12 @@ class TestDatabaseBindsComplete:
             "Add 'planning': 'sqlite:///:memory:' to conftest.py"
         )
 
-    def test_reports_bind_exists(self, app):
-        """Verify reports bind is configured."""
+    def test_reporting_bind_exists(self, app):
+        """Verify reporting bind is configured."""
         binds = app.config.get("SQLALCHEMY_BINDS", {})
-        assert "reports" in binds, (
-            "Reports bind is missing from SQLALCHEMY_BINDS!\n"
-            "Add 'reports': 'sqlite:///:memory:' to conftest.py"
+        assert "reporting" in binds, (
+            "Reporting bind is missing from SQLALCHEMY_BINDS!\n"
+            "Add 'reporting': 'sqlite:///:memory:' to conftest.py"
         )
 
     def test_all_enabled_modules_have_binds(self, app):
@@ -299,13 +299,15 @@ class TestDatabaseBindsComplete:
         if planning_enabled:
             assert "planning" in binds, "Planning is enabled but bind is missing!"
 
-        # Check Reports
-        reports_enabled = os.environ.get("REPORTS_ENABLED", "false").lower() in (
+        # Check Reporting
+        reporting_enabled_flag = os.environ.get(
+            "REPORTING_ENABLED", "false"
+        ).lower() in (
             "true",
             "1",
         )
-        if reports_enabled:
-            assert "reports" in binds, "Reports is enabled but bind is missing!"
+        if reporting_enabled_flag:
+            assert "reporting" in binds, "Reporting is enabled but bind is missing!"
 
 
 class TestNoFileBasedDBsDuringPytest:
@@ -323,15 +325,15 @@ class TestNoFileBasedDBsDuringPytest:
     _ALL_FILE_BASED_DBS = [
         # Production databases
         ("apps/planning/instance/planning.db", "production"),
-        ("apps/reports/instance/reports.db", "production"),
+        ("apps/reporting/instance/reporting.db", "production"),
         ("instance/mockcmms.db", "production"),
         # E2E databases (should only exist during Playwright tests)
         ("apps/planning/instance/planning_e2e.db", "e2e"),
-        ("apps/reports/instance/reports_e2e.db", "e2e"),
+        ("apps/reporting/instance/reporting_e2e.db", "e2e"),
         ("instance/mockcmms_e2e.db", "e2e"),
         # Test databases
         ("apps/planning/instance/planning_test.db", "test"),
-        ("apps/reports/instance/reports_test.db", "test"),
+        ("apps/reporting/instance/reporting_test.db", "test"),
         ("instance/mockcmms_test.db", "test"),
     ]
 
@@ -344,7 +346,7 @@ class TestNoFileBasedDBsDuringPytest:
         """
         instance_dirs = [
             PROJECT_ROOT / "apps" / "planning" / "instance",
-            PROJECT_ROOT / "apps" / "reports" / "instance",
+            PROJECT_ROOT / "apps" / "reporting" / "instance",
         ]
 
         for instance_dir in instance_dirs:
@@ -380,7 +382,7 @@ class TestNoFileBasedDBsDuringPytest:
         """
         e2e_db_paths = [
             PROJECT_ROOT / "apps" / "planning" / "instance" / "planning_e2e.db",
-            PROJECT_ROOT / "apps" / "reports" / "instance" / "reports_e2e.db",
+            PROJECT_ROOT / "apps" / "reporting" / "instance" / "reporting_e2e.db",
             PROJECT_ROOT / "instance" / "mockcmms_e2e.db",
         ]
 
@@ -403,7 +405,7 @@ class TestNoFileBasedDBsDuringPytest:
                 f'        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",\n'
                 f'        "SQLALCHEMY_BINDS": {{\n'
                 f'            "planning": "sqlite:///:memory:",\n'
-                f'            "reports": "sqlite:///:memory:",\n'
+                f'            "reporting": "sqlite:///:memory:",\n'
                 f"        }},\n"
                 f"    }})"
             )

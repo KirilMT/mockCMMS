@@ -11,7 +11,7 @@ from src.services.db_utils import db as _db  # noqa: E402
 @pytest.fixture
 def app(monkeypatch, tmp_path):
     monkeypatch.setenv("PLANNING_ENABLED", "true")
-    monkeypatch.setenv("REPORTS_ENABLED", "true")
+    monkeypatch.setenv("REPORTING_ENABLED", "true")
     planning_db_path = str(tmp_path / "planning_test.db")
     output_path = str(tmp_path / "output")
     os.makedirs(output_path, exist_ok=True)
@@ -23,7 +23,7 @@ def app(monkeypatch, tmp_path):
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
             "SQLALCHEMY_BINDS": {
                 "planning": f"sqlite:///{planning_db_path}",
-                "reports": "sqlite:///:memory:",
+                "reporting": "sqlite:///:memory:",
             },
             "DATABASE_PATH": planning_db_path,
             "OUTPUT_FOLDER": output_path,
