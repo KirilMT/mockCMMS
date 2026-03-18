@@ -449,8 +449,40 @@ if (Test-Path $templateFile) {
 
 $hookTemplate = Join-Path $projectRoot ".githooks\commit-msg"
 
-# Install commit-msg hook (DEPRECATED: Now handled by pre-commit in Step 6)
-# if (Test-Path $hookTemplate) { ... }
+$convCommitExe = Join-Path $projectRoot ".venv\Scripts\conventional-pre-commit.exe"
+if (-not (Test-Path $convCommitExe)) {
+    $convCommitExe = "conventional-pre-commit" # Fallback to PATH
+}
+
+# Install native commit-msg hook for Windows compatibility (avoids pre-commit shell dependency)
+$nativeHookPath = Join-Path $projectRoot ".git\hooks\commit-msg"
+$nativeHookContent = @"
+#!$pythonExe
+import sys
+import subprocess
+import os
+
+# 1. Run Conventional Commits Validator
+try:
+    subprocess.run(["$convCommitExe", sys.argv[1]], check=True)
+except subprocess.CalledProcessError:
+    sys.exit(1)
+except Exception as e:
+    print(f"Warning: Conventional commit validator failed to run: {e}")
+
+# 2. Run our custom Length Checker
+try:
+    subprocess.run(["$pythonExe", "scripts/check_commit_msg.py", sys.argv[1]], check=True)
+except subprocess.CalledProcessError:
+    sys.exit(1)
+"@
+
+if (Test-Path ".git") {
+    Write-Host "   Installing native commit-msg hook..." -ForegroundColor Yellow
+    Set-Content -Path $nativeHookPath -Value $nativeHookContent -Encoding utf8
+    Write-Host "   Handled native commit-msg hook " -NoNewline -ForegroundColor White
+    Write-Host "OK" -ForegroundColor Green
+}
 
 # ============================================================================
 # STEP 6: PRE-COMMIT HOOKS SETUP
@@ -487,9 +519,6 @@ if ($hasPreCommit) {
     try {
         # Install pre-commit hooks (commits)
         & $preCommitExe install 2>&1 | Out-Null
-
-        # Install commit-msg hooks (Conventional Commits)
-        & $preCommitExe install --hook-type commit-msg 2>&1 | Out-Null
 
         # Install pre-push hooks
         & $preCommitExe install --hook-type pre-push 2>&1 | Out-Null
