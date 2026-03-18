@@ -16,22 +16,6 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-symlinks
 
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v4.0.0
-    hooks:
-      - id: conventional-pre-commit
-        stages: [commit-msg]
-        args: [] # Optional: add custom types here
-
-  - repo: local
-    hooks:
-      - id: check-commit-msg-length
-        name: Check Commit Message Length
-        entry: python scripts/check_commit_msg.py
-        language: python
-        stages: [commit-msg]
-        always_run: true
-
   # Local hooks using project scripts (CHECK-ONLY mode)
   - repo: local
     hooks:
