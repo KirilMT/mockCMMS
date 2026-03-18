@@ -177,7 +177,3 @@ Contributions are welcome! See [Contributing documentation](.github/CONTRIBUTING
 - Workflow and commit conventions
 - Creating new modular apps
 - Debugging tips and coverage requirements
-
----
-
-**Version:** 2.1.0

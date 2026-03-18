@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Code Formatting Script — Single Source of Truth for ALL formatting.
 
+REQUIREMENT: For YAML formatting, you must have both 'prettier' and
+'prettier-plugin-yaml' installed as dev dependencies:
+    npm install --save-dev prettier prettier-plugin-yaml
+
 Actively formats code using configured formatters:
 - Whitespace: trailing whitespace removal, EOF newline normalization (ALL text files)
 - Python: ruff (lint fixing + unsafe fixes), isort, black, docformatter
 - JavaScript/CSS: prettier (quiet in format mode)
-- Documentation: prettier (quiet in format mode)
+- Documentation: prettier (quiet in format mode, with prettier-plugin-yaml for YAML)
 - Templates: djlint (Jinja2)
 
 ARCHITECTURE:
@@ -49,98 +53,6 @@ MAGENTA = "\033[95m"
 class CodeFormatter:
     """Handles code formatting with colored, professional, numbered output."""
 
-    def __init__(self, check_only: bool = False, files: Optional[list[str]] = None):
-        self.check_only = check_only
-        self.files = files
-        self.root_dir = Path(__file__).parent.parent
-        self.errors: list[str] = []
-
-    def _get_targets(
-        self, extensions: tuple[str, ...], default: list[str]
-    ) -> list[str]:
-        """Return files filtered by extension if provided, else return default dirs."""
-        if not self.files:
-            return default
-        return [f for f in self.files if f.lower().endswith(extensions)]
-
-    def run_command(
-        self,
-        cmd: list[str],
-        description: str,
-        step: Optional[int] = None,
-        total_steps: Optional[int] = None,
-    ) -> bool:
-        """Run command with clean colored output + optional numbering."""
-        if step is not None and total_steps is not None:
-            header = f"[FORMAT {step}/{total_steps}] {description}..."
-        else:
-            header = (
-                "[FORMAT] " + description + "..."
-                if not self.check_only
-                else "[CHECK] " + description + "..."
-            )
-        # Print the entire header in CYAN
-        print(f"\n{CYAN}{header}{RESET}")
-        # Print the command in MAGENTA
-        print(f"   {MAGENTA}Command: {' '.join(cmd)}{RESET}")
-
-        try:
-            env = os.environ.copy()
-            # Auto-detect and prepend local .venv for robustness
-            scripts_dir = "Scripts" if sys.platform == "win32" else "bin"
-            venv_scripts = self.root_dir / ".venv" / scripts_dir
-            if venv_scripts.exists():
-                path = env.get("PATH", "")
-                env["PATH"] = f"{venv_scripts}{os.pathsep}{path}"
-
-            env["PYTHONIOENCODING"] = "utf-8"
-            use_shell = sys.platform == "win32" and cmd[0] in ("npm", "npx")
-            result = subprocess.run(
-                cmd,
-                cwd=self.root_dir,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                check=False,
-                env=env,
-                shell=use_shell,
-            )
-
-            # Indent and print stdout/stderr if present
-            output_printed = False
-            if result.stdout.strip():
-                for line in result.stdout.strip().splitlines():
-                    print(f"       {line}")
-                output_printed = True
-            if result.stderr.strip():
-                for line in result.stderr.strip().splitlines():
-                    print(f"       {line}", file=sys.stderr)
-                output_printed = True
-            # If no output and success, print 'All checks passed!'
-            if result.returncode == 0:
-                if not output_printed:
-                    print("       All checks passed!")
-                print(f"   {GREEN}✅ {description} — SUCCESS{RESET}")
-                return True
-            else:
-                print(f"   {RED}❌ {description} — ISSUES FOUND{RESET}")
-                print(
-                    f"      {RED}⚠️  Review output above — "
-                    f"some issues may need manual fix{RESET}"
-                )
-                self.errors.append(description)
-                return False
-        except FileNotFoundError:
-            print(f"   {RED}❌ {description} — Tool not found{RESET}")
-            self.errors.append(f"{description} (tool not found)")
-            return False
-        except Exception as e:
-            print(f"   {RED}❌ {description} — Error: {e}{RESET}")
-            self.errors.append(f"{description} ({e})")
-            return False
-
-    # Text file extensions for whitespace normalization
     TEXT_EXTENSIONS: frozenset[str] = frozenset(
         {
             ".py",
@@ -171,6 +83,94 @@ class CodeFormatter:
             ".csv",
         }
     )
+
+    def __init__(self, check_only: bool = False, files: Optional[list[str]] = None):
+        self.check_only = check_only
+        self.files = files
+        self.root_dir = Path(__file__).parent.parent
+        self.errors: list[str] = []
+
+    def _get_targets(
+        self, extensions: tuple[str, ...], default: list[str]
+    ) -> list[str]:
+        """Return files filtered by extension if provided, else return default dirs."""
+        if not self.files:
+            return default
+        return [f for f in self.files if f.lower().endswith(extensions)]
+
+    def run_command(
+        self,
+        cmd: list[str],
+        description: str,
+        step: Optional[int] = None,
+        total_steps: Optional[int] = None,
+        suppress_output: bool = False,
+    ) -> bool:
+        """Run command with clean colored output + optional numbering.
+
+        If suppress_output is True, only print the command and summary result.
+        """
+        if step is not None and total_steps is not None:
+            header = f"[FORMAT {step}/{total_steps}] {description}..."
+        else:
+            header = (
+                "[FORMAT] " + description + "..."
+                if not self.check_only
+                else "[CHECK] " + description + "..."
+            )
+        print(f"\n{CYAN}{header}{RESET}")
+        print(f"   {MAGENTA}Command: {' '.join(cmd)}{RESET}")
+
+        try:
+            env = os.environ.copy()
+            scripts_dir = "Scripts" if sys.platform == "win32" else "bin"
+            venv_scripts = self.root_dir / ".venv" / scripts_dir
+            if venv_scripts.exists():
+                path = env.get("PATH", "")
+                env["PATH"] = f"{venv_scripts}{os.pathsep}{path}"
+            env["PYTHONIOENCODING"] = "utf-8"
+
+            use_shell = sys.platform == "win32" and cmd[0] in ("npm", "npx")
+            result = subprocess.run(
+                cmd,
+                cwd=self.root_dir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                env=env,
+                shell=use_shell,
+            )
+
+            if not suppress_output:
+                output_printed = False
+                if result.stdout.strip():
+                    for line in result.stdout.strip().splitlines():
+                        print(f"       {line}")
+                    output_printed = True
+                if result.stderr.strip():
+                    for line in result.stderr.strip().splitlines():
+                        print(f"       {line}", file=sys.stderr)
+                    output_printed = True
+                if result.returncode == 0 and not output_printed:
+                    print("       All checks passed!")
+            if result.returncode == 0:
+                print(f"   {GREEN}✅ {description} — SUCCESS{RESET}")
+                return True
+            else:
+                print(f"   {RED}❌ {description} — ISSUES FOUND{RESET}")
+                # No warning line here, per user request
+                self.errors.append(description)
+                return False
+        except FileNotFoundError:
+            print(f"   {RED}❌ {description} — Tool not found{RESET}")
+            self.errors.append(f"{description} (tool not found)")
+            return False
+        except Exception as e:
+            print(f"   {RED}❌ {description} — Error: {e}{RESET}")
+            self.errors.append(f"{description} ({e})")
+            return False
 
     def normalize_whitespace(self) -> bool:
         """Whitespace & EOF normalization with clean output."""
@@ -245,6 +245,19 @@ class CodeFormatter:
             result = result.replace(b"\n", b"\r\n")
         return result
 
+    def _print_check_result(self, desc: str, success: bool) -> None:
+        """Print standardized check result for every step."""
+        if success:
+            print(
+                f"   {GREEN}✅ {desc} (check) — All issues fixed — "
+                f"no further action needed.{RESET}"
+            )
+        else:
+            print(
+                f"   {RED}❌ {desc} (check) — Issues remain — "
+                f"manual fix required.{RESET}"
+            )
+
     def format_python(self) -> bool:
         """Python formatting with numbered steps (restored) + clean output."""
         targets = self._get_targets(
@@ -261,6 +274,11 @@ class CodeFormatter:
         if not self.check_only:
             ruff_cmd.extend(["--fix", "--unsafe-fixes"])
 
+        flake8_exclude = (
+            "--exclude="
+            ".venv,node_modules,__pycache__,.git,.pytest_cache,"
+            "htmlcov,playwright-report"
+        )
         steps = [
             ("Ruff linting & fixing", ruff_cmd),
             (
@@ -280,13 +298,10 @@ class CodeFormatter:
             ),
             (
                 "Final linting (flake8)",
-                [
-                    "flake8",
-                ]
+                ["flake8"]
                 + targets
                 + [
-                    "--exclude=.venv,node_modules,__pycache__,.git,.pytest_cache,"
-                    "htmlcov,playwright-report",
+                    flake8_exclude,
                     "--count",
                     "--show-source",
                     "--statistics",
@@ -296,10 +311,188 @@ class CodeFormatter:
         ]
 
         all_passed = True
+        failed_steps = []  # Store (step_header, desc, is_check)
         for idx, (desc, cmd) in enumerate(steps, 1):
-            success = self.run_command(cmd, desc, step=idx, total_steps=len(steps))
+            step_header = f"[FORMAT {idx}/{len(steps)}] {desc}"
+            # Main formatter run
+            main_indent = 0  # Always use 0 for now, can be parameterized if needed
+            success, result = self._run_formatter_with_output(
+                cmd, desc, idx, len(steps), indent=main_indent
+            )
+            check_cmd = None
+            if self.check_only:
+                check_cmd = self._get_check_cmd(desc, flake8_exclude)
+                if check_cmd:
+                    # Add empty line before check command for clarity
+                    print("")
+                    check_success, check_result = self._run_formatter_with_output(
+                        check_cmd,
+                        desc + " (check)",
+                        None,
+                        None,
+                        indent=main_indent,
+                        suppress_output=True,
+                        print_command=True,
+                    )
+                    prefix = " " * main_indent + "   "
+                    if check_success:
+                        msg = (
+                            f"{prefix}{GREEN}{desc} (check) — All issues fixed — "
+                            + "SUCCESS"
+                            + f"{RESET}"
+                        )
+                        print(msg)
+                    else:
+                        print(
+                            f"{prefix}{RED}❌ {desc} (check) — Issues remain — "
+                            f"manual fix required.{RESET}"
+                        )
+                        failed_steps.append((step_header, desc + " (check)", True))
+                    success = check_success
+            else:
+                if not success:
+                    check_cmd = self._get_check_cmd(desc, flake8_exclude)
+                    if check_cmd:
+                        print("")
+                        check_success, check_result = self._run_formatter_with_output(
+                            check_cmd,
+                            desc + " (check)",
+                            None,
+                            None,
+                            indent=main_indent,
+                            suppress_output=True,
+                            print_command=True,
+                        )
+                        prefix = " " * main_indent + "   "
+                        if check_success:
+                            msg = (
+                                f"{prefix}{GREEN}{desc} (check) — All issues fixed — "
+                                + "SUCCESS"
+                                + f"{RESET}"
+                            )
+                            print(msg)
+                        else:
+                            print(
+                                f"{prefix}{RED}❌ {desc} (check) — Issues remain — "
+                                f"manual fix required.{RESET}"
+                            )
+                            failed_steps.append((step_header, desc + " (check)", True))
+                        success = check_success
+                    else:
+                        failed_steps.append((step_header, desc, False))
+            if not success and not any(s[0] == step_header for s in failed_steps):
+                failed_steps.append((step_header, desc, False))
             all_passed &= success
+        # Only keep the (check) failure if both main and check failed for a step
+        deduped = {}
+        for step_header, desc, is_check in failed_steps:
+            if step_header not in deduped or is_check:
+                deduped[step_header] = (desc, is_check)
+        self.failed_tools = [(k, v[0], v[1]) for k, v in deduped.items()]
         return all_passed
+
+    def _run_formatter_with_output(
+        self,
+        cmd,
+        desc,
+        step,
+        total_steps,
+        indent=0,
+        suppress_output=False,
+        print_command=True,
+    ):
+        """Run formatter and return (success, result).
+
+        Handles output and indentation.
+        """
+        prefix = " " * indent
+        if step is not None and total_steps is not None:
+            header = f"[FORMAT {step}/{total_steps}] {desc}..."
+            print(f"\n{CYAN}{header}{RESET}")
+        if print_command:
+            print(f"{prefix}   {MAGENTA}Command: {' '.join(cmd)}{RESET}")
+        try:
+            env = os.environ.copy()
+            scripts_dir = "Scripts" if sys.platform == "win32" else "bin"
+            venv_scripts = self.root_dir / ".venv" / scripts_dir
+            if venv_scripts.exists():
+                path = env.get("PATH", "")
+                env["PATH"] = f"{venv_scripts}{os.pathsep}{path}"
+            env["PYTHONIOENCODING"] = "utf-8"
+            use_shell = sys.platform == "win32" and cmd[0] in ("npm", "npx")
+            result = subprocess.run(
+                cmd,
+                cwd=self.root_dir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                env=env,
+                shell=use_shell,
+            )
+            if suppress_output:
+                return (result.returncode == 0), result
+            output_printed = False
+            if result.stdout.strip():
+                for line in result.stdout.strip().splitlines():
+                    print(f"{prefix}       {line}")
+                output_printed = True
+            if result.stderr.strip():
+                for line in result.stderr.strip().splitlines():
+                    print(f"{prefix}       {line}", file=sys.stderr)
+                output_printed = True
+            if result.returncode == 0 and not output_printed:
+                print(f"{prefix}       All checks passed!")
+            is_check = desc.endswith("(check)")
+            if not is_check:
+                if result.returncode == 0:
+                    print(f"{prefix}   {GREEN}✅ {desc} — SUCCESS{RESET}")
+                else:
+                    print(f"{prefix}   {RED}❌ {desc} — ISSUES FOUND{RESET}")
+                    self.errors.append(desc)
+            return (result.returncode == 0), result
+        except Exception as e:
+            print(f"{prefix}   {RED}❌ {desc} — ERROR: {e}{RESET}")
+            self.errors.append(desc)
+            return False, None
+
+    def _get_check_cmd(self, desc, flake8_exclude):
+        if desc == "Ruff linting & fixing":
+            return ["ruff", "check"] + self._get_targets(
+                (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+            )
+        elif desc == "Import sorting (isort)":
+            return (
+                ["isort"]
+                + self._get_targets(
+                    (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+                )
+                + ["--check-only"]
+            )
+        elif desc == "Code formatting (black)":
+            return ["black", "--check"] + self._get_targets(
+                (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+            )
+        elif desc == "Docstring formatting (docformatter)":
+            return ["docformatter", "--check", "-r"] + self._get_targets(
+                (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+            )
+        elif desc == "Final linting (flake8)":
+            return (
+                ["flake8"]
+                + self._get_targets(
+                    (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+                )
+                + [
+                    flake8_exclude,
+                    "--count",
+                    "--show-source",
+                    "--statistics",
+                    "--max-line-length=88",
+                ]
+            )
+        return None
 
     def _check_prettier(self) -> bool:
         use_shell = sys.platform == "win32"
@@ -310,7 +503,24 @@ class CodeFormatter:
             shell=use_shell,
             check=False,
         )
-        return result.returncode == 0
+        if result.returncode != 0:
+            return False
+        # Check for prettier-plugin-yaml for YAML support
+        plugin_result = subprocess.run(
+            ["npm", "list", "prettier-plugin-yaml"],
+            cwd=self.root_dir,
+            capture_output=True,
+            shell=use_shell,
+            check=False,
+        )
+        if plugin_result.returncode != 0:
+            print(
+                "   ⚠️  prettier-plugin-yaml not installed — YAML files will NOT be "
+                "formatted!\n"
+                "      Run: npm install --save-dev prettier-plugin-yaml"
+            )
+            return False
+        return True
 
     def format_frontend(self) -> bool:
         """Frontend formatting — quiet in format mode (no 100+ unchanged lines)."""
@@ -399,20 +609,16 @@ class CodeFormatter:
         print("\n" + "=" * 80)
         print(f"{BOLD}FORMATTING SUMMARY{RESET}")
         print("=" * 80)
-
-        if not self.errors:
+        failed_tools = getattr(self, "failed_tools", [])
+        if not failed_tools:
             mode = "check" if self.check_only else "formatting"
             print(f"   {GREEN}✅ All {mode} operations completed successfully!{RESET}")
         else:
-            print(f"   {RED}❌ {len(self.errors)} operation(s) failed{RESET}")
-            for error in self.errors:
-                print(f"      • {error}")
-            print(
-                f"\n   {RED}⚠️  Review the errors above and fix manually if needed"
-                f"{RESET}"
-            )
-            if self.check_only:
-                print("      Run without --check to auto-fix everything.")
+            print(f"   {RED}❌ {len(failed_tools)} operation(s) failed{RESET}")
+            for step_header, desc, is_check in failed_tools:
+                # Show step number and title as in the step header
+                print(f"      • {step_header}")
+            print(f"\n   {RED}⚠️  Review the errors above and fix manually.{RESET}")
 
 
 def main() -> int:
