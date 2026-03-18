@@ -449,18 +449,8 @@ if (Test-Path $templateFile) {
 
 $hookTemplate = Join-Path $projectRoot ".githooks\commit-msg"
 
-# Install commit-msg hook
-if (Test-Path $hookTemplate) {
-    if (-not (Test-Path $hookDir)) {
-        New-Item -ItemType Directory -Force -Path $hookDir | Out-Null
-    }
-    Copy-Item -Path $hookTemplate -Destination $hookFile -Force
-    Write-Host "   [OK] commit-msg hook installed from .githooks template" -ForegroundColor Green
-    # Set permissions (Windows)
-    icacls $hookFile /grant Everyone:RX | Out-Null
-} else {
-    Write-Host "   [WARN] .githooks/commit-msg template not found, skipping hook setup" -ForegroundColor Yellow
-}
+# Install commit-msg hook (DEPRECATED: Now handled by pre-commit in Step 6)
+# if (Test-Path $hookTemplate) { ... }
 
 # ============================================================================
 # STEP 6: PRE-COMMIT HOOKS SETUP
@@ -497,6 +487,9 @@ if ($hasPreCommit) {
     try {
         # Install pre-commit hooks (commits)
         & $preCommitExe install 2>&1 | Out-Null
+
+        # Install commit-msg hooks (Conventional Commits)
+        & $preCommitExe install --hook-type commit-msg 2>&1 | Out-Null
 
         # Install pre-push hooks
         & $preCommitExe install --hook-type pre-push 2>&1 | Out-Null
