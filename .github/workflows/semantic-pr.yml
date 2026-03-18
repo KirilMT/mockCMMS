@@ -1,7 +1,7 @@
 ---
 name: "Semantic PR"
 
-on:
+"on":
   pull_request_target:
     types:
       - opened
@@ -38,5 +38,5 @@ jobs:
           # Subject part should not start with an uppercase letter
           subjectPattern: ^(?![A-Z]).+$
           subjectPatternError: |
-            The subject part of the PR title should not start with 
+            The subject part of the PR title should not start with
             an uppercase letter.

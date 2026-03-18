@@ -1,3 +1,10 @@
+# Conventional PR Title Guide
+
+> **IMPORTANT:** Your PR title MUST follow the [Conventional Commits](https://www.conventionalcommits.org/) format (e.g., `feat(ui): add dashboard`).
+> This ensures that `release-please` can automatically generate changelogs and version bumps.
+
+## Description
+
 A clear and concise summary of the changes. Please include the motivation and
 context for this change. _List any dependencies that are required for this
 change._
