@@ -41,9 +41,11 @@ For planned applications and development timeline, see [Project Roadmap](docs/mo
 
 ### Prerequisites
 
-- **Python:** 3.12 or higher
-- **pip:** Python package installer
-- **Git:** Version control
+- **Windows (Recommended):** The setup scripts can automatically install Python, Git, and Node.js via `winget`.
+- **macOS/Linux:**
+  - **Python:** 3.12 or higher
+  - **pip:** Python package installer
+  - **Git:** Version control
 
 ### Installation Steps
 
@@ -63,7 +65,7 @@ For planned applications and development timeline, see [Project Roadmap](docs/mo
    .\scripts\setup.ps1
    ```
 
-   > **Note:** For macOS/Linux, manually create a virtual environment and install dependencies from `requirements.txt`.
+   > **Note:** This script automatically detects or installs Python 3.12+ and Git (on Windows) and sets up the virtual environment. For macOS/Linux, manually create a virtual environment and install dependencies from `requirements.txt`.
 
 3. **Run the application:**
 
@@ -75,16 +77,17 @@ For planned applications and development timeline, see [Project Roadmap](docs/mo
 
 ### Development Setup
 
-To install testing and development dependencies (Pytest, Jest, Playwright, linting tools):
+To install testing and development dependencies (Pytest, Jest, Playwright, linting tools, and optionally GitHub CLI):
 
 ```powershell
 .\scripts\setup-dev.ps1
 ```
 
-This installs:
+This script automates the installation of:
 
-- Python: `pytest`, `ruff`, `black`, `mypy`, `pylint`, `docformatter`
-- JavaScript: `jest`, `playwright`, `eslint`, `prettier`, `stylelint`
+- **Tools (Windows via winget):** Node.js, GitHub CLI (optional)
+- **Python (venv):** `pytest`, `ruff`, `black`, `mypy`, `pylint`, `docformatter`
+- **JavaScript (npm):** `jest`, `playwright`, `eslint`, `prettier`, `stylelint`
 
 See [Development Cheat Sheet](#-development-cheat-sheet) for common commands.
 

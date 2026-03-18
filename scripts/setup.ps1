@@ -157,6 +157,63 @@ if (-not (Check-Python)) {
     }
 }
 
+# Step 1.2: Check for Git
+function Check-Git {
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        $v = git --version
+        Write-Host "   Found: " -NoNewline -ForegroundColor White
+        Write-Host "$v" -NoNewline -ForegroundColor White
+        Write-Host " OK" -ForegroundColor Green
+        return $true
+    }
+    return $false
+}
+
+if (-not (Check-Git)) {
+    Write-Warning "   Git not found. Attempting automatic installation via winget..."
+
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        try {
+            Write-Host "   Trying package ID: Git.Git..." -ForegroundColor Gray
+
+            # Start installation process
+            $startTime = Get-Date
+            $process = Start-Process -FilePath "winget" -ArgumentList "install -e --id Git.Git --silent --accept-package-agreements --accept-source-agreements" -NoNewWindow -PassThru -Wait
+            $duration = (Get-Date) - $startTime
+
+            if ($process.ExitCode -eq 0) {
+                Write-Host "   Git installed successfully (took $([int]$duration.TotalSeconds) seconds)" -ForegroundColor Green
+                Refresh-EnvPath
+
+                # Re-check
+                if (-not (Check-Git)) {
+                    Write-Warning "   Git installed but not found in PATH."
+                    Write-Host "   Please restart your terminal and run this script again." -ForegroundColor Yellow
+                    exit 1
+                }
+            }
+            else {
+                Write-Warning "   Automatic installation via winget failed."
+                Write-Host ""
+                Write-Host "   Please install Git manually:" -ForegroundColor Yellow
+                Write-Host "   1. Download from: https://git-scm.com/downloads" -ForegroundColor White
+                Write-Host "   2. Restart terminal and run this script again" -ForegroundColor White
+                exit 1
+            }
+        }
+        catch {
+            Write-Warning "   Automatic installation failed: $_"
+            Write-Host "   Please install Git manually from https://git-scm.com" -ForegroundColor Yellow
+            exit 1
+        }
+    }
+    else {
+        Write-Error "   Git not found and winget not available."
+        Write-Host "   Please install Git manually from https://git-scm.com" -ForegroundColor Yellow
+        exit 1
+    }
+}
+
 
 # Step 2: Create Virtual Environment
 Write-Host "`n[Step 2/5] Setting up virtual environment..." -ForegroundColor Yellow
