@@ -111,6 +111,28 @@ class TableSidebar {
                     </div>
                 </div>
 
+                <!-- Collaboration Section -->
+                <div class="sidebar-section" data-section="collaboration">
+                    <div class="section-header ${
+                      this.expandedSections.includes("collaboration")
+                        ? "expanded"
+                        : ""
+                    }">
+                        <i class="fas fa-users"></i>
+                        <span>Active Users</span>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="section-content ${
+                      this.expandedSections.includes("collaboration")
+                        ? ""
+                        : "collapsed"
+                    }">
+                        <div id="activeUsersList" class="active-users-list">
+                            <p class="empty-state-message">Checking for active users...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Saved Views Section -->
                 <div class="sidebar-section" data-section="configs">
                     <div class="section-header ${
@@ -220,6 +242,9 @@ class TableSidebar {
 
     // Validate filters to set initial button states
     this.validateAllFilters();
+
+    // Start real-time filter visibility polling
+    this.startCollaborationPolling();
   }
 
   /**
@@ -1136,27 +1161,56 @@ class TableSidebar {
       return;
     }
 
-    this.table.savedConfigs.forEach((config) => {
-      const viewItem = document.createElement("div");
-      viewItem.className = "saved-view-item";
-      viewItem.dataset.configId = config.id;
+    // Separate own configs and shared configs
+    const currentUserId =
+      window.currentUser?.id || parseInt(sessionStorage.getItem("user_id"), 10);
+    const ownConfigs = this.table.savedConfigs.filter(
+      (c) => c.user_id === currentUserId,
+    );
+    const sharedConfigs = this.table.savedConfigs.filter(
+      (c) => c.user_id !== currentUserId,
+    );
 
-      // Highlight active view (current configuration)
-      const isActive = config.id === this.table.selectedConfigId;
-      if (isActive) {
-        viewItem.classList.add("active");
-      }
+    const renderConfigGroup = (configs, title) => {
+      if (configs.length === 0) return "";
 
-      const displayName =
-        config.config_name.length > 25
-          ? config.config_name.substring(0, 24) + "…"
-          : config.config_name;
+      const groupHeader = document.createElement("div");
+      groupHeader.className = "sidebar-group-header";
+      groupHeader.style.cssText =
+        "font-size: 0.7rem; text-transform: uppercase; color: #6c757d; margin: 10px 0 5px 0; font-weight: bold;";
+      groupHeader.textContent = title;
+      viewsList.appendChild(groupHeader);
 
-      viewItem.innerHTML = `
+      configs.forEach((config) => {
+        const viewItem = document.createElement("div");
+        viewItem.className = "saved-view-item";
+        viewItem.dataset.configId = config.id;
+
+        // Highlight active view (current configuration)
+        const isActive = config.id === this.table.selectedConfigId;
+        if (isActive) {
+          viewItem.classList.add("active");
+        }
+
+        const displayName =
+          config.config_name.length > 25
+            ? config.config_name.substring(0, 24) + "…"
+            : config.config_name;
+
+        const isOwner = config.user_id === currentUserId;
+
+        viewItem.innerHTML = `
                 <div class="view-info" style="cursor: pointer; flex: 1;">
-                    <span class="view-name" title="${
-                      config.config_name
-                    }">${displayName}</span>
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="view-name" title="${
+                          config.config_name
+                        }">${displayName}</span>
+                        ${
+                          config.notes
+                            ? `<small class="text-muted" style="font-size: 0.7rem;">${config.notes}</small>`
+                            : ""
+                        }
+                    </div>
                     ${
                       config.is_default
                         ? '<span class="badge badge-primary badge-sm">Default</span>'
@@ -1164,51 +1218,74 @@ class TableSidebar {
                     }
                 </div>
                 <div class="view-actions">
-                    <button class="btn btn-sm btn-link set-default-btn" title="${
-                      config.is_default ? "Remove default" : "Set as default"
-                    }">
-                        <i class="fas fa-star${
-                          config.is_default ? " text-warning" : ""
-                        }"></i>
-                    </button>
-                    <button class="btn btn-sm btn-link delete-view-btn" title="Delete this view">
-                        <i class="fas fa-trash text-danger"></i>
-                    </button>
+                    ${
+                      isOwner
+                        ? `
+                        <button class="btn btn-sm btn-link share-view-btn" title="Share this view">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-link set-default-btn" title="${
+                          config.is_default ? "Remove default" : "Set as default"
+                        }">
+                            <i class="fas fa-star${
+                              config.is_default ? " text-warning" : ""
+                            }"></i>
+                        </button>
+                        <button class="btn btn-sm btn-link delete-view-btn" title="Delete this view">
+                            <i class="fas fa-trash text-danger"></i>
+                        </button>
+                    `
+                        : ""
+                    }
                 </div>
             `;
 
-      // Click on view info to load it
-      const viewInfo = viewItem.querySelector(".view-info");
-      if (viewInfo) {
-        viewInfo.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          this.loadView(config);
-        });
-      }
+        // Click on view info to load it
+        const viewInfo = viewItem.querySelector(".view-info");
+        if (viewInfo) {
+          viewInfo.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.loadView(config);
+          });
+        }
 
-      // Set/Remove default button
-      viewItem
-        .querySelector(".set-default-btn")
-        .addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (config.is_default) {
-            this.removeDefaultView(config.id);
-          } else {
-            this.setDefaultView(config.id);
-          }
-        });
+        if (isOwner) {
+          // Share button
+          viewItem
+            .querySelector(".share-view-btn")
+            .addEventListener("click", (e) => {
+              e.stopPropagation();
+              this.shareView(config);
+            });
 
-      // Delete button
-      viewItem
-        .querySelector(".delete-view-btn")
-        .addEventListener("click", (e) => {
-          e.stopPropagation();
-          this.deleteView(config);
-        });
+          // Set/Remove default button
+          viewItem
+            .querySelector(".set-default-btn")
+            .addEventListener("click", (e) => {
+              e.stopPropagation();
+              if (config.is_default) {
+                this.removeDefaultView(config.id);
+              } else {
+                this.setDefaultView(config.id);
+              }
+            });
 
-      viewsList.appendChild(viewItem);
-    });
+          // Delete button
+          viewItem
+            .querySelector(".delete-view-btn")
+            .addEventListener("click", (e) => {
+              e.stopPropagation();
+              this.deleteView(config);
+            });
+        }
+
+        viewsList.appendChild(viewItem);
+      });
+    };
+
+    renderConfigGroup(ownConfigs, "My Views");
+    renderConfigGroup(sharedConfigs, "Shared with Me");
 
     // Update button: Enable if there's a last loaded view (even if not currently active)
     if (updateBtn) {
@@ -1689,6 +1766,119 @@ class TableSidebar {
 
     // Update filter badge
     this.updateFilterBadge(this.table.filters.length);
+  }
+
+  /**
+   * Share a view configuration.
+   * @param {Object} config - The configuration object to share.
+   */
+  shareView(config) {
+    const userId = prompt("Enter User ID to share with:");
+    if (!userId) return;
+
+    const csrfToken = document
+      .querySelector("meta[name=csrf-token]")
+      ?.getAttribute("content");
+    fetch(`/api/table-config/${config.id}/share`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({ user_ids: [parseInt(userId, 10)] }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          ToastNotification.success(`Shared view "${config.config_name}"`);
+        } else {
+          ToastNotification.error("Failed to share view");
+        }
+      });
+  }
+
+  /**
+   * Start polling for collaboration features (active filters).
+   */
+  startCollaborationPolling() {
+    // Poll every 10 seconds
+    this.collaborationInterval = setInterval(
+      () => this.pollActiveFilters(),
+      10000,
+    );
+    // Initial poll
+    this.pollActiveFilters();
+  }
+
+  /**
+   * Poll for active filters from other users.
+   */
+  pollActiveFilters() {
+    // 1. Send current filters
+    const csrfToken = document
+      .querySelector("meta[name=csrf-token]")
+      ?.getAttribute("content");
+    fetch(`/api/active-filters/${this.table.pageName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({ filters: this.table.filters }),
+    }).catch((e) => console.warn("Collaboration: Update failed", e));
+
+    // 2. Fetch other users' filters
+    fetch(`/api/active-filters/${this.table.pageName}`)
+      .then((r) => r.json())
+      .then((users) => {
+        this.updateActiveUsersList(users);
+      })
+      .catch((e) => console.warn("Collaboration: Fetch failed", e));
+  }
+
+  /**
+   * Update the UI with the list of active users and their filters.
+   * @param {Array} users - The list of active users.
+   */
+  updateActiveUsersList(users) {
+    const list = document.getElementById("activeUsersList");
+    if (!list) return;
+
+    if (!users || users.length === 0) {
+      list.innerHTML =
+        '<p class="empty-state-message">No other users active on this page</p>';
+      return;
+    }
+
+    list.innerHTML = "";
+    users.forEach((u) => {
+      const userItem = document.createElement("div");
+      userItem.className = "active-user-item";
+      userItem.style.cssText = "margin-bottom: 8px; padding: 5px;";
+
+      let filterSummary = "No active filters";
+      try {
+        const filters = JSON.parse(u.filter_data);
+        if (filters && filters.length > 0) {
+          filterSummary = filters
+            .map((f) => `${f.column} ${f.operator} "${f.value}"`)
+            .join(", ");
+        }
+      } catch (e) {
+        // Ignore parse error
+      }
+
+      userItem.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-circle" style="color: #28a745; font-size: 0.6rem;"></i>
+                    <strong style="font-size: 0.85rem;">${u.username}</strong>
+                </div>
+                <div style="font-size: 0.7rem; color: #6c757d; padding-left: 16px;">
+                    Filtering: ${filterSummary}
+                </div>
+            `;
+      list.appendChild(userItem);
+    });
   }
 
   /**
