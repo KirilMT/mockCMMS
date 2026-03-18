@@ -1,5 +1,3 @@
-## Description
-
 A clear and concise summary of the changes. Please include the motivation and
 context for this change. _List any dependencies that are required for this
 change._
