@@ -1,0 +1,42 @@
+---
+name: "Semantic PR"
+
+"on":
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+permissions:
+  pull-requests: read
+
+jobs:
+  main:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Types allowed (matching commit-msg hook)
+          types: |
+            feat
+            fix
+            chore
+            refactor
+            perf
+            revert
+            docs
+            test
+            style
+            build
+            ci
+          requireScope: false
+          # Subject part should not start with an uppercase letter
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject part of the PR title should not start with
+            an uppercase letter.

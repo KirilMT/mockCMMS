@@ -449,8 +449,29 @@ if (Test-Path $templateFile) {
 
 $hookTemplate = Join-Path $projectRoot ".githooks\commit-msg"
 
-# Install commit-msg hook (DEPRECATED: Now handled by pre-commit in Step 6)
-# if (Test-Path $hookTemplate) { ... }
+$convCommitExe = Join-Path $projectRoot ".venv\Scripts\conventional-pre-commit.exe"
+$convCommitExe = $convCommitExe.Replace("\", "/")
+$pythonExe = Join-Path $projectRoot ".venv\Scripts\python.exe"
+$pythonExe = $pythonExe.Replace("\", "/")
+
+# Install native commit-msg hook for Windows compatibility (avoids pre-commit shell dependency)
+$nativeHookPath = Join-Path $projectRoot ".git\hooks\commit-msg"
+$nativeHookContent = @"
+#!/bin/sh
+# 1. Run Conventional Commits Validator
+"$convCommitExe" "`$1" || exit 1
+
+# 2. Run our custom Length Checker (One-liner)
+"$pythonExe" -c "import sys; msg = open(sys.argv[1], encoding='utf-8').read().splitlines(); exit(any(len(l) > 88 for l in msg))" "`$1" || { echo "ERROR: Commit message exceeds 88 characters."; exit 1; }
+"@
+
+if (Test-Path ".git") {
+    Write-Host "   Installing native commit-msg hook..." -ForegroundColor Yellow
+    # Use Out-File with -Encoding ascii to avoid BOM issues with Git on Windows hooks
+    $nativeHookContent | Out-File -FilePath $nativeHookPath -Encoding ascii -NoNewline
+    Write-Host "   Handled native commit-msg hook " -NoNewline -ForegroundColor White
+    Write-Host "OK" -ForegroundColor Green
+}
 
 # ============================================================================
 # STEP 6: PRE-COMMIT HOOKS SETUP
@@ -487,9 +508,6 @@ if ($hasPreCommit) {
     try {
         # Install pre-commit hooks (commits)
         & $preCommitExe install 2>&1 | Out-Null
-
-        # Install commit-msg hooks (Conventional Commits)
-        & $preCommitExe install --hook-type commit-msg 2>&1 | Out-Null
 
         # Install pre-push hooks
         & $preCommitExe install --hook-type pre-push 2>&1 | Out-Null
