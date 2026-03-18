@@ -135,10 +135,10 @@ temp/
 
 # External/sensitive configuration
 apps/planning/config/config.json
-apps/reports/config/config.json
-!apps/reports/config/config.example.json
+apps/reporting/config/config.json
+!apps/reporting/config/config.example.json
 config/config.json
-apps/reports/config/config.json
+apps/reporting/config/config.json
 
 # IDE specific files
 .vscode/
@@ -187,6 +187,9 @@ htmlcov/
 coverage.xml
 *.cover
 .pytest_cache/
+# pytest-testmon coverage DB (local smart-test cache — never commit)
+.testmondata
+.testmondata-*
 
 # Node modules (for local jscpd)
 node_modules/
@@ -197,6 +200,10 @@ test-results/
 playwright-report/
 blob-report/
 .playwright-artifacts/
+
+# ESLint cache
+.eslintcache
+**/.eslintcache
 
 # Ruff linter cache
 .ruff_cache/

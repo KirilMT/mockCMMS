@@ -1,6 +1,7 @@
 # src/app.py
 """Flask application factory for mockCMMS."""
 
+import importlib
 import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -21,7 +22,7 @@ from .services.db_utils import User, db
 from .services.logging_config import LoggingConfig
 from .services.simulation_service import DataSimulationService
 
-# NOTE: Modular app imports (reports, planning) MUST stay inside conditional
+# NOTE: Modular app imports (reporting, planning) MUST stay inside conditional
 # blocks because importing their models registers them with SQLAlchemy, causing
 # UnboundExecutionError when the module is disabled. C0415 is acceptable here.
 
@@ -29,6 +30,11 @@ from .services.simulation_service import DataSimulationService
 def get_env_bool(name, default="true"):
     """Get boolean value from environment variable."""
     return os.getenv(name, default).lower() in ("true", "1", "t", "yes")
+
+
+def is_reporting_enabled(default="false"):
+    """Return Reporting app toggle value."""
+    return get_env_bool("REPORTING_ENABLED", default)
 
 
 def create_app(config_overrides=None):
@@ -127,27 +133,29 @@ def create_app(config_overrides=None):
                 # Ensure legacy code finds the correct DB
                 app.config["DATABASE_PATH"] = planning_db_path
 
-    reports_enabled = get_env_bool("REPORTS_ENABLED", "false")
+    reporting_enabled_flag = is_reporting_enabled("false")
 
-    # Reports module database path - MONOREPO: apps/reports/instance/
-    reports_instance_dir = os.path.join(
-        app.root_path, "..", "apps", "reports", "instance"
+    # Reporting module database path - MONOREPO: apps/reporting/instance/
+    reporting_instance_dir = os.path.join(
+        app.root_path, "..", "apps", "reporting", "instance"
     )
 
-    if reports_enabled or app.testing:
-        if "reports" not in binds:
+    if reporting_enabled_flag or app.testing:
+        if "reporting" not in binds:
             if app.testing and not is_e2e:
-                binds["reports"] = "sqlite:///:memory:"
+                binds["reporting"] = "sqlite:///:memory:"
             elif is_e2e:
-                # Ensure the reports instance directory exists for E2E
-                os.makedirs(reports_instance_dir, exist_ok=True)
-                reports_db_path = os.path.join(reports_instance_dir, "reports_e2e.db")
-                binds["reports"] = f"sqlite:///{reports_db_path}"
+                # Ensure the reporting instance directory exists for E2E
+                os.makedirs(reporting_instance_dir, exist_ok=True)
+                reporting_db_path = os.path.join(
+                    reporting_instance_dir, "reporting_e2e.db"
+                )
+                binds["reporting"] = f"sqlite:///{reporting_db_path}"
             else:
                 # Ensure directory exists for Production/Dev
-                os.makedirs(reports_instance_dir, exist_ok=True)
-                reports_db_path = os.path.join(reports_instance_dir, "reports.db")
-                binds["reports"] = f"sqlite:///{reports_db_path}"
+                os.makedirs(reporting_instance_dir, exist_ok=True)
+                reporting_db_path = os.path.join(reporting_instance_dir, "reporting.db")
+                binds["reporting"] = f"sqlite:///{reporting_db_path}"
 
     app.config["SQLALCHEMY_BINDS"] = binds
 
@@ -224,7 +232,7 @@ def create_app(config_overrides=None):
             # Import models to ensure they are registered with SQLAlchemy
             # This is critical for fresh DB creation
 
-            # Create all tables for ALL binds (main db + planning + reports)
+            # Create all tables for ALL binds (main db + planning + reporting)
             db.create_all()
             # Also create tables for each bind explicitly
             for bind_key in app.config.get("SQLALCHEMY_BINDS", {}).keys():
@@ -252,16 +260,18 @@ def create_app(config_overrides=None):
 
         should_seed = app.config.get("AUTO_SEED_DATABASE", True) and should_init_db
         if should_seed:
+            app.logger.info("[SEED][CORE] Startup seeding phase started.")
             try:
                 # In E2E mode, we must ensure data exists immediately
                 if is_e2e or get_env_bool("AUTO_SEED_DATABASE", "true"):
                     populate_dummy_data(app.logger)
-                    app.logger.info("Dummy data populated successfully.")
+                    app.logger.info("[SEED][CORE] Dummy data populated successfully.")
             except Exception as e:
-                app.logger.error("Database seeding failed: %s", e)
+                app.logger.error("[SEED][CORE] Database seeding failed: %s", e)
 
             if get_env_bool("PLANNING_ENABLED", "true"):
                 try:
+                    app.logger.info("[SEED][PLANNING] Startup app seeding started.")
                     from apps.planning.src.services.planning_db_utils import init_db
 
                     planning_db_path = app.config.get("DATABASE_PATH")
@@ -283,19 +293,26 @@ def create_app(config_overrides=None):
                                 "AUTO_SEED_DATABASE", True
                             ),
                         )
-                    from apps.planning.src.services.seeding import seed_planning_data
+                    from apps.planning.src.services.db_seeding import seed_planning_data
 
                     seed_planning_data(app.logger)
+                    app.logger.info("[SEED][PLANNING] Startup app seeding completed.")
                 except Exception as e:
-                    app.logger.error("Planning App seeding failed: %s", e)
+                    app.logger.error("[SEED][PLANNING] App seeding failed: %s", e)
 
-            if get_env_bool("REPORTS_ENABLED", "false"):
+            if is_reporting_enabled("false"):
                 try:
-                    from apps.reports.src.services.seeding import seed_reports_data
+                    app.logger.info("[SEED][REPORTING] Startup app seeding started.")
+                    from apps.reporting.src.services.db_seeding import (
+                        seed_reporting_data,
+                    )
 
-                    seed_reports_data(app.logger)
+                    seed_reporting_data(app.logger)
+                    app.logger.info("[SEED][REPORTING] Startup app seeding completed.")
                 except Exception as e:
-                    app.logger.error("Reports App seeding failed: %s", e)
+                    app.logger.error("[SEED][REPORTING] App seeding failed: %s", e)
+        else:
+            app.logger.info("[SEED][CORE] Startup seeding skipped by configuration.")
     finally:
         app_ctx.__exit__(None, None, None)
 
@@ -338,33 +355,35 @@ def _register_blueprints(app, csrf):
 
     app.register_blueprint(simulation_bp)
 
-    if get_env_bool("REPORTS_ENABLED", "false"):
+    if is_reporting_enabled("false"):
         try:
-            from apps.reports.src.routes.reports import reports_bp
+            reporting_routes = importlib.import_module(
+                "apps.reporting.src.routes.reporting"
+            )
 
-            app.register_blueprint(reports_bp)
-            csrf.exempt(reports_bp)
-            app.logger.info("Reports Blueprint registered.")
+            app.register_blueprint(reporting_routes.reporting_bp)
+            csrf.exempt(reporting_routes.reporting_bp)
+            app.logger.info("Reporting Blueprint registered.")
             # Only create directories for NON-testing and NON-memory databases
             if not app.testing:
-                reports_binds = app.config.get("SQLALCHEMY_BINDS", {})
-                reports_db_uri = reports_binds.get("reports", "")
-                if reports_db_uri and ":memory:" not in str(reports_db_uri):
+                reporting_binds = app.config.get("SQLALCHEMY_BINDS", {})
+                reporting_db_uri = reporting_binds.get("reporting", "")
+                if reporting_db_uri and ":memory:" not in str(reporting_db_uri):
                     try:
-                        if "sqlite:///" in str(reports_db_uri):
+                        if "sqlite:///" in str(reporting_db_uri):
                             r_path = os.path.dirname(
-                                str(reports_db_uri).replace("sqlite:///", "")
+                                str(reporting_db_uri).replace("sqlite:///", "")
                             )
                         else:
                             r_path = os.path.join(
-                                app.root_path, "..", "apps", "reports", "instance"
+                                app.root_path, "..", "apps", "reporting", "instance"
                             )
                         if r_path:
                             os.makedirs(r_path, exist_ok=True)
                     except OSError as e:
-                        app.logger.error("Failed to create Reports directory: %s", e)
+                        app.logger.error("Failed to create Reporting directory: %s", e)
         except ImportError as e:
-            app.logger.error("Reports module not available: %s", e)
+            app.logger.error("Reporting module not available: %s", e)
 
     if get_env_bool("PLANNING_ENABLED", "true"):
         try:
@@ -437,6 +456,10 @@ def _register_request_handlers(app):
     def redirect_legacy_urls():
         if request.path.startswith("/planning-manager"):
             new_path = request.full_path.replace("/planning-manager", "/planning", 1)
+            return redirect(new_path, code=301)
+        legacy_reporting_path = f"/report{'s'}"
+        if request.path.startswith(legacy_reporting_path):
+            new_path = request.full_path.replace(legacy_reporting_path, "/reporting", 1)
             return redirect(new_path, code=301)
         return None
 
@@ -517,5 +540,5 @@ def _register_context_processors(app):
     def inject_config():
         return {
             "PLANNING_ENABLED": get_env_bool("PLANNING_ENABLED", "true"),
-            "REPORTS_ENABLED": get_env_bool("REPORTS_ENABLED", "false"),
+            "REPORTING_ENABLED": is_reporting_enabled("false"),
         }

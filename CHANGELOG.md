@@ -8,7 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.3] - Release automation improvements - 2026-03-15
+
+### Changed
+
+- Replace print statements with safe_print to handle UnicodeEncodeError gracefully
+- Update git_commit_and_tag to use Conventional Commit message format
+- Ensure consistent Unicode-safe output across release operations
+- Add detailed commit message and release automation requirements to
+  CONTRIBUTING.md, SKILL.md, and GIT_WORKFLOW.md
+- Introduce .gitmessage template for standardized commit messages
+- Update setup-dev.ps1 to configure commit template and commit-msg hook
+- Refactor release_manager.py to improve changelog parsing and formatting
+- Remove [Unreleased] section from CHANGELOG.md to align with automated workflow
+
+## [1.2.0] - 2026-03-14
 
 ### Added
 
@@ -85,10 +99,10 @@ and this project adheres to
     time tracking
   - SparePart model with manufacturer information and stock tracking
   - Report and TableConfiguration models for advanced reporting
-- **Reports Application**: Complete modular Flask blueprint for comprehensive
+- **Reporting Application**: Complete modular Flask blueprint for comprehensive
   reporting
-  - Reactive production reports with filtering capabilities
-  - Weekend completion reports with date range selection
+  - Reactive production reporting with filtering capabilities
+  - Weekend completion reporting with date range selection
   - PDF and Markdown export formats
   - Report management with view, download, and delete functionality
 - **Advanced Table Component**: JavaScript-based table with:
@@ -106,15 +120,15 @@ and this project adheres to
 - **Database Schema**: Updated all main models with comprehensive field sets
 - **Page Integration**: All main pages (Assets, MOs, Spare Parts, Users) now use
   advanced tables
-- **Navigation**: Updated to include Reports app with proper routing
-- **Template Structure**: Reports app templates moved to own directory for
+- **Navigation**: Updated to include Reporting app with proper routing
+- **Template Structure**: Reporting app templates moved to own directory for
   better maintainability
 - **Route Handling**: Enhanced to support new database fields and dictionary
   data format
 
 ### Fixed
 
-- **UI Consistency**: Reports app now maintains consistent layout with main
+- **UI Consistency**: Reporting app now maintains consistent layout with main
   application
 - **Template Management**: Proper separation of app templates while maintaining
   UI consistency
@@ -126,7 +140,7 @@ and this project adheres to
 ### Technical Details
 
 - Advanced JavaScript table component with full Excel-like functionality
-- Modular Flask blueprint architecture for reports
+- Modular Flask blueprint architecture for reporting
 - Enhanced SQLAlchemy models with comprehensive field coverage
 - Responsive CSS design with full-screen table layouts
 - Environment variable control for all modular applications

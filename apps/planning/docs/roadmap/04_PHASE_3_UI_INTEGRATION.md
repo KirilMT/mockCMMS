@@ -102,7 +102,7 @@
 - [ ] 5.6. Export options (NEEDS IMPLEMENTATION)
   - [ ] 5.6.1. Design export formats (e.g., PDF and Excel) for the current plan.
   - [ ] 5.6.2. Implement export endpoints that generate downloads from the current `PlanningResult`.
-  - [ ] 5.6.3. Ensure exports integrate with or reuse patterns from the `reports` app where appropriate.
+  - [ ] 5.6.3. Ensure exports integrate with or reuse patterns from the `reporting` app where appropriate.
   - [ ] 5.6.4. **NEW:** Add email notification option to send plans to technicians automatically
 
 - [ ] 5.6.5. **Configurable Shift Times** 🆕 **USER REQUEST - November 20, 2025**
@@ -403,7 +403,7 @@
       - [ ] **HTML Audit:** Scan all `.html` files for inline `style=""` attributes
         - Location: `src/templates/*.html`
         - Location: `apps/planning/src/templates/**/*.html`
-        - Location: `apps/reports/src/templates/**/*.html`
+        - Location: `apps/reporting/src/templates/**/*.html`
         - Tool: Use grep/search for `style="`
         - **Fix:** Move all inline styles to appropriate CSS files
       - [ ] **JavaScript Audit:** Scan all `.html` files for inline `<script>` tags (except template data injection)
@@ -415,13 +415,13 @@
       - [ ] **CSS Organization:** Ensure logical file structure
         - Main app: `src/static/css/`
         - planning: `apps/planning/src/static/css/`
-        - Reports: `apps/reports/src/static/css/`
+        - Reporting: `apps/reporting/src/static/css/`
         - **Fix:** Create component-specific CSS files if needed
         - **Fix:** Add CSS comments documenting purpose of each file
       - [ ] **JS Organization:** Ensure logical file structure
         - Main app: `src/static/js/`
         - planning: `apps/planning/src/static/js/`
-        - Reports: `apps/reports/src/static/js/`
+        - Reporting: `apps/reporting/src/static/js/`
         - **Fix:** Split monolithic JS files into modules
         - **Fix:** Use ES6 modules for better organization
       - [ ] **Documentation:** Create style guide documenting conventions

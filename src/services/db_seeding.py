@@ -2,6 +2,7 @@
 """Database seeding helper functions."""
 
 import json
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -16,6 +17,25 @@ from .db_utils import (
     UserSkill,
     db,
 )
+
+_CORE_SEED_PREFIX = "[SEED][CORE]"
+
+
+class _SeedLoggerAdapter(logging.LoggerAdapter):
+    """Attach a stable core seeding prefix to log messages."""
+
+    def process(self, msg, kwargs):
+        return f"{self.extra['seed_prefix']} {msg}", kwargs
+
+
+def _get_seed_logger(logger):
+    """Return a logger that prefixes core seeding messages consistently."""
+    if (
+        isinstance(logger, logging.LoggerAdapter)
+        and logger.extra.get("seed_prefix") == _CORE_SEED_PREFIX
+    ):
+        return logger
+    return _SeedLoggerAdapter(logger, {"seed_prefix": _CORE_SEED_PREFIX})
 
 
 def _load_dummy_data(logger):
@@ -281,6 +301,7 @@ def _create_spare_parts(parts_data, logger):
 
 def populate_dummy_data(logger):
     """Populates the database with initial dummy data."""
+    logger = _get_seed_logger(logger)
     logger.info("Checking if database needs to be populated.")
     first_role = Role.query.first()
     if first_role or User.query.first():

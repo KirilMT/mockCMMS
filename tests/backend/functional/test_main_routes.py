@@ -166,3 +166,4 @@ class TestAssetsPages:
             "/assets/add", data={"name": "Bad Asset"}, follow_redirects=True
         )
         assert response.status_code == 400
+        assert b"Asset code and name are required" in response.data

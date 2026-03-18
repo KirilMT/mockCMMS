@@ -21,12 +21,12 @@ const PLANNING_DB_PATH = path.join(
   "instance",
   "planning_e2e.db",
 );
-const REPORTS_DB_PATH = path.join(
+const REPORTING_DB_PATH = path.join(
   PROJECT_ROOT,
   "apps",
-  "reports",
+  "reporting",
   "instance",
-  "reports_e2e.db",
+  "reporting_e2e.db",
 );
 
 /**
@@ -42,9 +42,9 @@ function sleep(ms) {
 function killPythonProcesses() {
   console.log("🔪 Killing Python processes...");
   try {
-    // Kill any python process running run.py
+    // Kill any python process running run.py (specific match to avoid killing shell)
     execSync(
-      "wmic process where \"CommandLine like '%run.py%'\" call terminate",
+      "wmic process where \"Name='python.exe' and CommandLine like '%run.py%'\" call terminate",
       {
         stdio: "ignore",
       },
@@ -173,7 +173,7 @@ async function deleteDbJournalFiles(dbPath) {
 }
 
 async function cleanupDatabases() {
-  const dbs = [TEST_DB_PATH, PLANNING_DB_PATH, REPORTS_DB_PATH];
+  const dbs = [TEST_DB_PATH, PLANNING_DB_PATH, REPORTING_DB_PATH];
 
   for (const dbPath of dbs) {
     // First, try to delete any journal files

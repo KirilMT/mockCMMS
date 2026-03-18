@@ -4,7 +4,7 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![codecov](https://codecov.io/gh/KirilMT/mockCMMS/graph/badge.svg?token=PSNIDHV66T)](https://codecov.io/gh/KirilMT/mockCMMS)
-[![Linting: Flake8](https://img.shields.io/badge/linting-flake8-blue)](https://github.com/pycqa/flake8)
+[![Linting: Ruff](https://img.shields.io/badge/linting-ruff-purple.svg)](https://github.com/astral-sh/ruff)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Security: Bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 
@@ -26,83 +26,30 @@ that supports dynamic loading of specialized applications.
 - **Consistent UI/UX:** Shared base templates with responsive design
 - **Scalable Design:** Easy addition of new specialized modules
 
-## 📁 Project Structure
-
-```text
-mockCMMS/
-├── .github/                 # GitHub configuration and workflows
-├── src/                     # Main mockCMMS application
-│   ├── routes/              # API and web routes
-│   │   ├── api.py           # REST API endpoints
-│   │   └── main.py          # Web interface routes
-│   ├── services/            # Business logic
-│   │   └── db_utils.py      # Database utilities
-│   ├── static/              # CSS, JS, images
-│   ├── templates/           # HTML templates
-│   └── app.py               # Flask application factory
-├── apps/                    # Modular applications
-│   ├── planning/            # Planning management module
-│   │   ├── src/             # Application source code
-│   │   │   ├── routes/      # Flask blueprints
-│   │   │   ├── services/    # Core business logic
-│   │   │   ├── static/      # CSS/JS assets
-│   │   │   ├── templates/   # HTML templates
-│   │   │   └── app.py       # Flask factory
-│   │   ├── config/          # Configuration files
-│   │   ├── instance/        # SQLite databases
-│   │   ├── tests/           # Test suite
-│   │   └── README.md        # Module documentation
-│   └── reports/             # Reports and analytics module
-│       ├── src/             # Application source code
-│       │   ├── routes/      # Flask blueprints
-│       │   ├── services/    # Report generation logic
-│       │   └── templates/   # HTML templates
-│       ├── instance/        # Generated reports storage
-│       ├── setup.py         # Package configuration
-│       └── README.md        # Module documentation
-├── config/                  # Main app configuration
-├── docs/                    # Project-level documentation
-│   └── mockCMMS_roadmap.md  # High-level project roadmap
-├── instance/                # SQLite databases
-├── test_data/               # Test fixtures
-├── tests/                   # Main app tests
-├── .env                     # Environment configuration
-├── requirements.txt         # Dependencies
-└── run.py                   # Application entry point
-```
-
 ## 📦 Applications
 
-### Main Application
+mockCMMS supports a **main application** with dynamically loadable **modular apps**:
 
-- **Core mockCMMS:** Base maintenance management functionality
-- **Entry Point:** Serves as the foundation for all modular apps
-- **Configuration Hub:** Manages settings for all integrated applications
+| App                                       | Purpose                                                                                                            | Status    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------- |
+| **[Planning](apps/planning/README.md)**   | Intelligent maintenance planning with custom Gantt charts, shift-based scheduling, and skill-based task assignment | Available |
+| **[Reporting](apps/reporting/README.md)** | Comprehensive reporting and analytics with PDF/Markdown export capabilities                                        | Available |
 
-### Modular Apps
-
-- **[Planning](apps/planning/README.md):** Intelligent maintenance planning
-  system with custom Gantt charts, shift-based scheduling, and skill-based task
-  assignment
-- **[Reports](apps/reports/README.md):** Comprehensive reporting and analytics
-  system with PDF/Markdown export capabilities
-- **Future Apps:** Additional modules can be easily integrated following the
-  same pattern
-
-> **Note:** For detailed setup and usage instructions for specific apps, refer
-> to their individual README.md files.
+For planned applications and development timeline, see [Project Roadmap](docs/mockCMMS_roadmap.md). For creating new apps, see [Contributing documentation](.github/CONTRIBUTING.md).
 
 ## ⚙️ Setup and Installation
 
 ### Prerequisites
 
-- Python 3.12 or higher
-- pip (Python package installer)
-- Git
+- **Windows (Recommended):** The setup scripts can automatically install Python, Git, and Node.js via `winget`.
+- **macOS/Linux:**
+  - **Python:** 3.12 or higher
+  - **pip:** Python package installer
+  - **Git:** Version control
 
 ### Installation Steps
 
-1. **Clone the repository and navigate to it:**
+1. **Clone the repository:**
 
    ```bash
    git clone <repository-url>
@@ -112,58 +59,62 @@ mockCMMS/
    > **Note:** If you've already cloned the repository, open your terminal in
    > the `mockCMMS` project root directory (where `run.py` is located).
 
-2. **Run the setup script:**
+2. **Run the setup script (Windows PowerShell):**
 
    ```powershell
    .\scripts\setup.ps1
    ```
 
-   The script will guide you through the installation process with clear
-   feedback at each step.
+   > **Note:** This script automatically detects or installs Python 3.12+ and Git (on Windows) and sets up the virtual environment. For macOS/Linux, manually create a virtual environment and install dependencies from `requirements.txt`.
 
-3. **Activate the virtual environment:**
-
-   ```powershell
-   .\.venv\Scripts\Activate.ps1
-   ```
-
-   > **Note:** If you get an error, make sure you ran the setup script first.
-
-4. **Run the application:**
+3. **Run the application:**
 
    ```bash
    python run.py
    ```
 
+   The application will start in development mode. Access it at <http://127.0.0.1:5000>.
+
 ### Development Setup
 
-To install testing tools and development dependencies (like Playwright, Jest, etc.):
+To install testing and development dependencies (Pytest, Jest, Playwright, linting tools, and optionally GitHub CLI):
 
 ```powershell
 .\scripts\setup-dev.ps1
 ```
 
+This script automates the installation of:
+
+- **Tools (Windows via winget):** Node.js, GitHub CLI (optional)
+- **Python (venv):** `pytest`, `ruff`, `black`, `mypy`, `pylint`, `docformatter`
+- **JavaScript (npm):** `jest`, `playwright`, `eslint`, `prettier`, `stylelint`
+
+See [Development Cheat Sheet](#-development-cheat-sheet) for common commands.
+
 ## ⚙️ Configuration
 
-### Environment Variables
+| Variable            | Description                   | Default                      |
+| ------------------- | ----------------------------- | ---------------------------- |
+| `SECRET_KEY`        | Flask secret key for sessions | dev_key_fallback_for_testing |
+| `FLASK_DEBUG`       | Enable debug mode             | 0                            |
+| `PLANNING_ENABLED`  | Enable Planning app           | False                        |
+| `REPORTING_ENABLED` | Enable Reporting app          | False                        |
 
-| Variable           | Description                    | Default        |
-| ------------------ | ------------------------------ | -------------- |
-| `SECRET_KEY`       | Flask secret key for sessions  | Auto-generated |
-| `FLASK_DEBUG`      | Enable debug mode (1/true/yes) | 0              |
-| `PLANNING_ENABLED` | Enable Planning app            | False          |
-| `REPORTS_ENABLED`  | Enable Reports app             | True           |
+Enable/disable apps via `.env` (changes apply on restart):
 
-### App Management
+```dotenv
+PLANNING_ENABLED=True
+REPORTING_ENABLED=True
+SECRET_KEY=your-secret-key-here
+FLASK_DEBUG=0
+```
 
-- **Enable apps:** Set `APP_NAME_ENABLED=True` in `.env`
-- **Disable apps:** Set `APP_NAME_ENABLED=False` in `.env`
-- **Changes take effect:** On next application restart
+For app-specific configuration, see the app's README.
 
 ## 🏃 Running the Application
 
 ```bash
-# Activate virtual environment
+# Activate virtual environment (if not already active)
 .\.venv\Scripts\Activate.ps1  # Windows PowerShell
 # source .venv/bin/activate     # macOS/Linux
 
@@ -171,151 +122,62 @@ To install testing tools and development dependencies (like Playwright, Jest, et
 python run.py
 ```
 
-The application will start in development mode by default. Access it at
-`http://127.0.0.1:5000`
+**Default Access:**
+
+- **URL:** <http://127.0.0.1:5000>
+- **Demo Login:** `admin` / `admin123` (from `test_data/dummy_data.json`)
+
+The application will start in development mode with auto-reload enabled when `FLASK_DEBUG=1`.
 
 ## 🛠️ Development Cheat Sheet
 
-| Command                                   | Description                                        |
-| :---------------------------------------- | :------------------------------------------------- |
-| `python scripts/validate_code.py`         | **Run BEFORE Commit** (Lint + Test + Format Check) |
-| `python scripts/validate_code.py --quick` | Fast validation (skips E2E)                        |
-| `python run.py`                           | Run local dev server                               |
-| `pytest`                                  | Run backend tests manually                         |
+| Command                                   | Description                                                      |
+| :---------------------------------------- | :--------------------------------------------------------------- |
+| `python scripts/format_code.py`           | **Run first.** Auto-fix formatting: isort → black → docformatter |
+| `python scripts/validate_code.py`         | Full validation: linting + unit tests + coverage checks          |
+| `python scripts/validate_code.py --quick` | Fast validation: targeted tests, skips E2E                       |
+| `pytest tests/backend`                    | Run backend tests                                                |
+| `npm test`                                | Jest unit tests                                                  |
+| `npm run test:e2e`                        | Playwright E2E tests                                             |
 
-_See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for full developer guide and tool usage._
+**Quick CI Simulation:**
 
-## 🏗️ JavaScript Architecture
-
-### Overview
-
-The application uses a modular JavaScript architecture for maintainability and
-code organization.
-
-### Core Components
-
-#### Toast Notification System
-
-- **Location:** `src/static/js/toast-notification.js`
-- **Purpose:** Display user feedback messages (success, error, warning, info)
-- **Features:**
-  - FontAwesome icons for visual clarity
-  - Auto-dismiss with configurable duration
-  - Manual close button
-  - Positioned at top-center of viewport
-- **API:**
-
-  ```javascript
-  ToastNotification.success("Operation successful!");
-  ToastNotification.error("Failed to save", 7000);
-  ToastNotification.warning("Please review");
-  ToastNotification.info("New update available");
-  ```
-
-#### Flash Messages Handler
-
-- **Location:** `src/static/js/flash-messages.js`
-- **Purpose:** Bridge Flask's `flash()` function with ToastNotification UI
-- **Category Mapping:**
-  - Flask `'danger'` → Toast `'error'`
-  - Flask `'success'` → Toast `'success'`
-  - Flask `'warning'` → Toast `'warning'`
-  - Flask `'info'` → Toast `'info'`
-- **Usage:**
-
-  ```python
-  # In Flask route
-  flash('Asset created successfully!', 'success')
-  flash('Invalid input', 'danger')
-  ```
-
-#### Advanced Table System
-
-- **Location:** `src/static/js/advanced-table/` (modular architecture)
-- **Components:**
-  - `table-core.js` - Core AdvancedTable class
-  - `table-render.js` - Rendering methods
-  - `table-data.js` - Filtering, sorting, pagination
-  - `table-config.js` - Save/load configurations
-  - `table-events.js` - Event handling
-  - `table-export.js` - CSV export functionality
-  - `table-init.js` - Initialization helper
-  - `table-sidebar.js` - Sidebar functionality
-  - `table-resize.js` - Excel-like column resizing
-  - `table-loading.js` - Loading states and spinners
-  - `table-retry.js` - Retry mechanisms with exponential backoff
-- **Features:**
-  - Excel-like sorting and filtering with AND/OR logic
-  - Column visibility management
-  - Drag-and-drop column reordering
-  - **Excel-like column resizing** with sub-pixel precision
-  - Global search across all columns
-  - Save/load custom view configurations
-  - CSV export
-  - Responsive design with collapsible sidebar
-  - Loading states and automatic retry on failures
-
-### File Organization
-
-```text
-src/static/js/
-├── advanced-table/              # Modular table system
-│   ├── table-core.js           # Core class and initialization
-│   ├── table-render.js         # HTML rendering
-│   ├── table-data.js           # Data operations
-│   ├── table-config.js         # Configuration persistence
-│   ├── table-events.js         # Event listeners
-│   ├── table-export.js         # Export functionality
-│   ├── table-init.js           # Helper functions
-│   ├── table-sidebar.js        # Sidebar functionality
-│   ├── table-resize.js         # Column resizing
-│   ├── table-loading.js        # Loading states
-│   └── table-retry.js          # Retry mechanisms
-├── toast-notification.js       # Toast UI component (general purpose)
-└── flash-messages.js           # Flask flash message integration
+```bash
+python scripts/format_code.py && python scripts/validate_code.py
 ```
 
-## �️ Development Guide
+See [Tests documentation](tests/README.md) for detailed testing information.
 
-### Adding a New App
+## 🏗️ Architecture Overview
 
-1. **Create app directory:**
+The application uses a **modular, layered architecture** supporting a main application with dynamically loadable specialized apps.
 
-   ```bash
-   mkdir apps/your-app
-   ```
+### Technology Stack
 
-2. **Add setup.py in the app root**
+- **Backend:** Flask (Python 3.12+) with SQLAlchemy ORM
+- **Frontend:** Vanilla JavaScript (ES6+) with modular component architecture
+- **Database:** SQLite (dev) / PostgreSQL (production-ready)
 
-3. **Install in editable mode:**
+### Project Layers
 
-   ```bash
-   pip install -e apps/your-app
-   ```
-
-4. **Add configuration to `.env`:**
-
-   ```env
-   # --- Your App ---
-   YOUR_APP_ENABLED=True
-   YOUR_APP_SETTING=value
-   ```
-
-5. **Register blueprint in `src/app.py`**
-
-### Development Workflow
-
-1. Make changes to any app
-2. Restart with `python run.py`
-3. All apps reload automatically
-4. Use `.env` to enable/disable apps for testing
+```
+Frontend (src/static/)          → JavaScript modules + CSS
+     ↓
+API/Routes (src/routes/)        → REST API + Web routes
+     ↓
+Business Logic (src/services/)  → Database utilities, core logic
+     ↓
+Data Layer (instance/)          → SQLite/PostgreSQL databases
+```
 
 ## 🤝 Contributing
 
-Contributions are welcome. Please read the
-[contributing guidelines](.github/CONTRIBUTING.md) for development process,
-coding standards, and submission guidelines.
+Contributions are welcome! See [Contributing documentation](.github/CONTRIBUTING.md) for:
+
+- Workflow and commit conventions
+- Creating new modular apps
+- Debugging tips and coverage requirements
 
 ---
 
-**Version:** 1.2.0 | **Last Updated:** December 17, 2025
+**Version:** 1.2.3 | **Last Updated:** March 17, 2026

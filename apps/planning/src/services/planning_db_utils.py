@@ -1,7 +1,32 @@
 # src/db_utils.py
 import json
+import logging
 import os
 import sqlite3
+
+_PLANNING_RAW_DB_SEED_PREFIX = "[SEED][PLANNING][RAW_DB]"
+
+
+class _PlanningRawDbLoggerAdapter(logging.LoggerAdapter):
+    """Attach a stable planning raw-db seeding prefix to log messages."""
+
+    def process(self, msg, kwargs):
+        return f"{self.extra['seed_prefix']} {msg}", kwargs
+
+
+def _get_planning_raw_db_logger(base_logger):
+    """Return a logger that prefixes planning raw-db messages consistently."""
+    if base_logger is None:
+        return None
+    if (
+        isinstance(base_logger, logging.LoggerAdapter)
+        and base_logger.extra.get("seed_prefix") == _PLANNING_RAW_DB_SEED_PREFIX
+    ):
+        return base_logger
+    return _PlanningRawDbLoggerAdapter(
+        base_logger,
+        {"seed_prefix": _PLANNING_RAW_DB_SEED_PREFIX},
+    )
 
 
 # --- Database Helper Functions ---
@@ -13,6 +38,7 @@ def get_db_connection(database_path):
 
 def populate_dummy_data(conn, logger):
     """Populates the database with dummy data from dummy_data.json."""
+    logger = _get_planning_raw_db_logger(logger)
     logger.info("Populating database with dummy data.")
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -174,6 +200,7 @@ def populate_dummy_data(conn, logger):
 
 
 def init_db(db_path, logger=None, debug_use_test_db=False):
+    logger = _get_planning_raw_db_logger(logger)
     db_exists = os.path.exists(db_path)
 
     conn = get_db_connection(db_path)

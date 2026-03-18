@@ -108,16 +108,16 @@ async function globalTeardown() {
     "instance",
     "planning_e2e.db",
   );
-  const REPORTS_DB_PATH = path.join(
+  const REPORTING_DB_PATH = path.join(
     PROJECT_ROOT,
     "apps",
-    "reports",
+    "reporting",
     "instance",
-    "reports_e2e.db",
+    "reporting_e2e.db",
   );
 
   // Step 1: Remove test databases if they exist
-  const dbs = [TEST_DB_PATH, PLANNING_DB_PATH, REPORTS_DB_PATH];
+  const dbs = [TEST_DB_PATH, PLANNING_DB_PATH, REPORTING_DB_PATH];
 
   for (const dbPath of dbs) {
     if (fs.existsSync(dbPath)) {
@@ -132,7 +132,7 @@ async function globalTeardown() {
   const instanceDirs = [
     INSTANCE_DIR,
     path.dirname(PLANNING_DB_PATH),
-    path.dirname(REPORTS_DB_PATH),
+    path.dirname(REPORTING_DB_PATH),
   ];
 
   for (const dir of instanceDirs) {

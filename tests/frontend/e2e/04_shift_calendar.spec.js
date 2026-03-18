@@ -90,10 +90,10 @@ test.describe("Shift Calendar Tests", () => {
     // However, if no shifts are assigned, this test might be flaky.
     // Assuming seeded data has shifts.
 
-    if (await shiftBlocks.count() > 0) {
-        await expect(shiftBlocks.first()).toBeVisible();
-        const blockText = await shiftBlocks.first().innerText();
-        expect(blockText).toMatch(/Team [A-D]/);
+    if ((await shiftBlocks.count()) > 0) {
+      await expect(shiftBlocks.first()).toBeVisible();
+      const blockText = await shiftBlocks.first().innerText();
+      expect(blockText).toMatch(/Team [A-D]/);
     }
   });
 

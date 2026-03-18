@@ -1,0 +1,146 @@
+{% extends "base.html" %} {% block title %}Generate Report{% endblock %} {%
+block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h2>Generate Report</h2>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+          <div class="mb-3">
+            <label for="title" class="form-label">Report Title</label>
+            <input
+              type="text"
+              class="form-control"
+              id="title"
+              name="title"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="report_type" class="form-label">Report Type</label>
+            <select
+              class="form-select"
+              id="report_type"
+              name="report_type"
+              required
+              onchange="toggleParameters()"
+            >
+              <option value="">Select Report Type</option>
+              <option value="shift_report">Shift Production Report</option>
+              <option value="weekend_report">Weekend Task Report</option>
+            </select>
+          </div>
+
+          <!-- Format is always In-App (HTML/JSON) by default -->
+          <input type="hidden" name="format" value="html">
+
+          <!-- Shift Report Parameters -->
+          <div id="shift_params" class="report-params" style="display: none;">
+            <div class="mb-3">
+              <label for="shift_date" class="form-label">Shift Date</label>
+              <input
+                type="date"
+                class="form-control"
+                name="shift_date"
+                id="shift_date"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="shift_name" class="form-label">Shift</label>
+              <select class="form-select" name="shift_name" id="shift_name">
+                <option value="Early">Early (06:00 - 18:00)</option>
+                <option value="Night">Night (18:00 - 06:00)</option>
+              </select>
+            </div>
+
+            <!-- Handover Notes Section -->
+            <div class="mb-3">
+              <label for="handover_from_previous" class="form-label"
+                >Handover from Previous Shift</label
+              >
+              <textarea
+                class="form-control"
+                name="handover_from_previous"
+                id="handover_from_previous"
+                rows="3"
+                placeholder="Notes from previous shift..."
+              ></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="handover_to_next" class="form-label"
+                >Handover to Next Shift</label
+              >
+              <textarea
+                class="form-control"
+                name="handover_to_next"
+                id="handover_to_next"
+                rows="3"
+                placeholder="Notes for next shift..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Weekend Parameters -->
+          <div id="weekend_params" style="display: none">
+            <h5>Weekend Parameters</h5>
+            <div class="mb-3">
+              <label for="weekend_date" class="form-label"
+                >Weekend Date (any day of the week)</label
+              >
+              <input
+                type="date"
+                class="form-control"
+                id="weekend_date"
+                name="weekend_date"
+              />
+              <small class="form-text text-muted"
+                >Select any date in the week to get the weekend report</small
+              >
+            </div>
+            <div class="mb-3">
+              <label for="weekend_shift" class="form-label">Shift</label>
+              <select class="form-select" id="weekend_shift" name="weekend_shift">
+                <option value="Night">Night (18:00 - 06:00)</option>
+                <option value="Early">Early (06:00 - 18:00)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <a href="{{ url_for('reporting.index') }}" class="btn btn-secondary"
+              >Cancel</a
+            >
+            <button type="submit" class="btn btn-primary">
+              Generate Report
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleParameters() {
+    const reportType = document.getElementById("report_type").value;
+    const shiftParams = document.getElementById("shift_params");
+    const weekendParams = document.getElementById("weekend_params");
+
+    // Hide all parameter sections
+    shiftParams.style.display = "none";
+    weekendParams.style.display = "none";
+
+    // Show relevant parameters
+    if (reportType === "shift_report") {
+      shiftParams.style.display = "block";
+    } else if (reportType === "weekend_report") {
+      weekendParams.style.display = "block";
+    }
+  }
+</script>
+{% endblock %}

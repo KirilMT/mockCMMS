@@ -320,7 +320,7 @@ POST /planning/assign             # Run planning algorithm
 ### 2. Report Integration
 
 ```
-Planning Results → reports module → PDF/Excel export
+Planning Results → reporting module → PDF/Excel export
 ```
 
 ### 3. Future: SCADA Integration

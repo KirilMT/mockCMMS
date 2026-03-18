@@ -81,13 +81,18 @@ def create_app(config_overrides=None):
     db.init_app(app)
     db_manager.init_app(app)
 
-    # Ensure all modular binds are present in testing to avoid crashing
-    # on collected models
-    if app.config.get("TESTING"):
-        binds = app.config.get("SQLALCHEMY_BINDS", {}).copy()
-        if "reports" not in binds:
-            binds["reports"] = "sqlite:///:memory:"
-        app.config["SQLALCHEMY_BINDS"] = binds
+    # Ensure reporting bind exists whenever reporting models are imported.
+    binds = app.config.get("SQLALCHEMY_BINDS", {}).copy()
+    if "reporting" not in binds:
+        if app.config.get("TESTING"):
+            binds["reporting"] = "sqlite:///:memory:"
+        else:
+            reporting_db = os.path.join(
+                app.root_path, "..", "..", "reporting", "instance", "reporting.db"
+            )
+            binds["reporting"] = f"sqlite:///{reporting_db}"
+
+    app.config["SQLALCHEMY_BINDS"] = binds
 
     with app.app_context():
         db.create_all()

@@ -1,0 +1,274 @@
+/**
+ * Report Common Styles
+ * Shared styles for Shift and Weekend reporting views
+ */
+
+.report-container {
+  background-color: #f8f9fa;
+  color: #333;
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.report-header {
+  text-decoration: underline;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.report-header .team-badge {
+  display: inline;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  background: none;
+  font-weight: inherit;
+  font-size: 1em;
+  vertical-align: baseline;
+  margin-left: 0;
+  text-decoration: inherit;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.report-header:hover {
+  background-color: #fff3cd;
+}
+
+/* Removed hardcoded team color to support dynamic project colors */
+
+/* .report-header .team-name { color: #e74c3c; } */
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.section-title {
+  background: linear-gradient(90deg, #7cb342, #558b2f);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  display: inline-block;
+  border-radius: 4px;
+  margin: 0;
+}
+
+/* Collapse Icon */
+.collapse-icon {
+  margin-right: 0.5rem;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+[aria-expanded="false"] .collapse-icon {
+  transform: rotate(-90deg);
+}
+
+[aria-expanded="true"] .collapse-icon {
+  transform: rotate(0deg);
+}
+
+.section-title-orange {
+  background: linear-gradient(90deg, #f39c12, #e67e22);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  display: inline-block;
+  border-radius: 4px;
+  margin: 0;
+}
+
+.section-title-red {
+  background: linear-gradient(90deg, #e74c3c, #c0392b);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  display: inline-block;
+  border-radius: 4px;
+  margin: 0;
+}
+
+/* Report Items */
+.report-item {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-left: 4px solid #7cb342;
+  padding: 1rem;
+  padding-right: 5rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  position: relative;
+}
+
+.report-item.breakdown-item {
+  border-left-color: #e74c3c;
+}
+
+.report-item.ticket-item {
+  border-left-color: #f39c12;
+}
+
+.report-item.additional-item {
+  border-left-color: #e74c3c;
+}
+
+/* Item Labels */
+.item-label {
+  color: #e67e22;
+  font-weight: bold;
+}
+
+.item-label-red {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+/* Item Actions - Edit/Delete buttons */
+.item-actions {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 0.25rem;
+}
+
+.item-actions .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Metadata Row */
+.metadata-row {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.metadata-row > .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.metadata-row .col-md-3 {
+  text-align: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+/* Editable Fields */
+.editable-field {
+  cursor: pointer;
+  border-bottom: 1px dashed #aaa;
+  padding: 0 0.25rem;
+}
+
+.editable-field:hover {
+  background-color: #fff3cd;
+}
+
+/* Breakdown Details */
+.breakdown-details {
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 2px solid #dee2e6;
+}
+
+.breakdown-details li {
+  margin-bottom: 0.25rem;
+}
+
+/* Report Footer */
+.report-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Add Button */
+.section-header .btn-add {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.section-header .btn-sm {
+  margin-left: 0.5rem;
+}
+
+/* Form Styles in Modals */
+.report-form-group {
+  margin-bottom: 1rem;
+}
+
+.report-form-group label {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.report-form-group .form-control {
+  width: 100%;
+}
+
+/* Subsection styling */
+.subsection-title {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* List styling */
+.report-list {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.report-list li {
+  padding: 0.5rem 0;
+}
+
+/* Numbered list for MOs/Tickets */
+.numbered-list {
+  counter-reset: item-counter;
+  list-style: none;
+  padding-left: 0;
+}
+
+.numbered-list > li {
+  counter-increment: item-counter;
+  position: relative;
+  padding-left: 2rem;
+}
+
+.numbered-list > li::before {
+  content: counter(item-counter) ".";
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+  color: #7cb342;
+}
+
+.report-page {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.report-actions-row {
+  margin-top: 0;
+}
+
+.report-actions-row .col-12 {
+  padding-top: 0;
+}

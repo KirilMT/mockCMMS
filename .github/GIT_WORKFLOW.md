@@ -1,7 +1,7 @@
 # Professional Git Workflow Guide
 
 This document outlines the standard process for contributing to this project.
-Following these steps ensures the `master` branch remains stable and all changes
+Following these steps ensures the `main` branch remains stable and all changes
 are properly managed.
 
 ---
@@ -18,6 +18,14 @@ are properly managed.
 > - You can use `git push` normally to push additional commits
 >
 > **Why?** Pushing a new branch without a PR leaves orphan branches on GitHub with no review process.
+
+## Supported Commit Types
+
+The following commit types are supported for release automation and changelog generation:
+
+- feat, fix, chore, refactor, perf, remove, revert, docs, test, style, build, ci
+
+Use only these types in your commit messages for releases.
 
 ### 1. Initial Setup (First Time on a New Machine)
 
@@ -37,19 +45,19 @@ cd CMMS
 ### 2. Starting New Work (Creating a Feature Branch)
 
 Before starting any new feature, bugfix, or improvement, always create a new
-branch from an up-to-date `master`.
+branch from an up-to-date `main`.
 
-**Step 2.1: Sync Your Local `master` Branch**
+**Step 2.1: Sync Your Local `main` Branch**
 
-Make sure your local `master` branch has the latest changes from the remote
+Make sure your local `main` branch has the latest changes from the remote
 repository.
 
 ```sh
-# Switch to the master branch
-git checkout master
+# Switch to the main branch
+git checkout main
 
-# Pull the latest changes from the remote `master`
-git pull origin master
+# Pull the latest changes from the remote `main`
+git pull origin main
 ```
 
 **Step 2.2: Create Your New Branch**
@@ -67,7 +75,7 @@ git checkout -b new-feature-name
 
 ### 3. During Development (Committing and Pushing)
 
-Now you are on your new branch and can work safely without affecting `master`.
+Now you are on your new branch and can work safely without affecting `main`.
 
 **Step 3.1: The 5-Step Quality Loop (Iterative Process)**
 Before you commit, apply this loop to every file you touch:
@@ -96,19 +104,19 @@ git commit -m "Add a clear and concise commit message here"
 **Step 3.2: Keep Your Branch Updated**
 
 To prevent merge conflicts and ensure your feature branch has the latest changes
-from `master`, you should sync it regularly. This is especially important before
+from `main`, you should sync it regularly. This is especially important before
 creating a pull request.
 
 ```sh
-# Switch to the master branch and pull the latest changes
-git checkout master
-git pull origin master
+# Switch to the main branch and pull the latest changes
+git checkout main
+git pull origin main
 
 # Switch back to your feature branch
 git checkout new-feature-name
 
-# Merge the latest master into your feature branch
-git merge master
+# Merge the latest main into your feature branch
+git merge main
 
 # If there are any conflicts, resolve them now, then commit the merge.
 ```
@@ -173,88 +181,25 @@ information:
 - **MINOR (`x.1.x`):** Increment for new, backward-compatible features.
 - **PATCH (`x.x.1`):** Increment for backward-compatible bug fixes.
 
-#### Automated Version Management (Recommended)
+#### Automated Releases (Google Release Please)
 
-**Use the release manager script to automate version updates:**
+Releases and changelog generation are fully automated by **Google Release Please**:
 
-```sh
-# Preview changes without applying (dry-run)
-python scripts/release_manager.py patch --dry-run
-python scripts/release_manager.py minor --dry-run
-python scripts/release_manager.py major --dry-run
+1. Merge your changes (with Conventional Commits) to `main` via a pull request.
+2. The Release Please action runs automatically and opens a **Release PR**.
+3. This automated PR contains the updated `CHANGELOG.md` and version bumps for all relevant files (e.g., `pyproject.toml`, `README.md`).
+4. Review the Release PR. When you are ready to cut the actual release, simply **merge the Release PR**.
+5. Upon merging, the action automatically creates the git tag and the GitHub Release on the repository.
 
-# Apply version bump
-python scripts/release_manager.py patch   # For bug fixes
-python scripts/release_manager.py minor   # For new features
-python scripts/release_manager.py major   # For breaking changes
-```
+You do **not** need to manually edit `CHANGELOG.md` or version numbers in your feature branches. Release Please assumes control of the versioning based entirely on your commit messages.
 
-**The script automatically:**
+#### Why a Two-PR Workflow?
 
-- Updates CHANGELOG.md with new version and date
-- Updates README.md version footer
-- Creates git commit with conventional message
-- Creates annotated git tag (e.g., v1.2.0)
-- Ensures version numbers match everywhere
+It may seem counter-intuitive to merge your code in one PR, and then have to merge a _second_ "Release PR" to actually publish it. But **this is an industry standard** (used by Google, Node.js, and many others) for several reasons:
 
-**After running the script:**
-
-```sh
-# Push commit and tag to remote
-git push origin main v1.2.0
-```
-
-#### Automated Release via Commit Message (Alternative)
-
-**You can trigger automatic releases during `git push` by including `[release:TYPE]` in your commit message:**
-
-```sh
-# Regular commit (no release)
-git commit -m "feat: add new feature"
-git push  # Just validates, no release
-
-# Automatic release on push
-git commit -m "feat: feature complete [release:minor]"
-git push  # Validates + Creates release automatically
-
-# Available release types
-git commit -m "fix: bug fix [release:patch]"        # 1.0.0 -> 1.0.1
-git commit -m "feat: new feature [release:minor]"   # 1.0.0 -> 1.1.0
-git commit -m "feat!: breaking [release:major]"     # 1.0.0 -> 2.0.0
-git commit -m "chore: updates [release]"            # Defaults to patch
-```
-
-**How it works:**
-
-- The `auto_release_hook.py` pre-push hook detects the `[release]` tag
-- Automatically runs `release_manager.py` with the specified bump type
-- Creates the release commit and tag before pushing
-- Useful for quick releases without running the script manually
-
-#### Manual Version Updates (If Not Using Script)
-
-**Required Updates:**
-
-1. **Update CHANGELOG.md** (follow
-   [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format):
-   - Main app: `/CHANGELOG.md`
-   - planning: `/apps/planning/CHANGELOG.md`
-   - Add new version entry with date and categorized changes
-     (Added/Changed/Removed/Fixed)
-
-2. **Update README.md version footer**:
-   - Main app: `/README.md`
-   - planning: `/apps/planning/README.md`
-   - Ensure version numbers match between CHANGELOG.md and README.md
-   - Update "Last Updated" date
-
-**Example:**
-
-```markdown
-**Version:** 1.2.1 | **Last Updated:** January 27, 2025
-```
-
-This version information will be used for creating Git tags and releases.
+1. **Batching:** Instead of releasing `1.1.1`, `1.1.2`, and `1.2.0` on the same day every time a developer merges code, Release Please accumulates all features/fixes into a single running "Release PR."
+2. **Review:** The Release PR gives the maintainer a chance to read and review the auto-generated `CHANGELOG.md` _before_ the changelog logic is permanently locked into a Git tag or GitHub Release.
+3. **Decoupling Deployment:** Developers can safely merge code to `main` instantly, without throwing the entire project into a live production release loop. Maintainers can release whenever they feel the batch of features is ready by merging the bot's PR.
 
 ---
 
@@ -364,15 +309,15 @@ delete the remote feature branch. This keeps the repository clean.
 
 **Step 8.2: Update Your Local Repository**
 
-Now, update your local `master` branch with the changes you just merged on
+Now, update your local `main` branch with the changes you just merged on
 GitHub.
 
 ```sh
-# Switch back to your local master branch
-git checkout master
+# Switch back to your local main branch
+git checkout main
 
 # Pull the latest changes from the remote (which includes your merged PR)
-git pull origin master
+git pull origin main
 ```
 
 **Step 8.3: Prune Stale Remote Branches**
@@ -395,4 +340,20 @@ git branch -d new-feature-name
 ```
 
 This completes the workflow. You are now ready to start on the next task by
-creating a new branch from your up-to-date `master`.
+creating a new branch from your up-to-date `main`.
+
+---
+
+## Commit Message Enforcement & Template
+
+All commits must use the Conventional Commits format. This is enforced by a `commit-msg` hook and a `.gitmessage` template, both set up automatically by `scripts/setup-dev.ps1`.
+
+- **Format Example:**
+
+  ```
+  feat(module): add new feature
+
+  Detailed body describing the change.
+  ```
+
+See `.github/CONTRIBUTING.md` for the full commit message structure and release process.

@@ -1,149 +1,149 @@
 /* Shift Calendar Specific Styles */
 
 .shift-calendar-container {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 140px); /* Adjust based on header/footer */
-    overflow: hidden; /* Prevent page scroll */
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 140px); /* Adjust based on header/footer */
+  overflow: hidden; /* Prevent page scroll */
 }
 
 .calendar-controls {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .calendar-header-row {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-bottom: none;
-    font-weight: bold;
-    text-align: center;
-    padding: 0.5rem 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-bottom: none;
+  font-weight: bold;
+  text-align: center;
+  padding: 0.5rem 0;
 }
 
 .calendar-header-day {
-    padding: 5px;
+  padding: 5px;
 }
 
 .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    flex-grow: 1;
-    border: 1px solid #dee2e6;
-    border-right: none;
-    border-bottom: none;
-    overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex-grow: 1;
+  border: 1px solid #dee2e6;
+  border-right: none;
+  border-bottom: none;
+  overflow: hidden;
 }
 
 .calendar-day {
-    border-right: 1px solid #dee2e6;
-    border-bottom: 1px solid #dee2e6;
-    background-color: #fff;
-    padding: 5px;
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    min-width: 0; /* Fix for flex item overflow */
+  border-right: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #fff;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 0; /* Fix for flex item overflow */
 }
 
 .calendar-day:hover {
-    background-color: #f1f3f5;
+  background-color: #f1f3f5;
 }
 
 .calendar-day.other-month {
-    background-color: #e9ecef; /* Darker grey for better contrast */
-    color: #6c757d;
+  background-color: #e9ecef; /* Darker grey for better contrast */
+  color: #6c757d;
 }
 
 .calendar-day.today {
-    background-color: #e8f4fd;
-    position: relative;
+  background-color: #e8f4fd;
+  position: relative;
 }
 
 .calendar-day.today::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border: 2px solid #007bff;
-    pointer-events: none;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid #007bff;
+  pointer-events: none;
 }
 
 .day-number {
-    text-align: right;
-    font-weight: bold;
-    margin-bottom: 4px;
+  text-align: right;
+  font-weight: bold;
+  margin-bottom: 4px;
 }
 
 .shift-assignments {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    font-size: 0.75rem;
-    overflow: hidden;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.75rem;
+  overflow: hidden;
 }
 
 .shift-block {
-    padding: 2px 4px;
-    border-radius: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 500;
+  padding: 2px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
 }
 
 .shift-block.early {
-    background-color: #d1e7dd; /* Light Success Green */
-    color: #0f5132;
-    border-left: 3px solid #198754;
+  background-color: #d1e7dd; /* Light Success Green */
+  color: #0f5132;
+  border-left: 3px solid #198754;
 }
 
 .shift-block.late {
-    background-color: #e2e3e5; /* Light Secondary Grey */
-    color: #41464b;
-    border-left: 3px solid #6c757d;
+  background-color: #e2e3e5; /* Light Secondary Grey */
+  color: #41464b;
+  border-left: 3px solid #6c757d;
 }
 
 /* Team Indicators (Nested Pills) */
 .team-indicator {
-    display: inline-block;
-    padding: 0 6px;
-    border-radius: 10px;
-    color: white;
-    font-size: 0.7rem;
-    font-weight: bold;
-    margin-right: 4px;
-    min-width: 50px;
-    text-align: center;
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 10px;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin-right: 4px;
+  min-width: 50px;
+  text-align: center;
 }
 
 .team-indicator.team-a {
-    background-color: #0d6efd; /* Bootstrap Primary Blue */
+  background-color: #0d6efd; /* Bootstrap Primary Blue */
 }
 
 .team-indicator.team-b {
-    background-color: #6610f2; /* Bootstrap Indigo */
+  background-color: #6610f2; /* Bootstrap Indigo */
 }
 
 .team-indicator.team-c {
-    background-color: #fd7e14; /* Bootstrap Orange */
+  background-color: #fd7e14; /* Bootstrap Orange */
 }
 
 .team-indicator.team-d {
-    background-color: #d63384; /* Bootstrap Pink */
+  background-color: #d63384; /* Bootstrap Pink */
 }
 
 /* Modal Technician List Styling */
 .modal-body .list-group-item:hover {
-    background-color: rgba(0,0,0,0.05) !important;
-    color: #212529 !important; /* Ensure dark text on hover */
-    cursor: default;
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: #212529 !important; /* Ensure dark text on hover */
+  cursor: default;
 }

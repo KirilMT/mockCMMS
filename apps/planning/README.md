@@ -66,7 +66,7 @@ planning/
 │   ├── planning.db # Production database
 │   └── testsDB.db           # Test database
 ├── logs/                    # Application logs
-├── output/                  # Generated reports
+├── output/                  # Generated reporting
 ├── docs/                    # Documentation
 │   ├── assets/              # Documentation images
 │   └── roadmap/             # Detailed action plans and roadmaps

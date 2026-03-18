@@ -281,13 +281,27 @@ def assets():
 @login_required
 def add_asset():
     if request.method == "POST":
+        asset_code = request.form.get("asset_code")
+        name = request.form.get("name")
+        description = request.form.get("description", "")
+        asset_type = request.form.get("asset_type")
+        cost_center = request.form.get("cost_center")
+        status = request.form.get("status")
+
+        if not asset_code or not name:
+            flash("Asset code and name are required.", "error")
+            return (
+                render_template("asset_detail.html", asset=None, active_mos=[]),
+                400,
+            )
+
         new_asset = Asset(
-            asset_code=request.form["asset_code"],
-            name=request.form["name"],
-            description=request.form["description"],
-            asset_type=request.form["asset_type"],
-            cost_center=request.form["cost_center"],
-            status=request.form["status"],
+            asset_code=asset_code,
+            name=name,
+            description=description,
+            asset_type=asset_type,
+            cost_center=cost_center,
+            status=status,
         )
         db.session.add(new_asset)
         db.session.commit()

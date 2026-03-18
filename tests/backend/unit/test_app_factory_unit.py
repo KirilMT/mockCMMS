@@ -10,7 +10,7 @@ import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
-from flask import g, has_app_context, has_request_context, request
+from flask import Flask, g, has_app_context, has_request_context, request
 
 from src.app import create_app
 from src.services.db_utils import db
@@ -19,7 +19,7 @@ from src.services.simulation_service import DataSimulationService
 # Default binds - prevents UnboundExecutionError for modular models
 TEST_SQLALCHEMY_BINDS = {
     "planning": "sqlite:///:memory:",
-    "reports": "sqlite:///:memory:",
+    "reporting": "sqlite:///:memory:",
 }
 
 
@@ -83,7 +83,7 @@ class TestAppFactory:
         assert "api" in blueprint_names, "API blueprint not registered"
         assert "main" in blueprint_names, "Main blueprint not registered"
 
-        # Planning and Reports blueprints are conditional
+        # Planning and Reporting blueprints are conditional
         # In test mode, they should be disabled by default
         # (This is controlled by environment variables)
 
@@ -126,7 +126,7 @@ class TestAppFactory:
                 "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
                 "SQLALCHEMY_BINDS": {
                     "planning": "sqlite:///:memory:",
-                    "reports": "sqlite:///:memory:",
+                    "reporting": "sqlite:///:memory:",
                 },
             }
         )
@@ -143,14 +143,14 @@ class TestAppFactory:
         {
             "E2E_TEST": "True",
             "PLANNING_ENABLED": "True",
-            "REPORTS_ENABLED": "True",
+            "REPORTING_ENABLED": "True",
         },
     )
     @patch("src.app.db.create_all")
     @patch("src.app.db.init_app")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
-    @patch("apps.reports.src.services.seeding.seed_reports_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
+    @patch("apps.reporting.src.services.db_seeding.seed_reporting_data")
     @patch("apps.planning.src.services.planning_db_utils.init_db")
     @patch("src.app.os.makedirs")
     @patch("builtins.print")  # Suppress print to avoid encoding issues
@@ -159,7 +159,7 @@ class TestAppFactory:
         mock_print,
         mock_makedirs,
         mock_init_db,
-        mock_reports_seed,
+        mock_reporting_seed,
         mock_planning_seed,
         mock_populate,
         mock_db_init_app,
@@ -175,8 +175,8 @@ class TestAppFactory:
         binds = app.config.get("SQLALCHEMY_BINDS", {})
         assert "planning" in binds
         assert "planning_e2e.db" in binds["planning"]
-        assert "reports" in binds
-        assert "reports_e2e.db" in binds["reports"]
+        assert "reporting" in binds
+        assert "reporting_e2e.db" in binds["reporting"]
 
         # Verify makedirs was called for all instance directories
         call_args = [str(call[0][0]) for call in mock_makedirs.call_args_list]
@@ -210,8 +210,8 @@ class TestAppFactory:
             with (
                 patch.object(db, "create_all"),
                 patch("src.app.populate_dummy_data"),
-                patch("apps.planning.src.services.seeding.seed_planning_data"),
-                patch("apps.reports.src.services.seeding.seed_reports_data"),
+                patch("apps.planning.src.services.db_seeding.seed_planning_data"),
+                patch("apps.reporting.src.services.db_seeding.seed_reporting_data"),
                 patch("apps.planning.src.services.planning_db_utils.init_db"),
                 patch("src.app.os.makedirs"),
             ):
@@ -224,7 +224,7 @@ class TestAppFactory:
                         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
                         "SQLALCHEMY_BINDS": {
                             "planning": "sqlite:///:memory:",
-                            "reports": "sqlite:///:memory:",
+                            "reporting": "sqlite:///:memory:",
                         },
                     }
                 )
@@ -235,7 +235,7 @@ class TestAppFactory:
                 # Verify binds are set (in-memory versions)
                 binds = e2e_app.config.get("SQLALCHEMY_BINDS", {})
                 assert "planning" in binds
-                assert "reports" in binds
+                assert "reporting" in binds
 
                 # Clean up
                 with e2e_app.app_context():
@@ -298,10 +298,10 @@ class TestAppFactory:
             )
             ctx = inject_config()
             assert "PLANNING_ENABLED" in ctx
-            assert "REPORTS_ENABLED" in ctx
+            assert "REPORTING_ENABLED" in ctx
             # Check values are booleans (don't assert specific values)
             assert isinstance(ctx["PLANNING_ENABLED"], bool)
-            assert isinstance(ctx["REPORTS_ENABLED"], bool)
+            assert isinstance(ctx["REPORTING_ENABLED"], bool)
 
     def test_simulate_data_cli(self, app):
         """Test simulate-data CLI command execution coverage."""
@@ -355,20 +355,20 @@ class TestAppFactory:
                     # Verify logger was called with error
                     assert mock_logger.error.called
 
-    def test_reports_seeding_error_coverage(self):
-        """Test coverage for reports/planning seeding error scenarios."""
-        # Mock populate_dummy_data to succeed, but reports seeding to fail
+    def test_reporting_seeding_error_coverage(self):
+        """Test coverage for reporting/planning seeding error scenarios."""
+        # Mock populate_dummy_data to succeed, but reporting seeding to fail
         with (
             patch("src.app.populate_dummy_data"),
             patch("src.app.db.create_all"),
             patch(
-                "apps.reports.src.services.seeding.seed_reports_data",
-                side_effect=Exception("Reports BOOM"),
+                "apps.reporting.src.services.db_seeding.seed_reporting_data",
+                side_effect=Exception("Reporting BOOM"),
             ),
             patch("src.app.LoggingConfig.setup_logging"),
         ):
             # Set env vars to trigger seeding
-            with patch.dict(os.environ, {"REPORTS_ENABLED": "true"}):
+            with patch.dict(os.environ, {"REPORTING_ENABLED": "true"}):
                 app = create_app({"AUTO_SEED_DATABASE": True, "TESTING": True})
                 assert app is not None
 
@@ -422,7 +422,7 @@ class TestBlueprintConditionalLoading:
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
     def test_planning_blueprint_enabled(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
@@ -454,35 +454,35 @@ class TestBlueprintConditionalLoading:
 
     @patch.dict(
         os.environ,
-        {"REPORTS_ENABLED": "True", "TESTING": "0", "TESTING_PRODUCTION": "1"},
+        {"REPORTING_ENABLED": "True", "TESTING": "0", "TESTING_PRODUCTION": "1"},
     )
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
-    def test_reports_blueprint_enabled(
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
+    def test_reporting_blueprint_enabled(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
-        """Test reports blueprint loads when REPORTS_ENABLED=True."""
+        """Test reporting blueprint loads when REPORTING_ENABLED=True."""
         try:
             app = create_test_app()
             with app.app_context():
                 db.session.remove()
                 db.engine.dispose()
         except ImportError:
-            pytest.skip("Reports module not available")
+            pytest.skip("Reporting module not available")
 
     @patch.dict(
         os.environ,
-        {"REPORTS_ENABLED": "False", "TESTING": "0", "TESTING_PRODUCTION": "1"},
+        {"REPORTING_ENABLED": "False", "TESTING": "0", "TESTING_PRODUCTION": "1"},
     )
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    def test_reports_blueprint_disabled(self, mock_seed, mock_db_init, mock_makedirs):
-        """Test reports blueprint doesn't load when REPORTS_ENABLED=False."""
+    def test_reporting_blueprint_disabled(self, mock_seed, mock_db_init, mock_makedirs):
+        """Test reporting blueprint doesn't load when REPORTING_ENABLED=False."""
         app = create_test_app()
-        assert "reports" not in app.blueprints
+        assert "reporting" not in app.blueprints
 
         # Clean up
         with app.app_context():
@@ -495,16 +495,16 @@ class TestEnhancedAppConfiguration:
 
     @patch.dict(
         os.environ,
-        {"REPORTS_ENABLED": "True", "TESTING": "0", "TESTING_PRODUCTION": "1"},
+        {"REPORTING_ENABLED": "True", "TESTING": "0", "TESTING_PRODUCTION": "1"},
     )
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
-    def test_app_reports_module_enabled(
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
+    def test_app_reporting_module_enabled(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
-        """Test reports module loads when REPORTS_ENABLED=True."""
+        """Test reporting module loads when REPORTING_ENABLED=True."""
         try:
             app = create_test_app()
             assert app is not None
@@ -512,19 +512,21 @@ class TestEnhancedAppConfiguration:
                 db.session.remove()
                 db.engine.dispose()
         except ImportError:
-            pytest.skip("Reports module not available")
+            pytest.skip("Reporting module not available")
 
     @patch.dict(
         os.environ,
-        {"REPORTS_ENABLED": "False", "TESTING": "0", "TESTING_PRODUCTION": "1"},
+        {"REPORTING_ENABLED": "False", "TESTING": "0", "TESTING_PRODUCTION": "1"},
     )
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    def test_app_reports_module_disabled(self, mock_seed, mock_db_init, mock_makedirs):
-        """Test reports module doesn't load when REPORTS_ENABLED=False."""
+    def test_app_reporting_module_disabled(
+        self, mock_seed, mock_db_init, mock_makedirs
+    ):
+        """Test reporting module doesn't load when REPORTING_ENABLED=False."""
         app = create_test_app()
-        assert "reports" not in app.blueprints
+        assert "reporting" not in app.blueprints
 
         # Clean up
         with app.app_context():
@@ -538,7 +540,7 @@ class TestEnhancedAppConfiguration:
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
     def test_app_planning_module_enabled(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
@@ -595,7 +597,7 @@ class TestEnhancedAppConfiguration:
             assert "/planning/test" in response.location
 
     def test_app_context_processor_variables(self, app):
-        """Test PLANNING_ENABLED and REPORTS_ENABLED injected into templates."""
+        """Test PLANNING_ENABLED and REPORTING_ENABLED injected into templates."""
         with app.app_context():
             # Get context processor function
             context_processors = app.template_context_processors[None]
@@ -610,9 +612,9 @@ class TestEnhancedAppConfiguration:
             assert inject_config is not None
             context = inject_config()
             assert "PLANNING_ENABLED" in context
-            assert "REPORTS_ENABLED" in context
+            assert "REPORTING_ENABLED" in context
             assert isinstance(context["PLANNING_ENABLED"], bool)
-            assert isinstance(context["REPORTS_ENABLED"], bool)
+            assert isinstance(context["REPORTING_ENABLED"], bool)
 
     @patch("src.app.populate_dummy_data")
     def test_app_auto_seed_database(self, mock_populate_dummy_data):
@@ -641,21 +643,21 @@ class TestAppErrorHandling:
 
     @patch.dict(
         os.environ,
-        {"REPORTS_ENABLED": "True", "TESTING": "0", "TESTING_PRODUCTION": "1"},
+        {"REPORTING_ENABLED": "True", "TESTING": "0", "TESTING_PRODUCTION": "1"},
     )
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    def test_reports_blueprint_registration_error(
+    def test_reporting_blueprint_registration_error(
         self, mock_seed, mock_db_init, mock_makedirs
     ):
-        """Test app handles reports module unavailable gracefully."""
+        """Test app handles reporting module unavailable gracefully."""
 
         # Mock ImportError by making the module import fail
-        with patch.dict(sys.modules, {"apps.reports.src.routes.reports": None}):
+        with patch.dict(sys.modules, {"apps.reporting.src.routes.reporting": None}):
             app = create_test_app()
             assert app is not None
-            assert "reports" not in app.blueprints
+            assert "reporting" not in app.blueprints
 
             # Clean up
             with app.app_context():
@@ -669,7 +671,7 @@ class TestAppErrorHandling:
     @patch("src.app.os.makedirs")
     @patch("src.app.db.create_all")
     @patch("src.app.populate_dummy_data")
-    @patch("apps.planning.src.services.seeding.seed_planning_data")
+    @patch("apps.planning.src.services.db_seeding.seed_planning_data")
     def test_planning_blueprint_registration_error(
         self, mock_seed_planning, mock_seed, mock_db_init, mock_makedirs
     ):
@@ -785,7 +787,9 @@ class TestCoverageImprovements:
         with patch.dict(os.environ, {"PLANNING_ENABLED": "True", "E2E_TEST": "True"}):
             with patch.object(db, "create_all"):
                 with patch("src.app.populate_dummy_data"):
-                    with patch("apps.planning.src.services.seeding.seed_planning_data"):
+                    with patch(
+                        "apps.planning.src.services.db_seeding.seed_planning_data"
+                    ):
                         with patch("src.app.os.makedirs"):
                             # Pass in-memory URIs to prevent file creation
                             app = create_app(
@@ -794,14 +798,15 @@ class TestCoverageImprovements:
                                     "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
                                     "SQLALCHEMY_BINDS": {
                                         "planning": "sqlite:///:memory:",
-                                        "reports": "sqlite:///:memory:",
+                                        "reporting": "sqlite:///:memory:",
                                     },
                                 }
                             )
                             binds = app.config.get("SQLALCHEMY_BINDS", {})
                             # Verify binds are set (in-memory versions we passed)
                             assert "planning" in binds
-                            assert "reports" in binds
+                            assert "reporting" in binds
+                            assert "reporting" in binds
 
                             # Clean up connections
                             with app.app_context():
@@ -809,6 +814,37 @@ class TestCoverageImprovements:
                                 db.engine.dispose()
                                 for engine in db.engines.values():
                                     engine.dispose()
+
+    def test_reporting_legacy_url_redirects_to_reporting(self):
+        """Ensure legacy reporting URLs redirect to canonical /reporting URLs."""
+        app = create_test_app()
+        client = app.test_client()
+
+        response = client.get("/report" + "s?from=test", follow_redirects=False)
+
+        assert response.status_code == 301
+        assert response.headers["Location"].endswith("/reporting?from=test")
+
+    def test_reporting_directory_oserror_is_logged(self):
+        """Cover reporting directory creation failure branch in blueprint setup."""
+        from src.app import _register_blueprints
+
+        app = Flask(__name__)
+        app.config["TESTING"] = False
+        app.config["SQLALCHEMY_BINDS"] = {"reporting": "sqlite:///tmp/reporting.db"}
+        csrf = MagicMock()
+
+        with (
+            patch(
+                "src.app.get_env_bool",
+                side_effect=lambda name, default="true": name == "REPORTING_ENABLED",
+            ),
+            patch("src.app.os.makedirs", side_effect=OSError("permission denied")),
+            patch.object(app.logger, "error") as mock_logger_error,
+        ):
+            _register_blueprints(app, csrf)
+
+        assert mock_logger_error.called
 
     def test_ensure_planning_instance_folder(self):
         """Test that the planning instance folder is created."""
@@ -822,8 +858,8 @@ class TestCoverageImprovements:
                 patch("src.app.os.makedirs"),
                 patch("src.app.db.create_all"),
                 patch("src.app.populate_dummy_data"),
-                patch("apps.planning.src.services.seeding.seed_planning_data"),
-                patch("apps.reports.src.services.seeding.seed_reports_data"),
+                patch("apps.planning.src.services.db_seeding.seed_planning_data"),
+                patch("apps.reporting.src.services.db_seeding.seed_reporting_data"),
             ):
 
                 # We don't use the app variable, just checking side effects
@@ -863,7 +899,7 @@ class TestCoverageImprovements:
                 with patch("src.app.db.create_all"):
                     with patch("src.app.populate_dummy_data"):
                         with patch(
-                            "apps.planning.src.services.seeding.seed_planning_data"
+                            "apps.planning.src.services.db_seeding.seed_planning_data"
                         ):  # Skip seeding
                             # Should log error but not crash
                             # We need to trigger a file-based DB to reach the
@@ -933,8 +969,8 @@ class TestCoverageImprovements:
             patch("src.app.get_env_bool", side_effect=mock_get_env_bool),
             patch("src.app.db.create_all"),
             patch("src.app.populate_dummy_data"),
-            patch("apps.planning.src.services.seeding.seed_planning_data"),
-            patch("apps.reports.src.services.seeding.seed_reports_data"),
+            patch("apps.planning.src.services.db_seeding.seed_planning_data"),
+            patch("apps.reporting.src.services.db_seeding.seed_reporting_data"),
             patch("apps.planning.src.services.planning_db_utils.init_db"),
             patch("src.app.load_dotenv"),
             patch("src.app.os.makedirs"),  # Prevent directory creation

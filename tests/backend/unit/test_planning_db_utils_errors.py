@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 from unittest.mock import MagicMock, patch
 
@@ -34,11 +35,12 @@ def test_init_planning_db_migration_error():
 
         init_db(":memory:", logger=mock_logger)
 
-        # Verify logger.error was called
-        # Line 289
+        # Verify the prefixed error log was emitted through LoggerAdapter.log().
         assert any(
-            "Error checking/adding group_id" in str(call)
-            for call in mock_logger.error.call_args_list
+            call.args[0] == logging.ERROR
+            and "[SEED][PLANNING][RAW_DB] Error checking/adding group_id"
+            in call.args[1]
+            for call in mock_logger.log.call_args_list
         )
 
 

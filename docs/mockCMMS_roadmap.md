@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated March 10, 2026_
+_Updated March 17, 2026_ (Targeted CI Validation & Pre-Commit Refinement)
 
 ---
 
@@ -44,7 +44,7 @@ _Updated March 10, 2026_
    - Add key outcomes and technical details to help future reference
 
 2. **Add New Ideas**
-   - New features should be added to the appropriate application section (`planning`, `reports`, `core mockCMMS`, etc.)
+   - New features should be new features should be added to the appropriate application section (`planning`, `reporting`, `core mockCMMS`, etc.) mockCMMS`, etc.)
    - Follow the existing structure: Goal → Features → Priority → Reference (if applicable)
    - Assign a priority level: Critical, High, Medium, or Low
    - Maintain alphabetical or logical ordering within priority groups
@@ -93,6 +93,94 @@ _Updated March 10, 2026_
 
 ## 📋 PLANNED WORK
 
+- **[ ] Troubleshooting App Creation (New Modular App)** _(Priority: High)_
+  - **Goal:** Build a new fully modular `Troubleshooting` app inspired by the `Troubleshooting-Wizard` concept and integrate it into the mockCMMS monorepo without coupling it to core app internals.
+  - **Concept Scope (from Troubleshooting-Wizard):**
+    - Technology-based troubleshooting entry point (select system/technology first)
+    - Error code lookup workflows (PDF/manual references + structured database lookup)
+    - Configuration-driven resource mapping (manuals, guides, and troubleshooting paths)
+  - **Monorepo Standards (non-negotiable):**
+    - App lives in `apps/troubleshooting/` with isolated `src/`, `tests/`, `docs/`, and `config/`
+    - App enablement via environment flag (planned: `TROUBLESHOOTING_ENABLED=True|False`)
+    - Conditional registration in core app factory (no unconditional module-level imports from `apps/*` in `src/`)
+    - Dedicated roadmap/bug tracking in app docs (no task duplication in core roadmap)
+  - **Planning Docs:**
+    - [Troubleshooting App Roadmap](./Troubleshooting app/troubleshooting_roadmap.md)
+    - [Troubleshooting App Concept & Modular Architecture](./Troubleshooting app/troubleshooting_concept_and_modular_architecture.md)
+  - **Status:** Discovery + architecture definition
+
+- **[ ] Monitoring App Creation (New Modular App)** _(Priority: High)_
+  - **Goal:** Build a real-time **Production Re-Start Status Monitoring** application that provides visual oversight of plant floor readiness after Break Activities periods or weekend maintenance tasks.
+  - **Core Features:**
+    - **Plant Layout Visualization:** Spatial representation of production floor matching physical arrangement
+    - **Real-Time Status Tracking:** Live status indicators (green/yellow/red/blue) for each station and task type
+    - **MO-Asset Integration:** Automatic status updates based on Maintenance Order completion
+    - **Interactive Drill-Down:** Click stations to view detailed task lists and linked MOs/Assets
+    - **Production Readiness Dashboard:** At-a-glance view of which lines are ready for production restart
+  - **Use Cases:**
+    - Post-weekend readiness verification (operations managers check line status before production restart)
+    - Break period status monitoring (track maintenance progress during shutdowns)
+    - Cross-team coordination (shared visual reference for maintenance, operations, production teams)
+  - **Monorepo Standards (non-negotiable):**
+    - App lives in `apps/monitoring/` with isolated `src/`, `tests/`, `docs/`, and `config/`
+    - App enablement via environment flag (planned: `MONITORING_ENABLED=True|False`)
+    - Conditional registration in core app factory (no unconditional module-level imports from `apps/*` in `src/`)
+    - Dedicated roadmap/bug tracking in app docs (no task duplication in core roadmap)
+  - **Planning Docs:**
+    - [Monitoring App Roadmap](./Monitoring app/monitoring_roadmap.md)
+    - [Monitoring App Concept & Modular Architecture](./Monitoring app/monitoring_concept_and_modular_architecture.md)
+  - **Status:** Discovery + architecture definition
+
+- **[ ] Collaborative Development: Live Synchronization & File Locking** _(Priority: High)_
+  - **Goal:** Enable synchronized development across multiple developers with real-time visibility and automatic conflict prevention (similar to Siemens TIA Portal Server Projects).
+  - **Problem Solved:** Eliminates merge conflicts by implementing file locking and live updates to show who's working on what.
+  - **Implementation Strategy:** Tiered approach with quick-win (Tier 1) followed by comprehensive solution (Tier 2).
+
+  **📚 Documentation:**
+  - **[COLLABORATIVE_DEVELOPMENT_INDEX.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_INDEX.md)** - Navigation hub for all docs
+  - **[COLLABORATIVE_DEVELOPMENT_QUICK_START.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_QUICK_START.md)** - Decision guide (15 min read)
+  - **[COLLABORATIVE_DEVELOPMENT_VISUAL_GUIDE.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_VISUAL_GUIDE.md)** - Diagrams & architecture
+  - **[COLLABORATIVE_DEVELOPMENT_ANALYSIS.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_ANALYSIS.md)** - Complete option analysis
+  - **[TIER1_GIT_PROTECTION.md](./COLLABORATIVE_DEVELOPMENT/TIER1_GIT_PROTECTION.md)** - GitHub branch protection setup (2-4 hours)
+  - **[TIER2_FILE_LOCKING_SYSTEM.md](./COLLABORATIVE_DEVELOPMENT/TIER2_FILE_LOCKING_SYSTEM.md)** - File locking implementation guide (40-60 hours)
+
+  **Tier 1: Git Protection (Quick Win)**
+  - [ ] Phase 1.1: Enable GitHub branch protection rules
+  - [ ] Phase 1.2: Configure CODEOWNERS and code review requirements
+  - [ ] Phase 1.3: Setup GitHub Actions CI/CD validation
+  - [ ] Phase 1.4: Configure Slack notifications
+  - [ ] Phase 1.5: Create shared "Currently Working On" document
+  - **Timeline:** 2-4 hours (this week)
+  - **Expected Impact:** 40-50% fewer merge conflicts
+
+  **Tier 2: File Locking System (Main Implementation)**
+  - [ ] Phase 2.1: Design database schema (locks table)
+  - [ ] Phase 2.2: Build Flask lock service with REST API
+  - [ ] Phase 2.3: Create pre-commit hook integration
+  - [ ] Phase 2.4: Build lock management dashboard UI
+  - [ ] Phase 2.5: Create Python client library
+  - [ ] Phase 2.6: Implement monitoring & auto-cleanup
+  - [ ] Phase 2.7: Write comprehensive unit tests
+  - [ ] Phase 2.8: Test with 2-3 developers (Phase 2)
+  - [ ] Phase 2.9: Full team rollout & training (Phase 3)
+  - **Timeline:** 40-60 hours (1-2 sprints)
+  - **Expected Impact:** 70-80% fewer merge conflicts
+
+  **Success Metrics:**
+  - After Tier 1: 0 direct commits to main, 100% of changes require PR, 40-50% conflict reduction
+  - After Tier 2: Automatic file locking, dashboard shows active work, 70-80% conflict reduction
+
+  **Key Features:**
+  - Automatic file locking prevents simultaneous editing
+  - Real-time visibility dashboard
+  - Pre-commit hook enforcement
+  - Auto-release with 8-hour timeout
+  - Production-ready Python/Flask code included
+  - Scales to 8-10+ developers
+
+  **Dependencies:** None
+  - **Status:** Pending - Tier 1 can start immediately
+
 - **[ ] Bootstrap 5 Migration** _(Priority: Medium)_
   - **Goal:** Upgrade from Bootstrap 4.5.2 to Bootstrap 5.3.x to modernize the UI framework and improve accessibility.
   - **Detailed Plan:** [docs/bootstrap5_upgrade_analysis.md](bootstrap5_upgrade_analysis.md)
@@ -108,6 +196,33 @@ _Updated March 10, 2026_
 ---
 
 ## ✅ RECENTLY COMPLETED
+
+### CI Validation & Pre-Commit Refinement (March 17, 2026)
+
+- ✅ **Targeted Pre-Commit:** Updated `.pre-commit-config.yaml` and `scripts/validate_code.py` to only validate staged files during commits, drastically reducing false positives from unstaged debt.
+- ✅ **Conditional Sectioning:** Refined `validate_code.py` output to only show relevant tool headers (Bandit, DjLint) when applicable files are staged.
+- ✅ **Windows DB Locking Solved:** Migrated modular app tests (Planning) to strict in-memory SQLite to eliminate `PermissionError` (WinError 32) during parallel test execution.
+
+### AI Instruction Consolidation (March 14, 2026)
+
+- ✅ **Master Instruction File:** Created `AGENTS.md` as the single source of truth for all AI agents, reducing total line count across instruction files by >70%.
+- ✅ **Tool-Specific Overlays:** Implemented thin overlays for `GEMINI.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` to handle tool-specific behaviors without duplicating context.
+- ✅ **Skills Architecture:** Modularized complex workflows (testing, committing, bug tracking, feature creation) into `.agents/skills/` following the AGENTS.md + SKILL.md open standard.
+- ✅ **Knowledge Preservation:** Audited `docs/deprecated/` and preserved all essential project knowledge, patterns, and philosophies in the new Skills and master document.
+- ✅ **Validation Verified:** Full codebase validation (`validate_code.py`) passing with new instruction set.
+
+### Portable Windows Distribution Package (March 13, 2026)
+
+- ✅ **Zero-Installation App:** Created a portable distribution of mockCMMS for non-technical users to access the application via a simple `.zip` file.
+- ✅ **Automated Build:** Implemented `scripts/build_portable.py` to seamlessly bundle embedded Python 3.12, dependencies, databases, and code.
+- ✅ **Refined UX/UI:** Built `START_mockCMMS.bat` which launches an immersive console spinner and seamlessly directs the user to their local browser once the background server goes fully alive.
+
+### Pre-Commit Hooks Automation (March 12, 2026)
+
+- ✅ **Permanent Solution:** Added automatic pre-commit hook installation to `scripts/setup-dev.ps1`.
+- ✅ **Developer Experience:** New developers now automatically get pre-commit and pre-push hooks installed when running setup-dev.ps1.
+- ✅ **Safe Amend Workflow:** Added `scripts/safe-amend.ps1` to prevent pre-commit stash rollback conflicts during `git commit --amend`.
+- ✅ **Git Alias:** `git safe-amend` configured automatically via setup-dev.ps1.
 
 ### Phase 6: Root-Level & Configuration Files (January 2, 2026)
 
@@ -246,7 +361,7 @@ The core application can be improved with the following features to support the 
     - **Security Tool Consolidation:** Integrate `bandit` configuration directly into `pyproject.toml` to reduce configuration file sprawl.
     - **ESLint Plugin Expansion:** Add `eslint-plugin-security` or `eslint-plugin-sonarjs` to catch frontend logic bugs and security issues.
     - **Stylelint Standard Rule Enforcement:** Re-enable standard CSS rules (e.g., class pattern enforcement) to improve frontend architecture consistency.
-  - **Reference:** Consultation Reports (January 24, 2026)
+  - **Reference:** Consultation Reporting (January 24, 2026)
 
 - **[ ] Frontend Architecture Decision** _(Priority: High)_
   - **Goal:** Evaluate and decide on a frontend technology stack migration strategy.
@@ -322,6 +437,13 @@ The core application can be improved with the following features to support the 
     - **High-Volume Random Data Generation:** Generate large datasets (thousands of items per table) with realistic, randomized values to mimic production environments.
     - **Data Simulation Service:** Build a service that can generate realistic mock data (PMs, MOs, technician logs) for stress-testing and demonstration purposes.
     - **User Input Simulation:** Create a UI for simulating user inputs, such as manually triggering a breakdown alarm or reporting a technician as absent, to test the system's dynamic response.
+  - **Follow-up Enhancement Pending:** Add team-aware labor scaling for bulk-generated MOs so generated staffing better reflects assigned team headcount.
+
+- **[ ] Bulk Data Generator Team-Based Labor Scaling** _(Priority: Medium)_
+  - **Goal:** Keep generated maintenance order labor demand aligned with real team capacity.
+  - **Acceptance Criteria:**
+    - **Team Headcount Batching:** In bulk generation flows, each block of 100 generated MOs should represent one complete team profile (example: team headcount = 10 technicians, configurable by team).
+    - **Adaptive MO Labor Count Option:** When assigning a generated MO to a team, provide an option to auto-set MO `labour_count` to the assigned team's headcount.
 
 #### User & Calendar Management
 
@@ -339,8 +461,9 @@ The core application can be improved with the following features to support the 
     - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training).
     - **Workload Tracking:** Track and visualize individual technician workload over time.
 
-- **[ ] Shift Calendar Redesign** _(Priority: Medium)_
+- **[X] Shift Calendar Redesign** _(Priority: Medium)_
   - **Goal:** Improve the usability of the Shift Calendar page.
+  - **Status:** ✅ Completed
   - **Features:**
     - **Calendar Grid View:** Redesign the interface to resemble a standard calendar (month/week view) instead of a list.
     - **No-Scroll Layout:** Optimize the layout to fit within the viewport without requiring vertical scrolling.
@@ -471,7 +594,7 @@ The Advanced Table component was recently completed with core functionality. The
   - **Goal:** Automate repetitive tasks and reporting.
   - **Features:**
     - **Scheduled Exports:** Configure automatic CSV exports on a schedule (daily, weekly, monthly).
-    - **Email Reports:** Automatically email filtered data or reports to stakeholders.
+    - **Email Reporting:** Automatically email filtered data or reporting to stakeholders.
     - **Integration with External Tools:** Connect table data to external systems (Slack notifications, webhook triggers).
     - **Data Change Notifications:** Alert users when filtered data changes or meets certain conditions.
 
@@ -540,7 +663,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
       - Conventional commits format: `type(scope): subject`
       - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
       - Issue linking with closing keywords
-    - ✅ **Automated Release:** Commit message triggers via `[release:TYPE]`
+    - ✅ **Automated Release:** CI/CD pipeline via `workflow_dispatch`
   - **Pending (GitHub Settings):**
     - ⚠️ **Branch Protection Rules:** Must be configured in GitHub repository settings
       - Protect `main` branch from direct pushes
@@ -562,12 +685,12 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
       - Security scanning (bandit)
       - Diff coverage (90% threshold for new code)
       - Codecov integration
-    - ✅ **Release Workflow (`release.yml`):** Manual workflow dispatch from GitHub UI
-      - Choose version bump type (patch/minor/major)
-      - Runs `release_manager.py` automatically
-      - Creates GitHub release with changelog
-    - ✅ **Local Scripts:** `format_code.py`, `validate_code.py`, `release_manager.py`, `auto_release_hook.py`
-    - ✅ **Pre-commit Hooks:** Automated formatting, validation, and optional release on push
+    - ✅ **Release Workflow (`release.yml`):** Automatically runs Google Release Please
+      - Assumes control of versioning based on Conventional Commits
+      - Automatically opens "Release PRs" and updates CHANGELOG.md
+      - Creates GitHub release natively upon merging Release PR
+    - ✅ **Local Scripts:** `format_code.py`, `validate_code.py`
+    - ✅ **Pre-commit Hooks:** Automated formatting and validation checks
   - **Note:** A separate `code-quality.yml` is not needed since `ci.yml` already includes all quality checks (linting, type checking, security scanning).
 
 - **[x] Implement Local Development Scripts** _(Priority: High)_
@@ -575,14 +698,12 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - ✅ `validate_code.py` - Comprehensive pre-commit validation script (simulates CI locally)
     - ✅ `format_code.py` - Actively formats code (Black, isort, Prettier)
     - ✅ `test_workflow.py` - Deprecated (CI pipeline `ci.yml` is the source of truth)
-    - ✅ `release_manager.py` - Release management script implemented
   - **Goal:** Create utility scripts for local development workflow, adapted from Troubleshooting-Wizard.
   - **Reference:** [Troubleshooting-Wizard scripts/](https://github.com/KirilMT/Troubleshooting-Wizard/tree/main/scripts)
   - **Scripts to Implement:**
     - **`validate_code.py`:** ✅ COMPLETED - Comprehensive validation script that runs all checks (linting, formatting, tests, coverage, security) before committing. Simulates CI pipeline locally.
     - **`format_code.py`:** ✅ COMPLETED - Actively formats Python code (not just check). Applies Black, isort, and other formatters.
     - **`test_workflow.py`:** 🚫 DEPRECATED - CI/CD pipeline handles full validation.
-    - **`release_manager.py`:** ✅ COMPLETED - Handles version bumping, changelog updates, and git tagging for releases.
     - **`setup_environment.py`:** Not required for current scope.
   - **Key Requirements:**
     - Scripts must be modular and reusable across the mockCMMS ecosystem.
@@ -673,17 +794,17 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Ensure proper GitHub team integration.
   - **Reference:** [GitHub Issue #5](https://github.com/KirilMT/mockCMMS/issues/5)
 
-### Reports Application Enhancements
+### Reporting Application Enhancements
 
-> **📋 Detailed Roadmap:** See [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for complete task breakdown and implementation details.
+> **📋 Detailed Roadmap:** See [Reporting App Roadmap](../apps/reporting/docs/reporting_roadmap.md) for complete task breakdown and implementation details.
 
 - **[ ] Team-Scoped Shift Report Filtering** _(Priority: High)_
   - Filter handovers, breakdowns, and break activities to MOs assigned to the report team
   - Future: support department/team categories for non-maintenance report types
 
-- **[ ] Link Reports to Core CMMS Data** _(Priority: High)_
+- **[ ] Link Reporting to Core CMMS Data** _(Priority: High)_
   - Link Shift Report sections (Breakdowns, Engineering Support, Handover) to live MO database
-  - Detailed tasks in `apps/reports/docs/reports_roadmap.md`
+  - Detailed tasks in `apps/reporting/docs/reporting_roadmap.md`
 
 - **[ ] Asset Dropdown Population (Select2 AJAX)** _(Priority: Medium)_
   - Replace free-text asset entries with DB-backed API selection
@@ -697,7 +818,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Create a new structure:
       - 3.1 Detailed Directory Structure
       - 3.2 apps/workforceManager
-      - 3.3 apps/reports
+      - 3.3 apps/reporting
     - Verify README.md for consistency.
   - **Reference:** [GitHub Issue #1](https://github.com/KirilMT/mockCMMS/issues/1)
 
@@ -726,9 +847,9 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     ```
 
     **3. Monorepo-Specific: Component Coverage**
-    Use **Codecov Flags** to show coverage of individual applications (e.g., `planning`, `reports`) to reveal gaps hidden by overall coverage.
+    Use **Codecov Flags** to show coverage of individual applications (e.g., `planning`, `reporting`) to reveal gaps hidden by overall coverage.
     - **Planning Module Coverage:** `[![coverage: planning](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=planning)](https://codecov.io/gh/KirilMT/mockCMMS)`
-    - **Reports Module Coverage:** `[![coverage: reports](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=reports)](https://codecov.io/gh/KirilMT/mockCMMS)`
+    - **Reporting Module Coverage:** `[![coverage: reporting](https://codecov.io/gh/KirilMT/mockCMMS/branch/main/graph/badge.svg?token=YOUR_TOKEN&flag=reporting)](https://codecov.io/gh/KirilMT/mockCMMS)`
 
     **Recommended Layout:**
     Group badges by category at the top of `README.md`:
@@ -744,7 +865,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     [![License: MIT](...)](...)
 
     [![Planning Coverage](...)](...)
-    [![Reports Coverage](...)](...)
+    [![Reporting Coverage](...)](...)
     ```
 
 ### `planning` App Enhancements
@@ -762,9 +883,9 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Integrate condition validation into the task assignment workflow.
   - **Reference:** [GitHub Issue #6](https://github.com/KirilMT/mockCMMS/issues/6)
 
-### `reports` App Enhancements
+### `reporting` App Enhancements
 
-> **See:** [Reports App Roadmap](../apps/reports/docs/reports_roadmap.md) for future reporting features.
+> **See:** [Reporting App Roadmap](../apps/reporting/docs/reporting_roadmap.md) for future reporting features.
 
     - **Availability Dashboard:** Visualize technician availability, shifts, and status (on-call, sick leave, training).
     - **Workload Tracking:** Track and visualize individual technician workload over time.
@@ -782,7 +903,7 @@ Cross-cutting concerns that improve overall project quality, team collaboration,
     - Develop logic for complex scheduling scenarios like multi-day shutdowns or holidays, factoring in technician availability.
     - Create a simulation feature that can optimize schedules before finalizing them.
 
-### `reports` App Enhancements
+### `reporting` App Enhancements
 
 This application is intended for reporting and analytics. The following features would provide significant value.
 
@@ -796,23 +917,39 @@ This application is intended for reporting and analytics. The following features
     - Define an HMI → CMMS integration API contract (webhook or polling endpoint).
     - Auto-create a generic Reactive MO with pre-filled context from the HMI signal.
     - Allow operators/technicians to edit the MO after the fact (fault, root cause, recovery time).
-    - Ensure auto-created MOs are correctly picked up by the Reports Breakdowns section.
-  - **Note:** The Reports-side tracking (ensuring these MOs appear in Shift Reports) is in
-    `apps/reports/docs/reports_roadmap.md`.
+    - Ensure auto-created MOs are correctly picked up by the Reporting Breakdowns section.
+  - **Note:** The Reporting-side tracking (ensuring these MOs appear in Shift Reporting) is in
+    `apps/reporting/docs/reporting_roadmap.md`.
 
 - **[ ] Automated & Specialized Reporting**
-  - **Goal:** Generate key operational reports automatically.
+  - **Goal:** Generate key operational reporting automatically.
   - **Features:**
     - **Weekend Task Report:** A report summarizing all tasks planned and completed over a weekend.
     - **Shift Production Report:** A summary of maintenance activities during a specific shift.
-    - **Technician-Submitted Reports:** A system for technicians to log ad-hoc issues like breakdowns or PLC alarms, which can then be aggregated into reports.
+    - **Technician-Submitted Reporting:** A system for technicians to log ad-hoc issues like breakdowns or PLC alarms, which can then be aggregated into reporting.
 
 - **[ ] Advanced Statistical Analysis**
   - **Goal:** Provide deeper insights into maintenance operations.
   - **Features:**
     - Develop statistical dashboards for asset performance (e.g., Mean Time Between Failures).
     - Analyze technician performance and skill gaps.
-    - Generate reports on spare part consumption trends.
+    - Generate reporting on spare part consumption trends.
+
+### `troubleshooting` App (Planned New Module)
+
+> **See:** [Troubleshooting App Roadmap](./Troubleshooting app/troubleshooting_roadmap.md) for phased implementation tasks.
+
+- **[ ] Build Troubleshooting Module Foundation** _(Priority: High)_
+  - Scaffold `apps/troubleshooting` as an isolated Flask module with blueprint registration, config, and test suite.
+  - Keep strict boundary from core app and other apps; integrate only through controlled app registration and shared APIs.
+
+- **[ ] Implement Troubleshooting Knowledge Workflows** _(Priority: High)_
+  - Add technology selector and troubleshooting decision flow.
+  - Support error-code-centric diagnosis with configurable references to manuals/knowledge entries.
+
+- **[ ] Add Config-Driven Data and Resource Management** _(Priority: Medium)_
+  - Store troubleshooting mappings in app-specific config and/or dedicated app tables.
+  - Ensure secure handling of local/manual resource paths and separation from repository-sensitive data.
 
 ---
 
@@ -826,6 +963,8 @@ This application is intended for reporting and analytics. The following features
 **High Priority:**
 
 - **Line Conditions for Planning:** [See Planning Roadmap](../apps/planning/docs/planning_roadmap.md)
+- **Troubleshooting App Creation (New Modular App):** [See Troubleshooting Roadmap](./Troubleshooting app/troubleshooting_roadmap.md)
+- **Monitoring App Creation (New Modular App):** [See Monitoring Roadmap](./Monitoring app/monitoring_roadmap.md)
 - **Frontend Architecture Decision:** Evaluate migration to a modern framework (Angular/React).
 - **Docker-Based Visual Regression Testing:** Standardize visual testing with containerized runner.
 - **CI/CD Pipeline:** ✅ COMPLETE.
@@ -840,9 +979,10 @@ This application is intended for reporting and analytics. The following features
 
 - **Advanced User & Technician Management:** Comprehensive user management with roles, skills, training, and manpower API integration (availability, workload, dynamic status).
 - **Shift Calendar Redesign:** Improve calendar UI with grid view and interactive elements.
-- **Automated, Specialized Reports:** [See Reports Roadmap](../apps/reports/docs/reports_roadmap.md)
+- **Automated, Specialized Reporting:** [See Reporting Roadmap](../apps/reporting/docs/reporting_roadmap.md)
 - **HMI → Reactive MO Integration:** Auto-create breakdown MOs from HMI MNTC button signal.
 - **Hierarchical Assets & Automated Spares:** Deeper, more intelligent asset and inventory management.
+- **Bulk Data Generator Team-Based Labor Scaling:** Add team headcount batching (100 MOs per complete team profile) and optional MO `labour_count` auto-alignment to assigned team size.
 - **Form Input Controls & Table Filtering:** Dropdowns for predefined values, date-specific operators, **numeric comparators (between / greater-than / less-than)** for numeric columns.
 - **Infrastructure & Quality Refinement:** Ruff expansion, ESLint/Stylelint enforcement, and global coverage alignment (85%).
 - **UI Regression Automation:** End-to-end UI testing.

@@ -5,7 +5,7 @@ Modular Isolation:
     To improve development speed, individual apps under `apps/` can be
     excluded from test collection by setting environment variables:
     - PLANNING_ENABLED=false
-    - REPORTS_ENABLED=false
+    - REPORTING_ENABLED=false
 
     By default, apps are considered enabled to ensure total project coverage
     unless explicitly set to 'false', '0', or 'f'.
