@@ -450,36 +450,25 @@ if (Test-Path $templateFile) {
 $hookTemplate = Join-Path $projectRoot ".githooks\commit-msg"
 
 $convCommitExe = Join-Path $projectRoot ".venv\Scripts\conventional-pre-commit.exe"
-if (-not (Test-Path $convCommitExe)) {
-    $convCommitExe = "conventional-pre-commit" # Fallback to PATH
-}
+$convCommitExe = $convCommitExe.Replace("\", "/")
+$pythonExe = Join-Path $projectRoot ".venv\Scripts\python.exe"
+$pythonExe = $pythonExe.Replace("\", "/")
 
 # Install native commit-msg hook for Windows compatibility (avoids pre-commit shell dependency)
 $nativeHookPath = Join-Path $projectRoot ".git\hooks\commit-msg"
 $nativeHookContent = @"
-#!$pythonExe
-import sys
-import subprocess
-import os
-
+#!/bin/sh
 # 1. Run Conventional Commits Validator
-try:
-    subprocess.run(["$convCommitExe", sys.argv[1]], check=True)
-except subprocess.CalledProcessError:
-    sys.exit(1)
-except Exception as e:
-    print(f"Warning: Conventional commit validator failed to run: {e}")
+"$convCommitExe" "`$1" || exit 1
 
-# 2. Run our custom Length Checker
-try:
-    subprocess.run(["$pythonExe", "scripts/check_commit_msg.py", sys.argv[1]], check=True)
-except subprocess.CalledProcessError:
-    sys.exit(1)
+# 2. Run our custom Length Checker (One-liner)
+"$pythonExe" -c "import sys; msg = open(sys.argv[1], encoding='utf-8').read().splitlines(); exit(any(len(l) > 88 for l in msg))" "`$1" || { echo "ERROR: Commit message exceeds 88 characters."; exit 1; }
 "@
 
 if (Test-Path ".git") {
     Write-Host "   Installing native commit-msg hook..." -ForegroundColor Yellow
-    Set-Content -Path $nativeHookPath -Value $nativeHookContent -Encoding utf8
+    # Use Out-File with -Encoding ascii to avoid BOM issues with Git on Windows hooks
+    $nativeHookContent | Out-File -FilePath $nativeHookPath -Encoding ascii -NoNewline
     Write-Host "   Handled native commit-msg hook " -NoNewline -ForegroundColor White
     Write-Host "OK" -ForegroundColor Green
 }
