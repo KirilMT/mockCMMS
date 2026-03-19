@@ -10,7 +10,7 @@ docformatter==1.7.7     # Docstring formatting (PEP 257 compliant)
 
 # Linting (ESSENTIAL - Run always)
 flake8==7.3.0
-ruff==0.15.5
+ruff==0.15.7
 pylint==3.3.9
 
 # Type Checking (OPTIONAL - Run periodically)
@@ -37,7 +37,7 @@ yamllint==1.37.1        # YAML file validation
 # Pre-commit hooks (OPTIONAL - Configure later)
 # Run 'pre-commit install' only when ready to use
 pre-commit==4.3.0
-conventional-pre-commit==4.0.0
+conventional-pre-commit==4.4.0
 
 # HTML/Template Linting
 djlint>=1.36.4
