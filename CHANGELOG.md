@@ -11,10 +11,9 @@ and this project adheres to
 
 ## [2.4.0](https://github.com/KirilMT/mockCMMS/compare/v2.3.0...v2.4.0) (2026-03-19)
 
-
 ### Features
 
-* **workflow:** add explicit checkout step to release workflow ([a73a189](https://github.com/KirilMT/mockCMMS/commit/a73a1894b0ac954400ef3bfd49ebb08012ad1ab8))
+- **workflow:** add explicit checkout step to release workflow ([a73a189](https://github.com/KirilMT/mockCMMS/commit/a73a1894b0ac954400ef3bfd49ebb08012ad1ab8))
 
 ## [2.3.0](https://github.com/KirilMT/mockCMMS/compare/v2.2.0...v2.3.0) (2026-03-18)
 

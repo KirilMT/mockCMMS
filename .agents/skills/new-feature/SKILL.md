@@ -41,14 +41,14 @@ See Skill: `testing-workflow` for test placement and patterns.
 
 ### Core Feature (in `src/`)
 
-| Component | Location |
-|---|---|
-| Routes (API) | `src/routes/api.py` |
-| Routes (web) | `src/routes/main.py` |
-| Business logic | `src/services/` |
-| Templates | `src/templates/` |
-| Static assets | `src/static/css/`, `src/static/js/` |
-| Configuration | `src/config/` |
+| Component      | Location                            |
+| -------------- | ----------------------------------- |
+| Routes (API)   | `src/routes/api.py`                 |
+| Routes (web)   | `src/routes/main.py`                |
+| Business logic | `src/services/`                     |
+| Templates      | `src/templates/`                    |
+| Static assets  | `src/static/css/`, `src/static/js/` |
+| Configuration  | `src/config/`                       |
 
 ### New Modular App (in `apps/`)
 
@@ -75,6 +75,7 @@ apps/<app_name>/
 ```
 
 **Critical rules for new apps:**
+
 - Add toggle to `.env.example`: `<APP_NAME>_ENABLED=False`
 - Register blueprint conditionally in `src/app.py` (check env var)
 - **NEVER** import `apps/*` at module level in `src/` — use conditional imports inside functions

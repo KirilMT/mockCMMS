@@ -1,12 +1,15 @@
+---
 name: General Inquiry
-description: Ask a general question or submit a task that is not a bug or feature request
+description: >-
+  Ask a general question or submit a task that is not a bug or feature request
 title: "[Inquiry]: "
 labels: ["question"]
 body:
   - type: markdown
     attributes:
-      value: |
-        Please use this form for general questions, documentation updates, or miscellaneous tasks.
+      value: >-
+        Please use this form for general questions, documentation updates, or
+        miscellaneous tasks.
   - type: dropdown
     id: inquiry-type
     attributes:

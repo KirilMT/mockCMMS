@@ -1,4 +1,5 @@
 # .pre-commit-config.yaml
+---
 #
 # ARCHITECTURE: Pre-commit hooks are CHECK-ONLY (verify, never modify files).
 # Formatting is done EXCLUSIVELY by: python scripts/format_code.py
@@ -21,11 +22,21 @@ repos:
     hooks:
       - id: validate-code
         name: Validate Code (lint, type-check, tests)
-        # Only run backend/frontend on staged files. Config/Docs are handled by other hooks.
-        entry: python scripts/validate_code.py --quick --backend --frontend
+        # Only run backend/frontend on staged files. Config/Docs are handled
+        # by other hooks.
+        entry: |
+          python scripts/validate_code.py \
+            --quick \
+            --backend \
+            --frontend
         language: system
-        pass_filenames: true
-        require_serial: true  # All files in one call — prevents repeated output
+        # Do not pass filenames to the validate script. The script handles
+        # its own file discovery/quick modes. Allowing pre-commit to append
+        # filenames caused argparse "unrecognized arguments" errors when
+        # the script was invoked during commit hooks.
+        pass_filenames: false
+        require_serial: true
+        # All files in one call — prevents repeated output
         stages: [pre-commit]
 
       - id: pre-push-validation
