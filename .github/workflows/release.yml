@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: true
 
 permissions:
   contents: write
@@ -45,5 +45,6 @@ jobs:
         run: |
           npx prettier --write CHANGELOG.md
           git add CHANGELOG.md
-          git commit -m "chore: ensure CHANGELOG.md is Prettier-formatted (Release Please PR)" || exit 0
+          git commit -m "chore: ensure CHANGELOG.md is Prettier-formatted \
+           (Release Please PR)" || exit 0
           git push origin ${{ steps.release.outputs.pr.branch }}

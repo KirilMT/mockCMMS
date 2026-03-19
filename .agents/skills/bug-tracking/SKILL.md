@@ -37,12 +37,12 @@ When you observe unexpected behavior:
 
 When reporting issues, categorize by severity:
 
-| Severity | Criteria | Action |
-|---|---|---|
-| 🔴 **Critical** | Security vulnerabilities, data loss, app crashes, type errors | Fix immediately |
-| 🟡 **High** | Code duplicates >10 lines, coverage <70% for critical paths, broken user workflows | Fix this sprint |
-| 🟠 **Medium** | Style violations, medium complexity (radon CC 10-15), missing docstrings | Fix when touching the file |
-| 🟢 **Low** | Minor style issues, low complexity improvements, cosmetic concerns | Technical debt backlog |
+| Severity        | Criteria                                                                           | Action                     |
+| --------------- | ---------------------------------------------------------------------------------- | -------------------------- |
+| 🔴 **Critical** | Security vulnerabilities, data loss, app crashes, type errors                      | Fix immediately            |
+| 🟡 **High**     | Code duplicates >10 lines, coverage <70% for critical paths, broken user workflows | Fix this sprint            |
+| 🟠 **Medium**   | Style violations, medium complexity (radon CC 10-15), missing docstrings           | Fix when touching the file |
+| 🟢 **Low**      | Minor style issues, low complexity improvements, cosmetic concerns                 | Technical debt backlog     |
 
 ## Bug Fix Workflow
 
@@ -54,11 +54,11 @@ When reporting issues, categorize by severity:
 
 ## Status Transitions
 
-| From | To | Trigger |
-|---|---|---|
-| Open | In Progress | You start working on the bug |
-| In Progress | Fixed | Code applied, automated verification passed |
-| Fixed | ✅ Resolved | **User confirms** fix works |
+| From        | To          | Trigger                                     |
+| ----------- | ----------- | ------------------------------------------- |
+| Open        | In Progress | You start working on the bug                |
+| In Progress | Fixed       | Code applied, automated verification passed |
+| Fixed       | ✅ Resolved | **User confirms** fix works                 |
 
 **NEVER** mark a bug as "Resolved" without explicit user confirmation.
 "Fixed" = code is applied. "Resolved" = user verified.
@@ -67,10 +67,10 @@ When reporting issues, categorize by severity:
 
 ### File Locations (Modular Structure)
 
-| Scope | File |
-|---|---|
-| Core CMMS bugs | `docs/bug_tracking.md` |
-| Planning app bugs | `apps/planning/docs/planning_bug_tracking.md` |
+| Scope              | File                                            |
+| ------------------ | ----------------------------------------------- |
+| Core CMMS bugs     | `docs/bug_tracking.md`                          |
+| Planning app bugs  | `apps/planning/docs/planning_bug_tracking.md`   |
 | Reporting app bugs | `apps/reporting/docs/reporting_bug_tracking.md` |
 
 ### Update Rules

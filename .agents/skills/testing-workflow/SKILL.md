@@ -41,12 +41,12 @@ description: Use when writing tests, debugging coverage gaps, running validation
 
 Complete code verification requires 4 complementary layers:
 
-| Layer | What It Verifies | Tools |
-|---|---|---|
-| **1. Regression Tests** | Behavior consistency | pytest, jest, playwright |
-| **2. Code Quality Analysis** | Style, syntax, security | ruff, pylint, mypy, bandit, eslint |
-| **3. Requirements Validation** | Business logic correctness | Manual review |
-| **4. Enhanced Testing** | Workflows, performance, edge cases | pytest-benchmark, locust |
+| Layer                          | What It Verifies                   | Tools                              |
+| ------------------------------ | ---------------------------------- | ---------------------------------- |
+| **1. Regression Tests**        | Behavior consistency               | pytest, jest, playwright           |
+| **2. Code Quality Analysis**   | Style, syntax, security            | ruff, pylint, mypy, bandit, eslint |
+| **3. Requirements Validation** | Business logic correctness         | Manual review                      |
+| **4. Enhanced Testing**        | Workflows, performance, edge cases | pytest-benchmark, locust           |
 
 **Key insight:** Tests alone ≠ complete verification. Layer 2 is automated via `scripts/validate_code.py`. Layers 3-4 require human judgment.
 
@@ -75,19 +75,19 @@ npm run test:coverage
 
 ### Key Fixtures Available (conftest.py)
 
-| Fixture | Purpose |
-|---|---|
-| `app` | Flask app in testing mode |
-| `client` | Test client for HTTP requests |
-| `auth_client` | Authenticated test client (logged in) |
-| `db_session` | Database session with auto-rollback |
-| `sample_asset` | Pre-created asset |
-| `sample_mo` | Pre-created maintenance order |
-| `sample_user` | Pre-created user |
-| `sample_admin_user` | Admin user for permission tests |
-| `sample_role` | Sample role (Technician) |
-| `sample_team` | Sample team with shift info |
-| `multiple_assets` | 3 assets for list/filter testing |
+| Fixture             | Purpose                               |
+| ------------------- | ------------------------------------- |
+| `app`               | Flask app in testing mode             |
+| `client`            | Test client for HTTP requests         |
+| `auth_client`       | Authenticated test client (logged in) |
+| `db_session`        | Database session with auto-rollback   |
+| `sample_asset`      | Pre-created asset                     |
+| `sample_mo`         | Pre-created maintenance order         |
+| `sample_user`       | Pre-created user                      |
+| `sample_admin_user` | Admin user for permission tests       |
+| `sample_role`       | Sample role (Technician)              |
+| `sample_team`       | Sample team with shift info           |
+| `multiple_assets`   | 3 assets for list/filter testing      |
 
 ### SQLAlchemy Connection Safety in Tests
 
@@ -106,14 +106,14 @@ db.engine.dispose()         # Shutdown engine
 
 ### Test File Placement
 
-| Test Type | Directory | Example |
-|---|---|---|
-| Unit (isolated) | `tests/backend/unit/` | `test_db_utils.py` |
-| Functional (routes) | `tests/backend/functional/` | `test_api_routes.py` |
-| Integration (E2E) | `tests/backend/integration/` | `test_mo_workflow.py` |
-| Security (auth) | `tests/backend/security/` | `test_auth.py` |
-| Performance | `tests/backend/performance/` | `test_query_perf.py` |
-| Reliability | `tests/backend/reliability/` | `test_error_handling.py` |
+| Test Type           | Directory                    | Example                  |
+| ------------------- | ---------------------------- | ------------------------ |
+| Unit (isolated)     | `tests/backend/unit/`        | `test_db_utils.py`       |
+| Functional (routes) | `tests/backend/functional/`  | `test_api_routes.py`     |
+| Integration (E2E)   | `tests/backend/integration/` | `test_mo_workflow.py`    |
+| Security (auth)     | `tests/backend/security/`    | `test_auth.py`           |
+| Performance         | `tests/backend/performance/` | `test_query_perf.py`     |
+| Reliability         | `tests/backend/reliability/` | `test_error_handling.py` |
 
 ### Test Structure (AAA Pattern)
 
@@ -156,7 +156,7 @@ python scripts/generate_tests.py --scan                               # Find unt
 element.dispatchEvent(new Event("click"));
 
 // GOOD: Call the function directly with specific inputs
-await tableModals.saveTableConfiguration();  // Triggers the uncovered branch
+await tableModals.saveTableConfiguration(); // Triggers the uncovered branch
 ```
 
 ### Mock Timing
@@ -164,7 +164,7 @@ await tableModals.saveTableConfiguration();  // Triggers the uncovered branch
 ```javascript
 // BAD: Mocking after instantiation — handlers already bound
 const instance = new MyClass();
-jest.spyOn(instance, "method");  // Too late!
+jest.spyOn(instance, "method"); // Too late!
 
 // GOOD: Mock on prototype BEFORE instantiation
 jest.spyOn(MyClass.prototype, "method").mockImplementation(() => {});
@@ -177,10 +177,10 @@ const instance = new MyClass();
 
 ### Thresholds (IMMUTABLE)
 
-| Scope | Tool | Threshold | Config File |
-|---|---|---|---|
-| Backend | pytest | ≥85% | `pyproject.toml` (`--cov-fail-under=85`) |
-| Frontend | jest | ≥80% (branches, functions, lines, statements) | `package.json` (`coverageThreshold`) |
+| Scope    | Tool   | Threshold                                     | Config File                              |
+| -------- | ------ | --------------------------------------------- | ---------------------------------------- |
+| Backend  | pytest | ≥85%                                          | `pyproject.toml` (`--cov-fail-under=85`) |
+| Frontend | jest   | ≥80% (branches, functions, lines, statements) | `package.json` (`coverageThreshold`)     |
 
 **80% is the absolute floor.** 79.9% = FAILURE. Fix by adding tests, never by lowering config.
 
@@ -188,10 +188,10 @@ const instance = new MyClass();
 
 **Target error paths, not more happy paths.** This is the single most effective strategy for improving coverage with minimal test count.
 
-| Approach | Coverage Impact | Test Count |
-|---|---|---|
-| ❌ More happy path tests | Low (+1-2% per 10 tests) | Many |
-| ✅ Target uncovered error paths | High (+5-10% per 10 tests) | Few |
+| Approach                        | Coverage Impact            | Test Count |
+| ------------------------------- | -------------------------- | ---------- |
+| ❌ More happy path tests        | Low (+1-2% per 10 tests)   | Many       |
+| ✅ Target uncovered error paths | High (+5-10% per 10 tests) | Few        |
 
 **How to find uncovered error paths:**
 
@@ -253,14 +253,14 @@ Test fails after code change:
 
 When tests or linting fail:
 
-| Error Type | Action | Max Attempts |
-|---|---|---|
-| Import order (isort) | Run `isort --fix` | 1 |
-| Code formatting (black) | Run `black file.py` | 1 |
-| Unused imports (ruff F401) | Edit to remove | 2 |
-| Missing type hints (mypy) | Add type hints | 2 |
-| Test failures | Analyze error, fix code or test | 3 |
-| Coverage below threshold | Add more tests | 3 |
+| Error Type                 | Action                          | Max Attempts |
+| -------------------------- | ------------------------------- | ------------ |
+| Import order (isort)       | Run `isort --fix`               | 1            |
+| Code formatting (black)    | Run `black file.py`             | 1            |
+| Unused imports (ruff F401) | Edit to remove                  | 2            |
+| Missing type hints (mypy)  | Add type hints                  | 2            |
+| Test failures              | Analyze error, fix code or test | 3            |
+| Coverage below threshold   | Add more tests                  | 3            |
 
 After 3 failed attempts, report to user with error details and what you tried.
 
@@ -297,28 +297,32 @@ After implementing changes that affect **user-facing behavior** (UI, API respons
 # <Feature> — Verification Guide
 
 ## Prerequisites
+
 - [ ] Server running (`python run.py`)
 - [ ] Login: admin / admin123
 
 ## Test Cases
 
-| # | Action | Expected Result | ✅/❌ |
-|---|--------|-----------------|-------|
-| 1 | Navigate to /page | Page loads without errors | |
-| 2 | Click "Submit" with empty form | Validation error shown | |
-| 3 | Submit valid data | Success message, data persisted | |
+| #   | Action                         | Expected Result                 | ✅/❌ |
+| --- | ------------------------------ | ------------------------------- | ----- |
+| 1   | Navigate to /page              | Page loads without errors       |       |
+| 2   | Click "Submit" with empty form | Validation error shown          |       |
+| 3   | Submit valid data              | Success message, data persisted |       |
 
 ## Edge Cases
+
 - [ ] Empty inputs
 - [ ] Special characters
 - [ ] Multiple rapid submissions
 
 ## Browser Console
+
 - [ ] No JavaScript errors
 - [ ] No failed network requests
 ```
 
 **Rules:**
+
 - One guide per feature/fix — don't create a new doc for every minor tweak.
 - Update existing guides when modifying previously-documented features.
 - Keep it scannable — tables over paragraphs, checkboxes over prose.
@@ -327,6 +331,7 @@ After implementing changes that affect **user-facing behavior** (UI, API respons
 ### Evidence for Table Component Changes
 
 When modifying the Advanced Table component, also provide:
+
 - Video/screenshot evidence of browser testing
 - Console logs (no JS errors)
 - Network logs (API calls to `/api/table-config/` succeed)

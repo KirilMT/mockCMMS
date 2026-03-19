@@ -1,3 +1,4 @@
+---
 version: 2
 updates:
   - package-ecosystem: "pip"
@@ -5,7 +6,8 @@ updates:
     schedule:
       interval: "weekly"
 
-    # 1. Stability: Ignore all Major (breaking) version updates (e.g., 1.x.x to 2.x.x).
+    # 1. Stability: Ignore all Major (breaking) version updates (e.g., 1.x.x to
+    #   2.x.x).
     # This prevents most build failures and unnecessary CI runs.
     ignore:
       - dependency-name: "*"

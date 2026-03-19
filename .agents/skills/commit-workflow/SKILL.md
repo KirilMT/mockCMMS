@@ -23,6 +23,7 @@ description: Use when staging, reviewing, and committing changes. Covers the ful
 **MANDATORY** — never commit without formatting and passing validation.
 
 **Format first, validate second:**
+
 ```bash
 python scripts/format_code.py      # Format ALL code (must be the LAST edit before commit)
 python scripts/validate_code.py    # Full repo scan (lint + test + coverage)
@@ -31,6 +32,7 @@ python scripts/validate_code.py    # Full repo scan (lint + test + coverage)
 > ⚠️ **CRITICAL RULE:** `format_code.py` must be the **very last thing** you run before `git add` and `git commit`. If you edit ANY file after formatting, you MUST re-run `format_code.py` before committing. The pre-commit hook will catch unformatted code and reject the commit.
 
 **What the pre-commit hook does automatically:**
+
 - Runs `validate_code.py --quick` on only your **staged** files (with `require_serial: true` for clean output).
 - Ensures your specific changes pass lint/test even if other stashed files are messy.
 
@@ -56,6 +58,7 @@ git add path/to/file1.ext path/to/file2.ext
 ```
 
 Rules:
+
 - **DO NOT** stage unrelated changes — commit them separately
 - Use `git add -p` for partial staging if a file has mixed changes
 - **DO NOT** stage debug code, `console.log`, or temporary changes
@@ -133,10 +136,10 @@ Check if your branch is tracked:
 git branch -vv
 ```
 
-| Branch Status | Action | Command |
-|---|---|---|
+| Branch Status                     | Action           | Command                                           |
+| --------------------------------- | ---------------- | ------------------------------------------------- |
 | **Untracked** (no `[origin/...]`) | Create PR & Push | `gh pr create --base main --head <branch> --fill` |
-| **Tracked** (has `[origin/...]`) | Push Updates | `git push` |
+| **Tracked** (has `[origin/...]`)  | Push Updates     | `git push`                                        |
 
 **⚠️ NEVER** use `git push -u origin <branch>` for new branches — it creates orphan branches with no PR.
 

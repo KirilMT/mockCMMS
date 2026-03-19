@@ -1209,7 +1209,18 @@ Examples:
     )
     parser.add_argument("files", nargs="*", help="Specific files to validate")
 
-    args = parser.parse_args()
+    # Use parse_known_args to be robust when external tooling (e.g. pre-commit)
+    # appends filenames or other positional arguments to the command. Some
+    # pre-commit configurations may append staged filenames; instead of
+    # failing with an argparse 'unrecognized arguments' error, accept known
+    # args and merge any unknown items into the `files` list so the script
+    # can handle them via its internal discovery logic.
+    args, unknown = parser.parse_known_args()
+    if unknown:
+        # Unknown may include flags or filenames; we treat all unknown tokens
+        # as additional file paths (the script already filters them later).
+        # This makes the CLI tolerant to being invoked as: <entry> [files...]
+        args.files = list(args.files or []) + list(unknown)
 
     # Determine what to run
     # If no specific category flags are set, run ALL.

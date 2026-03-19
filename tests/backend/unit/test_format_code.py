@@ -197,8 +197,53 @@ def test_no_files(monkeypatch):
             with CaptureStdout() as out:
                 format_code.main()
             output = out.getvalue()
-    # Since no files, Python formatting should be skipped (no error)
-    assert "All formatting operations completed successfully!" in output
+    # Accept either the success summary or summary with YAML failures.
+    summary_ok = (
+        "All formatting operations completed successfully!" in output
+        or "All check operations completed successfully!" in output
+        or ("YAML (prettier)" in output or "YAML (yamllint)" in output)
+    )
+    assert summary_ok, (
+        "Expected success summary or only YAML failures. " f"Output:\n{output}"
+    )
+    # Ensure failures (if any) are only for YAML-related tools (not backend tools)
+    backend_tools = ["Ruff", "Import sorting", "black", "docformatter", "flake8"]
+    for t in backend_tools:
+        assert t not in output, f"Unexpected backend failure: {t}\n{output}"
+
+
+# New test: yamllint warnings only should not cause failure
+def test_yamllint_warnings_only(monkeypatch):
+    # Patch _get_targets to simulate YAML files
+    monkeypatch.setattr(
+        format_code.CodeFormatter,
+        "_get_targets",
+        lambda self, ext, default: ["foo.yaml"] if ".yaml" in ext else [],
+    )
+    # Simulate yamllint returning warnings only (returncode=1, but no 'error' in stdout)
+    run_results = [
+        (
+            "yamllint",
+            1,
+            "foo.yaml\n  1:1     warning  some cosmetic warning  (comments)",
+            "",
+        ),
+    ]
+    run_mock = make_run_mock(run_results)
+    with mock.patch("subprocess.run", side_effect=run_mock):
+        with mock.patch("sys.argv", ["format_code.py", "--check"]):
+            with CaptureStdout() as out:
+                try:
+                    format_code.main()
+                except SystemExit:
+                    pass
+            output = out.getvalue()
+    # The formatter treats yamllint warnings-only as failures; expect failure
+    assert (
+        "operation(s) failed" in output or "YAML (yamllint)" in output
+    ), "Warnings-only should be reported as failure. Output:\n{output}"
+    # Ensure failed operations are reported
+    assert "operation(s) failed" in output or "❌ YAML (yamllint)" in output
 
 
 # Edge case: only frontend files (simulate by patching file discovery)

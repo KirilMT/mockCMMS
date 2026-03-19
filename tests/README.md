@@ -246,15 +246,16 @@ Add to appropriate category in `tests/frontend/`:
 
 ### Database Types and When They're Used
 
-| Database Type | Example | Created By | When |
-|--------------|---------|------------|------|
-| **Production** | `planning.db`, `reporting.db`, `mockcmms.db` | `run.py` | Running the app normally |
-| **E2E** | `planning_e2e.db`, `reporting_e2e.db`, `mockcmms_e2e.db` | Playwright tests | E2E tests with `E2E_TEST=true` |
-| **In-Memory** | `sqlite:///:memory:` | pytest | ALL backend unit/functional/integration tests |
+| Database Type  | Example                                                  | Created By       | When                                          |
+| -------------- | -------------------------------------------------------- | ---------------- | --------------------------------------------- |
+| **Production** | `planning.db`, `reporting.db`, `mockcmms.db`             | `run.py`         | Running the app normally                      |
+| **E2E**        | `planning_e2e.db`, `reporting_e2e.db`, `mockcmms_e2e.db` | Playwright tests | E2E tests with `E2E_TEST=true`                |
+| **In-Memory**  | `sqlite:///:memory:`                                     | pytest           | ALL backend unit/functional/integration tests |
 
 ### ⚠️ Common Mistake: Testing E2E Configuration
 
 **WRONG:** Setting `E2E_TEST=True` in a unit test without in-memory URIs:
+
 ```python
 # ❌ THIS CREATES FILE-BASED DATABASES!
 with patch.dict(os.environ, {"E2E_TEST": "True"}):
@@ -262,6 +263,7 @@ with patch.dict(os.environ, {"E2E_TEST": "True"}):
 ```
 
 **CORRECT:** Always pass in-memory URIs when testing E2E configuration:
+
 ```python
 # ✅ This uses in-memory databases even with E2E_TEST=True
 with patch.dict(os.environ, {"E2E_TEST": "True"}):
@@ -309,6 +311,7 @@ When adding a new app (e.g., `apps/inventory/`):
 ### Safety Net Tests
 
 The `tests/backend/security/test_db_isolation_proof.py` file contains comprehensive tests that will **FAIL immediately** if:
+
 - Any production database files are created during testing
 - Any E2E database files are created during backend pytest
 - Any database bind uses a file-based URI instead of in-memory
@@ -374,6 +377,7 @@ python scripts/generate_tests.py src/services/module.py --force
 ```
 
 **Generated tests include:**
+
 - Proper imports following repo conventions
 - Class and function organization
 - Docstrings for all test methods
@@ -384,11 +388,13 @@ python scripts/generate_tests.py src/services/module.py --force
 **You write:** Test logic, assertions, mock setup, edge cases.
 
 **Important limitations:**
+
 - Generated tests are scaffolding, not complete/production-ready assertions.
 - Review and harden all generated tests before commit.
 - Private functions (prefixed with `_`) are intentionally skipped.
 
 **Category detection (auto):**
+
 - `api.py`, `routes.py` -> `tests/backend/functional/`
 - `services/`, `utils.py`, `models.py` -> `tests/backend/unit/`
 - default -> `tests/backend/unit/`
