@@ -331,39 +331,45 @@ class CodeFormatter:
 
             # Compute the canonical check command for this step (if available).
             check_cmd = self._get_check_cmd(desc, flake8_exclude)
-            # If the initial run failed and a check command exists, always
-            # print the compact 'check' invocation (Command 2) and the
-            # standardized summary. This applies both in format mode and in
-            # check-only mode so the user always sees Command 2 when the
-            # tool reported issues.
+            # If the initial run failed and a check command exists, in format
+            # mode we run the compact 'check' invocation (Command 2) and show
+            # the standardized summary. However, when running in check-only
+            # mode the initial invocation is already a check — do NOT run a
+            # second check command (that would duplicate output). Instead,
+            # record the failure and continue.
             if not success:
-                if check_cmd:
-                    print("")
-                    # Use the lower-level helper to print only the indented
-                    # 'Command:' line (no cyan header) by passing
-                    # suppress_summary=True and section=None. Then print the
-                    # standardized check result using _print_check_result so
-                    # the wording and layout match other tools.
-                    check_success, _ = self._run_formatter_with_output(
-                        check_cmd,
-                        desc,
-                        None,
-                        None,
-                        indent=0,
-                        suppress_output=True,
-                        print_command=True,
-                        section=None,
-                        section_idx=None,
-                        section_total=None,
-                        suppress_summary=True,
-                    )
-                    # Print standardized check result (indented)
-                    self._print_check_result(desc, check_success)
-                    if not check_success:
-                        failed_steps.append((step_header, desc + " (check)", True))
-                    success = check_success
-                else:
+                if self.check_only:
+                    # The initial command was the check itself; record the
+                    # failure and move on without executing a second check.
                     failed_steps.append((step_header, desc, False))
+                else:
+                    if check_cmd:
+                        print("")
+                        # Use the lower-level helper to print only the indented
+                        # 'Command:' line (no cyan header) by passing
+                        # suppress_summary=True and section=None. Then print the
+                        # standardized check result using _print_check_result so
+                        # the wording and layout match other tools.
+                        check_success, _ = self._run_formatter_with_output(
+                            check_cmd,
+                            desc,
+                            None,
+                            None,
+                            indent=0,
+                            suppress_output=True,
+                            print_command=True,
+                            section=None,
+                            section_idx=None,
+                            section_total=None,
+                            suppress_summary=True,
+                        )
+                        # Print standardized check result (indented)
+                        self._print_check_result(desc, check_success)
+                        if not check_success:
+                            failed_steps.append((step_header, desc + " (check)", True))
+                        success = check_success
+                    else:
+                        failed_steps.append((step_header, desc, False))
             if not success and not any(s[0] == step_header for s in failed_steps):
                 failed_steps.append((step_header, desc, False))
             all_passed &= success
