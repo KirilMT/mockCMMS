@@ -39,3 +39,11 @@ jobs:
             (Release Please PR)" || exit 0
           git push origin \
             ${{ steps.release.outputs.pr.branch }}
+
+      - name: Ensure CHANGELOG.md is Prettier-formatted
+        if: ${{ steps.release.outputs.pr }}
+        run: |
+          npx prettier --write CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "chore: ensure CHANGELOG.md is Prettier-formatted (Release Please PR)" || exit 0
+          git push origin ${{ steps.release.outputs.pr.branch }}
