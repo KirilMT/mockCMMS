@@ -1,8 +1,8 @@
 ---
 name: "Semantic PR"
 
-"on":
-  pull_request_target:
+on:
+  pull_request:
     types:
       - opened
       - edited
