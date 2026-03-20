@@ -9,6 +9,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0](https://github.com/KirilMT/mockCMMS/compare/v2.4.0...v2.5.0) (2026-03-20)
+
+
+### Features
+
+* **format:** avoid duplicate check command execution in check-only mode ([f126c4a](https://github.com/KirilMT/mockCMMS/commit/f126c4a2693309d604c2008c726224323a1efe90))
+* release please prettier changelog fix ([a553b3a](https://github.com/KirilMT/mockCMMS/commit/a553b3a9ef907179a01ca8824cd848ad1ac39d4b))
+* **workflow:** correct workflow_dispatch mapping in release workflow ([fdd4857](https://github.com/KirilMT/mockCMMS/commit/fdd485770675ff4b4bd89866d497e2da2ed65d67))
+* **workflow:** ensure CHANGELOG.md is always Prettier-formatted in Release PRs ([c0bf58c](https://github.com/KirilMT/mockCMMS/commit/c0bf58cbee74acb837b6a647d62a405858a31bd8))
+* **workflow:** fix for release please ([f4c8620](https://github.com/KirilMT/mockCMMS/commit/f4c8620c21d0ae9d499ae92b3bfadb95e7b94067))
+
+
+### Bug Fixes
+
+* **ci:** use pull_request event for semantic PR validation (avoid duplicate runs) ([e443493](https://github.com/KirilMT/mockCMMS/commit/e44349352438ff4a0b56e7c4e8b8733f0f48d90e))
+* **format:** standardize YAML/prettier/yamllint output and update tests ([fe3dde3](https://github.com/KirilMT/mockCMMS/commit/fe3dde323c83ee898fec68e8b02b317f653f0169))
+
 ## [2.4.0](https://github.com/KirilMT/mockCMMS/compare/v2.3.0...v2.4.0) (2026-03-19)
 
 ### Features
