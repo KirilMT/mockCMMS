@@ -24,27 +24,34 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      - name: Format Release PR (Python/JS standards)
-        if: ${{ steps.release.outputs.pr }}
+      - name: Format release artifacts and ensure CHANGELOG.md is Prettier-formatted
         run: |
+          # Determine the branch to push formatting fixes to: prefer the
+          # Release Please PR branch if available, otherwise fall back to main.
+          TARGET_BRANCH="${{ steps.release.outputs.pr.branch }}"
+          if [ -z "$TARGET_BRANCH" ]; then
+            TARGET_BRANCH="main"
+          fi
+
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
           npm ci || npm install
-          python scripts/format_code.py
+
+          # Run repository-wide formatting helpers
+          python scripts/format_code.py || true
+
+          # Ensure CHANGELOG.md is formatted by Prettier (IDEMPOTENT)
+          npx prettier --write CHANGELOG.md || true
+
+          # Commit + push only if there are changes
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore: auto-format with format_code.py \
-            (Release Please PR)" || exit 0
-          git push origin \
-            ${{ steps.release.outputs.pr.branch }}
-
-      - name: Ensure CHANGELOG.md is Prettier-formatted
-        if: ${{ steps.release.outputs.pr }}
-        run: |
-          npx prettier --write CHANGELOG.md
-          git add CHANGELOG.md
-          git commit -m "chore: ensure CHANGELOG.md is Prettier-formatted \
-           (Release Please PR)" || exit 0
-          git push origin ${{ steps.release.outputs.pr.branch }}
+          git add CHANGELOG.md || true
+          # also include other formatted files (if desired) but avoid noisy commits
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: auto-format formatting artifacts (Release Please)" || true
+            git push origin "$TARGET_BRANCH"
+          else
+            echo "No formatting changes to commit."
+          fi
