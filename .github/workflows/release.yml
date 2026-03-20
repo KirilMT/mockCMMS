@@ -15,6 +15,10 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    # Skip running this job when the triggering commit is an automated
+    # formatting commit created by this workflow. This avoids recursion
+    # when we push formatting fixes back to branches.
+    if: "!contains(github.event.head_commit.message, 'auto-format (Release Please)')"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -50,6 +54,14 @@ jobs:
 
           # Run repository-wide formatting helpers (idempotent)
           python scripts/format_code.py || true
+
+          # Debug: show git status and staged changes before committing
+          echo "--- GIT STATUS ---"
+          git status --porcelain --branch || true
+          echo "--- GIT DIFF (unstaged) ---"
+          git --no-pager diff || true
+          echo "--- GIT DIFF (staged) ---"
+          git --no-pager diff --staged || true
 
           # Ensure CHANGELOG.md is formatted by Prettier (idempotent)
           npx prettier --write CHANGELOG.md || true
