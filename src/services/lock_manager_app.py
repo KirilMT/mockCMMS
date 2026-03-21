@@ -123,6 +123,33 @@ def history():
     return jsonify(locks), 200
 
 
+@app.route("/api/locks/release-by-path", methods=["POST"])
+def release_by_path():
+    """Release a lock by file path and developer ID."""
+    data = request.json
+    if not data or "file_path" not in data or "developer_id" not in data:
+        return (
+            jsonify(
+                {
+                    "error": "Missing file_path/developer_id",
+                    "field": "file_path",
+                }
+            ),
+            400,
+        )
+
+    success, result = lock_manager.release_lock_by_path(
+        data["file_path"], data["developer_id"]
+    )
+
+    if success:
+        return jsonify(result), 200
+    else:
+        if result.get("status") == "not_found":
+            return jsonify(result), 404
+        return jsonify(result), 500
+
+
 @app.route(
     "/api/locks/developer/<developer_id>",
     methods=["GET"],
@@ -167,13 +194,29 @@ def cleanup():
     return jsonify({"status": "success", "cleaned_count": count}), 200
 
 
+def _get_local_git_user():
+    """Returns local git user for the dashboard context."""
+    try:
+        import subprocess
+
+        return (
+            subprocess.check_output(
+                ["git", "config", "user.name"], stderr=subprocess.STDOUT
+            )
+            .decode()
+            .strip()
+        )
+    except Exception:
+        return os.getenv("USERNAME") or "Unknown-Dev"
+
+
 @app.route("/admin/lock-dashboard")
 def dashboard():
     """Serve the lock management dashboard."""
     template_path = os.path.join(os.path.dirname(__file__), "lock_dashboard.html")
-    with open(template_path, "r") as f:
+    with open(template_path, "r", encoding="utf-8") as f:
         template = f.read()
-    return render_template_string(template)
+    return render_template_string(template, local_user=_get_local_git_user())
 
 
 if __name__ == "__main__":

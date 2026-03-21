@@ -59,15 +59,12 @@ class TestLockManager:
     def test_acquire_same_file_same_developer_refreshes(self, manager):
         """Test re-acquiring refreshes the lock."""
         _, res1 = manager.acquire_lock("test.py", "alice", expires_minutes=10)
-        token1 = res1["lock_token"]
+        res1["lock_token"]
 
         success, res2 = manager.acquire_lock("test.py", "alice", expires_minutes=20)
-        assert success is True
-        assert res2["status"] == "refreshed"
-        assert res2["lock_token"] == token1
-        assert datetime.fromisoformat(res2["expires_at"]) > datetime.fromisoformat(
-            res1["expires_at"]
-        )
+        assert success is False
+        assert res2["status"] == "conflict"
+        assert "You already hold an active lock" in res2["message"]
 
     def test_acquire_same_file_different_developer_conflicts(self, manager):
         """Test that a different developer gets a conflict."""
@@ -254,13 +251,17 @@ class TestLockManager:
         manager.release_lock(res["lock_token"])
 
         history = manager.get_lock_history()
-        assert len(history) == 2
+        # Should be 1 released lock in history.
+        # Active locks are NO LONGER in history table (options 2 logic)
+        assert len(history) == 1
 
     def test_get_lock_history_filtered_by_file(self, manager):
         """Test filtering lock history by file."""
         manager.acquire_lock("a.py", "alice")
         manager.acquire_lock("b.py", "bob")
 
+        # Release a.py as well to see it in history
+        manager.release_lock_by_path("a.py", "alice")
         history = manager.get_lock_history(file_path="a.py")
         assert len(history) == 1
         assert history[0]["file_path"] == "a.py"

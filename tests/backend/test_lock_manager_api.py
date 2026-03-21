@@ -134,7 +134,14 @@ def test_history_api(client):
     )
     res = client.get("/api/locks/history?limit=10")
     assert res.status_code == 200
-    assert len(res.json) >= 1
+    # Active locks are not in history
+    assert len(res.json) == 0
+
+    # Release it to make it appear in history
+    client.post(
+        "/api/locks/release-by-path",
+        json={"file_path": "hist1.py", "developer_id": "alice"},
+    )
 
     res = client.get("/api/locks/history?file_path=hist1.py")
     assert len(res.json) == 1

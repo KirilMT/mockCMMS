@@ -29,13 +29,14 @@ class FileLock(Base):
     __tablename__ = "file_locks"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    file_path: Mapped[str] = mapped_column(String(512), unique=True, index=True)
+    file_path: Mapped[str] = mapped_column(String(512), index=True)
     developer_id: Mapped[str] = mapped_column(String(100), index=True)
     developer_email: Mapped[Optional[str]] = mapped_column(String(255), default=None)
     lock_token: Mapped[str] = mapped_column(String(255), unique=True)
     acquired_at: Mapped[Optional[datetime]] = mapped_column(default=_utcnow)
     expires_at: Mapped[datetime] = mapped_column(index=True)
     released_at: Mapped[Optional[datetime]] = mapped_column(default=None, index=True)
+    released_by: Mapped[Optional[str]] = mapped_column(String(100), default=None)
     branch_name: Mapped[Optional[str]] = mapped_column(String(255), default=None)
     reason: Mapped[Optional[str]] = mapped_column(String(512), default=None)
     created_at: Mapped[Optional[datetime]] = mapped_column(default=_utcnow)
@@ -54,6 +55,7 @@ class FileLock(Base):
             "acquired_at": (self.acquired_at.isoformat() if self.acquired_at else None),
             "expires_at": (self.expires_at.isoformat() if self.expires_at else None),
             "released_at": (self.released_at.isoformat() if self.released_at else None),
+            "released_by": self.released_by,
             "branch_name": self.branch_name,
             "reason": self.reason,
             "created_at": (self.created_at.isoformat() if self.created_at else None),
@@ -92,7 +94,9 @@ class LockManager:
         session = self.Session()
         try:
             now = _utcnow()
-            expires_at = now + timedelta(minutes=expires_minutes)
+            # 0 means "Eternal" (set to 525600 minutes = 1 year)
+            effective_minutes = expires_minutes if expires_minutes > 0 else 525600
+            expires_at = now + timedelta(minutes=effective_minutes)
 
             existing_lock = (
                 session.query(FileLock)
@@ -106,18 +110,9 @@ class LockManager:
 
             if existing_lock:
                 if existing_lock.developer_id == developer_id:
-                    existing_lock.expires_at = expires_at
-                    existing_lock.branch_name = branch_name or existing_lock.branch_name
-                    existing_lock.reason = reason or existing_lock.reason
-                    session.commit()
-                    self.logger.info(
-                        "Lock refreshed for %s by %s",
-                        file_path,
-                        developer_id,
-                    )
-                    return True, {
-                        "status": "refreshed",
-                        "lock_token": (existing_lock.lock_token),
+                    return False, {
+                        "status": "conflict",
+                        "message": "You already hold an active lock on this file",
                         "expires_at": (existing_lock.expires_at.isoformat()),
                     }
                 else:
@@ -129,35 +124,20 @@ class LockManager:
                         "expires_at": (existing_lock.expires_at.isoformat()),
                     }
 
-            # Reuse or create (file_path has UNIQUE constraint)
-            old_lock = (
-                session.query(FileLock).filter(FileLock.file_path == file_path).first()
-            )
-
+            # Create a clean new record for the history
             lock_token = str(uuid.uuid4())
-            if old_lock:
-                old_lock.developer_id = developer_id
-                old_lock.developer_email = developer_email
-                old_lock.lock_token = lock_token
-                old_lock.acquired_at = now
-                old_lock.expires_at = expires_at
-                old_lock.released_at = None
-                old_lock.branch_name = branch_name
-                old_lock.reason = reason
-                session.commit()
-            else:
-                new_lock = FileLock(
-                    file_path=file_path,
-                    developer_id=developer_id,
-                    developer_email=developer_email,
-                    lock_token=lock_token,
-                    acquired_at=now,
-                    expires_at=expires_at,
-                    branch_name=branch_name,
-                    reason=reason,
-                )
-                session.add(new_lock)
-                session.commit()
+            new_lock = FileLock(
+                file_path=file_path,
+                developer_id=developer_id,
+                developer_email=developer_email,
+                lock_token=lock_token,
+                acquired_at=now,
+                expires_at=expires_at,
+                branch_name=branch_name,
+                reason=reason,
+            )
+            session.add(new_lock)
+            session.commit()
 
             self.logger.info(
                 "Lock acquired for %s by %s",
@@ -199,6 +179,7 @@ class LockManager:
                 }
 
             lock.released_at = _utcnow()
+            lock.released_by = lock.developer_id  # Owner released it
             session.commit()
             self.logger.info("Lock released for %s", lock.file_path)
             return True, {
@@ -211,6 +192,40 @@ class LockManager:
                 "status": "error",
                 "message": str(e),
             }
+        finally:
+            session.close()
+
+    def release_lock_by_path(
+        self, file_path: str, developer_id: str
+    ) -> Tuple[bool, Dict]:
+        """Release a lock by file path and developer ID."""
+        session = self.Session()
+        try:
+            now = _utcnow()
+            lock = (
+                session.query(FileLock)
+                .filter(
+                    FileLock.file_path == file_path,
+                    FileLock.developer_id == developer_id,
+                    FileLock.released_at.is_(None),
+                    FileLock.expires_at > now,
+                )
+                .first()
+            )
+
+            if not lock:
+                return False, {
+                    "status": "not_found",
+                    "message": "No active lock found for this file/developer",
+                }
+
+            lock.released_at = now
+            lock.released_by = developer_id  # Track who released it
+            session.commit()
+            return True, {"status": "released", "file_path": file_path}
+        except Exception as e:
+            session.rollback()
+            return False, {"status": "error", "message": str(e)}
         finally:
             session.close()
 
@@ -336,6 +351,7 @@ class LockManager:
                 }
 
             lock.released_at = _utcnow()
+            lock.released_by = admin_id  # Who triggered the force release
             reason_suffix = f" [Force released by {admin_id}]"
             lock.reason = (lock.reason or "") + reason_suffix
             session.commit()
@@ -365,7 +381,7 @@ class LockManager:
         """Get lock history, optionally filtered by file."""
         session = self.Session()
         try:
-            query = session.query(FileLock)
+            query = session.query(FileLock).filter(FileLock.released_at.is_not(None))
             if file_path:
                 query = query.filter(FileLock.file_path == file_path)
             locks = query.order_by(desc(FileLock.acquired_at)).limit(limit).all()

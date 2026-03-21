@@ -5,6 +5,7 @@ CLI scripts, IDE extensions, or other services.
 """
 
 import json
+import os
 import subprocess
 from typing import Dict, List, Optional, Tuple
 
@@ -21,10 +22,11 @@ class LockClient:
         self.server_url = server_url.rstrip("/")
         self.timeout = timeout
         if not developer_id:
-            developer_id = self._get_git_user()
+            developer_id = self._get_git_username()
         self.developer_id = developer_id
 
-    def _get_git_user(self) -> str:
+    def _get_git_username(self) -> str:
+        """Returns git user.name if available, else git user.email prefix."""
         try:
             name = (
                 subprocess.check_output(
@@ -33,9 +35,30 @@ class LockClient:
                 .decode()
                 .strip()
             )
-            return name.replace(" ", "_").lower()
+            if name:
+                return name
+            return (
+                subprocess.check_output(
+                    ["git", "config", "user.email"], stderr=subprocess.STDOUT
+                )
+                .decode()
+                .split("@")[0]
+            )
         except Exception:
-            return "unknown_user"
+            return os.getenv("USERNAME") or os.getenv("USER") or "unknown_user"
+
+    def _get_current_branch(self) -> Optional[str]:
+        """Returns current git branch name."""
+        try:
+            return (
+                subprocess.check_output(
+                    ["git", "branch", "--show-current"], stderr=subprocess.STDOUT
+                )
+                .decode()
+                .strip()
+            )
+        except Exception:
+            return None
 
     def acquire(
         self,
@@ -74,7 +97,32 @@ class LockClient:
                 json={"lock_token": lock_token},
                 timeout=self.timeout,
             )
-            data = res.json()
+            try:
+                data = res.json() if res.content else {}
+            except Exception:
+                data = {}
+            if res.status_code == 200:
+                return True, "released"
+            else:
+                return False, data.get("message", "Unknown error")
+        except Exception as e:
+            return False, str(e)
+
+    def release_by_path(
+        self, file_path: str, developer_id: Optional[str] = None
+    ) -> Tuple[bool, str]:
+        """Release a lock by its file path (for the current developer)."""
+        dev_id = developer_id or self.developer_id
+        try:
+            res = requests.post(
+                f"{self.server_url}/api/locks/release-by-path",
+                json={"file_path": file_path, "developer_id": dev_id},
+                timeout=self.timeout,
+            )
+            try:
+                data = res.json() if res.content else {}
+            except Exception:
+                data = {}
             if res.status_code == 200:
                 return True, "released"
             else:
@@ -165,12 +213,17 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
-    subparsers.add_parser("acquire", help="Acquire lock on a file").add_argument(
-        "file_path", help="Path to the file"
-    )
+    acq = subparsers.add_parser("acquire", help="Acquire lock on a file")
+    acq.add_argument("file_path", help="Path to the file")
+    acq.add_argument("--reason", help="Reason for the lock")
+    acq.add_argument("--expires", type=int, help="Expiry in minutes (default: 480)")
+
     subparsers.add_parser("release", help="Release lock using token").add_argument(
         "token", help="Lock token"
     )
+    rel_path = subparsers.add_parser("release-by-path", help="Release my lock on file")
+    rel_path.add_argument("file_path", help="Path to the file")
+
     subparsers.add_parser("status", help="Check lock status of a file").add_argument(
         "file_path", help="Path to the file"
     )
@@ -183,10 +236,25 @@ def main():
     client = LockClient(server_url=args.url, developer_id=args.user)
 
     if args.command == "acquire":
-        success, res = client.acquire(args.file_path)
+        branch = client._get_current_branch()
+        success, res = client.acquire(
+            args.file_path,
+            branch_name=branch,
+            reason=args.reason,
+            expires_minutes=args.expires or 480,
+        )
         print(f"Success: {success}, Result: {res}")
+        if success and branch:
+            print(f"Auto-detected branch: {branch}")
     elif args.command == "release":
-        success, res = client.release(args.token)
+        # Smart release: check if it's a path or a token
+        if "." in args.token or "/" in args.token or "\\" in args.token:
+            success, res = client.release_by_path(args.token)
+        else:
+            success, res = client.release(args.token)
+        print(f"Success: {success}, Result: {res}")
+    elif args.command == "release-by-path":
+        success, res = client.release_by_path(args.file_path)
         print(f"Success: {success}, Result: {res}")
     elif args.command == "status":
         res = client.status(args.file_path)

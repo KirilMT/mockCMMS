@@ -17,7 +17,7 @@ class TestLockClient:
             return "alice_git"
 
         monkeypatch.setattr(
-            "src.services.lock_client.LockClient._get_git_user", mock_git_user
+            "src.services.lock_client.LockClient._get_git_username", mock_git_user
         )
         # Pass developer_id=None so it calls _get_git_user
         c = LockClient(server_url="http://localhost:5001", developer_id=None)
@@ -30,7 +30,8 @@ class TestLockClient:
             raise Exception("Subprocess Error")
 
         monkeypatch.setattr("subprocess.check_output", mock_error)
-        c = LockClient()
+        monkeypatch.setenv("USERNAME", "unknown_user")
+        c = LockClient(developer_id=None)
         assert c.developer_id == "unknown_user"
 
     @responses.activate
