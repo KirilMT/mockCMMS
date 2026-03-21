@@ -42,3 +42,6 @@ conventional-pre-commit==4.4.0
 
 # HTML/Template Linting
 djlint>=1.36.4
+
+# Mocking API responses
+responses==0.26.0
