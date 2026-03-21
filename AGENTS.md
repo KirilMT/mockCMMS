@@ -16,19 +16,19 @@ mockCMMS is a **Computerized Maintenance Management System** — a Flask web app
 
 ## Stack
 
-| Layer             | Technology                                     | Version            |
-| ----------------- | ---------------------------------------------- | ------------------ |
+| Layer             | Technology                                     | Version             |
+| ----------------- | ---------------------------------------------- | ------------------- |
 | Language          | Python                                         | 3.12 (target ≥3.10) |
-| Framework         | Flask, SQLAlchemy, Jinja2                      | —                  |
-| Frontend          | Vanilla JS (ES6+), CSS3                        | —                  |
-| Database          | SQLite (dev), PostgreSQL (prod-ready)          | —                  |
-| Python Linting    | Ruff, Flake8, Mypy, Pylint                     | —                  |
-| Python Formatting | isort → Black → docformatter (strict order)    | —                  |
-| JS Linting        | ESLint 9                                       | —                  |
-| JS/CSS Formatting | Prettier, Stylelint                            | —                  |
-| Backend Tests     | Pytest (coverage ≥85%)                         | —                  |
-| Frontend Tests    | Jest 30 (coverage ≥80%), Playwright (E2E)      | —                  |
-| Package Managers  | pip (`requirements.txt`), npm (`package.json`) | —                  |
+| Framework         | Flask, SQLAlchemy, Jinja2                      | —                   |
+| Frontend          | Vanilla JS (ES6+), CSS3                        | —                   |
+| Database          | SQLite (dev), PostgreSQL (prod-ready)          | —                   |
+| Python Linting    | Ruff, Flake8, Mypy, Pylint                     | —                   |
+| Python Formatting | isort → Black → docformatter (strict order)    | —                   |
+| JS Linting        | ESLint 9                                       | —                   |
+| JS/CSS Formatting | Prettier, Stylelint                            | —                   |
+| Backend Tests     | Pytest (coverage ≥85%)                         | —                   |
+| Frontend Tests    | Jest 30 (coverage ≥80%), Playwright (E2E)      | —                   |
+| Package Managers  | pip (`requirements.txt`), npm (`package.json`) | —                   |
 
 ---
 
