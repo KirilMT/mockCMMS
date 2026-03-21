@@ -9,6 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.2](https://github.com/KirilMT/mockCMMS/compare/v2.5.1...v2.5.2) (2026-03-21)
+
+
+### ⚡ Performance Improvements
+
+* **ci:** optimize release please action workflow overhead ([ae121d3](https://github.com/KirilMT/mockCMMS/commit/ae121d3c765ac5c98d80ae638a4a64bde608cf5f))
+* **ci:** optimize release please action workflow overhead ([9a11cd1](https://github.com/KirilMT/mockCMMS/commit/9a11cd1ae9b52514496ee2824e91e3e86a653318))
+
 ## [2.5.1](https://github.com/KirilMT/mockCMMS/compare/v2.5.0...v2.5.1) (2026-03-21)
 
 ### 🐛 Bug Fixes
