@@ -208,14 +208,12 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
         cursor = conn.cursor()
 
         # Create satellite_points table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS satellite_points (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL
             )
-        """
-        )
+        """)
         logger.info("Table 'satellite_points' ensured.") if logger else None
 
         # Add a default satellite point if the table is empty and not in test mode
@@ -234,8 +232,7 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                     )
 
         # Create lines table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS lines (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -243,19 +240,16 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                 FOREIGN KEY(satellite_point_id) REFERENCES satellite_points(id),
                 UNIQUE(name, satellite_point_id)
             )
-        """
-        )
+        """)
         logger.info("Table 'lines' ensured.") if logger else None
 
         # Create shift_team table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS shift_team (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL
             )
-        """
-        )
+        """)
         logger.info("Table 'shift_team' ensured.") if logger else None
 
         # --- Technicians Table Logic ---
@@ -298,8 +292,7 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
 
         if recreate_table:
             # Create the table with the new, correct schema
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE technicians (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT UNIQUE NOT NULL,
@@ -309,8 +302,7 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                     FOREIGN KEY(shift_team_id) REFERENCES shift_team(id)
                 )
 
-            """
-            )
+            """)
             (
                 logger.info(
                     "Table 'technicians' created with new schema (satellite_point_id)."
@@ -337,8 +329,7 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
             logger.info("Table 'technicians' already up-to-date.") if logger else None
 
         # Technologies Table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS technologies (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL, -- Removed UNIQUE constraint
@@ -347,8 +338,7 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                 FOREIGN KEY (group_id) REFERENCES technology_groups (id),
                 FOREIGN KEY (parent_id) REFERENCES technologies (id)
             )
-        """
-        )
+        """)
         # Add group_id column to technologies if it doesn't exist (for existing dbs)
         try:
             cursor.execute("PRAGMA table_info(technologies)")
@@ -374,30 +364,25 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                 )
 
         # Technology Groups Table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS technology_groups (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL
             )
-        """
-        )
+        """)
 
         # Tasks Table (new schema)
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL
                 -- Tasks can have multiple skills via task_required_skills
                 -- FOREIGN KEY (technology_id) REFERENCES technologies (id)
             )
-        """
-        )
+        """)
 
         # Technician Technology Skills Table (using skill_level 0-4 as per your file)
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS technician_technology_skills (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 technician_id INTEGER NOT NULL,
@@ -407,12 +392,10 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                 FOREIGN KEY (technology_id) REFERENCES technologies (id),
                 UNIQUE (technician_id, technology_id)
             )
-        """
-        )
+        """)
 
         # Ensure 'technician_task_assignments' table exists with the new schema
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS technician_task_assignments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 technician_id INTEGER NOT NULL,
@@ -420,12 +403,10 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                 FOREIGN KEY (technician_id) REFERENCES technicians (id),
                 FOREIGN KEY (task_id) REFERENCES tasks (id)
             )
-        """
-        )
+        """)
 
         # New Table: Task Required Skills
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS task_required_skills (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 task_id INTEGER,
@@ -436,24 +417,20 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                 ON DELETE CASCADE,
                 UNIQUE(task_id, technology_id)
             )
-        """
-        )
+        """)
         logger.info("Table 'task_required_skills' ensured.") if logger else None
 
         # Technician Groups Table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS technician_groups (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL
             )
-        """
-        )
+        """)
         logger.info("Table 'technician_groups' ensured.") if logger else None
 
         # Technician Group Members Table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS technician_group_members (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 technician_id INTEGER NOT NULL,
@@ -464,84 +441,64 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                 ON DELETE CASCADE,
                 UNIQUE (technician_id, group_id)
             )
-        """
-        )
+        """)
         logger.info("Table 'technician_group_members' ensured.") if logger else None
 
         # 3. Create Indexes (idempotently)
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_technician_task_assignments_technician_id
             ON technician_task_assignments (technician_id)
-        """
-        )
+        """)
         # Index for new task_id column
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_technician_task_assignments_task_id
             ON technician_task_assignments (task_id)
-        """
-        )
+        """)
         # Indexes for technician_technology_skills
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_technician_technology_skills_technician_id
             ON technician_technology_skills (technician_id)
-        """
-        )
-        cursor.execute(
-            """
+        """)
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_technician_technology_skills_technology_id
             ON technician_technology_skills (technology_id)
-        """
-        )
+        """)
         # Index for technology group_id
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_technologies_group_id
             ON technologies (group_id)
-        """
-        )
+        """)
         # Index for parent_id
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_technologies_parent_id
             ON technologies (parent_id)
-        """
-        )
+        """)
 
         # Indexes for task_required_skills
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_task_required_skills_task_id
             ON task_required_skills (task_id)
-        """
-        )
-        cursor.execute(
-            """
+        """)
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_task_required_skills_technology_id
             ON task_required_skills (technology_id)
-        """
-        )
+        """)
 
         conn.commit()
 
         # Line Conditions Table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS line_conditions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL,
                 description TEXT,
                 color_code TEXT
             )
-        """
-        )
+        """)
         logger.info("Table 'line_conditions' ensured.") if logger else None
 
         # Task Line Conditions Table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS task_line_conditions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 task_id INTEGER NOT NULL,
@@ -552,8 +509,7 @@ def init_db(db_path, logger=None, debug_use_test_db=False):
                     REFERENCES line_conditions(id) ON DELETE CASCADE,
                 UNIQUE(task_id, condition_id)
             )
-        """
-        )
+        """)
         logger.info("Table 'task_line_conditions' ensured.") if logger else None
 
         conn.commit()
@@ -679,14 +635,12 @@ def get_technician_lines_via_satellite_point(conn, technician_id):
 def get_all_lines(conn):
     """Fetches all lines with their satellite point information."""
     cursor = conn.cursor()
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT l.id, l.name, l.satellite_point_id, sp.name as satellite_point_name
         FROM lines l
         LEFT JOIN satellite_points sp ON l.satellite_point_id = sp.id
         ORDER BY sp.name, l.name
-    """
-    )
+    """)
     return [dict(row) for row in cursor.fetchall()]
 
 
@@ -965,8 +919,7 @@ def delete_technician(conn, technician_id):
 
 def ensure_skill_update_log_table(conn):
     cursor = conn.cursor()
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS technician_skill_update_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             technician_id INTEGER,
@@ -977,8 +930,7 @@ def ensure_skill_update_log_table(conn):
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             message TEXT
         )
-    """
-    )
+    """)
     conn.commit()
 
 
