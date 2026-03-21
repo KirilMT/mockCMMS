@@ -7,9 +7,9 @@
 * @KirilMT
 
 # Lock service and collaborative dev tooling
-src/services/lock_manager.py @kmartineztamayo
-src/services/lock_manager_app.py @kmartineztamayo
-src/services/lock_client.py @kmartineztamayo
-tests/backend/test_lock_manager.py @kmartineztamayo
-scripts/cleanup_locks.py @kmartineztamayo
-.github/hooks/ @kmartineztamayo
+src/services/lock_manager.py @KirilMT
+src/services/lock_manager_app.py @KirilMT
+src/services/lock_client.py @KirilMT
+tests/backend/test_lock_manager.py @KirilMT
+scripts/cleanup_locks.py @KirilMT
+.github/hooks/ @KirilMT

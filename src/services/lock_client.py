@@ -149,7 +149,7 @@ class LockClient:
             res = requests.get(
                 f"{self.server_url}/api/locks/health", timeout=self.timeout
             )
-            return res.status_code == 200
+            return bool(res.status_code == 200)
         except Exception:
             return False
 

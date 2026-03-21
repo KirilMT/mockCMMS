@@ -29,6 +29,8 @@ iniconfig==2.1.0
 pandas-stubs==2.2.3.250527
 pluggy==1.6.0
 types-pytz==2025.2.0.20251108
+types-requests==2.32.4.20250913
+
 
 # Code Quality Analysis (OPTIONAL - Run periodically)
 bandit==1.8.6
