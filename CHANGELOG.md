@@ -11,11 +11,10 @@ and this project adheres to
 
 ## [2.5.3](https://github.com/KirilMT/mockCMMS/compare/v2.5.2...v2.5.3) (2026-03-21)
 
-
 ### 📝 Documentation
 
-* **ci:** strict PR formatting and lean release formatting ([f819867](https://github.com/KirilMT/mockCMMS/commit/f819867cfd3cd1fdd0ae5b8f174beab89292c461))
-* **ci:** strict PR formatting and lean release formatting ([a99c013](https://github.com/KirilMT/mockCMMS/commit/a99c0132b3582488e56c37ba7516fa82f7c8ba79))
+- **ci:** strict PR formatting and lean release formatting ([f819867](https://github.com/KirilMT/mockCMMS/commit/f819867cfd3cd1fdd0ae5b8f174beab89292c461))
+- **ci:** strict PR formatting and lean release formatting ([a99c013](https://github.com/KirilMT/mockCMMS/commit/a99c0132b3582488e56c37ba7516fa82f7c8ba79))
 
 ## [2.5.2](https://github.com/KirilMT/mockCMMS/compare/v2.5.1...v2.5.2) (2026-03-21)
 
