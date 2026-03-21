@@ -18,7 +18,7 @@ mockCMMS is a **Computerized Maintenance Management System** — a Flask web app
 
 | Layer             | Technology                                     | Version            |
 | ----------------- | ---------------------------------------------- | ------------------ |
-| Language          | Python                                         | 3.12 (target ≥3.9) |
+| Language          | Python                                         | 3.12 (target ≥3.10) |
 | Framework         | Flask, SQLAlchemy, Jinja2                      | —                  |
 | Frontend          | Vanilla JS (ES6+), CSS3                        | —                  |
 | Database          | SQLite (dev), PostgreSQL (prod-ready)          | —                  |
