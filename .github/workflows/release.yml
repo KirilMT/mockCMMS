@@ -64,7 +64,7 @@ jobs:
           git --no-pager diff --staged || true
 
           # Ensure CHANGELOG.md is formatted by Prettier (idempotent)
-          npx prettier --write CHANGELOG.md || true
+          node_modules/.bin/prettier --write CHANGELOG.md || true
 
           # Commit and push only if there are changes
           git config user.name "github-actions[bot]"
