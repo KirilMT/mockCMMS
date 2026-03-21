@@ -194,8 +194,9 @@ Or just run: `python scripts/format_code.py`
 ## Git & Commit Standards
 
 - **Conventional Commits:** `type(scope): description` (e.g., `fix(ui): resolve overflow in MO modal`)
+- **Pull Request Titles:** Must strictly follow Conventional Commits (e.g., `feat(ui): ...`). Using the `--fill` flag with `gh pr create` often defaults to the raw branch name, breaking the `Validate PR Title` CI check. Always manually specify `--title "type(scope): msg"`.
 - **Feature branches:** Never commit to `main`. Use `type/feature-name`.
-- **New branches:** Always use `gh pr create` to push. NEVER `git push -u`.
+- **New branches:** Always use `gh pr create --title "type(scope): msg" --body "..."` to push. NEVER `git push -u`.
 - **Tracked branches:** Use `git push` normally.
 - **Pre-commit hooks** are enabled: Unified validation (format + lint + targeted tests).
 

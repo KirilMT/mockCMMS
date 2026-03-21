@@ -152,10 +152,11 @@ It is **critical** to check whether your branch is already linked to a remote br
 
 ```sh
 # This pushes the branch AND creates the PR in one step
-gh pr create --base main --head <your-branch-name> --fill
+# ⚠️ Ensure the PR Title strictly follows Conventional Commits! Do NOT use --fill.
+gh pr create --base main --head <your-branch-name> --title "feat(scope): your descriptive title" --body "Your detailed PR body"
 
 # Or create as draft if not ready for review
-gh pr create --base main --head <your-branch-name> --fill --draft
+gh pr create --base main --head <your-branch-name> --title "feat(scope): your descriptive title" --body "Your detailed PR body" --draft
 ```
 
 **Option B: Existing Branch (Tracked) → Push Updates**
@@ -211,7 +212,8 @@ If you haven't created a Pull Request yet (e.g., you were working on an existing
 
 ```sh
 # Create the PR if not already done
-gh pr create --base main --head <your-branch-name> --fill
+# ⚠️ Ensure the PR Title strictly follows Conventional Commits! Do NOT use --fill.
+gh pr create --base main --head <your-branch-name> --title "feat(scope): your descriptive title" --body "Your detailed PR body"
 ```
 
 **Step 5.2: Mark as Ready (If Draft)**
