@@ -34,17 +34,16 @@ jobs:
         with:
           # checkout the PR branch created by release-please so we can
           # apply formatting fixes there
-          ref: refs/heads/${{ steps.release.outputs.pr.branch }}
+          ref: refs/heads/${{ fromJson(steps.release.outputs.pr).headBranchName }}
           fetch-depth: 0
           persist-credentials: true
 
       - name: Format release artifacts
         run: |
           # If the release-please action created a PR, TARGET_BRANCH will be set
-          TARGET_BRANCH="${{ steps.release.outputs.pr.branch }}"
-          if [ -z "$TARGET_BRANCH" ]; then
+          TARGET_BRANCH="${{ fromJson(steps.release.outputs.pr || '{}').headBranchName || 'main' }}"
+          if [ "$TARGET_BRANCH" = "main" ]; then
             echo "No Release PR detected; operating on main"
-            TARGET_BRANCH="main"
           fi
 
           python -m pip install --upgrade pip
