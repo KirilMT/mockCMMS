@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.services.lock_manager import LockManager
+from src.services.lock_manager import FileLock, LockManager
 
 
 def _utcnow():
@@ -19,6 +19,16 @@ class TestLockManager:
     def manager(self):
         """Create an in-memory LockManager for testing."""
         return LockManager(db_path=":memory:")
+
+    def test_init_with_env_path(self, monkeypatch, tmp_path):
+        """Test initialization using environment variable for DB path."""
+        db_file = tmp_path / "env_locks.db"
+        monkeypatch.setenv("LOCK_DB_PATH", str(db_file))
+        # Pass None so it picks up from env
+        m = LockManager(db_path=None)
+        assert m.engine.url.database == str(db_file)
+        # Ensure directory was created
+        assert db_file.parent.exists()
 
     def test_acquire_new_lock_succeeds(self, manager):
         """Test acquiring a new lock succeeds."""
@@ -77,8 +87,6 @@ class TestLockManager:
 
     def test_acquire_after_expiry_succeeds(self, manager):
         """Test acquiring after expiry works."""
-        from src.services.lock_manager import FileLock
-
         session = manager.Session()
         expired_lock = FileLock(
             file_path="expired.py",
@@ -95,6 +103,20 @@ class TestLockManager:
         assert result["status"] == "acquired"
         assert result["lock_token"] != "old_token"
 
+    def test_acquire_exception_handing(self, manager, monkeypatch):
+        """Test exception handling during lock acquisition."""
+
+        def mock_query(*args, **kwargs):
+            raise Exception("DB Error")
+
+        # Patch the session query to raise an exception
+        monkeypatch.setattr("sqlalchemy.orm.Session.query", mock_query)
+
+        success, result = manager.acquire_lock("error.py", "alice")
+        assert success is False
+        assert result["status"] == "error"
+        assert "DB Error" in result["message"]
+
     def test_release_by_valid_token(self, manager):
         """Test releasing a lock by valid token."""
         _, res = manager.acquire_lock("test.py", "alice")
@@ -107,6 +129,19 @@ class TestLockManager:
         success, result = manager.release_lock("invalid_token")
         assert success is False
         assert result["status"] == "not_found"
+
+    def test_release_exception_handling(self, manager, monkeypatch):
+        """Test exception handling during lock release."""
+
+        def mock_query(*args, **kwargs):
+            raise Exception("DB Error Release")
+
+        monkeypatch.setattr("sqlalchemy.orm.Session.query", mock_query)
+
+        success, result = manager.release_lock("some_token")
+        assert success is False
+        assert result["status"] == "error"
+        assert "DB Error Release" in result["message"]
 
     def test_release_already_released_returns_not_found(self, manager):
         """Test double-release returns not_found."""
@@ -159,8 +194,6 @@ class TestLockManager:
 
     def test_cleanup_expired_locks(self, manager):
         """Test cleanup of expired locks."""
-        from src.services.lock_manager import FileLock
-
         session = manager.Session()
         expired_lock = FileLock(
             file_path="expired.py",
@@ -177,6 +210,17 @@ class TestLockManager:
         status = manager.get_lock_status("expired.py")
         assert status["is_locked"] is False
 
+    def test_cleanup_exception_handling(self, manager, monkeypatch):
+        """Test exception handling during cleanup."""
+
+        def mock_query(*args, **kwargs):
+            raise Exception("Cleanup Error")
+
+        monkeypatch.setattr("sqlalchemy.orm.Session.query", mock_query)
+
+        count = manager.cleanup_expired_locks()
+        assert count == 0
+
     def test_force_release_active_lock(self, manager):
         """Test force-releasing an active lock."""
         manager.acquire_lock("test.py", "alice")
@@ -184,6 +228,24 @@ class TestLockManager:
         assert success is True
         status = manager.get_lock_status("test.py")
         assert status["is_locked"] is False
+
+    def test_force_release_not_found(self, manager):
+        """Test force-releasing a non-existent lock."""
+        success, result = manager.force_release_lock("nonexistent.py", "admin")
+        assert success is False
+        assert result["status"] == "not_found"
+
+    def test_force_release_exception_handling(self, manager, monkeypatch):
+        """Test exception handling during force release."""
+
+        def mock_query(*args, **kwargs):
+            raise Exception("Force Release Error")
+
+        monkeypatch.setattr("sqlalchemy.orm.Session.query", mock_query)
+
+        success, result = manager.force_release_lock("test.py", "admin")
+        assert success is False
+        assert result["status"] == "error"
 
     def test_get_lock_history_all(self, manager):
         """Test getting all lock history."""
@@ -202,3 +264,14 @@ class TestLockManager:
         history = manager.get_lock_history(file_path="a.py")
         assert len(history) == 1
         assert history[0]["file_path"] == "a.py"
+
+    def test_to_dict_coverage(self, manager):
+        """Test FileLock.to_dict for coverage."""
+        success, _ = manager.acquire_lock("test.py", "alice")
+        session = manager.Session()
+        lock = session.query(FileLock).filter(FileLock.file_path == "test.py").first()
+        d = lock.to_dict()
+        assert d["file_path"] == "test.py"
+        assert d["developer_id"] == "alice"
+        assert d["released_at"] is None
+        session.close()
