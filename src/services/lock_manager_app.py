@@ -1,5 +1,4 @@
-"""
-lock_manager_app.py
+"""lock_manager_app.py.
 
 Standalone Flask application exposing the lock manager REST API.
 """

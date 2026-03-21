@@ -1,8 +1,7 @@
-"""
-lock_manager.py
+"""lock_manager.py.
 
-File lock manager for collaborative development.
-Prevents simultaneous edits to the same file by multiple developers.
+File lock manager for collaborative development. Prevents simultaneous edits to the same
+file by multiple developers.
 """
 
 import logging

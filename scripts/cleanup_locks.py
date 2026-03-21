@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-cleanup_locks.py
+"""cleanup_locks.py.
 
 Cleanup expired file locks. Run this via cron or manually.
 

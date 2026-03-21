@@ -1,8 +1,7 @@
-"""
-lock_client.py
+"""lock_client.py.
 
-Python client library for interacting with the lock manager service.
-Can be used from CLI scripts, IDE extensions, or other services.
+Python client library for interacting with the lock manager service. Can be used from
+CLI scripts, IDE extensions, or other services.
 """
 
 import json
@@ -45,7 +44,8 @@ class LockClient:
         reason: Optional[str] = None,
         expires_minutes: int = 480,
     ) -> Tuple[bool, str]:
-        """Returns (True, lock_token) on success or (False, error_message) on failure."""
+        """Returns (True, lock_token) on success or (False, error_message) on
+        failure."""
         try:
             res = requests.post(
                 f"{self.server_url}/api/locks/acquire",
@@ -83,7 +83,10 @@ class LockClient:
             return False, str(e)
 
     def status(self, file_path: str) -> Dict:
-        """Returns lock status dict. Returns {'is_locked': False, 'error': '...'} if server unreachable."""
+        """Returns lock status dict.
+
+        Returns {'is_locked': False, 'error': '...'} if server unreachable.
+        """
         try:
             res = requests.get(
                 f"{self.server_url}/api/locks/status",
@@ -97,7 +100,10 @@ class LockClient:
             return {"is_locked": False, "error": str(e)}
 
     def active_locks(self) -> List[Dict]:
-        """Returns all active locks. Returns [] if server unreachable."""
+        """Returns all active locks.
+
+        Returns [] if server unreachable.
+        """
         try:
             res = requests.get(
                 f"{self.server_url}/api/locks/active", timeout=self.timeout
@@ -122,7 +128,10 @@ class LockClient:
             return []
 
     def release_all_my_locks(self) -> int:
-        """Releases all locks held by this developer. Returns count released."""
+        """Releases all locks held by this developer.
+
+        Returns count released.
+        """
         locks = self.my_locks()
         count = 0
         for lock in locks:
