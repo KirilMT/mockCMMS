@@ -18,6 +18,7 @@ mypy==1.19.1
 
 # Testing (ESSENTIAL - Run always)
 # Note: pytest is also in requirements.txt (needed for app testing)
+flask-cors
 pytest==8.4.2
 pytest-cov==6.3.0
 pytest-mock==3.15.1

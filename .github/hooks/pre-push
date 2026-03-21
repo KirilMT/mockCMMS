@@ -1,0 +1,17 @@
+#!/bin/bash
+# Tier 1: Warn if branch diverges significantly from main before push.
+# Does NOT block the push — just warns. Tier 2 (pre-commit) does enforcement.
+
+echo "🔍 Checking branch divergence from origin/main..."
+
+git fetch origin main:refs/remotes/origin/main --quiet 2>/dev/null
+
+BEHIND=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo 0)
+
+if [ "$BEHIND" -gt "10" ]; then
+  echo "⚠️  Warning: Your branch is $BEHIND commits behind main."
+  echo "   Consider rebasing: git rebase origin/main"
+  echo "   Continuing push..."
+fi
+
+exit 0
