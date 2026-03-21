@@ -15,19 +15,16 @@ def db_connection():
     cursor = conn.cursor()
 
     # Create tables matching the schema in planning_db_utils.py
-    cursor.execute(
-        """
+    cursor.execute("""
     CREATE TABLE line_conditions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
         description TEXT,
         color_code TEXT
     )
-    """
-    )
+    """)
 
-    cursor.execute(
-        """
+    cursor.execute("""
     CREATE TABLE task_line_conditions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         task_id INTEGER NOT NULL,
@@ -35,8 +32,7 @@ def db_connection():
         FOREIGN KEY (condition_id) REFERENCES line_conditions(id),
         UNIQUE(task_id, condition_id)
     )
-    """
-    )
+    """)
 
     conn.commit()
     yield conn

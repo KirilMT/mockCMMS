@@ -906,15 +906,13 @@ def get_technician_mappings_api():
 
         # 1. Get all technicians with shift team info
         # Note: Using LEFT JOIN to include technicians without a team (Unassigned)
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT t.id, t.name, t.shift_team_id, st.name as shift_team_name,
                    t.satellite_point_id, sp.name as satellite_point_name
             FROM technicians t
             LEFT JOIN shift_team st ON t.shift_team_id = st.id
             LEFT JOIN satellite_points sp ON t.satellite_point_id = sp.id
-        """
-        )
+        """)
         techs_rows = cursor.fetchall()
 
         technicians_map = {}
@@ -931,14 +929,12 @@ def get_technician_mappings_api():
             }
 
         # 2. Get skills
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT t.name, ts.technology_id, tech.name as skill_name, ts.skill_level
             FROM technician_technology_skills ts
             JOIN technicians t ON ts.technician_id = t.id
             JOIN technologies tech ON ts.technology_id = tech.id
-        """
-        )
+        """)
         skills_rows = cursor.fetchall()
 
         for row in skills_rows:

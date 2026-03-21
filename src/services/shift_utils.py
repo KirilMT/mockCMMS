@@ -1,5 +1,6 @@
 # src/services/shift_utils.py
 """Shift calculation utilities for the Pitman schedule."""
+
 from datetime import datetime, timedelta
 
 

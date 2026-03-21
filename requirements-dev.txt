@@ -4,7 +4,7 @@
 
 # Code Formatting (ESSENTIAL - Run always)
 autopep8==2.3.2
-black==24.10.0
+black==26.3.1
 isort==5.13.2           # Import sorting (PEP 8 compliant)
 docformatter==1.7.7     # Docstring formatting (PEP 257 compliant)
 
