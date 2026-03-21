@@ -43,13 +43,8 @@ jobs:
         run: |
           TARGET_BRANCH="${{ fromJson(steps.release.outputs.pr).headBranchName }}"
 
-          # Only install dev dependencies (linters); skip heavy production deps to save time
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
-          npm ci
-
-          # Run ONLY documentation formatting (Release Please only touches markdown/JSON/TOML)
-          python scripts/format_code.py --docs || true
+          # Fast execution: only npm is required to run Prettier
+          npm ci --silent
 
           # Ensure CHANGELOG.md is formatted explicitly by Prettier
           node_modules/.bin/prettier --write CHANGELOG.md || true

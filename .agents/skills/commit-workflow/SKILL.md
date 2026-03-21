@@ -136,9 +136,11 @@ Check if your branch is tracked:
 git branch -vv
 ```
 
-| Branch Status                     | Action           | Command                                           |
-| --------------------------------- | ---------------- | ------------------------------------------------- |
-| **Untracked** (no `[origin/...]`) | Create PR & Push | `gh pr create --base main --head <branch> --fill` |
+| Branch Status                     | Action           | Command                                                                                   |
+| --------------------------------- | ---------------- | ----------------------------------------------------------------------------------------- |
+| **Untracked** (no `[origin/...]`) | Create PR & Push | `gh pr create --title "type(scope): message" --body "..." --base main --head <branch>`    |
+
+> ⚠️ **CRITICAL RULE FOR PRs:** When creating a Pull Request, the PR Title **MUST strictly follow Conventional Commits** (e.g., `feat(ui): ...`). Do **NOT** use the `--fill` flag, as it will often use the raw branch name (e.g. `investigate/release-formatting`) for the PR title, which will cause the GitHub Action "Validate PR Title" to fail! Always manually specify the `--title`!
 | **Tracked** (has `[origin/...]`)  | Push Updates     | `git push`                                        |
 
 **⚠️ NEVER** use `git push -u origin <branch>` for new branches — it creates orphan branches with no PR.

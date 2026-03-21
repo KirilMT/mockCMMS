@@ -445,8 +445,7 @@ it for the default group.
 ### Merging a pull request
 
 Pull request titles and descriptions must follow the
-[commit messages](#commit-messages) conventions. This enables approvers to
-review the final commit message.
+[commit messages](#commit-messages) conventions. This is **strictly enforced** by CI actions (Validate PR Title). **Do not use the branch name as the PR title.** Always use a Conventional Commit format (e.g., `feat(api): add endpoint`) for the PR title itself. This enables approvers to review the final commit message correctly.
 
 Once the pull request has been approved and all checks have passed, click the
 [Squash and Merge](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges#squash-and-merge-your-commits)
