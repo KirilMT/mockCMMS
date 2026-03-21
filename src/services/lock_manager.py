@@ -106,7 +106,9 @@ class LockManager:
                     existing_lock.branch_name = branch_name or existing_lock.branch_name
                     existing_lock.reason = reason or existing_lock.reason
                     session.commit()
-                    self.logger.info(f"Lock refreshed for {file_path} by {developer_id}")
+                    self.logger.info(
+                        f"Lock refreshed for {file_path} by {developer_id}"
+                    )
                     return True, {
                         "status": "refreshed",
                         "lock_token": existing_lock.lock_token,
@@ -293,7 +295,10 @@ class LockManager:
             )
 
             if not lock:
-                return False, {"status": "not_found", "message": "Active lock not found"}
+                return False, {
+                    "status": "not_found",
+                    "message": "Active lock not found",
+                }
 
             lock.released_at = datetime.utcnow()
             lock.reason = (lock.reason or "") + f" [Force released by {admin_id}]"

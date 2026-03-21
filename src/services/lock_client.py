@@ -27,9 +27,13 @@ class LockClient:
 
     def _get_git_user(self) -> str:
         try:
-            name = subprocess.check_output(
-                ["git", "config", "user.name"], stderr=subprocess.STDOUT
-            ).decode().strip()
+            name = (
+                subprocess.check_output(
+                    ["git", "config", "user.name"], stderr=subprocess.STDOUT
+                )
+                .decode()
+                .strip()
+            )
             return name.replace(" ", "_").lower()
         except Exception:
             return "unknown_user"
@@ -95,7 +99,9 @@ class LockClient:
     def active_locks(self) -> List[Dict]:
         """Returns all active locks. Returns [] if server unreachable."""
         try:
-            res = requests.get(f"{self.server_url}/api/locks/active", timeout=self.timeout)
+            res = requests.get(
+                f"{self.server_url}/api/locks/active", timeout=self.timeout
+            )
             if res.status_code == 200:
                 return res.json()
             return []
@@ -128,7 +134,9 @@ class LockClient:
     def health(self) -> bool:
         """Returns True if lock server is reachable and healthy."""
         try:
-            res = requests.get(f"{self.server_url}/api/locks/health", timeout=self.timeout)
+            res = requests.get(
+                f"{self.server_url}/api/locks/health", timeout=self.timeout
+            )
             return res.status_code == 200
         except Exception:
             return False
@@ -138,7 +146,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Lock Manager CLI")
-    parser.add_argument("--url", default="http://localhost:5001", help="Lock server URL")
+    parser.add_argument(
+        "--url", default="http://localhost:5001", help="Lock server URL"
+    )
     parser.add_argument("--user", help="Developer ID (default: git user)")
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")

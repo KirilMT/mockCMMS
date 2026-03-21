@@ -1,5 +1,6 @@
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 
 from src.services.lock_manager import LockManager
 
@@ -39,7 +40,9 @@ class TestLockManager:
         assert success is True
         assert res2["status"] == "refreshed"
         assert res2["lock_token"] == token1
-        assert datetime.fromisoformat(res2["expires_at"]) > datetime.fromisoformat(res1["expires_at"])
+        assert datetime.fromisoformat(res2["expires_at"]) > datetime.fromisoformat(
+            res1["expires_at"]
+        )
 
     def test_acquire_same_file_different_developer_conflicts(self, manager):
         manager.acquire_lock("test.py", "alice")
@@ -57,12 +60,13 @@ class TestLockManager:
 
     def test_acquire_after_expiry_succeeds(self, manager):
         from src.services.lock_manager import FileLock
+
         session = manager.Session()
         expired_lock = FileLock(
             file_path="expired.py",
             developer_id="oldie",
             lock_token="old_token",
-            expires_at=datetime.utcnow() - timedelta(minutes=1)
+            expires_at=datetime.utcnow() - timedelta(minutes=1),
         )
         session.add(expired_lock)
         session.commit()
@@ -130,12 +134,13 @@ class TestLockManager:
     def test_cleanup_expired_locks(self, manager):
         # Manually insert an expired lock since we can't easily mock datetime.utcnow in SQLAlchemy default
         from src.services.lock_manager import FileLock
+
         session = manager.Session()
         expired_lock = FileLock(
             file_path="expired.py",
             developer_id="oldie",
             lock_token="old_token",
-            expires_at=datetime.utcnow() - timedelta(minutes=1)
+            expires_at=datetime.utcnow() - timedelta(minutes=1),
         )
         session.add(expired_lock)
         session.commit()

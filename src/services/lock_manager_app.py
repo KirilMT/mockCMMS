@@ -32,7 +32,9 @@ def acquire():
     data = request.json
     if not data or "file_path" not in data or "developer_id" not in data:
         return (
-            jsonify({"error": "Missing required fields", "field": "file_path/developer_id"}),
+            jsonify(
+                {"error": "Missing required fields", "field": "file_path/developer_id"}
+            ),
             400,
         )
 
@@ -104,11 +106,15 @@ def force_release():
     data = request.json
     if not data or "file_path" not in data or "admin_id" not in data:
         return (
-            jsonify({"error": "Missing required fields", "field": "file_path/admin_id"}),
+            jsonify(
+                {"error": "Missing required fields", "field": "file_path/admin_id"}
+            ),
             400,
         )
 
-    success, result = lock_manager.force_release_lock(data["file_path"], data["admin_id"])
+    success, result = lock_manager.force_release_lock(
+        data["file_path"], data["admin_id"]
+    )
 
     if success:
         return jsonify(result), 200
