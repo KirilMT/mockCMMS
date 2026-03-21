@@ -11,14 +11,13 @@ and this project adheres to
 
 ## [2.5.1](https://github.com/KirilMT/mockCMMS/compare/v2.5.0...v2.5.1) (2026-03-21)
 
-
 ### 🐛 Bug Fixes
 
-* **ci:** configure prettier defaults and align release workflow ([607e7ea](https://github.com/KirilMT/mockCMMS/commit/607e7ea65d11832ac707466baa1fe47a5a63f428))
-* **ci:** configure prettier defaults and align release workflow ([944a340](https://github.com/KirilMT/mockCMMS/commit/944a340171a35fd30a7537921efe7e3de5073aab))
-* **ci:** extract Release PR branch from JSON and stop changelog wrap ([c75979e](https://github.com/KirilMT/mockCMMS/commit/c75979e43e75abde0bb4c1b106c0fded8ceae3b4))
-* **ci:** extract Release PR branch from JSON and stop changelog wrap ([fa5c1bf](https://github.com/KirilMT/mockCMMS/commit/fa5c1bf4c602fd53232838e64bee46486a5c90de))
-* **ci:** yamllint / line-length and truthy directive for release workflow ([45d920e](https://github.com/KirilMT/mockCMMS/commit/45d920ef2e192a289eb2472b3d17b635029813ca))
+- **ci:** configure prettier defaults and align release workflow ([607e7ea](https://github.com/KirilMT/mockCMMS/commit/607e7ea65d11832ac707466baa1fe47a5a63f428))
+- **ci:** configure prettier defaults and align release workflow ([944a340](https://github.com/KirilMT/mockCMMS/commit/944a340171a35fd30a7537921efe7e3de5073aab))
+- **ci:** extract Release PR branch from JSON and stop changelog wrap ([c75979e](https://github.com/KirilMT/mockCMMS/commit/c75979e43e75abde0bb4c1b106c0fded8ceae3b4))
+- **ci:** extract Release PR branch from JSON and stop changelog wrap ([fa5c1bf](https://github.com/KirilMT/mockCMMS/commit/fa5c1bf4c602fd53232838e64bee46486a5c90de))
+- **ci:** yamllint / line-length and truthy directive for release workflow ([45d920e](https://github.com/KirilMT/mockCMMS/commit/45d920ef2e192a289eb2472b3d17b635029813ca))
 
 ## [2.5.0](https://github.com/KirilMT/mockCMMS/compare/v2.4.0...v2.5.0) (2026-03-20)
 
