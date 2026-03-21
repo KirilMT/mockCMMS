@@ -1,8 +1,7 @@
 ---
-# yamllint disable rule:truthy
 name: Release
 
-on:
+"on":
   push:
     branches:
       - main
@@ -18,7 +17,10 @@ jobs:
     # Skip running this job when the triggering commit is an automated
     # formatting commit created by this workflow. This avoids recursion
     # when we push formatting fixes back to branches.
-    if: "!contains(github.event.head_commit.message, 'auto-format (Release Please)')"
+    if: >-
+      !contains(
+      github.event.head_commit.message,
+      'auto-format (Release Please)')
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -34,14 +36,19 @@ jobs:
         with:
           # checkout the PR branch created by release-please so we can
           # apply formatting fixes there
-          ref: refs/heads/${{ fromJson(steps.release.outputs.pr).headBranchName }}
+          ref: >-
+            refs/heads/${{
+            fromJson(steps.release.outputs.pr).headBranchName
+            }}
           fetch-depth: 0
           persist-credentials: true
 
       - name: Format release artifacts
         if: ${{ steps.release.outputs.pr }}
         run: |
-          TARGET_BRANCH="${{ fromJson(steps.release.outputs.pr).headBranchName }}"
+          TARGET_BRANCH="${{
+            fromJson(steps.release.outputs.pr).headBranchName
+          }}"
 
           # Fast execution: only npm is required to run Prettier
           npm ci --silent

@@ -22,19 +22,13 @@ repos:
     hooks:
       - id: validate-code
         name: Validate Code (lint, type-check, tests)
-        # Only run backend/frontend on staged files. Config/Docs are handled
-        # by other hooks.
-        entry: |
-          python scripts/validate_code.py \
-            --quick \
-            --backend \
-            --frontend
+        # Rely on the internal file filtering in validate_code.py
+        # It handles selective testing cleanly via passed args.
+        entry: python scripts/validate_code.py --quick
         language: system
-        # Do not pass filenames to the validate script. The script handles
-        # its own file discovery/quick modes. Allowing pre-commit to append
-        # filenames caused argparse "unrecognized arguments" errors when
-        # the script was invoked during commit hooks.
-        pass_filenames: false
+        # Passing filenames guarantees we only test exactly what is staged,
+        # preventing failures caused by unrelated/unstaged broken files.
+        pass_filenames: true
         require_serial: true
         # All files in one call — prevents repeated output
         stages: [pre-commit]
