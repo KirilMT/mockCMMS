@@ -13,7 +13,7 @@ import argparse
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add src to sys.path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -43,7 +43,7 @@ def main():
 
     if args.dry_run:
         session = manager.Session()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         from src.services.lock_manager import FileLock
 
         to_clean = (

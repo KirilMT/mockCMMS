@@ -1,38 +1,53 @@
-from datetime import datetime, timedelta
+"""Tests for the LockManager class."""
+
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from src.services.lock_manager import LockManager
 
 
+def _utcnow():
+    """Return current UTC time as naive datetime."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 class TestLockManager:
+    """Tests for the LockManager class."""
+
     @pytest.fixture
     def manager(self):
+        """Create an in-memory LockManager for testing."""
         return LockManager(db_path=":memory:")
 
     def test_acquire_new_lock_succeeds(self, manager):
+        """Test acquiring a new lock succeeds."""
         success, result = manager.acquire_lock("test.py", "alice")
         assert success is True
         assert result["status"] == "acquired"
         assert "lock_token" in result
 
     def test_acquire_returns_lock_token(self, manager):
+        """Test that acquiring a lock returns a token."""
         _, result = manager.acquire_lock("test.py", "alice")
         assert len(result["lock_token"]) > 0
 
     def test_acquire_sets_correct_expiry(self, manager):
+        """Test that lock expiry is set correctly."""
         _, result = manager.acquire_lock("test.py", "alice", expires_minutes=10)
         expires_at = datetime.fromisoformat(result["expires_at"])
-        now = datetime.utcnow()
+        now = _utcnow()
         assert expires_at > now
         assert expires_at <= now + timedelta(minutes=11)
 
     def test_acquire_with_custom_expiry(self, manager):
+        """Test acquiring a lock with custom expiry."""
         _, result = manager.acquire_lock("test.py", "alice", expires_minutes=60)
         expires_at = datetime.fromisoformat(result["expires_at"])
-        assert expires_at > datetime.utcnow() + timedelta(minutes=59)
+        assert expires_at > _utcnow() + timedelta(minutes=59)
 
     def test_acquire_same_file_same_developer_refreshes(self, manager):
+        """Test re-acquiring refreshes the lock."""
         _, res1 = manager.acquire_lock("test.py", "alice", expires_minutes=10)
         token1 = res1["lock_token"]
 
@@ -45,6 +60,7 @@ class TestLockManager:
         )
 
     def test_acquire_same_file_different_developer_conflicts(self, manager):
+        """Test that a different developer gets a conflict."""
         manager.acquire_lock("test.py", "alice")
         success, result = manager.acquire_lock("test.py", "bob")
         assert success is False
@@ -52,6 +68,7 @@ class TestLockManager:
         assert result["locked_by"] == "alice"
 
     def test_acquire_after_release_succeeds(self, manager):
+        """Test acquiring after release works."""
         _, res = manager.acquire_lock("test.py", "alice")
         manager.release_lock(res["lock_token"])
         success, result = manager.acquire_lock("test.py", "bob")
@@ -59,6 +76,7 @@ class TestLockManager:
         assert result["status"] == "acquired"
 
     def test_acquire_after_expiry_succeeds(self, manager):
+        """Test acquiring after expiry works."""
         from src.services.lock_manager import FileLock
 
         session = manager.Session()
@@ -66,7 +84,7 @@ class TestLockManager:
             file_path="expired.py",
             developer_id="oldie",
             lock_token="old_token",
-            expires_at=datetime.utcnow() - timedelta(minutes=1),
+            expires_at=_utcnow() - timedelta(minutes=1),
         )
         session.add(expired_lock)
         session.commit()
@@ -78,17 +96,20 @@ class TestLockManager:
         assert result["lock_token"] != "old_token"
 
     def test_release_by_valid_token(self, manager):
+        """Test releasing a lock by valid token."""
         _, res = manager.acquire_lock("test.py", "alice")
         success, result = manager.release_lock(res["lock_token"])
         assert success is True
         assert result["status"] == "released"
 
     def test_release_invalid_token_returns_not_found(self, manager):
+        """Test releasing with invalid token fails."""
         success, result = manager.release_lock("invalid_token")
         assert success is False
         assert result["status"] == "not_found"
 
     def test_release_already_released_returns_not_found(self, manager):
+        """Test double-release returns not_found."""
         _, res = manager.acquire_lock("test.py", "alice")
         manager.release_lock(res["lock_token"])
         success, result = manager.release_lock(res["lock_token"])
@@ -96,6 +117,7 @@ class TestLockManager:
         assert result["status"] == "not_found"
 
     def test_status_locked_file(self, manager):
+        """Test status for a locked file."""
         manager.acquire_lock("test.py", "alice")
         status = manager.get_lock_status("test.py")
         assert status["is_locked"] is True
@@ -103,14 +125,17 @@ class TestLockManager:
         assert status["can_edit"] is False
 
     def test_status_unlocked_file(self, manager):
+        """Test status for an unlocked file."""
         status = manager.get_lock_status("free.py")
         assert status["is_locked"] is False
         assert status["can_edit"] is True
 
     def test_get_all_active_locks_empty(self, manager):
+        """Test empty active locks list."""
         assert len(manager.get_all_active_locks()) == 0
 
     def test_get_all_active_locks_returns_only_active(self, manager):
+        """Test active locks excludes released locks."""
         manager.acquire_lock("a.py", "alice")
         manager.acquire_lock("b.py", "bob")
         _, res = manager.acquire_lock("c.py", "charlie")
@@ -124,6 +149,7 @@ class TestLockManager:
         assert "c.py" not in paths
 
     def test_get_locks_by_developer(self, manager):
+        """Test filtering locks by developer."""
         manager.acquire_lock("a.py", "alice")
         manager.acquire_lock("b.py", "alice")
         manager.acquire_lock("c.py", "bob")
@@ -132,7 +158,7 @@ class TestLockManager:
         assert len(alice_locks) == 2
 
     def test_cleanup_expired_locks(self, manager):
-        # Manually insert an expired lock since we can't easily mock datetime.utcnow in SQLAlchemy default
+        """Test cleanup of expired locks."""
         from src.services.lock_manager import FileLock
 
         session = manager.Session()
@@ -140,7 +166,7 @@ class TestLockManager:
             file_path="expired.py",
             developer_id="oldie",
             lock_token="old_token",
-            expires_at=datetime.utcnow() - timedelta(minutes=1),
+            expires_at=_utcnow() - timedelta(minutes=1),
         )
         session.add(expired_lock)
         session.commit()
@@ -152,6 +178,7 @@ class TestLockManager:
         assert status["is_locked"] is False
 
     def test_force_release_active_lock(self, manager):
+        """Test force-releasing an active lock."""
         manager.acquire_lock("test.py", "alice")
         success, result = manager.force_release_lock("test.py", "admin")
         assert success is True
@@ -159,6 +186,7 @@ class TestLockManager:
         assert status["is_locked"] is False
 
     def test_get_lock_history_all(self, manager):
+        """Test getting all lock history."""
         manager.acquire_lock("a.py", "alice")
         _, res = manager.acquire_lock("b.py", "bob")
         manager.release_lock(res["lock_token"])
@@ -167,6 +195,7 @@ class TestLockManager:
         assert len(history) == 2
 
     def test_get_lock_history_filtered_by_file(self, manager):
+        """Test filtering lock history by file."""
         manager.acquire_lock("a.py", "alice")
         manager.acquire_lock("b.py", "bob")
 

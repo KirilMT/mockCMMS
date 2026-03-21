@@ -94,7 +94,8 @@ class LockClient:
                 timeout=self.timeout,
             )
             if res.status_code == 200:
-                return res.json()
+                data: Dict = res.json()
+                return data
             return {"is_locked": False, "error": f"Server returned {res.status_code}"}
         except Exception as e:
             return {"is_locked": False, "error": str(e)}
@@ -109,7 +110,8 @@ class LockClient:
                 f"{self.server_url}/api/locks/active", timeout=self.timeout
             )
             if res.status_code == 200:
-                return res.json()
+                result: List[Dict] = res.json()
+                return result
             return []
         except Exception:
             return []
@@ -122,7 +124,8 @@ class LockClient:
                 timeout=self.timeout,
             )
             if res.status_code == 200:
-                return res.json()
+                result: List[Dict] = res.json()
+                return result
             return []
         except Exception:
             return []

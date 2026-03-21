@@ -4,7 +4,7 @@ Standalone Flask application exposing the lock manager REST API.
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Flask, jsonify, render_template_string, request
 from flask_cors import CORS
@@ -14,25 +14,34 @@ from src.services.lock_manager import LockManager
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# Configuration
 LOCK_DB_PATH = os.environ.get("LOCK_DB_PATH", "instance/locks.db")
 DEFAULT_EXPIRY = int(os.environ.get("LOCK_DEFAULT_EXPIRY_MINUTES", 480))
 
 lock_manager = LockManager(db_path=LOCK_DB_PATH)
 
 
+def _utcnow_iso() -> str:
+    """Return current UTC time as ISO 8601 string."""
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+
+
 @app.route("/api/locks/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "timestamp": datetime.utcnow().isoformat()})
+    """Health check endpoint."""
+    return jsonify({"status": "ok", "timestamp": _utcnow_iso()})
 
 
 @app.route("/api/locks/acquire", methods=["POST"])
 def acquire():
+    """Acquire a file lock."""
     data = request.json
     if not data or "file_path" not in data or "developer_id" not in data:
         return (
             jsonify(
-                {"error": "Missing required fields", "field": "file_path/developer_id"}
+                {
+                    "error": "Missing required fields",
+                    "field": "file_path/developer_id",
+                }
             ),
             400,
         )
@@ -56,9 +65,18 @@ def acquire():
 
 @app.route("/api/locks/release", methods=["POST"])
 def release():
+    """Release a file lock by token."""
     data = request.json
     if not data or "lock_token" not in data:
-        return jsonify({"error": "Missing lock_token", "field": "lock_token"}), 400
+        return (
+            jsonify(
+                {
+                    "error": "Missing lock_token",
+                    "field": "lock_token",
+                }
+            ),
+            400,
+        )
 
     success, result = lock_manager.release_lock(data["lock_token"])
 
@@ -72,9 +90,18 @@ def release():
 
 @app.route("/api/locks/status", methods=["GET"])
 def status():
+    """Check lock status of a file."""
     file_path = request.args.get("file_path")
     if not file_path:
-        return jsonify({"error": "Missing file_path", "field": "file_path"}), 400
+        return (
+            jsonify(
+                {
+                    "error": "Missing file_path",
+                    "field": "file_path",
+                }
+            ),
+            400,
+        )
 
     result = lock_manager.get_lock_status(file_path)
     return jsonify(result), 200
@@ -82,31 +109,41 @@ def status():
 
 @app.route("/api/locks/active", methods=["GET"])
 def active():
+    """List all active locks."""
     locks = lock_manager.get_all_active_locks()
     return jsonify(locks), 200
 
 
 @app.route("/api/locks/history", methods=["GET"])
 def history():
+    """Get lock history."""
     file_path = request.args.get("file_path")
     limit = int(request.args.get("limit", 50))
     locks = lock_manager.get_lock_history(file_path=file_path, limit=limit)
     return jsonify(locks), 200
 
 
-@app.route("/api/locks/developer/<developer_id>", methods=["GET"])
+@app.route(
+    "/api/locks/developer/<developer_id>",
+    methods=["GET"],
+)
 def developer_locks(developer_id):
+    """List active locks for a specific developer."""
     locks = lock_manager.get_locks_by_developer(developer_id)
     return jsonify(locks), 200
 
 
 @app.route("/api/locks/force-release", methods=["POST"])
 def force_release():
+    """Force-release a lock (admin operation)."""
     data = request.json
     if not data or "file_path" not in data or "admin_id" not in data:
         return (
             jsonify(
-                {"error": "Missing required fields", "field": "file_path/admin_id"}
+                {
+                    "error": "Missing required fields",
+                    "field": "file_path/admin_id",
+                }
             ),
             400,
         )
@@ -125,12 +162,14 @@ def force_release():
 
 @app.route("/api/locks/cleanup", methods=["POST"])
 def cleanup():
+    """Clean up expired locks."""
     count = lock_manager.cleanup_expired_locks()
     return jsonify({"status": "success", "cleaned_count": count}), 200
 
 
 @app.route("/admin/lock-dashboard")
 def dashboard():
+    """Serve the lock management dashboard."""
     template_path = os.path.join(os.path.dirname(__file__), "lock_dashboard.html")
     with open(template_path, "r") as f:
         template = f.read()
@@ -138,6 +177,7 @@ def dashboard():
 
 
 if __name__ == "__main__":
+    host = os.environ.get("LOCK_SERVICE_HOST", "127.0.0.1")
     port = int(os.environ.get("LOCK_SERVICE_PORT", 5001))
     debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
-    app.run(host="0.0.0.0", port=port, debug=debug)
+    app.run(host=host, port=port, debug=debug)

@@ -1,6 +1,7 @@
+---
 name: Validate PR
 
-on:
+"on":
   pull_request:
     branches: [main]
 
@@ -21,9 +22,15 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Lint (flake8)
-        run: flake8 src/ tests/ --max-line-length=120 --ignore=E501,W503
+        run: >
+          flake8 src/ tests/
+          --max-line-length=88
 
       - name: Run tests with coverage
-        run: pytest --cov=src --cov-report=term-missing --cov-fail-under=40 --tb=short
+        run: >
+          pytest --cov=src
+          --cov-report=term-missing
+          --cov-fail-under=85
+          --tb=short
         timeout-minutes: 15
         continue-on-error: false

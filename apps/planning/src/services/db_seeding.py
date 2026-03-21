@@ -5,10 +5,7 @@ from datetime import datetime
 
 from flask import current_app
 
-from apps.planning.src.services.planning_db_utils import (
-    get_db_connection,
-    init_db,
-)
+from apps.planning.src.services.planning_db_utils import get_db_connection, init_db
 from apps.planning.src.services.planning_db_utils import (
     populate_dummy_data as populate_planning_dummy_data,
 )
