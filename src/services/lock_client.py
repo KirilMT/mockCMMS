@@ -50,8 +50,9 @@ class LockClient:
         self.developer_id = developer_id
 
         self.api_base = "https://api.github.com"
+        # Use Bearer prefix for broader compatibility (Classic + Fine-grained tokens)
         self.headers = {
-            "Authorization": f"token {self.token}",
+            "Authorization": f"Bearer {self.token}",
             "Accept": "application/vnd.github.v3+json",
         }
         self.gist_filename = "locks.json"

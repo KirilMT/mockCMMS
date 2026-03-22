@@ -193,6 +193,8 @@ coverage.xml
 # pytest-testmon coverage DB (local smart-test cache — never commit)
 .testmondata
 .testmondata-*
+# pytest-tempdir or similar transient artifacts
+pytest-cache-files-*/
 
 # Node modules (for local jscpd)
 node_modules/

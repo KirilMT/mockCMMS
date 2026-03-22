@@ -566,7 +566,8 @@
         async function fetchGist() {
             if (!GIST_ID || !GITHUB_TOKEN) throw new Error("Missing Credentials");
             const url = `https://api.github.com/gists/${GIST_ID}`;
-            const res = await fetch(url, { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+            // Use Bearer for better compatibility with fine-grained tokens
+            const res = await fetch(url, { headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}` } });
             if (!res.ok) throw new Error("Gist Fetch Failed");
             return await res.json();
         }
@@ -585,7 +586,7 @@
             try {
                 const data = await fetchGist();
                 if (!GITHUB_USER) {
-                    const userRes = await fetch("https://api.github.com/user", { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+                    const userRes = await fetch("https://api.github.com/user", { headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}` } });
                     if (userRes.ok) {
                         const userData = await userRes.json();
                         GITHUB_USER = userData.login;
@@ -746,7 +747,7 @@
 
                     const patchRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
                         method: 'PATCH',
-                        headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+                        headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             files: {
                                 'locks.json': { content: JSON.stringify(locks, null, 2) },

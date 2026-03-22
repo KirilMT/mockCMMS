@@ -60,6 +60,7 @@ TEST_OUTPUT_ARTIFACTS: List[str] = [
 TEST_OUTPUT_GLOB_PATTERNS: List[str] = [
     "jest_output.txt",
     "jest_*.txt",
+    "pytest-cache-files-*",  # Randomly named temporary directories from test runners
 ]
 
 # Tool caches that speed up subsequent runs but pollute the repo visually.
