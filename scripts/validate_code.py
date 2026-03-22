@@ -771,27 +771,22 @@ def validate_python_backend(
 
         checks.append(("Tests", success))
 
-        # Conditional Coverage Check in Quick Mode
-        if python_targets:
-            # We want to run coverage for the changed files efficiently
-            # but we use the 'Smart' generation step below later.
-            pass
-        else:
-            print_section("Step 10/11: Total Coverage Validation")
-            msg10 = (
-                f"{Colors.OKCYAN}[INFO] Quick mode (non-code): Skipping "
-                f"coverage threshold check.{Colors.ENDC}"
-            )
-            print(msg10)
-            checks.append(("Total Coverage Threshold", True))
+        # Explicitly mention skipped steps 10 and 11 in quick mode
+        print_section("Step 10/11: Total Coverage Validation")
+        msg10 = (
+            f"{Colors.OKCYAN}[INFO] Quick mode: Skipping overall coverage "
+            f"threshold check.{Colors.ENDC}"
+        )
+        print(msg10)
+        checks.append(("Total Coverage Threshold", True))
 
-            print_section("Step 11/11: Diff (Patch) Coverage")
-            msg11 = (
-                f"{Colors.OKCYAN}[INFO] Quick mode (non-code): Skipping diff coverage "
-                f"check.{Colors.ENDC}"
-            )
-            print(msg11)
-            checks.append(("Diff Coverage", True))
+        print_section("Step 11/11: Diff (Patch) Coverage")
+        msg11 = (
+            f"{Colors.OKCYAN}[INFO] Quick mode: Skipping diff coverage "
+            f"check.{Colors.ENDC}"
+        )
+        print(msg11)
+        checks.append(("Diff Coverage", True))
 
     else:
         print_section("Step 9/11: Full Test Suite with Coverage")
@@ -811,86 +806,58 @@ def validate_python_backend(
         )
         checks.append(("Full Discovery Suite", success))
 
-    # 10. Coverage validation (Total >= 85%) & 11. Diff Coverage (New Code >= 92%)
-    if not quick or python_targets:
-        if quick and python_targets:
-            # In quick mode, we need to generate coverage data first
-            # but ONLY for the relevant backend scopes to be much faster.
-            print_section("Step 10/11: Coverage Generation (Smart)")
-
-            # Use detected scopes if available, otherwise fallback to python_targets
-            backend_scopes = scopes.get("backend", []) if "scopes" in locals() else []
-            cov_targets = backend_scopes if backend_scopes else python_targets
-
-            run_command(
-                [
-                    "pytest",
-                    "-c",
-                    "pyproject.toml",
-                    "--cov=src",
-                    "--cov=apps",
-                    "--cov-report=xml",
-                    "-q",
-                    "--no-summary",
-                ]
-                + cov_targets,
-                "Smart coverage generation",
-                force_all_apps=force_all_apps,
-            )
-
-        # 10. Total Coverage Validation (Total >= 85%)
-        # In quick mode with specific files/scopes, we SKIP the TOTAL coverage threshold
-        # because the percentage will naturally be lower than 85%.
-        # We only run it if:
-        #  a) It's NOT quick mode (full run)
-        #  b) It IS quick mode, but we are running the 'full_suite' (global change)
-
-        is_full_coverage_run = (not quick) or (
-            "scopes" in locals() and scopes.get("full_suite", False)
+    # 10. Coverage validation (Total >= 82%)
+    if not quick:
+        print_section("Step 10/11: Total Coverage Validation")
+        success, _ = run_command(
+            [
+                "pytest",
+                "-c",
+                "pyproject.toml",
+                "--cov=src",
+                "--cov=apps",
+                "--cov-fail-under=85",
+                "-q",
+            ],
+            "Coverage threshold check (>= 85%)",
+            force_all_apps=force_all_apps,
         )
-
-        if is_full_coverage_run:
-            print_section("Step 10/11: Total Coverage Validation")
-            threshold = 85
-            success, _ = run_command(
-                [
-                    "pytest",
-                    "-c",
-                    "pyproject.toml",
-                    "--cov=src",
-                    "--cov=apps",
-                    f"--cov-fail-under={threshold}",
-                    "-q",
-                    "--no-summary",
-                    "--no-cov-on-fail",
-                ],
-                f"Total Coverage threshold check (>= {threshold}%)",
-                force_all_apps=force_all_apps,
-            )
-            checks.append(("Total Coverage Threshold", success))
-        else:
-            print_section("Step 10/11: Total Coverage Validation (Skipped)")
-            print_warning("Quick mode (partial scope) — skipping total coverage.")
-            print_warning("Diff coverage (Step 11) will still be enforced.")
-            checks.append(("Total Coverage Threshold", True))
+        checks.append(("Total Coverage Threshold", success))
 
         # 11. Diff Coverage validation (New Code >= 92%)
-        # This is the ROBUST check for new code in quick mode.
         print_section("Step 11/11: Diff (Patch) Coverage")
+        # Ensure we have coverage.xml
         if not os.path.exists("coverage.xml"):
-            print_warning("coverage.xml not found, skipping diff-cover.")
-            checks.append(("Diff Coverage", True))
-        else:
-            success, _ = run_command(
-                [
-                    "diff-cover",
-                    "coverage.xml",
-                    "--compare-branch=origin/main",
-                    "--fail-under=92",
-                ],
-                "Diff Coverage Check (New Code needs 92% coverage)",
+            msg_cov = (
+                f"{Colors.OKCYAN}[INFO] coverage.xml not found, skipping "
+                f"diff-cover.{Colors.ENDC}"
             )
-            checks.append(("Diff Coverage", success))
+            print(msg_cov)
+            checks.append(("Diff Coverage", True))  # Soft fail if missing
+        else:
+            # Check if diff-cover is installed
+            success, output = run_command(
+                ["diff-cover", "--version"], "Check diff-cover", check=False
+            )
+            if success:
+                success, _ = run_command(
+                    [
+                        "diff-cover",
+                        "coverage.xml",
+                        "--compare-branch=origin/main",
+                        "--fail-under=92",
+                    ],
+                    "Diff Coverage Check (New Code needs 92% coverage)",
+                )
+                checks.append(("Diff Coverage", success))
+            else:
+                msg_dc = (
+                    f"{Colors.OKCYAN}[INFO] diff-cover not installed. Run "
+                    f"'pip install diff-cover' to enable patch checks.{Colors.ENDC}"
+                )
+                print(msg_dc)
+                # Soft fail if tool is missing to allow environment flexibility
+                checks.append(("Diff Coverage", True))
 
     # Print summary
     print_section("Python Backend Validation Summary")

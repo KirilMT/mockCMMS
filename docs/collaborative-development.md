@@ -1,83 +1,129 @@
 # Collaborative Development Guide
 
-This system provides a file locking mechanism to prevent merge conflicts and give developers visibility into who is working on what files.
+This system provides a file locking mechanism to prevent merge conflicts and give developers visibility into who is working on what files. It is now a **pure serverless** system powered by GitHub Gists.
 
-## Overview
+---
 
-The system consists of:
+## 🛠️ Quick Setup (Windows)
 
-1. **Lock Service**: A Flask microservice that manages locks in a database.
-2. **Lock Dashboard**: A web interface to view active locks and history.
-3. **Git Hooks**:
-   - `pre-commit`: Automatically acquires/checks locks before you commit.
-   - `pre-push`: Warns if your branch is significantly behind `main`.
-4. **Python Client/CLI**: Tools for manual lock management.
+The simplest way to set up your environment is to run the development setup script:
 
-## Getting Started
+```powershell
+.\scripts\setup-dev.ps1
+```
 
-1. **Install Hooks**:
+This script will:
 
-   ```bash
-   bash scripts/setup_collab_dev.sh
-   ```
+1. **Configure Credentials**: Prompt you for your GitHub Personal Access Token (PAT) and Gist ID.
+2. **Install Hooks**: Automatically install the `pre-commit` and `post-commit` hooks into your local `.git` directory.
+3. **Validate Environment**: Ensure your `.env` file is correctly populated with `GITHUB_TOKEN` and `LOCK_GIST_ID`.
 
-2. **Start the Lock Service** (usually run by a lead or in a central location):
+---
 
-   ```bash
-   python -m src.services.lock_manager_app
-   ```
+## 💻 CLI Client Usage
 
-   By default, it runs on `http://localhost:5001`.
+The `lock_client.py` tool is used for manual lock management and is called automatically by Git hooks.
 
-3. **Verify Connection**:
-   ```bash
-   python -m src.services.lock_client health
-   ```
+### Check File Status
 
-## Daily Workflow
+```bash
+python -m src.services.lock_client status path/to/file.py
+```
 
-1. **Working on files**:
-   As you edit files and prepare to commit, the `pre-commit` hook will automatically try to acquire locks for you.
-   - If a file is **free**, the lock is acquired and the commit proceeds.
-   - If a file is **already locked by you**, the lock is refreshed and the commit proceeds.
-   - If a file is **locked by someone else**, the commit is **blocked** to prevent conflicts.
+### Acquire a Lock (Manual)
 
-2. **Checking Status**:
-   Visit the dashboard at `http://localhost:5001/admin/lock-dashboard` to see who is working on what.
+```bash
+python -m src.services.lock_client acquire path/to/file.py --reason "Refactoring core logic"
+```
 
-3. **Manual Locking** (Optional):
-   If you want to lock a file before you even start editing:
+### Acquire Multiple Locks (Batch)
 
-   ```bash
-   python -m src.services.lock_client acquire path/to/file.py
-   ```
+```bash
+python -m src.services.lock_client acquire-batch path/to/file1.py path/to/file2.py
+```
 
-4. **Releasing Locks**:
-   Locks expire automatically after 8 hours (default). They are also "released" in the system when someone else acquires them after they've expired.
-   To release all your locks manually:
-   ```bash
-   python -m src.services.lock_client release-all
-   ```
+### Release a Lock (Manual)
 
-## Handling Stuck Locks
+```bash
+python -m src.services.lock_client release path/to/file.py
+```
 
-If a developer is away and you need to edit a file they have locked:
+### Release All My Locks
 
-1. Contact the developer to see if they can release it.
-2. Use the **Force Release** button on the Dashboard.
-3. Use the CLI:
-   ```bash
-   # Note: This requires an admin_id for auditing
-   # Currently implemented in API but not directly in CLI client for safety
-   curl -X POST http://localhost:5001/api/locks/force-release -H "Content-Type: application/json" -d '{"file_path": "path/to/file.py", "admin_id": "your_name"}'
-   ```
+```bash
+python -m src.services.lock_client release-all
+```
 
-## Environment Variables
+### Workflow & Automation
 
-| Variable                      | Description                             | Default                 |
-| ----------------------------- | --------------------------------------- | ----------------------- |
-| `LOCK_SERVER_URL`             | URL of the lock service                 | `http://localhost:5001` |
-| `LOCK_DB_PATH`                | Path to the SQLite DB                   | `instance/locks.db`     |
-| `LOCK_SERVICE_PORT`           | Port for the Flask app                  | `5001`                  |
-| `LOCK_DEFAULT_EXPIRY_MINUTES` | Default lock duration                   | `480` (8 hours)         |
-| `LOCK_STRICT`                 | If 1, fail commit if server unreachable | `0` (fail-open)         |
+### 1. The Watcher (Automatic)
+
+The system is now fully automated. The **Gist Lock Watcher** starts automatically in the background whenever you perform git operations (checkout, pull, merge). It monitors your local git status and locks files as soon as you edit them.
+
+- **Zero Configuration**: No need to manually start the watcher. It launches on `git checkout` or `git pull`.
+- **Auto-Lock**: Locks are acquired when `git status` detects modifications.
+- **Conflict Alert**: If you edit a file locked by someone else, the watcher will print a **⚠️ WARNING** (or you can see the conflict on the dashboard).
+- **Auto-Release**: Locks are released if you discard changes (rollback) or if you commit/push your work.
+- **Self-Cleaning**: The background process automatically stops after 60 minutes of inactivity to save resources.
+
+#### Manual Control (if needed)
+
+While automation is recommended, you can manage the background process manually:
+
+- **Status**: `python -m src.services.lock_client daemon-status`
+- **Stop**: `python -m src.services.lock_client daemon-stop`
+- **Start**: `python -m src.services.lock_client daemon-start`
+
+### 2. Git Hooks (Safety Net)
+
+- **`pre-commit`**: Automatically attempts to acquire locks for all files you are committing (safety check).
+- **`post-commit`**: Automatically releases locks for the committed files.
+- **`pre-push`**: Automatically releases all your remaining locks after a successful push.
+
+---
+
+## Lock Dashboard
+
+Monitor all team activity via the standalone **Collaborative Explorer**.
+
+1.  **Open the Dashboard**:
+    - **Recommended**: Run `python -m src.services.lock_client dashboard`
+      > [!TIP]
+      > This command is the best way to open the explorer. It dynamically resolves your local path and forces your **default browser** to open the page.
+    - **Editor Link**: [Collaborative Explorer](../src/services/collaborative_explorer.html)
+      > [!NOTE]
+      > Clicking this link in your editor (like VS Code) will open the **HTML source code**. To view the actual dashboard, use the command above or right-click the file and select "Open in Browser".
+2.  **First-time usage**: The dashboard will prompt for your Token and Gist ID (check your `.env` file).
+3.  **Real-time Monitoring**: Keep this tab open on a second monitor to see who is working on what across the entire team.
+
+---
+
+## Manual CLI Usage
+
+If you prefer manual control, use the `lock_client` directly:
+
+- **Check Status**: `python -m src.services.lock_client status <file>`
+- **Acquire**: `python -m src.services.lock_client acquire <file> --reason "Feature X"`
+- **Release**: `python -m src.services.lock_client release <file>`
+- **List All**: `python -m src.services.lock_client active`
+- **Release All**: `python -m src.services.lock_client release-all`
+
+---
+
+## ⚠️ Handling Stuck Locks
+
+If a developer is away and you need to edit a locked file:
+
+1. **Via Dashboard**: Open the dashboard, find the lock, and use the **Force Release** button.
+2. **Via CLI**: Manually release the lock if you have the developer's permission, or manually edit the `locks.json` file in the GitHub Gist.
+
+---
+
+## ⚙️ Configuration Reference (.env)
+
+| Variable                      | Description                                |
+| :---------------------------- | :----------------------------------------- |
+| `GITHUB_TOKEN`                | GitHub PAT with `gist` scope               |
+| `LOCK_GIST_ID`                | Secret Gist ID for storage                 |
+| `LOCK_DEFAULT_EXPIRY_MINUTES` | Auto-expiry (default 480 / 8 hours)        |
+| `LOCK_STRICT`                 | If `1`, hooks fail-closed (block on error) |

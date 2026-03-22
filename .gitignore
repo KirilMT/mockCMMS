@@ -134,6 +134,7 @@ logs/*
 !logs/.gitkeep
 output/
 temp/
+.lock_watcher.pid
 
 # External/sensitive configuration
 apps/planning/config/config.json

@@ -40,3 +40,42 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
+
+      - id: gist-lock-acquire
+        name: Gist Lock Acquire (Safety)
+        entry: python scripts/hooks/pre_commit_lock.py
+        language: system
+        pass_filenames: true
+        stages: [pre-commit]
+
+      - id: gist-lock-release
+        name: Gist Lock Release (Cleanup)
+        entry: python scripts/hooks/pre_push_lock.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: gist-lock-post-commit
+        name: Gist Lock Release (Post-Commit)
+        entry: python scripts/hooks/post_commit_lock.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [post-commit]
+
+      - id: gist-lock-post-checkout
+        name: Gist Lock Watcher (Post-Checkout)
+        entry: python scripts/hooks/post_checkout_lock.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [post-checkout]
+
+      - id: gist-lock-post-merge
+        name: Gist Lock Watcher (Post-Merge)
+        entry: python scripts/hooks/post_merge_lock.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [post-merge]

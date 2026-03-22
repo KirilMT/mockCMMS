@@ -463,31 +463,7 @@ if (Test-Path $templateFile) {
     Write-Host "   [WARN] .gitmessage not found, skipping commit template setup" -ForegroundColor Yellow
 }
 
-$hookTemplate = Join-Path $projectRoot ".githooks\commit-msg"
-
-$convCommitExe = Join-Path $projectRoot ".venv\Scripts\conventional-pre-commit.exe"
-$convCommitExe = $convCommitExe.Replace("\", "/")
-$pythonExe = Join-Path $projectRoot ".venv\Scripts\python.exe"
-$pythonExe = $pythonExe.Replace("\", "/")
-
-# Install native commit-msg hook for Windows compatibility (avoids pre-commit shell dependency)
-$nativeHookPath = Join-Path $projectRoot ".git\hooks\commit-msg"
-$nativeHookContent = @"
-#!/bin/sh
-# 1. Run Conventional Commits Validator
-"$convCommitExe" "`$1" || exit 1
-
-# 2. Run our custom Length Checker (One-liner)
-"$pythonExe" -c "import sys; msg = open(sys.argv[1], encoding='utf-8').read().splitlines(); exit(any(len(l) > 88 for l in msg))" "`$1" || { echo "ERROR: Commit message exceeds 88 characters."; exit 1; }
-"@
-
-if (Test-Path ".git") {
-    Write-Host "   Installing native commit-msg hook..." -ForegroundColor Yellow
-    # Use Out-File with -Encoding ascii to avoid BOM issues with Git on Windows hooks
-    $nativeHookContent | Out-File -FilePath $nativeHookPath -Encoding ascii -NoNewline
-    Write-Host "   Handled native commit-msg hook " -NoNewline -ForegroundColor White
-    Write-Host "OK" -ForegroundColor Green
-}
+# Note: Hooks are managed by pre-commit tool in Step 6.
 
 # ============================================================================
 # STEP 6: PRE-COMMIT HOOKS SETUP
@@ -519,56 +495,47 @@ if ($hasPreCommit) {
     Write-Host "OK" -ForegroundColor Green
 
     # Install pre-commit hooks
-    Write-Host "   Installing pre-commit hooks..." -ForegroundColor Yellow
+    Write-Host "   Installing repository hooks (framework mode)..." -ForegroundColor Yellow
 
-    try {
-        # Install pre-commit hooks (commits)
-        & $preCommitExe install 2>&1 | Out-Null
+    $hookTypes = @("pre-commit", "post-commit", "post-checkout", "post-merge", "pre-push")
+    foreach ($type in $hookTypes) {
+        Write-Host "     - Installing $type hook..." -ForegroundColor Gray
+        & $preCommitExe install --hook-type $type --overwrite 2>&1 | Out-Null
+    }
 
-        # Install pre-push hooks
-        & $preCommitExe install --hook-type pre-push 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "   Framework hooks installed " -NoNewline -ForegroundColor White
+        Write-Host "OK" -ForegroundColor Green
+        Write-Host "   Enabled:" -ForegroundColor White
+        Write-Host "     - Validations: pre-commit (lint/test), pre-push (full)" -ForegroundColor Gray
+        Write-Host "     - Gist Locking: post-checkout, post-merge, post-commit" -ForegroundColor Gray
 
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "   Pre-commit hooks installed " -NoNewline -ForegroundColor White
-            Write-Host "OK" -ForegroundColor Green
-            Write-Host "   Enabled:" -ForegroundColor White
-            Write-Host "     - Pre-commit: Code formatting & validation" -ForegroundColor Gray
-            Write-Host "     - Pre-push: Full validation & auto-release" -ForegroundColor Gray
+        # Configure repo-local aliases for conflict-safe amend workflow.
+        $safeAmendScript = Join-Path $projectRoot "scripts\safe-amend.ps1"
+        $safeAmendScript = $safeAmendScript.Replace("/", "\")
+        $safeAmendBase = "!pwsh -NoProfile -ExecutionPolicy Bypass -File `"$safeAmendScript`""
 
-            # Configure repo-local aliases for conflict-safe amend workflow.
-            $safeAmendScript = Join-Path $projectRoot "scripts\safe-amend.ps1"
-            $safeAmendScript = $safeAmendScript.Replace("/", "\")
-            $safeAmendBase = "!pwsh -NoProfile -ExecutionPolicy Bypass -File `"$safeAmendScript`""
+        try {
+            $err1 = git config --local alias.safe-amend "$safeAmendBase amend" 2>&1
+            if ($LASTEXITCODE -ne 0) { throw $err1 }
 
-            try {
-                $err1 = git config --local alias.safe-amend "$safeAmendBase amend" 2>&1
-                if ($LASTEXITCODE -ne 0) { throw $err1 }
+            $err2 = git config --local alias.safe-amend-cleanup "$safeAmendBase cleanup" 2>&1
+            if ($LASTEXITCODE -ne 0) { throw $err2 }
 
-                $err2 = git config --local alias.safe-amend-cleanup "$safeAmendBase cleanup" 2>&1
-                if ($LASTEXITCODE -ne 0) { throw $err2 }
-
-                Write-Host "   Git aliases configured: " -NoNewline -ForegroundColor White
-                Write-Host "git safe-amend, git safe-amend-cleanup" -ForegroundColor Magenta
-            }
-            catch {
-                Write-Host "   Git alias setup " -NoNewline -ForegroundColor White
-                Write-Host "FAILED" -ForegroundColor Yellow
-                Write-Host "   Error: $_" -ForegroundColor Gray
-                $script:ErrorCount++
-            }
+            Write-Host "   Git aliases configured: " -NoNewline -ForegroundColor White
+            Write-Host "git safe-amend, git safe-amend-cleanup" -ForegroundColor Magenta
         }
-        else {
-            Write-Host ""
-            Write-Host "   Pre-commit hook install " -NoNewline -ForegroundColor White
-            Write-Host "FAILED" -ForegroundColor Red
+        catch {
+            Write-Host "   Git alias setup " -NoNewline -ForegroundColor White
+            Write-Host "FAILED" -ForegroundColor Yellow
+            Write-Host "   Error: $_" -ForegroundColor Gray
             $script:ErrorCount++
         }
     }
-    catch {
+    else {
         Write-Host ""
         Write-Host "   Pre-commit hook install " -NoNewline -ForegroundColor White
         Write-Host "FAILED" -ForegroundColor Red
-        Write-Host "   Error: $_" -ForegroundColor Red
         $script:ErrorCount++
     }
 }
@@ -578,6 +545,101 @@ else {
     Write-Host "   (Will be installed via requirements-dev.txt later)" -ForegroundColor Gray
 }
 
+
+# ============================================================================
+# STEP 7: SERVERLESS LOCKING SETUP (GIST)
+# ============================================================================
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host "   SERVERLESS LOCKING SETUP" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host ""
+
+Write-Host "[Dev Step 7/7] Configuring GitHub Gist for shared file locking..." -ForegroundColor Yellow
+
+$envFile = Join-Path $projectRoot ".env"
+$githubToken = ""
+$gistId = ""
+
+# Load existing values if any
+if (Test-Path $envFile) {
+    $envContent = Get-Content $envFile
+    foreach ($line in $envContent) {
+        if ($line -match "GITHUB_TOKEN=(.*)") { $githubToken = $Matches[1].Trim() }
+        if ($line -match "LOCK_GIST_ID=(.*)") { $gistId = $Matches[1].Trim() }
+    }
+}
+
+if ($githubToken -and $githubToken -notlike "your_*") {
+    Write-Host "   Current GITHUB_TOKEN found: " -NoNewline -ForegroundColor White
+    Write-Host "****" -ForegroundColor Gray
+} else {
+    Write-Host "   A GitHub Personal Access Token (PAT) with 'gist' scope is required." -ForegroundColor Gray
+    Write-Host "   Create one at: https://github.com/settings/tokens" -ForegroundColor Gray
+    $githubToken = Read-Host "   Enter GITHUB_TOKEN"
+}
+
+if ($gistId -and $gistId -notlike "your_*") {
+    Write-Host "   Current LOCK_GIST_ID found: " -NoNewline -ForegroundColor White
+    Write-Host "$gistId" -ForegroundColor Gray
+} else {
+    Write-Host "   The team uses a shared Gist to track file locks." -ForegroundColor Gray
+    Write-Host "   Recommended (Shared): 298dad0a283b47148a7a0a3303d937f" -ForegroundColor Gray
+    $gistId = Read-Host "   Enter LOCK_GIST_ID (press Enter for recommended)"
+    if (!$gistId) { $gistId = "298dad0a283b47148a7a0a3303d937f" }
+}
+
+if ($gistId -and $gistId -notlike "your_*") {
+    Write-Host "   Current LOCK_GIST_ID found: " -NoNewline -ForegroundColor White
+    Write-Host "$gistId" -ForegroundColor Magenta
+} else {
+    Write-Host "   A Gist ID is required to store the shared locks." -ForegroundColor Gray
+    $gistId = Read-Host "   Enter LOCK_GIST_ID"
+}
+
+if ($githubToken -and $gistId) {
+    # Validate token
+    Write-Host "   Validating token..." -ForegroundColor Gray
+    try {
+        $headers = @{ "Authorization" = "token $githubToken" }
+        $userRes = Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers -ErrorAction Stop
+        Write-Host "   Successfully authenticated as: " -NoNewline -ForegroundColor White
+        Write-Host "$($userRes.login)" -ForegroundColor Green
+
+        # Update .env
+        $newEnv = @()
+        $foundToken = $false
+        $foundGist = $false
+
+        if (Test-Path $envFile) {
+            foreach ($line in (Get-Content $envFile)) {
+                if ($line -match "^GITHUB_TOKEN=") {
+                    $newEnv += "GITHUB_TOKEN=$githubToken"
+                    $foundToken = $true
+                } elseif ($line -match "^LOCK_GIST_ID=") {
+                    $newEnv += "LOCK_GIST_ID=$gistId"
+                    $foundGist = $true
+                } else {
+                    $newEnv += $line
+                }
+            }
+        }
+
+        if (-not $foundToken) { $newEnv += "GITHUB_TOKEN=$githubToken" }
+        if (-not $foundGist) { $newEnv += "LOCK_GIST_ID=$gistId" }
+
+        $newEnv | Out-File -FilePath $envFile -Encoding utf8
+        Write-Host "   .env updated successfully " -NoNewline -ForegroundColor White
+        Write-Host "OK" -ForegroundColor Green
+    } catch {
+        Write-Host "   Token validation " -NoNewline -ForegroundColor White
+        Write-Host "FAILED" -ForegroundColor Red
+        Write-Warning "   Please check your token permissions (gist scope required)."
+        $script:ErrorCount++
+    }
+} else {
+    Write-Warning "   Locking setup skipped. You can manually edit .env later."
+}
 
 # Final Summary
 Write-Host "`n========================================" -ForegroundColor Cyan
