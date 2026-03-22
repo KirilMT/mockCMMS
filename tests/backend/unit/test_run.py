@@ -12,11 +12,28 @@ class TestRunEntry:
         """Ensure run module is not in sys.modules so it re-executes."""
         if "run" in sys.modules:
             del sys.modules["run"]
+        # Mock threading and stdout to avoid side effects on import
+        self.patcher_thread = patch("threading.Thread")
+        self.patcher_stdout = patch("sys.stdout", MagicMock())
+        self.patcher_stderr = patch("sys.stderr", MagicMock())
+        self.patcher_stdout_raw = patch("sys.__stdout__", MagicMock())
+        self.patcher_stderr_raw = patch("sys.__stderr__", MagicMock())
+
+        self.patcher_thread.start()
+        self.patcher_stdout.start()
+        self.patcher_stderr.start()
+        self.patcher_stdout_raw.start()
+        self.patcher_stderr_raw.start()
 
     def teardown_method(self):
-        """Clean up run module from sys.modules."""
+        """Clean up run module and patches."""
         if "run" in sys.modules:
             del sys.modules["run"]
+        self.patcher_thread.stop()
+        self.patcher_stdout.stop()
+        self.patcher_stderr.stop()
+        self.patcher_stdout_raw.stop()
+        self.patcher_stderr_raw.stop()
 
     @pytest.fixture
     def mock_env(self):
@@ -126,11 +143,29 @@ class TestRunRobust:
         """Ensure run module is not in sys.modules so it re-executes."""
         if "run" in sys.modules:
             del sys.modules["run"]
+        # Mock threading and stdout (including raw handles!)
+        # to avoid side effects on import
+        self.patcher_thread = patch("threading.Thread")
+        self.patcher_stdout = patch("sys.stdout", MagicMock())
+        self.patcher_stderr = patch("sys.stderr", MagicMock())
+        self.patcher_stdout_raw = patch("sys.__stdout__", MagicMock())  # ← added
+        self.patcher_stderr_raw = patch("sys.__stderr__", MagicMock())  # ← added
+
+        self.patcher_thread.start()
+        self.patcher_stdout.start()
+        self.patcher_stderr.start()
+        self.patcher_stdout_raw.start()
+        self.patcher_stderr_raw.start()
 
     def teardown_method(self):
-        """Clean up run module from sys.modules."""
+        """Clean up run module and patches."""
         if "run" in sys.modules:
             del sys.modules["run"]
+        self.patcher_thread.stop()
+        self.patcher_stdout.stop()
+        self.patcher_stderr.stop()
+        self.patcher_stdout_raw.stop()
+        self.patcher_stderr_raw.stop()
 
     @pytest.fixture
     def base_patches(self):
