@@ -229,3 +229,9 @@ temp_diff_output.txt
 
 # isort temporary files
 *.py.isorted
+
+# Collab locking runtime files
+.collab/.daemon.pid
+.collab/.daemon.log
+.collab/.pycharm_watcher.pid
+.collab/.pycharm_watcher.log

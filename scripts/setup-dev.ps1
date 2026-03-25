@@ -286,6 +286,25 @@ Write-Host "`n[Dev Step 3/6] Installing Python development tools..." -Foreground
 # Use correct Windows path (venv already exists from setup.ps1)
 $pipPath = ".\.venv\Scripts\pip.exe"
 $pythonPath = ".\.venv\Scripts\python.exe"
+# Normalize path (ensure relative to repo root)
+$pipPath = $pipPath.Replace('..\', '.\')
+$pythonPath = $pythonPath.Replace('..\', '.\')
+
+# Ensure pythonw.exe exists in the venv (required to avoid console popups on Windows)
+$pythonwPath = ".\.venv\Scripts\pythonw.exe"
+if (Test-Path $pythonwPath) {
+    Write-Host "   Found: pythonw.exe in venv" -ForegroundColor Green
+} elseif (Test-Path $pythonPath) {
+    try {
+        Copy-Item -Path $pythonPath -Destination $pythonwPath -Force
+        Write-Host "   Created: pythonw.exe in venv (copied from python.exe)" -ForegroundColor Green
+    } catch {
+        Write-Host "   Warning: pythonw.exe not found and could not be created in venv." -ForegroundColor Yellow
+        Write-Host "            daemon-start will attempt to fallback to a detached python process." -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "   Warning: venv python not found; cannot ensure pythonw.exe presence." -ForegroundColor Yellow
+}
 
 # Verify pip exists (should exist from production setup)
 if (-not (Test-Path $pipPath)) {
@@ -297,8 +316,69 @@ if (-not (Test-Path $pipPath)) {
 
 # Install or update dev requirements efficiently
 if (Test-Path "requirements-dev.txt") {
+    # Pre-check: detect if supabase is already present before installing dev requirements
+    $preSupabaseFound = $false
+    $preSupabaseVersion = ""
+    try {
+        $showOut = & $pipPath show supabase 2>&1
+        if ($LASTEXITCODE -eq 0 -and $showOut) {
+            $preSupabaseFound = $true
+            foreach ($l in $showOut -split "`n") {
+                if ($l -match "^Version:\s*(.*)") { $preSupabaseVersion = $Matches[1].Trim() }
+            }
+        }
+    } catch { }
+
     Write-Host "   Ensuring all dev dependencies are installed and up-to-date..." -ForegroundColor White
     & $pipPath install --upgrade --upgrade-strategy only-if-needed -r requirements-dev.txt > $null 2>&1
+    # Post-check: detect if supabase got installed by the requirements install
+    $postSupabaseFound = $false
+    $postSupabaseVersion = ""
+    try {
+        $showOut2 = & $pipPath show supabase 2>&1
+        if ($LASTEXITCODE -eq 0 -and $showOut2) {
+            $postSupabaseFound = $true
+            foreach ($l in $showOut2 -split "`n") {
+                if ($l -match "^Version:\s*(.*)") { $postSupabaseVersion = $Matches[1].Trim() }
+            }
+        }
+    } catch { $postSupabaseFound = $false; $postSupabaseVersion = "" }
+
+    # If requirements install didn't bring in supabase, attempt an explicit install
+    if (-not $preSupabaseFound -and -not $postSupabaseFound) {
+        Write-Host "   supabase still not present after requirements install; attempting explicit pip install supabase psutil plyer..." -ForegroundColor Yellow
+        $installOutput = & $pipPath install supabase psutil plyer 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            try {
+                $showOut3 = & $pipPath show supabase 2>&1
+                if ($LASTEXITCODE -eq 0 -and $showOut3) {
+                    $postSupabaseFound = $true
+                    foreach ($l in $showOut3 -split "`n") {
+                        if ($l -match "^Version:\s*(.*)") { $postSupabaseVersion = $Matches[1].Trim() }
+                    }
+                }
+            } catch { $postSupabaseFound = $false; $postSupabaseVersion = "" }
+            if ($postSupabaseFound) {
+                Write-Host ""
+                Write-Host "   Installed: " -NoNewline -ForegroundColor White
+                Write-Host "supabase $postSupabaseVersion" -NoNewline -ForegroundColor Magenta
+                Write-Host " OK" -ForegroundColor Green
+                Write-Host "   supabase installed and import OK (version: $postSupabaseVersion)" -ForegroundColor Green
+            } else {
+                Write-Host "   supabase install attempted but pip show still fails. Install output:" -ForegroundColor Yellow
+                Write-Host $installOutput -ForegroundColor Gray
+            }
+        } else {
+            Write-Host "   Explicit pip install failed. Pip output:" -ForegroundColor Yellow
+            Write-Host $installOutput -ForegroundColor Gray
+        }
+    } elseif (-not $preSupabaseFound -and $postSupabaseFound) {
+        Write-Host ""
+        Write-Host "   Installed: " -NoNewline -ForegroundColor White
+        Write-Host "supabase $postSupabaseVersion" -NoNewline -ForegroundColor Magenta
+        Write-Host " OK" -ForegroundColor Green
+        Write-Host "   supabase installed and import OK (version: $postSupabaseVersion)" -ForegroundColor Green
+    }
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""
         # Robust check for all required dev tool executables
@@ -346,6 +426,15 @@ if (Test-Path "requirements-dev.txt") {
     Write-Warning "   requirements-dev.txt not found."
     $script:ErrorCount++
 }
+
+# Supabase check/installation is handled during the dev requirements install block above.
+# The Step 7 summary below will show the final installed status.
+
+# Export final supabase detection variables for use in Step 7 summary
+if ($null -eq $supabaseFound) { $supabaseFound = $false }
+if ($null -eq $supabaseVersion) { $supabaseVersion = "" }
+if ($postSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $postSupabaseVersion }
+elseif ($preSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $preSupabaseVersion }
 
 
 # Step 4: JavaScript Development Tools
@@ -497,7 +586,9 @@ if ($hasPreCommit) {
     # Install pre-commit hooks
     Write-Host "   Installing repository hooks (framework mode)..." -ForegroundColor Yellow
 
-    $hookTypes = @("pre-commit", "post-commit", "post-checkout", "post-merge", "pre-push")
+    # Include post-rewrite so watcher is started on more git operations
+    # (matches previous branch behavior which triggered watcher on rewrite-like ops)
+    $hookTypes = @("pre-commit", "post-commit", "post-checkout", "post-merge", "post-rewrite", "pre-push")
     foreach ($type in $hookTypes) {
         Write-Host "     - Installing $type hook..." -ForegroundColor Gray
         & $preCommitExe install --hook-type $type --overwrite 2>&1 | Out-Null
@@ -508,7 +599,7 @@ if ($hasPreCommit) {
         Write-Host "OK" -ForegroundColor Green
         Write-Host "   Enabled:" -ForegroundColor White
         Write-Host "     - Validations: pre-commit (lint/test), pre-push (full)" -ForegroundColor Gray
-        Write-Host "     - Gist Locking: post-checkout, post-merge, post-commit" -ForegroundColor Gray
+        Write-Host "     - Live Locking hooks: post-checkout, post-merge, post-commit" -ForegroundColor Gray
 
         # Configure repo-local aliases for conflict-safe amend workflow.
         $safeAmendScript = Join-Path $projectRoot "scripts\safe-amend.ps1"
@@ -547,99 +638,113 @@ else {
 
 
 # ============================================================================
-# STEP 7: SERVERLESS LOCKING SETUP (GIST)
+# STEP 7: SUPABASE REALTIME LOCKING SETUP (REQUIRED)
 # ============================================================================
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Magenta
-Write-Host "   SERVERLESS LOCKING SETUP" -ForegroundColor Magenta
+Write-Host "   SUPABASE LOCKING SETUP (REQUIRED)" -ForegroundColor Magenta
 Write-Host "========================================" -ForegroundColor Magenta
 Write-Host ""
 
-Write-Host "[Dev Step 7/7] Configuring GitHub Gist for shared file locking..." -ForegroundColor Yellow
+Write-Host "[Dev Step 7/7] Configure Supabase Realtime for live locks (required)..." -ForegroundColor Yellow
 
 $envFile = Join-Path $projectRoot ".env"
-$githubToken = ""
-$gistId = ""
 
-# Load existing values if any
+# Show Supabase client status summary so user sees clearly at the start of Step 7
+if ($supabaseFound) {
+    Write-Host "   Supabase client: " -NoNewline -ForegroundColor White
+    Write-Host "supabase $supabaseVersion" -NoNewline -ForegroundColor Magenta
+    Write-Host " OK" -ForegroundColor Green
+} else {
+    Write-Host "   Supabase client: NOT INSTALLED" -ForegroundColor Yellow
+    Write-Host "   To install, run: .\.venv\Scripts\pip.exe install supabase" -ForegroundColor Gray
+}
+
+# Supabase locking is required for all developers. Ensure variables are provided.
+$supabaseUrl = ""
+$anonKey = ""
+$serviceKey = ""
+
+# Read example values to detect placeholder copies
+$exampleFile = Join-Path $projectRoot ".env.example"
+$exampleSupabaseUrl = ""; $exampleAnonKey = ""; $exampleServiceKey = ""
+if (Test-Path $exampleFile) {
+    foreach ($line in Get-Content $exampleFile) {
+        if ($line -match "SUPABASE_URL=(.*)") { $exampleSupabaseUrl = $Matches[1].Trim() }
+        if ($line -match "SUPABASE_ANON_KEY=(.*)") { $exampleAnonKey = $Matches[1].Trim() }
+        if ($line -match "SUPABASE_SERVICE_ROLE_KEY=(.*)") { $exampleServiceKey = $Matches[1].Trim() }
+    }
+}
+
+# Read actual .env if present
 if (Test-Path $envFile) {
-    $envContent = Get-Content $envFile
-    foreach ($line in $envContent) {
-        if ($line -match "GITHUB_TOKEN=(.*)") { $githubToken = $Matches[1].Trim() }
-        if ($line -match "LOCK_GIST_ID=(.*)") { $gistId = $Matches[1].Trim() }
+    foreach ($line in Get-Content $envFile) {
+        if ($line -match "SUPABASE_URL=(.*)") { $supabaseUrl = $Matches[1].Trim() }
+        if ($line -match "SUPABASE_ANON_KEY=(.*)") { $anonKey = $Matches[1].Trim() }
+        if ($line -match "SUPABASE_SERVICE_ROLE_KEY=(.*)") { $serviceKey = $Matches[1].Trim() }
     }
 }
 
-if ($githubToken -and $githubToken -notlike "your_*") {
-    Write-Host "   Current GITHUB_TOKEN found: " -NoNewline -ForegroundColor White
-    Write-Host "****" -ForegroundColor Gray
-} else {
-    Write-Host "   A GitHub Personal Access Token (PAT) with 'gist' scope is required." -ForegroundColor Gray
-    Write-Host "   Create one at: https://github.com/settings/tokens" -ForegroundColor Gray
-    $githubToken = Read-Host "   Enter GITHUB_TOKEN"
+function Is-Placeholder($val, $exampleVal) {
+    if (-not $val) { return $true }
+    # If equal to example placeholder, treat as missing
+    if ($exampleVal -and $val -eq $exampleVal) { return $true }
+    # Common placeholder patterns
+    if ($val -match "your[_-]" -or $val -match "your-project" -or $val -match "example" -or $val -match "CHANGE_ME") { return $true }
+    return $false
 }
 
-if ($gistId -and $gistId -notlike "your_*") {
-    Write-Host "   Current LOCK_GIST_ID found: " -NoNewline -ForegroundColor White
-    Write-Host "$gistId" -ForegroundColor Gray
-} else {
-    Write-Host "   The team uses a shared Gist to track file locks." -ForegroundColor Gray
-    Write-Host "   Recommended (Shared): 298dad0a283b47148a7a0a3303d937f" -ForegroundColor Gray
-    $gistId = Read-Host "   Enter LOCK_GIST_ID (press Enter for recommended)"
-    if (!$gistId) { $gistId = "298dad0a283b47148a7a0a3303d937f" }
+if (Is-Placeholder $supabaseUrl $exampleSupabaseUrl) { $supabaseUrl = Read-Host "   SUPABASE_URL (e.g. https://your-project.supabase.co) - REQUIRED" }
+if (Is-Placeholder $anonKey $exampleAnonKey) { $anonKey = Read-Host "   SUPABASE_ANON_KEY - REQUIRED" }
+if (Is-Placeholder $serviceKey $exampleServiceKey) { $serviceKey = Read-Host "   SUPABASE_SERVICE_ROLE_KEY (optional, recommended for admin tasks)" }
+
+if (-not $supabaseUrl -or -not $anonKey) {
+    Write-Error "SUPABASE_URL and SUPABASE_ANON_KEY are required for live locking. Setup cannot continue."
+    exit 1
 }
 
-if ($gistId -and $gistId -notlike "your_*") {
-    Write-Host "   Current LOCK_GIST_ID found: " -NoNewline -ForegroundColor White
-    Write-Host "$gistId" -ForegroundColor Magenta
-} else {
-    Write-Host "   A Gist ID is required to store the shared locks." -ForegroundColor Gray
-    $gistId = Read-Host "   Enter LOCK_GIST_ID"
-}
-
-if ($githubToken -and $gistId) {
-    # Validate token
-    Write-Host "   Validating token..." -ForegroundColor Gray
-    try {
-        $headers = @{ "Authorization" = "token $githubToken" }
-        $userRes = Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers -ErrorAction Stop
-        Write-Host "   Successfully authenticated as: " -NoNewline -ForegroundColor White
-        Write-Host "$($userRes.login)" -ForegroundColor Green
-
-        # Update .env
-        $newEnv = @()
-        $foundToken = $false
-        $foundGist = $false
-
-        if (Test-Path $envFile) {
-            foreach ($line in (Get-Content $envFile)) {
-                if ($line -match "^GITHUB_TOKEN=") {
-                    $newEnv += "GITHUB_TOKEN=$githubToken"
-                    $foundToken = $true
-                } elseif ($line -match "^LOCK_GIST_ID=") {
-                    $newEnv += "LOCK_GIST_ID=$gistId"
-                    $foundGist = $true
-                } else {
-                    $newEnv += $line
-                }
-            }
-        }
-
-        if (-not $foundToken) { $newEnv += "GITHUB_TOKEN=$githubToken" }
-        if (-not $foundGist) { $newEnv += "LOCK_GIST_ID=$gistId" }
-
-        $newEnv | Out-File -FilePath $envFile -Encoding utf8
-        Write-Host "   .env updated successfully " -NoNewline -ForegroundColor White
-        Write-Host "OK" -ForegroundColor Green
-    } catch {
-        Write-Host "   Token validation " -NoNewline -ForegroundColor White
-        Write-Host "FAILED" -ForegroundColor Red
-        Write-Warning "   Please check your token permissions (gist scope required)."
-        $script:ErrorCount++
+# Persist settings
+$newEnv = @()
+$foundUse = $false; $foundUrl = $false; $foundAnon = $false; $foundService = $false
+if (Test-Path $envFile) {
+    foreach ($line in (Get-Content $envFile)) {
+        if ($line -match "^USE_SUPABASE=") { $newEnv += "USE_SUPABASE=1"; $foundUse = $true }
+        elseif ($line -match "^SUPABASE_URL=") { $newEnv += "SUPABASE_URL=$supabaseUrl"; $foundUrl = $true }
+        elseif ($line -match "^SUPABASE_ANON_KEY=") { $newEnv += "SUPABASE_ANON_KEY=$anonKey"; $foundAnon = $true }
+        elseif ($line -match "^SUPABASE_SERVICE_ROLE_KEY=") { $newEnv += "SUPABASE_SERVICE_ROLE_KEY=$serviceKey"; $foundService = $true }
+        else { $newEnv += $line }
     }
-} else {
-    Write-Warning "   Locking setup skipped. You can manually edit .env later."
 }
+if (-not $foundUse) { $newEnv += "USE_SUPABASE=1" }
+if (-not $foundUrl) { $newEnv += "SUPABASE_URL=$supabaseUrl" }
+if (-not $foundAnon) { $newEnv += "SUPABASE_ANON_KEY=$anonKey" }
+if (-not $foundService) { $newEnv += "SUPABASE_SERVICE_ROLE_KEY=$serviceKey" }
+$newEnv | Out-File -FilePath $envFile -Encoding utf8
+Write-Host "   Supabase configuration saved to .env" -ForegroundColor Green
+
+# Auto-start note: the watcher is started automatically by git hooks
+# (post-checkout, post-merge, post-commit) and by IDE integrations.
+# We no longer register OS-level scheduled tasks here to avoid long-running
+# background processes tied to user sessions. If you want to start the
+# watcher manually for debugging, run:
+#   .\.venv\Scripts\python.exe .collab/core/lock_client.py daemon-start
+
+# Install Collab Git Hooks
+Write-Host "`n   Installing Collab Git Hooks..." -ForegroundColor Yellow
+$hooksDir = Join-Path $projectRoot ".git\hooks"
+$collabHooks = Join-Path $projectRoot ".collab\hooks"
+
+foreach ($hook in @("pre-commit", "post-commit", "pre-push")) {
+    $src = Join-Path $collabHooks $hook
+    $dst = Join-Path $hooksDir $hook
+    if (Test-Path $src) {
+        Copy-Item $src $dst -Force
+        Write-Host "     - Copied $hook" -ForegroundColor Gray
+    }
+}
+Write-Host "   Collab Git Hooks installed " -NoNewline -ForegroundColor White
+Write-Host "OK" -ForegroundColor Green
+
 
 # Final Summary
 Write-Host "`n========================================" -ForegroundColor Cyan

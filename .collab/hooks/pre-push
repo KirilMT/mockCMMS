@@ -1,0 +1,39 @@
+#!/bin/sh
+# Collaborative file lock — pre-push hook
+# Releases all remaining locks for the current developer before push.
+# Also stops the watcher daemon to ensure no orphaned processes.
+
+COLLAB_DIR="$(git rev-parse --show-toplevel)/.collab"
+PYTHON="${COLLAB_DIR}/../.venv/Scripts/python.exe"
+if [ ! -x "$PYTHON" ]; then
+    PYTHON="${COLLAB_DIR}/../.venv/bin/python"
+fi
+if [ ! -x "$PYTHON" ]; then
+    PYTHON="python"
+fi
+
+echo "[collab] Releasing all locks before push..."
+$PYTHON -c "
+import sys, os
+sys.path.insert(0, os.path.join('$COLLAB_DIR', '..'))
+os.chdir('$(git rev-parse --show-toplevel)')
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    sys.path.insert(0, '$COLLAB_DIR')
+    from core.lock_client import LockClient
+    client = LockClient()
+    count = client.release_all()
+    print(f'[collab] Released {count} lock(s).')
+    # Stop daemon to prevent orphaned processes
+    client.daemon_stop()
+except Exception as e:
+    print(f'[collab] Warning: Lock cleanup failed: {e}', file=sys.stderr)
+" 2>&1
+
+# Chain to pre-commit framework if installed
+if command -v pre-commit > /dev/null 2>&1; then
+    exec pre-commit run --hook-stage pre-push "$@"
+fi
+
+exit 0

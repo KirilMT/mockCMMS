@@ -13,8 +13,7 @@ class TestLockClient:
     @pytest.fixture(autouse=True)
     def setup_env(self, monkeypatch):
         """Mock environment variables for all tests."""
-        monkeypatch.setenv("GITHUB_TOKEN", "fake_token")
-        monkeypatch.setenv("LOCK_GIST_ID", "fake_gist_id")
+        monkeypatch.setenv("USE_SUPABASE", "0")
 
     @pytest.fixture
     def client(self):
