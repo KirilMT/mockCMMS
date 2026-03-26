@@ -6,67 +6,49 @@ The PyCharm watcher is a standalone Python script that monitors your local git
 changes and automatically acquires/releases file locks via Supabase. It uses
 `plyer` for cross-platform desktop notifications.
 
-## Prerequisites
+## Automatic Setup (Recommended)
 
-Make sure you've run the development setup script at least once (this installs all Python dependencies, including `supabase` and `plyer`):
+Run the development setup script — it auto-detects PyCharm and installs the
+Run Configuration for you:
 
 ```powershell
 .\scripts\setup-dev.ps1
 ```
 
-## Quick Start (Manual)
+After setup, open **Run > Collab Lock Watcher** in PyCharm and click Run.
+The watcher runs in the **Run** tool window (background tab) and will not
+interfere with your coding workflow.
+
+## Manual Start
 
 ```bash
-python .collab/pycharm/live_locks_watcher.py --interval 5 --timeout 60
+python .collab/pycharm/live_locks_watcher.py --interval 5 --timeout 480
 ```
 
-## Auto-Start on Project Open (Recommended)
+## How Conflicts Work
 
-### Option A: External Tools + Startup Task
+When the watcher detects a conflict (file locked by another developer):
 
-1. **Create an External Tool**:
-   - Go to `Settings → Tools → External Tools`
-   - Click `+` to add a new tool:
-     - **Name**: `Collab Lock Watcher`
-     - **Program**: `$ProjectFileDir$/.venv/Scripts/python.exe`
-       (or just `python` if not using a venv)
-     - **Arguments**: `$ProjectFileDir$/.collab/pycharm/live_locks_watcher.py --interval 5 --timeout 480`
-     - **Working directory**: `$ProjectFileDir$`
-
-2. **Add as Startup Task**:
-   - Go to `Settings → Tools → Startup Tasks`
-   - Click `+` → `Add External Tool`
-   - Select `Collab Lock Watcher`
-   - Check `Run on project open`
-
-### Option B: Run Configuration
-
-1. Go to `Run → Edit Configurations`
-2. Click `+` → `Python`
-3. Configure:
-   - **Name**: `Collab Lock Watcher`
-   - **Script path**: `.collab/pycharm/live_locks_watcher.py`
-   - **Parameters**: `--interval 5 --timeout 480`
-   - **Working directory**: `$ProjectFileDir$`
-   - **Python interpreter**: Your project's venv Python
-
-4. To auto-start: Go to `Settings → Build, Execution, Deployment → Console`, and
-   check `Run with my console manager` with the watcher configuration.
+1. A **desktop notification** pops up with the file name and lock owner
+2. The terminal shows a detailed warning with a dashboard link:
+   ```
+   [10:30] WARNING: ⚠ CONFLICT: src/app.py is locked by @bob
+                     — your changes may cause a merge conflict.
+                     Run: python collab.py dashboard
+   ```
+3. **Commits are blocked** — the `pre-commit` hook prevents committing
+   files locked by another developer
+4. When you revert the file or the conflict resolves, the watcher logs:
+   ```
+   [10:35] INFO: ✅ Conflict cleared: src/app.py (file reverted or resolved)
+   ```
 
 ## Stopping the Watcher
 
 - **Manual**: Press `Ctrl+C` in the Run tool window
 - **Automatic**: The watcher detects when PyCharm (parent process) exits and
   performs a clean shutdown, releasing all locks
-- **Kill manually**:
-
-  ```bash
-  # Windows
-  type .collab\.pycharm_watcher.pid | ForEach-Object { taskkill /F /PID $_ }
-
-  # Unix
-  kill $(cat .collab/.pycharm_watcher.pid)
-  ```
+- **CLI**: `python collab.py daemon-stop`
 
 ## Output
 
@@ -75,8 +57,10 @@ The watcher prints structured status lines to stdout:
 ```
 [10:30:15] INFO: Collab Locks — PyCharm Watcher
 [10:30:15] INFO: Developer: alice
-[10:30:15] INFO: Interval: 5s | Timeout: 60m
+[10:30:15] INFO: Interval: 5s | Timeout: 480m
+[10:30:15] INFO: Dashboard: python collab.py dashboard (Ctrl+Click to open)
 [10:30:20] INFO: 🔒 Locked: src/services/db_utils.py
 [10:31:45] WARNING: ⚠ CONFLICT: src/app.py is locked by @bob
 [10:32:10] INFO: 🔓 Released: src/services/db_utils.py
+[10:33:00] INFO: ✅ Conflict cleared: src/app.py (file reverted or resolved)
 ```

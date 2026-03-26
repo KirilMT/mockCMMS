@@ -1,7 +1,7 @@
 """Supabase-backed collaborative file lock client.
 
-Provides atomic lock acquisition, release, and daemon management for
-preventing merge conflicts in multi-developer workflows.
+Provides atomic lock acquisition, release, and daemon management for preventing merge
+conflicts in multi-developer workflows.
 """
 
 from __future__ import annotations
@@ -350,7 +350,10 @@ class LockClient:
         }
 
     def release_all(self) -> int:
-        """Release all locks held by this developer. Returns count released."""
+        """Release all locks held by this developer.
+
+        Returns count released.
+        """
         locks = self.active()
         my_locks = [lk for lk in locks if lk.get("developer_id") == self.developer_id]
         count = 0
@@ -386,7 +389,10 @@ class LockClient:
         reason: Optional[str] = None,
         branch_name: Optional[str] = None,
     ) -> Tuple[bool, List[str], str]:
-        """Acquire locks for multiple files. Returns (all_ok, failed_paths, message)."""
+        """Acquire locks for multiple files.
+
+        Returns (all_ok, failed_paths, message).
+        """
         failed = []
         for fp in file_paths:
             ok, msg = self.acquire(fp, reason=reason, branch_name=branch_name)
@@ -398,7 +404,10 @@ class LockClient:
         return True, [], "Success"
 
     def release_multiple(self, file_paths: List[str]) -> Tuple[bool, int, str]:
-        """Release locks for multiple files. Returns (ok, count, message)."""
+        """Release locks for multiple files.
+
+        Returns (ok, count, message).
+        """
         count = 0
         for fp in file_paths:
             ok, _ = self.release(fp)
@@ -606,7 +615,8 @@ class LockClient:
             Handler = partial(http.server.SimpleHTTPRequestHandler, directory=tmp_dir)
 
             # Silence request logging
-            http.server.SimpleHTTPRequestHandler.log_message = lambda *a, **k: None  # type: ignore[method-assign]
+            RequestHandler = http.server.SimpleHTTPRequestHandler
+            RequestHandler.log_message = lambda *a, **k: None  # type: ignore  # noqa
 
             server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
             port = server.server_address[1]
@@ -642,7 +652,10 @@ class LockClient:
     def watch(
         self, interval: int = 5, timeout_mins: int = 60, open_dashboard: bool = False
     ) -> None:
-        """Run the file-watching loop (foreground). Called by daemon_start."""
+        """Run the file-watching loop (foreground).
+
+        Called by daemon_start.
+        """
         self._parent_pid = os.getppid()
         self._write_pid(os.getpid())
         self._register_signal_handlers()
@@ -815,13 +828,19 @@ class LockClient:
         """Run git status --porcelain and return output."""
         args = ["git", "status", "--porcelain"]
         if sys.platform == "win32":
-            return subprocess.check_output(
-                args, stderr=subprocess.DEVNULL, creationflags=0x08000000
-            ).decode().strip()
+            return (
+                subprocess.check_output(
+                    args, stderr=subprocess.DEVNULL, creationflags=0x08000000
+                )
+                .decode()
+                .strip()
+            )
         else:
-            return subprocess.check_output(
-                args, stderr=subprocess.DEVNULL
-            ).decode().strip()
+            return (
+                subprocess.check_output(args, stderr=subprocess.DEVNULL)
+                .decode()
+                .strip()
+            )
 
     @staticmethod
     def _parse_git_status_path(line: str) -> str:
@@ -832,7 +851,7 @@ class LockClient:
         if p.startswith('"') and p.endswith('"'):
             p = p[1:-1]
             try:
-                p = p.encode('utf-8').decode('unicode_escape')
+                p = p.encode("utf-8").decode("unicode_escape")
             except Exception:
                 pass
         return p

@@ -269,7 +269,7 @@ class CodeFormatter:
     def format_python(self) -> bool:
         """Python formatting with new header format."""
         targets = self._get_targets(
-            (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+            (".py",), ["src", "tests", "scripts", "run.py", "apps", ".collab"]
         )
         if not targets:
             return True
@@ -457,29 +457,29 @@ class CodeFormatter:
     def _get_check_cmd(self, desc, flake8_exclude):
         if desc == "Ruff linting & fixing":
             return ["ruff", "check"] + self._get_targets(
-                (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+                (".py",), ["src", "tests", "scripts", "run.py", "apps", ".collab"]
             )
         elif desc == "Import sorting (isort)":
             return (
                 ["isort"]
                 + self._get_targets(
-                    (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+                    (".py",), ["src", "tests", "scripts", "run.py", "apps", ".collab"]
                 )
                 + ["--check-only"]
             )
         elif desc == "Code formatting (black)":
             return ["black", "--check"] + self._get_targets(
-                (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+                (".py",), ["src", "tests", "scripts", "run.py", "apps", ".collab"]
             )
         elif desc == "Docstring formatting (docformatter)":
             return ["docformatter", "--check", "-r"] + self._get_targets(
-                (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+                (".py",), ["src", "tests", "scripts", "run.py", "apps", ".collab"]
             )
         elif desc == "Final linting (flake8)":
             return (
                 ["flake8"]
                 + self._get_targets(
-                    (".py",), ["src", "tests", "scripts", "run.py", "apps"]
+                    (".py",), ["src", "tests", "scripts", "run.py", "apps", ".collab"]
                 )
                 + [
                     flake8_exclude,
@@ -529,6 +529,8 @@ class CodeFormatter:
                 "tests/**/*.js",
                 "src/static/css/**/*.css",
                 "apps/**/*.css",
+                ".collab/**/*.js",
+                ".collab/**/*.css",
             ],
         )
         if not targets:
@@ -575,6 +577,8 @@ class CodeFormatter:
                 "apps/**/*.md",
                 "*.json",
                 ".github/**/*.md",
+                ".collab/**/*.md",
+                ".collab/**/*.json",
             ],
         )
         if not doc_targets:

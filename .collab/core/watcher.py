@@ -1,7 +1,7 @@
 """Background watcher daemon for collaborative file locking.
 
-Monitors local git status and automatically acquires/releases Supabase locks.
-Can run as a standalone process or be started by the lock_client daemon commands.
+Monitors local git status and automatically acquires/releases Supabase locks. Can run as
+a standalone process or be started by the lock_client daemon commands.
 """
 
 from __future__ import annotations
@@ -36,8 +36,12 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Collaborative lock watcher daemon")
-    parser.add_argument("--interval", type=int, default=5, help="Poll interval (seconds)")
-    parser.add_argument("--timeout", type=int, default=60, help="Idle timeout (minutes)")
+    parser.add_argument(
+        "--interval", type=int, default=5, help="Poll interval (seconds)"
+    )
+    parser.add_argument(
+        "--timeout", type=int, default=60, help="Idle timeout (minutes)"
+    )
     parser.add_argument(
         "--open-dashboard", action="store_true", help="Open dashboard on start"
     )

@@ -294,15 +294,18 @@ $pythonPath = $pythonPath.Replace('..\', '.\')
 $pythonwPath = ".\.venv\Scripts\pythonw.exe"
 if (Test-Path $pythonwPath) {
     Write-Host "   Found: pythonw.exe in venv" -ForegroundColor Green
-} elseif (Test-Path $pythonPath) {
+}
+elseif (Test-Path $pythonPath) {
     try {
         Copy-Item -Path $pythonPath -Destination $pythonwPath -Force
         Write-Host "   Created: pythonw.exe in venv (copied from python.exe)" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "   Warning: pythonw.exe not found and could not be created in venv." -ForegroundColor Yellow
         Write-Host "            daemon-start will attempt to fallback to a detached python process." -ForegroundColor Yellow
     }
-} else {
+}
+else {
     Write-Host "   Warning: venv python not found; cannot ensure pythonw.exe presence." -ForegroundColor Yellow
 }
 
@@ -327,7 +330,8 @@ if (Test-Path "requirements-dev.txt") {
                 if ($l -match "^Version:\s*(.*)") { $preSupabaseVersion = $Matches[1].Trim() }
             }
         }
-    } catch { }
+    }
+    catch { }
 
     Write-Host "   Ensuring all dev dependencies are installed and up-to-date..." -ForegroundColor White
     & $pipPath install --upgrade --upgrade-strategy only-if-needed -r requirements-dev.txt > $null 2>&1
@@ -342,7 +346,8 @@ if (Test-Path "requirements-dev.txt") {
                 if ($l -match "^Version:\s*(.*)") { $postSupabaseVersion = $Matches[1].Trim() }
             }
         }
-    } catch { $postSupabaseFound = $false; $postSupabaseVersion = "" }
+    }
+    catch { $postSupabaseFound = $false; $postSupabaseVersion = "" }
 
     # If requirements install didn't bring in supabase, attempt an explicit install
     if (-not $preSupabaseFound -and -not $postSupabaseFound) {
@@ -357,22 +362,26 @@ if (Test-Path "requirements-dev.txt") {
                         if ($l -match "^Version:\s*(.*)") { $postSupabaseVersion = $Matches[1].Trim() }
                     }
                 }
-            } catch { $postSupabaseFound = $false; $postSupabaseVersion = "" }
+            }
+            catch { $postSupabaseFound = $false; $postSupabaseVersion = "" }
             if ($postSupabaseFound) {
                 Write-Host ""
                 Write-Host "   Installed: " -NoNewline -ForegroundColor White
                 Write-Host "supabase $postSupabaseVersion" -NoNewline -ForegroundColor Magenta
                 Write-Host " OK" -ForegroundColor Green
                 Write-Host "   supabase installed and import OK (version: $postSupabaseVersion)" -ForegroundColor Green
-            } else {
+            }
+            else {
                 Write-Host "   supabase install attempted but pip show still fails. Install output:" -ForegroundColor Yellow
                 Write-Host $installOutput -ForegroundColor Gray
             }
-        } else {
+        }
+        else {
             Write-Host "   Explicit pip install failed. Pip output:" -ForegroundColor Yellow
             Write-Host $installOutput -ForegroundColor Gray
         }
-    } elseif (-not $preSupabaseFound -and $postSupabaseFound) {
+    }
+    elseif (-not $preSupabaseFound -and $postSupabaseFound) {
         Write-Host ""
         Write-Host "   Installed: " -NoNewline -ForegroundColor White
         Write-Host "supabase $postSupabaseVersion" -NoNewline -ForegroundColor Magenta
@@ -384,16 +393,16 @@ if (Test-Path "requirements-dev.txt") {
         # Robust check for all required dev tool executables
         $devTools = @{
             'conventional-pre-commit.exe' = 'conventional-pre-commit'
-            'pre-commit.exe' = 'pre-commit'
-            'black.exe' = 'black'
-            'isort.exe' = 'isort'
-            'docformatter.exe' = 'docformatter'
-            'flake8.exe' = 'flake8'
-            'ruff.exe' = 'ruff'
-            'pylint.exe' = 'pylint'
-            'mypy.exe' = 'mypy'
-            'pytest.exe' = 'pytest'
-            'yamllint.exe' = 'yamllint'
+            'pre-commit.exe'              = 'pre-commit'
+            'black.exe'                   = 'black'
+            'isort.exe'                   = 'isort'
+            'docformatter.exe'            = 'docformatter'
+            'flake8.exe'                  = 'flake8'
+            'ruff.exe'                    = 'ruff'
+            'pylint.exe'                  = 'pylint'
+            'mypy.exe'                    = 'mypy'
+            'pytest.exe'                  = 'pytest'
+            'yamllint.exe'                = 'yamllint'
         }
         $missingTools = @()
         foreach ($exe in $devTools.Keys) {
@@ -403,7 +412,8 @@ if (Test-Path "requirements-dev.txt") {
                 & $pipPath install --force-reinstall $($devTools[$exe]) > $null 2>&1
                 if (Test-Path $exePath) {
                     Write-Host "   $exe installed successfully." -ForegroundColor Green
-                } else {
+                }
+                else {
                     Write-Host "   WARNING: $exe still missing after install!" -ForegroundColor Red
                     $missingTools += $exe
                 }
@@ -413,16 +423,19 @@ if (Test-Path "requirements-dev.txt") {
             Write-Host ""
             Write-Host "   Python dev dependencies are present and up-to-date " -NoNewline -ForegroundColor White
             Write-Host "OK" -ForegroundColor Green
-        } else {
+        }
+        else {
             Write-Host "   WARNING: Some dev tool executables are still missing: $($missingTools -join ', ')" -ForegroundColor Red
         }
-    } else {
+    }
+    else {
         Write-Host ""
         Write-Host "   Installation " -NoNewline -ForegroundColor White
         Write-Host "FAILED" -ForegroundColor Red
         $script:ErrorCount++
     }
-} else {
+}
+else {
     Write-Warning "   requirements-dev.txt not found."
     $script:ErrorCount++
 }
@@ -481,8 +494,8 @@ else {
     # Install packages with warnings and notices suppressed
     $env:npm_config_loglevel = "error"
     npm install jscpd jest jest-environment-jsdom @playwright/test --save-dev 2>&1 |
-        Where-Object { $_ -notmatch "^npm warn" -and $_ -notmatch "^npm notice" } |
-        Out-Null
+    Where-Object { $_ -notmatch "^npm warn" -and $_ -notmatch "^npm notice" } |
+    Out-Null
     $env:npm_config_loglevel = $null
 
     if ($LASTEXITCODE -eq 0) {
@@ -519,8 +532,8 @@ else {
 
     # Suppress npm notices during Playwright install
     npx playwright install 2>&1 |
-        Where-Object { $_ -notmatch "^npm notice" } |
-        Out-Null
+    Where-Object { $_ -notmatch "^npm notice" } |
+    Out-Null
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "   Browsers installed " -NoNewline -ForegroundColor White
@@ -548,7 +561,8 @@ $templateFile = Join-Path $projectRoot ".gitmessage"
 if (Test-Path $templateFile) {
     git config --local commit.template .gitmessage
     Write-Host "   [OK] .gitmessage set as commit template" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   [WARN] .gitmessage not found, skipping commit template setup" -ForegroundColor Yellow
 }
 
@@ -655,7 +669,8 @@ if ($supabaseFound) {
     Write-Host "   Supabase client: " -NoNewline -ForegroundColor White
     Write-Host "supabase $supabaseVersion" -NoNewline -ForegroundColor Magenta
     Write-Host " OK" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   Supabase client: NOT INSTALLED" -ForegroundColor Yellow
     Write-Host "   To install, run: .\.venv\Scripts\pip.exe install supabase" -ForegroundColor Gray
 }
@@ -734,7 +749,7 @@ Write-Host "`n   Installing Collab Git Hooks..." -ForegroundColor Yellow
 $hooksDir = Join-Path $projectRoot ".git\hooks"
 $collabHooks = Join-Path $projectRoot ".collab\hooks"
 
-foreach ($hook in @("pre-commit", "post-commit", "pre-push")) {
+foreach ($hook in @("pre-commit", "post-commit", "pre-push", "commit-msg")) {
     $src = Join-Path $collabHooks $hook
     $dst = Join-Path $hooksDir $hook
     if (Test-Path $src) {
@@ -744,6 +759,70 @@ foreach ($hook in @("pre-commit", "post-commit", "pre-push")) {
 }
 Write-Host "   Collab Git Hooks installed " -NoNewline -ForegroundColor White
 Write-Host "OK" -ForegroundColor Green
+
+
+# IDE Auto-Detection & Configuration
+# Priority: runtime environment variables > directory presence
+Write-Host "`n   Detecting IDE environment..." -ForegroundColor Yellow
+
+$detectedIDE = $null
+
+# Primary detection: check the running IDE via environment variables
+# VS Code / Antigravity / Cursor all set TERM_PROGRAM=vscode
+if ($env:TERM_PROGRAM -eq "vscode") {
+    $detectedIDE = "vscode"
+}
+# JetBrains IDEs (PyCharm, IntelliJ) set TERMINAL_EMULATOR=JetBrains-JediTerm
+elseif ($env:TERMINAL_EMULATOR -like "*JetBrains*") {
+    $detectedIDE = "jetbrains"
+}
+# Fallback: directory-based detection (only if no runtime signal)
+elseif (Test-Path (Join-Path $projectRoot ".vscode")) {
+    $detectedIDE = "vscode"
+}
+elseif (Test-Path (Join-Path $projectRoot ".idea")) {
+    $detectedIDE = "jetbrains"
+}
+
+switch ($detectedIDE) {
+    "vscode" {
+        Write-Host "     - VS Code / Antigravity detected" -ForegroundColor Gray
+        $vscodeExtDir = Join-Path $projectRoot ".collab\vscode"
+        $packageJson = Join-Path $vscodeExtDir "package.json"
+        if (Test-Path $packageJson) {
+            try {
+                Push-Location $vscodeExtDir
+                npm install --silent 2>$null
+                Pop-Location
+                Write-Host "     - VS Code extension dependencies installed " -NoNewline -ForegroundColor White
+                Write-Host "OK" -ForegroundColor Green
+            }
+            catch {
+                Pop-Location
+                Write-Host "     - VS Code extension npm install failed (non-fatal)" -ForegroundColor Yellow
+            }
+        }
+    }
+    "jetbrains" {
+        Write-Host "     - PyCharm/IntelliJ detected" -ForegroundColor Gray
+        $ideaPath = Join-Path $projectRoot ".idea"
+        $runConfigDir = Join-Path $ideaPath "runConfigurations"
+        if (-not (Test-Path $runConfigDir)) {
+            New-Item -Path $runConfigDir -ItemType Directory -Force | Out-Null
+        }
+        $xmlSrc = Join-Path $projectRoot ".collab\pycharm\Collab_Lock_Watcher.xml"
+        $xmlDst = Join-Path $runConfigDir "Collab_Lock_Watcher.xml"
+        if (Test-Path $xmlSrc) {
+            Copy-Item $xmlSrc $xmlDst -Force
+            Write-Host "     - PyCharm Run Configuration installed " -NoNewline -ForegroundColor White
+            Write-Host "OK" -ForegroundColor Green
+            Write-Host "       (Run > Collab Lock Watcher to start)" -ForegroundColor Gray
+        }
+    }
+    default {
+        Write-Host "     - No IDE detected (run manually: python collab.py daemon-start)" -ForegroundColor Gray
+    }
+}
 
 
 # Final Summary
@@ -758,23 +837,40 @@ else {
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 
-# Display next steps
+# Display next steps — IDE-aware
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host "                        NEXT STEPS                              " -ForegroundColor Yellow
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  1. Activate the virtual environment (if not already active):" -ForegroundColor White
+
+switch ($detectedIDE) {
+    "vscode" {
+        Write-Host "  1. Install the Collab Locks extension in VS Code:" -ForegroundColor White
+        Write-Host "     Press F1 > 'Developer: Install Extension from Location...'" -ForegroundColor Magenta
+        Write-Host "     Select the .collab\vscode\ directory, then reload VS Code." -ForegroundColor Magenta
+        Write-Host "     The extension auto-starts on open and shows lock status" -ForegroundColor Gray
+        Write-Host "     in the status bar. See .collab\vscode\README.md for details." -ForegroundColor Gray
+    }
+    "jetbrains" {
+        Write-Host "  1. Start the Collab Lock Watcher in PyCharm:" -ForegroundColor White
+        Write-Host "     Run > Collab Lock Watcher (click Run once to start)" -ForegroundColor Magenta
+        Write-Host "     The watcher runs in the Run tool window (background tab)." -ForegroundColor Gray
+        Write-Host "     See .collab\pycharm\plugin_notes.md for details." -ForegroundColor Gray
+    }
+    default {
+        Write-Host "  1. Start the lock watcher manually:" -ForegroundColor White
+        Write-Host "     python collab.py daemon-start" -ForegroundColor Magenta
+        Write-Host "     See .collab\README.md for full CLI reference." -ForegroundColor Gray
+    }
+}
+
+Write-Host ""
+Write-Host "  2. Activate the virtual environment (if not already active):" -ForegroundColor White
 Write-Host "     .\.venv\Scripts\Activate.ps1" -ForegroundColor Magenta
 Write-Host ""
-Write-Host "  2. Run the application:" -ForegroundColor White
+Write-Host "  3. Run the application:" -ForegroundColor White
 Write-Host "     python run.py" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "  3. Run tests:" -ForegroundColor White
-Write-Host "     pytest" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "  4. Run E2E tests:" -ForegroundColor White
-Write-Host "     npx playwright test" -ForegroundColor Magenta
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""

@@ -1,51 +1,56 @@
-# VS Code Extension — Development Installation
+# VS Code Extension — Collaborative File Locks
 
-## Prerequisites
+## Automatic Setup (Recommended)
 
-- VS Code ^1.85.0
-- Node.js (for `npm install`)
+Run the development setup script — it auto-detects VS Code and installs the
+extension dependencies for you:
 
-## Installation Steps
+```powershell
+.\scripts\setup-dev.ps1
+```
 
-1. **Install dependencies**:
+Then install the extension in VS Code:
 
-   ```bash
-   cd .collab/vscode
-   npm install
-   ```
+1. Press `F1` → Run `Developer: Install Extension from Location...`
+2. Select the `.collab/vscode/` directory
+3. Reload VS Code — the extension activates automatically on startup
 
-2. **Open in Development Mode**:
+## Features
 
-   - Open VS Code
-   - Press `F1` → Run `Developer: Install Extension from Location...`
-   - Select the `.collab/vscode/` directory
-   - Alternatively, create a symlink:
+### Lock-on-Open Warning
 
-     ```bash
-     # Windows (PowerShell as Admin)
-     New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.vscode\extensions\collab-file-locks" -Target ".collab\vscode"
+When you open or switch to a file that is locked by another developer,
+a popup immediately warns you with actionable buttons:
 
-     # Unix/macOS
-     ln -s "$(pwd)/.collab/vscode" "$HOME/.vscode/extensions/collab-file-locks"
-     ```
+- **Open Dashboard** — opens the real-time lock dashboard
+- **Show Locks** — lists all active locks in a quick pick
 
-3. **Reload VS Code** — the extension activates automatically on startup.
-
-## Commands
-
-| Command | Title |
-|---------|-------|
-| `collabLocks.showAll` | Show All Locked Files |
-| `collabLocks.releaseAll` | Release My Locks |
-| `collabLocks.openDashboard` | Open Dashboard |
-
-## Status Bar
+### Status Bar
 
 The extension shows a status bar item on the right side:
 
-- `$(unlock)` — current file is unlocked
+- `$(unlock) Unlocked` — current file is unlocked
 - `$(lock) You` — you hold the lock
 - `$(warning) Locked: @devname` — someone else holds the lock
+
+Click it to see all active locks.
+
+### Output Channel
+
+Watcher logs are piped to the **Collab Locks** output channel.
+Open via: **View > Output > Collab Locks** (dropdown).
+
+Conflict events appear in the output channel with timestamps and
+details. When a conflict is detected from the watcher, a popup
+automatically appears with options to open the dashboard or view logs.
+
+### Commands
+
+| Command                     | Title                 |
+| --------------------------- | --------------------- |
+| `collabLocks.showAll`       | Show All Locked Files |
+| `collabLocks.releaseAll`    | Release My Locks      |
+| `collabLocks.openDashboard` | Open Dashboard        |
 
 ## Configuration
 

@@ -235,3 +235,4 @@ temp_diff_output.txt
 .collab/.daemon.log
 .collab/.pycharm_watcher.pid
 .collab/.pycharm_watcher.log
+.collab/vscode/package-lock.json

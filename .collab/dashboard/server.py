@@ -1,7 +1,7 @@
 """Lightweight HTTP server for the collaborative lock dashboard.
 
-Serves the dashboard HTML file with injected Supabase configuration.
-Designed to be started by the lock_client CLI or used standalone.
+Serves the dashboard HTML file with injected Supabase configuration. Designed to be
+started by the lock_client CLI or used standalone.
 """
 
 from __future__ import annotations
@@ -62,7 +62,8 @@ def serve(port: int = 0, open_browser: bool = True) -> None:
     Handler = partial(http.server.SimpleHTTPRequestHandler, directory=tmp_dir)
 
     # Silence HTTP logging
-    http.server.SimpleHTTPRequestHandler.log_message = lambda *a, **k: None
+    RequestHandler = http.server.SimpleHTTPRequestHandler
+    RequestHandler.log_message = lambda *a, **k: None  # type: ignore  # noqa
 
     server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
     actual_port = server.server_address[1]

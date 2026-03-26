@@ -20,19 +20,20 @@ Open `.env` at the **project root** and ensure your Supabase credentials are set
 
 Required variables:
 
-| Variable | Description |
-|----------|-------------|
-| `SUPABASE_URL` | Your Supabase project URL (from Project Settings → API) |
-| `SUPABASE_ANON_KEY` | Anonymous/public key (from Project Settings → API → anon/public) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (optional, for admin force-release) |
-| `LOCK_DEFAULT_EXPIRY_MINUTES` | Lock auto-expiry in minutes (default: 480 = 8 hours) |
-| `LOCK_STRICT` | If `1`, git hooks block on lock errors. Default `0` (warn only) |
+| Variable                      | Description                                                      |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `SUPABASE_URL`                | Your Supabase project URL (from Project Settings → API)          |
+| `SUPABASE_ANON_KEY`           | Anonymous/public key (from Project Settings → API → anon/public) |
+| `SUPABASE_SERVICE_ROLE_KEY`   | Service role key (optional, for admin force-release)             |
+| `LOCK_DEFAULT_EXPIRY_MINUTES` | Lock auto-expiry in minutes (default: 480 = 8 hours)             |
+| `LOCK_STRICT`                 | If `1`, git hooks block on lock errors. Default `0` (warn only)  |
 
 ### 2. Create the Database Schema
 
 Open your Supabase project's **SQL Editor** and run the contents of `.collab/schema.sql`.
 
 This creates:
+
 - `file_locks` table (active locks)
 - `file_locks_history` table (audit trail)
 - `acquire_lock()` RPC function (atomic lock acquisition)
@@ -45,16 +46,17 @@ This creates:
 Run the global setup script to install dependencies (Python + npm) and copy the git hooks:
 
 **Windows:**
+
 ```powershell
 .\scripts\setup-dev.ps1
 ```
 
-*(This script automatically installs `supabase`, `psutil`, `plyer` and copies Collab git hooks from `.collab/hooks/` to `.git/hooks/`).*
+_(This script automatically installs `supabase`, `psutil`, `plyer` and copies Collab git hooks from `.collab/hooks/` to `.git/hooks/`)._
 
 ### 4. Verify Setup
 
 ```bash
-python -m .collab.core.lock_client active
+python collab.py active
 ```
 
 If connected, this shows all active locks (initially none).
@@ -104,11 +106,11 @@ python collab.py history path/to/file.py --limit 20
 
 The hooks are located in `.collab/hooks/` and are copied to `.git/hooks/` during setup. They run automatically:
 
-| Hook | Behavior |
-|------|----------|
-| `pre-commit` | Acquires locks for staged files. Blocks if conflict (when `LOCK_STRICT=1`) |
-| `post-commit` | Releases locks for committed files |
-| `pre-push` | Releases all your remaining locks and stops the daemon |
+| Hook          | Behavior                                                                           |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `pre-commit`  | Checks staged files for conflicts. **Always blocks** if another dev holds the lock |
+| `post-commit` | Releases locks for committed files                                                 |
+| `pre-push`    | Releases all your remaining locks and stops the daemon                             |
 
 If the lock client is unavailable (network error, Python not found), hooks **warn and continue** unless `LOCK_STRICT=1`.
 
@@ -123,6 +125,7 @@ python collab.py dashboard
 ```
 
 This starts a local HTTP server and opens the dashboard in your default browser. The dashboard:
+
 - Shows all active file locks with developer, branch, reason, and expiry
 - Updates in real-time via Supabase Realtime (no page refresh needed)
 - Includes a **Force Release** button for stuck locks
@@ -132,23 +135,34 @@ This starts a local HTTP server and opens the dashboard in your default browser.
 
 ## VS Code Extension
 
-See [`.collab/vscode/README.md`](vscode/README.md) for installation instructions.
+See [`.collab/vscode/README.md`](vscode/README.md) for details.
+
+`setup-dev.ps1` auto-detects VS Code (`.vscode/` directory) and runs `npm install` for the extension.
 
 Features:
+
+- **Lock-on-open:** When you open a locked file, a popup warns you immediately
+- Actionable buttons: _Open Dashboard_, _Show Locks_
 - Status bar showing lock state of the current file
-- Real-time conflict warnings when someone else locks your file
+- Real-time conflict warnings via Supabase Realtime
+- Watcher output piped to **Output Channel** (View > Output > Collab Locks)
 - Commands: Show All Locks, Release My Locks, Open Dashboard
 
 ---
 
 ## PyCharm Setup
 
-See [`.collab/pycharm/plugin_notes.md`](pycharm/plugin_notes.md) for setup instructions.
+See [`.collab/pycharm/plugin_notes.md`](pycharm/plugin_notes.md) for details.
+
+`setup-dev.ps1` auto-detects PyCharm (`.idea/` directory) and installs a Run Configuration.
 
 Features:
-- Standalone Python watcher (no JVM/Kotlin plugin needed)
-- Desktop notifications via `plyer`
+
+- Pre-configured Run Configuration (Run > Collab Lock Watcher)
+- Desktop notifications via `plyer` for conflict alerts
+- Clear conflict messaging: "Conflict cleared" vs "Released"
 - Auto-shutdown when PyCharm exits
+- Dashboard link printed at startup for quick access
 
 ---
 
@@ -165,7 +179,7 @@ Features:
 
 1. Dev A locks `src/foo.py`
 2. Dev B opens or edits `src/foo.py`
-3. Dev B sees a warning in the status bar and a popup: *"⚠ src/foo.py is locked by @alice since 14:32"*
+3. Dev B sees a warning in the status bar and a popup: _"⚠ src/foo.py is locked by @alice since 14:32"_
 4. Dev A commits → lock releases
 5. Dev B can now edit without warnings
 
@@ -198,6 +212,7 @@ Features:
 If the daemon is stuck:
 
 **Windows:**
+
 ```powershell
 # Read PID and kill
 $pid = Get-Content .collab\.daemon.pid
@@ -206,12 +221,14 @@ Remove-Item .collab\.daemon.pid
 ```
 
 **Unix/macOS:**
+
 ```bash
 kill $(cat .collab/.daemon.pid)
 rm .collab/.daemon.pid
 ```
 
 Or use the CLI:
+
 ```bash
 python collab.py daemon-stop
 ```
@@ -243,6 +260,7 @@ python collab.py daemon-stop
 ### Compression error ("file in use by another process")
 
 This happens when orphaned daemon processes hold file handles. Fix:
+
 1. Stop all daemons: `python collab.py daemon-stop`
 2. Check for orphaned processes: look at `.collab/.daemon.pid`
 3. Kill if needed (see "Kill the Daemon Manually")

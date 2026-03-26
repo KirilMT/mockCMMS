@@ -4,9 +4,15 @@
   "description": "Prevents merge conflicts by locking files when you start editing them.",
   "version": "1.0.0",
   "publisher": "mockcmms-team",
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other"],
-  "activationEvents": ["onStartupFinished"],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [

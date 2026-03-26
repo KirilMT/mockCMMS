@@ -1,12 +1,15 @@
 #!/bin/sh
 # Collaborative file lock — pre-commit hook
 # Acquires locks for all staged files before commit.
-# Falls back gracefully if the lock client is unavailable.
+# ALWAYS blocks if staged files are locked by another developer.
+# Falls back gracefully if the lock client itself is unavailable
+# (unless LOCK_STRICT=1, then even client errors block).
 
 COLLAB_DIR="$(git rev-parse --show-toplevel)/.collab"
-PYTHON="${COLLAB_DIR}/../.venv/Scripts/python.exe"
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+PYTHON="${PROJECT_ROOT}/.venv/Scripts/python.exe"
 if [ ! -x "$PYTHON" ]; then
-    PYTHON="${COLLAB_DIR}/../.venv/bin/python"
+    PYTHON="${PROJECT_ROOT}/.venv/bin/python"
 fi
 if [ ! -x "$PYTHON" ]; then
     PYTHON="python"
@@ -21,29 +24,32 @@ fi
 # Check if LOCK_STRICT is set
 LOCK_STRICT="${LOCK_STRICT:-0}"
 
-# Attempt to acquire locks
 echo "[collab] Checking locks for staged files..."
 RESULT=$($PYTHON -c "
 import sys, os
 sys.path.insert(0, os.path.join('$COLLAB_DIR', '..'))
-os.chdir('$(git rev-parse --show-toplevel)')
+os.chdir('$PROJECT_ROOT')
 try:
     from dotenv import load_dotenv
     load_dotenv()
-    # Import inline to keep hook self-contained
     sys.path.insert(0, '$COLLAB_DIR')
     from core.lock_client import LockClient
     client = LockClient()
-    files = '''$STAGED'''.strip().split('\n')
+    files = '''$STAGED'''.strip().split('\\n')
     files = [f.strip() for f in files if f.strip()]
     ok, failed, msg = client.acquire_multiple(files, reason='pre-commit')
     if not ok:
+        print('[collab] ❌ COMMIT BLOCKED — Lock conflicts detected:', file=sys.stderr)
+        print('', file=sys.stderr)
         for f in failed:
             status = client.get_lock_status(f)
             owner = status.get('locked_by', 'unknown')
-            print(f'BLOCKED: {f} is locked by @{owner}', file=sys.stderr)
+            print(f'  🔒 {f} — locked by @{owner}', file=sys.stderr)
+        print('', file=sys.stderr)
+        print('[collab] Resolve conflicts before committing.', file=sys.stderr)
+        print('[collab] Run: python collab.py dashboard', file=sys.stderr)
         sys.exit(1)
-    print(f'[collab] Locks acquired for {len(files)} file(s).')
+    print(f'[collab] ✓ Locks acquired for {len(files)} file(s).')
 except Exception as e:
     print(f'[collab] Warning: Lock check failed: {e}', file=sys.stderr)
     if os.getenv('LOCK_STRICT', '0') == '1':
@@ -55,13 +61,12 @@ EXIT_CODE=$?
 echo "$RESULT"
 
 if [ $EXIT_CODE -ne 0 ]; then
-    if [ "$LOCK_STRICT" = "1" ]; then
-        echo "[collab] Commit blocked by file lock conflict (LOCK_STRICT=1)."
-        exit 1
-    else
-        echo "[collab] Warning: Lock conflict detected but LOCK_STRICT=0, allowing commit."
-        exit 0
-    fi
+    # Lock conflicts always block — never let conflicting code through
+    echo ""
+    echo "[collab] ❌ Commit aborted due to file lock conflicts."
+    echo "[collab] To view details: python collab.py active"
+    echo "[collab] To open dashboard: python collab.py dashboard"
+    exit 1
 fi
 
 # Chain to pre-commit framework if installed

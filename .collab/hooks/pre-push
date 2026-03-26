@@ -33,7 +33,7 @@ except Exception as e:
 
 # Chain to pre-commit framework if installed
 if command -v pre-commit > /dev/null 2>&1; then
-    exec pre-commit run --hook-stage pre-push "$@"
+    exec pre-commit run --hook-stage pre-push
 fi
 
 exit 0

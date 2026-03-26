@@ -558,7 +558,7 @@ def validate_python_backend(
 
     # Full run (no specific files provided)
     if not files:
-        python_targets = ["src", "apps", "tests", "scripts", "run.py"]
+        python_targets = ["src", "apps", "tests", "scripts", "run.py", ".collab"]
         # template_targets, bandit_targets, test_targets will be handled by defaults
         # inside the respective sections below.
 
@@ -911,6 +911,8 @@ def validate_others(files: Optional[List[str]] = None) -> bool:
             "apps/**/*.md",
             "*.json",
             ".github/**/*.md",
+            ".collab/**/*.md",
+            ".collab/**/*.json",
         ]
 
     # Check if Prettier is installed first
@@ -991,6 +993,7 @@ def validate_javascript_frontend(
                 f.startswith("src/static/js")
                 or f.startswith("apps")
                 or f.startswith("tests/frontend")
+                or f.startswith(".collab")
             )
         ]
         # 2. Template targets
@@ -1027,6 +1030,7 @@ def validate_javascript_frontend(
                 "src/static/js",
                 "apps",
                 "tests/frontend",
+                ".collab",
                 "--report-unused-disable-directives",
             ],
             "ESLint check",
