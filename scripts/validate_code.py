@@ -423,6 +423,8 @@ _BACKEND_MAP: List[Tuple[str, List[str]]] = [
     ("tests/backend/", ["tests/backend"]),
     ("apps/planning/tests/", ["apps/planning/tests"]),
     ("apps/reporting/tests/", ["apps/reporting/tests"]),
+    # .collab sources → run tests under .collab/tests
+    (".collab/", [".collab/tests"]),
 ]
 
 # Maps source-file path prefixes → relevant frontend test directories.
@@ -689,9 +691,16 @@ def validate_python_backend(
         checks.append(("Template Linting", success))
 
     # 9. Running Tests
-    # Note: We now enable coverage generation in quick mode (via --cov arguments)
-    # so that Step 11 (Diff Coverage) can run robustly.
-    quick_cov_args = ["--cov=src", "--cov=apps", "--cov-report=xml"]
+    # Enable coverage generation in quick mode (via --cov arguments) so that
+    # Step 11 (Diff Coverage) can run robustly.  The total-coverage threshold
+    # (85%) is enforced only by CI and Step 10 (full suite); it is intentionally
+    # absent from pyproject.toml addopts to avoid false failures on partial runs.
+    quick_cov_args = [
+        "--cov=src",
+        "--cov=apps",
+        "--cov=.collab",
+        "--cov-report=xml",
+    ]
 
     if quick:
         print_section("Step 9/11: Targeted Tests (with Diff Coverage)")
@@ -735,7 +744,8 @@ def validate_python_backend(
                         + [
                             "-x",
                             "--tb=short",
-                        ],
+                        ]
+                        + [".collab/tests"],
                         "Quick test run (full scope)",
                         force_all_apps=force_all_apps,
                     )
@@ -753,7 +763,8 @@ def validate_python_backend(
                             "-x",
                             "--tb=short",
                         ]
-                        + scopes["backend"],
+                        + scopes["backend"]
+                        + [".collab/tests"],
                         "Smart test run",
                         force_all_apps=force_all_apps,
                     )
@@ -771,7 +782,8 @@ def validate_python_backend(
                         "pyproject.toml",
                     ]
                     + quick_cov_args
-                    + ["-x", "--tb=short"],
+                    + ["-x", "--tb=short"]
+                    + [".collab/tests"],
                     "Quick test run (full scope)",
                     force_all_apps=force_all_apps,
                 )
@@ -795,6 +807,14 @@ def validate_python_backend(
 
     else:
         print_section("Step 9/11: Full Test Suite with Coverage")
+        # Run full test discovery using pytest's configured testpaths in
+        # pyproject.toml instead of restricting to .collab/tests. This mirrors
+        # CI behavior where the entire backend suite is validated for
+        # coverage and ensures the coverage thresholds reflect the whole
+        # repository (not just the small .collab subset).
+        # Explicitly pass the canonical testpaths to mirror CI discovery and avoid
+        # cases where pytest picks up only a subset (e.g. a local .collab-only run).
+        testpaths = ["tests/backend", "apps", ".collab"]
         success, _ = run_command(
             [
                 "pytest",
@@ -802,10 +822,12 @@ def validate_python_backend(
                 "pyproject.toml",
                 "--cov=src",
                 "--cov=apps",
+                "--cov=.collab",
                 "--cov-report=term-missing",
                 "--cov-report=html",
                 "--cov-report=xml",  # Required for diff-cover
-            ],
+            ]
+            + testpaths,
             "Full test suite with discovery (500+ tests)",
             force_all_apps=force_all_apps,
         )
@@ -815,6 +837,9 @@ def validate_python_backend(
     # Only run total coverage check in full mode, but print skip in quick mode.
     print_section("Step 10/11: Total Coverage Validation")
     if not quick:
+        # Run coverage check across the full suite (use pyproject testpaths)
+        # Ensure coverage check runs against the same canonical testpaths used in CI
+        testpaths = ["tests/backend", "apps", ".collab"]
         success, _ = run_command(
             [
                 "pytest",
@@ -822,9 +847,11 @@ def validate_python_backend(
                 "pyproject.toml",
                 "--cov=src",
                 "--cov=apps",
+                "--cov=.collab",
                 "--cov-fail-under=85",
                 "-q",
-            ],
+            ]
+            + testpaths,
             "Coverage threshold check (>= 85%)",
             force_all_apps=force_all_apps,
         )

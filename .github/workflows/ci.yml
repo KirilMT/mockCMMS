@@ -58,7 +58,7 @@ jobs:
       - name: Lint with ruff
         run: |
           # Fast, modern linting (catches more than flake8)
-          ruff check src apps tests scripts run.py
+          ruff check src apps tests scripts run.py .collab
 
       - name: Lint with flake8
         run: >-
@@ -84,6 +84,7 @@ jobs:
           pytest \
             --cov=src \
             --cov=apps \
+            --cov=.collab \
             --cov-report=xml \
             --cov-fail-under=85
 
