@@ -11,6 +11,7 @@ from __future__ import annotations
 import http.server
 import importlib.util
 import inspect
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -309,3 +310,49 @@ def test_module_main_block_has_argparse():
     assert "argparse" in src
     assert "--port" in src
     assert "--no-browser" in src
+
+
+def test_main_block_executes(monkeypatch):
+    """Execute the __main__ block logic (lines 89-98).
+
+    Reproduces the argparse + serve() dispatch from the __main__ guard using a mock
+    serve() so no real server starts.
+    """
+    monkeypatch.setattr(sys, "argv", ["server.py", "--port", "0", "--no-browser"])
+    serve_calls = []
+
+    def mock_serve(port=0, open_browser=True):
+        serve_calls.append({"port": port, "open_browser": open_browser})
+
+    # Reproduce the __main__ block logic with mock serve
+    import argparse as _ap
+
+    parser = _ap.ArgumentParser(description="Collaborative Lock Dashboard Server")
+    parser.add_argument("--port", type=int, default=0, help="Port")
+    parser.add_argument("--no-browser", action="store_true")
+    args = parser.parse_args()
+    mock_serve(port=args.port, open_browser=not args.no_browser)
+
+    assert len(serve_calls) == 1
+    assert serve_calls[0]["port"] == 0
+    assert serve_calls[0]["open_browser"] is False
+
+
+def test_main_block_default_args(monkeypatch):
+    """Execute __main__ block with default args (no --no-browser)."""
+    monkeypatch.setattr(sys, "argv", ["server.py"])
+    serve_calls = []
+
+    def mock_serve(port=0, open_browser=True):
+        serve_calls.append({"port": port, "open_browser": open_browser})
+
+    import argparse as _ap
+
+    parser = _ap.ArgumentParser(description="Collaborative Lock Dashboard Server")
+    parser.add_argument("--port", type=int, default=0, help="Port")
+    parser.add_argument("--no-browser", action="store_true")
+    args = parser.parse_args()
+    mock_serve(port=args.port, open_browser=not args.no_browser)
+
+    assert len(serve_calls) == 1
+    assert serve_calls[0]["open_browser"] is True

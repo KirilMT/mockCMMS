@@ -30,35 +30,39 @@ jobs:
       - name: Check import sorting with isort
         run: |
           # Check PEP 8 import organization
-          isort src apps tests scripts run.py --check-only
+          isort src apps tests scripts run.py collab.py conftest.py .collab \
+            --check-only
 
       - name: Check code formatting with black
         run: |
           # Check Black code formatting
-          black --check src apps tests scripts run.py
+          black --check src apps tests scripts run.py collab.py conftest.py \
+            .collab
 
       - name: Check docstring formatting with docformatter
         run: |
           # Check PEP 257 docstring standards
-          docformatter --check -r src apps tests scripts run.py
+          docformatter --check -r src apps tests scripts run.py collab.py \
+            conftest.py .collab
 
       - name: Check documentation formatting with prettier
         run: |
-          # Verify documentation formatting
+          # Verify documentation formatting (mirrors validate_code.py)
           npx prettier --check "docs/**/*.md" "*.md" "apps/**/*.md" \
-            "*.json" ".github/**/*.md"
+            "*.json" ".github/**/*.md" ".collab/**/*.md" \
+            ".collab/**/*.json" "tests/**/*.md" ".agents/**/*.md"
 
       - name: Check Jinja2 templates with djlint
         run: |
           # Check Jinja2 template formatting and linting
           # Using soft failure (just warning) for initial rollout
-          djlint --check src/templates apps/**/templates || \
+          djlint --check src/templates apps/*/src/templates || \
             echo "::warning::djlint found formatting issues"
 
       - name: Lint with ruff
         run: |
           # Fast, modern linting (catches more than flake8)
-          ruff check src apps tests scripts run.py .collab
+          ruff check src apps tests scripts run.py collab.py conftest.py .collab
 
       - name: Lint with flake8
         run: >-
@@ -75,25 +79,45 @@ jobs:
 
       - name: Security scan with bandit
         run: |
-          # Detect security vulnerabilities
-          bandit -r src/ apps/ -ll
+          # Detect security vulnerabilities in ALL Python sources.
+          # -r recurses dirs; root .py files listed explicitly.
+          bandit -r src/ apps/ scripts/ .collab/ \
+            run.py collab.py conftest.py -ll
 
-      - name: Test with pytest and generate coverage
+      - name: Test with pytest and generate comprehensive coverage
         run: |
-          # Run ALL tests to ensure 100% discovery (539+ tests)
+          # Run ALL tests with comprehensive coverage scope.
+          # Measures ALL Python sources so Step 10 (total ≥85%) and
+          # diff-cover can validate coverage for any changed file.
           pytest \
             --cov=src \
             --cov=apps \
             --cov=.collab \
+            --cov=scripts \
+            --cov=run.py \
+            --cov=collab.py \
+            --cov=conftest.py \
             --cov-report=xml \
-            --cov-fail-under=85
+            --cov-report=term-missing
 
-      - name: Check diff coverage (new code)
+      - name: Verify total coverage threshold (>= 85%)
         run: |
-          # Enforce 90% coverage on NEW code (matches local script)
+          # Check total coverage across ALL measured sources meets 85%.
+          # The previous step already scoped measurement to the
+          # comprehensive list (src, apps, .collab, scripts, run.py,
+          # collab.py, conftest.py).  No --include filter needed here —
+          # the .coverage file already contains exactly what was measured.
+          # This mirrors validate_code.py Step 10.
+          coverage report --fail-under=85
+
+      - name: Check diff coverage (new code >= 92%)
+        run: |
+          # Enforce 92% coverage on NEW code (matches validate_code.py).
+          # Uses comprehensive coverage.xml so ANY changed .py file
+          # in the branch is validated — not just src/apps/.collab.
           diff-cover coverage.xml \
             --compare-branch=origin/main \
-            --fail-under=90
+            --fail-under=92
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

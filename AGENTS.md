@@ -103,7 +103,9 @@ REPORTING_ENABLED=True   # apps/reporting
 ```bash
 # Backend
 pytest tests/backend                           # Run all backend tests
-pytest --cov=src --cov=apps tests/backend      # With coverage
+pytest --cov=src --cov=apps --cov=scripts \
+  --cov=.collab --cov=run.py --cov=collab.py \
+  --cov=conftest.py tests/backend             # With comprehensive coverage
 
 # Frontend
 npm test                                        # Jest unit tests
@@ -119,10 +121,31 @@ python scripts/validate_code.py --quick <files> # Rapid check for staged files
 
 ### Coverage Thresholds (IMMUTABLE)
 
-- **Backend (pytest):** ≥85% (`pyproject.toml` → `--cov-fail-under=85`)
+- **Backend (pytest):** ≥85% total (`ci.yml` + `validate_code.py` Step 10 via `coverage report --fail-under=85`)
+- **Backend (diff-cover):** ≥92% on new/changed code (`ci.yml` + `validate_code.py` Step 11)
 - **Frontend (jest):** ≥80% branches, functions, lines, statements (`package.json`)
 - 80% is the **floor**. If coverage drops even to 79.9%, it is a failure.
 - Fix by adding tests, not by lowering thresholds.
+
+### All-Python-Files Policy (STRICT)
+
+**Every** Python file in the repository must be linted, formatted, type-checked, tested, and covered. No exclusions. This applies to:
+
+- `src/`, `apps/`, `tests/`, `scripts/`, `.collab/`
+- Root-level files: `run.py`, `collab.py`, `conftest.py`
+
+**When adding a new root-level `.py` file or top-level package**, you must update these locations:
+
+| Location                                             | What to update                                                  |
+| ---------------------------------------------------- | --------------------------------------------------------------- |
+| `scripts/validate_code.py` → `python_targets`        | Add file/dir to the default list                                |
+| `scripts/validate_code.py` → `_cov_sources`          | Add `"--cov=<path>"` entry                                      |
+| `scripts/validate_code.py` → `_FULL_TESTPATHS`       | Add test directory (if new test root)                           |
+| `scripts/validate_code.py` → `_BACKEND_MAP`          | Add prefix → test dir mapping                                   |
+| `scripts/format_code.py` → `format_python()` targets | Add file/dir to the list                                        |
+| `.github/workflows/ci.yml`                           | Add to isort, black, docformatter, ruff, bandit, pytest `--cov` |
+
+Missing any of these causes 0% coverage → false failure.
 
 ### Test Organization
 

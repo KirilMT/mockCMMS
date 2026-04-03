@@ -366,11 +366,20 @@ Generate test stubs automatically with the `generate_tests.py` script:
 # Generate test stubs for a module
 python scripts/generate_tests.py src/services/new_module.py
 
+# Generate stubs for modular app code
+python scripts/generate_tests.py apps/reporting/src/services/report_generator.py
+
+# Generate stubs for repository scripts
+python scripts/generate_tests.py scripts/cleanup.py
+
 # Preview before creating (always do this first!)
 python scripts/generate_tests.py src/services/new_module.py --dry-run
 
-# Find all untested modules
+# Find all untested modules across the repository
 python scripts/generate_tests.py --scan
+
+# Scan a specific directory tree
+python scripts/generate_tests.py apps/reporting/src/ --scan
 
 # Overwrite existing test file
 python scripts/generate_tests.py src/services/module.py --force
@@ -398,6 +407,12 @@ python scripts/generate_tests.py src/services/module.py --force
 - `api.py`, `routes.py` -> `tests/backend/functional/`
 - `services/`, `utils.py`, `models.py` -> `tests/backend/unit/`
 - default -> `tests/backend/unit/`
+
+**Default output mapping:**
+
+- `src/`, `scripts/`, and root-level `.py` -> `tests/backend/<category>/`
+- `apps/<name>/src/` and app-local Python files -> `apps/<name>/tests/backend/<category>/`
+- `.collab/` -> `.collab/tests/<category>/`
 
 Use `--category` to override when needed.
 

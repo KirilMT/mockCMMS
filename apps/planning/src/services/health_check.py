@@ -85,16 +85,19 @@ class HealthChecker:
 
             # Get record counts for key tables
             metrics = {}
-            tables = [
-                "technicians",
-                "tasks",
-                "technologies",
-                "technician_technology_skills",
-            ]
+            # Pre-built queries — fully static, no string concatenation.
+            _table_queries = {
+                "technicians": "SELECT COUNT(*) FROM technicians",
+                "tasks": "SELECT COUNT(*) FROM tasks",
+                "technologies": "SELECT COUNT(*) FROM technologies",
+                "technician_technology_skills": (
+                    "SELECT COUNT(*) FROM technician_technology_skills"
+                ),
+            }
 
-            for table in tables:
+            for table, query in _table_queries.items():
                 try:
-                    cursor.execute(f"SELECT COUNT(*) FROM {table}")  # nosec B608
+                    cursor.execute(query)
                     metrics[f"{table}_count"] = cursor.fetchone()[0]
                 except sqlite3.Error:
                     metrics[f"{table}_count"] = "error"

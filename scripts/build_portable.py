@@ -1,5 +1,4 @@
-"""
-Build Portable Windows Distribution for mockCMMS.
+"""Build Portable Windows Distribution for mockCMMS.
 
 This script creates a zero-installation, portable distribution package
 that allows non-technical users to run mockCMMS without Python, Git,
@@ -17,13 +16,15 @@ Requirements:
     - 500MB free disk space
 """
 
+import http.client
 import os
 import shutil
+import ssl
 import subprocess
 import sys
-import urllib.request
 import zipfile
 from pathlib import Path
+from urllib.parse import urlparse
 
 # Configuration
 PYTHON_VERSION = "3.12.1"
@@ -48,6 +49,40 @@ def print_step(message: str) -> None:
     print(f"{'='*60}\n")
 
 
+def _secure_download(url: str, dest: Path) -> None:
+    """Download a file over HTTPS only.
+
+    Uses http.client.HTTPSConnection which inherently restricts to HTTPS —
+    file://
+    and other schemes are impossible (prevents B310).
+    Follows up to 5 redirects.
+    """
+    context = ssl.create_default_context()
+    for _ in range(5):
+        parsed = urlparse(url)
+        if parsed.scheme != "https":
+            raise ValueError(f"Only HTTPS URLs are allowed, got: {url}")
+        conn = http.client.HTTPSConnection(
+            parsed.hostname or "", port=parsed.port, timeout=120, context=context
+        )
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        conn.request("GET", path, headers={"User-Agent": "mockCMMS-build/1.0"})
+        resp = conn.getresponse()
+        if resp.status in (301, 302, 303, 307, 308):
+            url = resp.getheader("Location", "")
+            conn.close()
+            continue
+        if resp.status != 200:
+            conn.close()
+            raise RuntimeError(f"Download failed: HTTP {resp.status} from {url}")
+        dest.write_bytes(resp.read())
+        conn.close()
+        return
+    raise RuntimeError(f"Too many redirects downloading {url}")
+
+
 def download_python_embeddable() -> None:
     """Download Python embeddable package."""
     print_step("Downloading Python Embeddable Package")
@@ -61,7 +96,7 @@ def download_python_embeddable() -> None:
     print(f"📥 Downloading from: {PYTHON_EMBED_URL}")
     print(f"   Destination: {zip_path}")
 
-    urllib.request.urlretrieve(PYTHON_EMBED_URL, zip_path)
+    _secure_download(PYTHON_EMBED_URL, zip_path)
     print(f"✅ Download complete ({zip_path.stat().st_size / 1024 / 1024:.1f} MB)")
 
 
@@ -121,7 +156,7 @@ def install_pip() -> None:
     get_pip_path = PYTHON_DIR / "get-pip.py"
 
     print("📥 Downloading get-pip.py")
-    urllib.request.urlretrieve(get_pip_url, get_pip_path)
+    _secure_download(get_pip_url, get_pip_path)
     print(f"✅ Downloaded to: {get_pip_path}")
 
     # Install pip with verbose output

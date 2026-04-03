@@ -66,8 +66,10 @@ findstr /S "describe\|it(" tests\frontend\unit\*.js
 Check what's uncovered:
 
 ```bash
-# Backend
-pytest --cov=src --cov=apps --cov-report=term-missing tests/backend
+# Backend (comprehensive — all Python sources)
+pytest --cov=src --cov=apps --cov=scripts --cov=.collab \
+  --cov=run.py --cov=collab.py --cov=conftest.py \
+  --cov-report=term-missing tests/backend
 
 # Frontend
 npm run test:coverage
@@ -177,12 +179,15 @@ const instance = new MyClass();
 
 ### Thresholds (IMMUTABLE)
 
-| Scope    | Tool   | Threshold                                     | Config File                              |
-| -------- | ------ | --------------------------------------------- | ---------------------------------------- |
-| Backend  | pytest | ≥85%                                          | `pyproject.toml` (`--cov-fail-under=85`) |
-| Frontend | jest   | ≥80% (branches, functions, lines, statements) | `package.json` (`coverageThreshold`)     |
+| Scope         | Tool       | Threshold                                     | Enforced By                           |
+| ------------- | ---------- | --------------------------------------------- | ------------------------------------- |
+| Backend total | pytest     | ≥85%                                          | `ci.yml` + `validate_code.py` Step 10 |
+| Backend diff  | diff-cover | ≥92% on new/changed code                      | `ci.yml` + `validate_code.py` Step 11 |
+| Frontend      | jest       | ≥80% (branches, functions, lines, statements) | `package.json` (`coverageThreshold`)  |
 
 **80% is the absolute floor.** 79.9% = FAILURE. Fix by adding tests, never by lowering config.
+
+**All-Python-Files Policy:** Every `.py` file must be covered — `src/`, `apps/`, `tests/`, `scripts/`, `.collab/`, `run.py`, `collab.py`, `conftest.py`. No exclusions.
 
 ### Coverage Improvement Strategy
 

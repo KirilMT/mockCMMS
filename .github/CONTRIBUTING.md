@@ -285,8 +285,8 @@ comprehensive test coverage.**
    implementing
 4. **Implement code** - Write the actual feature/fix
 5. **Verify tests pass** - All tests (old + new) must pass
-6. **Check coverage** - Run `pytest --cov=src tests/` to ensure new code paths
-   are tested
+6. **Check coverage** - Run `pytest --cov-report=term-missing tests/backend`
+   to ensure new code paths are tested
 
 #### When Modifying Existing Code
 
@@ -306,12 +306,12 @@ comprehensive test coverage.**
 
 Tests are organized in 6 categories:
 
-- `tests/unit/` - Fast, isolated component tests
-- `tests/functional/` - API and route endpoint tests
-- `tests/integration/` - End-to-end workflow tests
-- `tests/security/` - Authentication, validation, security
-- `tests/performance/` - Scalability and optimization
-- `tests/reliability/` - Error handling and robustness
+- `tests/backend/unit/` - Fast, isolated component tests
+- `tests/backend/functional/` - API and route endpoint tests
+- `tests/backend/integration/` - End-to-end workflow tests
+- `tests/backend/security/` - Authentication, validation, security
+- `tests/backend/performance/` - Scalability and optimization
+- `tests/backend/reliability/` - Error handling and robustness
 
 **Separate Test File When:**
 
@@ -331,8 +331,10 @@ Tests are organized in 6 categories:
 
 - Coverage isn't about test count—it's about testing all code paths
 - Test success cases, failure cases, and edge cases
-- **Target**: 80-85% overall coverage (current: 82.99%)
+- **Minimum**: ≥85% overall coverage — enforced by CI and `validate_code.py`
+- **Diff coverage**: ≥92% on new/changed code — enforced by diff-cover
 - **Critical paths**: 90%+ coverage (auth, API, database)
+- **All Python files** must be covered — no exclusions
 
 #### Modular App Testing
 
@@ -351,11 +353,11 @@ MockCMMS uses a **Smart Collector** logic. Tests for apps in `apps/` (Planning, 
 
 #### Before Submitting a Pull Request
 
-1. Run the full test suite: `pytest tests/`
-2. Ensure all tests pass
+1. Run the full validation: `python scripts/validate_code.py`
+2. Ensure all checks pass (lint + test + coverage)
 3. Add tests for new functionality
-4. Maintain or improve code coverage: `pytest --cov=src tests/`
-5. Verify coverage meets targets (80-85% overall)
+4. Maintain or improve code coverage (≥85% overall, ≥92% on new code)
+5. All Python files must be linted, tested, and covered — no exclusions
 
 **Reference:** See `tests/README.md` for test suite organization and complete
 testing strategy.

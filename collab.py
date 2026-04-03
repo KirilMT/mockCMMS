@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""
-collab.py — CLI Wrapper for the Collaborative File-Locking System.
+"""collab.py — CLI Wrapper for the Collaborative File-Locking System.
+
 Delegates all commands to .collab/core/lock_client.py.
 """
-import sys
+
 import os
 import runpy
+import sys
 
 if __name__ == "__main__":
     _THIS_DIR = os.path.dirname(os.path.abspath(__file__))

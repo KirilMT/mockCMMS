@@ -291,8 +291,10 @@ def run_command(
     try:
         print(f"Running: {' '.join(command)}")
 
-        # On Windows, use shell=True for npm/npx to find them in PATH
-        use_shell = sys.platform == "win32" and command[0] in ("npm", "npx")
+        # On Windows, npm/npx are .cmd files that need cmd.exe to execute.
+        # Instead of shell=True (B602 security risk), prefix with cmd /c.
+        if sys.platform == "win32" and command[0] in ("npm", "npx"):
+            command = ["cmd", "/c"] + command
 
         # IRONCLAD MODE: Fresh, minimal env to mirror CI clean state.
         # Blocks local shell variables from masking configuration gaps.
@@ -360,7 +362,6 @@ def run_command(
             text=True,
             encoding="utf-8",
             errors="replace",
-            shell=use_shell,
             check=False,
             env=ironclad_env,
         )
@@ -423,6 +424,8 @@ _BACKEND_MAP: List[Tuple[str, List[str]]] = [
     ("tests/backend/", ["tests/backend"]),
     ("apps/planning/tests/", ["apps/planning/tests"]),
     ("apps/reporting/tests/", ["apps/reporting/tests"]),
+    # Scripts → run their unit tests
+    ("scripts/", ["tests/backend/unit"]),
     # .collab sources → run tests under .collab/tests
     (".collab/", [".collab/tests"]),
 ]
@@ -546,10 +549,24 @@ def validate_python_backend(
         template_targets = [
             f for f in clean_files if f.endswith(".html") and "templates" in f
         ]
-        # 3. Bandit targets
-        bandit_targets = [f for f in clean_files if f.startswith("src/")]
-        # 4. Test targets
-        test_targets = [f for f in clean_files if "tests" in f and f.endswith(".py")]
+        # 3. Bandit targets — all Python source files (dirs + root-level .py)
+        _bandit_prefixes = ("src/", "apps/", "scripts/", ".collab/")
+        bandit_targets = [
+            f
+            for f in clean_files
+            if f.endswith(".py")
+            and (
+                any(f.startswith(p) for p in _bandit_prefixes)
+                or "/" not in f  # root-level .py files (run.py, collab.py, …)
+            )
+        ]
+        # 4. Test targets — identified by pytest naming convention (test_*.py),
+        #    not by directory.  Matches pyproject.toml python_files = ["test_*.py"].
+        test_targets = [
+            f
+            for f in clean_files
+            if f.endswith(".py") and Path(f).name.startswith("test_")
+        ]
 
         # Early Exit: Return True silently if no backend work found
         if not any([python_targets, template_targets, bandit_targets, test_targets]):
@@ -560,7 +577,16 @@ def validate_python_backend(
 
     # Full run (no specific files provided)
     if not files:
-        python_targets = ["src", "apps", "tests", "scripts", "run.py", ".collab"]
+        python_targets = [
+            "src",
+            "apps",
+            "tests",
+            "scripts",
+            "run.py",
+            "collab.py",
+            "conftest.py",
+            ".collab",
+        ]
         # template_targets, bandit_targets, test_targets will be handled by defaults
         # inside the respective sections below.
 
@@ -649,15 +675,29 @@ def validate_python_backend(
             )
         else:
             msg = (
-                f"{Colors.OKCYAN}[INFO] No files in src/ targeted — "
-                f"skipping.{Colors.ENDC}"
+                f"{Colors.OKCYAN}[INFO] No source files targeted — "
+                f"skipping bandit.{Colors.ENDC}"
             )
             print(msg)
             success = True
     else:
-        success, _ = run_command(["bandit", "-r", "src/", "-ll"], "Security scanning")
+        success, _ = run_command(
+            [
+                "bandit",
+                "-r",
+                "src/",
+                "apps/",
+                "scripts/",
+                ".collab/",
+                "run.py",
+                "collab.py",
+                "conftest.py",
+                "-ll",
+            ],
+            "Security scanning",
+        )
 
-    if success and files and not [f for f in files if f.startswith("src/")]:
+    if success and files and not bandit_targets:
         checks.append(("Security Scanning", True))
     else:
         checks.append(("Security Scanning", success))
@@ -678,7 +718,10 @@ def validate_python_backend(
             print(msg)
             success = True
     else:
+        # Discover all template directories (src + modular apps)
         template_paths = ["src/templates"]
+        for app_tpl in sorted(Path(".").glob("apps/*/src/templates")):
+            template_paths.append(str(app_tpl))
         success, _ = run_command(
             [sys.executable, "-m", "djlint", "--check"] + template_paths,
             "Jinja2 template linting",
@@ -695,12 +738,36 @@ def validate_python_backend(
     # Step 11 (Diff Coverage) can run robustly.  The total-coverage threshold
     # (85%) is enforced only by CI and Step 10 (full suite); it is intentionally
     # absent from pyproject.toml addopts to avoid false failures on partial runs.
-    quick_cov_args = [
+    #
+    # _cov_sources (comprehensive) — Lists EVERY directory/file containing
+    # Python source code.  Used by Step 9 (both quick and full) to generate
+    # .coverage + coverage.xml with data for ALL Python files.  This ensures
+    # both Step 10 (total ≥85%) and Step 11 (diff-cover ≥92%) can validate
+    # coverage for ANY Python file — not just src/apps/.collab.  If a new
+    # top-level package or root .py file is added, add a "--cov=<path>"
+    # entry here.  Missing an entry means coverage reports 0% for that
+    # file → false failure.
+    #
+    # _FULL_TESTPATHS — Canonical list of ALL test discovery directories.
+    # Used by full-mode Step 9 AND quick-mode "full_suite" branches so
+    # both run the exact same test surface.  If a new test root is added,
+    # add it here.
+    #
+    # ARCHITECTURE (same in CI, validate_code.py, and pre-commit):
+    #   Step 9  → _cov_sources  (comprehensive .coverage + coverage.xml)
+    #   Step 10 → coverage report --fail-under=85  (reads .coverage from Step 9)
+    #   Step 11 → diff-cover coverage.xml  (new code ≥92%)
+    _FULL_TESTPATHS = ["tests/backend", "apps", ".collab"]
+    _cov_sources = [
         "--cov=src",
         "--cov=apps",
         "--cov=.collab",
-        "--cov-report=xml",
+        "--cov=scripts",
+        "--cov=run.py",
+        "--cov=collab.py",
+        "--cov=conftest.py",
     ]
+    quick_cov_args = _cov_sources + ["--cov-report=xml"]
 
     if quick:
         print_section("Step 9/11: Targeted Tests (with Diff Coverage)")
@@ -745,7 +812,7 @@ def validate_python_backend(
                             "-x",
                             "--tb=short",
                         ]
-                        + [".collab/tests"],
+                        + _FULL_TESTPATHS,
                         "Quick test run (full scope)",
                         force_all_apps=force_all_apps,
                     )
@@ -763,8 +830,7 @@ def validate_python_backend(
                             "-x",
                             "--tb=short",
                         ]
-                        + scopes["backend"]
-                        + [".collab/tests"],
+                        + scopes["backend"],
                         "Smart test run",
                         force_all_apps=force_all_apps,
                     )
@@ -783,7 +849,7 @@ def validate_python_backend(
                     ]
                     + quick_cov_args
                     + ["-x", "--tb=short"]
-                    + [".collab/tests"],
+                    + _FULL_TESTPATHS,
                     "Quick test run (full scope)",
                     force_all_apps=force_all_apps,
                 )
@@ -814,20 +880,24 @@ def validate_python_backend(
         # repository (not just the small .collab subset).
         # Explicitly pass the canonical testpaths to mirror CI discovery and avoid
         # cases where pytest picks up only a subset (e.g. a local .collab-only run).
-        testpaths = ["tests/backend", "apps", ".collab"]
+        #
+        # Uses _cov_sources (comprehensive) so .coverage and coverage.xml
+        # have data for ALL Python files.  Step 10 reads this .coverage to
+        # verify the total ≥85% threshold, and Step 11 reads coverage.xml
+        # for diff-cover.  This mirrors CI behavior exactly.
         success, _ = run_command(
             [
                 "pytest",
                 "-c",
                 "pyproject.toml",
-                "--cov=src",
-                "--cov=apps",
-                "--cov=.collab",
+            ]
+            + _cov_sources
+            + [
                 "--cov-report=term-missing",
                 "--cov-report=html",
                 "--cov-report=xml",  # Required for diff-cover
             ]
-            + testpaths,
+            + _FULL_TESTPATHS,
             "Full test suite with discovery (500+ tests)",
             force_all_apps=force_all_apps,
         )
@@ -835,23 +905,19 @@ def validate_python_backend(
 
     # 10. Coverage validation (Total >= 85%)
     # Only run total coverage check in full mode, but print skip in quick mode.
+    # Reads from the .coverage file generated by Step 9 (comprehensive scope).
+    # No --include filter — ALL Python sources must meet 85%.
+    # This mirrors CI (ci.yml) exactly.
     print_section("Step 10/11: Total Coverage Validation")
     if not quick:
-        # Run coverage check across the full suite (use pyproject testpaths)
-        # Ensure coverage check runs against the same canonical testpaths used in CI
-        testpaths = ["tests/backend", "apps", ".collab"]
+        # Use 'coverage report' to check threshold against the .coverage data
+        # from Step 9.  No need to re-run pytest — mirrors CI exactly.
         success, _ = run_command(
             [
-                "pytest",
-                "-c",
-                "pyproject.toml",
-                "--cov=src",
-                "--cov=apps",
-                "--cov=.collab",
-                "--cov-fail-under=85",
-                "-q",
-            ]
-            + testpaths,
+                "coverage",
+                "report",
+                "--fail-under=85",
+            ],
             "Coverage threshold check (>= 85%)",
             force_all_apps=force_all_apps,
         )
@@ -865,7 +931,8 @@ def validate_python_backend(
         checks.append(("Total Coverage Threshold", True))
 
     # 11. Diff Coverage validation (New Code >= 92%)
-    # This now runs in BOTH modes (assuming coverage.xml exists)
+    # This now runs in BOTH modes (assuming coverage.xml exists).
+    # Threshold matches CI (ci.yml) — both use --fail-under=92.
     print_section("Step 11/11: Diff (Patch) Coverage")
     if not os.path.exists("coverage.xml"):
         msg_cov = (
@@ -880,16 +947,64 @@ def validate_python_backend(
             ["diff-cover", "--version"], "Check diff-cover", check=False
         )
         if success:
-            success, _ = run_command(
-                [
-                    "diff-cover",
-                    "coverage.xml",
-                    "--compare-branch=origin/main",
-                    "--fail-under=92",
-                ],
-                "Diff Coverage Check (New Code needs 92% coverage)",
-            )
-            checks.append(("Diff Coverage", success))
+            diff_cover_cmd = [
+                "diff-cover",
+                "coverage.xml",
+                "--compare-branch=origin/main",
+                "--fail-under=92",
+            ]
+            # In quick mode with specific files (pre-commit), scope diff-cover
+            # to only validate coverage for the staged source files.
+            #
+            # WHY: In targeted mode, coverage.xml only reflects what the
+            # targeted tests exercised.  But diff-cover compares the full
+            # branch diff against origin/main — including files that were
+            # changed earlier in the branch but are NOT part of this commit.
+            # Those files appear as 0% covered, causing false failures.
+            #
+            # FIX: Use --include to restrict diff-cover to only the staged
+            # source files.  Test files are excluded because diff-cover
+            # measures SOURCE coverage, not test coverage.
+            #
+            # EDGE CASES:
+            #   - Only test files staged → no source to validate → skip
+            #   - Only non-Python files staged → no source to validate → skip
+            #   - Full mode (no files) → check entire branch diff (correct
+            #     because full test suite generates complete coverage.xml)
+            #   - Quick mode without files → check entire diff (user is
+            #     running a broader validation, not a targeted commit)
+            skip_diff_cover = False
+            if quick and files:
+                # Only include files that:
+                #   1. Are Python files
+                #   2. Are NOT test files (at any nesting depth)
+                src_files = [
+                    f
+                    for f in files
+                    if f.endswith(".py")
+                    and "/tests/" not in f
+                    and not f.startswith("tests/")
+                ]
+                if src_files:
+                    diff_cover_cmd.extend(["--include"] + src_files)
+                else:
+                    # No source files in this commit — only tests, configs,
+                    # or non-Python files.  diff-cover has nothing meaningful
+                    # to validate for this commit, so skip gracefully.
+                    msg_skip = (
+                        f"{Colors.OKCYAN}[INFO] Quick mode: No source files "
+                        f"in staged changes — skipping diff-cover.{Colors.ENDC}"
+                    )
+                    print(msg_skip)
+                    checks.append(("Diff Coverage", True))
+                    skip_diff_cover = True
+
+            if not skip_diff_cover:
+                success, _ = run_command(
+                    diff_cover_cmd,
+                    "Diff Coverage Check (New Code needs 92% coverage)",
+                )
+                checks.append(("Diff Coverage", success))
         else:
             msg_dc = (
                 f"{Colors.OKCYAN}[INFO] diff-cover not installed. Run "
@@ -940,16 +1055,18 @@ def validate_others(files: Optional[List[str]] = None) -> bool:
             ".github/**/*.md",
             ".collab/**/*.md",
             ".collab/**/*.json",
+            "tests/**/*.md",
+            ".agents/**/*.md",
         ]
 
     # Check if Prettier is installed first
     try:
-        use_shell = sys.platform == "win32"
+        # On Windows, npm is a .cmd file — use cmd /c instead of shell=True.
+        npm_cmd = ["cmd", "/c", "npm"] if sys.platform == "win32" else ["npm"]
         check_prettier = subprocess.run(
-            ["npm", "list", "prettier"],
+            npm_cmd + ["list", "prettier"],
             cwd=os.getcwd(),
             capture_output=True,
-            shell=use_shell,
             check=False,
         )
         if check_prettier.returncode == 0:

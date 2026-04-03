@@ -2,8 +2,11 @@
 
 import importlib.util
 import os
+import shutil
 from pathlib import Path
 from unittest.mock import MagicMock
+
+import pytest
 
 
 def _load_validate_code_module():
@@ -233,24 +236,356 @@ class TestValidateCodeRobust:
         assert ranges["short test summary info"] == (4, 6)
 
     def test_run_command_shell_selection(self, monkeypatch):
-        """Verify shell=True is only used for npm/npx on Windows."""
+        """Verify npm/npx commands are prefixed with 'cmd /c' on Windows."""
         captured = []
 
         def mock_run(cmd, **kwargs):
-            captured.append(kwargs.get("shell", False))
-            return MagicMock(returncode=0)
+            captured.append(cmd)
+            return MagicMock(returncode=0, stdout="ok", stderr="")
 
         monkeypatch.setattr(validate_code.subprocess, "run", mock_run)
 
-        # Mocking Windows
+        # Mocking Windows — npm should be prefixed with cmd /c
         monkeypatch.setattr(validate_code.sys, "platform", "win32")
         validate_code.run_command(["npm", "test"], "npm test")
-        assert captured[-1] is True
+        assert captured[-1][:2] == ["cmd", "/c"]
 
         validate_code.run_command(["python", "run.py"], "python")
-        assert captured[-1] is False
+        assert captured[-1][0] == "python"
+        assert "cmd" not in captured[-1]
 
-        # Mocking Linux
+        # Mocking Linux — npm should NOT be prefixed
         monkeypatch.setattr(validate_code.sys, "platform", "linux")
         validate_code.run_command(["npm", "test"], "npm test")
-        assert captured[-1] is False
+        assert captured[-1][0] == "npm"
+        assert "cmd" not in captured[-1]
+
+
+class TestValidatePythonBackendPaths:
+    """Tests covering all branch paths in validate_python_backend.
+
+    Exercises every combination of quick/full mode, files/no-files, and scope detection
+    so that diff-cover sees 92%+ coverage for new lines.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, monkeypatch):
+        """Mock run_command to always succeed and fake coverage.xml."""
+        monkeypatch.setattr(
+            validate_code,
+            "run_command",
+            lambda cmd, desc, **kwargs: (True, ""),
+        )
+        _orig_exists = os.path.exists
+        monkeypatch.setattr(
+            os.path,
+            "exists",
+            lambda p: True if p == "coverage.xml" else _orig_exists(p),
+        )
+
+    def test_full_mode_no_files(self):
+        """Full mode: default targets, full suite, coverage threshold, diff-cover."""
+        result = validate_code.validate_python_backend(quick=False, files=None)
+        assert result is True
+
+    def test_quick_with_test_files(self):
+        """Quick mode with test files runs targeted tests and scoped diff-cover."""
+        result = validate_code.validate_python_backend(
+            quick=True,
+            files=["tests/backend/unit/test_foo.py", "src/app.py"],
+        )
+        assert result is True
+
+    def test_quick_source_only_full_suite(self, monkeypatch):
+        """Quick + source files + full_suite scope triggers global test run."""
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda: {"full_suite": True, "backend": [], "frontend": []},
+        )
+        result = validate_code.validate_python_backend(
+            quick=True,
+            files=["src/app.py"],
+        )
+        assert result is True
+
+    def test_quick_source_only_backend_scope(self, monkeypatch):
+        """Quick + source files + backend scope targets specific test dirs."""
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda: {
+                "full_suite": False,
+                "backend": ["tests/backend"],
+                "frontend": [],
+            },
+        )
+        result = validate_code.validate_python_backend(
+            quick=True,
+            files=["src/app.py"],
+        )
+        assert result is True
+
+    def test_quick_no_files_full_suite(self, monkeypatch):
+        """Quick without files + full_suite runs all tests."""
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda: {"full_suite": True, "backend": [], "frontend": []},
+        )
+        result = validate_code.validate_python_backend(quick=True, files=None)
+        assert result is True
+
+    def test_quick_no_files_backend_scope(self, monkeypatch):
+        """Quick without files + backend scope targets specific dirs."""
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda: {
+                "full_suite": False,
+                "backend": ["tests/backend"],
+                "frontend": [],
+            },
+        )
+        result = validate_code.validate_python_backend(quick=True, files=None)
+        assert result is True
+
+    def test_quick_only_test_files_skips_diff_cover(self):
+        """Quick with only test files has no source → skips diff-cover."""
+        result = validate_code.validate_python_backend(
+            quick=True,
+            files=["tests/backend/unit/test_foo.py"],
+        )
+        assert result is True
+
+    def test_quick_no_relevant_scopes_skips_tests(self, monkeypatch):
+        """Quick + source files + empty scopes skips test execution."""
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda: {"full_suite": False, "backend": [], "frontend": []},
+        )
+        result = validate_code.validate_python_backend(
+            quick=True,
+            files=["src/app.py"],
+        )
+        assert result is True
+
+    def test_quick_no_files_no_scopes(self, monkeypatch):
+        """Quick without files + no scopes → skip tests entirely."""
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda: {"full_suite": False, "backend": [], "frontend": []},
+        )
+        result = validate_code.validate_python_backend(quick=True, files=None)
+        assert result is True
+
+
+class TestValidatePythonBackendEdgeCases:
+    """Edge-case tests that need different fixture setup."""
+
+    def test_full_mode_no_coverage_xml(self, monkeypatch):
+        """Full mode without coverage.xml skips diff-cover gracefully."""
+        monkeypatch.setattr(
+            validate_code,
+            "run_command",
+            lambda cmd, desc, **kwargs: (True, ""),
+        )
+        # coverage.xml does NOT exist → diff-cover is skipped
+        _orig_exists = os.path.exists
+        monkeypatch.setattr(
+            os.path,
+            "exists",
+            lambda p: False if p == "coverage.xml" else _orig_exists(p),
+        )
+        result = validate_code.validate_python_backend(quick=False, files=None)
+        assert result is True
+
+
+class TestValidateOthersPrettierNotInstalled:
+    """Test validate_others when Prettier is not installed."""
+
+    def test_prettier_not_installed_skips_gracefully(self, monkeypatch):
+        """validate_others skips linting when npm list prettier returns non-zero."""
+        monkeypatch.setattr(
+            validate_code.subprocess,
+            "run",
+            lambda *a, **kw: MagicMock(returncode=1),
+        )
+        result = validate_code.validate_others(files=["docs/readme.md"])
+        assert result is True
+
+
+class TestValidateOthersPrettierInstalled:
+    """Test validate_others when Prettier IS installed (line 1023+)."""
+
+    def test_prettier_installed_runs_check(self, monkeypatch):
+        """validate_others runs prettier check when npm list returns 0."""
+        call_log = []
+
+        def mock_subprocess_run(*args, **kwargs):
+            call_log.append(args)
+            return MagicMock(returncode=0, stdout="ok", stderr="")
+
+        monkeypatch.setattr(validate_code.subprocess, "run", mock_subprocess_run)
+        monkeypatch.setattr(
+            validate_code,
+            "run_command",
+            lambda cmd, desc, **kw: (True, ""),
+        )
+        result = validate_code.validate_others(files=["docs/readme.md"])
+        assert result is True
+
+    def test_prettier_check_exception_skips(self, monkeypatch):
+        """validate_others skips when subprocess raises an exception."""
+
+        def boom(*a, **kw):
+            raise OSError("npm not found")
+
+        monkeypatch.setattr(validate_code.subprocess, "run", boom)
+        result = validate_code.validate_others(files=["docs/readme.md"])
+        assert result is True
+
+
+class TestDiffCoverNotInstalled:
+    """Test diff-cover not installed path (lines 964-971)."""
+
+    def test_diff_cover_not_installed_soft_passes(self, monkeypatch):
+        """When diff-cover --version fails, should soft-pass."""
+        _orig_exists = os.path.exists
+        monkeypatch.setattr(
+            os.path,
+            "exists",
+            lambda p: True if p == "coverage.xml" else _orig_exists(p),
+        )
+
+        call_count = [0]
+
+        def mock_run(cmd, desc, **kwargs):
+            call_count[0] += 1
+            # Make diff-cover --version fail
+            if "diff-cover" in cmd and "--version" in cmd:
+                return (False, "not found")
+            return (True, "")
+
+        monkeypatch.setattr(validate_code, "run_command", mock_run)
+        result = validate_code.validate_python_backend(quick=False, files=None)
+        assert result is True
+
+
+class TestDiffCoverFailure:
+    """Test diff-cover execution failure path (line 961)."""
+
+    def test_diff_cover_fails_reports_failure(self, monkeypatch):
+        """When diff-cover check fails, the overall result should be False."""
+        _orig_exists = os.path.exists
+        monkeypatch.setattr(
+            os.path,
+            "exists",
+            lambda p: True if p == "coverage.xml" else _orig_exists(p),
+        )
+
+        def mock_run(cmd, desc, **kwargs):
+            # diff-cover --version succeeds
+            if "diff-cover" in cmd and "--version" in cmd:
+                return (True, "diff-cover 1.0")
+            # diff-cover check FAILS
+            if "diff-cover" in cmd and "coverage.xml" in cmd:
+                return (False, "Coverage below 92%")
+            return (True, "")
+
+        monkeypatch.setattr(validate_code, "run_command", mock_run)
+        result = validate_code.validate_python_backend(quick=False, files=None)
+        # Should be False because diff-cover failed
+        assert result is False
+
+
+class TestSummaryPrintsErrors:
+    """Test the summary loop prints errors for failed checks (line 976+)."""
+
+    def test_failed_check_prints_error(self, monkeypatch, capsys):
+        """When a linting step fails, the summary should print FAIL."""
+        _orig_exists = os.path.exists
+        monkeypatch.setattr(
+            os.path,
+            "exists",
+            lambda p: True if p == "coverage.xml" else _orig_exists(p),
+        )
+
+        call_count = [0]
+
+        def mock_run(cmd, desc, **kwargs):
+            call_count[0] += 1
+            # Make the first check (isort) fail
+            if "isort" in cmd:
+                return (False, "unsorted imports")
+            return (True, "")
+
+        monkeypatch.setattr(validate_code, "run_command", mock_run)
+        result = validate_code.validate_python_backend(quick=False, files=None)
+        assert result is False
+        out = capsys.readouterr().out
+        assert "FAIL" in out
+
+
+class TestValidateJsFrontend:
+    """Test validate_javascript_frontend branches."""
+
+    def test_npm_not_available_skips(self, monkeypatch):
+        """When npm is not found, frontend validation should pass (skip)."""
+        monkeypatch.setattr(shutil, "which", lambda name: None)
+        result = validate_code.validate_javascript_frontend(quick=False, files=None)
+        assert result is True
+
+    def test_no_frontend_files_returns_true(self, monkeypatch):
+        """When given files with no frontend targets, should return True early."""
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npm")
+        result = validate_code.validate_javascript_frontend(
+            quick=False, files=["src/app.py"]
+        )
+        assert result is True
+
+
+class TestValidateConfiguration:
+    """Tests for validate_configuration."""
+
+    def test_validates_json_files(self, monkeypatch):
+        """Should validate JSON files that exist."""
+        monkeypatch.setattr(
+            validate_code,
+            "run_command",
+            lambda cmd, desc, **kw: (True, ""),
+        )
+        result = validate_code.validate_configuration()
+        assert isinstance(result, bool)
+
+
+class TestDetectChangedScopes:
+    """Tests for detect_changed_scopes edge cases."""
+
+    def test_global_config_file_triggers_full_suite(self, monkeypatch):
+        """Changes to conftest.py trigger full suite."""
+        monkeypatch.setattr(
+            validate_code, "_get_changed_files", lambda: ["conftest.py"]
+        )
+        scopes = validate_code.detect_changed_scopes()
+        assert scopes["full_suite"] is True
+
+    def test_infrastructure_prefix_triggers_full_suite(self, monkeypatch):
+        """Changes to scripts/ trigger full suite."""
+        monkeypatch.setattr(
+            validate_code, "_get_changed_files", lambda: ["scripts/validate.py"]
+        )
+        scopes = validate_code.detect_changed_scopes()
+        assert scopes["full_suite"] is True
+
+    def test_frontend_only_change(self, monkeypatch):
+        """CSS changes should map to frontend only, not backend."""
+        monkeypatch.setattr(
+            validate_code, "_get_changed_files", lambda: ["src/static/css/style.css"]
+        )
+        scopes = validate_code.detect_changed_scopes()
+        assert scopes["full_suite"] is False
+        assert scopes["backend"] == []
+        assert len(scopes["frontend"]) > 0

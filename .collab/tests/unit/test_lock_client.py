@@ -13,6 +13,7 @@ import importlib.util
 import os
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest import mock
@@ -1122,7 +1123,8 @@ def test_dashboard_opens_browser(monkeypatch):
     opened_urls = []
 
     def mock_prepare(self):
-        return "http://127.0.0.1:9999/dash.html", "/tmp/dash.html"
+        _tmp = os.path.join(tempfile.gettempdir(), "dash.html")
+        return "http://127.0.0.1:9999/dash.html", _tmp
 
     monkeypatch.setattr(mod.LockClient, "_prepare_dashboard_server", mock_prepare)
 
@@ -1163,7 +1165,8 @@ def test_dashboard_browser_exception(monkeypatch, capsys):
     )
 
     def mock_prepare(self):
-        return "http://127.0.0.1:9999/dash.html", "/tmp/dash.html"
+        _tmp = os.path.join(tempfile.gettempdir(), "dash.html")
+        return "http://127.0.0.1:9999/dash.html", _tmp
 
     monkeypatch.setattr(mod.LockClient, "_prepare_dashboard_server", mock_prepare)
 
@@ -2052,7 +2055,8 @@ def test_cli_dashboard(monkeypatch, capsys):
     )
 
     def mock_prepare(self):
-        return "http://127.0.0.1:9999/dash.html", "/tmp/dash.html"
+        _tmp = os.path.join(tempfile.gettempdir(), "dash.html")
+        return "http://127.0.0.1:9999/dash.html", _tmp
 
     monkeypatch.setattr(mod.LockClient, "_prepare_dashboard_server", mock_prepare)
 
@@ -2284,7 +2288,7 @@ def test_watch_with_conflict_warning(monkeypatch, tmp_path):
     monkeypatch.setattr(mod.time, "sleep", mock_sleep)
 
     lc = mod.LockClient(developer_id="test_user")
-    lc.watch(interval=1, timeout_mins=60)
+    lc.watch(interval=1, timeout_mins=60)  # Will exit via KeyboardInterrupt
 
 
 def test_watch_dashboard_error(monkeypatch, tmp_path):

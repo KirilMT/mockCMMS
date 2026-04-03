@@ -1,6 +1,7 @@
+---
 name: Lock Service Smoke Test
 
-on:
+"on":
   pull_request:
     branches: [main]
 

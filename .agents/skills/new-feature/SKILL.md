@@ -98,6 +98,21 @@ python scripts/validate_code.py    # Full lint + test + coverage
 
 Ensure coverage threshold is met with the new code.
 
+### If You Added New Root-Level `.py` Files or Top-Level Packages
+
+**Every** new Python file must be included in ALL validation tools. Update:
+
+| Location                                             | What to update                                                  |
+| ---------------------------------------------------- | --------------------------------------------------------------- |
+| `scripts/validate_code.py` → `python_targets`        | Add file/dir to the default list                                |
+| `scripts/validate_code.py` → `_cov_sources`          | Add `"--cov=<path>"` entry                                      |
+| `scripts/validate_code.py` → `_FULL_TESTPATHS`       | Add test directory (if new test root)                           |
+| `scripts/validate_code.py` → `_BACKEND_MAP`          | Add prefix → test dir mapping                                   |
+| `scripts/format_code.py` → `format_python()` targets | Add file/dir to the list                                        |
+| `.github/workflows/ci.yml`                           | Add to isort, black, docformatter, ruff, bandit, pytest `--cov` |
+
+**Missing any of these causes 0% coverage → CI failure.**
+
 ## Step 5: Document
 
 1. Update relevant roadmap (`docs/mockCMMS_roadmap.md` or `apps/<name>/docs/`)
