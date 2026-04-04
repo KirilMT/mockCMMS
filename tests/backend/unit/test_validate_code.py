@@ -301,7 +301,12 @@ class TestValidatePythonBackendPaths:
         monkeypatch.setattr(
             validate_code,
             "detect_changed_scopes",
-            lambda: {"full_suite": True, "backend": [], "frontend": []},
+            lambda *args, **kwargs: {
+                "full_suite": True,
+                "backend": [],
+                "frontend": [],
+                "reason": None,
+            },
         )
         result = validate_code.validate_python_backend(
             quick=True,
@@ -314,10 +319,11 @@ class TestValidatePythonBackendPaths:
         monkeypatch.setattr(
             validate_code,
             "detect_changed_scopes",
-            lambda: {
+            lambda *args, **kwargs: {
                 "full_suite": False,
                 "backend": ["tests/backend"],
                 "frontend": [],
+                "reason": None,
             },
         )
         result = validate_code.validate_python_backend(
@@ -331,7 +337,12 @@ class TestValidatePythonBackendPaths:
         monkeypatch.setattr(
             validate_code,
             "detect_changed_scopes",
-            lambda: {"full_suite": True, "backend": [], "frontend": []},
+            lambda *args, **kwargs: {
+                "full_suite": True,
+                "backend": [],
+                "frontend": [],
+                "reason": None,
+            },
         )
         result = validate_code.validate_python_backend(quick=True, files=None)
         assert result is True
@@ -341,10 +352,11 @@ class TestValidatePythonBackendPaths:
         monkeypatch.setattr(
             validate_code,
             "detect_changed_scopes",
-            lambda: {
+            lambda *args, **kwargs: {
                 "full_suite": False,
                 "backend": ["tests/backend"],
                 "frontend": [],
+                "reason": None,
             },
         )
         result = validate_code.validate_python_backend(quick=True, files=None)
@@ -363,7 +375,12 @@ class TestValidatePythonBackendPaths:
         monkeypatch.setattr(
             validate_code,
             "detect_changed_scopes",
-            lambda: {"full_suite": False, "backend": [], "frontend": []},
+            lambda *args, **kwargs: {
+                "full_suite": False,
+                "backend": [],
+                "frontend": [],
+                "reason": None,
+            },
         )
         result = validate_code.validate_python_backend(
             quick=True,
@@ -376,10 +393,28 @@ class TestValidatePythonBackendPaths:
         monkeypatch.setattr(
             validate_code,
             "detect_changed_scopes",
-            lambda: {"full_suite": False, "backend": [], "frontend": []},
+            lambda *args, **kwargs: {
+                "full_suite": False,
+                "backend": [],
+                "frontend": [],
+                "reason": None,
+                "changed_files": [],
+            },
         )
         result = validate_code.validate_python_backend(quick=True, files=None)
         assert result is True
+
+    def test_detect_changed_scopes_no_changes(self, monkeypatch):
+        """Test that detect_changed_scopes correctly defaults when no changes."""
+        monkeypatch.setattr(validate_code, "_get_changed_files", lambda: [])
+        result = validate_code.detect_changed_scopes()
+        assert result == {
+            "full_suite": True,
+            "backend": [],
+            "frontend": [],
+            "reason": None,
+            "changed_files": [],
+        }
 
 
 class TestValidatePythonBackendEdgeCases:
@@ -501,6 +536,71 @@ class TestDiffCoverFailure:
         assert result is False
 
 
+class TestDiffCoverStrictQuickMode:
+    """Test diff-cover is strictly enforced in quick mode (scoped via --include)."""
+
+    def test_quick_mode_diff_cover_failure_blocks_commit(self, monkeypatch):
+        """When diff-cover fails in quick mode, overall result is False."""
+        _orig_exists = os.path.exists
+        monkeypatch.setattr(
+            os.path,
+            "exists",
+            lambda p: True if p == "coverage.xml" else _orig_exists(p),
+        )
+
+        def mock_run(cmd, desc, **kwargs):
+            if "diff-cover" in cmd and "--version" in cmd:
+                return (True, "diff-cover 1.0")
+            if "diff-cover" in cmd and "coverage.xml" in cmd:
+                return (False, "Coverage below 92%")
+            return (True, "")
+
+        monkeypatch.setattr(validate_code, "run_command", mock_run)
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda *args, **kwargs: {
+                "full_suite": True,
+                "backend": [],
+                "frontend": [],
+                "reason": None,
+            },
+        )
+        result = validate_code.validate_python_backend(quick=True, files=None)
+        # Should be False — diff-cover is strictly enforced even in quick mode
+        assert result is False
+
+
+class TestDetectChangedScopesReason:
+    """Test that detect_changed_scopes returns reason strings."""
+
+    def test_reason_for_global_config(self, monkeypatch):
+        """Global config change returns a reason string."""
+        monkeypatch.setattr(
+            validate_code, "_get_changed_files", lambda: ["conftest.py"]
+        )
+        scopes = validate_code.detect_changed_scopes()
+        assert scopes["full_suite"] is True
+        assert scopes["reason"] is not None
+        assert "conftest.py" in scopes["reason"]
+
+    def test_reason_for_infrastructure(self, monkeypatch):
+        """Infrastructure change returns a reason string."""
+        monkeypatch.setattr(
+            validate_code, "_get_changed_files", lambda: ["scripts/validate.py"]
+        )
+        scopes = validate_code.detect_changed_scopes()
+        assert scopes["full_suite"] is True
+        assert scopes["reason"] is not None
+        assert "scripts" in scopes["reason"]
+
+    def test_no_reason_for_normal_changes(self, monkeypatch):
+        """Normal changes return reason=None."""
+        monkeypatch.setattr(validate_code, "_get_changed_files", lambda: ["src/app.py"])
+        scopes = validate_code.detect_changed_scopes()
+        assert scopes["reason"] is None
+
+
 class TestSummaryPrintsErrors:
     """Test the summary loop prints errors for failed checks (line 976+)."""
 
@@ -545,6 +645,131 @@ class TestValidateJsFrontend:
             quick=False, files=["src/app.py"]
         )
         assert result is True
+
+    def test_quick_jest_targeted_files(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npm")
+        monkeypatch.setattr(
+            validate_code, "run_command", lambda *args, **kwargs: (True, "")
+        )
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda *args, **kwargs: {
+                "full_suite": False,
+                "backend": [],
+                "frontend": [],
+                "reason": None,
+                "changed_files": [],
+            },
+        )
+        result = validate_code.validate_javascript_frontend(
+            quick=True, files=["src/index.test.js"]
+        )
+        assert result is True
+
+    def test_quick_jest_skips_when_no_frontend(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npm")
+        monkeypatch.setattr(
+            validate_code, "run_command", lambda *args, **kwargs: (True, "")
+        )
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda *args, **kwargs: {
+                "full_suite": False,
+                "backend": [],
+                "frontend": [],
+                "reason": None,
+                "changed_files": [],
+            },
+        )
+        result = validate_code.validate_javascript_frontend(
+            quick=True, files=["src/main.js"]
+        )
+        assert result is True
+
+    def test_quick_jest_smart_scope(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npm")
+        monkeypatch.setattr(
+            validate_code, "run_command", lambda *args, **kwargs: (True, "")
+        )
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda *args, **kwargs: {
+                "full_suite": False,
+                "backend": [],
+                "frontend": ["src/main.js"],
+                "reason": "test",
+                "changed_files": [],
+            },
+        )
+        result = validate_code.validate_javascript_frontend(
+            quick=True, files=["src/main.js"]
+        )
+        assert result is True
+
+    def test_quick_jest_full_suite(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npm")
+        monkeypatch.setattr(
+            validate_code, "run_command", lambda *args, **kwargs: (True, "")
+        )
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda *args, **kwargs: {
+                "full_suite": True,
+                "backend": [],
+                "frontend": [],
+                "reason": "test",
+                "changed_files": [],
+            },
+        )
+        result = validate_code.validate_javascript_frontend(quick=True, files=None)
+        assert result is True
+
+    def test_quick_jest_no_files_no_scopes(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npm")
+        monkeypatch.setattr(
+            validate_code, "run_command", lambda *args, **kwargs: (True, "")
+        )
+        monkeypatch.setattr(
+            validate_code,
+            "detect_changed_scopes",
+            lambda *args, **kwargs: {
+                "full_suite": False,
+                "backend": [],
+                "frontend": [],
+                "reason": None,
+                "changed_files": [],
+            },
+        )
+        result = validate_code.validate_javascript_frontend(quick=True, files=None)
+        assert result is True
+
+    def test_javascript_frontend_full_mode_passes(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npm")
+        monkeypatch.setattr(
+            validate_code, "run_command", lambda *args, **kwargs: (True, "")
+        )
+        result = validate_code.validate_javascript_frontend(quick=False, files=None)
+        assert result is True
+
+    def test_javascript_frontend_full_mode_fails_e2e(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/npm")
+
+        def fake_run(cmd, *args, **kwargs):
+            if "playwright" in str(cmd):
+                return False, ""
+            return True, ""
+
+        monkeypatch.setattr(validate_code, "run_command", fake_run)
+        result = validate_code.validate_javascript_frontend(quick=False, files=None)
+        assert result is False
+
+    def test_detect_changed_scopes_backslash(self, monkeypatch):
+        result = validate_code.detect_changed_scopes(files=["src\\app.py"])
+        assert "src/app.py" in result["changed_files"]
 
 
 class TestValidateConfiguration:

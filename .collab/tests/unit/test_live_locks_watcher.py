@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import os
 import subprocess
 import sys
 import types
@@ -36,6 +37,14 @@ if "collab" not in sys.modules:
     _collab_pkg.__path__ = []
     sys.modules["collab"] = _collab_pkg
 sys.modules["collab.pycharm_watcher"] = watcher
+
+
+@pytest.fixture(autouse=True)
+def _reset_shutdown_guard():
+    """Reset the shutdown guard before each test so tests are independent."""
+    watcher._shutdown_done = False
+    yield
+    watcher._shutdown_done = False
 
 
 # ============================================================================
@@ -1058,8 +1067,13 @@ def test_main_idle_timeout(monkeypatch, tmp_path):
 # ============================================================================
 
 
-def test_main_parent_process_exit(monkeypatch, tmp_path):
-    """Test that main exits when parent process dies."""
+def test_main_does_not_exit_on_parent_death(monkeypatch, tmp_path):
+    """Test that main does NOT exit when parent process dies.
+
+    The parent PID check was removed — PyCharm manages the process lifecycle via its
+    stop button / IDE close.  The watcher should keep running until explicitly stopped
+    (KeyboardInterrupt / signal).
+    """
     monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
     monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "test_key")
     monkeypatch.setattr(sys, "argv", ["live_locks_watcher.py"])
@@ -1083,7 +1097,8 @@ def test_main_parent_process_exit(monkeypatch, tmp_path):
 
     monkeypatch.setattr(watcher, "create_client", lambda url, key: FakeSupaClient())
 
-    # Make _is_process_alive always return False (parent is dead)
+    # Even with _is_process_alive returning False, the watcher should
+    # keep running because it no longer checks the parent PID.
     monkeypatch.setattr(watcher, "_is_process_alive", lambda pid: False)
 
     def mock_check_output(cmd, *args, **kwargs):
@@ -1095,36 +1110,22 @@ def test_main_parent_process_exit(monkeypatch, tmp_path):
 
     monkeypatch.setattr(subprocess, "check_output", mock_check_output)
 
-    from datetime import datetime, timedelta
+    sleep_count = [0]
 
-    real_now = datetime.now
-    offset = [timedelta()]
+    def mock_sleep(seconds):
+        sleep_count[0] += 1
+        if sleep_count[0] > 3:
+            raise KeyboardInterrupt()
 
-    def advancing_sleep(seconds):
-        offset[0] += timedelta(seconds=31)
-
-    def fake_now(*args, **kwargs):
-        return real_now() + offset[0]
-
-    monkeypatch.setattr("time.sleep", advancing_sleep)
-    monkeypatch.setattr(
-        watcher,
-        "datetime",
-        type(
-            "FakeDT",
-            (),
-            {
-                "now": staticmethod(fake_now),
-                "fromisoformat": datetime.fromisoformat,
-            },
-        )(),
-        raising=False,
-    )
+    monkeypatch.setattr("time.sleep", mock_sleep)
 
     try:
         watcher.main()
-    except (SystemExit, AttributeError, TypeError):
+    except (SystemExit, KeyboardInterrupt):
         pass
+
+    # The watcher ran for multiple iterations (did not exit early)
+    assert sleep_count[0] > 2
 
 
 # ============================================================================
@@ -1134,7 +1135,7 @@ def test_main_parent_process_exit(monkeypatch, tmp_path):
 
 def test_main_block_present():
     """Test that __name__ == '__main__' block exists."""
-    src = module_file.read_text()
+    src = module_file.read_text(encoding="utf-8")
     assert '__name__ == "__main__"' in src or "__name__ == '__main__'" in src
 
 
@@ -1439,3 +1440,375 @@ def test_main_idle_timeout_break(monkeypatch, tmp_path):
         watcher.main()
     except (SystemExit, AttributeError, TypeError):
         pass
+
+
+# ============================================================================
+# _scan_remote_locks Tests
+# ============================================================================
+
+
+class FakeScanClient:
+    """Mock Supabase client for _scan_remote_locks tests."""
+
+    def __init__(self, data=None, raise_exc=None):
+        self._data = data or []
+        self._raise_exc = raise_exc
+
+    def table(self, *args, **kwargs):
+        return self
+
+    def select(self, *args, **kwargs):
+        if self._raise_exc:
+            raise self._raise_exc
+        return self
+
+    def execute(self):
+        if self._raise_exc:
+            raise self._raise_exc
+
+        class Resp:
+            data = self._data
+
+        return Resp()
+
+
+def test_scan_remote_locks_warns_about_other_devs(monkeypatch, caplog):
+    """_scan_remote_locks notifies when another developer holds a lock."""
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+    watcher._warned_remote_locks.clear()
+    monkeypatch.setattr(watcher, "_notify", lambda *a, **k: None)
+
+    client = FakeScanClient(
+        data=[
+            {"file_path": "src/app.py", "developer_id": "bob"},
+        ]
+    )
+
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="collab.pycharm_watcher"):
+        watcher._scan_remote_locks(client)
+
+    assert "src/app.py" in watcher._warned_remote_locks
+    assert any("REMOTE LOCK" in r.message for r in caplog.records)
+    watcher._warned_remote_locks.clear()
+
+
+def test_scan_remote_locks_skips_own_locks(monkeypatch):
+    """_scan_remote_locks ignores locks held by the current developer."""
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+    watcher._warned_remote_locks.clear()
+
+    client = FakeScanClient(
+        data=[
+            {"file_path": "src/app.py", "developer_id": "alice"},
+        ]
+    )
+    watcher._scan_remote_locks(client)
+
+    assert "src/app.py" not in watcher._warned_remote_locks
+    watcher._warned_remote_locks.clear()
+
+
+def test_scan_remote_locks_clears_released_warnings(monkeypatch, caplog):
+    """_scan_remote_locks clears warnings when remote locks are released."""
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+    watcher._warned_remote_locks.clear()
+    monkeypatch.setattr(watcher, "_notify", lambda *a, **k: None)
+
+    # First scan: bob holds a lock
+    client_with_lock = FakeScanClient(
+        data=[{"file_path": "src/app.py", "developer_id": "bob"}]
+    )
+    watcher._scan_remote_locks(client_with_lock)
+    assert "src/app.py" in watcher._warned_remote_locks
+
+    # Second scan: lock released
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="collab.pycharm_watcher"):
+        client_empty = FakeScanClient(data=[])
+        watcher._scan_remote_locks(client_empty)
+
+    assert "src/app.py" not in watcher._warned_remote_locks
+    assert any("Remote lock cleared" in r.message for r in caplog.records)
+    watcher._warned_remote_locks.clear()
+
+
+def test_scan_remote_locks_no_duplicate_warnings(monkeypatch):
+    """_scan_remote_locks does not re-warn for already-warned files."""
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+    watcher._warned_remote_locks.clear()
+    notify_calls = []
+    monkeypatch.setattr(watcher, "_notify", lambda t, m: notify_calls.append((t, m)))
+
+    client = FakeScanClient(data=[{"file_path": "src/app.py", "developer_id": "bob"}])
+
+    watcher._scan_remote_locks(client)
+    watcher._scan_remote_locks(client)  # second call — should NOT notify again
+
+    assert len(notify_calls) == 1
+    watcher._warned_remote_locks.clear()
+
+
+def test_scan_remote_locks_handles_exception(monkeypatch):
+    """_scan_remote_locks returns gracefully on API failure."""
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+    watcher._warned_remote_locks.clear()
+
+    client = FakeScanClient(raise_exc=RuntimeError("network down"))
+    watcher._scan_remote_locks(client)  # should not raise
+
+    assert len(watcher._warned_remote_locks) == 0
+
+
+def test_scan_remote_locks_skips_empty_file_path(monkeypatch):
+    """_scan_remote_locks ignores entries with empty file_path."""
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+    watcher._warned_remote_locks.clear()
+    monkeypatch.setattr(watcher, "_notify", lambda *a, **k: None)
+
+    client = FakeScanClient(data=[{"file_path": "", "developer_id": "bob"}])
+    watcher._scan_remote_locks(client)
+
+    assert len(watcher._warned_remote_locks) == 0
+
+
+# ============================================================================
+# _start_dashboard_server Tests
+# ============================================================================
+
+
+def test_start_dashboard_server_returns_url(monkeypatch):
+    """_start_dashboard_server returns an http:// URL on success."""
+    import http.server
+
+    monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(watcher, "SUPABASE_SERVICE_ROLE_KEY", None)
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+
+    class FakeServer:
+        def __init__(self, addr, handler):
+            self.server_address = (addr[0], 9999)
+
+        def serve_forever(self):
+            pass
+
+        def shutdown(self):
+            pass
+
+    monkeypatch.setattr(http.server, "ThreadingHTTPServer", FakeServer)
+
+    url = watcher._start_dashboard_server()
+    assert url is not None
+    assert url.startswith("http://127.0.0.1:9999/")
+    assert url.endswith(".html")
+
+
+def test_start_dashboard_server_missing_html(monkeypatch):
+    """_start_dashboard_server returns None when index.html is missing."""
+    monkeypatch.setattr(watcher, "_COLLAB_ROOT", "/nonexistent/path")
+    result = watcher._start_dashboard_server()
+    assert result is None
+
+
+def test_start_dashboard_server_read_error(monkeypatch, tmp_path):
+    """_start_dashboard_server returns None when index.html can't be read."""
+    dashboard_dir = tmp_path / "dashboard"
+    dashboard_dir.mkdir()
+    html_file = dashboard_dir / "index.html"
+    html_file.write_text("test")
+    # Make it unreadable by patching open
+    monkeypatch.setattr(watcher, "_COLLAB_ROOT", str(tmp_path))
+
+    original_open = open
+
+    def failing_open(path, *args, **kwargs):
+        if "index.html" in str(path):
+            raise PermissionError("denied")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.open", failing_open)
+    result = watcher._start_dashboard_server()
+    assert result is None
+
+
+def test_start_dashboard_server_http_server_error(monkeypatch, tmp_path):
+    """_start_dashboard_server returns None when HTTP server fails to start."""
+    import http.server
+
+    # Create a valid dashboard dir
+    dashboard_dir = tmp_path / "dashboard"
+    dashboard_dir.mkdir()
+    (dashboard_dir / "index.html").write_text("<html></html>")
+    monkeypatch.setattr(watcher, "_COLLAB_ROOT", str(tmp_path))
+    monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "key")
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+
+    def raising_server(*args, **kwargs):
+        raise OSError("Address already in use")
+
+    monkeypatch.setattr(http.server, "ThreadingHTTPServer", raising_server)
+
+    result = watcher._start_dashboard_server()
+    assert result is None
+
+
+def test_start_dashboard_server_tmpfile_error(monkeypatch, tmp_path):
+    """_start_dashboard_server returns None when tempfile creation fails."""
+    import tempfile
+
+    dashboard_dir = tmp_path / "dashboard"
+    dashboard_dir.mkdir()
+    (dashboard_dir / "index.html").write_text("<html></html>")
+    monkeypatch.setattr(watcher, "_COLLAB_ROOT", str(tmp_path))
+    monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "key")
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+
+    def failing_tmpfile(**kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(tempfile, "NamedTemporaryFile", failing_tmpfile)
+
+    result = watcher._start_dashboard_server()
+    assert result is None
+
+
+def test_start_dashboard_server_unlink_error(monkeypatch, tmp_path):
+    """_start_dashboard_server handles unlink failure after server error."""
+    import http.server
+
+    dashboard_dir = tmp_path / "dashboard"
+    dashboard_dir.mkdir()
+    (dashboard_dir / "index.html").write_text("<html></html>")
+    monkeypatch.setattr(watcher, "_COLLAB_ROOT", str(tmp_path))
+    monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "key")
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "alice")
+
+    # Server creation fails
+    def raising_server(*args, **kwargs):
+        raise OSError("port in use")
+
+    monkeypatch.setattr(http.server, "ThreadingHTTPServer", raising_server)
+
+    # unlink also fails
+    original_unlink = os.unlink
+
+    def failing_unlink(path):
+        if str(path).endswith(".html"):
+            raise OSError("cannot unlink")
+        return original_unlink(path)
+
+    monkeypatch.setattr(os, "unlink", failing_unlink)
+
+    result = watcher._start_dashboard_server()
+    assert result is None
+
+
+def test_main_dashboard_fallback_message(monkeypatch, tmp_path, caplog):
+    """Test main() logs fallback dashboard message when server fails (line 382)."""
+    monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(sys, "argv", ["live_locks_watcher.py"])
+
+    pid_file = tmp_path / "watcher.pid"
+    monkeypatch.setattr(watcher, "PID_FILE", str(pid_file))
+    monkeypatch.setattr(watcher, "desktop_notify", None)
+
+    # Make _start_dashboard_server return None
+    monkeypatch.setattr(watcher, "_start_dashboard_server", lambda: None)
+
+    class FakeSupaClient:
+        def table(self, name):
+            return self
+
+        def delete(self):
+            return self
+
+        def eq(self, *args):
+            return self
+
+        def execute(self):
+            return None
+
+        def select(self, *args):
+            return self
+
+    monkeypatch.setattr(watcher, "create_client", lambda url, key: FakeSupaClient())
+
+    def mock_check_output(cmd, *args, **kwargs):
+        if "user.name" in cmd:
+            return b"test_user\n"
+        if "branch" in cmd:
+            return b"main\n"
+        return b""
+
+    monkeypatch.setattr(subprocess, "check_output", mock_check_output)
+
+    sleep_count = [0]
+
+    def mock_sleep(seconds):
+        sleep_count[0] += 1
+        if sleep_count[0] > 1:
+            raise KeyboardInterrupt()
+
+    monkeypatch.setattr("time.sleep", mock_sleep)
+
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="collab.pycharm_watcher"):
+        try:
+            watcher.main()
+        except (KeyboardInterrupt, SystemExit):
+            pass
+
+    assert any("python collab.py dashboard" in r.message for r in caplog.records)
+
+
+def test_graceful_shutdown_guard_prevents_double_run(monkeypatch, tmp_path):
+    """_graceful_shutdown runs only once; second call is a no-op."""
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "test_dev")
+    monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(watcher, "PID_FILE", str(tmp_path / "pid"))
+
+    call_count = [0]
+
+    class FakeTable:
+        def delete(self):
+            call_count[0] += 1
+            return self
+
+        def eq(self, *args):
+            return self
+
+        def execute(self):
+            return None
+
+    class FakeClient:
+        def table(self, name):
+            return FakeTable()
+
+    monkeypatch.setattr(watcher, "create_client", lambda url, key: FakeClient())
+
+    watcher._graceful_shutdown()  # first call — runs
+    watcher._graceful_shutdown()  # second call — guard returns immediately
+
+    assert call_count[0] == 1  # delete called only once
+
+
+def test_graceful_shutdown_dev_id_without_credentials(monkeypatch, tmp_path):
+    """_graceful_shutdown skips lock release when credentials are missing."""
+    monkeypatch.setattr(watcher, "DEVELOPER_ID", "test_dev")
+    monkeypatch.setattr(watcher, "SUPABASE_URL", None)  # missing
+    monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "test_key")
+    pid_file = tmp_path / "watcher.pid"
+    pid_file.write_text("12345")
+    monkeypatch.setattr(watcher, "PID_FILE", str(pid_file))
+
+    watcher._graceful_shutdown()  # should not attempt API call
+    assert not pid_file.exists()

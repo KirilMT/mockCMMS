@@ -140,6 +140,12 @@ class LockClient:
         key = SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY
         self._client = create_client(SUPABASE_URL, key)
         self._parent_pid: Optional[int] = None
+        self._is_admin: bool = bool(SUPABASE_SERVICE_ROLE_KEY)
+
+    @property
+    def is_admin(self) -> bool:
+        """Return True if this client has admin privileges (service role key)."""
+        return self._is_admin
 
     # ------------------------------------------------------------------
     # Git helpers
@@ -364,16 +370,31 @@ class LockClient:
         return count
 
     def force_release(self, file_path: str) -> Tuple[bool, str]:
-        """Force-release a lock regardless of owner (admin action)."""
-        try:
-            res = _retry_on_network_error(
-                lambda: (
-                    self._client.table("file_locks")
-                    .delete()
-                    .eq("file_path", file_path)
-                    .execute()
+        """Force-release a lock on file_path.
+
+        Non-admin users can only force-release their own locks. Admin users (with
+        SUPABASE_SERVICE_ROLE_KEY) can force-release any lock.
+
+        Returns (success: bool, message: str).
+        """
+        if not self._is_admin:
+            # Non-admin: verify the lock belongs to this developer
+            status_info = self.get_lock_status(file_path)
+            if (
+                status_info.get("is_locked")
+                and status_info.get("locked_by") != self.developer_id
+            ):
+                owner = status_info.get("locked_by", "another developer")
+                return False, (
+                    f"Permission denied: {file_path} is locked by @{owner}. "
+                    "Only admins can force-release other developers' locks."
                 )
-            )
+
+        try:
+            query = self._client.table("file_locks").delete().eq("file_path", file_path)
+            if not self._is_admin:
+                query = query.eq("developer_id", self.developer_id)
+            res = _retry_on_network_error(lambda: query.execute())
         except Exception as e:
             return False, f"API Error: {e}"
         _, data, error = self._parse_response(res)
@@ -416,27 +437,53 @@ class LockClient:
         return True, count, "Success"
 
     def history(self, file_path: Optional[str] = None, limit: int = 20) -> List[Dict]:
-        """Fetch lock history records."""
+        """Fetch lock history records.
+
+        When *file_path* is provided, an exact match is tried first.  If that
+        returns nothing, a ``LIKE %<basename>%`` fallback query runs so the user
+        does not have to remember the full stored path.
+        """
         try:
-            q = (
-                self._client.table("file_locks_history")
-                .select("*")
-                .order("id", desc=True)
-                .limit(limit)
-            )
+            q = self._client.table("file_locks_history").select("*")
             if file_path:
                 q = q.eq("file_path", file_path)
+            q = q.order("id", desc=True).limit(limit)
             res = q.execute()
-        except Exception:
+        except Exception as exc:
+            logger.error("Failed to fetch lock history: %s", exc)
             return []
+
         _, data, error = self._parse_response(res)
-        return data or [] if not error else []
+        if error:
+            logger.error("History query error: %s", error)
+            return []
+        rows = data or []
+
+        # Fallback: if exact match returned nothing, try a partial match
+        if not rows and file_path:
+            try:
+                basename = file_path.replace("\\", "/").rsplit("/", 1)[-1]
+                q2 = (
+                    self._client.table("file_locks_history")
+                    .select("*")
+                    .ilike("file_path", f"%{basename}%")
+                    .order("id", desc=True)
+                    .limit(limit)
+                )
+                res2 = q2.execute()
+                _, data2, error2 = self._parse_response(res2)
+                if not error2 and data2:
+                    rows = data2
+            except Exception:
+                pass  # Fallback is best-effort
+
+        return rows
 
     # ------------------------------------------------------------------
     # Daemon management
     # ------------------------------------------------------------------
     def daemon_start(
-        self, interval: int = 5, timeout_mins: int = 60, open_dashboard: bool = False
+        self, interval: int = 5, timeout_mins: int = 0, open_dashboard: bool = False
     ) -> None:
         """Start the watcher as a background daemon process."""
         pid = self._read_pid()
@@ -453,6 +500,7 @@ class LockClient:
             str(interval),
             "--timeout",
             str(timeout_mins),
+            "--daemon",
         ]
         if open_dashboard:
             cmd.append("--open-dashboard")
@@ -499,10 +547,10 @@ class LockClient:
 
         if not self._is_process_alive(proc.pid):
             self._remove_pid()
-            print(f"Watcher process (PID: {proc.pid}) exited immediately.")
+            print(f"❌ Watcher process (PID: {proc.pid}) exited immediately.")
             return
 
-        print(f"Started (PID: {proc.pid})")
+        print(f"✅ Started (PID: {proc.pid})")
 
     def daemon_stop(self) -> None:
         """Stop the running watcher daemon."""
@@ -539,15 +587,30 @@ class LockClient:
                     pass
 
         self._remove_pid()
-        print("Stopped.")
+        print("✅ Stopped.")
 
     def daemon_status(self) -> bool:
-        """Check if the watcher daemon is running."""
+        """Check if the watcher daemon is running.
+
+        Checks both the primary PID file and the legacy PyCharm watcher PID file for
+        backward compatibility.
+        """
         pid = self._read_pid()
         if pid and self._is_process_alive(pid):
-            print(f"Lock watcher is RUNNING (PID: {pid})")
+            print(f"✅ Lock watcher is RUNNING (PID: {pid})")
             return True
-        print("Lock watcher is NOT running.")
+        # Fallback: check legacy PyCharm watcher PID file
+        _legacy_pid_file = os.path.join(_COLLAB_ROOT, ".pycharm_watcher.pid")
+        if os.path.exists(_legacy_pid_file):
+            try:
+                with open(_legacy_pid_file, "r") as f:
+                    legacy_pid = int(f.read().strip())
+                if self._is_process_alive(legacy_pid):
+                    print(f"✅ Lock watcher is RUNNING (PID: {legacy_pid})")
+                    return True
+            except (ValueError, OSError):
+                pass
+        print("❌ Lock watcher is NOT running.")
         self._remove_pid()
         return False
 
@@ -650,13 +713,19 @@ class LockClient:
     # Watcher (foreground process)
     # ------------------------------------------------------------------
     def watch(
-        self, interval: int = 5, timeout_mins: int = 60, open_dashboard: bool = False
+        self,
+        interval: int = 5,
+        timeout_mins: int = 0,
+        open_dashboard: bool = False,
+        daemon_mode: bool = False,
     ) -> None:
         """Run the file-watching loop (foreground).
 
-        Called by daemon_start.
+        Called by daemon_start.  When *daemon_mode* is True the parent-PID liveness
+        check is skipped (detached daemons have no meaningful parent).
         """
-        self._parent_pid = os.getppid()
+        if not daemon_mode:
+            self._parent_pid = os.getppid()
         self._write_pid(os.getpid())
         self._register_signal_handlers()
 
@@ -668,7 +737,8 @@ class LockClient:
 
         logger.info("Lock watcher started")
         logger.info("Developer: %s", self.developer_id)
-        logger.info("Interval: %ds | Auto-timeout: %dm", interval, timeout_mins)
+        timeout_label = f"{timeout_mins}m" if timeout_mins > 0 else "disabled"
+        logger.info("Interval: %ds | Auto-timeout: %s", interval, timeout_label)
         logger.info("Monitoring local git changes for automatic locking...")
 
         last_modified: set = set()
@@ -682,7 +752,12 @@ class LockClient:
             while True:
                 try:
                     # Parent process liveness check every 30 seconds
-                    if (datetime.now() - last_parent_check).total_seconds() > 30:
+                    # (skipped in daemon mode — detached processes have
+                    # no meaningful parent PID)
+                    if (
+                        not daemon_mode
+                        and (datetime.now() - last_parent_check).total_seconds() > 30
+                    ):
                         last_parent_check = datetime.now()
                         if self._parent_pid and not self._is_process_alive(
                             self._parent_pid
@@ -716,9 +791,9 @@ class LockClient:
                                 reason="Auto-Watch Sync",
                             )
                             if ok:
-                                logger.info("Locked: %s", list(new_files))
+                                logger.info("🔒 Locked: %s", list(new_files))
                             else:
-                                logger.warning("CONFLICT ALERT: %s", msg)
+                                logger.warning("⚠️ CONFLICT ALERT: %s", msg)
 
                         released = last_modified - current_modified
                         if released:
@@ -726,7 +801,7 @@ class LockClient:
                             logger.info("[%s] Finalised: %s", ts, list(released))
                             ok, count, _ = self.release_multiple(list(released))
                             if ok and count > 0:
-                                logger.info("Released: %d file(s)", count)
+                                logger.info("🔓 Released: %d file(s)", count)
 
                         last_modified = current_modified
                     else:
@@ -771,11 +846,19 @@ class LockClient:
         signal.signal(signal.SIGINT, _handle_signal)
 
     def _graceful_shutdown(self) -> None:
-        """Release all locks and clean up PID file."""
+        """Release all locks and clean up PID file.
+
+        Guarded so it runs at most once per instance, even when called from multiple
+        shutdown paths (signal, finally, atexit).
+        """
+        if getattr(self, "_shutdown_done", False):
+            return
+        self._shutdown_done = True
+
         try:
             count = self.release_all()
             if count > 0:
-                logger.info("Released %d lock(s) during shutdown.", count)
+                logger.info("✅ Released %d lock(s) during shutdown.", count)
         except Exception as e:
             logger.error("Error releasing locks during shutdown: %s", e)
         self._remove_pid()
@@ -929,6 +1012,17 @@ class LockClient:
 # ---------------------------------------------------------------------------
 def _run_cli() -> None:
     """CLI entry point for the lock client."""
+    # Force UTF-8 on Windows so Unicode symbols (✓, ❌, 🔒) render correctly.
+    # Mirrors the proven pattern from validate_code.py, format_code.py, run.py.
+    # errors="replace" ensures graceful fallback if the terminal truly cannot
+    # handle a character (e.g. bare cmd.exe with cp437).
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
     parser = argparse.ArgumentParser(
         description="Collaborative File Lock Manager (Supabase)"
     )
@@ -954,7 +1048,10 @@ def _run_cli() -> None:
     sub.add_parser("release-all", help="Release all locks held by you")
 
     # force-release
-    fr = sub.add_parser("force-release", help="Force release a lock (admin)")
+    fr = sub.add_parser(
+        "force-release",
+        help="Force release a lock (own locks only; admin can release any)",
+    )
     fr.add_argument("file_path")
 
     # acquire-batch
@@ -968,6 +1065,13 @@ def _run_cli() -> None:
 
     # daemon-start
     ds = sub.add_parser("daemon-start", help="Start the watcher daemon")
+    ds.add_argument("--interval", type=int, default=5, help="Poll interval (seconds)")
+    ds.add_argument(
+        "--timeout",
+        type=int,
+        default=0,
+        help="Idle timeout in minutes (0 = disabled)",
+    )
     ds.add_argument("--open-dashboard", action="store_true")
 
     # daemon-stop
@@ -986,12 +1090,20 @@ def _run_cli() -> None:
     hp = sub.add_parser("history", help="Show lock history")
     hp.add_argument("file_path", nargs="?")
     hp.add_argument("--limit", type=int, default=20)
+    hp.add_argument(
+        "--json", action="store_true", dest="json_output", help="Output as raw JSON"
+    )
 
     # watch (internal, called by daemon-start)
     wp = sub.add_parser("watch", help="Run watcher in foreground")
     wp.add_argument("--interval", type=int, default=5)
-    wp.add_argument("--timeout", type=int, default=60)
+    wp.add_argument("--timeout", type=int, default=0)
     wp.add_argument("--open-dashboard", action="store_true")
+    wp.add_argument(
+        "--daemon",
+        action="store_true",
+        help="Daemon mode: skip parent-PID liveness check",
+    )
 
     args = parser.parse_args()
     client = LockClient()
@@ -1056,7 +1168,11 @@ def _run_cli() -> None:
     elif args.command == "daemon-start":
         open_flag = getattr(args, "open_dashboard", False)
         auto_env = os.getenv("AUTO_OPEN_DASHBOARD", "0").lower() in ("1", "true", "yes")
-        client.daemon_start(open_dashboard=(open_flag or auto_env))
+        client.daemon_start(
+            interval=getattr(args, "interval", 5),
+            timeout_mins=getattr(args, "timeout", 0),
+            open_dashboard=(open_flag or auto_env),
+        )
 
     elif args.command == "daemon-stop":
         client.daemon_stop()
@@ -1077,16 +1193,43 @@ def _run_cli() -> None:
         client._reconcile()
 
     elif args.command == "history":
-        rows = client.history(
-            getattr(args, "file_path", None), limit=getattr(args, "limit", 20)
-        )
-        print(json.dumps(rows, indent=2))
+        fp = getattr(args, "file_path", None)
+        rows = client.history(fp, limit=getattr(args, "limit", 20))
+        if getattr(args, "json_output", False):
+            print(json.dumps(rows, indent=2))
+        elif not rows:
+            if fp:
+                print(f"No history found for '{fp}'.")
+                print("  Tip: run 'python collab.py history' (no file) to see all.")
+            else:
+                print("No lock history found.")
+        else:
+            # Check if results came from fallback (partial match)
+            if fp and rows and rows[0].get("file_path") != fp:
+                actual = rows[0].get("file_path", "")
+                print(
+                    f"  (No exact match for '{fp}' — "
+                    f"showing partial matches for '{actual.rsplit('/', 1)[-1]}')\n"
+                )
+            for row in rows:
+                acquired = row.get("acquired_at", "?")[:19].replace("T", " ")
+                released = row.get("released_at", "?")[:19].replace("T", " ")
+                dev = row.get("developer_id", "?")
+                fpath = row.get("file_path", "?")
+                branch = row.get("branch_name", "")
+                outcome = row.get("outcome", "?")
+                print(
+                    f"  {fpath}  @{dev}  "
+                    f"[{acquired} → {released}]  "
+                    f"branch:{branch}  {outcome}"
+                )
 
     elif args.command == "watch":
         client.watch(
             interval=getattr(args, "interval", 5),
-            timeout_mins=getattr(args, "timeout", 60),
+            timeout_mins=getattr(args, "timeout", 0),
             open_dashboard=getattr(args, "open_dashboard", False),
+            daemon_mode=getattr(args, "daemon", False),
         )
 
     else:

@@ -14,21 +14,7 @@ Prevents merge conflicts by automatically locking files when a developer starts 
 
 ## 5-Minute Setup Guide
 
-### 1. Configure Environment Variables
-
-Open `.env` at the **project root** and ensure your Supabase credentials are set. If you don't have an `.env` file, copy `.env.example` to `.env`:
-
-Required variables:
-
-| Variable                      | Description                                                      |
-| ----------------------------- | ---------------------------------------------------------------- |
-| `SUPABASE_URL`                | Your Supabase project URL (from Project Settings → API)          |
-| `SUPABASE_ANON_KEY`           | Anonymous/public key (from Project Settings → API → anon/public) |
-| `SUPABASE_SERVICE_ROLE_KEY`   | Service role key (optional, for admin force-release)             |
-| `LOCK_DEFAULT_EXPIRY_MINUTES` | Lock auto-expiry in minutes (default: 480 = 8 hours)             |
-| `LOCK_STRICT`                 | If `1`, git hooks block on lock errors. Default `0` (warn only)  |
-
-### 2. Create the Database Schema
+### 1. Create the Database Schema
 
 Open your Supabase project's **SQL Editor** and run the contents of `.collab/schema.sql`.
 
@@ -37,13 +23,13 @@ This creates:
 - `file_locks` table (active locks)
 - `file_locks_history` table (audit trail)
 - `acquire_lock()` RPC function (atomic lock acquisition)
-- Row Level Security policies
+- Row Level Security policies (see [Security Model](#security-model) below)
 - Realtime publication
 - Auto-history trigger on lock release
 
-### 3. Setup Development Environment
+### 2. Run the Development Setup
 
-Run the global setup script to install dependencies (Python + npm) and copy the git hooks:
+One command handles everything — dependencies, `.env` configuration, git hooks, and IDE integration:
 
 **Windows:**
 
@@ -51,7 +37,28 @@ Run the global setup script to install dependencies (Python + npm) and copy the 
 .\scripts\setup-dev.ps1
 ```
 
-_(This script automatically installs `supabase`, `psutil`, `plyer` and copies Collab git hooks from `.collab/hooks/` to `.git/hooks/`)._
+The script automatically:
+
+- Installs `supabase`, `psutil`, `plyer` Python packages
+- Prompts for Supabase credentials if `.env` is missing or has placeholders
+- Copies git hooks from `.collab/hooks/` to `.git/hooks/`
+- Detects your IDE (PyCharm or VS Code) and configures the watcher
+
+> **Note:** `.collab/scripts/setup.ps1` and `setup.sh` exist as standalone installers for environments outside the full mockCMMS dev workflow. For mockCMMS developers, `scripts/setup-dev.ps1` is the only command you need.
+
+### 3. Environment Variables
+
+After running the setup, verify your `.env` at the project root has these values:
+
+| Variable                      | Description                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| `SUPABASE_URL`                | Your Supabase project URL (from Project Settings → API)                         |
+| `SUPABASE_ANON_KEY`           | Anonymous/public key (from Project Settings → API → anon/public)                |
+| `SUPABASE_SERVICE_ROLE_KEY`   | Service role key (**required** for dashboard force-release and full API access) |
+| `LOCK_DEFAULT_EXPIRY_MINUTES` | Lock auto-expiry in minutes (default: 480 = 8 hours)                            |
+| `LOCK_STRICT`                 | If `1`, git hooks block on lock errors. Default `0` (warn only)                 |
+
+> **Important:** `SUPABASE_SERVICE_ROLE_KEY` is needed for the dashboard's Force Release button to work. Without it, only your own locks can be released.
 
 ### 4. Verify Setup
 
@@ -84,8 +91,9 @@ python collab.py release-all
 # Force release (admin)
 python collab.py force-release path/to/file.py
 
-# Start background watcher
+# Start background watcher (no idle timeout by default)
 python collab.py daemon-start
+python collab.py daemon-start --interval 10 --timeout 480
 
 # Stop watcher
 python collab.py daemon-stop
@@ -96,8 +104,14 @@ python collab.py daemon-status
 # Open dashboard
 python collab.py dashboard
 
-# View lock history
-python collab.py history path/to/file.py --limit 20
+# View lock history (all files)
+python collab.py history
+
+# View lock history (specific file, with partial-match fallback)
+python collab.py history src/app.py --limit 10
+
+# View lock history as raw JSON (for scripting)
+python collab.py history --json
 ```
 
 ---
@@ -114,6 +128,8 @@ The hooks are located in `.collab/hooks/` and are copied to `.git/hooks/` during
 
 If the lock client is unavailable (network error, Python not found), hooks **warn and continue** unless `LOCK_STRICT=1`.
 
+> **Windows note:** Hooks set `PYTHONUTF8=1` before invoking Python to prevent encoding errors with Unicode symbols on `cp1252` terminals.
+
 ---
 
 ## Dashboard
@@ -128,8 +144,10 @@ This starts a local HTTP server and opens the dashboard in your default browser.
 
 - Shows all active file locks with developer, branch, reason, and expiry
 - Updates in real-time via Supabase Realtime (no page refresh needed)
-- Includes a **Force Release** button for stuck locks
+- **Release** button for your own locks; **Force Release** for admins with `SUPABASE_SERVICE_ROLE_KEY`
 - Shows lock history with durations and outcomes
+
+The PyCharm watcher also auto-starts a dashboard server and prints a **clickable `http://` URL** in the Run console.
 
 ---
 
@@ -159,10 +177,12 @@ See [`.collab/pycharm/plugin_notes.md`](pycharm/plugin_notes.md) for details.
 Features:
 
 - Pre-configured Run Configuration (Run > Collab Lock Watcher)
-- Desktop notifications via `plyer` for conflict alerts
+- Desktop notifications via `plyer` for conflict alerts and **remote lock warnings**
+- Proactive remote lock scanning every 30 seconds (warns about files locked by others **before you save**)
 - Clear conflict messaging: "Conflict cleared" vs "Released"
-- Auto-shutdown when PyCharm exits
-- Dashboard link printed at startup for quick access
+- Clickable dashboard URL printed at startup in the Run console
+- No idle timeout by default (watcher runs until explicitly stopped via Ctrl+C or IDE stop button)
+- Clean single-pass shutdown — guarded to prevent duplicate release requests
 
 ---
 
@@ -170,7 +190,7 @@ Features:
 
 ### Scenario A — Happy Path (Single Developer)
 
-1. Developer opens IDE → watcher starts automatically
+1. Developer opens IDE → starts the Collab Lock Watcher run configuration
 2. Developer edits `src/foo.py` → lock acquired automatically
 3. Developer commits → lock released automatically
 4. Dashboard reflects correct state at each step
@@ -178,32 +198,26 @@ Features:
 ### Scenario B — Conflict Detection (Two Developers)
 
 1. Dev A locks `src/foo.py`
-2. Dev B opens or edits `src/foo.py`
-3. Dev B sees a warning in the status bar and a popup: _"⚠ src/foo.py is locked by @alice since 14:32"_
-4. Dev A commits → lock releases
+2. Dev B's watcher detects the remote lock within 30 seconds (when start editing) and shows a desktop notification: _"src/foo.py is locked by @alice"_
+3. If Dev B saves changes to `src/foo.py`, the lock acquisition returns a conflict
+4. Dev A commits → lock releases → Dev B's watcher clears the warning
 5. Dev B can now edit without warnings
 
-### Scenario C — Orphaned Lock After IDE Crash
-
-1. Dev A locks a file, then IDE crashes
-2. The daemon detects the parent process is dead (checks every 30s)
-3. Daemon auto-releases all of Dev A's locks
-4. Dashboard shows the file as unlocked
-
-### Scenario D — Force Release via Dashboard
+### Scenario C — Force Release via Dashboard
 
 1. Dev A is away, file is still locked
-2. Dev B opens the dashboard, clicks **Force Release**
-3. Lock is released, Dev B can now edit
+2. Dev B opens the dashboard (clickable URL in watcher output)
+3. Dev B sees their own locks with a **Release** button and Dev A's locks with a **Locked** label
+4. If Dev B has admin access (`SUPABASE_SERVICE_ROLE_KEY` configured), they see a **Force Release** button on Dev A's lock
+5. Admin clicks Force Release → lock is released, Dev A is notified on next sync
 
-### Scenario E — Clean IDE Shutdown
+### Scenario D — Clean IDE Shutdown
 
 1. Developer edits files while locks are held
-2. Developer closes IDE normally
-3. Daemon shuts down via `deactivate()` hook / signal handler / atexit
-4. Locks are released
-5. **No files remain "in use" by orphaned processes**
-6. Zip/archive operations succeed immediately after IDE close
+2. Developer stops the Collab Lock Watcher (or closes PyCharm)
+3. Shutdown handler releases all locks exactly once (guarded)
+4. **No files remain "in use" by orphaned processes**
+5. Zip/archive operations succeed immediately after IDE close
 
 ---
 
@@ -250,6 +264,12 @@ python collab.py daemon-stop
 2. Use the dashboard's **Force Release** button, or
 3. Run: `python collab.py force-release path/to/file.py`
 
+### Dashboard Force Release not working
+
+- Only your **own** locks show a Release button by default
+- To force-release another developer's lock, you need **admin access** — set `SUPABASE_SERVICE_ROLE_KEY` in `.env`
+- Restart the watcher or dashboard after changing `.env`
+
 ### Dashboard not loading
 
 - Check that `.env` has `SUPABASE_URL` and `SUPABASE_ANON_KEY` set
@@ -271,6 +291,14 @@ This happens when orphaned daemon processes hold file handles. Fix:
 - Fill in your Supabase project credentials
 - Make sure there are no quotes or trailing spaces in the values
 
+### Unicode errors in git hooks on Windows
+
+Hooks use a two-layer approach: `PYTHONUTF8=1` environment variable plus explicit `sys.stdout.reconfigure(encoding='utf-8', errors='replace')` inside the Python code. If you still see encoding errors, ensure your hooks are up to date:
+
+```powershell
+.\scripts\setup-dev.ps1
+```
+
 ---
 
 ## Database Schema
@@ -280,6 +308,23 @@ The complete schema is in `.collab/schema.sql`. Key components:
 - **`file_locks`** — Active locks (file_path is primary key)
 - **`file_locks_history`** — Audit trail of all lock/release events
 - **`acquire_lock()`** — Atomic RPC function preventing race conditions
-- **RLS policies** — Read access for all, write access scoped by owner
+- **RLS policies** — See [Security Model](#security-model) below
 - **`log_lock_release()`** — Trigger that auto-records history on release
 - **Realtime** — `file_locks` table published for live subscriptions
+
+---
+
+## Security Model
+
+The collab system uses **shared API keys** (not per-user JWT tokens). Since individual users don't have unique JWTs, Supabase RLS cannot distinguish between developers at the database level.
+
+**How access control works:**
+
+| Role         | Key used                    | Can release        | Enforced by         |
+| ------------ | --------------------------- | ------------------ | ------------------- |
+| Regular user | `SUPABASE_ANON_KEY`         | **Own locks only** | Application code    |
+| Admin        | `SUPABASE_SERVICE_ROLE_KEY` | **Any lock**       | Service role bypass |
+
+- **Application-level enforcement:** The CLI (`lock_client.py`) and dashboard (`index.html`) filter delete operations by `developer_id` for non-admin users. Non-admin users can only release locks where `developer_id` matches their identity.
+- **Admin bypass:** When `SUPABASE_SERVICE_ROLE_KEY` is configured, the dashboard shows a "Force Release" button on other developers' locks. The service role key bypasses RLS entirely.
+- **RLS policies** are permissive at the database level because shared API keys make JWT-based row filtering impossible. Ownership checks happen in the application layer.

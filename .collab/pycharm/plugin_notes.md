@@ -45,9 +45,9 @@ When the watcher detects a conflict (file locked by another developer):
 
 ## Stopping the Watcher
 
-- **Manual**: Press `Ctrl+C` in the Run tool window
-- **Automatic**: The watcher detects when PyCharm (parent process) exits and
-  performs a clean shutdown, releasing all locks
+- **Manual**: Press the **Stop** button (⬛) in PyCharm's Run tool window, or `Ctrl+C`
+- **Automatic**: When PyCharm sends SIGINT/SIGTERM on IDE close, the watcher
+  performs a clean shutdown, releasing all locks via its signal handler
 - **CLI**: `python collab.py daemon-stop`
 
 ## Output

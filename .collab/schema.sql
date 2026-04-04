@@ -58,16 +58,20 @@ create policy "owner can acquire lock"
   with check (true);
 
 -- A developer can update their own lock (or when JWT is empty / service role)
+-- NOTE: Because the collab system uses shared API keys (not per-user JWT),
+-- fine-grained ownership enforcement happens at the application level.
 create policy "owner can update own lock"
   on file_locks for update
-  using (developer_id = current_setting('request.jwt.claims', true)::json->>'sub'
-         or current_setting('request.jwt.claims', true)::text = '');
+  using (true);
 
--- A developer can delete (release) their own lock (or service role)
-create policy "owner can release own lock"
+-- A developer can delete (release) their own lock (or service role).
+-- NOTE: Because the collab system uses shared API keys (not per-user JWT),
+-- fine-grained ownership enforcement happens at the application level
+-- (lock_client.py and dashboard). Non-admin users can only release their
+-- own locks; admin users (with service role key) can release any lock.
+create policy "anyone can release locks"
   on file_locks for delete
-  using (developer_id = current_setting('request.jwt.claims', true)::json->>'sub'
-         or current_setting('request.jwt.claims', true)::text = '');
+  using (true);
 
 -- History table: read-only for all, insert via trigger only
 create policy "anyone can read history"

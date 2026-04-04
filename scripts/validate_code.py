@@ -473,7 +473,7 @@ def _get_changed_files() -> List[str]:
     return sorted(changed)
 
 
-def detect_changed_scopes() -> Dict[str, Any]:
+def detect_changed_scopes(files: Optional[List[str]] = None) -> Dict[str, Any]:
     """Analyze git changes and return smart test scopes for --quick mode.
 
     Returns a dict with:
@@ -483,34 +483,60 @@ def detect_changed_scopes() -> Dict[str, Any]:
         no backend-relevant files changed — skip backend tests.
       - ``"frontend"`` (list[str]): Frontend test dirs to run.  Empty list means
         no frontend-relevant files changed — skip frontend tests.
+      - ``"reason"`` (str | None): Human-readable reason for full_suite trigger.
+        Callers should print this as a warning if non-None.
+      - ``"changed_files"`` (list[str]): List of files analyzed for scope.
     """
-    files = _get_changed_files()
+    if files is not None:
+        # Use explicitly provided files (e.g. from pre-commit) natively
+        # Normalize to avoid platform separator issues
+        changed = sorted({f.replace("\\", "/") for f in files})
+    else:
+        changed = _get_changed_files()
 
     # No changes or git unavailable → default to full suite (safest fallback)
-    if not files:
-        return {"full_suite": True, "backend": [], "frontend": []}
+    if not changed:
+        return {
+            "full_suite": True,
+            "backend": [],
+            "frontend": [],
+            "reason": None,
+            "changed_files": [],
+        }
 
     # Any global config/infrastructure change invalidates targeted scope
-    for f in files:
+    for f in changed:
         basename = f.rsplit("/", 1)[-1]
         if basename in _FULL_SUITE_FILENAMES:
-            print_warning(f"Global config changed ({f!r}) — full suite required.")
-            return {"full_suite": True, "backend": [], "frontend": []}
+            reason = f"Global config changed ({f!r}) — full suite required."
+            return {
+                "full_suite": True,
+                "backend": [],
+                "frontend": [],
+                "reason": reason,
+                "changed_files": changed,
+            }
         if any(f.startswith(p) for p in _FULL_SUITE_PREFIXES):
-            print_warning(f"Infrastructure file changed ({f!r}) — full suite required.")
-            return {"full_suite": True, "backend": [], "frontend": []}
+            reason = f"Infrastructure file changed ({f!r}) — full suite required."
+            return {
+                "full_suite": True,
+                "backend": [],
+                "frontend": [],
+                "reason": reason,
+                "changed_files": changed,
+            }
 
     backend: set = set()
     frontend: set = set()
 
-    for f in files:
+    for f in changed:
         # Backend mapping (first match wins per file; [] = frontend-only, skip)
         for prefix, dirs in _BACKEND_MAP:
             if f.startswith(prefix):
-                if dirs:  # Empty list means "frontend-only — no backend tests"
-                    backend.update(dirs)
-                break  # Always break so the generic src/ catch-all is not reached
-        # Frontend mapping (independent — a file can affect both)
+                backend.update(dirs)
+                break
+
+        # Frontend mapping (first match wins)
         for prefix, dirs in _FRONTEND_MAP:
             if f.startswith(prefix):
                 frontend.update(dirs)
@@ -518,9 +544,10 @@ def detect_changed_scopes() -> Dict[str, Any]:
 
     return {
         "full_suite": False,
-        # Keep only directories that actually exist in this repo
-        "backend": [d for d in sorted(backend) if Path(d).exists()],
-        "frontend": [d for d in sorted(frontend) if Path(d).exists()],
+        "backend": sorted(backend),
+        "frontend": sorted(frontend),
+        "reason": None,
+        "changed_files": changed,
     }
 
 
@@ -741,7 +768,7 @@ def validate_python_backend(
     #
     # _cov_sources (comprehensive) — Lists EVERY directory/file containing
     # Python source code.  Used by Step 9 (both quick and full) to generate
-    # .coverage + coverage.xml with data for ALL Python files.  This ensures
+    # .coverage + coverage.xml with data for ALL Python files. This ensures
     # both Step 10 (total ≥85%) and Step 11 (diff-cover ≥92%) can validate
     # coverage for ANY Python file — not just src/apps/.collab.  If a new
     # top-level package or root .py file is added, add a "--cov=<path>"
@@ -756,7 +783,7 @@ def validate_python_backend(
     # ARCHITECTURE (same in CI, validate_code.py, and pre-commit):
     #   Step 9  → _cov_sources  (comprehensive .coverage + coverage.xml)
     #   Step 10 → coverage report --fail-under=85  (reads .coverage from Step 9)
-    #   Step 11 → diff-cover coverage.xml  (new code ≥92%)
+    #   Step 11 → diff-cover coverage.xml  (new code ≥92% coverage)
     _FULL_TESTPATHS = ["tests/backend", "apps", ".collab"]
     _cov_sources = [
         "--cov=src",
@@ -771,103 +798,55 @@ def validate_python_backend(
 
     if quick:
         print_section("Step 9/11: Targeted Tests (with Diff Coverage)")
-        print_warning("Quick mode: Smart test targeting enabled")
 
-        # Priority 1: Specifically passed files (pre-commit)
-        if files:
-            if test_targets:
-                print_warning(
-                    f"Quick mode [Targeted Files]: Running {len(test_targets)} test(s)"
-                )
-                success, _ = run_command(
-                    [
-                        "pytest",
-                        "-c",
-                        "pyproject.toml",
-                    ]
-                    + quick_cov_args
-                    + [
-                        "-x",
-                        "--tb=short",
-                    ]
-                    + test_targets,
-                    "Targeted test run",
-                    force_all_apps=force_all_apps,
-                )
-            else:
-                # No specific test files in staged changes, use smart discovery
-                scopes = detect_changed_scopes()
-                if scopes["full_suite"]:
-                    print_warning(
-                        "Quick mode [Full Scope]: Global changes — running all tests."
-                    )
-                    success, _ = run_command(
-                        [
-                            "pytest",
-                            "-c",
-                            "pyproject.toml",
-                        ]
-                        + quick_cov_args
-                        + [
-                            "-x",
-                            "--tb=short",
-                        ]
-                        + _FULL_TESTPATHS,
-                        "Quick test run (full scope)",
-                        force_all_apps=force_all_apps,
-                    )
-                elif scopes["backend"]:
-                    scope_str = " ".join(scopes["backend"])
-                    print_warning(f"Quick mode [Smart Scoping]: Running: {scope_str}")
-                    success, _ = run_command(
-                        [
-                            "pytest",
-                            "-c",
-                            "pyproject.toml",
-                        ]
-                        + quick_cov_args
-                        + [
-                            "-x",
-                            "--tb=short",
-                        ]
-                        + scopes["backend"],
-                        "Smart test run",
-                        force_all_apps=force_all_apps,
-                    )
-                else:
-                    print_warning("Quick mode: No relevant changes — skipping tests.")
-                    success = True
+        # Detect scopes ONCE upfront — avoids redundant git subprocess calls
+        scopes = detect_changed_scopes(files)
+
+        if scopes["full_suite"]:
+            reason = (
+                f" ({scopes.get('reason')})"
+                if scopes.get("reason")
+                else " (Global changes)"
+            )
+            print_warning(
+                f"Quick mode: Full suite required{reason} — running all tests."
+            )
+            success, _ = run_command(
+                [
+                    "pytest",
+                    "-c",
+                    "pyproject.toml",
+                ]
+                + quick_cov_args
+                + [
+                    "-x",
+                    "--tb=short",
+                ]
+                + _FULL_TESTPATHS,
+                "Quick test run (full scope)",
+                force_all_apps=force_all_apps,
+            )
+        elif scopes["backend"]:
+            scope_str = " ".join(scopes["backend"])
+            print_warning(f"Quick mode [Smart Scoping]: Running: {scope_str}")
+            success, _ = run_command(
+                [
+                    "pytest",
+                    "-c",
+                    "pyproject.toml",
+                ]
+                + quick_cov_args
+                + [
+                    "-x",
+                    "--tb=short",
+                ]
+                + scopes["backend"],
+                "Smart test run",
+                force_all_apps=force_all_apps,
+            )
         else:
-            # Normal quick mode without specific files
-            scopes = detect_changed_scopes()
-            if scopes["full_suite"]:
-                success, _ = run_command(
-                    [
-                        "pytest",
-                        "-c",
-                        "pyproject.toml",
-                    ]
-                    + quick_cov_args
-                    + ["-x", "--tb=short"]
-                    + _FULL_TESTPATHS,
-                    "Quick test run (full scope)",
-                    force_all_apps=force_all_apps,
-                )
-            elif scopes["backend"]:
-                success, _ = run_command(
-                    [
-                        "pytest",
-                        "-c",
-                        "pyproject.toml",
-                    ]
-                    + quick_cov_args
-                    + ["-x", "--tb=short"]
-                    + scopes["backend"],
-                    "Smart test run",
-                    force_all_apps=force_all_apps,
-                )
-            else:
-                success = True
+            print_warning("Quick mode: No relevant changes — skipping tests.")
+            success = True
 
         checks.append(("Tests", success))
 
@@ -931,8 +910,9 @@ def validate_python_backend(
         checks.append(("Total Coverage Threshold", True))
 
     # 11. Diff Coverage validation (New Code >= 92%)
-    # This now runs in BOTH modes (assuming coverage.xml exists).
+    # Runs in BOTH modes (assuming coverage.xml exists).
     # Threshold matches CI (ci.yml) — both use --fail-under=92.
+    # QUICK MODE & FULL MODE: Strict (fail blocks commit).
     print_section("Step 11/11: Diff (Patch) Coverage")
     if not os.path.exists("coverage.xml"):
         msg_cov = (
@@ -947,71 +927,37 @@ def validate_python_backend(
             ["diff-cover", "--version"], "Check diff-cover", check=False
         )
         if success:
+            compare_branch = "HEAD" if quick else "origin/main"
             diff_cover_cmd = [
                 "diff-cover",
                 "coverage.xml",
-                "--compare-branch=origin/main",
+                f"--compare-branch={compare_branch}",
                 "--fail-under=92",
+                "--include-untracked",  # Must include untracked new files as well
             ]
-            # In quick mode with specific files (pre-commit), scope diff-cover
-            # to only validate coverage for the staged source files.
-            #
-            # WHY: In targeted mode, coverage.xml only reflects what the
-            # targeted tests exercised.  But diff-cover compares the full
-            # branch diff against origin/main — including files that were
-            # changed earlier in the branch but are NOT part of this commit.
-            # Those files appear as 0% covered, causing false failures.
-            #
-            # FIX: Use --include to restrict diff-cover to only the staged
-            # source files.  Test files are excluded because diff-cover
-            # measures SOURCE coverage, not test coverage.
-            #
-            # EDGE CASES:
-            #   - Only test files staged → no source to validate → skip
-            #   - Only non-Python files staged → no source to validate → skip
-            #   - Full mode (no files) → check entire branch diff (correct
-            #     because full test suite generates complete coverage.xml)
-            #   - Quick mode without files → check entire diff (user is
-            #     running a broader validation, not a targeted commit)
-            skip_diff_cover = False
-            if quick and files:
-                # Only include files that:
-                #   1. Are Python files
-                #   2. Are NOT test files (at any nesting depth)
-                src_files = [
-                    f
-                    for f in files
-                    if f.endswith(".py")
-                    and "/tests/" not in f
-                    and not f.startswith("tests/")
-                ]
-                if src_files:
-                    diff_cover_cmd.extend(["--include"] + src_files)
-                else:
-                    # No source files in this commit — only tests, configs,
-                    # or non-Python files.  diff-cover has nothing meaningful
-                    # to validate for this commit, so skip gracefully.
-                    msg_skip = (
-                        f"{Colors.OKCYAN}[INFO] Quick mode: No source files "
-                        f"in staged changes — skipping diff-cover.{Colors.ENDC}"
-                    )
-                    print(msg_skip)
-                    checks.append(("Diff Coverage", True))
-                    skip_diff_cover = True
 
-            if not skip_diff_cover:
-                success, _ = run_command(
-                    diff_cover_cmd,
-                    "Diff Coverage Check (New Code needs 92% coverage)",
-                )
-                checks.append(("Diff Coverage", success))
+            if quick and not scopes["full_suite"]:
+                # Only evaluate explicitly targeted/changed files in quick mode
+                py_files = [
+                    f
+                    for f in scopes.get("changed_files", [])
+                    if f.endswith(".py") or Path(f).name == "run.py"
+                ]
+                if py_files:
+                    diff_cover_cmd.append("--include")
+                    diff_cover_cmd.extend(py_files)
+
+            success, _ = run_command(
+                diff_cover_cmd,
+                "Diff Coverage Check (New Code needs 92% coverage)",
+            )
+            checks.append(("Diff Coverage", success))
         else:
             msg_dc = (
                 f"{Colors.OKCYAN}[INFO] diff-cover not installed. Run "
                 f"'pip install diff-cover' to enable patch checks.{Colors.ENDC}"
             )
             print(msg_dc)
-            # Soft fail if tool is missing to allow environment flexibility
             checks.append(("Diff Coverage", True))
 
     # Print summary
@@ -1183,12 +1129,17 @@ def validate_javascript_frontend(
     checks.append(("ESLint", eslint_success))
 
     # 2. JavaScript tests (Jest)
+    print_section("Step 2/3: JavaScript Tests (jest)")
     if quick:
+        # Detect scopes ONCE for frontend (same pattern as backend Step 9)
+        scopes = detect_changed_scopes(files)
+        if scopes.get("reason"):
+            print_warning(scopes["reason"])
+
         # Priority 1: Specifically passed test files
         if files:
             jest_targets = [f for f in files if f.endswith(".test.js")]
             if jest_targets:
-                print_section("Step 2/3: JavaScript Tests (jest)")
                 print_warning(
                     f"Quick mode [Targeted Files]: Running {len(jest_targets)} test(s)"
                 )
@@ -1198,10 +1149,8 @@ def validate_javascript_frontend(
                     force_all_apps=force_all_apps,
                 )
             else:
-                # Priority 2: Smart scoping from all staged changes
-                scopes = detect_changed_scopes()
+                # Priority 2: Smart scoping from cached scopes
                 if scopes["full_suite"] or scopes["frontend"]:
-                    print_section("Step 2/3: JavaScript Tests (jest)")
                     print_warning("Quick mode [Smart Scoping]: Running frontend tests")
                     success, _ = run_command(
                         ["npm", "test"],
@@ -1209,21 +1158,28 @@ def validate_javascript_frontend(
                         force_all_apps=force_all_apps,
                     )
                 else:
+                    msg_jest = (
+                        f"{Colors.OKCYAN}[INFO] Quick mode: No frontend changes "
+                        f"— skipping Jest tests.{Colors.ENDC}"
+                    )
+                    print(msg_jest)
                     success = True
         else:
-            # Normal quick mode without specific files
-            scopes = detect_changed_scopes()
+            # Normal quick mode without specific files — use cached scopes
             if scopes["full_suite"] or scopes["frontend"]:
-                print_section("Step 2/3: JavaScript Tests (jest)")
                 success, _ = run_command(
                     ["npm", "test"],
                     "Quick Jest run",
                     force_all_apps=force_all_apps,
                 )
             else:
+                msg_jest = (
+                    f"{Colors.OKCYAN}[INFO] Quick mode: No frontend changes "
+                    f"— skipping Jest tests.{Colors.ENDC}"
+                )
+                print(msg_jest)
                 success = True
     else:
-        print_section("Step 2/3: JavaScript Tests (jest)")
         success, _ = run_command(
             [
                 "npm",
@@ -1239,8 +1195,8 @@ def validate_javascript_frontend(
     checks.append(("Jest Tests", success))
 
     # 3. E2E tests (Playwright) - MATCHES CI
+    print_section("Step 3/3: E2E Tests (playwright)")
     if not quick:
-        print_section("Step 3/3: E2E Tests (playwright)")
         # Force E2E_TEST=true to ensure production DBs are not touched
         # This overrides any local .env settings
         ironclad_env_e2e = os.environ.copy()
@@ -1254,7 +1210,9 @@ def validate_javascript_frontend(
         )
         checks.append(("E2E Tests", success))
     else:
-        print_warning("Quick mode: Skipping E2E tests")
+        msg_e2e = f"{Colors.OKCYAN}[INFO] Quick mode: Skipping E2E tests.{Colors.ENDC}"
+        print(msg_e2e)
+        checks.append(("E2E Tests", True))
 
     # Print summary
     print_section("Frontend Validation Summary")

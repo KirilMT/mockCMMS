@@ -378,13 +378,12 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold">Force Release Lock</h5>
+                    <h5 class="modal-title fw-bold" id="modal-title">Release Lock</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small">
-                        This will immediately release the lock on this file, regardless of who owns it.
-                        The owner will be notified on their next sync.
+                    <p id="modal-description" class="text-muted small">
+                        This will immediately release the lock on this file.
                     </p>
                     <div class="bg-light p-3 rounded">
                         <div class="small text-muted">File Path</div>
@@ -394,7 +393,7 @@
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-premium btn-premium-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-premium btn-premium-danger" id="confirm-release-btn">
-                        <i class="fas fa-lock-open"></i> Force Release
+                        <i class="fas fa-lock-open"></i> Release
                     </button>
                 </div>
             </div>
@@ -411,6 +410,7 @@
         const SUPABASE_KEY = serverCfg.serviceKey || serverCfg.anonKey || '';
         const SUPABASE_USER = serverCfg.user || null;
         const SUPABASE_MODE = !!(SUPABASE_URL && SUPABASE_KEY);
+        const IS_ADMIN = !!serverCfg.serviceKey;
 
         let SUPABASE_CLIENT = null;
         let RELEASE_MODAL = null;
@@ -534,8 +534,17 @@
                 else if (diffMin < 60) { statusClass = 'badge-warning'; statusText = '● EXPIRING'; }
 
                 const isMine = SUPABASE_USER && lock.developer_id === SUPABASE_USER;
+                const canRelease = isMine || IS_ADMIN;
                 const startedStr = 'Started: ' + acquired.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const expiresStr = diffMin > 0 ? `Expires in ${diffMin}m` : 'Expired';
+
+                const releaseBtn = canRelease
+                    ? `<button class="btn btn-sm btn-outline-danger" onclick="initRelease('${lock.file_path.replace(/'/g, "\\'")}', ${isMine})">
+                            <i class="fas fa-lock-open me-1"></i>${isMine ? 'Release' : 'Force Release'}
+                       </button>`
+                    : `<span class="text-muted small" title="Only the lock owner or an admin can release this lock">
+                            <i class="fas fa-lock me-1"></i>Locked
+                       </span>`;
 
                 return `
                 <tr class="animate-fade">
@@ -545,11 +554,7 @@
                     <td class="text-muted small">${lock.reason || 'No reason'}</td>
                     <td><span class="badge-modern ${statusClass}">${statusText}</span></td>
                     <td class="small">${startedStr}<br><span class="text-muted">${expiresStr}</span></td>
-                    <td class="text-end">
-                        <button class="btn btn-sm btn-outline-danger" onclick="initRelease('${lock.file_path.replace(/'/g, "\\'")}')">
-                            <i class="fas fa-lock-open me-1"></i>Release
-                        </button>
-                    </td>
+                    <td class="text-end">${releaseBtn}</td>
                 </tr>`;
             }).join('');
         }
@@ -615,9 +620,23 @@
         // =====================================================================
         // Force Release
         // =====================================================================
-        function initRelease(filePath) {
+        function initRelease(filePath, isMine) {
             PENDING_RELEASE_PATH = filePath;
             document.getElementById('modal-file-path').textContent = filePath;
+
+            if (isMine) {
+                document.getElementById('modal-title').textContent = 'Release Lock';
+                document.getElementById('modal-description').textContent =
+                    'This will immediately release your lock on this file.';
+                document.getElementById('confirm-release-btn').innerHTML =
+                    '<i class="fas fa-lock-open"></i> Release';
+            } else {
+                document.getElementById('modal-title').textContent = 'Force Release Lock (Admin)';
+                document.getElementById('modal-description').textContent =
+                    'This will immediately release another developer\'s lock. The owner will be notified on their next sync.';
+                document.getElementById('confirm-release-btn').innerHTML =
+                    '<i class="fas fa-lock-open"></i> Force Release';
+            }
             RELEASE_MODAL.show();
         }
 
@@ -628,10 +647,17 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Releasing...';
 
             try {
-                const { error } = await SUPABASE_CLIENT
+                let query = SUPABASE_CLIENT
                     .from('file_locks')
                     .delete()
                     .eq('file_path', PENDING_RELEASE_PATH);
+
+                // Non-admin users can only release their own locks
+                if (!IS_ADMIN && SUPABASE_USER) {
+                    query = query.eq('developer_id', SUPABASE_USER);
+                }
+
+                const { error } = await query;
 
                 if (error) throw error;
                 RELEASE_MODAL.hide();
@@ -640,7 +666,7 @@
                 alert('Failed to release lock: ' + (e.message || e));
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-lock-open"></i> Force Release';
+                btn.innerHTML = '<i class="fas fa-lock-open"></i> Release';
                 PENDING_RELEASE_PATH = null;
             }
         }

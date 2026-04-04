@@ -1,8 +1,11 @@
-# Collaborative File Locking — Windows Setup
+# Collaborative File Locking — Windows Setup (Standalone)
+# NOTE: For mockCMMS developers, use .\scripts\setup-dev.ps1 instead — it covers
+# everything this script does plus all dev tooling.
 # Run this script from the project root: .\.collab\scripts\setup.ps1
 
 $ErrorActionPreference = "Continue"
-$CollabRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+# $PSScriptRoot = .collab/scripts → parent = .collab → grandparent = project root
+$CollabRoot = Split-Path -Parent $PSScriptRoot
 $ProjectRoot = Split-Path -Parent $CollabRoot
 
 Write-Host "`n=== Collaborative File Locking — Setup ===" -ForegroundColor Cyan
@@ -45,17 +48,17 @@ if (Test-Path $envPath) {
     } else {
         Write-Host "  WARN: .env exists but Supabase credentials may be placeholder values." -ForegroundColor Yellow
         Write-Host "  Edit .env and set SUPABASE_URL and SUPABASE_ANON_KEY." -ForegroundColor Yellow
-        Write-Host "  Reference: .collab\.env.example" -ForegroundColor Yellow
+        Write-Host "  Reference: .env.example" -ForegroundColor Yellow
     }
 } else {
     Write-Host "  WARN: .env not found at project root." -ForegroundColor Yellow
-    Write-Host "  Copy .collab\.env.example to .env and fill in your credentials." -ForegroundColor Yellow
+    Write-Host "  Copy .env.example to .env and fill in your credentials." -ForegroundColor Yellow
 }
 
 # 4. Install hooks
 Write-Host "[4/4] Installing git hooks..." -ForegroundColor Yellow
 $hooksDir = Join-Path $ProjectRoot ".git\hooks"
-$collabHooks = Join-Path $CollabRoot ".collab\hooks"
+$collabHooks = Join-Path $CollabRoot "hooks"
 
 foreach ($hook in @("pre-commit", "post-commit", "pre-push")) {
     $src = Join-Path $collabHooks $hook

@@ -1,5 +1,7 @@
 #!/bin/bash
-# Collaborative File Locking — Unix Setup
+# Collaborative File Locking — Unix Setup (Standalone)
+# NOTE: For mockCMMS developers, scripts/setup-dev.ps1 covers everything
+# this script does plus all dev tooling.
 # Run from the project root: bash .collab/scripts/setup.sh
 
 set -e
@@ -43,10 +45,10 @@ if [ -f "$ENV_FILE" ]; then
         echo "  ✓ .env has Supabase credentials"
     else
         echo "  ⚠ .env exists but may be missing Supabase credentials."
-        echo "  Reference: .collab/.env.example"
+        echo "  Reference: .env.example"
     fi
 else
-    echo "  ⚠ .env not found. Copy .collab/.env.example to .env"
+    echo "  ⚠ .env not found. Copy .env.example to .env"
 fi
 
 # 4. Install hooks

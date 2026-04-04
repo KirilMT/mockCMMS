@@ -25,8 +25,14 @@ fi
 LOCK_STRICT="${LOCK_STRICT:-0}"
 
 echo "[collab] Checking locks for staged files..."
+export PYTHONUTF8=1
 RESULT=$($PYTHON -c "
 import sys, os
+# Force UTF-8 on Windows (PYTHONUTF8 alone is unreliable in shell capture)
+for _s in (sys.stdout, sys.stderr):
+    if hasattr(_s, 'reconfigure'):
+        try: _s.reconfigure(encoding='utf-8', errors='replace')
+        except Exception: pass
 sys.path.insert(0, os.path.join('$COLLAB_DIR', '..'))
 os.chdir('$PROJECT_ROOT')
 try:

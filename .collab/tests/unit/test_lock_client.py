@@ -76,6 +76,9 @@ class FakeClient:
     def limit(self, *args, **kwargs):
         return self
 
+    def ilike(self, *args, **kwargs):
+        return self
+
     def execute(self):
         return self._resp
 
@@ -111,6 +114,170 @@ def test_lockclient_class_and_methods_exist():
     LC = getattr(mod, "LockClient")
     for name in ("acquire", "release", "active", "get_lock_status", "watch"):
         assert hasattr(LC, name), f"Missing {name}"
+
+
+def test_is_admin_property(monkeypatch):
+    """Test the is_admin property."""
+    monkeypatch.setattr(mod, "SUPABASE_SERVICE_ROLE_KEY", "admin_key")
+    monkeypatch.setattr(mod, "_supabase_create_client", lambda url, key: None)
+    client = getattr(mod, "LockClient")()
+    assert client.is_admin is True
+
+
+def test_get_git_username_oserror(monkeypatch):
+    """Test get_git_username OSError."""
+    monkeypatch.delenv("DEVELOPER_ID", raising=False)
+    monkeypatch.delenv("USERNAME", raising=False)
+    monkeypatch.delenv("USER", raising=False)
+
+    def mock_check_output(cmd, *args, **kwargs):
+        raise OSError("failed")
+
+    monkeypatch.setattr(subprocess, "check_output", mock_check_output)
+    client = getattr(mod, "LockClient")
+    assert client._get_git_username() == "unknown_user"
+
+
+def test_daemon_start_win32_exception_and_fallback(monkeypatch):
+    monkeypatch.setattr(mod, "SUPABASE_SERVICE_ROLE_KEY", "admin_key")
+    monkeypatch.setattr(mod, "_supabase_create_client", lambda url, key: None)
+    client = getattr(mod, "LockClient")()
+    monkeypatch.setattr(client, "_read_pid", lambda: None)
+    monkeypatch.setattr(client, "_is_process_alive", lambda pid: False)
+    monkeypatch.setattr(sys, "platform", "win32")
+
+    def mock_open(*args, **kwargs):
+        raise OSError("failed")
+
+    monkeypatch.setattr("builtins.open", mock_open)
+
+    monkeypatch.setattr(os.path, "exists", lambda x: False)
+
+    class FakeProc:
+        pid = 1234
+
+    did_call = []
+
+    def mock_popen(*args, **kwargs):
+        did_call.append(kwargs.get("creationflags"))
+        return FakeProc()
+
+    monkeypatch.setattr(subprocess, "Popen", mock_popen)
+    client.daemon_start()
+    assert len(did_call) == 1
+    assert did_call[0] is not None
+
+
+def test_daemon_start_non_win32(monkeypatch):
+    monkeypatch.setattr(mod, "SUPABASE_SERVICE_ROLE_KEY", "admin_key")
+    monkeypatch.setattr(mod, "_supabase_create_client", lambda url, key: None)
+    client = getattr(mod, "LockClient")()
+    monkeypatch.setattr(client, "_read_pid", lambda: None)
+    monkeypatch.setattr(client, "_is_process_alive", lambda pid: False)
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    class FakeProc:
+        pid = 4321
+
+    did_call = []
+
+    def mock_popen(*args, **kwargs):
+        did_call.append(1)
+        return FakeProc()
+
+    monkeypatch.setattr(subprocess, "Popen", mock_popen)
+    monkeypatch.setattr(os, "setsid", lambda: None, raising=False)
+    client.daemon_start(open_dashboard=True)
+    assert len(did_call) == 1
+
+
+def test_prepare_dashboard_server_tmpfile_exception(monkeypatch):
+    monkeypatch.setattr(mod, "SUPABASE_SERVICE_ROLE_KEY", "admin_key")
+    monkeypatch.setattr(mod, "_supabase_create_client", lambda url, key: None)
+    client = getattr(mod, "LockClient")()
+
+    def mock_named(*args, **kwargs):
+        raise OSError("failed")
+
+    monkeypatch.setattr("tempfile.NamedTemporaryFile", mock_named)
+    port, err = client._prepare_dashboard_server()
+    assert port is None
+    assert err is None
+
+
+def test_history_fallback_exception(monkeypatch):
+    """Test history partial exception."""
+    monkeypatch.setattr(mod, "SUPABASE_SERVICE_ROLE_KEY", "admin_key")
+
+    class FakeQuery:
+        def select(self, *args):
+            return self
+
+        def eq(self, *args):
+            return self
+
+        def is_(self, *args):
+            return self
+
+        def ilike(self, *args):
+            return self
+
+        def order(self, *args, **kwargs):
+            return self
+
+        def limit(self, *args):
+            return self
+
+        def execute(self):
+            return None
+
+    class FakeClient:
+        def table(self, *args):
+            return FakeQuery()
+
+    client = getattr(mod, "LockClient")()
+    client._client = FakeClient()
+    monkeypatch.setattr(client, "_parse_response", lambda res: (False, [], None))
+
+    # Pass an object that throws when string methods are called
+    class Exploder:
+        def replace(self, *args, **kwargs):
+            raise Exception("boom")
+
+    res = client.history(limit=5, file_path=Exploder())
+    assert res == []
+
+
+def test_daemon_status_legacy_pid(monkeypatch, tmp_path):
+    client = getattr(mod, "LockClient")()
+    monkeypatch.setattr(client, "_read_pid", lambda: None)
+    legacy = tmp_path / ".pycharm_watcher.pid"
+    legacy.write_text("54321")
+    monkeypatch.setattr(mod, "_COLLAB_ROOT", str(tmp_path))
+    monkeypatch.setattr(client, "_is_process_alive", lambda p: p == 54321)
+    assert client.daemon_status() is True
+
+
+def test_daemon_status_legacy_pid_exception(monkeypatch, tmp_path):
+    client = getattr(mod, "LockClient")()
+    monkeypatch.setattr(client, "_read_pid", lambda: None)
+    legacy = tmp_path / ".pycharm_watcher.pid"
+    legacy.write_text("invalid")
+    monkeypatch.setattr(mod, "_COLLAB_ROOT", str(tmp_path))
+    assert client.daemon_status() is False
+
+
+def test_run_cli_reconfigure_exception(monkeypatch):
+    class FakeStream:
+        def reconfigure(self, *args, **kwargs):
+            raise Exception("boom")
+
+    streams = (FakeStream(), FakeStream())
+    monkeypatch.setattr(sys, "stdout", streams[0])
+    monkeypatch.setattr(sys, "stderr", streams[1])
+    monkeypatch.setattr(sys, "argv", ["collab"])
+    # should not raise
+    mod._run_cli()
 
 
 # ============================================================================
@@ -784,6 +951,133 @@ def test_force_release_no_lock(monkeypatch):
     ok, msg = lc.force_release("src/app.py")
     assert ok is False
     assert "No lock removed" in msg
+
+
+def test_force_release_nonadmin_own_lock(monkeypatch):
+    """Non-admin user can force-release their own lock."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    # Module-level var is already resolved at import time; patch it directly
+    monkeypatch.setattr(mod, "SUPABASE_SERVICE_ROLE_KEY", None)
+
+    # get_lock_status returns a lock owned by this developer
+    status_resp = FakeResponse(
+        status=200,
+        data=[
+            {
+                "file_path": "src/app.py",
+                "developer_id": "alice",
+                "expires_at": "2099-01-01T00:00:00Z",
+            }
+        ],
+    )
+    delete_resp = FakeResponse(status=200, data=[{"file_path": "src/app.py"}])
+
+    call_log = []
+
+    class TrackingClient(FakeClient):
+        """Tracks method calls to verify developer_id filter is applied."""
+
+        def __init__(self, resp):
+            super().__init__(resp)
+            self._current_resp = resp
+
+        def select(self, *args, **kwargs):
+            self._current_resp = status_resp
+            return self
+
+        def delete(self, *args, **kwargs):
+            self._current_resp = delete_resp
+            call_log.append("delete")
+            return self
+
+        def eq(self, col, val):
+            call_log.append(("eq", col, val))
+            return self
+
+        def execute(self):
+            return self._current_resp
+
+    monkeypatch.setattr(
+        mod,
+        "_get_create_client",
+        lambda: lambda url, key: TrackingClient(status_resp),
+    )
+
+    lc = mod.LockClient(developer_id="alice")
+    ok, msg = lc.force_release("src/app.py")
+    assert ok is True
+    # Non-admin path should include developer_id filter
+    eq_calls = [c for c in call_log if isinstance(c, tuple) and c[0] == "eq"]
+    dev_id_filters = [c for c in eq_calls if c[1] == "developer_id"]
+    assert len(dev_id_filters) > 0, "Non-admin should filter by developer_id"
+    assert dev_id_filters[-1][2] == "alice"
+
+
+def test_force_release_nonadmin_other_dev_lock_denied(monkeypatch):
+    """Non-admin user cannot force-release another developer's lock."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    monkeypatch.setattr(mod, "SUPABASE_SERVICE_ROLE_KEY", None)
+
+    # get_lock_status returns a lock owned by someone else
+    status_resp = FakeResponse(
+        status=200,
+        data=[
+            {
+                "file_path": "src/app.py",
+                "developer_id": "bob",
+                "expires_at": "2099-01-01T00:00:00Z",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        mod,
+        "_get_create_client",
+        lambda: make_create_client(status_resp),
+    )
+
+    lc = mod.LockClient(developer_id="alice")
+    ok, msg = lc.force_release("src/app.py")
+    assert ok is False
+    assert "Permission denied" in msg
+    assert "@bob" in msg
+
+
+def test_force_release_admin_other_dev_lock_succeeds(monkeypatch):
+    """Admin user can force-release any developer's lock."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service_key")
+    monkeypatch.setattr(mod, "SUPABASE_SERVICE_ROLE_KEY", "service_key")
+
+    delete_resp = FakeResponse(status=200, data=[{"file_path": "src/app.py"}])
+
+    call_log = []
+
+    class TrackingClient(FakeClient):
+        def delete(self, *args, **kwargs):
+            call_log.append("delete")
+            return self
+
+        def eq(self, col, val):
+            call_log.append(("eq", col, val))
+            return self
+
+    monkeypatch.setattr(
+        mod,
+        "_get_create_client",
+        lambda: lambda url, key: TrackingClient(delete_resp),
+    )
+
+    lc = mod.LockClient(developer_id="admin_user")
+    ok, msg = lc.force_release("src/app.py")
+    assert ok is True
+    # Admin path should NOT include developer_id filter
+    eq_calls = [c for c in call_log if isinstance(c, tuple) and c[0] == "eq"]
+    dev_id_filters = [c for c in eq_calls if c[1] == "developer_id"]
+    assert len(dev_id_filters) == 0, "Admin should not filter by developer_id"
 
 
 # ============================================================================
@@ -2032,7 +2326,7 @@ def test_cli_reconcile(monkeypatch, tmp_path, capsys):
 
 
 def test_cli_history(monkeypatch, capsys):
-    """Test CLI history command."""
+    """Test CLI history command with no records."""
     monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
 
@@ -2042,7 +2336,120 @@ def test_cli_history(monkeypatch, capsys):
 
     mod._run_cli()
     captured = capsys.readouterr()
-    assert "[]" in captured.out
+    assert "no lock history" in captured.out.lower()
+
+
+def test_cli_history_json_flag(monkeypatch, capsys):
+    """Test CLI history --json outputs raw JSON."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+
+    records = [{"id": 1, "file_path": "src/app.py", "developer_id": "alice"}]
+    response = FakeResponse(status=200, data=records)
+    monkeypatch.setattr(mod, "_get_create_client", lambda: make_create_client(response))
+    monkeypatch.setattr(sys, "argv", ["lock_client.py", "history", "--json"])
+
+    mod._run_cli()
+    captured = capsys.readouterr()
+    assert '"file_path"' in captured.out
+    assert '"src/app.py"' in captured.out
+
+
+def test_cli_history_no_match_with_file(monkeypatch, capsys):
+    """Test CLI history with file_path that has no records shows tip."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+
+    response = FakeResponse(status=200, data=[])
+    monkeypatch.setattr(mod, "_get_create_client", lambda: make_create_client(response))
+    monkeypatch.setattr(sys, "argv", ["lock_client.py", "history", "nonexistent.py"])
+
+    mod._run_cli()
+    captured = capsys.readouterr()
+    assert "no history found" in captured.out.lower()
+    assert "tip" in captured.out.lower()
+
+
+def test_cli_history_formatted_output(monkeypatch, capsys):
+    """Test CLI history displays formatted table output."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+
+    records = [
+        {
+            "id": 1,
+            "file_path": "src/app.py",
+            "developer_id": "alice",
+            "acquired_at": "2026-04-03T22:00:00+00:00",
+            "released_at": "2026-04-03T22:30:00+00:00",
+            "branch_name": "main",
+            "outcome": "released",
+        }
+    ]
+    response = FakeResponse(status=200, data=records)
+    monkeypatch.setattr(mod, "_get_create_client", lambda: make_create_client(response))
+    monkeypatch.setattr(sys, "argv", ["lock_client.py", "history"])
+
+    mod._run_cli()
+    captured = capsys.readouterr()
+    assert "src/app.py" in captured.out
+    assert "@alice" in captured.out
+    assert "released" in captured.out
+    assert "branch:main" in captured.out
+
+
+def test_cli_history_partial_match_output(monkeypatch, capsys):
+    """Test CLI history shows partial match notice when fallback is used."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+
+    fallback_records = [
+        {
+            "id": 1,
+            "file_path": "collab/README.md",
+            "developer_id": "alice",
+            "acquired_at": "2026-04-03T22:00:00+00:00",
+            "released_at": "2026-04-03T22:30:00+00:00",
+            "branch_name": "main",
+            "outcome": "released",
+        }
+    ]
+    call_count = [0]
+
+    class FallbackClient:
+        def table(self, *a, **k):
+            return self
+
+        def select(self, *a, **k):
+            return self
+
+        def eq(self, *a, **k):
+            return self
+
+        def ilike(self, *a, **k):
+            return self
+
+        def order(self, *a, **k):
+            return self
+
+        def limit(self, *a, **k):
+            return self
+
+        def execute(self):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return FakeResponse(data=[])  # exact: empty
+            return FakeResponse(data=fallback_records)  # fallback: found
+
+    monkeypatch.setattr(
+        mod, "_get_create_client", lambda: lambda url, key: FallbackClient()
+    )
+    monkeypatch.setattr(sys, "argv", ["lock_client.py", "history", "README.md"])
+
+    mod._run_cli()
+    captured = capsys.readouterr()
+    assert "no exact match" in captured.out.lower()
+    assert "collab/README.md" in captured.out
 
 
 def test_cli_dashboard(monkeypatch, capsys):
@@ -2588,3 +2995,127 @@ def test_prepare_dashboard_server_unlink_error(monkeypatch, tmp_path):
     url, tmp_file = lc._prepare_dashboard_server()
     assert url is None
     assert tmp_file is None
+
+
+# ============================================================================
+# history() Tests
+# ============================================================================
+
+
+def test_history_returns_all_records(monkeypatch):
+    """History() without file_path returns all records."""
+    records = [
+        {"id": 2, "file_path": "src/app.py", "developer_id": "alice"},
+        {"id": 1, "file_path": "src/routes.py", "developer_id": "bob"},
+    ]
+    monkeypatch.setattr(mod, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(mod, "SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod,
+        "_get_create_client",
+        lambda: make_create_client(FakeResponse(data=records)),
+    )
+    lc = mod.LockClient(developer_id="test_user")
+    result = lc.history()
+    assert result == records
+
+
+def test_history_with_exact_file_path(monkeypatch):
+    """History() with file_path filters by exact match."""
+    records = [{"id": 1, "file_path": "src/app.py", "developer_id": "alice"}]
+    monkeypatch.setattr(mod, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(mod, "SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod,
+        "_get_create_client",
+        lambda: make_create_client(FakeResponse(data=records)),
+    )
+    lc = mod.LockClient(developer_id="test_user")
+    result = lc.history(file_path="src/app.py")
+    assert result == records
+
+
+def test_history_partial_fallback(monkeypatch):
+    """History() falls back to ilike when exact match returns nothing."""
+    fallback_records = [
+        {"id": 1, "file_path": "collab/README.md", "developer_id": "alice"}
+    ]
+    call_count = [0]
+
+    class FallbackClient:
+        def table(self, *a, **k):
+            return self
+
+        def select(self, *a, **k):
+            return self
+
+        def eq(self, *a, **k):
+            return self
+
+        def ilike(self, *a, **k):
+            return self
+
+        def order(self, *a, **k):
+            return self
+
+        def limit(self, *a, **k):
+            return self
+
+        def execute(self):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return FakeResponse(data=[])  # exact match: empty
+            return FakeResponse(data=fallback_records)  # fallback: found
+
+    monkeypatch.setattr(mod, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(mod, "SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod, "_get_create_client", lambda: lambda url, key: FallbackClient()
+    )
+    lc = mod.LockClient(developer_id="test_user")
+    result = lc.history(file_path="README.md")
+    assert result == fallback_records
+    assert call_count[0] == 2  # exact + fallback
+
+
+def test_history_exception_returns_empty(monkeypatch):
+    """History() returns [] and logs error on exception."""
+
+    class ExplodingClient:
+        def table(self, *a, **k):
+            raise RuntimeError("network down")
+
+    monkeypatch.setattr(mod, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(mod, "SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod, "_get_create_client", lambda: lambda url, key: ExplodingClient()
+    )
+    lc = mod.LockClient(developer_id="test_user")
+    result = lc.history()
+    assert result == []
+
+
+def test_history_error_response_returns_empty(monkeypatch):
+    """History() returns [] when response contains an error."""
+    monkeypatch.setattr(mod, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(mod, "SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod,
+        "_get_create_client",
+        lambda: make_create_client(FakeResponse(error="table not found")),
+    )
+    lc = mod.LockClient(developer_id="test_user")
+    result = lc.history()
+    assert result == []
+
+
+def test_history_empty_when_no_records(monkeypatch):
+    """History() returns [] when no records exist."""
+    monkeypatch.setattr(mod, "SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setattr(mod, "SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod, "_get_create_client", lambda: make_create_client(FakeResponse(data=[]))
+    )
+    lc = mod.LockClient(developer_id="test_user")
+    result = lc.history()
+    assert result == []
