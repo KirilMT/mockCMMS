@@ -21,6 +21,30 @@ if [ -z "$STAGED" ]; then
     exit 0
 fi
 
+# If the background watcher daemon is running, it already acquires locks
+# for edited files. In that case skip pre-commit lock acquisition to avoid
+# redundant operations and false-positive conflicts. This keeps commits
+# fast for developers who run the watcher in their editor.
+PID_FILE="$COLLAB_DIR/.daemon.pid"
+if [ -f "$PID_FILE" ]; then
+    PID=$(cat "$PID_FILE" 2>/dev/null || true)
+    if [ -n "$PID" ]; then
+        # Check process liveness (POSIX and Windows-compatible best-effort)
+        if command -v ps >/dev/null 2>&1; then
+            if ps -p "$PID" >/dev/null 2>&1; then
+                echo "[collab] Watcher running (PID: $PID) — skipping pre-commit lock acquisition."
+                exit 0
+            fi
+        fi
+        if command -v tasklist >/dev/null 2>&1; then
+            if tasklist /FI "PID eq $PID" | grep -q "$PID" >/dev/null 2>&1; then
+                echo "[collab] Watcher running (PID: $PID) — skipping pre-commit lock acquisition."
+                exit 0
+            fi
+        fi
+    fi
+fi
+
 # Check if LOCK_STRICT is set
 LOCK_STRICT="${LOCK_STRICT:-0}"
 

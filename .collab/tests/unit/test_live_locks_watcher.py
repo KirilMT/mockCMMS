@@ -117,8 +117,10 @@ def test_parse_git_status_path_type_change():
 
 def test_should_ignore_path_git_and_collab():
     """Test that .git/ and .collab/ paths are ignored."""
+    # The watcher intentionally does NOT ignore `.collab/` (IDE metadata is
+    # relevant to locking). Only .git/ is ignored.
     assert watcher._should_ignore_path(".git/objects/abc") is True
-    assert watcher._should_ignore_path(".collab/somefile") is True
+    assert watcher._should_ignore_path(".collab/somefile") is False
     assert watcher._should_ignore_path("src/app.py") is False
 
 

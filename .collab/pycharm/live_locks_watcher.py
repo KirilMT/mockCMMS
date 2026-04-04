@@ -11,6 +11,8 @@ Usage:
 from __future__ import annotations
 
 import atexit
+import importlib
+import importlib.util
 import logging
 import os
 import signal
@@ -18,7 +20,26 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from typing import Any, Callable, Optional
+
+# Optional colored output (avoid try/except to reduce unreachable-branch lines)
+_HAS_COLORAMA = False
+try:
+    _colorama_spec = importlib.util.find_spec("colorama")
+except Exception:
+    _colorama_spec = None
+if _colorama_spec is not None:
+    colorama_mod = importlib.import_module("colorama")
+    Fore = getattr(colorama_mod, "Fore")
+    Style = getattr(colorama_mod, "Style")
+    _colorama_init = getattr(colorama_mod, "init", None)
+    if callable(_colorama_init):
+        try:
+            _colorama_init()
+        except Exception:
+            pass
+    _HAS_COLORAMA = True
 
 # Ensure .collab packages are importable
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -50,23 +71,37 @@ logging.basicConfig(
 )
 logger = logging.getLogger("collab.pycharm_watcher")
 
-# ---------------------------------------------------------------------------
-# Dependencies
-# ---------------------------------------------------------------------------
-try:
-    from supabase import create_client
-except ImportError:
-    logger.error("supabase not installed. Run: pip install supabase")
-    sys.exit(1)
+# Reduce noisy HTTP client logs (Supabase client uses httpx under the hood)
+for _noisy in ("httpx", "httpx._client", "urllib3", "asyncio"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
+
+# Type annotation: allow create_client to be None until we bind the real factory.
+create_client: Optional[Callable[..., Any]] = None
 
 try:
-    from plyer import notification as desktop_notify
-except ImportError:
+    _supa_spec = importlib.util.find_spec("supabase")
+except Exception:
+    _supa_spec = None
+if _supa_spec is None:
+    logger.error("supabase not installed. Run: pip install supabase")
+    sys.exit(1)
+else:
+    _supa = importlib.import_module("supabase")
+    create_client = getattr(_supa, "create_client")
+
+try:
+    _ply_spec = importlib.util.find_spec("plyer")
+except Exception:
+    _ply_spec = None
+if _ply_spec is None:
     desktop_notify = None
     logger.warning(
         "plyer not installed — desktop notifications disabled. "
         "Run: pip install plyer"
     )
+else:
+    _ply = importlib.import_module("plyer")
+    desktop_notify = getattr(_ply, "notification", None)
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -77,10 +112,23 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 PID_FILE = os.path.join(_COLLAB_ROOT, ".daemon.pid")
 DEVELOPER_ID = None
 
+# Ephemeral developer prefixes enforced in code (not via env) to avoid
+# accidental disabling of lock persistence. These accounts (e.g. CI/test)
+# will not write locks to the remote DB and are used by automated runners.
+EPHEMERAL_PREFIXES = ["test_dev", "ci"]
+
+# Expiry semantics: disabled. The DB RPC ignores time-based expiry and locks
+# persist until explicitly released. The watcher does not send an expires_at
+# value when acquiring locks.
+
 # Track files currently in conflict (locked by another dev)
 _active_conflicts: set[str] = set()
 # Track remote locks we already warned about (avoid duplicate notifications)
 _warned_remote_locks: set[str] = set()
+# Track all remote locks last seen (used to surface any add/remove activity)
+_known_remote_locks: set[str] = set()
+# Track locks this watcher process has acquired locally (avoid duplicate notices)
+_local_owned_locks: set[str] = set()
 # Guard to prevent _graceful_shutdown from running more than once
 _shutdown_done: bool = False
 
@@ -144,9 +192,27 @@ def _should_ignore_path(path: str) -> bool:
     norm = path.replace("\\", "/")
     if "/.git/" in norm or norm.startswith(".git/"):
         return True
-    if norm.startswith(".collab/"):
-        return True
+    # Do not ignore `.collab/` — watcher should consider files under it.
     return False
+
+
+def _color(text: str, color: str) -> str:
+    if not _HAS_COLORAMA:
+        return text
+    return f"{color}{text}{Style.RESET_ALL}"
+
+
+def _is_ephemeral_dev(dev_id: Optional[str]) -> bool:
+    if not dev_id:
+        return False
+    for p in EPHEMERAL_PREFIXES:
+        if dev_id.startswith(p):
+            return True
+    return False
+
+
+# (No _compute_expires_at) - watcher intentionally does not compute or send
+# expires_at. The DB handles locks as persistent until release.
 
 
 def _notify(title: str, message: str) -> None:
@@ -199,6 +265,10 @@ def _scan_remote_locks(client) -> None:
     conflict warnings *before* saving a file.  Only new remote locks
     trigger a desktop notification (tracked via ``_warned_remote_locks``).
     """
+    # Only rebind `_known_remote_locks` in this function; the other sets are
+    # mutated in-place (add/discard) so they do not need a `global` declaration.
+    global _known_remote_locks
+
     try:
         res = client.table("file_locks").select("*").execute()
         data = getattr(res, "data", None) or []
@@ -206,27 +276,197 @@ def _scan_remote_locks(client) -> None:
         logger.debug("Remote lock scan failed: %s", exc)
         return
 
-    current_remote: set[str] = set()
+    # Build set of all remote file paths (normalize separators) and map full lock rows
+    current_remote_all: set[str] = set()
+    owner_map: dict[str, dict] = {}
     for lock in data:
         owner = lock.get("developer_id", "")
         fp = lock.get("file_path", "")
-        if owner == DEVELOPER_ID or not fp:
+        if not fp:
             continue
-        current_remote.add(fp)
-        if fp not in _warned_remote_locks:
+        fp = fp.replace("\\", "/")
+        current_remote_all.add(fp)
+        owner_map[fp] = lock
+
+        # If this watcher already acquired this lock locally, skip notifications
+        if owner == DEVELOPER_ID and fp in _local_owned_locks:
+            continue
+
+        # If the lock belongs to the same developer but a different session,
+        # surface it as a normal locked message (not a conflict) and include
+        # metadata (owner, branch, reason) so terminal output mirrors
+        # `python collab.py active`.
+        if owner == DEVELOPER_ID:
+            if fp not in _known_remote_locks:
+                br = lock.get("branch_name") or "main"
+                reason = lock.get("reason") or "No reason"
+                msg = f"🔒 [LOCKED] {fp} — @{owner} (branch: {br}, reason: {reason})"
+                logger.info(_color(msg, Fore.GREEN) if _HAS_COLORAMA else msg)
+            continue
+
+        # For locks owned by others: warn once per lock and include branch/reason
+        if owner != DEVELOPER_ID and fp not in _warned_remote_locks:
             _warned_remote_locks.add(fp)
-            logger.warning("🔒 REMOTE LOCK: %s is locked by @%s", fp, owner)
-            _notify(
-                "File Locked",
-                f"{fp} is locked by @{owner}.\n" "Coordinate before editing.",
+            br = lock.get("branch_name") or "main"
+            reason = lock.get("reason") or "No reason"
+            warn_msg = (
+                f"⚠️ REMOTE LOCK: {fp} — @{owner} (branch: {br}, reason: {reason})"
             )
+            logger.warning(warn_msg)
+            notify_msg = (
+                f"{fp} is locked by @{owner}.\n"
+                f"branch: {br}\n"
+                f"reason: {reason}\n"
+                "Coordinate before editing."
+            )
+            _notify("File Locked", notify_msg)
 
     # Clear warnings for locks that were released remotely
-    released = _warned_remote_locks - current_remote
-    if released:
-        _warned_remote_locks.difference_update(released)
-        for fp in released:
+    released_warned = _warned_remote_locks - current_remote_all
+    if released_warned:
+        _warned_remote_locks.difference_update(released_warned)
+        for fp in released_warned:
             logger.info("✅ Remote lock cleared: %s", fp)
+
+    # Surface add/remove activity for remote locks (excluding those owned
+    # by this watcher which we suppressed above). Do not re-report locks
+    # that we already logged above (same-developer) — filter them out.
+    added = current_remote_all - _known_remote_locks
+    removed = _known_remote_locks - current_remote_all
+    # Filter out additions that correspond to locks we just acquired locally
+    # or locks owned by this developer (they were already logged as LOCKED).
+    # Filter out additions that correspond to locks we just acquired locally
+    # or locks owned by this developer (they were already logged as LOCKED).
+    # NOTE: owner_map stores the full lock dict, so compare the stored
+    # developer_id field rather than the dict object itself (bugfix).
+    filtered_added = {
+        p
+        for p in added
+        if p not in _local_owned_locks
+        and (owner_map.get(p, {}).get("developer_id") != DEVELOPER_ID)
+    }
+    if filtered_added:
+        for fp in sorted(filtered_added):
+            lk = owner_map.get(fp, {})
+            owner = lk.get("developer_id") if lk else "unknown"
+            br = lk.get("branch_name") if lk else None
+            reason = lk.get("reason") if lk else None
+            br = br or "main"
+            reason = reason or "No reason"
+            # Remote additions should be highlighted so they stand out in the
+            # terminal. Use yellow when colorama is available (matches
+            # WARNING/CONFLICT color), otherwise plain info text.
+            msg = (
+                f"🔔 Remote lock added: {fp} — @{owner} "
+                f"(branch: {br}, reason: {reason})"
+            )
+            log_msg = _color(msg, Fore.YELLOW) if _HAS_COLORAMA else msg
+            logger.info(log_msg)
+    if removed:
+        for fp in sorted(removed):
+            # If we had recorded it locally, ensure it's removed from that set
+            if fp in _local_owned_locks:
+                _local_owned_locks.discard(fp)
+            # Use the same RELEASED log style as the watcher uses for local releases
+            release_msg = f"🔓 [RELEASED] {fp}"
+            # Use a distinct color for remote releases so they are visually
+            # different from local releases in the terminal output.
+            log_msg = _color(release_msg, Fore.CYAN) if _HAS_COLORAMA else release_msg
+            logger.info(log_msg)
+    _known_remote_locks = current_remote_all
+
+
+def _process_new_files(client, branch: str, new_files: set[str]) -> None:
+    """Process newly modified files: attempt to acquire locks and handle conflicts.
+
+    Extracted from the main loop so unit tests can target error/fallback
+    branches (e.g. when modifying the local-owned set raises).
+    """
+    for fp in new_files:
+        try:
+            if _is_ephemeral_dev(DEVELOPER_ID):
+                msg = f"🔒 [EPHEMERAL] {fp} (not written to DB)"
+                logger.info(_color(msg, Fore.CYAN) if _HAS_COLORAMA else msg)
+                # skip remote RPC for ephemeral/dev prefixes
+                continue
+
+            res = client.rpc(
+                "acquire_lock",
+                {
+                    "p_file_path": fp,
+                    "p_developer_id": DEVELOPER_ID,
+                    "p_branch_name": branch,
+                    "p_reason": "Auto-Watch",
+                    "p_lock_token": str(__import__("uuid").uuid4()),
+                    "p_is_ephemeral": _is_ephemeral_dev(DEVELOPER_ID),
+                },
+            ).execute()
+            data = getattr(res, "data", None) or []
+            if isinstance(data, list) and data and data[0].get("status") == "conflict":
+                owner = data[0].get("owner", "someone")
+                _active_conflicts.add(fp)
+                msg = (
+                    f"⚠️ CONFLICT: {fp} is locked by @{owner} -- "
+                    "your changes may cause a merge conflict."
+                )
+                log_msg = _color(msg, Fore.YELLOW) if _HAS_COLORAMA else msg
+                logger.warning(log_msg)
+                notify_msg = (
+                    f"{fp} is locked by @{owner}.\n" "Coordinate before committing."
+                )
+                _notify("Lock Conflict", notify_msg)
+            else:
+                br_local = branch or "main"
+                reason_local = "Auto-Watch"
+                msg = (
+                    f"🔒 [LOCKED] {fp} — @{DEVELOPER_ID} "
+                    f"(branch: {br_local}, reason: {reason_local})"
+                )
+                log_msg = _color(msg, Fore.GREEN) if _HAS_COLORAMA else msg
+                logger.info(log_msg)
+                # Track locks this watcher created so remote scans do not
+                # report them as 'remote added' later.
+                try:
+                    _local_owned_locks.add(fp)
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.error("Failed to acquire lock for %s: %s", fp, e)
+
+
+def _process_releases(client, released: set[str]) -> None:
+    """Process local releases for files no longer modified.
+
+    Extracted so tests can simulate exceptions when removing locks from the local-owned
+    set without running the entire main loop.
+    """
+    for fp in released:
+        # Was this file in conflict?
+        if fp in _active_conflicts:
+            _active_conflicts.discard(fp)
+            msg = f"✅ Conflict cleared: {fp} (file reverted or resolved)"
+            logger.info(_color(msg, Fore.BLUE) if _HAS_COLORAMA else msg)
+        else:
+            try:
+                if _is_ephemeral_dev(DEVELOPER_ID):
+                    logger.info("🔓 [EPHEMERAL-RELEASE] %s", fp)
+                else:
+                    client.table("file_locks").delete().eq("file_path", fp).eq(
+                        "developer_id", DEVELOPER_ID
+                    ).execute()
+                    logger.info(
+                        _color(f"🔓 [RELEASED] {fp}", Fore.MAGENTA)
+                        if _HAS_COLORAMA
+                        else f"[RELEASED] {fp}"
+                    )
+                    # If we released a lock we held locally, remove it
+                    # from the local-owned set so remote scans don't keep it there.
+                    try:
+                        _local_owned_locks.discard(fp)
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.error("Failed to release lock for %s: %s", fp, e)
 
 
 def _start_dashboard_server() -> str | None:
@@ -376,6 +616,11 @@ def main() -> None:
     signal.signal(signal.SIGINT, _signal_handler)
 
     # Create Supabase client
+    if create_client is None:
+        logger.error(
+            "Supabase client factory is not available. Ensure supabase is installed."
+        )
+        sys.exit(1)
     client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
     # Start local dashboard server for a clickable URL
@@ -448,69 +693,13 @@ def main() -> None:
 
                 # New files to lock
                 new_files = current_modified - last_modified
-                for fp in new_files:
-                    try:
-                        res = client.rpc(
-                            "acquire_lock",
-                            {
-                                "p_file_path": fp,
-                                "p_developer_id": DEVELOPER_ID,
-                                "p_branch_name": branch,
-                                "p_reason": "Auto-Watch",
-                                "p_expires_at": (
-                                    datetime.now(timezone.utc) + timedelta(hours=8)
-                                ).isoformat(),
-                                "p_lock_token": str(__import__("uuid").uuid4()),
-                            },
-                        ).execute()
-                        data = getattr(res, "data", None) or []
-                        if (
-                            isinstance(data, list)
-                            and data
-                            and data[0].get("status") == "conflict"
-                        ):
-                            owner = data[0].get("owner", "someone")
-                            _active_conflicts.add(fp)
-                            logger.warning(
-                                "⚠️ CONFLICT: %s is locked by @%s "
-                                "-- your changes may cause a merge "
-                                "conflict. Run: python collab.py "
-                                "dashboard",
-                                fp,
-                                owner,
-                            )
-                            _notify(
-                                "Lock Conflict",
-                                f"{fp} is locked by @{owner}.\n"
-                                "Coordinate before committing.",
-                            )
-                        else:
-                            logger.info("🔒 [LOCKED] %s", fp)
-                    except Exception as e:
-                        logger.error("Failed to acquire lock for %s: %s", fp, e)
+                # Delegate acquire/release logic to helper functions to allow
+                # targeted unit tests to exercise error/fallback branches.
+                _process_new_files(client, branch, new_files)
 
                 # Files no longer modified locally
                 released = last_modified - current_modified
-                for fp in released:
-                    # Was this file in conflict?
-                    if fp in _active_conflicts:
-                        _active_conflicts.discard(fp)
-                        logger.info(
-                            "✅ Conflict cleared: %s " "(file reverted or resolved)",
-                            fp,
-                        )
-                    else:
-                        try:
-                            client.table("file_locks").delete().eq("file_path", fp).eq(
-                                "developer_id", DEVELOPER_ID
-                            ).execute()
-                            logger.info("🔓 [RELEASED] %s", fp)
-                        except Exception as e:
-                            logger.error(
-                                "Failed to release lock for %s: %s",
-                                fp,
-                                e,
-                            )
+                _process_releases(client, released)
 
                 last_modified = current_modified
             else:

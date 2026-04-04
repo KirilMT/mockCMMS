@@ -334,13 +334,12 @@
                             <th>Developer</th>
                             <th>Branch</th>
                             <th>Reason</th>
-                            <th>Status</th>
                             <th>Timeline</th>
                             <th class="text-end">Action</th>
                         </tr>
                     </thead>
                     <tbody id="active-locks-body">
-                        <tr><td colspan="7" class="text-center py-5 text-muted">
+                        <tr><td colspan="6" class="text-center py-5 text-muted">
                             <div class="spinner-border spinner-border-sm me-2"></div> Connecting...
                         </td></tr>
                     </tbody>
@@ -359,6 +358,8 @@
                         <tr>
                             <th>File Path</th>
                             <th>Developer</th>
+                            <th>Branch</th>
+                            <th>Reason</th>
                             <th>Acquired At</th>
                             <th>Released At</th>
                             <th>Duration</th>
@@ -366,7 +367,7 @@
                         </tr>
                     </thead>
                     <tbody id="history-body">
-                        <tr><td colspan="6" class="text-center py-4 text-muted">No history found</td></tr>
+                        <tr><td colspan="8" class="text-center py-4 text-muted">No history found</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -494,11 +495,13 @@
 
             try {
                 const { data: locks, error: le } = await SUPABASE_CLIENT
-                    .from('file_locks').select('*').order('acquired_at', { ascending: false });
+                    // Exclude ephemeral/test-runner locks from the dashboard
+                    .from('file_locks').select('*').neq('is_ephemeral', true).order('acquired_at', { ascending: false });
                 if (le) throw le;
 
                 const { data: history, error: he } = await SUPABASE_CLIENT
-                    .from('file_locks_history').select('*').order('id', { ascending: false }).limit(50);
+                    // Exclude ephemeral records from history to keep dashboard focused
+                    .from('file_locks_history').select('*').neq('is_ephemeral', true).order('id', { ascending: false }).limit(50);
                 if (he) throw he;
 
                 renderActiveLocks(locks || []);
@@ -519,24 +522,19 @@
         function renderActiveLocks(locks) {
             const tbody = document.getElementById('active-locks-body');
             if (!locks.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted"><i class="fas fa-check-circle text-success me-2"></i> Workspace is currently clear — no active file locks</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-check-circle text-success me-2"></i> Workspace is currently clear — no active file locks</td></tr>';
                 return;
             }
 
             const now = new Date();
             tbody.innerHTML = locks.map(lock => {
-                const expires = new Date(lock.expires_at);
                 const acquired = new Date(lock.acquired_at);
-                const diffMin = Math.round((expires - now) / 60000);
-
-                let statusClass = 'badge-healthy', statusText = '● HEALTHY';
-                if (diffMin < 0) { statusClass = 'badge-danger'; statusText = '● EXPIRED'; }
-                else if (diffMin < 60) { statusClass = 'badge-warning'; statusText = '● EXPIRING'; }
+                const heldMin = Math.round((now - acquired) / 60000);
 
                 const isMine = SUPABASE_USER && lock.developer_id === SUPABASE_USER;
                 const canRelease = isMine || IS_ADMIN;
                 const startedStr = 'Started: ' + acquired.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const expiresStr = diffMin > 0 ? `Expires in ${diffMin}m` : 'Expired';
+                const expiresStr = `Held for ${heldMin}m`;
 
                 const releaseBtn = canRelease
                     ? `<button class="btn btn-sm btn-outline-danger" onclick="initRelease('${lock.file_path.replace(/'/g, "\\'")}', ${isMine})">
@@ -552,7 +550,6 @@
                     <td><div class="dev-tag ${isMine ? 'dev-tag-owner' : ''}">${lock.developer_id}</div></td>
                     <td class="text-muted small">${lock.branch_name || 'main'}</td>
                     <td class="text-muted small">${lock.reason || 'No reason'}</td>
-                    <td><span class="badge-modern ${statusClass}">${statusText}</span></td>
                     <td class="small">${startedStr}<br><span class="text-muted">${expiresStr}</span></td>
                     <td class="text-end">${releaseBtn}</td>
                 </tr>`;
@@ -574,11 +571,15 @@
                 const outcomeClass = h.outcome === 'released' ? 'text-success' :
                                      h.outcome === 'force-released' ? 'text-warning' :
                                      h.outcome === 'expired' ? 'text-danger' : '';
+                const branch = h.branch_name || 'main';
+                const reason = h.reason || 'No reason';
 
                 return `
                 <tr>
                     <td><code class="text-muted">${h.file_path}</code></td>
                     <td><div class="dev-tag ${isMine ? 'dev-tag-owner' : ''}">${h.developer_id}</div></td>
+                    <td class="text-muted small">${branch}</td>
+                    <td class="text-muted small">${reason}</td>
                     <td class="text-muted small">${acq ? acq.toLocaleString() : '—'}</td>
                     <td class="text-muted small">${rel ? rel.toLocaleString() : '—'}</td>
                     <td class="small">${dur}</td>
@@ -614,7 +615,7 @@
             const main = document.getElementById('main-view');
             if (main) main.classList.remove('hidden');
             document.getElementById('active-locks-body').innerHTML =
-                `<tr><td colspan="7" class="text-center py-5 text-danger"><i class="fas fa-exclamation-triangle me-2"></i>${msg}</td></tr>`;
+                `<tr><td colspan="6" class="text-center py-5 text-danger"><i class="fas fa-exclamation-triangle me-2"></i>${msg}</td></tr>`;
         }
 
         // =====================================================================

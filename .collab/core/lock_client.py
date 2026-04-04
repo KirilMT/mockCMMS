@@ -18,7 +18,7 @@ import tempfile
 import threading
 import time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
@@ -46,8 +46,20 @@ load_dotenv(os.path.join(_PROJECT_ROOT, ".env"))
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-LOCK_DEFAULT_EXPIRY = int(os.getenv("LOCK_DEFAULT_EXPIRY_MINUTES", "480"))
 LOCK_STRICT = os.getenv("LOCK_STRICT", "0") == "1"
+
+# Expiry semantics: this project enforces NO automatic expiry. Locks persist
+# until released explicitly. The DB RPC ignores time-based expiry; the
+# expires_at column is kept for audit but is not used for automatic
+# replacement. Clients do not send an expires_at value.
+
+# Developer id prefixes treated as ephemeral (do not persist locks to the DB).
+# Enforced in code (not configurable via .env) to avoid accidental skips.
+EPHEMERAL_PREFIXES = ["test_dev", "ci"]
+
+# (Intentionally no repo-level toggle) Do not expose a runtime flag to
+# enable/disable `.collab/` locking — the watcher and client always consider
+# files under `.collab/`.
 
 # PID file lives inside .collab/ so it stays with the feature
 PID_FILE = os.path.join(_COLLAB_ROOT, ".daemon.pid")
@@ -141,6 +153,37 @@ class LockClient:
         self._client = create_client(SUPABASE_URL, key)
         self._parent_pid: Optional[int] = None
         self._is_admin: bool = bool(SUPABASE_SERVICE_ROLE_KEY)
+        # Treat certain developer ids as ephemeral (e.g. CI/test accounts) so
+        # they do not persist locks to the DB. This list is enforced in-code to
+        # prevent arbitrary opt-outs via environment variables.
+        # Determine if this developer id is ephemeral (CI/test prefixes)
+        self._is_ephemeral: bool = False
+        if self.developer_id:
+            try:
+                for p in EPHEMERAL_PREFIXES:
+                    if self.developer_id.startswith(p):
+                        self._is_ephemeral = True
+                        break
+            except Exception:
+                # Defensive: if developer_id is not a str for any reason
+                self._is_ephemeral = False
+
+    def _normalize_file_path(self, file_path: str) -> str:
+        """Normalize a file path to a project-root relative Unix-style path.
+
+        This ensures that paths stored in Supabase match the paths produced by "git
+        status --porcelain" (which are relative paths with forward slashes).
+        """
+        try:
+            # If an absolute path was provided, make it relative to project root
+            if os.path.isabs(file_path):
+                rel = os.path.relpath(file_path, _PROJECT_ROOT)
+            else:
+                rel = file_path
+            # Normalize separators to forward-slash for consistency in the DB
+            return rel.replace("\\", "/")
+        except Exception:
+            return file_path.replace("\\", "/")
 
     @property
     def is_admin(self) -> bool:
@@ -224,24 +267,41 @@ class LockClient:
 
         Returns (success: bool, message: str).
         """
-        # Local validation
-        full_path = os.path.join(_PROJECT_ROOT, file_path)
+        # Local validation — accept either project-relative or absolute paths.
+        full_path = (
+            file_path
+            if os.path.isabs(file_path)
+            else os.path.join(_PROJECT_ROOT, file_path)
+        )
         if not os.path.exists(full_path):
             return False, f"File or directory does not exist locally: {file_path}"
 
+        # Ephemeral developer IDs do not persist locks to the backend
+        # (useful for CI/test users). Short-circuit and return a local token.
+        if getattr(self, "_is_ephemeral", False):
+            token = f"ephemeral-{uuid.uuid4()}"
+            logger.info(
+                "🔒 [EPHEMERAL] %s (not persisted) — owner=%s",
+                file_path,
+                self.developer_id,
+            )
+            return True, token
+
         branch = branch_name or self._get_current_branch()
-        expiry_mins = expires_minutes or LOCK_DEFAULT_EXPIRY
-        now = datetime.now(timezone.utc)
-        expires_at = now + timedelta(minutes=expiry_mins)
         token = str(uuid.uuid4())
 
+        # Do not send expires_at: the RPC and DB intentionally ignore
+        # time-based expiry. This keeps acquisition atomic while ensuring
+        # locks persist until explicitly released.
+        # Normalize the stored file_path so the watcher and dashboard see the
+        # same canonical (project-relative, forward-slash) path.
         rpc_params = {
-            "p_file_path": file_path,
+            "p_file_path": self._normalize_file_path(file_path),
             "p_developer_id": self.developer_id,
             "p_branch_name": branch,
             "p_reason": reason,
-            "p_expires_at": expires_at.isoformat(),
             "p_lock_token": token,
+            "p_is_ephemeral": bool(getattr(self, "_is_ephemeral", False)),
         }
 
         try:
@@ -282,12 +342,20 @@ class LockClient:
 
         Returns (success: bool, message: str).
         """
+        # If ephemeral, nothing was persisted so there's nothing to delete.
+        if getattr(self, "_is_ephemeral", False):
+            logger.info(
+                "🔓 [EPHEMERAL-RELEASE] %s (no-op for %s)", file_path, self.developer_id
+            )
+            return True, "ephemeral-released"
+
         try:
+            norm = self._normalize_file_path(file_path)
             res = _retry_on_network_error(
                 lambda: (
                     self._client.table("file_locks")
                     .delete()
-                    .eq("file_path", file_path)
+                    .eq("file_path", norm)
                     .eq("developer_id", self.developer_id)
                     .execute()
                 )
@@ -318,11 +386,12 @@ class LockClient:
     def get_lock_status(self, file_path: str) -> Dict:
         """Return the lock status for a specific file."""
         try:
+            norm = self._normalize_file_path(file_path)
             res = _retry_on_network_error(
                 lambda: (
                     self._client.table("file_locks")
                     .select("*")
-                    .eq("file_path", file_path)
+                    .eq("file_path", norm)
                     .execute()
                 )
             )
@@ -338,19 +407,14 @@ class LockClient:
             return {"is_locked": False, "can_edit": True}
 
         lock = rows[0]
-        try:
-            expiry = datetime.fromisoformat(lock.get("expires_at", ""))
-        except (ValueError, TypeError):
-            expiry = datetime.now(timezone.utc)
 
-        if expiry < datetime.now(timezone.utc):
-            return {"is_locked": False, "can_edit": True, "expired": True}
-
+        # With server-side expiry disabled, a present row implies an active
+        # lock until it is explicitly released. Do not expose expires_at — it
+        # was removed from the schema and is treated as audit-only historically.
         return {
             "is_locked": True,
             "locked_by": lock.get("developer_id"),
             "acquired_at": lock.get("acquired_at"),
-            "expires_at": lock.get("expires_at"),
             "reason": lock.get("reason"),
             "can_edit": lock.get("developer_id") == self.developer_id,
         }
@@ -945,8 +1009,8 @@ class LockClient:
         norm = path.replace("\\", "/")
         if "/.git/" in norm or norm.startswith(".git/"):
             return True
-        if norm.startswith(".collab/"):
-            return True
+        # Do not ignore `.collab/` paths — watcher and client will handle
+        # editor/IDE metadata appropriately. Only .git is ignored here.
         return False
 
     @staticmethod
@@ -1136,9 +1200,7 @@ def _run_cli() -> None:
         info = client.get_lock_status(args.file_path)
         if info.get("is_locked"):
             print(
-                f"🔒 Locked by @{info.get('locked_by')} "
-                f"since {info.get('acquired_at')} "
-                f"(expires: {info.get('expires_at')})"
+                f"🔒 Locked by @{info.get('locked_by')} since {info.get('acquired_at')}"
             )
         else:
             print("🔓 File is unlocked.")

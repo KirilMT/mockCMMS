@@ -14,7 +14,7 @@ create table if not exists file_locks (
   branch_name text,
   reason text,
   acquired_at timestamptz not null default now(),
-  expires_at timestamptz not null
+  is_ephemeral boolean not null default false
 );
 
 create table if not exists file_locks_history (
@@ -26,7 +26,8 @@ create table if not exists file_locks_history (
   reason text,
   acquired_at timestamptz,
   released_at timestamptz,
-  outcome text
+  outcome text,
+  is_ephemeral boolean
 );
 
 -- ---------------------------------------------------------------------------
@@ -34,8 +35,8 @@ create table if not exists file_locks_history (
 -- ---------------------------------------------------------------------------
 create index if not exists idx_file_locks_acquired_at
   on file_locks(acquired_at);
-create index if not exists idx_file_locks_expires_at
-  on file_locks(expires_at);
+-- Note: expiry semantics are intentionally disabled. Locks persist until
+-- explicitly released; no automatic time-based replacement is enforced.
 create index if not exists idx_file_locks_history_developer
   on file_locks_history(developer_id);
 create index if not exists idx_file_locks_history_released_at
@@ -91,34 +92,38 @@ alter publication supabase_realtime add table file_locks;
 -- Atomic lock acquisition function (RPC)
 -- ---------------------------------------------------------------------------
 -- This function attempts to insert a lock for file_path. If a lock already
--- exists it will only replace it when the existing lock is expired OR when
--- the requester is the current owner (allowing renewals). Returns status
+-- exists it will only be replaced by the same owner (renewals). There is
+-- no automatic expiry-based replacement: locks persist until explicitly
+-- released. Returns status and token.
 -- and token.
 --
 -- Usage (RPC):
---   select * from acquire_lock('path', 'alice', 'editing', '2026-03-24T00:00:00Z', 'uuid-token');
+--   select * from acquire_lock('path', 'alice', 'editing', 'uuid-token');
 create or replace function acquire_lock(
   p_file_path text,
   p_developer_id text,
   p_branch_name text,
   p_reason text,
-  p_expires_at timestamptz,
-  p_lock_token text
+  p_lock_token text,
+  p_is_ephemeral boolean default false
 ) returns table(status text, lock_token text, owner text) as $$
 declare
   rec record;
 begin
   -- Try to insert; on conflict update only when expired or same owner
-  insert into file_locks(file_path, developer_id, branch_name, lock_token, reason, acquired_at, expires_at)
-  values (p_file_path, p_developer_id, p_branch_name, p_lock_token, p_reason, now(), p_expires_at)
+  -- Insert without an expires_at value; locks persist until released.
+  insert into file_locks(file_path, developer_id, branch_name, lock_token, reason, acquired_at, is_ephemeral)
+  values (p_file_path, p_developer_id, p_branch_name, p_lock_token, p_reason, now(), p_is_ephemeral)
   on conflict (file_path) do update
     set developer_id = excluded.developer_id,
         branch_name = excluded.branch_name,
         lock_token = excluded.lock_token,
         reason = excluded.reason,
         acquired_at = now(),
-        expires_at = excluded.expires_at
-    where file_locks.expires_at < now() or file_locks.developer_id = excluded.developer_id
+        is_ephemeral = excluded.is_ephemeral
+    -- Do not replace another developer's lock. Only allow update when the
+    -- existing lock belongs to the requester (renewal).
+    where file_locks.developer_id = excluded.developer_id
   returning file_locks.lock_token, file_locks.developer_id into rec;
 
   if found then
@@ -139,10 +144,10 @@ returns trigger as $$
 begin
   insert into file_locks_history(
     file_path, developer_id, lock_token, branch_name, reason,
-    acquired_at, released_at, outcome
+    acquired_at, released_at, outcome, is_ephemeral
   ) values (
     OLD.file_path, OLD.developer_id, OLD.lock_token, OLD.branch_name, OLD.reason,
-    OLD.acquired_at, now(), 'released'
+    OLD.acquired_at, now(), 'released', OLD.is_ephemeral
   );
   return OLD;
 end;

@@ -385,8 +385,10 @@ def test_get_current_branch(monkeypatch):
 def test_should_ignore_path(monkeypatch):
     """Test path filtering for ignored directories."""
     # _should_ignore_path is a static method, only ignores .git/ and .collab/
+    # The client intentionally does NOT ignore `.collab/` (locks and metadata
+    # under .collab/ are relevant to the locking system). Only .git/ is ignored.
     assert mod.LockClient._should_ignore_path(".git/config") is True
-    assert mod.LockClient._should_ignore_path(".collab/core/file.py") is True
+    assert mod.LockClient._should_ignore_path(".collab/core/file.py") is False
     assert mod.LockClient._should_ignore_path("src/app.py") is False
     assert mod.LockClient._should_ignore_path("tests/test_something.py") is False
 
@@ -2040,9 +2042,11 @@ def test_get_lock_status_expired(monkeypatch):
 
     lc = mod.LockClient(developer_id="test_user")
     status = lc.get_lock_status("src/app.py")
-    assert status["is_locked"] is False
-    assert status["can_edit"] is True
-    assert status.get("expired") is True
+    # With server-side expiry disabled, presence of a DB row implies an active
+    # lock until explicitly released. The client does not evaluate expires_at.
+    assert status["is_locked"] is True
+    assert status["locked_by"] == "other_user"
+    assert status["can_edit"] is False
 
 
 # ============================================================================

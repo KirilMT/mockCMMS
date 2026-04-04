@@ -50,13 +50,12 @@ The script automatically:
 
 After running the setup, verify your `.env` at the project root has these values:
 
-| Variable                      | Description                                                                     |
-| ----------------------------- | ------------------------------------------------------------------------------- |
-| `SUPABASE_URL`                | Your Supabase project URL (from Project Settings → API)                         |
-| `SUPABASE_ANON_KEY`           | Anonymous/public key (from Project Settings → API → anon/public)                |
-| `SUPABASE_SERVICE_ROLE_KEY`   | Service role key (**required** for dashboard force-release and full API access) |
-| `LOCK_DEFAULT_EXPIRY_MINUTES` | Lock auto-expiry in minutes (default: 480 = 8 hours)                            |
-| `LOCK_STRICT`                 | If `1`, git hooks block on lock errors. Default `0` (warn only)                 |
+| Variable                    | Description                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------- |
+| `SUPABASE_URL`              | Your Supabase project URL (from Project Settings → API)                         |
+| `SUPABASE_ANON_KEY`         | Anonymous/public key (from Project Settings → API → anon/public)                |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (**required** for dashboard force-release and full API access) |
+| `LOCK_STRICT`               | If `1`, git hooks block on lock errors. Default `0` (warn only)                 |
 
 > **Important:** `SUPABASE_SERVICE_ROLE_KEY` is needed for the dashboard's Force Release button to work. Without it, only your own locks can be released.
 
@@ -142,7 +141,7 @@ python collab.py dashboard
 
 This starts a local HTTP server and opens the dashboard in your default browser. The dashboard:
 
-- Shows all active file locks with developer, branch, reason, and expiry
+- Shows all active file locks with developer, branch, reason, and optional expiry (informational)
 - Updates in real-time via Supabase Realtime (no page refresh needed)
 - **Release** button for your own locks; **Force Release** for admins with `SUPABASE_SERVICE_ROLE_KEY`
 - Shows lock history with durations and outcomes
@@ -260,9 +259,8 @@ python collab.py daemon-stop
 
 ### Lock stuck (file shows locked but developer is gone)
 
-1. Wait for the lock to expire (default 8 hours), or
-2. Use the dashboard's **Force Release** button, or
-3. Run: `python collab.py force-release path/to/file.py`
+1. Use the dashboard's **Force Release** button (admins only), or
+2. Run: `python collab.py force-release path/to/file.py`
 
 ### Dashboard Force Release not working
 
