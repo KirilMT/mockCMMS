@@ -18,10 +18,53 @@ import tempfile
 import threading
 import time
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from dotenv import load_dotenv
+
+
+def _safe_now() -> datetime:
+    """Return the current datetime using the (possibly monkeypatched) ``datetime``
+    symbol imported into this module.
+
+    Tests patch ``datetime`` with a fake
+    class/instance and some replacement objects may present a ``now`` attribute
+    that behaves oddly when bound. This helper attempts to call the patched
+    ``now`` safely and falls back to the real datetime on failure.
+    """
+    try:
+        return datetime.now()
+    except TypeError:
+        # If the patched datetime is an instance, try to fetch the class-level
+        # attribute and call it as an unbound function (avoids implicit binding)
+        try:
+            cls = datetime if isinstance(datetime, type) else datetime.__class__
+            now_attr = getattr(cls, "now", None)
+            if callable(now_attr):
+                # Call the class-level now and ensure we return a real datetime
+                try:
+                    res = now_attr()
+                except TypeError:
+                    # If calling now as an unbound function failed, continue to fallback
+                    res = None
+                # Use the real stdlib datetime type for isinstance checks to avoid
+                # confusion when the module-level `datetime` has been monkeypatched
+                from datetime import datetime as _real_dt
+
+                if isinstance(res, _real_dt):
+                    return res
+        except Exception:
+            pass
+        # Last-resort: use the real datetime type from the stdlib
+        from datetime import datetime as _real_dt
+
+        return _real_dt.now()
+
+
+# ---------------------------------------------------------------------------
+# Logging configuration
+# ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 # Logging configuration
@@ -552,8 +595,58 @@ class LockClient:
         """Start the watcher as a background daemon process."""
         pid = self._read_pid()
         if pid and self._is_process_alive(pid):
-            print(f"Watcher already running (PID: {pid})")
-            return
+            # Try to verify the PID metadata (entrypoint) first; prefer the
+            # entrypoint field when present because background starters write
+            # a human-friendly entrypoint. If the PID file is the legacy plain
+            # integer format we intentionally *do not* treat a cmdline mismatch
+            # as proof of staleness. Older clients wrote only the PID and users
+            # expect the watcher to be considered running when that PID is
+            # still alive (even if we can't reconstruct the exact cmdline).
+            entrypoint = None
+            had_metadata = False
+            try:
+                if os.path.exists(PID_FILE):
+                    with open(PID_FILE, "r", encoding="utf-8") as fh:
+                        raw = fh.read().strip()
+                    if raw.startswith("{"):
+                        had_metadata = True
+                        obj = json.loads(raw)
+                        entrypoint = obj.get("entrypoint")
+            except Exception:
+                entrypoint = None
+
+            if entrypoint:
+                print(f"Watcher already running (PID: {pid}) — {entrypoint}")
+                return
+
+            # If we have no richer metadata (legacy plain-PID) be conservative:
+            # - If the PID matches the current process, consider it running.
+            # - Otherwise try to verify the cmdline (if available) and only
+            #   treat as running when it matches or cannot be determined.
+            if not had_metadata:
+                if pid == os.getpid():
+                    print(f"Watcher already running (PID: {pid})")
+                    return
+                cmdline = self._get_cmdline_for_pid(pid)
+                if cmdline:
+                    if self._cmdline_matches_watcher(cmdline):
+                        print(f"Watcher already running (PID: {pid})")
+                        return
+                    # cmdline present but doesn't match -> consider stale
+                    # and continue to start a new watcher
+                else:
+                    # cmdline unavailable -> assume running to avoid false
+                    # positives in restricted environments
+                    print(f"Watcher already running (PID: {pid})")
+                    return
+
+            # Fallback: try to verify the process command-line to avoid
+            # starting a duplicate when we do have metadata to inspect.
+            cmdline = self._get_cmdline_for_pid(pid)
+            if cmdline and self._cmdline_matches_watcher(cmdline):
+                print(f"Watcher already running (PID: {pid})")
+                return
+            # If cmdline doesn't match, continue and start a new watcher
 
         print("Starting lock watcher in background...")
         cmd = [
@@ -661,7 +754,61 @@ class LockClient:
         """
         pid = self._read_pid()
         if pid and self._is_process_alive(pid):
-            print(f"✅ Lock watcher is RUNNING (PID: {pid})")
+            # Attempt to read PID metadata (entrypoint) and prefer it for
+            # human-facing output when available. When the PID file is the
+            # legacy plain-integer format we avoid strict cmdline verification
+            # to reduce false negatives in environments where reconstructing
+            # a cmdline is unreliable (tests, limited containers, etc.).
+            entrypoint: Optional[str] = None
+            had_metadata = False
+            try:
+                if os.path.exists(PID_FILE):
+                    with open(PID_FILE, "r", encoding="utf-8") as fh:
+                        raw = fh.read().strip()
+                    if raw.startswith("{"):
+                        had_metadata = True
+                        obj = json.loads(raw)
+                        entrypoint = obj.get("entrypoint")
+            except Exception:
+                entrypoint = None
+
+            # If an entrypoint is present in the PID metadata, prefer it.
+            if entrypoint:
+                print(f"✅ Lock watcher is RUNNING (PID: {pid}) — {entrypoint}")
+                return True
+
+            # If we have no richer metadata (legacy plain-PID) preserve the
+            # historical, lenient behaviour: older clients only wrote an integer PID
+            # and callers expect a live PID to indicate the watcher is running.
+            # Do NOT mark such PIDs stale solely because the reconstructed
+            # command-line doesn't match — this avoids false negatives in tests
+            # and constrained environments where cmdline inspection is unreliable.
+            if not had_metadata:
+                # If this is the legacy plain-PID file, preserve the historical
+                # behavior: if the PID matches the current process, confidently
+                # report running. Otherwise fall through and attempt a
+                # best-effort cmdline verification below to avoid treating an
+                # unrelated process as the watcher.
+                if pid == os.getpid():
+                    print(f"✅ Lock watcher is RUNNING (PID: {pid}) (cmdline unknown)")
+                    return True
+
+            # Fallback: try to verify the process command-line to avoid false positives
+            cmdline = self._get_cmdline_for_pid(pid)
+            if cmdline:
+                if not self._cmdline_matches_watcher(cmdline):
+                    # PID belongs to some other process; treat as stale
+                    print(
+                        f"❌ Lock watcher PID file points to PID {pid} "
+                        "but command-line doesn't match."
+                    )
+                    logger.debug("PID %d cmdline: %s", pid, cmdline)
+                    self._remove_pid()
+                    return False
+                print(f"✅ Lock watcher is RUNNING (PID: {pid}) — {cmdline}")
+            else:
+                # Can't verify cmdline — assume running
+                print(f"✅ Lock watcher is RUNNING (PID: {pid}) (cmdline unknown)")
             return True
         # Fallback: check legacy PyCharm watcher PID file
         _legacy_pid_file = os.path.join(_COLLAB_ROOT, ".pycharm_watcher.pid")
@@ -806,9 +953,9 @@ class LockClient:
         logger.info("Monitoring local git changes for automatic locking...")
 
         last_modified: set = set()
-        last_change_time = datetime.now()
-        last_reconcile_time = datetime.now()
-        last_parent_check = datetime.now()
+        last_change_time = _safe_now()
+        last_reconcile_time = _safe_now()
+        last_parent_check = _safe_now()
 
         last_modified = self._reconcile()
 
@@ -820,9 +967,9 @@ class LockClient:
                     # no meaningful parent PID)
                     if (
                         not daemon_mode
-                        and (datetime.now() - last_parent_check).total_seconds() > 30
+                        and (_safe_now() - last_parent_check).total_seconds() > 30
                     ):
-                        last_parent_check = datetime.now()
+                        last_parent_check = _safe_now()
                         if self._parent_pid and not self._is_process_alive(
                             self._parent_pid
                         ):
@@ -843,10 +990,10 @@ class LockClient:
                                     current_modified.add(path)
 
                     if current_modified != last_modified:
-                        last_change_time = datetime.now()
+                        last_change_time = _safe_now()
                         new_files = current_modified - last_modified
                         if new_files:
-                            ts = datetime.now().strftime("%H:%M:%S")
+                            ts = _safe_now().strftime("%H:%M:%S")
                             logger.info("[%s] Detected: %s", ts, list(new_files))
                             branch = self._get_current_branch()
                             ok, failed, msg = self.acquire_multiple(
@@ -861,7 +1008,7 @@ class LockClient:
 
                         released = last_modified - current_modified
                         if released:
-                            ts = datetime.now().strftime("%H:%M:%S")
+                            ts = _safe_now().strftime("%H:%M:%S")
                             logger.info("[%s] Finalised: %s", ts, list(released))
                             ok, count, _ = self.release_multiple(list(released))
                             if ok and count > 0:
@@ -870,14 +1017,12 @@ class LockClient:
                         last_modified = current_modified
                     else:
                         # Periodic reconciliation
-                        if (datetime.now() - last_reconcile_time) > timedelta(
-                            minutes=15
-                        ):
+                        if (_safe_now() - last_reconcile_time) > timedelta(minutes=15):
                             last_modified = self._reconcile()
-                            last_reconcile_time = datetime.now()
+                            last_reconcile_time = _safe_now()
 
                         # Idle timeout
-                        idle = datetime.now() - last_change_time
+                        idle = _safe_now() - last_change_time
                         if timeout_mins > 0 and idle > timedelta(minutes=timeout_mins):
                             logger.info(
                                 "Watcher timed out after %dm inactivity.", timeout_mins
@@ -1015,21 +1160,164 @@ class LockClient:
 
     @staticmethod
     def _read_pid() -> Optional[int]:
-        """Read daemon PID from the PID file."""
-        if os.path.exists(PID_FILE):
+        """Read daemon PID from the PID file.
+
+        Supports two formats for backward compatibility:
+        - Plain integer stored in `.daemon.pid` (legacy)
+        - JSON object stored in `.daemon.pid` containing a numeric "pid" field
+
+        Returns the pid as an int, or None if the file is missing or malformed.
+        """
+        if not os.path.exists(PID_FILE):
+            return None
+        try:
+            with open(PID_FILE, "r", encoding="utf-8") as f:
+                raw = f.read().strip()
+            if not raw:
+                return None
+            # Try JSON first (richer metadata), fall back to int
+            if raw.startswith("{"):
+                try:
+                    obj = json.loads(raw)
+                    pid = obj.get("pid")
+                    if isinstance(pid, int):
+                        return pid
+                except Exception:
+                    logger.debug("PID file contains invalid JSON: %s", raw)
+                    return None
+            # Fallback: plain integer
+            return int(raw)
+        except ValueError:
+            logger.debug("PID file does not contain an integer: %s", PID_FILE)
+            return None
+        except OSError as e:
+            logger.debug("Could not read PID file %s: %s", PID_FILE, e)
+            return None
+
+    @staticmethod
+    def _get_cmdline_for_pid(pid: int) -> Optional[str]:
+        """Return the command-line string for a process, or None if unavailable.
+
+        Uses psutil when available. If psutil is not installed or access fails, returns
+        None which indicates we couldn't verify the cmdline.
+        """
+        # Prefer psutil when available (robust cross-platform). If unavailable,
+        # fall back to lightweight platform-specific methods (procfs on Unix,
+        # WMIC/tasklist on Windows) so we can verify PID command-lines even
+        # in minimal environments.
+        try:
+            import psutil
+
             try:
-                with open(PID_FILE, "r") as f:
-                    return int(f.read().strip())
-            except (ValueError, OSError):
+                p = psutil.Process(pid)
+                cmd = p.cmdline()
+                if isinstance(cmd, (list, tuple)):
+                    return " ".join(cmd)
+                return str(cmd)
+            except Exception:
+                # If psutil fails for this PID, continue to fallbacks
                 pass
-        return None
+        except Exception:
+            # psutil not installed — continue to platform fallbacks
+            pass
+
+        # Platform-specific fallbacks
+        if sys.platform == "win32":
+            # Try WMIC (widely available on older Windows) to fetch CommandLine
+            try:
+                out = subprocess.check_output(
+                    [
+                        "wmic",
+                        "process",
+                        "where",
+                        f"ProcessId={pid}",
+                        "get",
+                        "CommandLine",
+                    ],
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                )
+                # WMIC prints a header line; strip and return the joined remainder
+                lines = [line.strip() for line in out.splitlines() if line.strip()]
+                if len(lines) >= 2:
+                    return " ".join(lines[1:]).strip()
+            except Exception:
+                pass
+            # Try PowerShell CIM as a more modern fallback (works on recent Windows)
+            try:
+                cmd_str = (
+                    '(Get-CimInstance Win32_Process -Filter "ProcessId=%d").'
+                    "CommandLine" % pid
+                )
+                ps_cmd = ("-NoProfile", "-Command", cmd_str)
+                out = subprocess.check_output(
+                    ["powershell", *ps_cmd], stderr=subprocess.DEVNULL, text=True
+                )
+                out = out.strip()
+                if out:
+                    return out
+            except Exception:
+                pass
+            # As a last resort on Windows we cannot reliably get a cmdline
+            return None
+        else:
+            # Unix-like systems: read /proc/<pid>/cmdline if available
+            proc_path = f"/proc/{pid}/cmdline"
+            try:
+                if os.path.exists(proc_path):
+                    with open(proc_path, "rb") as fh:
+                        data = fh.read()
+                        if not data:
+                            return None
+                        # cmdline entries are null-separated
+                        raw_parts = data.split(b"\x00")
+                        parts = [
+                            part.decode(errors="replace") for part in raw_parts if part
+                        ]
+                        return " ".join(parts)
+            except Exception:
+                pass
+            return None
+
+    @staticmethod
+    def _cmdline_matches_watcher(cmdline: str) -> bool:
+        """Heuristic: return True if the command-line looks like our watcher.
+
+        Matches the two supported watcher entrypoints:
+        - `.collab/pycharm/live_locks_watcher.py`
+        - `lock_client.py watch` (the lock_client watch subcommand)
+        """
+        if not cmdline:
+            return False
+        s = cmdline.lower()
+        return (
+            "live_locks_watcher" in s
+            or ("lock_client.py" in s and "watch" in s)
+            or ("collab.core.lock_client" in s and "watch" in s)
+        )
 
     @staticmethod
     def _write_pid(pid: int) -> None:
-        """Write daemon PID to the PID file."""
+        """Write daemon PID metadata to the PID file as JSON.
+
+        Historically this file contained a plain integer.  Newer clients write a small
+        JSON object with fields useful for diagnostics.  The reader already supports
+        both formats for backward compatibility.
+        """
+        meta = {
+            "pid": int(pid),
+            # Use _safe_now to accommodate tests that monkeypatch the module
+            # level `datetime` symbol. Ensure the stored time is in UTC.
+            "started_at": _safe_now().astimezone(timezone.utc).isoformat(),
+            # Use a human-friendly entrypoint string so other tools can display
+            # a concise description without reconstructing the full cmdline.
+            "entrypoint": "python lock_client.py",
+            "cmdline": " ".join([sys.executable] + sys.argv),
+            "cwd": os.getcwd(),
+        }
         try:
-            with open(PID_FILE, "w") as f:
-                f.write(str(pid))
+            with open(PID_FILE, "w", encoding="utf-8") as f:
+                f.write(json.dumps(meta))
         except OSError as e:
             logger.warning("Could not write PID file: %s", e)
 

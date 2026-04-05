@@ -13,14 +13,18 @@ from __future__ import annotations
 import atexit
 import importlib
 import importlib.util
+import json
 import logging
 import os
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
-from datetime import datetime, timedelta
+import traceback
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 # Optional colored output (avoid try/except to reduce unreachable-branch lines)
@@ -562,8 +566,185 @@ def _graceful_shutdown() -> None:
     try:
         if os.path.exists(PID_FILE):
             os.remove(PID_FILE)
+            logger.info("Removed PID file: %s", PID_FILE)
     except OSError:
         pass
+
+
+def _write_pid_file(pid: int) -> None:
+    """Atomically write JSON metadata to the PID file for daemon-status checks.
+
+    Keeps process metadata to aid verification and diagnostics. Writes a JSON object
+    containing pid, started_at (UTC ISO), cmdline and cwd.
+    """
+    meta = {
+        "pid": pid,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "entrypoint": "pycharm-watcher",
+        "cmdline": " ".join([sys.executable] + sys.argv),
+        "cwd": os.getcwd(),
+    }
+    pid_dir = os.path.dirname(PID_FILE) or "."
+    tmp = None
+    try:
+        tmp = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, dir=pid_dir, suffix=".pid.tmp", encoding="utf-8"
+        )
+        tmp.write(json.dumps(meta))
+        tmp.flush()
+        tmp.close()
+        os.replace(tmp.name, PID_FILE)
+        logger.info("Wrote PID metadata to %s (PID: %d)", PID_FILE, pid)
+    except Exception as exc:
+        logger.warning("Failed to write PID metadata to %s: %s", PID_FILE, exc)
+        if tmp is not None:
+            try:
+                os.unlink(tmp.name)
+            except Exception:
+                pass
+
+
+def _get_cmdline_for_pid_local(pid: int) -> Optional[str]:
+    """Local helper to fetch a process command-line (psutil preferred, then platform-
+    specific fallbacks)."""
+    try:
+        import psutil
+
+        try:
+            p = psutil.Process(pid)
+            cmd = p.cmdline()
+            if isinstance(cmd, (list, tuple)):
+                return " ".join(cmd)
+            return str(cmd)
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+    # Windows fallbacks
+    if sys.platform == "win32":
+        try:
+            out = subprocess.check_output(
+                ["wmic", "process", "where", f"ProcessId={pid}", "get", "CommandLine"],
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+            lines = [line.strip() for line in out.splitlines() if line.strip()]
+            if len(lines) >= 2:
+                return " ".join(lines[1:]).strip()
+        except Exception:
+            pass
+        try:
+            cmd_str = (
+                '(Get-CimInstance Win32_Process -Filter "ProcessId=%d").'
+                "CommandLine" % pid
+            )
+            ps_cmd = ("-NoProfile", "-Command", cmd_str)
+            out = subprocess.check_output(
+                ["powershell", *ps_cmd], stderr=subprocess.DEVNULL, text=True
+            )
+            out = out.strip()
+            if out:
+                return out
+        except Exception:
+            pass
+        return None
+
+
+def _cmdline_matches_watcher_local(cmdline: Optional[str]) -> bool:
+    if not cmdline:
+        return False
+    s = cmdline.lower()
+    return (
+        "live_locks_watcher" in s
+        or ("lock_client.py" in s and "watch" in s)
+        or ("collab.core.lock_client" in s and "watch" in s)
+    )
+
+
+def _shorten_process_label(
+    label: Optional[str], max_tokens: int = 4, max_len: int = 80
+) -> Optional[str]:
+    """Return a short, human-friendly label for a process/entrypoint string.
+
+    - Collapse long filesystem paths to their basenames
+    - Keep only the first `max_tokens` tokens and append ' ...' if truncated
+    - Ensure the returned string is not longer than `max_len` (truncates with ellipsis)
+    """
+    if not label:
+        return None
+    try:
+        parts = label.split()
+        short_parts: list[str] = []
+        for p in parts[:max_tokens]:
+            # If it's a path-like token, show only the basename for readability
+            if ("/" in p) or ("\\" in p):
+                try:
+                    b = os.path.basename(p)
+                    if b:
+                        short_parts.append(b)
+                        continue
+                except Exception:
+                    pass
+            # Normalize common python executable mention
+            low = p.lower()
+            if low.endswith("python") or low.endswith("python.exe") or "pythonw" in low:
+                short_parts.append("python")
+            else:
+                short_parts.append(p)
+
+        short = " ".join(short_parts)
+        if len(parts) > max_tokens:
+            short = short + " ..."
+        if len(short) > max_len:
+            short = short[: max_len - 3].rstrip() + "..."
+        return short
+    except Exception:
+        # Best-effort: return the original label if shortening fails
+        return label if label else None
+
+
+def _existing_watcher_running() -> tuple[bool, int | None, str | None, str | None]:
+    """Check for an existing watcher process via PID file and return (is_running, pid,
+    cmdline, entrypoint).
+
+    If no existing PID file or cannot verify, returns (False, None, None, None).
+    """
+    try:
+        if not os.path.exists(PID_FILE):
+            return (False, None, None, None)
+        with open(PID_FILE, "r", encoding="utf-8") as fh:
+            raw = fh.read().strip()
+        if not raw:
+            return (False, None, None, None)
+        pid = None
+        cmdline = None
+        entrypoint = None
+        if raw.startswith("{"):
+            try:
+                obj = json.loads(raw)
+                pid = obj.get("pid")
+                cmdline = obj.get("cmdline")
+                entrypoint = obj.get("entrypoint")
+            except Exception:
+                return (False, None, None, None)
+        else:
+            try:
+                pid = int(raw)
+            except Exception:
+                return (False, None, None, None)
+
+        if not pid:
+            return (False, None, None, None)
+
+        real_cmd = _get_cmdline_for_pid_local(pid)
+        if real_cmd:
+            cmdline = real_cmd
+        if _cmdline_matches_watcher_local(cmdline):
+            return (True, pid, cmdline, entrypoint)
+        return (False, pid, cmdline, entrypoint)
+    except Exception:
+        return (False, None, None, None)
 
 
 # ---------------------------------------------------------------------------
@@ -585,6 +766,11 @@ def main() -> None:
         default=0,
         help="Idle timeout in minutes (0 = disabled)",
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging (prints heartbeat and debug details)",
+    )
     args = parser.parse_args()
 
     if not SUPABASE_URL or not SUPABASE_ANON_KEY:
@@ -596,12 +782,62 @@ def main() -> None:
 
     DEVELOPER_ID = _get_developer_id()
 
+    # Optional debug mode: enable verbose logging for diagnostics
+    debug_mode = args.debug or os.getenv("COLLAB_DEBUG", "0").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    if debug_mode:
+        logging.getLogger().setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
+        logger.info("Debug logging enabled")
+
     # Write PID file (unified with lock_client daemon)
+    # Startup guard: avoid starting a second watcher if one is already active
+    running, existing_pid, existing_cmd, existing_entry = _existing_watcher_running()
+    if running:
+        # Prefer a stable human-facing label when the PID metadata contains an
+        # entrypoint. Map well-known entrypoint tokens to a short, descriptive
+        # process name so output is consistent for operators.
+        label = None
+        if existing_entry:
+            e = str(existing_entry).lower()
+            if e in ("lock-daemon", "lock-client"):
+                # Prefer an explicit, familiar invocation instead of a short token
+                label = "python lock_client.py"
+            elif e == "pycharm-watcher":
+                label = "python .collab/pycharm/live_locks_watcher.py"
+            else:
+                label = _shorten_process_label(existing_entry)
+        elif existing_cmd:
+            label = _shorten_process_label(existing_cmd)
+
+        if label:
+            first_line = f"Watcher already running (PID: {existing_pid}) — {label}."
+        else:
+            first_line = f"Watcher already running (PID: {existing_pid})."
+
+        # Use multi-line info so the IDE/terminal shows each action on its own line
+        msg = (
+            first_line
+            + "\nTo check status: python collab.py daemon-status\n"
+            + "To stop: python collab.py daemon-stop"
+        )
+        logger.info(msg)
+        # Avoid printing a duplicate concise line to the console — the logger
+        # output is sufficient and prevents double messages in IDE Run windows.
+        sys.exit(0)
+
     try:
-        with open(PID_FILE, "w") as f:
-            f.write(str(os.getpid()))
-    except OSError:
-        pass
+        _write_pid_file(os.getpid())
+    except Exception:
+        # Best-effort: if writing metadata fails, fall back to plain PID integer
+        try:
+            with open(PID_FILE, "w", encoding="utf-8") as f:
+                f.write(str(os.getpid()))
+        except OSError:
+            pass
 
     # Register cleanup
     atexit.register(_graceful_shutdown)
@@ -640,6 +876,7 @@ def main() -> None:
     last_modified: set = set()
     last_change_time = datetime.now()
     last_remote_scan = datetime.now()
+    last_heartbeat = datetime.now()
 
     # Initial remote lock scan
     _scan_remote_locks(client)
@@ -649,6 +886,10 @@ def main() -> None:
 
             # Remote lock scan every 30 seconds (independent of git status)
             now = datetime.now()
+            # Periodic heartbeat (helps diagnose silent exits)
+            if (now - last_heartbeat).total_seconds() > 60:
+                last_heartbeat = now
+                logger.debug("heartbeat pid=%d", os.getpid())
             if (now - last_remote_scan).total_seconds() > 30:
                 last_remote_scan = now
                 _scan_remote_locks(client)
@@ -718,4 +959,38 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:  # top-level catch to ensure operator sees failures
+        # Write full traceback to the daemon log for post-mortem analysis
+        log_path = os.path.join(_COLLAB_ROOT, ".daemon.log")
+        tb = traceback.format_exc()
+        try:
+            with open(log_path, "a", encoding="utf-8") as fh:
+                fh.write(
+                    "["
+                    + datetime.now(timezone.utc).isoformat()
+                    + "] Unhandled exception in live_locks_watcher: "
+                    + str(exc)
+                    + "\n"
+                )
+                fh.write(tb)
+                fh.write("\n")
+        except Exception:
+            # best-effort logging only
+            pass
+
+        # Print short, operator-friendly message to stderr so it appears in
+        # the IDE/terminal immediately, pointing to the full log for details.
+        try:
+            file_uri = Path(log_path).resolve().as_uri()
+        except Exception:
+            file_uri = log_path
+        print(f"Unhandled error in watcher. See log: {file_uri}", file=sys.stderr)
+
+        # Attempt graceful cleanup, then exit non-zero
+        try:
+            _graceful_shutdown()
+        except Exception:
+            pass
+        sys.exit(1)
