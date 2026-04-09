@@ -343,6 +343,15 @@ MockCMMS uses a **Smart Collector** logic. Tests for apps in `apps/` (Planning, 
 - **Development Speed:** Use `$env:PLANNING_ENABLED="false"` to skip tests for modules you aren't changing.
 - **Stability Enforcement:** The validation script default (Health Mode) overrides these flags to ensure 100% project health before PR submission.
 
+#### Collaborative System Isolation
+
+Tests that interact with the collaborative file-locking system must be isolated from the live production daemon to prevent accidental interference (e.g., tests killing the production watcher or releasing production locks).
+
+- **`COLLAB_TEST_MODE=1`**: When set, the system skips real network calls during `atexit` or graceful shutdown, preventing test sessions from affecting the Supabase backend.
+- **`COLLAB_PID_FILE`**: Tests should point this to a temporary file (handled automatically in `conftest.py`) so they do not read or overwrite the production `.collab/.daemon.pid`.
+
+These are configured globally in `.collab/tests/conftest.py`. Always ensure new collaborative tests respect these isolation boundaries.
+
 #### Avoiding Test Duplicates
 
 1. **Search before creating** - Use `findstr /S "def test_" tests\*.py`

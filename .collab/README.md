@@ -248,6 +248,18 @@ python collab.py daemon-stop
 
 ---
 
+## Logging
+
+All collaborative system logs are consolidated in `.collab/logs/`:
+
+- **`application.log`**: General operation logs, heartbeat info, and non-fatal warnings.
+- **`errors.log`**: Crash reports and unhandled exception tracebacks.
+- **`test_application.log` / `test_errors.log`**: Logs generated during test runs (isolated from production logs).
+
+Daemon processes (started via `daemon-start` or IDE plugins) redirect their stdout and stderr to these files automatically.
+
+---
+
 ## Troubleshooting
 
 ### Daemon stuck / not stopping
@@ -277,11 +289,12 @@ python collab.py daemon-stop
 
 ### Compression error ("file in use by another process")
 
-This happens when orphaned daemon processes hold file handles. Fix:
+This happens when orphaned daemon processes hold file handles or leave stale PID files. Fix:
 
-1. Stop all daemons: `python collab.py daemon-stop`
-2. Check for orphaned processes: look at `.collab/.daemon.pid`
-3. Kill if needed (see "Kill the Daemon Manually")
+1. Check the logs in `.collab/logs/errors.log` for any crash details.
+2. Stop all daemons: `python collab.py daemon-stop`
+3. Check for orphaned processes: look at `.collab/.daemon.pid`
+4. Kill if needed (see "Kill the Daemon Manually")
 
 ### "Missing SUPABASE_URL or SUPABASE_ANON_KEY"
 

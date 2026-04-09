@@ -11,7 +11,6 @@ Usage:
 from __future__ import annotations
 
 import atexit
-import importlib
 import importlib.util
 import json
 import logging
@@ -24,8 +23,16 @@ import threading
 import time
 import traceback
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from typing import Any, Callable, Optional
+from importlib import import_module
+from typing import Any, Callable, Optional, cast
+
+from dotenv import load_dotenv
+
+# NOTE: do NOT import collab-local modules before ensuring the .collab
+# directory is on sys.path. The import for `logging_config` is moved
+# lower in this file (after sys.path.insert and load_dotenv) so that
+# the local helper module can be resolved reliably when running from
+# the project root or via IDE run configurations.
 
 # Optional colored output (avoid try/except to reduce unreachable-branch lines)
 _HAS_COLORAMA = False
@@ -34,7 +41,7 @@ try:
 except Exception:
     _colorama_spec = None
 if _colorama_spec is not None:
-    colorama_mod = importlib.import_module("colorama")
+    colorama_mod = import_module("colorama")
     Fore = getattr(colorama_mod, "Fore")
     Style = getattr(colorama_mod, "Style")
     _colorama_init = getattr(colorama_mod, "init", None)
@@ -52,8 +59,36 @@ _PROJECT_ROOT = os.path.abspath(os.path.join(_COLLAB_ROOT, ".."))
 sys.path.insert(0, _COLLAB_ROOT)
 
 # Load environment before reading config variables
-load_dotenv = __import__("dotenv", fromlist=["load_dotenv"]).load_dotenv  # noqa: E402
 load_dotenv(os.path.join(_PROJECT_ROOT, ".env"))
+
+# Runtime: load logging_config dynamically from the .collab directory so the
+# module is resolvable regardless of IDE/project interpreter settings.
+_setup_collab_logging_obj = None
+try:
+    _lc_path = os.path.join(_COLLAB_ROOT, "logging_config.py")
+    if os.path.exists(_lc_path):
+        _spec = importlib.util.spec_from_file_location(
+            "collab.logging_config", _lc_path
+        )
+        if _spec and _spec.loader:
+            _mod = importlib.util.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)
+            _setup_collab_logging_obj = getattr(_mod, "setup_collab_logging", None)
+except Exception:
+    _setup_collab_logging_obj = None
+
+
+def setup_collab_logging(collab_dir: str) -> None:
+    """Dynamically routes logging setup or falls back to basicConfig.
+
+    This proxy func resolves static analyzer type-hinting natively without relying on
+    TYPE_CHECKING imports or triggering F811 redefinition lints.
+    """
+    if _setup_collab_logging_obj is not None:
+        _setup_collab_logging_obj(collab_dir)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
 
 # ---------------------------------------------------------------------------
 # UTF-8 encoding (Windows fix — same pattern as validate_code.py / run.py)
@@ -68,11 +103,13 @@ for _stream in (sys.stdout, sys.stderr):
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
-logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] %(levelname)s: %(message)s",
-    datefmt="%H:%M:%S",
-)
+
+if callable(setup_collab_logging):
+    setup_collab_logging(collab_dir=_COLLAB_ROOT)
+else:
+    # Best-effort fallback: configure a simple console logger so runtime
+    # still produces useful output even when the collab helper cannot be loaded.
+    logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("collab.pycharm_watcher")
 
 # Reduce noisy HTTP client logs (Supabase client uses httpx under the hood)
@@ -87,11 +124,41 @@ try:
 except Exception:
     _supa_spec = None
 if _supa_spec is None:
-    logger.error("supabase not installed. Run: pip install supabase")
-    sys.exit(1)
+    logger.warning("supabase not installed. Run: pip install supabase")
+    # create_client remains None; main() will exit when it detects this.
 else:
-    _supa = importlib.import_module("supabase")
-    create_client = getattr(_supa, "create_client")
+    # Defensive diagnostic: ensure we are importing the expected package and
+    # not a local file under the project (e.g. .collab/supabase.py) which would
+    # shadow the installed package. This has caused failures where a test stub
+    # or stray file raised a RuntimeError during watcher startup.
+    origin = getattr(_supa_spec, "origin", None)
+    try:
+        if origin:
+            origin_abs = os.path.abspath(origin)
+            # If the resolved module origin is inside the repo's .collab folder,
+            # abort with a clear operator message instead of quietly importing it.
+            if origin_abs.startswith(_COLLAB_ROOT):
+                logger.error(
+                    "Detected local module 'supabase' at %s "
+                    "which shadows the installed package.",
+                    origin_abs,
+                )
+                logger.error(
+                    "Remove or rename this file/folder and restart the watcher."
+                )
+                sys.exit(1)
+    except Exception:
+        # Best-effort diagnostics only; continue to import below if something
+        # went wrong inspecting the origin.
+        pass
+
+    _supa = import_module("supabase")
+    create_client = getattr(_supa, "create_client", None)
+    if create_client is None:
+        logger.error(
+            "The installed 'supabase' package does not expose 'create_client'."
+        )
+        logger.error("Ensure supabase-py is correctly installed and up to date.")
 
 try:
     _ply_spec = importlib.util.find_spec("plyer")
@@ -104,7 +171,7 @@ if _ply_spec is None:
         "Run: pip install plyer"
     )
 else:
-    _ply = importlib.import_module("plyer")
+    _ply = import_module("plyer")
     desktop_notify = getattr(_ply, "notification", None)
 
 # ---------------------------------------------------------------------------
@@ -113,7 +180,10 @@ else:
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-PID_FILE = os.path.join(_COLLAB_ROOT, ".daemon.pid")
+# PID file lives inside .collab/ so it stays with the feature.
+# Tests can override this via COLLAB_PID_FILE env var to avoid interfering with
+# the live production watcher.
+PID_FILE = os.getenv("COLLAB_PID_FILE") or os.path.join(_COLLAB_ROOT, ".daemon.pid")
 DEVELOPER_ID = None
 
 # Ephemeral developer prefixes enforced in code (not via env) to avoid
@@ -189,6 +259,31 @@ def _parse_git_status_path(line: str) -> str:
     if p.startswith('"') and p.endswith('"'):
         p = p[1:-1]
     return p
+
+
+def _normalize_path(path: str, project_root: str) -> str:
+    """Normalise a file path to a canonical project-relative Unix-style key.
+
+    - Converts backslashes to forward slashes.
+    - Strips a leading ``./`` if present.
+    - Resolves ``collab/`` vs ``.collab/`` ambiguity: if both map to the same
+      physical directory, canonicalise to the ``.collab/`` prefix.
+    - Uses ``os.path.relpath`` when the path is absolute.
+    """
+    try:
+        if os.path.isabs(path):
+            path = os.path.relpath(path, project_root)
+        path = path.replace("\\", "/")
+        if path.startswith("./"):
+            path = path[2:]
+
+        # Canonicalise collab/ -> .collab/ if it looks like a path mismatch.
+        # Mirror logic in lock_client.py for strict consistency.
+        if path.startswith("collab/"):
+            path = "." + path
+        return path
+    except Exception:
+        return path.replace("\\", "/")
 
 
 def _should_ignore_path(path: str) -> bool:
@@ -434,8 +529,9 @@ def _process_new_files(client, branch: str, new_files: set[str]) -> None:
                     _local_owned_locks.add(fp)
                 except Exception:
                     pass
-        except Exception as e:
-            logger.error("Failed to acquire lock for %s: %s", fp, e)
+        except Exception:
+            # Log full traceback so errors during acquire are visible in errors.log
+            logger.exception("Failed to acquire lock for %s", fp)
 
 
 def _process_releases(client, released: set[str]) -> None:
@@ -469,8 +565,9 @@ def _process_releases(client, released: set[str]) -> None:
                         _local_owned_locks.discard(fp)
                     except Exception:
                         pass
-            except Exception as e:
-                logger.error("Failed to release lock for %s: %s", fp, e)
+            except Exception:
+                # Ensure full traceback is captured in errors.log for diagnostics
+                logger.exception("Failed to release lock for %s", fp)
 
 
 def _start_dashboard_server() -> str | None:
@@ -551,18 +648,33 @@ def _graceful_shutdown() -> None:
     (signal handler, finally block, atexit).
     """
     global _shutdown_done
-    if _shutdown_done:
+    if _shutdown_done or os.getenv("COLLAB_TEST_MODE") == "1":
         return
     _shutdown_done = True
 
-    dev_id = DEVELOPER_ID
-    if dev_id and SUPABASE_URL and SUPABASE_ANON_KEY:
+    # Never touch real Supabase in test mode
+    if os.getenv("COLLAB_TEST_MODE") == "1":
         try:
-            client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+            if os.path.exists(PID_FILE):
+                os.remove(PID_FILE)
+        except OSError:
+            pass
+        return
+
+    dev_id = DEVELOPER_ID
+    if dev_id and SUPABASE_URL and SUPABASE_ANON_KEY and create_client is not None:
+        try:
+            # Help static analyzers understand create_client is callable here
+            assert create_client is not None
+            client = cast(Callable[..., Any], create_client)(
+                SUPABASE_URL, SUPABASE_ANON_KEY
+            )
             client.table("file_locks").delete().eq("developer_id", dev_id).execute()
             logger.info("✅ Released all locks during shutdown.")
-        except Exception as e:
-            logger.error("Error releasing locks during shutdown: %s", e)
+        except Exception:
+            # Capture full stack trace when shutdown cleanup fails so the
+            # reason the daemon exited is visible in .collab/logs/errors.log
+            logger.exception("Error releasing locks during shutdown")
     try:
         if os.path.exists(PID_FILE):
             os.remove(PID_FILE)
@@ -840,7 +952,8 @@ def main() -> None:
             pass
 
     # Register cleanup
-    atexit.register(_graceful_shutdown)
+    if os.getenv("COLLAB_TEST_MODE") != "1":
+        atexit.register(_graceful_shutdown)
 
     def _signal_handler(signum, frame):
         logger.info("Received signal %d, shutting down...", signum)
@@ -857,7 +970,9 @@ def main() -> None:
             "Supabase client factory is not available. Ensure supabase is installed."
         )
         sys.exit(1)
-    client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    # static analyzers may still treat create_client as Optional; cast for
+    # their sake so they recognize the value is callable beyond this point.
+    client = cast(Callable[..., Any], create_client)(SUPABASE_URL, SUPABASE_ANON_KEY)
 
     # Start local dashboard server for a clickable URL
     dashboard_url = _start_dashboard_server()
@@ -924,7 +1039,7 @@ def main() -> None:
             if out:
                 for line in out.splitlines():
                     if len(line) > 3:
-                        p = _parse_git_status_path(line)
+                        p = _normalize_path(_parse_git_status_path(line), _PROJECT_ROOT)
                         if not _should_ignore_path(p):
                             current_modified.add(p)
 
@@ -954,6 +1069,9 @@ def main() -> None:
 
     except KeyboardInterrupt:
         logger.info("Stopped by user.")
+    except Exception as e:
+        logger.error("Watcher loop error: %s", e, exc_info=True)
+        _notify("Watcher Error", f"Loop error: {e}")
     finally:
         _graceful_shutdown()
 
@@ -962,31 +1080,16 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as exc:  # top-level catch to ensure operator sees failures
-        # Write full traceback to the daemon log for post-mortem analysis
-        log_path = os.path.join(_COLLAB_ROOT, ".daemon.log")
         tb = traceback.format_exc()
-        try:
-            with open(log_path, "a", encoding="utf-8") as fh:
-                fh.write(
-                    "["
-                    + datetime.now(timezone.utc).isoformat()
-                    + "] Unhandled exception in live_locks_watcher: "
-                    + str(exc)
-                    + "\n"
-                )
-                fh.write(tb)
-                fh.write("\n")
-        except Exception:
-            # best-effort logging only
-            pass
+        # Log to standard .collab/logs/ via the structured logger
+        logger.error("Unhandled exception in live_locks_watcher: %s\n%s", exc, tb)
 
         # Print short, operator-friendly message to stderr so it appears in
         # the IDE/terminal immediately, pointing to the full log for details.
-        try:
-            file_uri = Path(log_path).resolve().as_uri()
-        except Exception:
-            file_uri = log_path
-        print(f"Unhandled error in watcher. See log: {file_uri}", file=sys.stderr)
+        print(
+            "Unhandled error in watcher. See .collab/logs/errors.log",
+            file=sys.stderr,
+        )
 
         # Attempt graceful cleanup, then exit non-zero
         try:

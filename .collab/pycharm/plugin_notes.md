@@ -50,9 +50,7 @@ When the watcher detects a conflict (file locked by another developer):
   performs a clean shutdown, releasing all locks via its signal handler
 - **CLI**: `python collab.py daemon-stop`
 
-## Output
-
-The watcher prints structured status lines to stdout:
+The watcher prints structured status lines to stdout, which are automatically captured in `.collab/logs/application.log`:
 
 ```
 [10:30:15] INFO: Collab Locks — PyCharm Watcher
@@ -64,3 +62,5 @@ The watcher prints structured status lines to stdout:
 [10:32:10] INFO: 🔓 Released: src/services/db_utils.py
 [10:33:00] INFO: ✅ Conflict cleared: src/app.py (file reverted or resolved)
 ```
+
+Errors and crashes are recorded in `.collab/logs/errors.log`.

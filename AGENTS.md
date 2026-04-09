@@ -46,6 +46,11 @@ mockCMMS/
 ├── apps/                       # Modular extensions (each is a Flask blueprint)
 │   ├── planning/               # Skill-based technician task assignment
 │   └── reporting/              # Report generation (PDF, Markdown)
+├── .collab/                    # Collaborative file locking system
+│   ├── core/                   # Lock client logic
+│   ├── logs/                   # Application and error logs
+│   ├── tests/                  # Unit and integration tests
+│   └── vscode/                 # VS Code extension
 ├── tests/
 │   ├── backend/                # Pytest: unit/, functional/, integration/,
 │   │                           #         security/, performance/, reliability/

@@ -44,7 +44,9 @@ def _reset_shutdown_guard():
     """Reset the shutdown guard before each test so tests are independent."""
     watcher._shutdown_done = False
     yield
-    watcher._shutdown_done = False
+    # Do NOT reset _shutdown_done in teardown — leaving it True prevents the
+    # atexit-registered hook from re-firing after the test session when
+    # COLLAB_TEST_MODE has already been torn down.
 
 
 # ============================================================================
@@ -428,8 +430,8 @@ def test_main_handles_keyboard_interrupt(monkeypatch):
     # main() has a try/except KeyboardInterrupt at line 386, should not propagate
     try:
         watcher.main()
-    except SystemExit:
-        pass  # sys.exit(0) from signal handler is OK
+    except (SystemExit, KeyboardInterrupt):
+        pass  # sys.exit(0) from signal handler is OK, and KeyboardInterrupt is expected
 
 
 def test_main_handles_git_error(monkeypatch):
@@ -619,6 +621,8 @@ def test_graceful_shutdown_with_valid_dev_id(monkeypatch, tmp_path):
     monkeypatch.setattr(watcher, "DEVELOPER_ID", "test_dev")
     monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
     monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "test_key")
+    # Temporarily unset test mode to allow the guard to proceed in this specific test
+    monkeypatch.setenv("COLLAB_TEST_MODE", "0")
 
     pid_file = tmp_path / "watcher.pid"
     pid_file.write_text("12345")
@@ -649,6 +653,8 @@ def test_graceful_shutdown_with_error(monkeypatch, tmp_path):
     monkeypatch.setattr(watcher, "DEVELOPER_ID", "test_dev")
     monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
     monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "test_key")
+    # Temporarily unset test mode to allow the guard to proceed in this specific test
+    monkeypatch.setenv("COLLAB_TEST_MODE", "0")
 
     pid_file = tmp_path / "watcher.pid"
     pid_file.write_text("12345")
@@ -670,6 +676,8 @@ def test_graceful_shutdown_no_dev_id(monkeypatch, tmp_path):
     pid_file = tmp_path / "watcher.pid"
     pid_file.write_text("12345")
     monkeypatch.setattr(watcher, "PID_FILE", str(pid_file))
+    # Unset test mode to allow verify cleanup
+    monkeypatch.setenv("COLLAB_TEST_MODE", "0")
 
     watcher._graceful_shutdown()
     assert not pid_file.exists()
@@ -2254,6 +2262,7 @@ def test_graceful_shutdown_guard_prevents_double_run(monkeypatch, tmp_path):
     monkeypatch.setattr(watcher, "SUPABASE_URL", "https://test.supabase.co")
     monkeypatch.setattr(watcher, "SUPABASE_ANON_KEY", "test_key")
     monkeypatch.setattr(watcher, "PID_FILE", str(tmp_path / "pid"))
+    monkeypatch.setenv("COLLAB_TEST_MODE", "0")
 
     call_count = [0]
 
@@ -2288,6 +2297,7 @@ def test_graceful_shutdown_dev_id_without_credentials(monkeypatch, tmp_path):
     pid_file = tmp_path / "watcher.pid"
     pid_file.write_text("12345")
     monkeypatch.setattr(watcher, "PID_FILE", str(pid_file))
+    monkeypatch.setenv("COLLAB_TEST_MODE", "0")
 
     watcher._graceful_shutdown()  # should not attempt API call
     assert not pid_file.exists()
@@ -2413,14 +2423,41 @@ def test_process_releases_handles_discard_exception(monkeypatch):
 
     # Fake client for delete.execute()
     class FakeClientLocal2:
+        """Fake Supabase client with fluent CRUD interface for testing."""
+
         def __init__(self, data=None, explode=False):
-            self._data = data
+            self._data = data if data is not None else []
             self._explode = explode
+            self._rows = list(self._data)
 
         def table(self, *a, **k):
             return self
 
         def select(self, *a, **k):
+            return self
+
+        def insert(self, *a, **k):
+            return self
+
+        def update(self, *a, **k):
+            return self
+
+        def delete(self):
+            return self
+
+        def eq(self, *a, **k):
+            return self
+
+        def ilike(self, *a, **k):
+            return self
+
+        def order(self, *a, **k):
+            return self
+
+        def limit(self, *a, **k):
+            return self
+
+        def rpc(self, *a, **k):
             return self
 
         def execute(self):

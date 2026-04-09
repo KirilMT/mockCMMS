@@ -208,6 +208,7 @@ def test_prepare_dashboard_server_tmpfile_exception(monkeypatch):
 def test_history_fallback_exception(monkeypatch):
     """Test history partial exception."""
     monkeypatch.setattr(mod, "SUPABASE_SERVICE_ROLE_KEY", "admin_key")
+    monkeypatch.setattr(mod, "_supabase_create_client", lambda url, key: None)
 
     class FakeQuery:
         def select(self, *args):
@@ -249,6 +250,7 @@ def test_history_fallback_exception(monkeypatch):
 
 
 def test_daemon_status_legacy_pid(monkeypatch, tmp_path):
+    monkeypatch.setattr(mod, "_supabase_create_client", lambda url, key: None)
     client = getattr(mod, "LockClient")()
     monkeypatch.setattr(client, "_read_pid", lambda: None)
     legacy = tmp_path / ".pycharm_watcher.pid"
@@ -259,6 +261,7 @@ def test_daemon_status_legacy_pid(monkeypatch, tmp_path):
 
 
 def test_daemon_status_legacy_pid_exception(monkeypatch, tmp_path):
+    monkeypatch.setattr(mod, "_supabase_create_client", lambda url, key: None)
     client = getattr(mod, "LockClient")()
     monkeypatch.setattr(client, "_read_pid", lambda: None)
     legacy = tmp_path / ".pycharm_watcher.pid"
@@ -276,6 +279,7 @@ def test_run_cli_reconfigure_exception(monkeypatch):
     monkeypatch.setattr(sys, "stdout", streams[0])
     monkeypatch.setattr(sys, "stderr", streams[1])
     monkeypatch.setattr(sys, "argv", ["collab"])
+    monkeypatch.setattr(mod, "_supabase_create_client", lambda url, key: None)
     # should not raise
     mod._run_cli()
 
@@ -1148,6 +1152,7 @@ def test_history_exception(monkeypatch):
 def test_pid_file_helpers(tmp_path, monkeypatch):
     pid_file = tmp_path / "daemon.pid"
     monkeypatch.setattr(mod, "PID_FILE", str(pid_file))
+    monkeypatch.setenv("COLLAB_TEST_MODE", "0")
     if pid_file.exists():
         pid_file.unlink()
 
@@ -1745,6 +1750,7 @@ def test_graceful_shutdown(monkeypatch, tmp_path):
     pid_file = tmp_path / "daemon.pid"
     pid_file.write_text("12345")
     monkeypatch.setattr(mod, "PID_FILE", str(pid_file))
+    monkeypatch.setenv("COLLAB_TEST_MODE", "0")
     monkeypatch.setattr(
         mod, "_get_create_client", lambda: make_create_client(FakeResponse())
     )

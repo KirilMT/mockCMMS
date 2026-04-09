@@ -164,8 +164,22 @@ function loadConfig() {
 
   const url = vars["SUPABASE_URL"];
   const key = vars["SUPABASE_SERVICE_ROLE_KEY"] || vars["SUPABASE_ANON_KEY"];
-  const user =
-    vars["USERNAME"] || require("os").userInfo().username || "unknown";
+
+  let user = vars["DEVELOPER_ID"] || vars["USERNAME"];
+  if (!user) {
+    try {
+      const { execSync } = require("child_process");
+      const gitName = execSync("git config user.name", { cwd: workspaceRoot })
+        .toString()
+        .trim();
+      if (gitName) user = gitName;
+    } catch (e) {
+      /* ignore git failure */
+    }
+  }
+  if (!user) {
+    user = require("os").userInfo().username || "unknown";
+  }
 
   if (!url || !key) return null;
   return { url, key, user };

@@ -95,12 +95,18 @@ npm run test:coverage
 
 Always ensure proper cleanup to avoid "unclosed connection" warnings:
 
-```python
+````python
 # In fixtures or teardown:
 db.session.remove()         # Return connection to pool
 db.engine.pool.dispose()    # Close checked-out connections
-db.engine.dispose()         # Shutdown engine
-```
+### Collaborative System Isolation
+
+When testing components that interact with the collaborative file-locking system, you MUST ensure that tests are isolated from the production environment to avoid interfering with the live watcher or Supabase backend.
+
+- **`COLLAB_TEST_MODE=1`**: Disables actual network calls in `atexit`/graceful shutdown handlers.
+- **`COLLAB_PID_FILE`**: Points to a temporary location (`temp_pid` fixture) to avoid overwriting `.collab/.daemon.pid`.
+
+These are handled automatically in `.collab/tests/conftest.py` for all tests under `.collab/tests`. When adding collaborative tests outside that directory, ensure these environment variables are set.
 
 ---
 
@@ -131,7 +137,7 @@ def test_create_maintenance_order_with_valid_data(app, db_session):
     # Assert
     assert response.status_code == 201
     assert db_session.query(MaintenanceOrder).count() == 1
-```
+````
 
 ### Generate Test Stubs
 

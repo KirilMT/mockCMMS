@@ -218,6 +218,8 @@ def test_daemon_status_prefers_entrypoint(tmp_path, monkeypatch):
         stderr=subprocess.DEVNULL,
     )
     try:
+        pid_file = tmp_path / ".daemon.pid"
+
         # reuse a minimal writer to create the PID file used by the CLI
         def _write_meta(pid: int, entrypoint: str, cmdline: str) -> None:
             meta = {
@@ -227,10 +229,7 @@ def test_daemon_status_prefers_entrypoint(tmp_path, monkeypatch):
                 "cmdline": cmdline,
                 "cwd": os.getcwd(),
             }
-            (Path(".collab") / ".daemon.pid").parent.mkdir(parents=True, exist_ok=True)
-            (Path(".collab") / ".daemon.pid").write_text(
-                json.dumps(meta), encoding="utf-8"
-            )
+            pid_file.write_text(json.dumps(meta), encoding="utf-8")
 
         _write_meta(p.pid, "python lock_client.py", f"{sys.executable} -c dummy_sleep")
 
@@ -238,6 +237,9 @@ def test_daemon_status_prefers_entrypoint(tmp_path, monkeypatch):
         env = dict(os.environ)
         env["SUPABASE_URL"] = env.get("SUPABASE_URL", "http://example.invalid")
         env["SUPABASE_ANON_KEY"] = env.get("SUPABASE_ANON_KEY", "anon")
+        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[3])
+        env["COLLAB_TEST_MODE"] = "1"
+        env["COLLAB_PID_FILE"] = str(pid_file)
 
         res = subprocess.run(
             [sys.executable, "collab.py", "daemon-status"],
@@ -254,7 +256,8 @@ def test_daemon_status_prefers_entrypoint(tmp_path, monkeypatch):
         except Exception:
             pass
         try:
-            (Path(".collab") / ".daemon.pid").unlink()
+            if pid_file.exists():
+                pid_file.unlink()
         except Exception:
             pass
 
@@ -264,6 +267,7 @@ def test_daemon_status_removes_stale_pid(monkeypatch, tmp_path):
     pid_file = tmp_path / ".daemon.pid"
     pid_file.write_text("99999")
     monkeypatch.setattr(mod, "PID_FILE", str(pid_file))
+    monkeypatch.setenv("COLLAB_TEST_MODE", "0")
 
     # Simulate that the PID exists but belongs to another process
     monkeypatch.setattr(mod.LockClient, "_read_pid", staticmethod(lambda: 99999))

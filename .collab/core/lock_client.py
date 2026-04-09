@@ -65,16 +65,7 @@ def _safe_now() -> datetime:
 # ---------------------------------------------------------------------------
 # Logging configuration
 # ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
-# Logging configuration
-# ---------------------------------------------------------------------------
 logger = logging.getLogger("collab.lock_client")
-if not logger.handlers:
-    _handler = logging.StreamHandler()
-    _handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
-    logger.addHandler(_handler)
-    logger.setLevel(logging.INFO)
 
 # ---------------------------------------------------------------------------
 # Environment
@@ -104,8 +95,10 @@ EPHEMERAL_PREFIXES = ["test_dev", "ci"]
 # enable/disable `.collab/` locking — the watcher and client always consider
 # files under `.collab/`.
 
-# PID file lives inside .collab/ so it stays with the feature
-PID_FILE = os.path.join(_COLLAB_ROOT, ".daemon.pid")
+# PID file lives inside .collab/ so it stays with the feature.
+# Tests can override this via COLLAB_PID_FILE env var to avoid interfering with
+# the live production watcher.
+PID_FILE = os.getenv("COLLAB_PID_FILE") or os.path.join(_COLLAB_ROOT, ".daemon.pid")
 
 # Maximum retry attempts for network errors
 MAX_RETRIES = 3
@@ -120,16 +113,115 @@ def _get_create_client():
     """Lazy-load the supabase create_client function."""
     global _supabase_create_client
     if _supabase_create_client is None:
-        try:
-            from supabase import create_client
+        # First: if tests or other harnesses have injected a fake module into
+        # ``sys.modules['supabase']``, prefer that module. Tests commonly
+        # monkeypatch sys.modules rather than relying on import machinery, and
+        # failing here causes fragile tests. If the injected module exposes a
+        # ``create_client`` symbol it will be used. If the injected module has
+        # a __file__ located inside the repository, treat that as accidental
+        # local shadowing and fail fast with a clear message.
+        supa_mod = sys.modules.get("supabase")
+        if supa_mod is not None:
+            # Honour any test-level import-time failures: if the import
+            # machinery (builtins.__import__) has been monkeypatched to raise
+            # ImportError for 'supabase' we should respect that and exit so
+            # tests that simulate missing packages behave deterministically.
+            try:
+                __import__("supabase")
+            except ImportError:
+                logger.error(
+                    "supabase-py is not installed (import failed). "
+                    "Install it with: pip install supabase"
+                )
+                sys.exit(1)
 
-            _supabase_create_client = create_client
+            origin = None
+            try:
+                spec = getattr(supa_mod, "__spec__", None)
+                spec_origin = getattr(spec, "origin", None) if spec else None
+                origin = spec_origin or getattr(supa_mod, "__file__", None)
+            except Exception:
+                origin = None
+
+            try:
+                if origin:
+                    origin_abs = os.path.abspath(origin)
+                    if origin_abs.startswith(_COLLAB_ROOT):
+                        logger.error(
+                            "Detected local module 'supabase' at %s "
+                            "which shadows the installed package.",
+                            origin_abs,
+                        )
+                        logger.error(
+                            "Remove or rename this file/folder and re-run "
+                            "tests / watcher."
+                        )
+                        sys.exit(1)
+            except Exception:
+                # Defensive: any unexpected error inspecting the fake module
+                # should not break tests; fall through and attempt to use it.
+                pass
+
+            create_fn = getattr(supa_mod, "create_client", None)
+            if create_fn is None:
+                logger.error(
+                    "The 'supabase' module present in sys.modules "
+                    "does not expose 'create_client'."
+                )
+                logger.error(
+                    "If this is a test, ensure your fake module "
+                    "provides 'create_client'."
+                )
+                sys.exit(1)
+
+            _supabase_create_client = create_fn
+            return _supabase_create_client
+
+        # No preloaded module in sys.modules — fall back to importing the
+        # real package. If it is missing, fail loudly with a helpful message.
+        try:
+            # This will call the import machinery and raise ImportError if
+            # the package is not available or tests have patched __import__.
+            from supabase import create_client as create_fn
         except ImportError:
             logger.error(
                 "supabase-py is not installed. Install it with: pip install supabase\n"
                 "See .collab/.env.example for required environment variables."
             )
             sys.exit(1)
+
+        # After a successful import, detect if the resolved module originates
+        # from the repository (e.g. .collab/supabase.py) which would indicate
+        # an accidental shadowing of the real package.
+        supa_mod = sys.modules.get("supabase")
+        spec_origin = None
+        if supa_mod is not None:
+            spec = getattr(supa_mod, "__spec__", None)
+            spec_origin = getattr(spec, "origin", None) if spec else None
+
+        if supa_mod is not None:
+            origin = spec_origin or getattr(supa_mod, "__file__", None)
+        else:
+            origin = None
+
+        try:
+            if origin:
+                origin_abs = os.path.abspath(origin)
+                if origin_abs.startswith(_COLLAB_ROOT):
+                    logger.error(
+                        "Detected local module 'supabase' at %s "
+                        "which shadows the installed package.",
+                        origin_abs,
+                    )
+                    logger.error(
+                        "Remove or rename this file/folder and re-run "
+                        "tests / watcher."
+                    )
+                    sys.exit(1)
+        except Exception:
+            pass
+
+        _supabase_create_client = create_fn
     return _supabase_create_client
 
 
@@ -174,6 +266,10 @@ def _retry_on_network_error(func, *args, **kwargs) -> Any:
                 time.sleep(wait)
             else:
                 raise
+    # Log the permanent failure with full traceback so operators can diagnose
+    # why retries exhausted (e.g. DNS resolution errors). Use logger.exception
+    # to ensure the stacktrace is written to .collab/logs/errors.log.
+    logger.exception("Permanent network failure after %d attempts", MAX_RETRIES)
     raise last_error  # type: ignore[misc]
 
 
@@ -188,12 +284,21 @@ class LockClient:
     defined in ``schema.sql`` to prevent race conditions.
     """
 
-    def __init__(self, developer_id: Optional[str] = None) -> None:
-        _validate_credentials()
+    def __init__(
+        self, developer_id: Optional[str] = None, local_only: bool = False
+    ) -> None:
+        from typing import cast
+
+        if not local_only:
+            _validate_credentials()
         self.developer_id = developer_id or self._get_git_username()
-        create_client = _get_create_client()
-        key = SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY
-        self._client = create_client(SUPABASE_URL, key)
+
+        self._client = cast(Any, None)
+        if not local_only:
+            create_client = _get_create_client()
+            key = SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY
+            self._client = cast(Any, create_client(SUPABASE_URL, key))
+
         self._parent_pid: Optional[int] = None
         self._is_admin: bool = bool(SUPABASE_SERVICE_ROLE_KEY)
         # Treat certain developer ids as ephemeral (e.g. CI/test accounts) so
@@ -223,8 +328,16 @@ class LockClient:
                 rel = os.path.relpath(file_path, _PROJECT_ROOT)
             else:
                 rel = file_path
-            # Normalize separators to forward-slash for consistency in the DB
-            return rel.replace("\\", "/")
+            # Normalise separators to forward-slash for consistency in the DB
+            rel = rel.replace("\\", "/")
+            if rel.startswith("./"):
+                rel = rel[2:]
+
+            # Canonicalise collab/ -> .collab/ if it looks like a path mismatch.
+            # We check for the presence of .collab directory to be safe.
+            if rel.startswith("collab/"):
+                rel = "." + rel
+            return rel
         except Exception:
             return file_path.replace("\\", "/")
 
@@ -347,6 +460,7 @@ class LockClient:
             "p_is_ephemeral": bool(getattr(self, "_is_ephemeral", False)),
         }
 
+        assert self._client is not None, "Supabase client not initialized"
         try:
             res = _retry_on_network_error(
                 lambda: self._client.rpc("acquire_lock", rpc_params).execute()
@@ -392,6 +506,7 @@ class LockClient:
             )
             return True, "ephemeral-released"
 
+        assert self._client is not None, "Supabase client not initialized"
         try:
             norm = self._normalize_file_path(file_path)
             res = _retry_on_network_error(
@@ -415,6 +530,7 @@ class LockClient:
 
     def active(self) -> List[Dict]:
         """Return all currently active locks."""
+        assert self._client is not None, "Supabase client not initialized"
         try:
             res = _retry_on_network_error(
                 lambda: self._client.table("file_locks").select("*").execute()
@@ -428,6 +544,7 @@ class LockClient:
 
     def get_lock_status(self, file_path: str) -> Dict:
         """Return the lock status for a specific file."""
+        assert self._client is not None, "Supabase client not initialized"
         try:
             norm = self._normalize_file_path(file_path)
             res = _retry_on_network_error(
@@ -663,7 +780,9 @@ class LockClient:
             cmd.append("--open-dashboard")
 
         if sys.platform == "win32":
-            log_path = os.path.join(_COLLAB_ROOT, ".daemon.log")
+            _logs_dir = os.path.join(_COLLAB_ROOT, "logs")
+            os.makedirs(_logs_dir, exist_ok=True)
+            log_path = os.path.join(_logs_dir, "application.log")
             log_fh: Any
             try:
                 log_fh = open(log_path, "a", encoding="utf-8")
@@ -935,6 +1054,11 @@ class LockClient:
         Called by daemon_start.  When *daemon_mode* is True the parent-PID liveness
         check is skipped (detached daemons have no meaningful parent).
         """
+        # Ensure file-based logging is wired so watch output goes to logs/
+        from logging_config import setup_collab_logging
+
+        setup_collab_logging(collab_dir=_COLLAB_ROOT)
+
         if not daemon_mode:
             self._parent_pid = os.getppid()
         self._write_pid(os.getpid())
@@ -985,7 +1109,9 @@ class LockClient:
                     if out:
                         for line in out.splitlines():
                             if len(line) > 3:
-                                path = self._parse_git_status_path(line)
+                                path = self._normalize_file_path(
+                                    self._parse_git_status_path(line)
+                                )
                                 if not self._should_ignore_path(path):
                                     current_modified.add(path)
 
@@ -1031,7 +1157,7 @@ class LockClient:
 
                     time.sleep(interval)
                 except Exception as e:
-                    logger.error("Error in watcher loop: %s", e)
+                    logger.error("Error in watcher loop: %s", e, exc_info=True)
                     time.sleep(interval)
         except KeyboardInterrupt:
             logger.info("Watcher stopped by user.")
@@ -1043,7 +1169,8 @@ class LockClient:
     # ------------------------------------------------------------------
     def _register_signal_handlers(self) -> None:
         """Register cleanup handlers for clean shutdown."""
-        atexit.register(self._graceful_shutdown)
+        if os.getenv("COLLAB_TEST_MODE") != "1":
+            atexit.register(self._graceful_shutdown)
 
         def _handle_signal(signum, frame):
             logger.info("Received signal %d, shutting down...", signum)
@@ -1064,12 +1191,18 @@ class LockClient:
             return
         self._shutdown_done = True
 
+        # Never touch real Supabase OR local PID file in test mode to avoid
+        # interfering with the live production environment.
+        if os.getenv("COLLAB_TEST_MODE") == "1":
+            return
+
         try:
             count = self.release_all()
             if count > 0:
                 logger.info("✅ Released %d lock(s) during shutdown.", count)
-        except Exception as e:
-            logger.error("Error releasing locks during shutdown: %s", e)
+        except Exception:
+            # Ensure full traceback is captured for shutdown failures
+            logger.exception("Error releasing locks during shutdown")
         self._remove_pid()
 
     def _reconcile(self) -> set:
@@ -1323,7 +1456,14 @@ class LockClient:
 
     @staticmethod
     def _remove_pid() -> None:
-        """Remove the PID file if it exists."""
+        """Remove the PID file if it exists.
+
+        Suppressed in COLLAB_TEST_MODE to prevent test processes from accidentally
+        deleting the production watcher's PID file.
+        """
+        if os.getenv("COLLAB_TEST_MODE") == "1":
+            return
+
         try:
             if os.path.exists(PID_FILE):
                 os.remove(PID_FILE)
@@ -1374,6 +1514,13 @@ def _run_cli() -> None:
                 stream.reconfigure(encoding="utf-8", errors="replace")
             except Exception:
                 pass
+
+    # Wire up file-based logging early so all CLI output is captured.
+    if _COLLAB_ROOT not in sys.path:
+        sys.path.insert(0, _COLLAB_ROOT)
+    from logging_config import setup_collab_logging
+
+    setup_collab_logging(collab_dir=_COLLAB_ROOT)
 
     parser = argparse.ArgumentParser(
         description="Collaborative File Lock Manager (Supabase)"
@@ -1458,7 +1605,8 @@ def _run_cli() -> None:
     )
 
     args = parser.parse_args()
-    client = LockClient()
+    local_only = args.command in ("daemon-status", "daemon-stop")
+    client = LockClient(local_only=local_only)
 
     if args.command == "acquire":
         ok, msg = client.acquire(args.file_path, reason=args.reason)
@@ -1588,7 +1736,19 @@ def _run_cli() -> None:
 
 def main():
     """Entry point for ``python -m .collab.core.lock_client``."""
-    _run_cli()
+    try:
+        _run_cli()
+    except Exception as exc:
+        import traceback as _tb
+
+        tb_str = _tb.format_exc()
+        # Log to standard .collab/logs/ via the structured logger
+        logger.error("Unhandled exception: %s\n%s", exc, tb_str)
+        print(
+            "FATAL: lock_client crashed \u2014 see .collab/logs/errors.log",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":

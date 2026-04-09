@@ -19,4 +19,14 @@ if __name__ == "__main__":
     # Re-write sys.argv[0] to pretend we invoked the script directly,
     # then execute it in the __main__ namespace.
     sys.argv[0] = _CLIENT_PATH
+    # Historically this wrapper attempted to reconfigure stdout/stderr to the
+    # parent test harness codepage (cp1252) to prevent UnicodeDecodeError when
+    # pytest captured subprocess output on Windows. That approach replaced
+    # non-representable characters (including emoji) and caused confusion for
+    # operators — we avoid mutating global streams here. The daemon/watcher is
+    # started detached and its stdout/stderr are redirected to
+    # `.collab/logs/application.log` and `.collab/logs/errors.log` so pytest
+    # capture should not encounter background-process bytes. Keep the default
+    # system streams untouched.
+
     runpy.run_path(_CLIENT_PATH, run_name="__main__")
