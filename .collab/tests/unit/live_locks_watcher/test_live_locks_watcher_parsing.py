@@ -126,3 +126,30 @@ def test_parse_git_status_path_and_normalize_migrated(tmp_path, monkeypatch):
     open(ap, "w").close()
     got = mod._normalize_path(ap, str(tmp_path))
     assert got.replace("\\", "/").startswith("src/")
+
+
+def test_normalize_path_strips_dot_slash_prefix(tmp_path):
+    """_normalize_path strips leading ./ from relative paths."""
+    mod = load_watcher_module()
+    result = mod._normalize_path("./src/app.py", str(tmp_path))
+    assert result == "src/app.py"
+
+
+def test_normalize_path_canonicalises_collab_prefix(tmp_path):
+    """_normalize_path converts collab/ prefix to .collab/."""
+    mod = load_watcher_module()
+    result = mod._normalize_path("collab/core/lock_client.py", str(tmp_path))
+    assert result == ".collab/core/lock_client.py"
+
+
+def test_normalize_path_exception_falls_back_to_slash_replace(monkeypatch):
+    """_normalize_path returns path with backslash replacement when relpath raises."""
+    mod = load_watcher_module()
+
+    def _raising_relpath(path, start):
+        raise OSError("relpath failed")
+
+    monkeypatch.setattr(mod.os.path, "isabs", lambda p: True)
+    monkeypatch.setattr(mod.os.path, "relpath", _raising_relpath)
+    result = mod._normalize_path("src\\app.py", "/project")
+    assert result == "src/app.py"

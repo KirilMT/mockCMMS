@@ -45,4 +45,12 @@ def test_is_ephemeral_dev_empty():
     assert mod._is_ephemeral_dev("") is False
 
 
+def test_is_ephemeral_dev_matches_prefix():
+    """_is_ephemeral_dev returns True when dev_id starts with an ephemeral prefix."""
+    mod = load_watcher_module()
+    assert mod._is_ephemeral_dev("test_dev_42") is True
+    assert mod._is_ephemeral_dev("ci-runner") is True
+    assert mod._is_ephemeral_dev("regular_user") is False
+
+
 watcher = load_watcher_module()

@@ -92,6 +92,19 @@ def test_color_without_colorama():
     assert out == "hello"
 
 
+def test_setup_collab_logging_fallback_to_basic_config(monkeypatch):
+    """setup_collab_logging falls back to basicConfig when _setup_collab_logging_obj is
+    None."""
+    mod = load_watcher_module()
+    monkeypatch.setattr(mod, "_setup_collab_logging_obj", None)
+    called = []
+    monkeypatch.setattr(
+        mod.logging, "basicConfig", lambda **kwargs: called.append(kwargs)
+    )
+    mod.setup_collab_logging(collab_dir="/fake/collab")
+    assert called, "basicConfig should be called when _setup_collab_logging_obj is None"
+
+
 def test_reload_watcher_handles_find_spec_exceptions(monkeypatch):
     """Import-time optional dependency probes should tolerate find_spec errors."""
     module_path = (

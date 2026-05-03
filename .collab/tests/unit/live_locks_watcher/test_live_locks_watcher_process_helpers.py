@@ -592,4 +592,75 @@ def test_existing_watcher_running_stale_pid_remove_oserror(monkeypatch, tmp_path
 
 # Restored archived-only original-name test (non-destructive restore)
 
+
+def test_is_process_alive_win32_tasklist_success(monkeypatch):
+    """_is_process_alive returns True on win32 when tasklist finds the PID (no
+    psutil)."""
+    mod = load_watcher_module()
+    monkeypatch.setattr(sys, "platform", "win32")
+
+    import builtins as _builtins
+
+    real_import = _builtins.__import__
+
+    def _no_psutil(name, *a, **k):
+        if name == "psutil":
+            raise ImportError("no psutil")
+        return real_import(name, *a, **k)
+
+    monkeypatch.setattr(_builtins, "__import__", _no_psutil)
+    monkeypatch.setattr(
+        subprocess, "check_output", lambda *a, **k: "Image  PID\npython.exe  99999"
+    )
+    assert mod._is_process_alive(99999) is True
+
+
+def test_is_process_alive_non_win32_process_alive(monkeypatch):
+    """_is_process_alive returns True on non-win32 when os.kill succeeds."""
+    mod = load_watcher_module()
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setattr(mod.os, "kill", lambda pid, sig: None)
+    assert mod._is_process_alive(12345) is True
+
+
+def test_is_process_alive_non_win32_process_lookup_error(monkeypatch):
+    """_is_process_alive returns False on non-win32 when process does not exist."""
+    mod = load_watcher_module()
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    def _kill_not_found(pid, sig):
+        raise ProcessLookupError("no such process")
+
+    monkeypatch.setattr(mod.os, "kill", _kill_not_found)
+    assert mod._is_process_alive(12345) is False
+
+
+def test_is_process_alive_non_win32_permission_error(monkeypatch):
+    """_is_process_alive returns True on non-win32 when PermissionError (process exists
+    but not owned by this user)."""
+    mod = load_watcher_module()
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    def _kill_permission_denied(pid, sig):
+        raise PermissionError("access denied")
+
+    monkeypatch.setattr(mod.os, "kill", _kill_permission_denied)
+    assert mod._is_process_alive(12345) is True
+
+
+def test_get_current_branch_non_win32(monkeypatch):
+    """_get_current_branch uses subprocess without creationflags on non-win32."""
+    mod = load_watcher_module()
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    def _check_output(cmd, **kwargs):
+        assert (
+            "creationflags" not in kwargs
+        ), "creationflags must not be passed on non-win32"
+        return b"main\n"
+
+    monkeypatch.setattr(subprocess, "check_output", _check_output)
+    assert mod._get_current_branch() == "main"
+
+
 watcher = load_watcher_module()
