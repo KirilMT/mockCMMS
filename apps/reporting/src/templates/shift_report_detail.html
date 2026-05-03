@@ -1,1293 +1,1057 @@
-﻿{% extends "base.html" %} {% block title %} Shift Report - {{
-data.report_info.date if data.report_info else 'N/A' }} - {{
-data.report_info.shift if data.report_info else 'N/A' }} {% endblock %} {% block
-extra_css %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('reporting.static', filename='css/report-detail.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('reporting.static', filename='css/print-styles.css') }}"
-/>
-{% endblock %} {% block content %}
-<div class="container-fluid report-page" data-report-id="{{ report.id }}">
-  <div class="row mb-3 report-actions-row">
-    <div class="col-12 d-flex justify-content-end align-items-center">
-      <div>
-        <a href="{{ url_for('reporting.index') }}" class="btn btn-secondary"
-          >Back to Reporting</a
-        >
-        <div class="btn-group">
-          <button
-            type="button"
-            class="btn btn-primary dropdown-toggle"
-            data-toggle="dropdown"
-          >
-            Export
-          </button>
-          <ul class="dropdown-menu">
-            <li>
-              <a
-                class="dropdown-item"
-                href="#"
-                onclick="
-                  window.print();
-                  return false;
-                "
-                >Print / Save as PDF</a
-              >
-            </li>
-            <li>
-              <a
-                class="dropdown-item"
-                href="{{ url_for('reporting.export_report', report_id=report.id, fmt='markdown') }}"
-                >Markdown</a
-              >
-            </li>
-            <li>
-              <a
-                class="dropdown-item"
-                href="{{ url_for('reporting.export_report', report_id=report.id, fmt='txt') }}"
-                >Text</a
-              >
-            </li>
-          </ul>
+﻿
+
+{% extends "base.html" %}
+
+{% block title %}
+    Shift Report - {{
+    data.report_info.date if data.report_info else 'N/A' }} - {{
+    data.report_info.shift if data.report_info else 'N/A' }}
+{% endblock %}
+{% block
+    extra_css %}
+    <link rel="stylesheet"
+          href="{{ url_for('reporting.static', filename='css/report-detail.css') }}" />
+    <link rel="stylesheet"
+          href="{{ url_for('reporting.static', filename='css/print-styles.css') }}" />
+{% endblock %}
+{% block content %}
+    <div class="container-fluid report-page" data-report-id="{{ report.id }}">
+        <div class="row mb-3 report-actions-row">
+            <div class="col-12 d-flex justify-content-end align-items-center">
+                <div>
+                    <a href="{{ url_for('reporting.index') }}" class="btn btn-secondary">Back to Reporting</a>
+                    <div class="btn-group">
+                        <button type="button"
+                                class="btn btn-primary dropdown-toggle"
+                                data-toggle="dropdown">Export</button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item"
+                                   href="#"
+                                   onclick=" window.print(); return false; ">Print / Save as PDF</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{{ url_for('reporting.export_report', report_id=report.id, fmt='markdown') }}">Markdown</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{{ url_for('reporting.export_report', report_id=report.id, fmt='txt') }}">Text</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <button id="copyMdBtn" class="btn btn-info text-white">Copy for Teams</button>
+                    <form method="POST"
+                          action="{{ url_for('reporting.delete_report', report_id=report.id) }}"
+                          class="d-inline"
+                          id="deleteReportForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <button type="button"
+                                class="btn btn-danger"
+                                onclick="showDeleteConfirm(document.getElementById('deleteReportForm'), 'Are you sure you want to delete this report?')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
-        <button id="copyMdBtn" class="btn btn-info text-white">
-          Copy for Teams
-        </button>
-        <form
-          method="POST"
-          action="{{ url_for('reporting.delete_report', report_id=report.id) }}"
-          class="d-inline"
-          id="deleteReportForm"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <button type="button" class="btn btn-danger" onclick="showDeleteConfirm(document.getElementById('deleteReportForm'), 'Are you sure you want to delete this report?')">
-            <i class="fas fa-trash"></i> Delete
-          </button>
-        </form>
-      </div>
+        <div class="report-container" id="report-content">
+            <div class="text-center mb-4">
+                <h2 class="report-header">
+                    <u>
+                        {% set header_date = ((data.report_info.date if data.report_info and
+                                                    data.report_info.date else "") | string) %} {% set header_shift = ((data.report_info.shift if data.report_info and
+                         data.report_info.shift else "Early") | string) %}
+                        {% set
+                            header_team_name = ((data.report_info.team_name if data.report_info
+                            and data.report_info.team_name else data.team_name | default("")) |
+                        string) %}
+                        {% set header_team_color = ((data.team_color |
+                                                default("#3498db")) | string) %}
+                        <span class="editable-field"
+                              data-field="report_title"
+                              data-type="header"
+                              data-title="Report Header"
+                              data-params='{"date":"{{ header_date | e }}","shift":"{{ header_shift | e }}","team_name":"{{ header_team_name | e }}","team_color":"{{ header_team_color | e }}"}'
+                              onclick="openEditModalFromData(this)">
+                            Shift Report - {{ header_date or 'dd/mm/yyyy' }} - {{ header_shift
+                            }}
+                            {% if header_team_name %}
+                                -
+                                <span class="team-badge" style="color: {{ header_team_color }};">
+                                    {{ header_team_name }}
+                                </span>
+                            {% endif %}
+                        </span>
+                    </u>
+                </h2>
+            </div>
+            <div class="metadata-row mb-4">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <span class="metadata-label">Attendance:</span>
+                        {% set att_val = (data.report_info.attendance if data.report_info and
+                                                    data.report_info.attendance is defined else (data.attendance |
+                                                    default(0) | int)) %} {% set att_total = (data.report_info.attendance_total if data.report_info and
+                             data.report_info.attendance_total is defined else (technician_count or
+                             20)) %} {% set att_pct = (att_val / att_total) * 100 if att_total > 0
+                             else 0 %} {% set att_class = 'text-danger' if att_pct < 50 else
+                         ('text-warning' if att_pct < 80 else 'text-success') %}
+                        <span class="editable-field fw-bold {{ att_class }}"
+                              data-type="metadata"
+                              data-title="Attendance"
+                              data-params='{{ {"key": "attendance", "value": att_val, "total": att_total}|tojson|safe }}'
+                              onclick="openEditModalFromData(this)">
+                            {{ att_val }}/{{ att_total }}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="metadata-label">EHS incidents:</span>
+                        {% set ehs_val = (data.ehs_incidents | default(0) | int) %}
+                        {% set
+                            ehs_class = 'text-danger fw-bold' if ehs_val > 0 else 'text-success
+                        fw-bold' %}
+                        <span class="editable-field {{ ehs_class }}"
+                              data-type="metadata"
+                              data-title="EHS Incidents"
+                              data-params='{{ {"key": "ehs_incidents", "value": ehs_val}|tojson|safe }}'
+                              onclick="openEditModalFromData(this)">
+                            {{ ehs_val }}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="metadata-label">VIGEL:</span>
+                        {% set vigel_val = (data.vigel | default(0) | int) %}
+                        {% set
+                        vigel_total_val = (vigel_total or 10) %}
+                        {% set vigel_pct = (vigel_val
+                                                / vigel_total_val) * 100 if vigel_total_val > 0 else 0 %}
+                        {% set
+                            vigel_class = 'text-danger' if vigel_pct < 50 else ('text-warning' if
+                        vigel_pct < 80 else 'text-success') %}
+                        <span class="editable-field fw-bold {{ vigel_class }}"
+                              data-type="metadata"
+                              data-title="VIGEL"
+                              data-params='{{ {"key": "vigel", "value": vigel_val, "total": vigel_total_val}|tojson|safe }}'
+                              onclick="openEditModalFromData(this)">
+                            {{ vigel_val }}/{{ vigel_total_val }}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="metadata-label">MDS:</span>
+                        {% set mds_val = (data.mds | default(0) | int) %}
+                        {% set mds_total_val = (mds_total or 15) %}
+                        {% set mds_pct = (mds_val / mds_total_val) *
+                                                    100 if mds_total_val > 0 else 0 %} {% set mds_class = 'text-danger' if
+                         mds_pct < 50 else ('text-warning' if mds_pct < 80 else 'text-success') %}
+                        <span class="editable-field fw-bold {{ mds_class }}"
+                              data-type="metadata"
+                              data-title="MDS"
+                              data-params='{{ {"key": "mds", "value": mds_val, "total": mds_total_val}|tojson|safe }}'
+                              onclick="openEditModalFromData(this)">
+                            {{ mds_val }}/{{ mds_total_val }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="section-header"
+                     style="cursor: pointer"
+                     data-toggle="collapse"
+                     data-target="#handover_from_section"
+                     aria-expanded="true">
+                    <span class="section-title">
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                        Handover from previous Shift:
+                    </span>
+                    <button class="btn btn-sm btn-success"
+                            onclick=" event.stopPropagation(); openAddModal('handover_from', 'Handover from Previous Shift'); ">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="handover_from_section" class="collapse show">
+                    <div id="handover_from_items">
+                        {% set hf = data.handover_from_previous if data.handover_from_previous is defined else (data.report_info.handover_from_previous if data.report_info else []) %}
+                        {% if hf %}
+                            {% for item in hf %}
+                                {%- set _raw_mo = (item.mo_id if item is mapping else None) or (item.id if item is mapping else None) -%}
+                                {%- set _mo_str = _raw_mo | string | replace('MO-','') | replace('MO','') | trim if _raw_mo else '' -%}
+                                {%- set mo_number = _mo_str | int if (_mo_str and _mo_str.isdigit()) else None -%}
+                                <div class="report-item">
+                                    <div class="item-actions">
+                                        {% if mo_number and mo_number in mo_link_map %}
+                                            <a class="btn btn-outline-warning btn-sm"
+                                               href="{{ mo_link_map[mo_number] }}"
+                                               title="Edit Maintenance Order">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-outline-warning btn-sm"
+                                                    data-type="handover_from"
+                                                    data-title="Handover Item"
+                                                    data-params='{{ item|tojson|safe }}'
+                                                    data-index="{{ loop.index0 }}"
+                                                    onclick="openEditModalFromData(this)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        {% endif %}
+                                        <button class="btn btn-outline-danger btn-sm"
+                                                data-type="handover_from"
+                                                data-index="{{ loop.index0 }}"
+                                                onclick="deleteItemFromData(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    {% if item is mapping %}
+                                        {%- if mo_number and mo_number in mo_data_map -%}
+                                            {%- set handover_asset = mo_data_map[mo_number].asset_code -%}
+                                            {%- set handover_title = mo_data_map[mo_number].title or mo_data_map[mo_number].description -%}
+                                            {%- set handover_desc = mo_data_map[mo_number].description -%}
+                                            {%- set handover_status = mo_data_map[mo_number].status | default('In Progress') -%}
+                                            {%- set handover_time = item.timestamp | default(mo_data_map[mo_number].created_at) | default('N/A') -%}
+                                            {%- set handover_duration = item.duration | default(mo_data_map[mo_number].downtime_duration) | default('N/A') -%}
+                                        {%- else -%}
+                                            {%- set handover_asset = (item.asset_code or item.asset) | default('') -%}
+                                            {%- set handover_title = item.title | default('Instruction') -%}
+                                            {%- set handover_desc = item.description | default('') -%}
+                                            {%- set handover_status = item.status | default('In Progress') -%}
+                                            {%- set handover_time = item.timestamp | default(item.start_time) | default('N/A') -%}
+                                            {%- set handover_duration = item.duration | default('N/A') -%}
+                                        {%- endif -%}
+                                        {% if handover_asset and handover_asset in asset_link_map %}
+                                            <a href="{{ asset_link_map[handover_asset] }}"><strong>{{ handover_asset }}</strong></a>
+                                        {% elif handover_asset %}
+                                            <strong>{{ handover_asset }}</strong>
+                                        {% endif %}
+                                        - {{ handover_time }} - {{ handover_duration }} min
+                                        {% if mo_number %}
+                                            -
+                                            {% if mo_number in mo_link_map %}
+                                                <a href="{{ mo_link_map[mo_number] }}"><strong>MO-{{ mo_number }}</strong></a>
+                                            {% else %}
+                                                <strong>MO-{{ mo_number }}</strong>
+                                            {% endif %}
+                                        {% endif %}
+                                        : <em>{{ handover_status }}</em>
+                                        <p class="ms-4 mb-0 text-muted">
+                                            <em>{{ handover_title }}</em>: {{ linkify_spare_parts(handover_desc) | safe }}
+                                        </p>
+                                    {% else %}
+                                        <p class="ms-2 mb-0 text-muted">{{ linkify_spare_parts(item) | safe }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No handover notes from previous shift.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="section-header"
+                     style="cursor: pointer"
+                     data-toggle="collapse"
+                     data-target="#breakdown_section"
+                     aria-expanded="true">
+                    <span class="section-title">
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                        Breakdowns:
+                    </span>
+                    <button class="btn btn-sm btn-success"
+                            onclick=" event.stopPropagation(); openAddModal('breakdown', 'Breakdown'); ">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="breakdown_section" class="collapse show">
+                    <div id="breakdown_items">
+                        {% for bd in data.breakdowns %}
+                            {%- set _raw_bd_mo = (bd.mo_id if bd is mapping else None) or (bd.id if bd is mapping else None) -%}
+                            {%- set _bd_mo_str = _raw_bd_mo | string | replace('MO-','') | replace('MO','') | trim if _raw_bd_mo else '' -%}
+                            {%- set breakdown_mo_number = _bd_mo_str | int if (_bd_mo_str and _bd_mo_str.isdigit()) else None -%}
+                            <div class="report-item">
+                                <div class="item-actions">
+                                    {% if breakdown_mo_number and breakdown_mo_number in mo_link_map %}
+                                        <a class="btn btn-outline-warning btn-sm"
+                                           href="{{ mo_link_map[breakdown_mo_number] }}"
+                                           title="Edit Maintenance Order">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-outline-warning btn-sm"
+                                                data-type="breakdown"
+                                                data-title="Breakdown"
+                                                data-params='{{ bd|tojson|safe }}'
+                                                data-index="{{ loop.index0 }}"
+                                                onclick="openEditModalFromData(this)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-outline-danger btn-sm"
+                                            data-type="breakdown"
+                                            data-index="{{ loop.index0 }}"
+                                            onclick="deleteItemFromData(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                {%- set bd_asset_code = bd.asset_code or bd.equipment_line or bd.asset or 'ASSET' -%}
+                                {%- set bd_desc = bd.description or bd.fault or 'N/A' -%}
+                                {%- set bd_start = bd.timestamp or bd.start_time or '00:00' -%}
+                                {%- set bd_status = bd.status or 'N/A' -%}
+                                {%- set _bd_duration_raw = bd.duration -%}
+                                {%- set _bd_root_raw = bd.root_cause -%}
+                                {%- set _bd_recovery_raw = bd.resolution_notes or bd.recovery -%}
+                                {%- set bd_duration = _bd_duration_raw if (_bd_duration_raw is not none and (_bd_duration_raw|string|trim) and (_bd_duration_raw|string|lower != 'n/a')) else none -%}
+                                {%- set bd_root = _bd_root_raw if (_bd_root_raw is not none and (_bd_root_raw|string|trim) and (_bd_root_raw|string|lower != 'n/a')) else none -%}
+                                {%- set bd_recovery = _bd_recovery_raw if (_bd_recovery_raw is not none and (_bd_recovery_raw|string|trim) and (_bd_recovery_raw|string|lower != 'n/a')) else none -%}
+                                {%- if breakdown_mo_number and breakdown_mo_number in mo_data_map -%}
+                                    {%- set bd_asset_code = mo_data_map[breakdown_mo_number].asset_code -%}
+                                    {%- set bd_desc = mo_data_map[breakdown_mo_number].title -%}
+                                    {%- set bd_status = mo_data_map[breakdown_mo_number].status -%}
+                                    {%- set bd_duration = bd_duration or mo_data_map[breakdown_mo_number].downtime_duration -%}
+                                    {%- set bd_root = bd_root or mo_data_map[breakdown_mo_number].root_cause -%}
+                                    {%- set bd_recovery = bd_recovery or mo_data_map[breakdown_mo_number].recovery -%}
+                                    {%- set bd_start = bd.timestamp or bd.start_time or mo_data_map[breakdown_mo_number].created_at or 'N/A' -%}
+                                {%- endif -%}
+                                {%- set bd_duration = bd_duration if bd_duration is not none else 'N/A' -%}
+                                {%- set bd_root = bd_root if bd_root is not none else 'N/A' -%}
+                                {%- set bd_recovery = bd_recovery if bd_recovery is not none else 'N/A' -%}
+                                {% if bd_asset_code and bd_asset_code in asset_link_map %}
+                                    <a href="{{ asset_link_map[bd_asset_code] }}"><strong>{{ bd_asset_code }}</strong></a>
+                                {% else %}
+                                    <strong>{{ bd_asset_code }}</strong>
+                                {% endif %}
+                                - {{ bd_start }} - {{ bd_duration }} min
+                                {% if breakdown_mo_number %}
+                                    -
+                                    {% if breakdown_mo_number in mo_link_map %}
+                                        <a href="{{ mo_link_map[breakdown_mo_number] }}"><strong>MO-{{ breakdown_mo_number }}</strong></a>
+                                    {% else %}
+                                        <strong>MO-{{ breakdown_mo_number }}</strong>
+                                    {% endif %}
+                                {% endif %}
+                                :
+                                <ul class="mb-0 text-muted">
+                                    <li>Fault: {{ bd_desc }} (Status: {{ bd_status }})</li>
+                                    <li>Root cause: {{ bd_root }}</li>
+                                    <li>Recovery: {{ bd_recovery }}</li>
+                                </ul>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="section-header"
+                     style="cursor: pointer"
+                     data-toggle="collapse"
+                     data-target="#activity_section"
+                     aria-expanded="true">
+                    <span class="section-title">
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                        Engineering support / Work Requests / Break Activities:
+                    </span>
+                    <button class="btn btn-sm btn-success"
+                            onclick=" event.stopPropagation(); openAddModal('activities', 'Activity'); ">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="activity_section" class="collapse show">
+                    <h6 class="mt-3">
+                        <strong>Work Requests:</strong>
+                    </h6>
+                    <ol id="flux_ticket_items">
+                        {% set flux_tickets = data.break_activities | selectattr('type',
+                                                'equalto', 'flux_ticket') | list if data.break_activities else [] %}
+                        {% if flux_tickets %}
+                            {% for a in flux_tickets %}
+                                {% set mo_label = a.mo_id | default('Num.') %}
+                                {% set mo_number = mo_label | replace('MO-','') | int %}
+                                {% set edit_data = a.copy() %}
+                                {% if mo_number in mo_data_map %}
+                                    {% set mo_data = mo_data_map[mo_number] %}
+                                    {% set _ = edit_data.update({'asset': mo_data.asset_code}) %}
+                                {% endif %}
+                                <li class="report-item" style="list-style-position: inside">
+                                    <div class="item-actions">
+                                        {% if mo_number and mo_number in mo_link_map %}
+                                            <a class="btn btn-outline-warning btn-sm"
+                                               href="{{ mo_link_map[mo_number] }}"
+                                               title="Edit Maintenance Order">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-outline-warning btn-sm"
+                                                    data-type="flux_tickets"
+                                                    data-title="Activity"
+                                                    data-params='{{ edit_data | tojson | safe }}'
+                                                    data-index="{{ loop.index0 }}"
+                                                    onclick="openEditModalFromData(this)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        {% endif %}
+                                        <button class="btn btn-outline-danger btn-sm"
+                                                data-type="flux_tickets"
+                                                data-index="{{ loop.index0 }}"
+                                                onclick="deleteItemFromData(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    {% set mo_label = a.mo_id | default('Num.') %}
+                                    {% set mo_number = mo_label | replace('MO-','') | int %}
+                                    {# Prefer database-backed MO info when available #}
+                                    {% if mo_number in mo_data_map %}
+                                        {% set mo_data = mo_data_map[mo_number] %}
+                                        {% set asset_code = mo_data.asset_code %}
+                                        {% set asset_url = mo_data.asset_url %}
+                                        {% set mo_title = mo_data.title %}
+                                        {% set mo_status = mo_data.status %}
+                                    {% else %}
+                                        {% set asset_code = a.asset | default('ASSET_CODE') %}
+                                        {% set asset_url = asset_link_map.get(a.asset) if a.asset else None %}
+                                        {% set mo_title = a.title | default(a.description) | default('details') %}
+                                        {% set mo_status = a.status | default('') %}
+                                    {% endif %}
+                                    {% if asset_url %}
+                                        <a href="{{ asset_url }}"><strong>{{ asset_code }}</strong></a>
+                                    {% else %}
+                                        <strong>{{ asset_code }}</strong>
+                                    {% endif %}
+                                    - {{ linkify_spare_parts(mo_title) | safe }}
+                                    -
+                                    {% if mo_number in mo_link_map %}
+                                        <a href="{{ mo_link_map[mo_number] }}">
+                                            <strong>MO-{{ mo_number }}</strong>
+                                        </a>
+                                    {% else %}
+                                        <strong>MO-{{ mo_number }}</strong>
+                                    {% endif %}
+                                    :
+                                    <em>{{ mo_status }}</em>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="text-muted">None recorded.</li>
+                        {% endif %}
+                    </ol>
+                    <h6 class="mt-3">
+                        <strong>Engineering Support:</strong>
+                    </h6>
+                    <ol id="engineering_support_items">
+                        {% if data.engineering_support %}
+                            {% for e in data.engineering_support
+                                %}
+                                {% set engineering_mo_number = (e.mo_id | default(e.id) | string | replace('MO-','') | int) if (e.mo_id or e.id) else None %}
+                                <li class="report-item" style="list-style-position: inside">
+                                    <div class="item-actions">
+                                        {% if engineering_mo_number and engineering_mo_number in mo_link_map %}
+                                            <a class="btn btn-outline-warning btn-sm"
+                                               href="{{ mo_link_map[engineering_mo_number] }}"
+                                               title="Edit Maintenance Order">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-outline-warning btn-sm"
+                                                    data-type="engineering_support"
+                                                    data-title="Engineering Support"
+                                                    data-params='{{ e | tojson | safe }}'
+                                                    data-index="{{ loop.index0 }}"
+                                                    onclick="openEditModalFromData(this)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        {% endif %}
+                                        <button class="btn btn-outline-danger btn-sm"
+                                                data-type="engineering_support"
+                                                data-index="{{ loop.index0 }}"
+                                                onclick="deleteItemFromData(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    {% set engineering_mo_label = e.mo_id | default(e.id) | default('Num.') %}
+                                    {% set engineering_mo_id = engineering_mo_label | replace('MO-','') | int if (e.mo_id or e.id) else None %}
+                                    {# Prefer database-backed MO info when available #}
+                                    {% if engineering_mo_id and engineering_mo_id in mo_data_map %}
+                                        {% set eng_mo_data = mo_data_map[engineering_mo_id] %}
+                                        {% set asset_code = eng_mo_data.asset_code %}
+                                        {% set asset_url = eng_mo_data.asset_url %}
+                                        {% set eng_mo_title = eng_mo_data.title or eng_mo_data.description %}
+                                        {% set eng_mo_status = eng_mo_data.status %}
+                                    {% else %}
+                                        {% set asset_code = e.asset | default(e.asset_code) | default('ASSET_CODE') %}
+                                        {% set asset_url = asset_link_map.get(asset_code) if asset_code else None %}
+                                        {% set eng_mo_title = e.title | default(e.description) | default('details') %}
+                                        {% set eng_mo_status = e.status | default('') %}
+                                    {% endif %}
+                                    {% if asset_url %}
+                                        <a href="{{ asset_url }}"><strong>{{ asset_code }}</strong></a>
+                                    {% else %}
+                                        <strong>{{ asset_code }}</strong>
+                                    {% endif %}
+                                    - {{ linkify_spare_parts(eng_mo_title) | safe }}
+                                    -
+                                    {% if engineering_mo_id and engineering_mo_id in mo_link_map %}
+                                        <a class="link-primary" href="{{ mo_link_map[engineering_mo_id] }}">
+                                            <strong>MO-{{ engineering_mo_id }}</strong>
+                                        </a>
+                                    {% else %}
+                                        <strong>MO-{{ engineering_mo_id }}</strong>
+                                    {% endif %}
+                                    :
+                                    <em>{{ eng_mo_status }}</em>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="text-muted">None recorded.</li>
+                        {% endif %}
+                    </ol>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="section-header"
+                     style="cursor: pointer"
+                     data-toggle="collapse"
+                     data-target="#handover_to_section"
+                     aria-expanded="true">
+                    <span class="section-title">
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                        Handover to next Shift:
+                    </span>
+                    <button class="btn btn-sm btn-success"
+                            onclick=" event.stopPropagation(); openAddModal('handover_to', 'Handover to Next Shift'); ">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="handover_to_section" class="collapse show">
+                    <div id="handover_to_items">
+                        {% set ht = data.handover_to_next if data.handover_to_next is defined else (data.report_info.handover_to_next if data.report_info else []) %}
+                        {% if ht %}
+                            {% for item in ht %}
+                                {%- set _raw_mo = (item.mo_id if item is mapping else None) or (item.id if item is mapping else None) -%}
+                                {%- set _mo_str = _raw_mo | string | replace('MO-','') | replace('MO','') | trim if _raw_mo else '' -%}
+                                {%- set mo_number = _mo_str | int if (_mo_str and _mo_str.isdigit()) else None -%}
+                                <div class="report-item">
+                                    <div class="item-actions">
+                                        {% if mo_number and mo_number in mo_link_map %}
+                                            <a class="btn btn-outline-warning btn-sm"
+                                               href="{{ mo_link_map[mo_number] }}"
+                                               title="Edit Maintenance Order">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% else %}
+                                            <button class="btn btn-outline-warning btn-sm"
+                                                    data-type="handover_to"
+                                                    data-title="Handover Item"
+                                                    data-params='{{ item|tojson|safe }}'
+                                                    data-index="{{ loop.index0 }}"
+                                                    onclick="openEditModalFromData(this)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        {% endif %}
+                                        <button class="btn btn-outline-danger btn-sm"
+                                                data-type="handover_to"
+                                                data-index="{{ loop.index0 }}"
+                                                onclick="deleteItemFromData(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    {% if item is mapping %}
+                                        {%- if mo_number and mo_number in mo_data_map -%}
+                                            {%- set handover_asset = mo_data_map[mo_number].asset_code -%}
+                                            {%- set handover_title = mo_data_map[mo_number].title or mo_data_map[mo_number].description -%}
+                                            {%- set handover_desc = mo_data_map[mo_number].description -%}
+                                            {%- set handover_status = mo_data_map[mo_number].status | default('In Progress') -%}
+                                            {%- set handover_time = item.timestamp | default(mo_data_map[mo_number].created_at) | default('N/A') -%}
+                                            {%- set handover_duration = item.duration | default(mo_data_map[mo_number].downtime_duration) | default('N/A') -%}
+                                        {%- else -%}
+                                            {%- set handover_asset = (item.asset_code or item.asset) | default('') -%}
+                                            {%- set handover_title = item.title | default('Instruction') -%}
+                                            {%- set handover_desc = item.description | default('') -%}
+                                            {%- set handover_status = item.status | default('In Progress') -%}
+                                            {%- set handover_time = item.timestamp | default(item.start_time) | default('N/A') -%}
+                                            {%- set handover_duration = item.duration | default('N/A') -%}
+                                        {%- endif -%}
+                                        {% if handover_asset and handover_asset in asset_link_map %}
+                                            <a href="{{ asset_link_map[handover_asset] }}"><strong>{{ handover_asset }}</strong></a>
+                                        {% elif handover_asset %}
+                                            <strong>{{ handover_asset }}</strong>
+                                        {% endif %}
+                                        - {{ handover_time }} - {{ handover_duration }} min
+                                        {% if mo_number %}
+                                            -
+                                            {% if mo_number in mo_link_map %}
+                                                <a href="{{ mo_link_map[mo_number] }}"><strong>MO-{{ mo_number }}</strong></a>
+                                            {% else %}
+                                                <strong>MO-{{ mo_number }}</strong>
+                                            {% endif %}
+                                        {% endif %}
+                                        : <em>{{ handover_status }}</em>
+                                        <p class="ms-4 mb-0 text-muted">
+                                            <em>{{ handover_title }}</em>: {{ linkify_spare_parts(handover_desc) | safe }}
+                                        </p>
+                                    {% else %}
+                                        <p class="ms-2 mb-0 text-muted">{{ linkify_spare_parts(item) | safe }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No handover notes for next shift.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 pt-4 border-top">
+                <p class="mb-1">Have a good shift,</p>
+                <p>
+                    <strong>{{ report.generated_by_name | default("Technician") }}</strong>
+                </p>
+            </div>
+        </div>
+        <!-- End of id="report-content" -->
     </div>
-  </div>
-  <div class="report-container" id="report-content">
-    <div class="text-center mb-4">
-      <h2 class="report-header">
-        <u>
-          {% set header_date = ((data.report_info.date if data.report_info and
-          data.report_info.date else "") | string) %} {% set header_shift =
-          ((data.report_info.shift if data.report_info and
-          data.report_info.shift else "Early") | string) %} {% set
-          header_team_name = ((data.report_info.team_name if data.report_info
-          and data.report_info.team_name else data.team_name | default("")) |
-          string) %} {% set header_team_color = ((data.team_color |
-          default("#3498db")) | string) %}
-          <span
-            class="editable-field"
-            data-field="report_title"
-            data-type="header"
-            data-title="Report Header"
-            data-params='{"date":"{{ header_date | e }}","shift":"{{ header_shift | e }}","team_name":"{{ header_team_name | e }}","team_color":"{{ header_team_color | e }}"}'
-            onclick="openEditModalFromData(this)"
-          >
-            Shift Report - {{ header_date or 'dd/mm/yyyy' }} - {{ header_shift
-            }}{% if header_team_name %} -
-            <span class="team-badge" style="color: {{ header_team_color }};">
-              {{ header_team_name }}
-            </span>
-            {% endif %}
-          </span>
-        </u>
-      </h2>
+    <!-- End of container-fluid -->
+    <div class="modal fade"
+         id="editModal"
+         tabindex="-1"
+         aria-labelledby="editModalLabel">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Item</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Header Form -->
+                    <div id="edit-header-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="mb-3">
+                            <label class="form-label">Shift Date</label>
+                            <input type="date" class="form-control" id="edit-header-date" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Shift</label>
+                            <select class="form-select" id="edit-header-shift">
+                                <option value="Early">Early</option>
+                                <option value="Night">Night</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Team Name</label>
+                            <select class="form-select" id="edit-header-team">
+                                <option value="">Select Team...</option>
+                                {% for team in teams %}<option value="{{ team }}">{{ team }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <input type="hidden" id="edit-header-color" />
+                    </div>
+                    <!-- Metadata Form -->
+                    <div id="edit-metadata-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <input type="hidden" id="edit-metadata-key" />
+                        <div class="mb-3">
+                            <label class="form-label">Value</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="text"
+                                       class="form-control"
+                                       id="edit-metadata-value"
+                                       placeholder="Enter value"
+                                       style="flex: 0 0 auto;
+                                              width: 100px" />
+                                <small id="edit-metadata-total-text"
+                                       class="text-muted"
+                                       style="white-space: nowrap"></small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Handover Form (Shift & Weekend) -->
+                    <div id="edit-handover-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="mb-3">
+                            <label class="form-label">Asset Code</label>
+                            <select class="form-control"
+                                    id="edit-handover-asset"
+                                    data-placeholder="Select Asset or type custom...">
+                                <option value="">Select Asset...</option>
+                                {% for asset in assets %}<option value="{{ asset }}">{{ asset }}</option>{% endfor %}
+                            </select>
+                            <small class="text-muted">Or leave empty if just general text.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="edit-handover-title"
+                                   placeholder="Brief title or heading" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description / Instruction</label>
+                            <textarea class="form-control" id="edit-handover-desc" rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Attachments</label>
+                            <input type="file" class="form-control" id="edit-handover-file" />
+                        </div>
+                    </div>
+                    <!-- Breakdown Form -->
+                    <div id="edit-breakdown-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Asset Code / Line</label>
+                                <select class="form-control"
+                                        id="edit-bd-asset"
+                                        data-placeholder="Select Asset or type custom...">
+                                    <option value="">Select Asset...</option>
+                                    {% for asset in assets %}<option value="{{ asset }}">{{ asset }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="edit-bd-time" />
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Duration</label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="edit-bd-duration"
+                                       placeholder="e.g. 30min" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fault / Description</label>
+                            <textarea class="form-control" id="edit-bd-fault" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Root Cause</label>
+                            <textarea class="form-control" id="edit-bd-root" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Recovery / Resolution</label>
+                            <textarea class="form-control" id="edit-bd-recovery" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Attachments</label>
+                            <input type="file" class="form-control" id="edit-bd-file" />
+                        </div>
+                    </div>
+                    <!-- Activity Form -->
+                    <div id="edit-activity-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="mb-3">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" id="edit-act-type">
+                                <option value="flux_ticket">Work Request</option>
+                                <option value="engineering_support">Engineering Support</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Asset</label>
+                            <select class="form-control"
+                                    id="edit-act-asset"
+                                    data-placeholder="Select Asset or type custom...">
+                                <option value="">Select Asset...</option>
+                                {% for asset in assets %}<option value="{{ asset }}">{{ asset }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3" id="edit-act-mo-group">
+                            <label class="form-label">MO/Ticket ID</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="edit-act-mo-id"
+                                   placeholder="e.g., MO-12345" />
+                        </div>
+                        <div class="mb-3" id="edit-act-title-group" style="display: none">
+                            <label class="form-label">Title</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="edit-act-title"
+                                   placeholder="Brief description" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description / Details</label>
+                            <textarea class="form-control" id="edit-act-desc" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3" id="edit-act-status-group">
+                            <label class="form-label">Status</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="edit-act-status"
+                                   placeholder="e.g., Completed, In Progress" />
+                        </div>
+                    </div>
+                    <!-- Simple Task Form (PMs/MOs weekend) -->
+                    <div id="edit-simple-task-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="mb-3" id="edit-task-id-group" style="display: none">
+                            <label class="form-label">ID (if applicable)</label>
+                            <input type="text" class="form-control" id="edit-task-id" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Asset Code</label>
+                            <select class="form-control"
+                                    id="edit-task-asset"
+                                    data-placeholder="Select Asset or type custom...">
+                                <option value="">Select Asset...</option>
+                                {% for asset in assets %}<option value="{{ asset }}">{{ asset }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="edit-task-desc" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <input type="text" class="form-control" id="edit-task-status" />
+                        </div>
+                    </div>
+                    <!-- Generic Form -->
+                    <div id="edit-generic-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="mb-3">
+                            <label class="form-label">Content</label>
+                            <textarea class="form-control" id="edit-generic-content" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveEditBtn">Save Changes</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="metadata-row mb-4">
-      <div class="row text-center">
-        <div class="col-md-3">
-          <span class="metadata-label">Attendance:</span>
-          {% set att_val = (data.report_info.attendance if data.report_info and
-          data.report_info.attendance is defined else (data.attendance |
-          default(0) | int)) %} {% set att_total =
-          (data.report_info.attendance_total if data.report_info and
-          data.report_info.attendance_total is defined else (technician_count or
-          20)) %} {% set att_pct = (att_val / att_total) * 100 if att_total > 0
-          else 0 %} {% set att_class = 'text-danger' if att_pct < 50 else
-          ('text-warning' if att_pct < 80 else 'text-success') %}
-          <span
-            class="editable-field fw-bold {{ att_class }}"
-            data-type="metadata"
-            data-title="Attendance"
-            data-params='{{ {"key": "attendance", "value": att_val, "total": att_total}|tojson|safe }}'
-            onclick="openEditModalFromData(this)"
-          >
-            {{ att_val }}/{{ att_total }}
-          </span>
+    <div class="modal fade"
+         id="addModal"
+         tabindex="-1"
+         aria-labelledby="addModalLabel">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addModalLabel">Add Item</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Handover Form -->
+                    <div id="add-handover-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="mb-3">
+                            <label class="form-label">Asset Code</label>
+                            <select class="form-control"
+                                    id="add-handover-asset"
+                                    data-placeholder="Select Asset or type custom...">
+                                <option value="">Select Asset...</option>
+                                {% for asset in assets %}<option value="{{ asset }}">{{ asset }}</option>{% endfor %}
+                            </select>
+                            <small class="text-muted">Or leave empty if just general text.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="add-handover-title"
+                                   placeholder="Brief title or heading" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description / Details</label>
+                            <textarea class="form-control" id="add-handover-desc" rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Attachments</label>
+                            <input type="file" class="form-control" id="add-handover-file" />
+                        </div>
+                    </div>
+                    <!-- Breakdown Form -->
+                    <div id="add-breakdown-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Asset Code</label>
+                                <select class="form-control"
+                                        id="add-bd-asset"
+                                        data-placeholder="Select Asset or type custom...">
+                                    <option value="">Select Asset...</option>
+                                    {% for asset in assets %}<option value="{{ asset }}">{{ asset }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="add-bd-time" />
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Duration</label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="add-bd-duration"
+                                       placeholder="e.g. 30min" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fault / Description</label>
+                            <textarea class="form-control" id="add-bd-fault" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Root Cause</label>
+                            <textarea class="form-control" id="add-bd-root" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Recovery / Resolution</label>
+                            <textarea class="form-control" id="add-bd-recovery" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <!-- Activity Form -->
+                    <div id="add-activity-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="mb-3">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" id="add-act-type">
+                                <option value="flux_ticket">Work Request</option>
+                                <option value="engineering_support">Engineering Support</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Asset Code</label>
+                            <select class="form-control"
+                                    id="add-act-asset"
+                                    data-placeholder="Select Asset or type custom...">
+                                <option value="">Select Asset...</option>
+                                {% for asset in assets %}<option value="{{ asset }}">{{ asset }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3" id="add-act-mo-group">
+                            <label class="form-label">MO/Ticket ID</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="add-act-mo-id"
+                                   placeholder="e.g., MO-12345" />
+                        </div>
+                        <div class="mb-3" id="add-act-title-group" style="display: none">
+                            <label class="form-label">Title</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="add-act-title"
+                                   placeholder="Brief description" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description / Work Done</label>
+                            <textarea class="form-control" id="add-act-desc" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3" id="add-act-status-group">
+                            <label class="form-label">Status</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="add-act-status"
+                                   placeholder="e.g., Completed, In Progress"
+                                   value="Open" />
+                        </div>
+                    </div>
+                    <!-- Simple Task Form (PMs/MOs weekend) -->
+                    <div id="add-simple-task-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="mb-3" id="add-task-id-group" style="display: none">
+                            <label class="form-label">ID (if applicable)</label>
+                            <input type="text" class="form-control" id="add-task-id" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Asset Code</label>
+                            <select class="form-control"
+                                    id="add-task-asset"
+                                    data-placeholder="Select Asset or type custom...">
+                                <option value="">Select Asset...</option>
+                                {% for asset in assets %}<option value="{{ asset }}">{{ asset }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="add-task-desc" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <input type="text" class="form-control" id="add-task-status" value="Open" />
+                        </div>
+                    </div>
+                    <!-- Generic Form -->
+                    <div id="add-generic-form"
+                         class="modal-form-content"
+                         style="display: none">
+                        <div class="mb-3">
+                            <label class="form-label">Content</label>
+                            <textarea class="form-control" id="add-generic-content" rows="4"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="saveAddBtn">Add Item</button>
+                </div>
+            </div>
         </div>
-        <div class="col-md-3">
-          <span class="metadata-label">EHS incidents:</span>
-          {% set ehs_val = (data.ehs_incidents | default(0) | int) %} {% set
-          ehs_class = 'text-danger fw-bold' if ehs_val > 0 else 'text-success
-          fw-bold' %}
-          <span
-            class="editable-field {{ ehs_class }}"
-            data-type="metadata"
-            data-title="EHS Incidents"
-            data-params='{{ {"key": "ehs_incidents", "value": ehs_val}|tojson|safe }}'
-            onclick="openEditModalFromData(this)"
-          >
-            {{ ehs_val }}
-          </span>
-        </div>
-        <div class="col-md-3">
-          <span class="metadata-label">VIGEL:</span>
-          {% set vigel_val = (data.vigel | default(0) | int) %} {% set
-          vigel_total_val = (vigel_total or 10) %} {% set vigel_pct = (vigel_val
-          / vigel_total_val) * 100 if vigel_total_val > 0 else 0 %} {% set
-          vigel_class = 'text-danger' if vigel_pct < 50 else ('text-warning' if
-          vigel_pct < 80 else 'text-success') %}
-          <span
-            class="editable-field fw-bold {{ vigel_class }}"
-            data-type="metadata"
-            data-title="VIGEL"
-            data-params='{{ {"key": "vigel", "value": vigel_val, "total": vigel_total_val}|tojson|safe }}'
-            onclick="openEditModalFromData(this)"
-          >
-            {{ vigel_val }}/{{ vigel_total_val }}
-          </span>
-        </div>
-        <div class="col-md-3">
-          <span class="metadata-label">MDS:</span>
-          {% set mds_val = (data.mds | default(0) | int) %} {% set mds_total_val
-          = (mds_total or 15) %} {% set mds_pct = (mds_val / mds_total_val) *
-          100 if mds_total_val > 0 else 0 %} {% set mds_class = 'text-danger' if
-          mds_pct < 50 else ('text-warning' if mds_pct < 80 else 'text-success')
-          %}
-          <span
-            class="editable-field fw-bold {{ mds_class }}"
-            data-type="metadata"
-            data-title="MDS"
-            data-params='{{ {"key": "mds", "value": mds_val, "total": mds_total_val}|tojson|safe }}'
-            onclick="openEditModalFromData(this)"
-          >
-            {{ mds_val }}/{{ mds_total_val }}
-          </span>
-        </div>
-      </div>
     </div>
-    <div class="mb-4">
-      <div
-        class="section-header"
-        style="cursor: pointer"
-        data-toggle="collapse"
-        data-target="#handover_from_section"
-        aria-expanded="true"
-      >
-        <span class="section-title">
-          <i class="fas fa-chevron-down collapse-icon"></i>
-          Handover from previous Shift:
-        </span>
-        <button
-          class="btn btn-sm btn-success"
-          onclick="
-            event.stopPropagation();
-            openAddModal('handover_from', 'Handover from Previous Shift');
-          "
-        >
-          <i class="fas fa-plus"></i>
-        </button>
-      </div>
-      <div id="handover_from_section" class="collapse show">
-        <div id="handover_from_items">
-          {% set hf = data.handover_from_previous if data.handover_from_previous is defined else (data.report_info.handover_from_previous if data.report_info else []) %}
-          {% if hf %} {% for item in hf %}
-          {%- set _raw_mo = (item.mo_id if item is mapping else None) or (item.id if item is mapping else None) -%}
-          {%- set _mo_str = _raw_mo | string | replace('MO-','') | replace('MO','') | trim if _raw_mo else '' -%}
-          {%- set mo_number = _mo_str | int if (_mo_str and _mo_str.isdigit()) else None -%}
-          <div class="report-item">
-            <div class="item-actions">
-              {% if mo_number and mo_number in mo_link_map %}
-              <a class="btn btn-outline-warning btn-sm" href="{{ mo_link_map[mo_number] }}" title="Edit Maintenance Order">
-                <i class="fas fa-edit"></i>
-              </a>
-              {% else %}
-              <button
-                class="btn btn-outline-warning btn-sm"
-                data-type="handover_from"
-                data-title="Handover Item"
-                data-params='{{ item|tojson|safe }}'
-                data-index="{{ loop.index0 }}"
-                onclick="openEditModalFromData(this)"
-              >
-                <i class="fas fa-edit"></i>
-              </button>
-              {% endif %}
-              <button
-                class="btn btn-outline-danger btn-sm"
-                data-type="handover_from"
-                data-index="{{ loop.index0 }}"
-                onclick="deleteItemFromData(this)"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade"
+         id="reportDeleteConfirmModal"
+         tabindex="-1"
+         aria-labelledby="reportDeleteConfirmModalLabel">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reportDeleteConfirmModalLabel">Confirm Delete</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this item?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmReportDeleteBtn">
+                        Delete
+                    </button>
+                </div>
             </div>
-            {% if item is mapping %}
-            {%- if mo_number and mo_number in mo_data_map -%}
-            {%- set handover_asset = mo_data_map[mo_number].asset_code -%}
-            {%- set handover_title = mo_data_map[mo_number].title or mo_data_map[mo_number].description -%}
-            {%- set handover_desc = mo_data_map[mo_number].description -%}
-            {%- set handover_status = mo_data_map[mo_number].status | default('In Progress') -%}
-            {%- set handover_time = item.timestamp | default(mo_data_map[mo_number].created_at) | default('N/A') -%}
-            {%- set handover_duration = item.duration | default(mo_data_map[mo_number].downtime_duration) | default('N/A') -%}
-            {%- else -%}
-            {%- set handover_asset = (item.asset_code or item.asset) | default('') -%}
-            {%- set handover_title = item.title | default('Instruction') -%}
-            {%- set handover_desc = item.description | default('') -%}
-            {%- set handover_status = item.status | default('In Progress') -%}
-            {%- set handover_time = item.timestamp | default(item.start_time) | default('N/A') -%}
-            {%- set handover_duration = item.duration | default('N/A') -%}
-            {%- endif -%}
-            {% if handover_asset and handover_asset in asset_link_map %}
-            <a href="{{ asset_link_map[handover_asset] }}"><strong>{{ handover_asset }}</strong></a>
-            {% elif handover_asset %}
-            <strong>{{ handover_asset }}</strong>
-            {% endif %}
-            - {{ handover_time }} - {{ handover_duration }} min
-            {% if mo_number %}
-            -
-            {% if mo_number in mo_link_map %}
-            <a href="{{ mo_link_map[mo_number] }}"><strong>MO-{{ mo_number }}</strong></a>
-            {% else %}
-            <strong>MO-{{ mo_number }}</strong>
-            {% endif %}
-            {% endif %}: <em>{{ handover_status }}</em>
-            <p class="ms-4 mb-0 text-muted">
-              <em>{{ handover_title }}</em>: {{ linkify_spare_parts(handover_desc) | safe }}
-            </p>
-            {% else %}
-            <p class="ms-2 mb-0 text-muted">{{ linkify_spare_parts(item) | safe }}</p>
-            {% endif %}
-          </div>
-          {% endfor %} {% else %}
-          <p class="text-muted">No handover notes from previous shift.</p>
-          {% endif %}
         </div>
-      </div>
     </div>
-    <div class="mb-4">
-      <div
-        class="section-header"
-        style="cursor: pointer"
-        data-toggle="collapse"
-        data-target="#breakdown_section"
-        aria-expanded="true"
-      >
-        <span class="section-title">
-          <i class="fas fa-chevron-down collapse-icon"></i>
-          Breakdowns:
-        </span>
-        <button
-          class="btn btn-sm btn-success"
-          onclick="
-            event.stopPropagation();
-            openAddModal('breakdown', 'Breakdown');
-          "
-        >
-          <i class="fas fa-plus"></i>
-        </button>
-      </div>
-      <div id="breakdown_section" class="collapse show">
-        <div id="breakdown_items">
-          {% for bd in data.breakdowns %}
-          {%- set _raw_bd_mo = (bd.mo_id if bd is mapping else None) or (bd.id if bd is mapping else None) -%}
-          {%- set _bd_mo_str = _raw_bd_mo | string | replace('MO-','') | replace('MO','') | trim if _raw_bd_mo else '' -%}
-          {%- set breakdown_mo_number = _bd_mo_str | int if (_bd_mo_str and _bd_mo_str.isdigit()) else None -%}
-          <div class="report-item">
-            <div class="item-actions">
-              {% if breakdown_mo_number and breakdown_mo_number in mo_link_map %}
-              <a class="btn btn-outline-warning btn-sm" href="{{ mo_link_map[breakdown_mo_number] }}" title="Edit Maintenance Order">
-                <i class="fas fa-edit"></i>
-              </a>
-              {% else %}
-              <button
-                class="btn btn-outline-warning btn-sm"
-                data-type="breakdown"
-                data-title="Breakdown"
-                data-params='{{ bd|tojson|safe }}'
-                data-index="{{ loop.index0 }}"
-                onclick="openEditModalFromData(this)"
-              >
-                <i class="fas fa-edit"></i>
-              </button>
-              {% endif %}
-              <button
-                class="btn btn-outline-danger btn-sm"
-                data-type="breakdown"
-                data-index="{{ loop.index0 }}"
-                onclick="deleteItemFromData(this)"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-
-            {%- set bd_asset_code = bd.asset_code or bd.equipment_line or bd.asset or 'ASSET' -%}
-            {%- set bd_desc = bd.description or bd.fault or 'N/A' -%}
-            {%- set bd_start = bd.timestamp or bd.start_time or '00:00' -%}
-            {%- set bd_status = bd.status or 'N/A' -%}
-            {%- set _bd_duration_raw = bd.duration -%}
-            {%- set _bd_root_raw = bd.root_cause -%}
-            {%- set _bd_recovery_raw = bd.resolution_notes or bd.recovery -%}
-            {%- set bd_duration = _bd_duration_raw if (_bd_duration_raw is not none and (_bd_duration_raw|string|trim) and (_bd_duration_raw|string|lower != 'n/a')) else none -%}
-            {%- set bd_root = _bd_root_raw if (_bd_root_raw is not none and (_bd_root_raw|string|trim) and (_bd_root_raw|string|lower != 'n/a')) else none -%}
-            {%- set bd_recovery = _bd_recovery_raw if (_bd_recovery_raw is not none and (_bd_recovery_raw|string|trim) and (_bd_recovery_raw|string|lower != 'n/a')) else none -%}
-
-            {%- if breakdown_mo_number and breakdown_mo_number in mo_data_map -%}
-               {%- set bd_asset_code = mo_data_map[breakdown_mo_number].asset_code -%}
-               {%- set bd_desc = mo_data_map[breakdown_mo_number].title -%}
-               {%- set bd_status = mo_data_map[breakdown_mo_number].status -%}
-               {%- set bd_duration = bd_duration or mo_data_map[breakdown_mo_number].downtime_duration -%}
-               {%- set bd_root = bd_root or mo_data_map[breakdown_mo_number].root_cause -%}
-               {%- set bd_recovery = bd_recovery or mo_data_map[breakdown_mo_number].recovery -%}
-               {%- set bd_start = bd.timestamp or bd.start_time or mo_data_map[breakdown_mo_number].created_at or 'N/A' -%}
-            {%- endif -%}
-
-            {%- set bd_duration = bd_duration if bd_duration is not none else 'N/A' -%}
-            {%- set bd_root = bd_root if bd_root is not none else 'N/A' -%}
-            {%- set bd_recovery = bd_recovery if bd_recovery is not none else 'N/A' -%}
-
-            {% if bd_asset_code and bd_asset_code in asset_link_map %}
-            <a href="{{ asset_link_map[bd_asset_code] }}"><strong>{{ bd_asset_code }}</strong></a>
-            {% else %}
-            <strong>{{ bd_asset_code }}</strong>
-            {% endif %}
-            - {{ bd_start }} - {{ bd_duration }} min
-            {% if breakdown_mo_number %}
-            -
-            {% if breakdown_mo_number in mo_link_map %}
-            <a href="{{ mo_link_map[breakdown_mo_number] }}"><strong>MO-{{ breakdown_mo_number }}</strong></a>
-            {% else %}
-            <strong>MO-{{ breakdown_mo_number }}</strong>
-            {% endif %}
-            {% endif %}:
-            <ul class="mb-0 text-muted">
-              <li>Fault: {{ bd_desc }} (Status: {{ bd_status }})</li>
-              <li>Root cause: {{ bd_root }}</li>
-              <li>Recovery: {{ bd_recovery }}</li>
-            </ul>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    <div class="mb-4">
-      <div
-        class="section-header"
-        style="cursor: pointer"
-        data-toggle="collapse"
-        data-target="#activity_section"
-        aria-expanded="true"
-      >
-        <span class="section-title">
-          <i class="fas fa-chevron-down collapse-icon"></i>
-          Engineering support / Work Requests / Break Activities:
-        </span>
-        <button
-          class="btn btn-sm btn-success"
-          onclick="
-            event.stopPropagation();
-            openAddModal('activities', 'Activity');
-          "
-        >
-          <i class="fas fa-plus"></i>
-        </button>
-      </div>
-      <div id="activity_section" class="collapse show">
-        <h6 class="mt-3"><strong>Work Requests:</strong></h6>
-        <ol id="flux_ticket_items">
-          {% set flux_tickets = data.break_activities | selectattr('type',
-          'equalto', 'flux_ticket') | list if data.break_activities else [] %}
-          {% if flux_tickets %} {% for a in flux_tickets %}
-          {% set mo_label = a.mo_id | default('Num.') %}
-          {% set mo_number = mo_label | replace('MO-','') | int %}
-          {% set edit_data = a.copy() %}
-          {% if mo_number in mo_data_map %}
-          {% set mo_data = mo_data_map[mo_number] %}
-          {% set _ = edit_data.update({'asset': mo_data.asset_code}) %}
-          {% endif %}
-          <li class="report-item" style="list-style-position: inside">
-            <div class="item-actions">
-              {% if mo_number and mo_number in mo_link_map %}
-              <a class="btn btn-outline-warning btn-sm" href="{{ mo_link_map[mo_number] }}" title="Edit Maintenance Order">
-                <i class="fas fa-edit"></i>
-              </a>
-              {% else %}
-              <button
-                class="btn btn-outline-warning btn-sm"
-                data-type="flux_tickets"
-                data-title="Activity"
-                data-params='{{ edit_data | tojson | safe }}'
-                data-index="{{ loop.index0 }}"
-                onclick="openEditModalFromData(this)"
-              >
-                <i class="fas fa-edit"></i>
-              </button>
-              {% endif %}
-              <button
-                class="btn btn-outline-danger btn-sm"
-                data-type="flux_tickets"
-                data-index="{{ loop.index0 }}"
-                onclick="deleteItemFromData(this)"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-            {% set mo_label = a.mo_id | default('Num.') %}
-            {% set mo_number = mo_label | replace('MO-','') | int %}
-
-            {# Prefer database-backed MO info when available #}
-            {% if mo_number in mo_data_map %}
-              {% set mo_data = mo_data_map[mo_number] %}
-              {% set asset_code = mo_data.asset_code %}
-              {% set asset_url = mo_data.asset_url %}
-              {% set mo_title = mo_data.title %}
-              {% set mo_status = mo_data.status %}
-            {% else %}
-              {% set asset_code = a.asset | default('ASSET_CODE') %}
-              {% set asset_url = asset_link_map.get(a.asset) if a.asset else None %}
-              {% set mo_title = a.title | default(a.description) | default('details') %}
-              {% set mo_status = a.status | default('') %}
-            {% endif %}
-
-            {% if asset_url %}
-            <a href="{{ asset_url }}"><strong>{{ asset_code }}</strong></a>
-            {% else %}
-            <strong>{{ asset_code }}</strong>
-            {% endif %}
-            - {{ linkify_spare_parts(mo_title) | safe }}
-            -
-            {% if mo_number in mo_link_map %}
-            <a href="{{ mo_link_map[mo_number] }}">
-              <strong>MO-{{ mo_number }}</strong>
-            </a>
-            {% else %}
-            <strong>MO-{{ mo_number }}</strong>
-            {% endif %}:
-            <em>{{ mo_status }}</em>
-          </li>
-          {% endfor %} {% else %}
-          <li class="text-muted">None recorded.</li>
-          {% endif %}
-        </ol>
-        <h6 class="mt-3"><strong>Engineering Support:</strong></h6>
-        <ol id="engineering_support_items">
-          {% if data.engineering_support %} {% for e in data.engineering_support
-          %}
-          {% set engineering_mo_number = (e.mo_id | default(e.id) | string | replace('MO-','') | int) if (e.mo_id or e.id) else None %}
-          <li class="report-item" style="list-style-position: inside">
-            <div class="item-actions">
-              {% if engineering_mo_number and engineering_mo_number in mo_link_map %}
-              <a class="btn btn-outline-warning btn-sm" href="{{ mo_link_map[engineering_mo_number] }}" title="Edit Maintenance Order">
-                <i class="fas fa-edit"></i>
-              </a>
-              {% else %}
-              <button
-                class="btn btn-outline-warning btn-sm"
-                data-type="engineering_support"
-                data-title="Engineering Support"
-                data-params='{{ e | tojson | safe }}'
-                data-index="{{ loop.index0 }}"
-                onclick="openEditModalFromData(this)"
-              >
-                <i class="fas fa-edit"></i>
-              </button>
-              {% endif %}
-              <button
-                class="btn btn-outline-danger btn-sm"
-                data-type="engineering_support"
-                data-index="{{ loop.index0 }}"
-                onclick="deleteItemFromData(this)"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-            {% set engineering_mo_label = e.mo_id | default(e.id) | default('Num.') %}
-            {% set engineering_mo_id = engineering_mo_label | replace('MO-','') | int if (e.mo_id or e.id) else None %}
-
-            {# Prefer database-backed MO info when available #}
-            {% if engineering_mo_id and engineering_mo_id in mo_data_map %}
-              {% set eng_mo_data = mo_data_map[engineering_mo_id] %}
-              {% set asset_code = eng_mo_data.asset_code %}
-              {% set asset_url = eng_mo_data.asset_url %}
-              {% set eng_mo_title = eng_mo_data.title or eng_mo_data.description %}
-              {% set eng_mo_status = eng_mo_data.status %}
-            {% else %}
-              {% set asset_code = e.asset | default(e.asset_code) | default('ASSET_CODE') %}
-              {% set asset_url = asset_link_map.get(asset_code) if asset_code else None %}
-              {% set eng_mo_title = e.title | default(e.description) | default('details') %}
-              {% set eng_mo_status = e.status | default('') %}
-            {% endif %}
-
-            {% if asset_url %}
-            <a href="{{ asset_url }}"><strong>{{ asset_code }}</strong></a>
-            {% else %}
-            <strong>{{ asset_code }}</strong>
-            {% endif %}
-            - {{ linkify_spare_parts(eng_mo_title) | safe }}
-            -
-            {% if engineering_mo_id and engineering_mo_id in mo_link_map %}
-            <a class="link-primary" href="{{ mo_link_map[engineering_mo_id] }}">
-              <strong>MO-{{ engineering_mo_id }}</strong>
-            </a>
-            {% else %}
-            <strong>MO-{{ engineering_mo_id }}</strong>
-            {% endif %}:
-            <em>{{ eng_mo_status }}</em>
-          </li>
-          {% endfor %} {% else %}
-          <li class="text-muted">None recorded.</li>
-          {% endif %}
-        </ol>
-      </div>
-    </div>
-    <div class="mb-4">
-      <div
-        class="section-header"
-        style="cursor: pointer"
-        data-toggle="collapse"
-        data-target="#handover_to_section"
-        aria-expanded="true"
-      >
-        <span class="section-title">
-          <i class="fas fa-chevron-down collapse-icon"></i>
-          Handover to next Shift:
-        </span>
-        <button
-          class="btn btn-sm btn-success"
-          onclick="
-            event.stopPropagation();
-            openAddModal('handover_to', 'Handover to Next Shift');
-          "
-        >
-          <i class="fas fa-plus"></i>
-        </button>
-      </div>
-      <div id="handover_to_section" class="collapse show">
-        <div id="handover_to_items">
-          {% set ht = data.handover_to_next if data.handover_to_next is defined else (data.report_info.handover_to_next if data.report_info else []) %}
-          {% if ht %} {% for item in ht %}
-          {%- set _raw_mo = (item.mo_id if item is mapping else None) or (item.id if item is mapping else None) -%}
-          {%- set _mo_str = _raw_mo | string | replace('MO-','') | replace('MO','') | trim if _raw_mo else '' -%}
-          {%- set mo_number = _mo_str | int if (_mo_str and _mo_str.isdigit()) else None -%}
-          <div class="report-item">
-            <div class="item-actions">
-              {% if mo_number and mo_number in mo_link_map %}
-              <a class="btn btn-outline-warning btn-sm" href="{{ mo_link_map[mo_number] }}" title="Edit Maintenance Order">
-                <i class="fas fa-edit"></i>
-              </a>
-              {% else %}
-              <button
-                class="btn btn-outline-warning btn-sm"
-                data-type="handover_to"
-                data-title="Handover Item"
-                data-params='{{ item|tojson|safe }}'
-                data-index="{{ loop.index0 }}"
-                onclick="openEditModalFromData(this)"
-              >
-                <i class="fas fa-edit"></i>
-              </button>
-              {% endif %}
-              <button
-                class="btn btn-outline-danger btn-sm"
-                data-type="handover_to"
-                data-index="{{ loop.index0 }}"
-                onclick="deleteItemFromData(this)"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-            {% if item is mapping %}
-            {%- if mo_number and mo_number in mo_data_map -%}
-            {%- set handover_asset = mo_data_map[mo_number].asset_code -%}
-            {%- set handover_title = mo_data_map[mo_number].title or mo_data_map[mo_number].description -%}
-            {%- set handover_desc = mo_data_map[mo_number].description -%}
-            {%- set handover_status = mo_data_map[mo_number].status | default('In Progress') -%}
-            {%- set handover_time = item.timestamp | default(mo_data_map[mo_number].created_at) | default('N/A') -%}
-            {%- set handover_duration = item.duration | default(mo_data_map[mo_number].downtime_duration) | default('N/A') -%}
-            {%- else -%}
-            {%- set handover_asset = (item.asset_code or item.asset) | default('') -%}
-            {%- set handover_title = item.title | default('Instruction') -%}
-            {%- set handover_desc = item.description | default('') -%}
-            {%- set handover_status = item.status | default('In Progress') -%}
-            {%- set handover_time = item.timestamp | default(item.start_time) | default('N/A') -%}
-            {%- set handover_duration = item.duration | default('N/A') -%}
-            {%- endif -%}
-            {% if handover_asset and handover_asset in asset_link_map %}
-            <a href="{{ asset_link_map[handover_asset] }}"><strong>{{ handover_asset }}</strong></a>
-            {% elif handover_asset %}
-            <strong>{{ handover_asset }}</strong>
-            {% endif %}
-            - {{ handover_time }} - {{ handover_duration }} min
-            {% if mo_number %}
-            -
-            {% if mo_number in mo_link_map %}
-            <a href="{{ mo_link_map[mo_number] }}"><strong>MO-{{ mo_number }}</strong></a>
-            {% else %}
-            <strong>MO-{{ mo_number }}</strong>
-            {% endif %}
-            {% endif %}: <em>{{ handover_status }}</em>
-            <p class="ms-4 mb-0 text-muted">
-              <em>{{ handover_title }}</em>: {{ linkify_spare_parts(handover_desc) | safe }}
-            </p>
-            {% else %}
-            <p class="ms-2 mb-0 text-muted">{{ linkify_spare_parts(item) | safe }}</p>
-            {% endif %}
-          </div>
-          {% endfor %} {% else %}
-          <p class="text-muted">No handover notes for next shift.</p>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-    <div class="mt-5 pt-4 border-top">
-      <p class="mb-1">Have a good shift,</p>
-      <p>
-        <strong>{{ report.generated_by_name | default('Technician') }}</strong>
-      </p>
-    </div>
-  </div>
-  <!-- End of id="report-content" -->
-</div>
-<!-- End of container-fluid -->
-
-<div
-  class="modal fade"
-  id="editModal"
-  tabindex="-1"
-  aria-labelledby="editModalLabel"
->
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editModalLabel">Edit Item</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-dismiss="modal"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <!-- Header Form -->
-        <div
-          id="edit-header-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="mb-3">
-            <label class="form-label">Shift Date</label>
-            <input type="date" class="form-control" id="edit-header-date" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Shift</label>
-            <select class="form-select" id="edit-header-shift">
-              <option value="Early">Early</option>
-              <option value="Night">Night</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Team Name</label>
-            <select class="form-select" id="edit-header-team">
-              <option value="">Select Team...</option>
-              {% for team in teams %}
-              <option value="{{ team }}">{{ team }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <input type="hidden" id="edit-header-color" />
-        </div>
-
-        <!-- Metadata Form -->
-        <div
-          id="edit-metadata-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <input type="hidden" id="edit-metadata-key" />
-          <div class="mb-3">
-            <label class="form-label">Value</label>
-            <div class="d-flex align-items-center gap-2">
-              <input
-                type="text"
-                class="form-control"
-                id="edit-metadata-value"
-                placeholder="Enter value"
-                style="flex: 0 0 auto; width: 100px;"
-              />
-              <small
-                id="edit-metadata-total-text"
-                class="text-muted"
-                style="white-space: nowrap;"
-              ></small>
-            </div>
-          </div>
-        </div>
-
-        <!-- Handover Form (Shift & Weekend) -->
-        <div
-          id="edit-handover-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="mb-3">
-            <label class="form-label">Asset Code</label>
-            <select
-              class="form-control"
-              id="edit-handover-asset"
-              data-placeholder="Select Asset or type custom..."
-            >
-              <option value="">Select Asset...</option>
-              {% for asset in assets %}
-              <option value="{{ asset }}">{{ asset }}</option>
-              {% endfor %}
-            </select>
-            <small class="text-muted"
-              >Or leave empty if just general text.</small
-            >
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Title</label>
-            <input
-              type="text"
-              class="form-control"
-              id="edit-handover-title"
-              placeholder="Brief title or heading"
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Description / Instruction</label>
-            <textarea
-              class="form-control"
-              id="edit-handover-desc"
-              rows="4"
-            ></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Attachments</label>
-            <input type="file" class="form-control" id="edit-handover-file" />
-          </div>
-        </div>
-
-        <!-- Breakdown Form -->
-        <div
-          id="edit-breakdown-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Asset Code / Line</label>
-              <select
-                class="form-control"
-                id="edit-bd-asset"
-                data-placeholder="Select Asset or type custom..."
-              >
-                <option value="">Select Asset...</option>
-                {% for asset in assets %}
-                <option value="{{ asset }}">{{ asset }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Start Time</label>
-              <input type="time" class="form-control" id="edit-bd-time" />
-            </div>
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Duration</label>
-              <input
-                type="text"
-                class="form-control"
-                id="edit-bd-duration"
-                placeholder="e.g. 30min"
-              />
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Fault / Description</label>
-            <textarea
-              class="form-control"
-              id="edit-bd-fault"
-              rows="2"
-            ></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Root Cause</label>
-            <textarea
-              class="form-control"
-              id="edit-bd-root"
-              rows="2"
-            ></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Recovery / Resolution</label>
-            <textarea
-              class="form-control"
-              id="edit-bd-recovery"
-              rows="2"
-            ></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Attachments</label>
-            <input type="file" class="form-control" id="edit-bd-file" />
-          </div>
-        </div>
-
-        <!-- Activity Form -->
-        <div
-          id="edit-activity-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="mb-3">
-            <label class="form-label">Type</label>
-            <select class="form-select" id="edit-act-type">
-              <option value="flux_ticket">Work Request</option>
-              <option value="engineering_support">Engineering Support</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Asset</label>
-            <select
-              class="form-control"
-              id="edit-act-asset"
-              data-placeholder="Select Asset or type custom..."
-            >
-              <option value="">Select Asset...</option>
-              {% for asset in assets %}
-              <option value="{{ asset }}">{{ asset }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-3" id="edit-act-mo-group">
-            <label class="form-label">MO/Ticket ID</label>
-            <input
-              type="text"
-              class="form-control"
-              id="edit-act-mo-id"
-              placeholder="e.g., MO-12345"
-            />
-          </div>
-          <div class="mb-3" id="edit-act-title-group" style="display: none">
-            <label class="form-label">Title</label>
-            <input
-              type="text"
-              class="form-control"
-              id="edit-act-title"
-              placeholder="Brief description"
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Description / Details</label>
-            <textarea
-              class="form-control"
-              id="edit-act-desc"
-              rows="3"
-            ></textarea>
-          </div>
-          <div class="mb-3" id="edit-act-status-group">
-            <label class="form-label">Status</label>
-            <input
-              type="text"
-              class="form-control"
-              id="edit-act-status"
-              placeholder="e.g., Completed, In Progress"
-            />
-          </div>
-        </div>
-
-        <!-- Simple Task Form (PMs/MOs weekend) -->
-        <div
-          id="edit-simple-task-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="mb-3" id="edit-task-id-group" style="display: none">
-            <label class="form-label">ID (if applicable)</label>
-            <input type="text" class="form-control" id="edit-task-id" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Asset Code</label>
-            <select
-              class="form-control"
-              id="edit-task-asset"
-              data-placeholder="Select Asset or type custom..."
-            >
-              <option value="">Select Asset...</option>
-              {% for asset in assets %}
-              <option value="{{ asset }}">{{ asset }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea
-              class="form-control"
-              id="edit-task-desc"
-              rows="3"
-            ></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Status</label>
-            <input type="text" class="form-control" id="edit-task-status" />
-          </div>
-        </div>
-
-        <!-- Generic Form -->
-        <div
-          id="edit-generic-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="mb-3">
-            <label class="form-label">Content</label>
-            <textarea
-              class="form-control"
-              id="edit-generic-content"
-              rows="4"
-            ></textarea>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-          Cancel
-        </button>
-        <button type="button" class="btn btn-primary" id="saveEditBtn">
-          Save Changes
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-<div
-  class="modal fade"
-  id="addModal"
-  tabindex="-1"
-  aria-labelledby="addModalLabel"
->
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addModalLabel">Add Item</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-dismiss="modal"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <!-- Handover Form -->
-        <div
-          id="add-handover-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="mb-3">
-            <label class="form-label">Asset Code</label>
-            <select
-              class="form-control"
-              id="add-handover-asset"
-              data-placeholder="Select Asset or type custom..."
-            >
-              <option value="">Select Asset...</option>
-              {% for asset in assets %}
-              <option value="{{ asset }}">{{ asset }}</option>
-              {% endfor %}
-            </select>
-            <small class="text-muted"
-              >Or leave empty if just general text.</small
-            >
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Title</label>
-            <input
-              type="text"
-              class="form-control"
-              id="add-handover-title"
-              placeholder="Brief title or heading"
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Description / Details</label>
-            <textarea
-              class="form-control"
-              id="add-handover-desc"
-              rows="4"
-            ></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Attachments</label>
-            <input type="file" class="form-control" id="add-handover-file" />
-          </div>
-        </div>
-
-        <!-- Breakdown Form -->
-        <div
-          id="add-breakdown-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Asset Code</label>
-              <select
-                class="form-control"
-                id="add-bd-asset"
-                data-placeholder="Select Asset or type custom..."
-              >
-                <option value="">Select Asset...</option>
-                {% for asset in assets %}
-                <option value="{{ asset }}">{{ asset }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Start Time</label>
-              <input type="time" class="form-control" id="add-bd-time" />
-            </div>
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Duration</label>
-              <input
-                type="text"
-                class="form-control"
-                id="add-bd-duration"
-                placeholder="e.g. 30min"
-              />
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Fault / Description</label>
-            <textarea
-              class="form-control"
-              id="add-bd-fault"
-              rows="2"
-            ></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Root Cause</label>
-            <textarea class="form-control" id="add-bd-root" rows="2"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Recovery / Resolution</label>
-            <textarea
-              class="form-control"
-              id="add-bd-recovery"
-              rows="2"
-            ></textarea>
-          </div>
-        </div>
-
-        <!-- Activity Form -->
-        <div
-          id="add-activity-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="mb-3">
-            <label class="form-label">Type</label>
-            <select class="form-select" id="add-act-type">
-              <option value="flux_ticket">Work Request</option>
-              <option value="engineering_support">Engineering Support</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Asset Code</label>
-            <select
-              class="form-control"
-              id="add-act-asset"
-              data-placeholder="Select Asset or type custom..."
-            >
-              <option value="">Select Asset...</option>
-              {% for asset in assets %}
-              <option value="{{ asset }}">{{ asset }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-3" id="add-act-mo-group">
-            <label class="form-label">MO/Ticket ID</label>
-            <input
-              type="text"
-              class="form-control"
-              id="add-act-mo-id"
-              placeholder="e.g., MO-12345"
-            />
-          </div>
-          <div class="mb-3" id="add-act-title-group" style="display: none">
-            <label class="form-label">Title</label>
-            <input
-              type="text"
-              class="form-control"
-              id="add-act-title"
-              placeholder="Brief description"
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Description / Work Done</label>
-            <textarea
-              class="form-control"
-              id="add-act-desc"
-              rows="3"
-            ></textarea>
-          </div>
-          <div class="mb-3" id="add-act-status-group">
-            <label class="form-label">Status</label>
-            <input
-              type="text"
-              class="form-control"
-              id="add-act-status"
-              placeholder="e.g., Completed, In Progress"
-              value="Open"
-            />
-          </div>
-        </div>
-
-        <!-- Simple Task Form (PMs/MOs weekend) -->
-        <div
-          id="add-simple-task-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="mb-3" id="add-task-id-group" style="display: none">
-            <label class="form-label">ID (if applicable)</label>
-            <input type="text" class="form-control" id="add-task-id" />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Asset Code</label>
-            <select
-              class="form-control"
-              id="add-task-asset"
-              data-placeholder="Select Asset or type custom..."
-            >
-              <option value="">Select Asset...</option>
-              {% for asset in assets %}
-              <option value="{{ asset }}">{{ asset }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea
-              class="form-control"
-              id="add-task-desc"
-              rows="3"
-            ></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Status</label>
-            <input
-              type="text"
-              class="form-control"
-              id="add-task-status"
-              value="Open"
-            />
-          </div>
-        </div>
-
-        <!-- Generic Form -->
-        <div
-          id="add-generic-form"
-          class="modal-form-content"
-          style="display: none"
-        >
-          <div class="mb-3">
-            <label class="form-label">Content</label>
-            <textarea
-              class="form-control"
-              id="add-generic-content"
-              rows="4"
-            ></textarea>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-          Cancel
-        </button>
-        <button type="button" class="btn btn-success" id="saveAddBtn">
-          Add Item
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Delete Confirmation Modal -->
-<div
-  class="modal fade"
-  id="reportDeleteConfirmModal"
-  tabindex="-1"
-  aria-labelledby="reportDeleteConfirmModalLabel"
->
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="reportDeleteConfirmModalLabel">
-          Confirm Delete
-        </h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-dismiss="modal"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <p>Are you sure you want to delete this item?</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="btn btn-danger"
-          id="confirmReportDeleteBtn"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Datalist for Assets -->
-<datalist id="assetOptions">
-  {% for asset in assets %}
-  <option value="{{ asset }}"></option>
-  {% endfor %}
-</datalist>
-{% endblock %} {% block extra_js %}
-<!-- Hidden Data Sink to satisfy linters -->
-<div
-  id="report-data-sink"
-  data-type="{{ report.report_type if report else 'shift' }}"
-  data-tech-count="{{ technician_count or 20 }}"
-  data-vigel-total="{{ vigel_total or 10 }}"
-  data-mds-total="{{ mds_total or 15 }}"
-  style="display: none"
-></div>
-<script type="application/json" id="report-data-content">
+    <!-- Datalist for Assets -->
+    <datalist id="assetOptions">
+        {% for asset in assets %}<option value="{{ asset }}"></option>{% endfor %}
+    </datalist>
+{% endblock %}
+{% block extra_js %}
+    <!-- Hidden Data Sink to satisfy linters -->
+    <div id="report-data-sink"
+         data-type="{{ report.report_type if report else 'shift' }}"
+         data-tech-count="{{ technician_count or 20 }}"
+         data-vigel-total="{{ vigel_total or 10 }}"
+         data-mds-total="{{ mds_total or 15 }}"
+         style="display: none"></div>
+    <script type="application/json" id="report-data-content">
   {{ report_data_json | safe }}
-</script>
-<script type="application/json" id="report-data-report">
+    </script>
+    <script type="application/json" id="report-data-report">
   {{ report_meta_json | safe }}
-</script>
-<script type="application/json" id="report-data-mos">
+    </script>
+    <script type="application/json" id="report-data-mos">
   {{ report_mo_json | safe }}
-</script>
-
-<!-- Load external JS BEFORE inline scripts to ensure functions are available -->
-<script src="{{ url_for('reporting.static', filename='js/report-interactions.js') }}"></script>
-
-<script>
+    </script>
+    <!-- Load external JS BEFORE inline scripts to ensure functions are available -->
+    <script src="{{ url_for('reporting.static', filename='js/report-interactions.js') }}"></script>
+    <script>
   (function () {
     function initReportData() {
       const sink = document.getElementById("report-data-sink");
@@ -1338,5 +1102,5 @@ extra_css %}
     }
     initReportData();
   })();
-</script>
+    </script>
 {% endblock %}

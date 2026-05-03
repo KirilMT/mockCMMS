@@ -23,21 +23,28 @@ authors = [
 # =============================================================================
 [tool.pytest.ini_options]
 minversion = "6.0"
-testpaths = ["tests/backend", "apps"]
+# Include the .collab directory in test discovery so its unit tests run by default
+testpaths = ["tests/backend", "apps", ".collab"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 # Output and Behavior
+# NOTE: --cov-fail-under is NOT set here on purpose. addopts applies to every
+# pytest invocation (IDE, single-file, targeted pre-commit) and a global
+# threshold causes false failures on partial runs.  The 85% gate is enforced by:
+#   1. CI  →  .github/workflows/ci.yml  (--cov-fail-under=85, full suite)
+#   2. Local full validation  →  validate_code.py Step 10  (full suite)
+#   3. Pre-push hook  →  runs validate_code.py without --quick
 addopts = """
     -v
     --tb=short
     --strict-markers
     --cov=src
     --cov=apps
+    --cov=.collab
     --cov-report=term-missing
     --cov-report=html
-    --cov-fail-under=85
     -W ignore::ResourceWarning
     -W ignore::pytest.PytestUnraisableExceptionWarning
 """
@@ -172,7 +179,7 @@ select = ["E", "F", "W"]
 # COVERAGE CONFIGURATION
 # =============================================================================
 [tool.coverage.run]
-source = ["src", "apps"]
+source = ["src", "apps", ".collab"]
 omit = [
     "*/tests/*",
     "*/venv/*",

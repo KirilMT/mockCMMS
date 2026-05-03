@@ -62,7 +62,8 @@ db.sqlite3
 db.sqlite3-journal
 
 # Flask stuff:
-instance/
+instance/*
+!instance/.gitkeep
 .webassets-cache
 
 # Scrapy stuff:
@@ -129,9 +130,11 @@ dmypy.json
 *.db
 *.sqlite
 *.sqlite3
-logs/
+logs/*
+!logs/.gitkeep
 output/
 temp/
+.lock_watcher.pid
 
 # External/sensitive configuration
 apps/planning/config/config.json
@@ -190,6 +193,8 @@ coverage.xml
 # pytest-testmon coverage DB (local smart-test cache — never commit)
 .testmondata
 .testmondata-*
+# pytest-tempdir or similar transient artifacts
+pytest-cache-files-*/
 
 # Node modules (for local jscpd)
 node_modules/
@@ -224,3 +229,18 @@ temp_diff_output.txt
 
 # isort temporary files
 *.py.isorted
+
+# Collab locking runtime files
+.collab/.daemon.pid
+.collab/.daemon.log
+.collab/.pycharm_watcher.pid
+.collab/.pycharm_watcher.log
+.collab/.startup_summary.json
+.collab/.shutdown_complete
+.collab/.stop_request
+.collab/.vscode_heartbeat
+.collab/vscode/package-lock.json
+# Collab runtime logs: exclude to avoid large diffs and editor performance issues
+.collab/logs/
+.collab/logs/*.log
+.collab/logs/**/ 

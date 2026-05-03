@@ -267,6 +267,42 @@ def _print_output_tail(output: str, label: str, color: str) -> None:
         print(output)
 
 
+_PYTHON_TOOL_MODULES: Dict[str, str] = {
+    "isort": "isort",
+    "black": "black",
+    "docformatter": "docformatter",
+    "ruff": "ruff",
+    "flake8": "flake8",
+    "mypy": "mypy",
+    "bandit": "bandit",
+    "pytest": "pytest",
+    "coverage": "coverage",
+    "yamllint": "yamllint",
+    "diff-cover": "diff_cover.diff_cover_tool",
+}
+
+
+def _python_module_fallback_command(command: List[str]) -> Optional[List[str]]:
+    """Return a Python module command fallback for known tools.
+
+    This avoids PATH/PATHEXT issues in hook shells by running tools with the same
+    interpreter used for this script (sys.executable).
+    """
+    if not command:
+        return None
+
+    executable = command[0]
+    # Explicit paths should not be rewritten.
+    if os.path.isabs(executable) or "/" in executable or "\\" in executable:
+        return None
+
+    module = _PYTHON_TOOL_MODULES.get(executable.lower())
+    if not module:
+        return None
+
+    return [sys.executable, "-m", module] + command[1:]
+
+
 def run_command(
     command: List[str],
     description: str,
@@ -291,8 +327,10 @@ def run_command(
     try:
         print(f"Running: {' '.join(command)}")
 
-        # On Windows, use shell=True for npm/npx to find them in PATH
-        use_shell = sys.platform == "win32" and command[0] in ("npm", "npx")
+        # On Windows, npm/npx are .cmd files that need cmd.exe to execute.
+        # Instead of shell=True (B602 security risk), prefix with cmd /c.
+        if sys.platform == "win32" and command[0] in ("npm", "npx"):
+            command = ["cmd", "/c"] + command
 
         # IRONCLAD MODE: Fresh, minimal env to mirror CI clean state.
         # Blocks local shell variables from masking configuration gaps.
@@ -354,16 +392,33 @@ def run_command(
         if env:
             ironclad_env.update(env)
 
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            shell=use_shell,
-            check=False,
-            env=ironclad_env,
-        )
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                env=ironclad_env,
+            )
+        except FileNotFoundError:
+            fallback_command = _python_module_fallback_command(command)
+            if not fallback_command:
+                raise
+            print_warning(
+                f"{command[0]} not found via PATH; retrying with: "
+                f"{' '.join(fallback_command)}"
+            )
+            result = subprocess.run(
+                fallback_command,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                env=ironclad_env,
+            )
 
         if result.returncode == 0:
             print_success(f"{description} passed")
@@ -423,6 +478,10 @@ _BACKEND_MAP: List[Tuple[str, List[str]]] = [
     ("tests/backend/", ["tests/backend"]),
     ("apps/planning/tests/", ["apps/planning/tests"]),
     ("apps/reporting/tests/", ["apps/reporting/tests"]),
+    # Scripts → run their unit tests
+    ("scripts/", ["tests/backend/unit"]),
+    # .collab sources → run tests under .collab/tests
+    (".collab/", [".collab/tests"]),
 ]
 
 # Maps source-file path prefixes → relevant frontend test directories.
@@ -468,7 +527,56 @@ def _get_changed_files() -> List[str]:
     return sorted(changed)
 
 
-def detect_changed_scopes() -> Dict[str, Any]:
+def _expand_input_paths(paths: List[str]) -> List[str]:
+    """Expand and normalize user-provided path arguments.
+
+    Directory arguments are recursively expanded into files so quick mode can
+    correctly scope checks when users pass folders (for example `.collab`).
+    """
+    expanded: set[str] = set()
+    cwd = Path.cwd()
+    ignored_dirnames = {
+        ".git",
+        ".venv",
+        "node_modules",
+        "__pycache__",
+        ".pytest_cache",
+        "htmlcov",
+        "playwright-report",
+    }
+
+    for raw in paths:
+        if not raw:
+            continue
+
+        p = Path(raw)
+        if p.exists() and p.is_dir():
+            for child in p.rglob("*"):
+                if not child.is_file():
+                    continue
+                if any(part in ignored_dirnames for part in child.parts):
+                    continue
+                try:
+                    rel = child.resolve().relative_to(cwd).as_posix()
+                except ValueError:
+                    rel = child.resolve().as_posix()
+                expanded.add(rel)
+            continue
+
+        if p.exists() and p.is_file():
+            try:
+                rel = p.resolve().relative_to(cwd).as_posix()
+            except ValueError:
+                rel = p.resolve().as_posix()
+            expanded.add(rel)
+            continue
+
+        expanded.add(raw.replace("\\", "/"))
+
+    return sorted(expanded)
+
+
+def detect_changed_scopes(files: Optional[List[str]] = None) -> Dict[str, Any]:
     """Analyze git changes and return smart test scopes for --quick mode.
 
     Returns a dict with:
@@ -478,34 +586,58 @@ def detect_changed_scopes() -> Dict[str, Any]:
         no backend-relevant files changed — skip backend tests.
       - ``"frontend"`` (list[str]): Frontend test dirs to run.  Empty list means
         no frontend-relevant files changed — skip frontend tests.
+      - ``"reason"`` (str | None): Human-readable reason for full_suite trigger.
+        Callers should print this as a warning if non-None.
+      - ``"changed_files"`` (list[str]): List of files analyzed for scope.
     """
-    files = _get_changed_files()
+    if files is not None:
+        changed = _expand_input_paths(files)
+    else:
+        changed = _get_changed_files()
 
     # No changes or git unavailable → default to full suite (safest fallback)
-    if not files:
-        return {"full_suite": True, "backend": [], "frontend": []}
+    if not changed:
+        return {
+            "full_suite": True,
+            "backend": [],
+            "frontend": [],
+            "reason": None,
+            "changed_files": [],
+        }
 
     # Any global config/infrastructure change invalidates targeted scope
-    for f in files:
-        basename = f.rsplit("/", 1)[-1]
-        if basename in _FULL_SUITE_FILENAMES:
-            print_warning(f"Global config changed ({f!r}) — full suite required.")
-            return {"full_suite": True, "backend": [], "frontend": []}
+    for f in changed:
+        normalized = f.lstrip("./")
+        if "/" not in normalized and normalized in _FULL_SUITE_FILENAMES:
+            reason = f"Global config changed ({f!r}) — full suite required."
+            return {
+                "full_suite": True,
+                "backend": [],
+                "frontend": [],
+                "reason": reason,
+                "changed_files": changed,
+            }
         if any(f.startswith(p) for p in _FULL_SUITE_PREFIXES):
-            print_warning(f"Infrastructure file changed ({f!r}) — full suite required.")
-            return {"full_suite": True, "backend": [], "frontend": []}
+            reason = f"Infrastructure file changed ({f!r}) — full suite required."
+            return {
+                "full_suite": True,
+                "backend": [],
+                "frontend": [],
+                "reason": reason,
+                "changed_files": changed,
+            }
 
     backend: set = set()
     frontend: set = set()
 
-    for f in files:
+    for f in changed:
         # Backend mapping (first match wins per file; [] = frontend-only, skip)
         for prefix, dirs in _BACKEND_MAP:
             if f.startswith(prefix):
-                if dirs:  # Empty list means "frontend-only — no backend tests"
-                    backend.update(dirs)
-                break  # Always break so the generic src/ catch-all is not reached
-        # Frontend mapping (independent — a file can affect both)
+                backend.update(dirs)
+                break
+
+        # Frontend mapping (first match wins)
         for prefix, dirs in _FRONTEND_MAP:
             if f.startswith(prefix):
                 frontend.update(dirs)
@@ -513,9 +645,10 @@ def detect_changed_scopes() -> Dict[str, Any]:
 
     return {
         "full_suite": False,
-        # Keep only directories that actually exist in this repo
-        "backend": [d for d in sorted(backend) if Path(d).exists()],
-        "frontend": [d for d in sorted(frontend) if Path(d).exists()],
+        "backend": sorted(backend),
+        "frontend": sorted(frontend),
+        "reason": None,
+        "changed_files": changed,
     }
 
 
@@ -533,8 +666,9 @@ def validate_python_backend(
     test_targets = []
 
     if files:
+        expanded_files = _expand_input_paths(files)
         # Avoid hidden files like .gitmessage
-        clean_files = [f for f in files if not Path(f).name.startswith(".")]
+        clean_files = [f for f in expanded_files if not Path(f).name.startswith(".")]
 
         # 1. Python targets
         python_targets = [
@@ -544,10 +678,24 @@ def validate_python_backend(
         template_targets = [
             f for f in clean_files if f.endswith(".html") and "templates" in f
         ]
-        # 3. Bandit targets
-        bandit_targets = [f for f in clean_files if f.startswith("src/")]
-        # 4. Test targets
-        test_targets = [f for f in clean_files if "tests" in f and f.endswith(".py")]
+        # 3. Bandit targets — all Python source files (dirs + root-level .py)
+        _bandit_prefixes = ("src/", "apps/", "scripts/", ".collab/")
+        bandit_targets = [
+            f
+            for f in clean_files
+            if f.endswith(".py")
+            and (
+                any(f.startswith(p) for p in _bandit_prefixes)
+                or "/" not in f  # root-level .py files (run.py, collab.py, …)
+            )
+        ]
+        # 4. Test targets — identified by pytest naming convention (test_*.py),
+        #    not by directory.  Matches pyproject.toml python_files = ["test_*.py"].
+        test_targets = [
+            f
+            for f in clean_files
+            if f.endswith(".py") and Path(f).name.startswith("test_")
+        ]
 
         # Early Exit: Return True silently if no backend work found
         if not any([python_targets, template_targets, bandit_targets, test_targets]):
@@ -558,7 +706,16 @@ def validate_python_backend(
 
     # Full run (no specific files provided)
     if not files:
-        python_targets = ["src", "apps", "tests", "scripts", "run.py"]
+        python_targets = [
+            "src",
+            "apps",
+            "tests",
+            "scripts",
+            "run.py",
+            "collab.py",
+            "conftest.py",
+            ".collab",
+        ]
         # template_targets, bandit_targets, test_targets will be handled by defaults
         # inside the respective sections below.
 
@@ -647,15 +804,29 @@ def validate_python_backend(
             )
         else:
             msg = (
-                f"{Colors.OKCYAN}[INFO] No files in src/ targeted — "
-                f"skipping.{Colors.ENDC}"
+                f"{Colors.OKCYAN}[INFO] No source files targeted — "
+                f"skipping bandit.{Colors.ENDC}"
             )
             print(msg)
             success = True
     else:
-        success, _ = run_command(["bandit", "-r", "src/", "-ll"], "Security scanning")
+        success, _ = run_command(
+            [
+                "bandit",
+                "-r",
+                "src/",
+                "apps/",
+                "scripts/",
+                ".collab/",
+                "run.py",
+                "collab.py",
+                "conftest.py",
+                "-ll",
+            ],
+            "Security scanning",
+        )
 
-    if success and files and not [f for f in files if f.startswith("src/")]:
+    if success and files and not bandit_targets:
         checks.append(("Security Scanning", True))
     else:
         checks.append(("Security Scanning", success))
@@ -676,7 +847,10 @@ def validate_python_backend(
             print(msg)
             success = True
     else:
+        # Discover all template directories (src + modular apps)
         template_paths = ["src/templates"]
+        for app_tpl in sorted(Path(".").glob("apps/*/src/templates")):
+            template_paths.append(str(app_tpl))
         success, _ = run_command(
             [sys.executable, "-m", "djlint", "--check"] + template_paths,
             "Jinja2 template linting",
@@ -689,90 +863,147 @@ def validate_python_backend(
         checks.append(("Template Linting", success))
 
     # 9. Running Tests
-    if quick:
-        print_section("Step 9/11: Targeted Tests (No Coverage)")
-        print_warning("Quick mode: Smart test targeting enabled")
+    # Enable coverage generation in quick mode (via --cov arguments) so that
+    # Step 11 (Diff Coverage) can run robustly.  The total-coverage threshold
+    # (85%) is enforced only by CI and Step 10 (full suite); it is intentionally
+    # absent from pyproject.toml addopts to avoid false failures on partial runs.
+    #
+    # _cov_sources (comprehensive) — Lists EVERY directory/file containing
+    # Python source code.  Used by Step 9 (both quick and full) to generate
+    # .coverage + coverage.xml with data for ALL Python files. This ensures
+    # both Step 10 (total ≥85%) and Step 11 (diff-cover ≥92%) can validate
+    # coverage for ANY Python file — not just src/apps/.collab.  If a new
+    # top-level package or root .py file is added, add a "--cov=<path>"
+    # entry here.  Missing an entry means coverage reports 0% for that
+    # file → false failure.
+    #
+    # _FULL_TESTPATHS — Canonical list of ALL test discovery directories.
+    # Used by full-mode Step 9 AND quick-mode "full_suite" branches so
+    # both run the exact same test surface.  If a new test root is added,
+    # add it here.
+    #
+    # ARCHITECTURE (same in CI, validate_code.py, and pre-commit):
+    #   Step 9  → _cov_sources  (comprehensive .coverage + coverage.xml)
+    #   Step 10 → coverage report --fail-under=85  (reads .coverage from Step 9)
+    #   Step 11 → diff-cover coverage.xml  (new code ≥92% coverage)
+    _FULL_TESTPATHS = ["tests/backend", "apps", ".collab"]
+    _cov_sources = [
+        "--cov=src",
+        "--cov=apps",
+        "--cov=.collab",
+        "--cov=scripts",
+        "--cov=run.py",
+        "--cov=collab.py",
+        "--cov=conftest.py",
+    ]
+    quick_cov_args = _cov_sources + ["--cov-report=xml"]
 
-        # Priority 1: Specifically passed files (pre-commit)
-        if files:
-            if test_targets:
-                print_warning(
-                    f"Quick mode [Targeted Files]: Running {len(test_targets)} test(s)"
-                )
-                success, _ = run_command(
-                    [
-                        "pytest",
-                        "-c",
-                        "pyproject.toml",
-                        "--no-cov",
-                        "-x",
-                        "--tb=short",
-                    ]
-                    + test_targets,
-                    "Targeted test run",
-                    force_all_apps=force_all_apps,
-                )
-            else:
-                # No specific test files in staged changes, use smart discovery
-                scopes = detect_changed_scopes()
-                if scopes["full_suite"]:
-                    print_warning(
-                        "Quick mode [Full Scope]: Global changes — running all tests."
-                    )
-                    success, _ = run_command(
-                        [
-                            "pytest",
-                            "-c",
-                            "pyproject.toml",
-                            "--no-cov",
-                            "-x",
-                            "--tb=short",
-                        ],
-                        "Quick test run (full scope)",
-                        force_all_apps=force_all_apps,
-                    )
-                elif scopes["backend"]:
-                    scope_str = " ".join(scopes["backend"])
-                    print_warning(f"Quick mode [Smart Scoping]: Running: {scope_str}")
-                    success, _ = run_command(
-                        [
-                            "pytest",
-                            "-c",
-                            "pyproject.toml",
-                            "--no-cov",
-                            "-x",
-                            "--tb=short",
-                        ]
-                        + scopes["backend"],
-                        "Smart test run",
-                        force_all_apps=force_all_apps,
-                    )
-                else:
-                    print_warning("Quick mode: No relevant changes — skipping tests.")
-                    success = True
+    if quick:
+        print_section("Step 9/11: Targeted Tests (with Diff Coverage)")
+
+        # Detect scopes ONCE upfront — avoids redundant git subprocess calls
+        scopes = detect_changed_scopes(files)
+
+        if scopes["full_suite"]:
+            reason = (
+                f" ({scopes.get('reason')})"
+                if scopes.get("reason")
+                else " (Global changes)"
+            )
+            print_warning(
+                f"Quick mode: Full suite required{reason} — running all tests."
+            )
+            success, _ = run_command(
+                [
+                    "pytest",
+                    "-c",
+                    "pyproject.toml",
+                ]
+                + quick_cov_args
+                + [
+                    "-x",
+                    "--tb=short",
+                ]
+                + _FULL_TESTPATHS,
+                "Quick test run (full scope)",
+                force_all_apps=force_all_apps,
+            )
+        elif scopes["backend"]:
+            scope_str = " ".join(scopes["backend"])
+            print_warning(f"Quick mode [Smart Scoping]: Running: {scope_str}")
+            success, _ = run_command(
+                [
+                    "pytest",
+                    "-c",
+                    "pyproject.toml",
+                ]
+                + quick_cov_args
+                + [
+                    "-x",
+                    "--tb=short",
+                ]
+                + scopes["backend"],
+                "Smart test run",
+                force_all_apps=force_all_apps,
+            )
         else:
-            # Normal quick mode without specific files
-            scopes = detect_changed_scopes()
-            if scopes["full_suite"]:
-                success, _ = run_command(
-                    ["pytest", "-c", "pyproject.toml", "--no-cov", "-x", "--tb=short"],
-                    "Quick test run (full scope)",
-                    force_all_apps=force_all_apps,
-                )
-            elif scopes["backend"]:
-                success, _ = run_command(
-                    ["pytest", "-c", "pyproject.toml", "--no-cov", "-x", "--tb=short"]
-                    + scopes["backend"],
-                    "Smart test run",
-                    force_all_apps=force_all_apps,
-                )
-            else:
-                success = True
+            print_warning("Quick mode: No relevant changes — skipping tests.")
+            success = True
 
         checks.append(("Tests", success))
 
-        # Explicitly mention skipped steps 10 and 11 in quick mode
-        print_section("Step 10/11: Total Coverage Validation")
+    else:
+        print_section("Step 9/11: Full Test Suite with Coverage")
+        # Run full test discovery using pytest's configured testpaths in
+        # pyproject.toml instead of restricting to .collab/tests. This mirrors
+        # CI behavior where the entire backend suite is validated for
+        # coverage and ensures the coverage thresholds reflect the whole
+        # repository (not just the small .collab subset).
+        # Explicitly pass the canonical testpaths to mirror CI discovery and avoid
+        # cases where pytest picks up only a subset (e.g. a local .collab-only run).
+        #
+        # Uses _cov_sources (comprehensive) so .coverage and coverage.xml
+        # have data for ALL Python files.  Step 10 reads this .coverage to
+        # verify the total ≥85% threshold, and Step 11 reads coverage.xml
+        # for diff-cover.  This mirrors CI behavior exactly.
+        success, _ = run_command(
+            [
+                "pytest",
+                "-c",
+                "pyproject.toml",
+            ]
+            + _cov_sources
+            + [
+                "--cov-report=term-missing",
+                "--cov-report=html",
+                "--cov-report=xml",  # Required for diff-cover
+            ]
+            + _FULL_TESTPATHS,
+            "Full test suite with discovery (500+ tests)",
+            force_all_apps=force_all_apps,
+        )
+        checks.append(("Full Discovery Suite", success))
+
+    # 10. Coverage validation (Total >= 85%)
+    # Only run total coverage check in full mode, but print skip in quick mode.
+    # Reads from the .coverage file generated by Step 9 (comprehensive scope).
+    # No --include filter — ALL Python sources must meet 85%.
+    # This mirrors CI (ci.yml) exactly.
+    print_section("Step 10/11: Total Coverage Validation")
+    if not quick:
+        # Use 'coverage report' to check threshold against the .coverage data
+        # from Step 9.  No need to re-run pytest — mirrors CI exactly.
+        success, _ = run_command(
+            [
+                "coverage",
+                "report",
+                "--fail-under=85",
+            ],
+            "Coverage threshold check (>= 85%)",
+            force_all_apps=force_all_apps,
+        )
+        checks.append(("Total Coverage Threshold", success))
+    else:
         msg10 = (
             f"{Colors.OKCYAN}[INFO] Quick mode: Skipping overall coverage "
             f"threshold check.{Colors.ENDC}"
@@ -780,84 +1011,56 @@ def validate_python_backend(
         print(msg10)
         checks.append(("Total Coverage Threshold", True))
 
-        print_section("Step 11/11: Diff (Patch) Coverage")
-        msg11 = (
-            f"{Colors.OKCYAN}[INFO] Quick mode: Skipping diff coverage "
-            f"check.{Colors.ENDC}"
+    # 11. Diff Coverage validation (New Code >= 92%)
+    # Runs in BOTH modes (assuming coverage.xml exists).
+    # Threshold matches CI (ci.yml) — both use --fail-under=92.
+    # QUICK MODE & FULL MODE: Strict (fail blocks commit).
+    print_section("Step 11/11: Diff (Patch) Coverage")
+    if not os.path.exists("coverage.xml"):
+        msg_cov = (
+            f"{Colors.OKCYAN}[INFO] coverage.xml not found (no tests run?), skipping "
+            f"diff-cover.{Colors.ENDC}"
         )
-        print(msg11)
-        checks.append(("Diff Coverage", True))
-
+        print(msg_cov)
+        checks.append(("Diff Coverage", True))  # Soft fail if missing
     else:
-        print_section("Step 9/11: Full Test Suite with Coverage")
-        success, _ = run_command(
-            [
-                "pytest",
-                "-c",
-                "pyproject.toml",
-                "--cov=src",
-                "--cov=apps",
-                "--cov-report=term-missing",
-                "--cov-report=html",
-                "--cov-report=xml",  # Required for diff-cover
-            ],
-            "Full test suite with discovery (500+ tests)",
-            force_all_apps=force_all_apps,
+        # Check if diff-cover is installed
+        success, output = run_command(
+            ["diff-cover", "--version"], "Check diff-cover", check=False
         )
-        checks.append(("Full Discovery Suite", success))
+        if success:
+            compare_branch = "HEAD" if quick else "origin/main"
+            diff_cover_cmd = [
+                "diff-cover",
+                "coverage.xml",
+                f"--compare-branch={compare_branch}",
+                "--fail-under=92",
+                "--include-untracked",  # Must include untracked new files as well
+            ]
 
-    # 10. Coverage validation (Total >= 82%)
-    if not quick:
-        print_section("Step 10/11: Total Coverage Validation")
-        success, _ = run_command(
-            [
-                "pytest",
-                "-c",
-                "pyproject.toml",
-                "--cov=src",
-                "--cov=apps",
-                "--cov-fail-under=85",
-                "-q",
-            ],
-            "Coverage threshold check (>= 85%)",
-            force_all_apps=force_all_apps,
-        )
-        checks.append(("Total Coverage Threshold", success))
+            if quick and not scopes["full_suite"]:
+                # Only evaluate explicitly targeted/changed files in quick mode
+                py_files = [
+                    f
+                    for f in scopes.get("changed_files", [])
+                    if f.endswith(".py") or Path(f).name == "run.py"
+                ]
+                if py_files:
+                    diff_cover_cmd.append("--include")
+                    diff_cover_cmd.extend(py_files)
 
-        # 11. Diff Coverage validation (New Code >= 92%)
-        print_section("Step 11/11: Diff (Patch) Coverage")
-        # Ensure we have coverage.xml
-        if not os.path.exists("coverage.xml"):
-            msg_cov = (
-                f"{Colors.OKCYAN}[INFO] coverage.xml not found, skipping "
-                f"diff-cover.{Colors.ENDC}"
+            success, _ = run_command(
+                diff_cover_cmd,
+                "Diff Coverage Check (New Code needs 92% coverage)",
             )
-            print(msg_cov)
-            checks.append(("Diff Coverage", True))  # Soft fail if missing
+            checks.append(("Diff Coverage", success))
         else:
-            # Check if diff-cover is installed
-            success, output = run_command(
-                ["diff-cover", "--version"], "Check diff-cover", check=False
+            msg_dc = (
+                f"{Colors.OKCYAN}[INFO] diff-cover not installed. Run "
+                f"'pip install diff-cover' to enable patch checks.{Colors.ENDC}"
             )
-            if success:
-                success, _ = run_command(
-                    [
-                        "diff-cover",
-                        "coverage.xml",
-                        "--compare-branch=origin/main",
-                        "--fail-under=92",
-                    ],
-                    "Diff Coverage Check (New Code needs 92% coverage)",
-                )
-                checks.append(("Diff Coverage", success))
-            else:
-                msg_dc = (
-                    f"{Colors.OKCYAN}[INFO] diff-cover not installed. Run "
-                    f"'pip install diff-cover' to enable patch checks.{Colors.ENDC}"
-                )
-                print(msg_dc)
-                # Soft fail if tool is missing to allow environment flexibility
-                checks.append(("Diff Coverage", True))
+            print(msg_dc)
+            checks.append(("Diff Coverage", True))
 
     # Print summary
     print_section("Python Backend Validation Summary")
@@ -898,16 +1101,20 @@ def validate_others(files: Optional[List[str]] = None) -> bool:
             "apps/**/*.md",
             "*.json",
             ".github/**/*.md",
+            ".collab/**/*.md",
+            ".collab/**/*.json",
+            "tests/**/*.md",
+            ".agents/**/*.md",
         ]
 
     # Check if Prettier is installed first
     try:
-        use_shell = sys.platform == "win32"
+        # On Windows, npm is a .cmd file — use cmd /c instead of shell=True.
+        npm_cmd = ["cmd", "/c", "npm"] if sys.platform == "win32" else ["npm"]
         check_prettier = subprocess.run(
-            ["npm", "list", "prettier"],
+            npm_cmd + ["list", "prettier"],
             cwd=os.getcwd(),
             capture_output=True,
-            shell=use_shell,
             check=False,
         )
         if check_prettier.returncode == 0:
@@ -978,6 +1185,7 @@ def validate_javascript_frontend(
                 f.startswith("src/static/js")
                 or f.startswith("apps")
                 or f.startswith("tests/frontend")
+                or f.startswith(".collab")
             )
         ]
         # 2. Template targets
@@ -1014,6 +1222,7 @@ def validate_javascript_frontend(
                 "src/static/js",
                 "apps",
                 "tests/frontend",
+                ".collab",
                 "--report-unused-disable-directives",
             ],
             "ESLint check",
@@ -1022,12 +1231,17 @@ def validate_javascript_frontend(
     checks.append(("ESLint", eslint_success))
 
     # 2. JavaScript tests (Jest)
+    print_section("Step 2/3: JavaScript Tests (jest)")
     if quick:
+        # Detect scopes ONCE for frontend (same pattern as backend Step 9)
+        scopes = detect_changed_scopes(files)
+        if scopes.get("reason"):
+            print_warning(scopes["reason"])
+
         # Priority 1: Specifically passed test files
         if files:
             jest_targets = [f for f in files if f.endswith(".test.js")]
             if jest_targets:
-                print_section("Step 2/3: JavaScript Tests (jest)")
                 print_warning(
                     f"Quick mode [Targeted Files]: Running {len(jest_targets)} test(s)"
                 )
@@ -1037,10 +1251,8 @@ def validate_javascript_frontend(
                     force_all_apps=force_all_apps,
                 )
             else:
-                # Priority 2: Smart scoping from all staged changes
-                scopes = detect_changed_scopes()
+                # Priority 2: Smart scoping from cached scopes
                 if scopes["full_suite"] or scopes["frontend"]:
-                    print_section("Step 2/3: JavaScript Tests (jest)")
                     print_warning("Quick mode [Smart Scoping]: Running frontend tests")
                     success, _ = run_command(
                         ["npm", "test"],
@@ -1048,21 +1260,28 @@ def validate_javascript_frontend(
                         force_all_apps=force_all_apps,
                     )
                 else:
+                    msg_jest = (
+                        f"{Colors.OKCYAN}[INFO] Quick mode: No frontend changes "
+                        f"— skipping Jest tests.{Colors.ENDC}"
+                    )
+                    print(msg_jest)
                     success = True
         else:
-            # Normal quick mode without specific files
-            scopes = detect_changed_scopes()
+            # Normal quick mode without specific files — use cached scopes
             if scopes["full_suite"] or scopes["frontend"]:
-                print_section("Step 2/3: JavaScript Tests (jest)")
                 success, _ = run_command(
                     ["npm", "test"],
                     "Quick Jest run",
                     force_all_apps=force_all_apps,
                 )
             else:
+                msg_jest = (
+                    f"{Colors.OKCYAN}[INFO] Quick mode: No frontend changes "
+                    f"— skipping Jest tests.{Colors.ENDC}"
+                )
+                print(msg_jest)
                 success = True
     else:
-        print_section("Step 2/3: JavaScript Tests (jest)")
         success, _ = run_command(
             [
                 "npm",
@@ -1078,8 +1297,8 @@ def validate_javascript_frontend(
     checks.append(("Jest Tests", success))
 
     # 3. E2E tests (Playwright) - MATCHES CI
+    print_section("Step 3/3: E2E Tests (playwright)")
     if not quick:
-        print_section("Step 3/3: E2E Tests (playwright)")
         # Force E2E_TEST=true to ensure production DBs are not touched
         # This overrides any local .env settings
         ironclad_env_e2e = os.environ.copy()
@@ -1093,7 +1312,9 @@ def validate_javascript_frontend(
         )
         checks.append(("E2E Tests", success))
     else:
-        print_warning("Quick mode: Skipping E2E tests")
+        msg_e2e = f"{Colors.OKCYAN}[INFO] Quick mode: Skipping E2E tests.{Colors.ENDC}"
+        print(msg_e2e)
+        checks.append(("E2E Tests", True))
 
     # Print summary
     print_section("Frontend Validation Summary")
@@ -1221,6 +1442,9 @@ Examples:
         # as additional file paths (the script already filters them later).
         # This makes the CLI tolerant to being invoked as: <entry> [files...]
         args.files = list(args.files or []) + list(unknown)
+
+    if args.files:
+        args.files = _expand_input_paths(args.files)
 
     # Determine what to run
     # If no specific category flags are set, run ALL.

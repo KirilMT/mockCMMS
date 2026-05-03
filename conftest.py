@@ -12,6 +12,7 @@ Modular Isolation:
 """
 
 import os
+import tempfile
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -21,6 +22,15 @@ load_dotenv()
 
 # Set TESTING globally for all pytest runs
 os.environ["TESTING"] = "1"
+
+# Global collab isolation so repository-wide pytest runs cannot interact with
+# a production watcher daemon.
+_collab_test_runtime_dir = tempfile.mkdtemp(prefix="mockcmms_pytest_collab_")
+os.environ.setdefault("COLLAB_TEST_MODE", "1")
+os.environ.setdefault(
+    "COLLAB_PID_FILE", str(Path(_collab_test_runtime_dir) / "daemon.pid")
+)
+os.environ.setdefault("COLLAB_STATE_DIR", _collab_test_runtime_dir)
 
 
 def pytest_ignore_collect(collection_path, config):

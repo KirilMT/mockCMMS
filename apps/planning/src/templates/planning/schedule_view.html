@@ -1,296 +1,270 @@
-{% extends "/base.html" %} {% block title %}{{ schedule.name }} - Planning{%
-endblock %} {% block extra_css %}
-<!-- Custom Planning Gantt CSS -->
-<link
-  rel="stylesheet"
-  href="{{ url_for('planning.static', filename='css/planning-gantt-custom.css') }}"
-/>
-{% endblock %} {% block extra_js %}
-<!-- Custom Planning Gantt JS -->
-<script src="{{ url_for('planning.static', filename='js/planning-gantt-custom.js') }}"></script>
-{% endblock %} {% block content %}
-<div class="container-fluid">
-  <!-- Header -->
-  <div class="row mb-3">
-    <div class="col-md-8">
-      <h1 class="h2">{{ schedule.name }}</h1>
-      <p class="text-muted">
-        {{ schedule.start_date.strftime('%Y-%m-%d') }} to {{
-        schedule.end_date.strftime('%Y-%m-%d') }}
-        <span class="ml-3">
-          Status: {% if schedule.planning_status == 'Draft' %}
-          <span class="badge badge-secondary">Draft</span>
-          {% elif schedule.planning_status == 'Planned' %}
-          <span class="badge badge-primary">Planned</span>
-          {% elif schedule.planning_status == 'Published' %}
-          <span class="badge badge-success">Published</span>
-          {% elif schedule.planning_status == 'Locked' %}
-          <span class="badge badge-dark">Locked</span>
-          {% endif %}
-        </span>
-      </p>
-    </div>
-    <div class="col-md-4 text-right">
-      <a
-        href="{{ url_for('planning.planning_index') }}"
-        class="btn btn-secondary"
-      >
-        <i class="fas fa-arrow-left"></i> Back to Schedules
-      </a>
-    </div>
-  </div>
+{% extends "/base.html" %}
 
-  <!-- Planning Mode Selection & Actions -->
-  <div class="row mb-3">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <label><strong>Planning Mode:</strong></label>
-              <div
-                class="btn-group btn-group-toggle d-block"
-                data-toggle="buttons"
-              >
-                <label
-                  class="btn btn-outline-primary {% if planning_mode == 'shift_break' %}active{% endif %}"
-                >
-                  <input
-                    type="radio"
-                    name="planning_mode"
-                    value="shift_break"
-                    {% if planning_mode == 'shift_break' %}checked{% endif %}
-                    onchange="changePlanningMode('shift_break')"
-                  />
-                  <i class="fas fa-clock"></i> Shift Break
-                </label>
-                <label
-                  class="btn btn-outline-primary {% if planning_mode == 'weekend' %}active{% endif %}"
-                >
-                  <input
-                    type="radio"
-                    name="planning_mode"
-                    value="weekend"
-                    {% if planning_mode == 'weekend' %}checked{% endif %}
-                    onchange="changePlanningMode('weekend')"
-                  />
-                  <i class="fas fa-calendar-week"></i> Weekend
-                </label>
-              </div>
+{% block title %}
+    {{ schedule.name }} - Planning{%
+    endblock %}
+    {% block extra_css %}
+        <!-- Custom Planning Gantt CSS -->
+        <link rel="stylesheet"
+              href="{{ url_for('planning.static', filename='css/planning-gantt-custom.css') }}" />
+    {% endblock %}
+    {% block extra_js %}
+        <!-- Custom Planning Gantt JS -->
+        <script src="{{ url_for('planning.static', filename='js/planning-gantt-custom.js') }}"></script>
+    {% endblock %}
+    {% block content %}
+        <div class="container-fluid">
+            <!-- Header -->
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <h1 class="h2">{{ schedule.name }}</h1>
+                    <p class="text-muted">
+                        {{ schedule.start_date.strftime("%Y-%m-%d") }} to {{ schedule.end_date.strftime("%Y-%m-%d") }}
+                        <span class="ml-3">
+                            Status:
+                            {% if schedule.planning_status == 'Draft' %}
+                                <span class="badge badge-secondary">Draft</span>
+                            {% elif schedule.planning_status == 'Planned' %}
+                                <span class="badge badge-primary">Planned</span>
+                            {% elif schedule.planning_status == 'Published' %}
+                                <span class="badge badge-success">Published</span>
+                            {% elif schedule.planning_status == 'Locked' %}
+                                <span class="badge badge-dark">Locked</span>
+                            {% endif %}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-4 text-right">
+                    <a href="{{ url_for('planning.planning_index') }}"
+                       class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Schedules
+                    </a>
+                </div>
             </div>
-            <div class="col-md-6 text-right">
-              {% if schedule.planning_status != 'Locked' %}
-              <button class="btn btn-success" onclick="runPlanning()">
-                <i class="fas fa-play-circle"></i> Run Planning
-              </button>
-              {% endif %} {% if schedule.planning_status == 'Planned' %}
-              <button class="btn btn-primary" onclick="publishSchedule()">
-                <i class="fas fa-check-circle"></i> Publish
-              </button>
-              {% endif %}
+            <!-- Planning Mode Selection & Actions -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label>
+                                        <strong>Planning Mode:</strong>
+                                    </label>
+                                    <div class="btn-group btn-group-toggle d-block" data-toggle="buttons">
+                                        <label class="btn btn-outline-primary {% if planning_mode == 'shift_break' %}active{% endif %}">
+                                            <input type="radio"
+                                                   name="planning_mode"
+                                                   value="shift_break"
+                                                   {% if planning_mode == 'shift_break' %}checked{% endif %}
+                                                   onchange="changePlanningMode('shift_break')" />
+                                            <i class="fas fa-clock"></i> Shift Break
+                                        </label>
+                                        <label class="btn btn-outline-primary {% if planning_mode == 'weekend' %}active{% endif %}">
+                                            <input type="radio"
+                                                   name="planning_mode"
+                                                   value="weekend"
+                                                   {% if planning_mode == 'weekend' %}checked{% endif %}
+                                                   onchange="changePlanningMode('weekend')" />
+                                            <i class="fas fa-calendar-week"></i> Weekend
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    {% if schedule.planning_status != 'Locked' %}
+                                        <button class="btn btn-success" onclick="runPlanning()">
+                                            <i class="fas fa-play-circle"></i> Run Planning
+                                        </button>
+                                    {% endif %}
+                                    {% if schedule.planning_status == 'Planned' %}
+                                        <button class="btn btn-primary" onclick="publishSchedule()">
+                                            <i class="fas fa-check-circle"></i> Publish
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Stats Cards -->
-  <div class="row mb-3">
-    <div class="col-md-3">
-      <div class="card bg-info text-white">
-        <div class="card-body text-center">
-          <h5>Total Tasks</h5>
-          <h2>{{ task_data|length }}</h2>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card bg-success text-white">
-        <div class="card-body text-center">
-          <h5>Assigned</h5>
-          <h2>
-            {{ task_data|selectattr('planning_task.status', 'equalto',
-            'Planned')|list|length }}
-          </h2>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card bg-warning text-white">
-        <div class="card-body text-center">
-          <h5>Unassigned</h5>
-          <h2>
-            {{ task_data|selectattr('planning_task.status', 'equalto',
-            'Unplanned')|list|length }}
-          </h2>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card bg-secondary text-white">
-        <div class="card-body text-center">
-          <h5>Success Rate</h5>
-          <h2>
-            {% set assigned = task_data|selectattr('planning_task.status',
-            'equalto', 'Planned')|list|length %} {% set total = task_data|length
-            %} {% if total > 0 %}{{ (assigned / total * 100)|round(1) }}%{% else
-            %}N/A{% endif %}
-          </h2>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Planning Warnings and Errors Display -->
-  <div class="row mt-3" id="planningMessagesContainer" style="display: none">
-    <div class="col-12">
-      <div id="planningWarnings"></div>
-      <div id="planningErrors"></div>
-    </div>
-  </div>
-
-  <!-- Gantt Chart View -->
-  <div class="row">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-primary text-white">
-          <h5 class="mb-0">
-            <i class="fas fa-chart-bar"></i> Gantt Chart - Timeline View
-          </h5>
-        </div>
-        <div class="card-body">
-          <!-- Gantt Controls -->
-          <div class="gantt-controls">
-            <div>
-              <span class="badge badge-info">
-                <i class="fas fa-info-circle"></i> Task IDs in bars match
-                Maintenance Order IDs
-              </span>
+            <!-- Stats Cards -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h5>Total Tasks</h5>
+                            <h2>{{ task_data|length }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h5>Assigned</h5>
+                            <h2>
+                                {{ task_data|selectattr('planning_task.status', 'equalto',
+                                                                'Planned') |list|length }}
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h5>Unassigned</h5>
+                            <h2>
+                                {{ task_data|selectattr('planning_task.status', 'equalto',
+                                                                'Unplanned') |list|length }}
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body text-center">
+                            <h5>Success Rate</h5>
+                            <h2>
+                                {% set assigned = task_data|selectattr('planning_task.status',
+                                                                    'equalto', 'Planned')|list|length %} {% set total = task_data|length %}
+                                    {% if total > 0 %}
+                                        {{ (assigned / total * 100)|round(1) }}%
+                                    {% else
+                                    %}
+                                    N/A
+                                {% endif %}
+                            </h2>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="gantt-view-modes">
-              <small class="text-muted d-block mb-2" style="font-size: 0.8em">
-                <i class="fas fa-lightbulb"></i> View Mode (Coming Soon)
-              </small>
-              <button
-                class="btn btn-sm btn-outline-primary"
-                onclick="
-                  if (window.ganttChart)
-                    window.ganttChart.changeViewMode('Quarter Day');
-                "
-              >
-                <i class="fas fa-clock"></i> Quarter Day
-              </button>
-              <button
-                class="btn btn-sm btn-outline-primary"
-                onclick="
-                  if (window.ganttChart)
-                    window.ganttChart.changeViewMode('Half Day');
-                "
-              >
-                <i class="fas fa-calendar-day"></i> Half Day
-              </button>
-              <button
-                class="btn btn-sm btn-outline-primary active"
-                onclick="
-                  if (window.ganttChart)
-                    window.ganttChart.changeViewMode('Day');
-                "
-              >
-                <i class="fas fa-calendar"></i> Day
-              </button>
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                onclick="if (window.ganttChart) window.ganttChart.refresh();"
-              >
-                <i class="fas fa-sync-alt"></i> Refresh
-              </button>
+            <!-- Planning Warnings and Errors Display -->
+            <div class="row mt-3" id="planningMessagesContainer" style="display: none">
+                <div class="col-12">
+                    <div id="planningWarnings"></div>
+                    <div id="planningErrors"></div>
+                </div>
             </div>
-          </div>
-
-          <!-- Gantt Chart Container -->
-          <div id="gantt-container">
-            <div class="text-center py-5">
-              <div class="spinner-border text-primary" role="status">
-                <span class="sr-only">Loading...</span>
-              </div>
-              <p class="mt-3 text-muted">Loading Gantt chart...</p>
+            <!-- Gantt Chart View -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar"></i> Gantt Chart - Timeline View
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Gantt Controls -->
+                            <div class="gantt-controls">
+                                <div>
+                                    <span class="badge badge-info">
+                                        <i class="fas fa-info-circle"></i> Task IDs in bars match
+                                        Maintenance Order IDs
+                                    </span>
+                                </div>
+                                <div class="gantt-view-modes">
+                                    <small class="text-muted d-block mb-2" style="font-size: 0.8em">
+                                        <i class="fas fa-lightbulb"></i> View Mode (Coming Soon)
+                                    </small>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            onclick=" if (window.ganttChart) window.ganttChart.changeViewMode('Quarter Day'); ">
+                                        <i class="fas fa-clock"></i> Quarter Day
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            onclick=" if (window.ganttChart) window.ganttChart.changeViewMode('Half Day'); ">
+                                        <i class="fas fa-calendar-day"></i> Half Day
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary active"
+                                            onclick=" if (window.ganttChart) window.ganttChart.changeViewMode('Day'); ">
+                                        <i class="fas fa-calendar"></i> Day
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="if (window.ganttChart) window.ganttChart.refresh();">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Gantt Chart Container -->
+                            <div id="gantt-container">
+                                <div class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                    <p class="mt-3 text-muted">Loading Gantt chart...</p>
+                                </div>
+                            </div>
+                            <!-- Legend -->
+                            <div class="gantt-legend">
+                                <h6 class="w-100 mb-2">Priority Legend:</h6>
+                                <div class="gantt-legend-item">
+                                    <div class="gantt-legend-color critical"></div>
+                                    <span>Critical</span>
+                                </div>
+                                <div class="gantt-legend-item">
+                                    <div class="gantt-legend-color high"></div>
+                                    <span>High</span>
+                                </div>
+                                <div class="gantt-legend-item">
+                                    <div class="gantt-legend-color medium"></div>
+                                    <span>Medium</span>
+                                </div>
+                                <div class="gantt-legend-item">
+                                    <div class="gantt-legend-color low"></div>
+                                    <span>Low</span>
+                                </div>
+                                <div class="gantt-legend-item">
+                                    <div class="gantt-legend-color unassigned"></div>
+                                    <span>Unassigned/Undefined</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-
-          <!-- Legend -->
-          <div class="gantt-legend">
-            <h6 class="w-100 mb-2">Priority Legend:</h6>
-            <div class="gantt-legend-item">
-              <div class="gantt-legend-color critical"></div>
-              <span>Critical</span>
+            <!-- Planning Tasks Table (Cross-Reference with Gantt) -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-table"></i> Planning Tasks Details
+                                <small class="ml-2" style="font-size: 0.85em; opacity: 0.9">
+                                    (Task IDs match Maintenance Order IDs from /maintenance_orders)
+                                </small>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if task_data %}
+                                <!-- The advanced table will be rendered here by JavaScript -->
+                                <div id="planningTasksTable"></div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> No tasks in this schedule yet.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="gantt-legend-item">
-              <div class="gantt-legend-color high"></div>
-              <span>High</span>
+            <!-- Resource Allocation Summary -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-users"></i> Resource Allocation
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="resource-allocation" class="resource-allocation-summary">
+                                <p class="text-muted">Loading resource allocation data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="gantt-legend-item">
-              <div class="gantt-legend-color medium"></div>
-              <span>Medium</span>
-            </div>
-            <div class="gantt-legend-item">
-              <div class="gantt-legend-color low"></div>
-              <span>Low</span>
-            </div>
-            <div class="gantt-legend-item">
-              <div class="gantt-legend-color unassigned"></div>
-              <span>Unassigned/Undefined</span>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Planning Tasks Table (Cross-Reference with Gantt) -->
-  <div class="row mt-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-primary text-white">
-          <h5 class="mb-0">
-            <i class="fas fa-table"></i> Planning Tasks Details
-            <small class="ml-2" style="font-size: 0.85em; opacity: 0.9">
-              (Task IDs match Maintenance Order IDs from /maintenance_orders)
-            </small>
-          </h5>
-        </div>
-        <div class="card-body">
-          {% if task_data %}
-          <!-- The advanced table will be rendered here by JavaScript -->
-          <div id="planningTasksTable"></div>
-          {% else %}
-          <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> No tasks in this schedule yet.
-          </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Resource Allocation Summary -->
-  <div class="row mt-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-info text-white">
-          <h5 class="mb-0"><i class="fas fa-users"></i> Resource Allocation</h5>
-        </div>
-        <div class="card-body">
-          <div id="resource-allocation" class="resource-allocation-summary">
-            <p class="text-muted">Loading resource allocation data...</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
+        <script>
   function changePlanningMode(mode) {
       window.location.href = `{{ url_for('planning.view_schedule', schedule_id=schedule.id) }}?mode=${mode}`;
   }
@@ -622,9 +596,7 @@ endblock %} {% block extra_css %}
               <div class="technician-card">
                   <h6>${tech.name}</h6>
                   <div class="utilization-bar">
-                      <div class="utilization-fill" style="width: ${Math.min(utilization, 100)}%; background: ${
-                          utilization > 90 ? '#dc3545' : (utilization > 70 ? '#ffc107' : '#28a745')
-                      };"></div>
+                      <div class="utilization-fill" style="width: ${Math.min(utilization, 100)}%; background: ${ utilization > 90 ? '#dc3545' : (utilization > 70 ? '#ffc107' : '#28a745') };"></div>
                   </div>
                   <div class="utilization-stats">
                       <span>${tech.assigned_minutes} min / ${shiftDuration} min</span>
@@ -771,5 +743,5 @@ endblock %} {% block extra_css %}
       }, 100);
   });
   {% endif %}
-</script>
-{% endblock %}
+        </script>
+    {% endblock %}

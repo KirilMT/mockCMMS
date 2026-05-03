@@ -5,3 +5,11 @@
 
 # All files in the repository are owned by you.
 * @KirilMT
+
+# Lock service and collaborative dev tooling
+src/services/lock_manager.py @KirilMT
+src/services/lock_manager_app.py @KirilMT
+src/services/lock_client.py @KirilMT
+tests/backend/test_lock_manager.py @KirilMT
+scripts/cleanup_locks.py @KirilMT
+.github/hooks/ @KirilMT

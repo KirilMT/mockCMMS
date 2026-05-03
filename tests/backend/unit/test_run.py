@@ -12,11 +12,28 @@ class TestRunEntry:
         """Ensure run module is not in sys.modules so it re-executes."""
         if "run" in sys.modules:
             del sys.modules["run"]
+        # Mock threading and stdout to avoid side effects on import
+        self.patcher_thread = patch("threading.Thread")
+        self.patcher_stdout = patch("sys.stdout", MagicMock())
+        self.patcher_stderr = patch("sys.stderr", MagicMock())
+        self.patcher_stdout_raw = patch("sys.__stdout__", MagicMock())
+        self.patcher_stderr_raw = patch("sys.__stderr__", MagicMock())
+
+        self.patcher_thread.start()
+        self.patcher_stdout.start()
+        self.patcher_stderr.start()
+        self.patcher_stdout_raw.start()
+        self.patcher_stderr_raw.start()
 
     def teardown_method(self):
-        """Clean up run module from sys.modules."""
+        """Clean up run module and patches."""
         if "run" in sys.modules:
             del sys.modules["run"]
+        self.patcher_thread.stop()
+        self.patcher_stdout.stop()
+        self.patcher_stderr.stop()
+        self.patcher_stdout_raw.stop()
+        self.patcher_stderr_raw.stop()
 
     @pytest.fixture
     def mock_env(self):
@@ -126,11 +143,29 @@ class TestRunRobust:
         """Ensure run module is not in sys.modules so it re-executes."""
         if "run" in sys.modules:
             del sys.modules["run"]
+        # Mock threading and stdout (including raw handles!)
+        # to avoid side effects on import
+        self.patcher_thread = patch("threading.Thread")
+        self.patcher_stdout = patch("sys.stdout", MagicMock())
+        self.patcher_stderr = patch("sys.stderr", MagicMock())
+        self.patcher_stdout_raw = patch("sys.__stdout__", MagicMock())  # ← added
+        self.patcher_stderr_raw = patch("sys.__stderr__", MagicMock())  # ← added
+
+        self.patcher_thread.start()
+        self.patcher_stdout.start()
+        self.patcher_stderr.start()
+        self.patcher_stdout_raw.start()
+        self.patcher_stderr_raw.start()
 
     def teardown_method(self):
-        """Clean up run module from sys.modules."""
+        """Clean up run module and patches."""
         if "run" in sys.modules:
             del sys.modules["run"]
+        self.patcher_thread.stop()
+        self.patcher_stdout.stop()
+        self.patcher_stderr.stop()
+        self.patcher_stdout_raw.stop()
+        self.patcher_stderr_raw.stop()
 
     @pytest.fixture
     def base_patches(self):
@@ -143,7 +178,7 @@ class TestRunRobust:
             patch("src.app.db.create_all"),
             patch("src.app.populate_dummy_data"),
             patch("src.app.os.makedirs"),
-            patch("urllib.request.urlopen"),
+            patch("http.client.HTTPConnection"),
             patch("webbrowser.open"),
             patch("threading.Thread") as mock_thread,
             patch("builtins.open", mock_open()),
@@ -192,15 +227,17 @@ class TestRunRobust:
             del sys.modules["run"]
         import run
 
-        # Mock urlopen to succeed immediately
+        # Mock HTTPConnection to succeed immediately (run.py uses http.client)
+        mock_conn = MagicMock()
         with (
-            patch("urllib.request.urlopen") as mock_url,
+            patch("http.client.HTTPConnection", return_value=mock_conn) as mock_http,
             patch("webbrowser.open") as mock_browser,
             patch("time.sleep"),
         ):
             run._portable_startup_sequence()
 
-            mock_url.assert_called()
+            mock_http.assert_called()
+            mock_conn.request.assert_called()
             mock_browser.assert_called_with(
                 "http://127.0.0.1:5000", new=0, autoraise=True
             )

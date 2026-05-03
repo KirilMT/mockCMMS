@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 
 {% block title %}Planning Settings - Mock CMMS{% endblock %}
-
 {% block extra_css %}
-<style>
+    <style>
     .settings-container {
         padding: 20px;
     }
@@ -23,120 +22,153 @@
     .color-green { background-color: #28a745; }
     .color-red { background-color: #dc3545; }
     .color-yellow { background-color: #ffc107; }
-</style>
+    </style>
 {% endblock %}
-
 {% block content %}
-<div class="settings-container">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h1><i class="fas fa-cogs"></i> Planning Settings</h1>
-            <p class="text-muted">Configure global settings for the planning module.</p>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Settings Navigation (Tabs) -->
-        <div class="col-md-3">
-            <div class="nav flex-column nav-pills settings-nav" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                <a class="nav-link active" id="v-pills-conditions-tab" data-toggle="pill" href="#v-pills-conditions" role="tab" aria-controls="v-pills-conditions" aria-selected="true">
-                    <i class="fas fa-traffic-light mr-2"></i> Line Conditions
-                </a>
-                <a class="nav-link disabled" id="v-pills-other-tab" data-toggle="pill" href="#v-pills-other" role="tab" aria-controls="v-pills-other" aria-selected="false">
-                    <i class="fas fa-tools mr-2"></i> General Settings (Coming Soon)
-                </a>
+    <div class="settings-container">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h1>
+                    <i class="fas fa-cogs"></i> Planning Settings
+                </h1>
+                <p class="text-muted">Configure global settings for the planning module.</p>
             </div>
         </div>
-
-        <!-- Settings Content -->
-        <div class="col-md-9">
-            <div class="tab-content" id="v-pills-tabContent">
-
-                <!-- Line Conditions Tab -->
-                <div class="tab-pane fade show active" id="v-pills-conditions" role="tabpanel" aria-labelledby="v-pills-conditions-tab">
-                    <div class="card">
-                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Line Conditions</h5>
-                            <button class="btn btn-primary btn-sm" onclick="openConditionModal()">
-                                <i class="fas fa-plus"></i> Add Condition
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted small">Define required states for production lines before maintenance tasks can start (e.g., "Line Empty", "Power Off").</p>
-
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="conditionsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Description</th>
-                                            <th>Color</th>
-                                            <th class="text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="conditionsTableBody">
-                                        <!-- Populated via JS -->
-                                        <tr><td colspan="4" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
-                                    </tbody>
-                                </table>
+        <div class="row">
+            <!-- Settings Navigation (Tabs) -->
+            <div class="col-md-3">
+                <div class="nav flex-column nav-pills settings-nav"
+                     id="v-pills-tab"
+                     role="tablist"
+                     aria-orientation="vertical">
+                    <a class="nav-link active"
+                       id="v-pills-conditions-tab"
+                       data-toggle="pill"
+                       href="#v-pills-conditions"
+                       role="tab"
+                       aria-controls="v-pills-conditions"
+                       aria-selected="true">
+                        <i class="fas fa-traffic-light mr-2"></i> Line Conditions
+                    </a>
+                    <a class="nav-link disabled"
+                       id="v-pills-other-tab"
+                       data-toggle="pill"
+                       href="#v-pills-other"
+                       role="tab"
+                       aria-controls="v-pills-other"
+                       aria-selected="false">
+                        <i class="fas fa-tools mr-2"></i> General Settings (Coming Soon)
+                    </a>
+                </div>
+            </div>
+            <!-- Settings Content -->
+            <div class="col-md-9">
+                <div class="tab-content" id="v-pills-tabContent">
+                    <!-- Line Conditions Tab -->
+                    <div class="tab-pane fade show active"
+                         id="v-pills-conditions"
+                         role="tabpanel"
+                         aria-labelledby="v-pills-conditions-tab">
+                        <div class="card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Line Conditions</h5>
+                                <button class="btn btn-primary btn-sm" onclick="openConditionModal()">
+                                    <i class="fas fa-plus"></i> Add Condition
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">
+                                    Define required states for production lines before maintenance tasks can start (e.g., "Line Empty", "Power Off").
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="conditionsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Description</th>
+                                                <th>Color</th>
+                                                <th class="text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="conditionsTableBody">
+                                            <!-- Populated via JS -->
+                                            <tr>
+                                                <td colspan="4" class="text-center">
+                                                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Placeholder for future tabs -->
-                <div class="tab-pane fade" id="v-pills-other" role="tabpanel" aria-labelledby="v-pills-other-tab">
-                    <div class="alert alert-info">More settings configuration options coming soon.</div>
+                    <!-- Placeholder for future tabs -->
+                    <div class="tab-pane fade"
+                         id="v-pills-other"
+                         role="tabpanel"
+                         aria-labelledby="v-pills-other-tab">
+                        <div class="alert alert-info">More settings configuration options coming soon.</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Add/Edit Condition Modal -->
-<div class="modal fade" id="conditionModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="conditionModalTitle">Add Line Condition</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="conditionForm">
-                    <input type="hidden" id="conditionId">
-                    <div class="form-group">
-                        <label for="conditionName">Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="conditionName" required maxlength="50">
-                    </div>
-                    <div class="form-group">
-                        <label for="conditionDescription">Description</label>
-                        <textarea class="form-control" id="conditionDescription" rows="2" maxlength="100"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="conditionColor">Color Code</label>
-                        <select class="form-control" id="conditionColor">
-                            <option value="blue">Blue (Info)</option>
-                            <option value="green">Green (Safe/Ready)</option>
-                            <option value="yellow">Yellow (Warning/Caution)</option>
-                            <option value="red">Red (Danger/Stop)</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveCondition()">Save</button>
+    <!-- Add/Edit Condition Modal -->
+    <div class="modal fade"
+         id="conditionModal"
+         tabindex="-1"
+         role="dialog"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="conditionModalTitle">Add Line Condition</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="conditionForm">
+                        <input type="hidden" id="conditionId">
+                        <div class="form-group">
+                            <label for="conditionName">
+                                Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="conditionName"
+                                   required
+                                   maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="conditionDescription">Description</label>
+                            <textarea class="form-control"
+                                      id="conditionDescription"
+                                      rows="2"
+                                      maxlength="100"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="conditionColor">Color Code</label>
+                            <select class="form-control" id="conditionColor">
+                                <option value="blue">Blue (Info)</option>
+                                <option value="green">Green (Safe/Ready)</option>
+                                <option value="yellow">Yellow (Warning/Caution)</option>
+                                <option value="red">Red (Danger/Stop)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveCondition()">Save</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
 {% endblock %}
-
 {% block extra_js %}
-<script>
+    <script>
     // Wrapper for ToastNotification to match showToast(type, message) signature used in this file
     function showToast(type, message) {
         if (typeof ToastNotification !== 'undefined') {
@@ -285,5 +317,5 @@
             });
         });
     }
-</script>
+    </script>
 {% endblock %}

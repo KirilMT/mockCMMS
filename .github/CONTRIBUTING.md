@@ -285,80 +285,182 @@ comprehensive test coverage.**
    implementing
 4. **Implement code** - Write the actual feature/fix
 5. **Verify tests pass** - All tests (old + new) must pass
-6. **Check coverage** - Run `pytest --cov=src tests/` to ensure new code paths
-   are tested
+6. **Check coverage** - Run `pytest --cov-report=term-missing tests/backend`
+   to ensure new code paths are tested
 
-#### When Modifying Existing Code
+### Test File Standard
 
-1. **Identify affected tests** - Find tests that cover the code being modified
-2. **Run tests BEFORE changes** - Establish baseline (all should pass)
-3. **Make code changes** - Implement modifications
-4. **Run tests AFTER changes** - Verify nothing broke
-5. **If tests fail** - CRITICAL DECISION POINT:
-   - **Option A**: Code is wrong → Fix the code to match test expectations
-   - **Option B**: Test is wrong → Update test to match new correct behavior
-   - **Decision criteria**: Prioritize test correctness unless requirements
-     changed
-6. **Update tests if needed** - Adjust tests only if requirements genuinely
-   changed
+This repository enforces a clear test-file layout for long-running or complex test suites. The Test File Standard applies repository-wide — to `tests/`, `.collab/tests/`, and `apps/<name>/tests/` (for example `apps/planning/tests/`, `apps/reporting/tests/`). Use this standard whenever you split or reorganize Python tests.
 
-#### Test Organization
+## Purpose
 
-Tests are organized in 6 categories:
+- Reduce editor and CI friction for very large test files.
+- Make it obvious which tests map to which production source files.
+- Prevent accidental duplication during refactors.
 
-- `tests/unit/` - Fast, isolated component tests
-- `tests/functional/` - API and route endpoint tests
-- `tests/integration/` - End-to-end workflow tests
-- `tests/security/` - Authentication, validation, security
-- `tests/performance/` - Scalability and optimization
-- `tests/reliability/` - Error handling and robustness
+## Standard (short)
 
-**Separate Test File When:**
+- Canonical test file: A canonical test file named `test_<source>.py` should exist at the appropriate test root for each production source that has tests. Examples:
+  - Core/shared modules: `tests/unit/test_<source>.py` (or `tests/test_<source>.py`)
+  - App-specific modules: `apps/<app>/tests/unit/test_<source>.py` (e.g. `apps/planning/tests/unit/test_scheduler.py`)
+  - Tooling/collab helpers: `.collab/tests/unit/test_<source>.py` where applicable
+- Split when the canonical file exceeds **1,500 lines** or **200 test functions**.
+- Use a subfolder under the same test root: `<test-root>/unit/<source>/` with smaller files named `test_<source>_<topic>.py`.
+- Keep shared fixtures in `conftest.py` at the test root (for example `tests/conftest.py`, `apps/<app>/tests/conftest.py`, or `.collab/tests/conftest.py`) or a shared helpers module such as `_helpers.py`.
 
-- Different testing concern (Performance vs Functionality)
-- Different security level (Auth tests need extra scrutiny)
-- Different execution timing (Slow integration tests)
-- Cross-cutting concern (Validation applies to all components)
+- Helper naming convention: modules that provide test utilities, loaders, or shared helpers (and are not test cases) MUST be named with a leading underscore (for example `_helpers.py`) and MUST NOT start with the `test_` prefix. This prevents pytest from accidentally collecting helper modules as tests. Test files themselves must always start with `test_` and follow the `test_<source>_<topic>.py` pattern when split into topic modules.
 
-**Combine Tests When:**
+## Why a shim file?
 
-- Same component/module (All API tests in test_api_routes.py)
-- Same testing level (Unit tests for db_utils together)
-- Same execution context (Fast unit tests together)
-- Natural cohesion (CRUD operations for same resource)
+Keeping a small `test_<source>.py` file at the canonical location ensures CI and reviewers can quickly find the test mapping and satisfies tooling that expects a file-per-source mapping.
 
-#### Coverage Philosophy
+## Repository-wide folder layout example
 
-- Coverage isn't about test count—it's about testing all code paths
-- Test success cases, failure cases, and edge cases
-- **Target**: 80-85% overall coverage (current: 82.99%)
-- **Critical paths**: 90%+ coverage (auth, API, database)
+```
+tests/unit/
+├── test_lock_client.py          # shim (canonical anchor)
+└── lock_client/
+    ├── test_lock_client_daemon.py
+    ├── test_lock_client_cli.py
+    └── test_lock_client_pid.py
 
-#### Modular App Testing
+apps/planning/tests/unit/
+└── test_planning_scheduler.py
+```
 
-MockCMMS uses a **Smart Collector** logic. Tests for apps in `apps/` (Planning, Reporting, etc.) are dynamically skipped if disabled via environment variables.
+## Splitting guidelines
 
-- **Development Speed:** Use `$env:PLANNING_ENABLED="false"` to skip tests for modules you aren't changing.
-- **Stability Enforcement:** The validation script default (Health Mode) overrides these flags to ensure 100% project health before PR submission.
+1. Identify logical topics: CLI, daemon lifecycle, PID handling, process-info parsing, HTTP/dashboard helpers, edge-case/error paths.
+2. Prefer focused modules that are <1,500 lines and <200 tests.
+3. Factor repeated setup into fixtures in the root `conftest.py` for that test tree.
+4. When tests are similar except for inputs, prefer `pytest.mark.parametrize`.
 
-#### Avoiding Test Duplicates
+## Dedup & safety checklist
 
-1. **Search before creating** - Use `findstr /S "def test_" tests\*.py`
-   (Windows) or `grep -r "def test_" tests/` (Unix)
-2. **Check test names** - Look for similar test names in the same module
+- Before removing or collapsing tests, run an AST-normalized-body hash to highlight exact duplicates.
+- For near-duplicates, perform a manual semantic review to ensure you're not losing coverage of distinct branches.
+- Always run the formatter and quick validation after making moves:
+
+```bash
+python scripts/format_code.py
+python scripts/validate_code.py --quick
+```
+
+## Migration steps (recommended)
+
+1. Create the target folder under the same test root (for example `tests/unit/<source>/` or `apps/<app>/tests/unit/<source>/`).
+2. Move groups of tests into `test_<source>_<topic>.py` files. Keep functions intact and preserve imports/fixtures.
+3. Leave `test_<source>.py` at the test root as a tiny shim with a short docstring pointing to the folder.
+4. Run formatting and `--quick` validation. Fix any failures.
+5. Open a single PR with the refactor and descriptive commit message: `refactor(tests): split test_<source> into topic modules`.
+
+## Notes
+
+- The threshold values are defaults. If a module's tests are exceptional in size, consult the team before changing thresholds.
+- This standard applies repository-wide; adapt the test-root conventions to the specific test tree you are working in (`tests/`, `apps/<app>/tests/`, `.collab/tests/`).
+
 3. **Review test file** - Read existing tests in the file you're modifying
 4. **Consolidate if needed** - Merge duplicate tests into comprehensive ones
 
 #### Before Submitting a Pull Request
 
-1. Run the full test suite: `pytest tests/`
-2. Ensure all tests pass
+1. Run the full validation: `python scripts/validate_code.py`
+2. Ensure all checks pass (lint + test + coverage)
 3. Add tests for new functionality
-4. Maintain or improve code coverage: `pytest --cov=src tests/`
-5. Verify coverage meets targets (80-85% overall)
+4. Maintain or improve code coverage (≥85% overall, ≥92% on new code)
+5. All Python files must be linted, tested, and covered — no exclusions
 
 **Reference:** See `tests/README.md` for test suite organization and complete
 testing strategy.
+
+### Test File Standard
+
+This repository enforces a clear test-file layout for long-running or complex test suites. Use this standard whenever you split or reorganize Python tests in the repository (especially under `.collab/tests`).
+
+## Purpose
+
+- Reduce editor and CI friction for very large test files.
+- Make it obvious which tests map to which source files.
+- Prevent accidental duplication during refactors.
+
+## Standard (short)
+
+- Canonical test file: `.collab/tests/unit/test_<source>.py` must exist for every production source in `.collab` that has tests.
+- Split when the canonical file exceeds **1,500 lines** or **200 test functions**.
+- Use a subfolder: `.collab/tests/unit/<source>/` with smaller files named `test_<source>_<topic>.py`.
+- Keep shared fixtures in `.collab/tests/conftest.py` or `.collab/tests/_helpers.py`.
+
+## Why a shim file?
+
+Keeping a small `test_<source>.py` file at the canonical location ensures CI and code-owners can find the test mapping quickly and satisfies automated tooling that expects a file-per-source mapping.
+
+## Folder layout example
+
+```
+.collab/tests/unit/
+├── test_lock_client.py          # shim (canonical anchor)
+└── lock_client/
+  ├── test_lock_client_daemon.py
+  ├── test_lock_client_cli.py
+  └── test_lock_client_pid.py
+```
+
+## Splitting guidelines
+
+1. Identify logical topics: CLI, daemon lifecycle, PID handling, process-info parsing, HTTP/dashboard helpers, edge-case/error paths.
+2. Prefer focused modules that are <1,500 lines and <200 tests.
+3. Factor repeated setup into fixtures in `.collab/tests/conftest.py`.
+4. When tests are similar except for inputs, prefer `pytest.mark.parametrize`.
+
+## Dedup & safety checklist
+
+- Before removing or collapsing tests, run an AST-normalized-body hash to highlight exact duplicates.
+- For near-duplicates, do a manual semantic review to ensure you're not losing coverage of distinct branches.
+- Always run:
+
+```bash
+python scripts/format_code.py
+python scripts/validate_code.py --quick
+```
+
+## Migration steps (recommended)
+
+1. Create the target folder `.collab/tests/unit/<source>/`.
+2. Move groups of tests into `test_<source>_<topic>.py` files. Keep functions intact and preserve imports/fixtures.
+3. Leave `test_<source>.py` as a tiny shim with a short docstring pointing to the folder.
+4. Run formatting and `--quick` validation. Fix any failures.
+5. Open a single PR with the refactor and descriptive commit message: `refactor(tests): split test_<source> into topic modules`.
+
+## Notes
+
+- The threshold values are defaults. If a module's tests are exceptional in size, consult the team before changing thresholds.
+- This standard applies first to `.collab/tests` in this branch; other test roots may be migrated subsequently.
+
+## Collaborative File Locking
+
+This repository uses a file locking system (`.collab/`) to prevent merge conflicts when multiple contributors work concurrently.
+
+### Workflow (devs and AI agents)
+
+1. **Identify all files** your task may modify before you start.
+2. **Check locks:**
+   Run `python collab.py active` before edits.
+   Optional targeted check: `python collab.py status path/to/file.py`.
+   For devs, the watcher/IDE also detects conflicts automatically when a locked file is opened and shows a warning notification popup.
+   For AI agents, explicit lock checks are mandatory before edits (AI agents do not see popup notifications).
+
+3. **Decision gate:**
+   - Unlocked → proceed with edits (lock handling is automatic while editing).
+   - Locked by the current developer → proceed.
+   - Locked by another developer → **do not edit**. Coordinate with the lock owner or wait.
+
+> **Never force-release another developer's lock.**
+>
+> For AI agents this is forbidden under all circumstances.
+
+See `.collab/README.md` for lock-system setup and CLI reference.
+
+---
 
 ## Contribution Process
 

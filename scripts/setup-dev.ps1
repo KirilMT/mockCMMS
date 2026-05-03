@@ -286,6 +286,28 @@ Write-Host "`n[Dev Step 3/6] Installing Python development tools..." -Foreground
 # Use correct Windows path (venv already exists from setup.ps1)
 $pipPath = ".\.venv\Scripts\pip.exe"
 $pythonPath = ".\.venv\Scripts\python.exe"
+# Normalize path (ensure relative to repo root)
+$pipPath = $pipPath.Replace('..\', '.\')
+$pythonPath = $pythonPath.Replace('..\', '.\')
+
+# Ensure pythonw.exe exists in the venv (required to avoid console popups on Windows)
+$pythonwPath = ".\.venv\Scripts\pythonw.exe"
+if (Test-Path $pythonwPath) {
+    Write-Host "   Found: pythonw.exe in venv" -ForegroundColor Green
+}
+elseif (Test-Path $pythonPath) {
+    try {
+        Copy-Item -Path $pythonPath -Destination $pythonwPath -Force
+        Write-Host "   Created: pythonw.exe in venv (copied from python.exe)" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "   Warning: pythonw.exe not found and could not be created in venv." -ForegroundColor Yellow
+        Write-Host "            daemon-start will attempt to fallback to a detached python process." -ForegroundColor Yellow
+    }
+}
+else {
+    Write-Host "   Warning: venv python not found; cannot ensure pythonw.exe presence." -ForegroundColor Yellow
+}
 
 # Verify pip exists (should exist from production setup)
 if (-not (Test-Path $pipPath)) {
@@ -297,23 +319,90 @@ if (-not (Test-Path $pipPath)) {
 
 # Install or update dev requirements efficiently
 if (Test-Path "requirements-dev.txt") {
+    # Pre-check: detect if supabase is already present before installing dev requirements
+    $preSupabaseFound = $false
+    $preSupabaseVersion = ""
+    try {
+        $showOut = & $pipPath show supabase 2>&1
+        if ($LASTEXITCODE -eq 0 -and $showOut) {
+            $preSupabaseFound = $true
+            foreach ($l in $showOut -split "`n") {
+                if ($l -match "^Version:\s*(.*)") { $preSupabaseVersion = $Matches[1].Trim() }
+            }
+        }
+    }
+    catch { }
+
     Write-Host "   Ensuring all dev dependencies are installed and up-to-date..." -ForegroundColor White
     & $pipPath install --upgrade --upgrade-strategy only-if-needed -r requirements-dev.txt > $null 2>&1
+    # Post-check: detect if supabase got installed by the requirements install
+    $postSupabaseFound = $false
+    $postSupabaseVersion = ""
+    try {
+        $showOut2 = & $pipPath show supabase 2>&1
+        if ($LASTEXITCODE -eq 0 -and $showOut2) {
+            $postSupabaseFound = $true
+            foreach ($l in $showOut2 -split "`n") {
+                if ($l -match "^Version:\s*(.*)") { $postSupabaseVersion = $Matches[1].Trim() }
+            }
+        }
+    }
+    catch { $postSupabaseFound = $false; $postSupabaseVersion = "" }
+
+    # If requirements install didn't bring in supabase, attempt an explicit install
+    if (-not $preSupabaseFound -and -not $postSupabaseFound) {
+        Write-Host "   supabase still not present after requirements install; attempting explicit pip install supabase psutil plyer..." -ForegroundColor Yellow
+        $installOutput = & $pipPath install supabase psutil plyer 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            try {
+                $showOut3 = & $pipPath show supabase 2>&1
+                if ($LASTEXITCODE -eq 0 -and $showOut3) {
+                    $postSupabaseFound = $true
+                    foreach ($l in $showOut3 -split "`n") {
+                        if ($l -match "^Version:\s*(.*)") { $postSupabaseVersion = $Matches[1].Trim() }
+                    }
+                }
+            }
+            catch { $postSupabaseFound = $false; $postSupabaseVersion = "" }
+            if ($postSupabaseFound) {
+                Write-Host ""
+                Write-Host "   Installed: " -NoNewline -ForegroundColor White
+                Write-Host "supabase $postSupabaseVersion" -NoNewline -ForegroundColor Magenta
+                Write-Host " OK" -ForegroundColor Green
+                Write-Host "   supabase installed and import OK (version: $postSupabaseVersion)" -ForegroundColor Green
+            }
+            else {
+                Write-Host "   supabase install attempted but pip show still fails. Install output:" -ForegroundColor Yellow
+                Write-Host $installOutput -ForegroundColor Gray
+            }
+        }
+        else {
+            Write-Host "   Explicit pip install failed. Pip output:" -ForegroundColor Yellow
+            Write-Host $installOutput -ForegroundColor Gray
+        }
+    }
+    elseif (-not $preSupabaseFound -and $postSupabaseFound) {
+        Write-Host ""
+        Write-Host "   Installed: " -NoNewline -ForegroundColor White
+        Write-Host "supabase $postSupabaseVersion" -NoNewline -ForegroundColor Magenta
+        Write-Host " OK" -ForegroundColor Green
+        Write-Host "   supabase installed and import OK (version: $postSupabaseVersion)" -ForegroundColor Green
+    }
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""
         # Robust check for all required dev tool executables
         $devTools = @{
             'conventional-pre-commit.exe' = 'conventional-pre-commit'
-            'pre-commit.exe' = 'pre-commit'
-            'black.exe' = 'black'
-            'isort.exe' = 'isort'
-            'docformatter.exe' = 'docformatter'
-            'flake8.exe' = 'flake8'
-            'ruff.exe' = 'ruff'
-            'pylint.exe' = 'pylint'
-            'mypy.exe' = 'mypy'
-            'pytest.exe' = 'pytest'
-            'yamllint.exe' = 'yamllint'
+            'pre-commit.exe'              = 'pre-commit'
+            'black.exe'                   = 'black'
+            'isort.exe'                   = 'isort'
+            'docformatter.exe'            = 'docformatter'
+            'flake8.exe'                  = 'flake8'
+            'ruff.exe'                    = 'ruff'
+            'pylint.exe'                  = 'pylint'
+            'mypy.exe'                    = 'mypy'
+            'pytest.exe'                  = 'pytest'
+            'yamllint.exe'                = 'yamllint'
         }
         $missingTools = @()
         foreach ($exe in $devTools.Keys) {
@@ -323,7 +412,8 @@ if (Test-Path "requirements-dev.txt") {
                 & $pipPath install --force-reinstall $($devTools[$exe]) > $null 2>&1
                 if (Test-Path $exePath) {
                     Write-Host "   $exe installed successfully." -ForegroundColor Green
-                } else {
+                }
+                else {
                     Write-Host "   WARNING: $exe still missing after install!" -ForegroundColor Red
                     $missingTools += $exe
                 }
@@ -333,19 +423,31 @@ if (Test-Path "requirements-dev.txt") {
             Write-Host ""
             Write-Host "   Python dev dependencies are present and up-to-date " -NoNewline -ForegroundColor White
             Write-Host "OK" -ForegroundColor Green
-        } else {
+        }
+        else {
             Write-Host "   WARNING: Some dev tool executables are still missing: $($missingTools -join ', ')" -ForegroundColor Red
         }
-    } else {
+    }
+    else {
         Write-Host ""
         Write-Host "   Installation " -NoNewline -ForegroundColor White
         Write-Host "FAILED" -ForegroundColor Red
         $script:ErrorCount++
     }
-} else {
+}
+else {
     Write-Warning "   requirements-dev.txt not found."
     $script:ErrorCount++
 }
+
+# Supabase check/installation is handled during the dev requirements install block above.
+# The Step 7 summary below will show the final installed status.
+
+# Export final supabase detection variables for use in Step 7 summary
+if ($null -eq $supabaseFound) { $supabaseFound = $false }
+if ($null -eq $supabaseVersion) { $supabaseVersion = "" }
+if ($postSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $postSupabaseVersion }
+elseif ($preSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $preSupabaseVersion }
 
 
 # Step 4: JavaScript Development Tools
@@ -392,8 +494,8 @@ else {
     # Install packages with warnings and notices suppressed
     $env:npm_config_loglevel = "error"
     npm install jscpd jest jest-environment-jsdom @playwright/test --save-dev 2>&1 |
-        Where-Object { $_ -notmatch "^npm warn" -and $_ -notmatch "^npm notice" } |
-        Out-Null
+    Where-Object { $_ -notmatch "^npm warn" -and $_ -notmatch "^npm notice" } |
+    Out-Null
     $env:npm_config_loglevel = $null
 
     if ($LASTEXITCODE -eq 0) {
@@ -430,8 +532,8 @@ else {
 
     # Suppress npm notices during Playwright install
     npx playwright install 2>&1 |
-        Where-Object { $_ -notmatch "^npm notice" } |
-        Out-Null
+    Where-Object { $_ -notmatch "^npm notice" } |
+    Out-Null
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "   Browsers installed " -NoNewline -ForegroundColor White
@@ -459,35 +561,12 @@ $templateFile = Join-Path $projectRoot ".gitmessage"
 if (Test-Path $templateFile) {
     git config --local commit.template .gitmessage
     Write-Host "   [OK] .gitmessage set as commit template" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   [WARN] .gitmessage not found, skipping commit template setup" -ForegroundColor Yellow
 }
 
-$hookTemplate = Join-Path $projectRoot ".githooks\commit-msg"
-
-$convCommitExe = Join-Path $projectRoot ".venv\Scripts\conventional-pre-commit.exe"
-$convCommitExe = $convCommitExe.Replace("\", "/")
-$pythonExe = Join-Path $projectRoot ".venv\Scripts\python.exe"
-$pythonExe = $pythonExe.Replace("\", "/")
-
-# Install native commit-msg hook for Windows compatibility (avoids pre-commit shell dependency)
-$nativeHookPath = Join-Path $projectRoot ".git\hooks\commit-msg"
-$nativeHookContent = @"
-#!/bin/sh
-# 1. Run Conventional Commits Validator
-"$convCommitExe" "`$1" || exit 1
-
-# 2. Run our custom Length Checker (One-liner)
-"$pythonExe" -c "import sys; msg = open(sys.argv[1], encoding='utf-8').read().splitlines(); exit(any(len(l) > 88 for l in msg))" "`$1" || { echo "ERROR: Commit message exceeds 88 characters."; exit 1; }
-"@
-
-if (Test-Path ".git") {
-    Write-Host "   Installing native commit-msg hook..." -ForegroundColor Yellow
-    # Use Out-File with -Encoding ascii to avoid BOM issues with Git on Windows hooks
-    $nativeHookContent | Out-File -FilePath $nativeHookPath -Encoding ascii -NoNewline
-    Write-Host "   Handled native commit-msg hook " -NoNewline -ForegroundColor White
-    Write-Host "OK" -ForegroundColor Green
-}
+# Note: Hooks are managed by pre-commit tool in Step 6.
 
 # ============================================================================
 # STEP 6: PRE-COMMIT HOOKS SETUP
@@ -519,56 +598,66 @@ if ($hasPreCommit) {
     Write-Host "OK" -ForegroundColor Green
 
     # Install pre-commit hooks
-    Write-Host "   Installing pre-commit hooks..." -ForegroundColor Yellow
+    Write-Host "   Installing repository hooks (framework mode)..." -ForegroundColor Yellow
 
-    try {
-        # Install pre-commit hooks (commits)
-        & $preCommitExe install 2>&1 | Out-Null
+    # Include post-rewrite so watcher is started on more git operations
+    # (matches previous branch behavior which triggered watcher on rewrite-like ops)
+    $hookTypes = @("pre-commit", "post-commit", "post-checkout", "post-merge", "post-rewrite", "pre-push")
+    foreach ($type in $hookTypes) {
+        Write-Host "     - Installing $type hook..." -ForegroundColor Gray
+        & $preCommitExe install --hook-type $type --overwrite 2>&1 | Out-Null
+    }
 
-        # Install pre-push hooks
-        & $preCommitExe install --hook-type pre-push 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "   Framework hooks installed " -NoNewline -ForegroundColor White
+        Write-Host "OK" -ForegroundColor Green
+        Write-Host "   Enabled:" -ForegroundColor White
+        Write-Host "     - Validations: pre-commit (lint/test), pre-push (full)" -ForegroundColor Gray
+        Write-Host "     - Live Locking hooks: post-checkout, post-merge, post-commit" -ForegroundColor Gray
 
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "   Pre-commit hooks installed " -NoNewline -ForegroundColor White
-            Write-Host "OK" -ForegroundColor Green
-            Write-Host "   Enabled:" -ForegroundColor White
-            Write-Host "     - Pre-commit: Code formatting & validation" -ForegroundColor Gray
-            Write-Host "     - Pre-push: Full validation & auto-release" -ForegroundColor Gray
+        # Configure repo-local aliases for conflict-safe amend workflow.
+        $safeAmendScript = Join-Path $projectRoot "scripts\safe-amend.ps1"
+        $safeAmendScript = $safeAmendScript.Replace("/", "\")
+        $safeAmendBase = "!pwsh -NoProfile -ExecutionPolicy Bypass -File `"$safeAmendScript`""
 
-            # Configure repo-local aliases for conflict-safe amend workflow.
-            $safeAmendScript = Join-Path $projectRoot "scripts\safe-amend.ps1"
-            $safeAmendScript = $safeAmendScript.Replace("/", "\")
-            $safeAmendBase = "!pwsh -NoProfile -ExecutionPolicy Bypass -File `"$safeAmendScript`""
+        try {
+            $err1 = git config --local alias.safe-amend "$safeAmendBase amend" 2>&1
+            if ($LASTEXITCODE -ne 0) { throw $err1 }
 
-            try {
-                $err1 = git config --local alias.safe-amend "$safeAmendBase amend" 2>&1
-                if ($LASTEXITCODE -ne 0) { throw $err1 }
+            $err2 = git config --local alias.safe-amend-cleanup "$safeAmendBase cleanup" 2>&1
+            if ($LASTEXITCODE -ne 0) { throw $err2 }
 
-                $err2 = git config --local alias.safe-amend-cleanup "$safeAmendBase cleanup" 2>&1
-                if ($LASTEXITCODE -ne 0) { throw $err2 }
-
-                Write-Host "   Git aliases configured: " -NoNewline -ForegroundColor White
-                Write-Host "git safe-amend, git safe-amend-cleanup" -ForegroundColor Magenta
-            }
-            catch {
-                Write-Host "   Git alias setup " -NoNewline -ForegroundColor White
-                Write-Host "FAILED" -ForegroundColor Yellow
-                Write-Host "   Error: $_" -ForegroundColor Gray
-                $script:ErrorCount++
-            }
+            Write-Host "   Git aliases configured: " -NoNewline -ForegroundColor White
+            Write-Host "git safe-amend, git safe-amend-cleanup" -ForegroundColor Magenta
         }
-        else {
-            Write-Host ""
-            Write-Host "   Pre-commit hook install " -NoNewline -ForegroundColor White
-            Write-Host "FAILED" -ForegroundColor Red
+        catch {
+            Write-Host "   Git alias setup " -NoNewline -ForegroundColor White
+            Write-Host "FAILED" -ForegroundColor Yellow
+            Write-Host "   Error: $_" -ForegroundColor Gray
             $script:ErrorCount++
         }
+
+        # Overlay collab locking hooks on top of the pre-commit framework hooks.
+        # The collab hooks are the entry point — they handle lock acquisition and
+        # then chain to 'pre-commit run' for validations. This MUST run AFTER
+        # 'pre-commit install' so our hooks win (framework hooks are overwritten).
+        Write-Host "   Overlaying collab locking hooks..." -ForegroundColor Yellow
+        $collabHooksDir = Join-Path $projectRoot ".collab\hooks"
+        foreach ($hookName in @("pre-commit", "post-commit", "pre-push")) {
+            $srcHook = Join-Path $collabHooksDir $hookName
+            $dstHook = Join-Path $hookDir $hookName
+            if (Test-Path $srcHook) {
+                Copy-Item $srcHook $dstHook -Force
+                Write-Host "     - Installed collab $hookName hook (chains to framework)" -ForegroundColor Gray
+            }
+        }
+        Write-Host "   Collab hooks installed " -NoNewline -ForegroundColor White
+        Write-Host "OK" -ForegroundColor Green
     }
-    catch {
+    else {
         Write-Host ""
         Write-Host "   Pre-commit hook install " -NoNewline -ForegroundColor White
         Write-Host "FAILED" -ForegroundColor Red
-        Write-Host "   Error: $_" -ForegroundColor Red
         $script:ErrorCount++
     }
 }
@@ -576,6 +665,180 @@ else {
     Write-Host "   Pre-commit not found " -NoNewline -ForegroundColor White
     Write-Host "SKIPPED" -ForegroundColor Yellow
     Write-Host "   (Will be installed via requirements-dev.txt later)" -ForegroundColor Gray
+}
+
+
+# ============================================================================
+# STEP 7: SUPABASE REALTIME LOCKING SETUP (REQUIRED)
+# ============================================================================
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host "   SUPABASE LOCKING SETUP (REQUIRED)" -ForegroundColor Magenta
+Write-Host "========================================" -ForegroundColor Magenta
+Write-Host ""
+
+Write-Host "[Dev Step 7/7] Configure Supabase Realtime for live locks (required)..." -ForegroundColor Yellow
+
+$envFile = Join-Path $projectRoot ".env"
+
+# Show Supabase client status summary so user sees clearly at the start of Step 7
+if ($supabaseFound) {
+    Write-Host "   Supabase client: " -NoNewline -ForegroundColor White
+    Write-Host "supabase $supabaseVersion" -NoNewline -ForegroundColor Magenta
+    Write-Host " OK" -ForegroundColor Green
+}
+else {
+    Write-Host "   Supabase client: NOT INSTALLED" -ForegroundColor Yellow
+    Write-Host "   To install, run: .\.venv\Scripts\pip.exe install supabase" -ForegroundColor Gray
+}
+
+# Supabase locking is required for all developers. Ensure variables are provided.
+$supabaseUrl = ""
+$anonKey = ""
+$serviceKey = ""
+
+# Read example values to detect placeholder copies
+$exampleFile = Join-Path $projectRoot ".env.example"
+$exampleSupabaseUrl = ""; $exampleAnonKey = ""; $exampleServiceKey = ""
+if (Test-Path $exampleFile) {
+    foreach ($line in Get-Content $exampleFile) {
+        if ($line -match "SUPABASE_URL=(.*)") { $exampleSupabaseUrl = $Matches[1].Trim() }
+        if ($line -match "SUPABASE_ANON_KEY=(.*)") { $exampleAnonKey = $Matches[1].Trim() }
+        if ($line -match "SUPABASE_SERVICE_ROLE_KEY=(.*)") { $exampleServiceKey = $Matches[1].Trim() }
+    }
+}
+
+# Read actual .env if present
+if (Test-Path $envFile) {
+    foreach ($line in Get-Content $envFile) {
+        if ($line -match "SUPABASE_URL=(.*)") { $supabaseUrl = $Matches[1].Trim() }
+        if ($line -match "SUPABASE_ANON_KEY=(.*)") { $anonKey = $Matches[1].Trim() }
+        if ($line -match "SUPABASE_SERVICE_ROLE_KEY=(.*)") { $serviceKey = $Matches[1].Trim() }
+    }
+}
+
+function Is-Placeholder($val, $exampleVal) {
+    if (-not $val) { return $true }
+    # If equal to example placeholder, treat as missing
+    if ($exampleVal -and $val -eq $exampleVal) { return $true }
+    # Common placeholder patterns
+    if ($val -match "your[_-]" -or $val -match "your-project" -or $val -match "example" -or $val -match "CHANGE_ME") { return $true }
+    return $false
+}
+
+if (Is-Placeholder $supabaseUrl $exampleSupabaseUrl) { $supabaseUrl = Read-Host "   SUPABASE_URL (e.g. https://your-project.supabase.co) - REQUIRED" }
+if (Is-Placeholder $anonKey $exampleAnonKey) { $anonKey = Read-Host "   SUPABASE_ANON_KEY - REQUIRED" }
+if (Is-Placeholder $serviceKey $exampleServiceKey) { $serviceKey = Read-Host "   SUPABASE_SERVICE_ROLE_KEY (optional, recommended for admin tasks)" }
+
+if (-not $supabaseUrl -or -not $anonKey) {
+    Write-Error "SUPABASE_URL and SUPABASE_ANON_KEY are required for live locking. Setup cannot continue."
+    exit 1
+}
+
+# Persist settings
+$newEnv = @()
+$foundUse = $false; $foundUrl = $false; $foundAnon = $false; $foundService = $false
+if (Test-Path $envFile) {
+    foreach ($line in (Get-Content $envFile)) {
+        if ($line -match "^USE_SUPABASE=") { $newEnv += "USE_SUPABASE=1"; $foundUse = $true }
+        elseif ($line -match "^SUPABASE_URL=") { $newEnv += "SUPABASE_URL=$supabaseUrl"; $foundUrl = $true }
+        elseif ($line -match "^SUPABASE_ANON_KEY=") { $newEnv += "SUPABASE_ANON_KEY=$anonKey"; $foundAnon = $true }
+        elseif ($line -match "^SUPABASE_SERVICE_ROLE_KEY=") { $newEnv += "SUPABASE_SERVICE_ROLE_KEY=$serviceKey"; $foundService = $true }
+        else { $newEnv += $line }
+    }
+}
+if (-not $foundUse) { $newEnv += "USE_SUPABASE=1" }
+if (-not $foundUrl) { $newEnv += "SUPABASE_URL=$supabaseUrl" }
+if (-not $foundAnon) { $newEnv += "SUPABASE_ANON_KEY=$anonKey" }
+if (-not $foundService) { $newEnv += "SUPABASE_SERVICE_ROLE_KEY=$serviceKey" }
+$newEnv | Out-File -FilePath $envFile -Encoding utf8
+Write-Host "   Supabase configuration saved to .env" -ForegroundColor Green
+
+# Auto-start note: the watcher is started automatically by git hooks
+# (post-checkout, post-merge, post-commit) and by IDE integrations.
+# We no longer register OS-level scheduled tasks here to avoid long-running
+# background processes tied to user sessions. If you want to start the
+# watcher manually for debugging, run:
+#   .\.venv\Scripts\python.exe .collab/core/lock_client.py daemon-start
+
+# Install Collab Git Hooks
+Write-Host "`n   Installing Collab Git Hooks..." -ForegroundColor Yellow
+$hooksDir = Join-Path $projectRoot ".git\hooks"
+$collabHooks = Join-Path $projectRoot ".collab\hooks"
+
+foreach ($hook in @("pre-commit", "post-commit", "pre-push", "commit-msg")) {
+    $src = Join-Path $collabHooks $hook
+    $dst = Join-Path $hooksDir $hook
+    if (Test-Path $src) {
+        Copy-Item $src $dst -Force
+        Write-Host "     - Copied $hook" -ForegroundColor Gray
+    }
+}
+Write-Host "   Collab Git Hooks installed " -NoNewline -ForegroundColor White
+Write-Host "OK" -ForegroundColor Green
+
+
+# IDE Auto-Detection & Configuration
+# Priority: runtime environment variables > directory presence
+Write-Host "`n   Detecting IDE environment..." -ForegroundColor Yellow
+
+$detectedIDE = $null
+
+# Primary detection: check the running IDE via environment variables
+# VS Code / Antigravity / Cursor all set TERM_PROGRAM=vscode
+if ($env:TERM_PROGRAM -eq "vscode") {
+    $detectedIDE = "vscode"
+}
+# JetBrains IDEs (PyCharm, IntelliJ) set TERMINAL_EMULATOR=JetBrains-JediTerm
+elseif ($env:TERMINAL_EMULATOR -like "*JetBrains*") {
+    $detectedIDE = "jetbrains"
+}
+# Fallback: directory-based detection (only if no runtime signal)
+elseif (Test-Path (Join-Path $projectRoot ".vscode")) {
+    $detectedIDE = "vscode"
+}
+elseif (Test-Path (Join-Path $projectRoot ".idea")) {
+    $detectedIDE = "jetbrains"
+}
+
+switch ($detectedIDE) {
+    "vscode" {
+        Write-Host "     - VS Code / Antigravity detected" -ForegroundColor Gray
+        $vscodeExtDir = Join-Path $projectRoot ".collab\vscode"
+        $packageJson = Join-Path $vscodeExtDir "package.json"
+        if (Test-Path $packageJson) {
+            try {
+                Push-Location $vscodeExtDir
+                npm install --silent 2>$null
+                Pop-Location
+                Write-Host "     - VS Code extension dependencies installed " -NoNewline -ForegroundColor White
+                Write-Host "OK" -ForegroundColor Green
+            }
+            catch {
+                Pop-Location
+                Write-Host "     - VS Code extension npm install failed (non-fatal)" -ForegroundColor Yellow
+            }
+        }
+    }
+    "jetbrains" {
+        Write-Host "     - PyCharm/IntelliJ detected" -ForegroundColor Gray
+        $ideaPath = Join-Path $projectRoot ".idea"
+        $runConfigDir = Join-Path $ideaPath "runConfigurations"
+        if (-not (Test-Path $runConfigDir)) {
+            New-Item -Path $runConfigDir -ItemType Directory -Force | Out-Null
+        }
+        $xmlSrc = Join-Path $projectRoot ".collab\pycharm\Collab_Lock_Watcher.xml"
+        $xmlDst = Join-Path $runConfigDir "Collab_Lock_Watcher.xml"
+        if (Test-Path $xmlSrc) {
+            Copy-Item $xmlSrc $xmlDst -Force
+            Write-Host "     - PyCharm Run Configuration installed " -NoNewline -ForegroundColor White
+            Write-Host "OK" -ForegroundColor Green
+            Write-Host "       (Run > Collab Lock Watcher to start)" -ForegroundColor Gray
+        }
+    }
+    default {
+        Write-Host "     - No IDE detected (run manually: python collab.py daemon-start)" -ForegroundColor Gray
+    }
 }
 
 
@@ -591,23 +854,40 @@ else {
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 
-# Display next steps
+# Display next steps — IDE-aware
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host "                        NEXT STEPS                              " -ForegroundColor Yellow
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "  1. Activate the virtual environment (if not already active):" -ForegroundColor White
+
+switch ($detectedIDE) {
+    "vscode" {
+        Write-Host "  1. Install the Collab Locks extension in VS Code:" -ForegroundColor White
+        Write-Host "     Press F1 > 'Developer: Install Extension from Location...'" -ForegroundColor Magenta
+        Write-Host "     Select the .collab\vscode\ directory, then reload VS Code." -ForegroundColor Magenta
+        Write-Host "     The extension auto-starts on open and shows lock status" -ForegroundColor Gray
+        Write-Host "     in the status bar. See .collab\vscode\README.md for details." -ForegroundColor Gray
+    }
+    "jetbrains" {
+        Write-Host "  1. Start the Collab Lock Watcher in PyCharm:" -ForegroundColor White
+        Write-Host "     Run > Collab Lock Watcher (click Run once to start)" -ForegroundColor Magenta
+        Write-Host "     The watcher runs in the Run tool window (background tab)." -ForegroundColor Gray
+        Write-Host "     See .collab\pycharm\plugin_notes.md for details." -ForegroundColor Gray
+    }
+    default {
+        Write-Host "  1. Start the lock watcher manually:" -ForegroundColor White
+        Write-Host "     python collab.py daemon-start" -ForegroundColor Magenta
+        Write-Host "     See .collab\README.md for full CLI reference." -ForegroundColor Gray
+    }
+}
+
+Write-Host ""
+Write-Host "  2. Activate the virtual environment (if not already active):" -ForegroundColor White
 Write-Host "     .\.venv\Scripts\Activate.ps1" -ForegroundColor Magenta
 Write-Host ""
-Write-Host "  2. Run the application:" -ForegroundColor White
+Write-Host "  3. Run the application:" -ForegroundColor White
 Write-Host "     python run.py" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "  3. Run tests:" -ForegroundColor White
-Write-Host "     pytest" -ForegroundColor Magenta
-Write-Host ""
-Write-Host "  4. Run E2E tests:" -ForegroundColor White
-Write-Host "     npx playwright test" -ForegroundColor Magenta
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""

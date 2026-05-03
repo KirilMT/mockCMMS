@@ -1,16 +1,14 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Supervisor Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.css"
-    />
-    <style>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Supervisor Dashboard</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
+        <link rel="stylesheet"
+              href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.css" />
+        <style>
       body {
         font-family: Arial, sans-serif;
         padding: 20px;
@@ -35,32 +33,29 @@
       #gantt {
         margin-top: 20px;
       }
-    </style>
-  </head>
-  <body>
-    <h1>Supervisor Maintenance Dashboard</h1>
-    <table>
-      <tr>
-        <th>Task</th>
-        <th>Plan (min)</th>
-        <th>Status</th>
-      </tr>
-      {% for task in tasks %}
-      <tr>
-        <td>{{ task.name }}</td>
-        <td>{{ task.plan }}</td>
-        <td>{{ "Done" if task.progress == 100 else "In Progress" }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-
-    <!-- Bar Chart -->
-    <canvas id="taskChart" width="400" height="200"></canvas>
-
-    <!-- Gantt Chart -->
-    <div id="gantt"></div>
-
-    <script>
+        </style>
+    </head>
+    <body>
+        <h1>Supervisor Maintenance Dashboard</h1>
+        <table>
+            <tr>
+                <th>Task</th>
+                <th>Plan (min)</th>
+                <th>Status</th>
+            </tr>
+            {% for task in tasks %}
+                <tr>
+                    <td>{{ task.name }}</td>
+                    <td>{{ task.plan }}</td>
+                    <td>{{ "Done" if task.progress == 100 else "In Progress" }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <!-- Bar Chart -->
+        <canvas id="taskChart" width="400" height="200"></canvas>
+        <!-- Gantt Chart -->
+        <div id="gantt"></div>
+        <script>
       // Bar Chart
       const ctx = document.getElementById('taskChart').getContext('2d');
       new Chart(ctx, {
@@ -84,6 +79,6 @@
           view_mode: 'Day',
           date_format: 'YYYY-MM-DD'
       });
-    </script>
-  </body>
+        </script>
+    </body>
 </html>

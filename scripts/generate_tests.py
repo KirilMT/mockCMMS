@@ -7,8 +7,10 @@ the Arrange-Act-Assert pattern.
 
 Usage:
     python scripts/generate_tests.py src/services/new_module.py
-    python scripts/generate_tests.py src/routes/api.py --dry-run
-    python scripts/generate_tests.py --scan src/
+    python scripts/generate_tests.py apps/reporting/src/services/report_generator.py
+    python scripts/generate_tests.py scripts/cleanup.py --dry-run
+    python scripts/generate_tests.py --scan
+    python scripts/generate_tests.py src/ --scan
 """
 
 import argparse
@@ -16,10 +18,22 @@ import ast
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional, Set, Tuple
+from typing import Iterable, List, Optional, Set, Tuple
 
 if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def _is_relative_to(path: Path, other: Path) -> bool:
+    """Return True when *path* is located under *other*."""
+    try:
+        path.relative_to(other)
+    except ValueError:
+        return False
+    return True
 
 
 class CodeAnalyzer:
@@ -32,7 +46,7 @@ class CodeAnalyzer:
 
     def analyze(self) -> List[Tuple[str, str]]:
         """Extract module-level public (non-private) classes and functions."""
-        with open(self.filepath, "r", encoding="utf-8") as f:
+        with open(self.filepath, "r", encoding="utf-8-sig") as f:
             content = f.read()
 
         try:
@@ -45,7 +59,9 @@ class CodeAnalyzer:
         for node in tree.body:
             if isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
                 self.entities.append((node.name, "class"))
-            elif isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
+            elif isinstance(
+                node, (ast.FunctionDef, ast.AsyncFunctionDef)
+            ) and not node.name.startswith("_"):
                 self.entities.append((node.name, "function"))
 
         return self.entities
@@ -62,41 +78,106 @@ class TestGenerator:
         "models.py": "unit",
     }
 
-    def __init__(self, source_file: str, category: Optional[str] = None):
-        self.source_file = source_file
-        self.module_name = Path(source_file).stem
+    def __init__(
+        self,
+        source_file: str,
+        category: Optional[str] = None,
+        repo_root: Optional[Path] = None,
+    ):
+        self.repo_root = (repo_root or ROOT).resolve()
+        self.source_path = Path(source_file).resolve()
+        self.source_file = str(self.source_path)
+        self.module_name = self.source_path.stem
+        self.relative_source_path = self._get_relative_source_path()
         self.category = category or self._detect_category()
+
+    def _get_relative_source_path(self) -> Optional[Path]:
+        """Return the repository-relative source path when available."""
+        if _is_relative_to(self.source_path, self.repo_root):
+            return self.source_path.relative_to(self.repo_root)
+        return None
 
     def _detect_category(self) -> str:
         """Auto-detect test category based on file path."""
-        filepath_lower = self.source_file.lower()
+        filepath_lower = self._display_source_path().lower()
+        if filepath_lower.startswith("scripts/") or filepath_lower.startswith(
+            ".collab/"
+        ):
+            return "unit"
         for pattern, cat in self.CATEGORY_PATTERNS.items():
             if pattern in filepath_lower:
                 return cat
         return "unit"
+
+    def _display_source_path(self) -> str:
+        """Return a readable source path for messages and generated docstrings."""
+        if self.relative_source_path is not None:
+            return self.relative_source_path.as_posix()
+        return self.source_path.as_posix()
+
+    def _get_direct_import_module(self) -> Optional[str]:
+        """Return the direct import module path when the source is importable."""
+        rel = self.relative_source_path
+        if rel is None:
+            path = self.source_file.replace("\\", "/")
+            if "src/" in path:
+                return "src." + path.split("src/")[1].replace("/", ".").replace(
+                    ".py", ""
+                )
+            return self.module_name
+
+        parts = rel.with_suffix("").parts
+        if not parts:
+            return self.module_name
+        if parts[0] == "src":
+            return ".".join(parts)
+        if parts[0] == "apps" and len(parts) >= 3 and parts[2] == "src":
+            return ".".join(parts)
+        if len(parts) == 1:
+            return parts[0]
+        return None
+
+    def get_test_dir(self, output_root: Optional[Path] = None) -> Path:
+        """Return the target directory for the generated test file."""
+        if output_root is not None:
+            return Path(output_root) / self.category
+
+        rel = self.relative_source_path
+        if rel is not None and rel.parts:
+            if rel.parts[0] == "apps" and len(rel.parts) >= 2:
+                return (
+                    self.repo_root
+                    / rel.parts[0]
+                    / rel.parts[1]
+                    / "tests"
+                    / "backend"
+                    / self.category
+                )
+            if rel.parts[0] == ".collab":
+                return self.repo_root / ".collab" / "tests" / self.category
+
+        return self.repo_root / "tests" / "backend" / self.category
+
+    def get_test_file(self, output_root: Optional[Path] = None) -> Path:
+        """Return the full destination path for the generated test file."""
+        return (
+            self.get_test_dir(output_root=output_root) / f"test_{self.module_name}.py"
+        )
 
     def generate(self, entities: List[Tuple[str, str]]) -> str:
         """Generate test file content."""
         if not entities:
             return ""
 
-        lines = [
-            f'"""Tests for {self.module_name} module."""',
-            "",
-            "import pytest",
-            "",
-        ]
-
         # Add imports
         classes = [e[0] for e in entities if e[1] == "class"]
         functions = [e[0] for e in entities if e[1] == "function"]
+        import_names = sorted(set(classes + functions))
 
-        if classes or functions:
-            lines.append("from src." + self._get_import_path() + " import (")
-            for name in sorted(set(classes + functions)):
-                lines.append(f"    {name},")
-            lines[-1] = lines[-1].rstrip(",")
-            lines.append(")")
+        lines = [f'"""Tests for `{self._display_source_path()}`."""', ""]
+        lines.extend(self._build_import_block(import_names))
+
+        if lines[-1] != "":
             lines.append("")
 
         # Generate test classes
@@ -112,12 +193,109 @@ class TestGenerator:
 
         return "\n".join(lines)
 
+    def _build_import_block(self, import_names: List[str]) -> List[str]:
+        """Build the import or module-loading section for generated tests."""
+        direct_import = self._get_direct_import_module()
+
+        if direct_import:
+            lines = ["import pytest", ""]
+            lines.append(f"from {direct_import} import (")
+            for name in import_names:
+                lines.append(f"    {name},")
+            lines[-1] = lines[-1].rstrip(",")
+            lines.append(")")
+            lines.append("")
+            return lines
+
+        return self._build_path_loader_block(import_names)
+
     def _get_import_path(self) -> str:
         """Convert file path to import path."""
+        rel = self.relative_source_path
+        if rel is not None:
+            rel_without_suffix = rel.with_suffix("")
+            if rel.parts and rel.parts[0] == "src":
+                return ".".join(rel_without_suffix.parts[1:])
+            return ".".join(rel_without_suffix.parts)
+
         path = self.source_file.replace("\\", "/")
         if "src/" in path:
             return path.split("src/")[1].replace("/", ".").replace(".py", "")
         return self.module_name
+
+    def _build_path_loader_block(self, import_names: List[str]) -> List[str]:
+        """Build a loader block for non-importable repository files."""
+        separator = "# " + "-" * 75
+        root_docstring = (
+            '    """Locate the repository root from the generated test file."""'
+        )
+        root_marker_check = (
+            '        if (candidate / "pyproject.toml").exists() '
+            'and (candidate / "AGENTS.md").exists():'
+        )
+        spec_line = (
+            "    spec = importlib.util.spec_from_file_location("
+            f'"{self.module_name}_ut", module_path)'
+        )
+        lines = [
+            "import importlib.util",
+            "from pathlib import Path",
+            "",
+            "import pytest",
+            "",
+            separator,
+            "# Module loading",
+            separator,
+            "",
+        ]
+
+        if self.relative_source_path is not None:
+            lines.extend(
+                [
+                    "def _find_repo_root() -> Path:",
+                    root_docstring,
+                    "    current = Path(__file__).resolve().parent",
+                    "    for candidate in (current, *current.parents):",
+                    root_marker_check,
+                    "            return candidate",
+                    '    raise RuntimeError("Could not locate the repository root.")',
+                    "",
+                    "",
+                ]
+            )
+
+        lines.extend(
+            [
+                "def _load_module():",
+                f'    """Load `{self._display_source_path()}` as a testable module."""',
+                f"    module_path = {self._build_module_path_expression()}",
+                spec_line,
+                "    assert spec and spec.loader",
+                "    mod = importlib.util.module_from_spec(spec)",
+                "    spec.loader.exec_module(mod)",
+                "    return mod",
+                "",
+                "",
+                "module_under_test = _load_module()",
+            ]
+        )
+
+        for name in import_names:
+            lines.append(f"{name} = module_under_test.{name}")
+
+        lines.append("")
+        return lines
+
+    def _build_module_path_expression(self) -> str:
+        """Render a portable Path expression for the source module."""
+        rel = self.relative_source_path
+        if rel is None:
+            return f"Path({self.source_path.as_posix()!r})"
+
+        expr = "_find_repo_root()"
+        for part in rel.parts:
+            expr += f" / {part!r}"
+        return expr
 
     def _generate_class_tests(self, class_name: str) -> List[str]:
         """Generate test class for a source class."""
@@ -172,24 +350,106 @@ class TestGenerator:
 class TestDiscovery:
     """Find modules without test coverage."""
 
-    def __init__(self):
-        self.test_dir = "tests/backend"
+    EXCLUDED_DIRS = {
+        ".git",
+        ".pytest_cache",
+        ".venv",
+        "__pycache__",
+        "build",
+        "dist",
+        "htmlcov",
+        "instance",
+        "logs",
+        "node_modules",
+        "playwright-report",
+        "test_data",
+        "vscode-live-locks",
+    }
 
-    def find_untested(self, src_dir: str) -> List[str]:
+    def __init__(self, repo_root: Optional[Path] = None):
+        self.repo_root = (repo_root or ROOT).resolve()
+        self.test_dir = str(self.repo_root / "tests" / "backend")
+
+    def find_untested(self, src_dir: Optional[str] = None) -> List[str]:
         """Find Python modules without corresponding tests."""
+        scan_path = Path(src_dir).resolve() if src_dir else self.repo_root
+
+        if not scan_path.exists():
+            return []
+
+        if not _is_relative_to(scan_path, self.repo_root):
+            return self._find_untested_external(scan_path)
+
+        untested = []
+        for source_path in self._iter_repo_source_files(scan_path):
+            generator = TestGenerator(str(source_path), repo_root=self.repo_root)
+            if not generator.get_test_file().exists():
+                untested.append(source_path.relative_to(self.repo_root).as_posix())
+
+        return sorted(untested)
+
+    def _find_untested_external(self, src_dir: Path) -> List[str]:
+        """Fallback scan mode for paths outside the repository root."""
         tested = self._get_tested_modules()
         untested = []
 
-        for root, dirs, files in os.walk(src_dir):
-            dirs[:] = [d for d in dirs if not d.startswith(("_", "."))]
-
-            for file in files:
-                if file.endswith(".py") and not file.startswith("_"):
-                    module = file.replace(".py", "")
-                    if module not in tested:
-                        untested.append(os.path.join(root, file))
+        for source_path in self._iter_python_files(src_dir):
+            module = source_path.stem
+            if module not in tested:
+                untested.append(str(source_path))
 
         return sorted(untested)
+
+    def _iter_repo_source_files(self, scan_path: Path) -> Iterable[Path]:
+        """Yield repository Python files that should have tests."""
+        if scan_path == self.repo_root:
+            for child in sorted(self.repo_root.glob("*.py")):
+                if self._is_candidate_source(child):
+                    yield child
+
+            for dirname in ("src", "scripts", "apps", ".collab"):
+                target = self.repo_root / dirname
+                if target.exists():
+                    yield from self._iter_python_files(target)
+            return
+
+        yield from self._iter_python_files(scan_path)
+
+    def _iter_python_files(self, scan_path: Path) -> Iterable[Path]:
+        """Yield candidate Python files under *scan_path*."""
+        if scan_path.is_file():
+            if self._is_candidate_source(scan_path):
+                yield scan_path
+            return
+
+        for root, dirs, files in os.walk(scan_path):
+            dirs[:] = [d for d in dirs if not self._should_skip_dir(Path(root) / d)]
+            for filename in sorted(files):
+                candidate = Path(root) / filename
+                if self._is_candidate_source(candidate):
+                    yield candidate.resolve()
+
+    def _should_skip_dir(self, path: Path) -> bool:
+        """Return True when a directory should be excluded from scanning."""
+        name = path.name
+        if name in self.EXCLUDED_DIRS or name.endswith(".egg-info"):
+            return True
+        if name.startswith(".") and name not in {".collab"}:
+            return True
+        return False
+
+    def _is_candidate_source(self, path: Path) -> bool:
+        """Return True when a Python file should be considered for test generation."""
+        if path.suffix != ".py":
+            return False
+        if path.name == "__init__.py" or path.name.startswith(("test_", "_")):
+            return False
+
+        normalized_parts = set(path.parts)
+        if "tests" in normalized_parts:
+            return False
+
+        return True
 
     def _get_tested_modules(self) -> Set[str]:
         """Get set of modules that have tests."""
@@ -216,7 +476,15 @@ def main():
     parser.add_argument(
         "--dry-run", action="store_true", help="Print output without creating file"
     )
-    parser.add_argument("--scan", action="store_true", help="Scan for untested modules")
+    parser.add_argument(
+        "--output-root",
+        help="Root directory for generated tests (default: tests/backend)",
+    )
+    parser.add_argument(
+        "--scan",
+        action="store_true",
+        help="Scan the repository (or a provided directory) for untested modules",
+    )
     parser.add_argument(
         "--force", action="store_true", help="Overwrite existing test files"
     )
@@ -225,9 +493,11 @@ def main():
 
     # Scan mode
     if args.scan:
-        print("\n📊 Untested modules in src/:\n")
+        scan_target = args.source_file
+        scope_label = scan_target or "repository"
+        print(f"\n📊 Untested modules in {scope_label}:\n")
         discovery = TestDiscovery()
-        untested = discovery.find_untested("src")
+        untested = discovery.find_untested(scan_target)
 
         if untested:
             for module in untested:
@@ -246,23 +516,30 @@ def main():
         print(f"❌ File not found: {args.source_file}\n")
         sys.exit(1)
 
+    source_path = Path(args.source_file).resolve()
+    if source_path.is_dir():
+        print("❌ Source path is a directory. Use --scan to inspect directories.\n")
+        sys.exit(1)
+
     # Analyze
-    analyzer = CodeAnalyzer(args.source_file)
+    analyzer = CodeAnalyzer(str(source_path))
     entities = analyzer.analyze()
 
     if not entities:
-        print(f"⚠️  No testable entities found in {args.source_file}\n")
+        print(f"⚠️  No testable entities found in {source_path}\n")
         return
 
     print(f"🔍 Found {len(entities)} testable entities\n")
 
     # Generate
-    generator = TestGenerator(args.source_file, category=args.category)
+    generator = TestGenerator(str(source_path), category=args.category)
     test_code = generator.generate(entities)
 
-    # Determine output path
-    test_dir = Path("tests") / "backend" / generator.category
-    test_file = test_dir / f"test_{generator.module_name}.py"
+    # Determine output path (support custom output root)
+    test_file = generator.get_test_file(
+        output_root=Path(args.output_root).resolve() if args.output_root else None
+    )
+    test_dir = test_file.parent
 
     # Handle existing files
     if test_file.exists() and not args.force and not args.dry_run:

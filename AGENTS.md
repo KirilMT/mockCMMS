@@ -46,6 +46,11 @@ mockCMMS/
 ├── apps/                       # Modular extensions (each is a Flask blueprint)
 │   ├── planning/               # Skill-based technician task assignment
 │   └── reporting/              # Report generation (PDF, Markdown)
+├── .collab/                    # Collaborative file locking system
+│   ├── core/                   # Lock client logic
+│   ├── logs/                   # Application and error logs
+│   ├── tests/                  # Unit and integration tests
+│   └── vscode/                 # VS Code extension
 ├── tests/
 │   ├── backend/                # Pytest: unit/, functional/, integration/,
 │   │                           #         security/, performance/, reliability/
@@ -103,7 +108,9 @@ REPORTING_ENABLED=True   # apps/reporting
 ```bash
 # Backend
 pytest tests/backend                           # Run all backend tests
-pytest --cov=src --cov=apps tests/backend      # With coverage
+pytest --cov=src --cov=apps --cov=scripts \
+  --cov=.collab --cov=run.py --cov=collab.py \
+  --cov=conftest.py tests/backend             # With comprehensive coverage
 
 # Frontend
 npm test                                        # Jest unit tests
@@ -119,10 +126,31 @@ python scripts/validate_code.py --quick <files> # Rapid check for staged files
 
 ### Coverage Thresholds (IMMUTABLE)
 
-- **Backend (pytest):** ≥85% (`pyproject.toml` → `--cov-fail-under=85`)
+- **Backend (pytest):** ≥85% total (`ci.yml` + `validate_code.py` Step 10 via `coverage report --fail-under=85`)
+- **Backend (diff-cover):** ≥92% on new/changed code (`ci.yml` + `validate_code.py` Step 11)
 - **Frontend (jest):** ≥80% branches, functions, lines, statements (`package.json`)
 - 80% is the **floor**. If coverage drops even to 79.9%, it is a failure.
 - Fix by adding tests, not by lowering thresholds.
+
+### All-Python-Files Policy (STRICT)
+
+**Every** Python file in the repository must be linted, formatted, type-checked, tested, and covered. No exclusions. This applies to:
+
+- `src/`, `apps/`, `tests/`, `scripts/`, `.collab/`
+- Root-level files: `run.py`, `collab.py`, `conftest.py`
+
+**When adding a new root-level `.py` file or top-level package**, you must update these locations:
+
+| Location                                             | What to update                                                  |
+| ---------------------------------------------------- | --------------------------------------------------------------- |
+| `scripts/validate_code.py` → `python_targets`        | Add file/dir to the default list                                |
+| `scripts/validate_code.py` → `_cov_sources`          | Add `"--cov=<path>"` entry                                      |
+| `scripts/validate_code.py` → `_FULL_TESTPATHS`       | Add test directory (if new test root)                           |
+| `scripts/validate_code.py` → `_BACKEND_MAP`          | Add prefix → test dir mapping                                   |
+| `scripts/format_code.py` → `format_python()` targets | Add file/dir to the list                                        |
+| `.github/workflows/ci.yml`                           | Add to isort, black, docformatter, ruff, bandit, pytest `--cov` |
+
+Missing any of these causes 0% coverage → false failure.
 
 ### Test Organization
 
@@ -222,9 +250,35 @@ Or just run: `python scripts/format_code.py`
 
 ### Task Completion
 
-- Complete the **full scope**. If asked for A, B, and C — do all three.
-- No partial submissions unless fully blocked.
-- Always run `python scripts/validate_code.py` (Full Mode) before pushing or finishing a major task to ensure global repository health.
+### File Locking Protocol
+
+This repository uses a collaborative file locking system (`.collab/`). **Before editing any file**, agents must follow this protocol:
+
+1. **Identify all files** the task requires — source, tests, docs, config — before touching anything.
+2. **Check lock status (AI agents: mandatory every time before edits):** run `python collab.py active` before edits. You may also run `python collab.py status <file>` for targeted checks.
+
+- Devs may also see automatic warning popups when opening a file already being edited by another dev.
+- AI agents must **not** rely on popup warnings and must always run an explicit lock command.
+
+3. **Decision gate:**
+
+- Unlocked → proceed with edits (lock acquisition is automatic when editing starts).
+- Locked by the **current developer** (the dev using this agent) → proceed.
+- Locked by **another developer** → **STOP**. Report which files are blocked and by whom. Do not edit. Ask the user how to proceed.
+
+4. **Do not require manual lock commands** as part of normal workflow; acquisition/release is automatic via watcher/daemon behavior.
+
+> **ABSOLUTE RULE FOR AI AGENTS:** Force-releasing another developer's lock is forbidden under all circumstances. Do not do it.
+
+See **Skill: `file-locking`** for the complete workflow and CLI reference.
+
+### Background Process Monitoring
+
+When working with long-running background tasks, specifically the collaborative daemon, observe these rules:
+
+- **Daemon Startup Handshake:** Always wait for the PID polling to complete. `daemon-start` may report success only after the child writes its metadata to `.collab/.daemon.pid`.
+- **PID Source of Truth:** Never trust `proc.pid` from `subprocess.Popen` for the collab daemon on Windows. Use `LockClient._read_pid()` (or manually parse the `.collab/.daemon.pid` JSON) to find the real child process.
+- **Verification:** Always run `python scripts/validate_code.py` (Full Mode) before pushing or finishing a major task to ensure global repository health.
 
 ### File Safety
 
@@ -255,11 +309,12 @@ See `.github/CONTRIBUTING.md` and `.github/GIT_WORKFLOW.md` for full details.
 
 Complex, multi-step workflows are documented as Skills in `.agents/skills/`:
 
-| Skill              | Trigger                                               |
-| ------------------ | ----------------------------------------------------- |
-| `testing-workflow` | Writing tests, debugging coverage, running validation |
-| `commit-workflow`  | Staging, reviewing, and committing changes            |
-| `bug-tracking`     | Discovering, reporting, and fixing bugs               |
-| `new-feature`      | Scaffolding a new feature or modular app              |
+| Skill              | Trigger                                                                |
+| ------------------ | ---------------------------------------------------------------------- |
+| `file-locking`     | Check locks, acquire, edit safely, release — **run before every edit** |
+| `testing-workflow` | Writing tests, debugging coverage, running validation                  |
+| `commit-workflow`  | Staging, reviewing, and committing changes                             |
+| `bug-tracking`     | Discovering, reporting, and fixing bugs                                |
+| `new-feature`      | Scaffolding a new feature or modular app                               |
 
 > **To use a Skill:** Read `.agents/skills/<name>/SKILL.md` before starting the workflow.

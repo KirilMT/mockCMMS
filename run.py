@@ -34,8 +34,8 @@ if is_portable:
 def _portable_startup_sequence() -> None:
     """Startup sequence for portable mode with a spinner and auto-open browser."""
     import time
-    import urllib.request
     import webbrowser
+    from http.client import HTTPConnection
 
     animation = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     out = getattr(sys, "__stdout__", None)
@@ -48,9 +48,12 @@ def _portable_startup_sequence() -> None:
             out.flush()
 
         try:
-            with urllib.request.urlopen("http://127.0.0.1:5000", timeout=1):
-                server_ready = True
-                break
+            conn = HTTPConnection("127.0.0.1", 5000, timeout=1)
+            conn.request("HEAD", "/")
+            conn.getresponse()
+            conn.close()
+            server_ready = True
+            break
         except Exception as e:
             if hasattr(e, "code"):
                 server_ready = True

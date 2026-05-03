@@ -19,6 +19,7 @@ Usage:
 """
 
 import argparse
+import shutil
 import sys
 from pathlib import Path
 from typing import List, Tuple
@@ -60,6 +61,7 @@ TEST_OUTPUT_ARTIFACTS: List[str] = [
 TEST_OUTPUT_GLOB_PATTERNS: List[str] = [
     "jest_output.txt",
     "jest_*.txt",
+    "pytest-cache-files-*",  # Randomly named temporary directories from test runners
 ]
 
 # Tool caches that speed up subsequent runs but pollute the repo visually.
@@ -106,8 +108,6 @@ def _remove(path: Path, dry_run: bool) -> Tuple[bool, str]:
 
     try:
         if path.is_dir():
-            import shutil
-
             shutil.rmtree(path)
         else:
             path.unlink()
@@ -118,7 +118,7 @@ def _remove(path: Path, dry_run: bool) -> Tuple[bool, str]:
         return False, f"  ⚠  Could not remove {path}: {exc}"
 
 
-def _clean_top_level(names: List[str], dry_run: bool) -> int:
+def _clean_items(names: List[str], dry_run: bool) -> int:
     """Remove top-level artifacts by exact name relative to ROOT.
 
     Args:
@@ -131,11 +131,12 @@ def _clean_top_level(names: List[str], dry_run: bool) -> int:
     count = 0
     for name in names:
         path = ROOT / name
-        ok, msg = _remove(path, dry_run)
-        if msg:
-            print(msg)
-        if ok:
-            count += 1
+        if path.exists():
+            ok, msg = _remove(path, dry_run)
+            if msg:
+                print(msg)
+            if ok:
+                count += 1
     return count
 
 
@@ -161,7 +162,11 @@ def _clean_glob(patterns: List[str], dry_run: bool) -> int:
                 continue
             seen.add(match)
 
-            if _is_protected(match.relative_to(ROOT)):
+            try:
+                if _is_protected(match.relative_to(ROOT)):
+                    continue
+            except ValueError:
+                # Path might be outside ROOT or invalid
                 continue
 
             ok, msg = _remove(match, dry_run)
@@ -182,8 +187,9 @@ def clean_coverage(dry_run: bool = False) -> int:
     Returns:
         Total number of items cleaned.
     """
+    print("Cleaning coverage artifacts...")
     total = 0
-    total += _clean_top_level(COVERAGE_ARTIFACTS, dry_run)
+    total += _clean_items(COVERAGE_ARTIFACTS, dry_run)
     total += _clean_glob(COVERAGE_GLOB_PATTERNS, dry_run)
     return total
 
@@ -197,8 +203,9 @@ def clean_test_output(dry_run: bool = False) -> int:
     Returns:
         Total number of items cleaned.
     """
+    print("Cleaning test output...")
     total = 0
-    total += _clean_top_level(TEST_OUTPUT_ARTIFACTS, dry_run)
+    total += _clean_items(TEST_OUTPUT_ARTIFACTS, dry_run)
     total += _clean_glob(TEST_OUTPUT_GLOB_PATTERNS, dry_run)
     return total
 
@@ -215,8 +222,9 @@ def clean_caches(dry_run: bool = False) -> int:
     Returns:
         Total number of items cleaned.
     """
+    print("Cleaning tool caches...")
     total = 0
-    total += _clean_top_level(CACHE_ARTIFACTS, dry_run)
+    total += _clean_items(CACHE_ARTIFACTS, dry_run)
     total += _clean_glob(CACHE_GLOB_PATTERNS, dry_run)
     return total
 
@@ -290,15 +298,20 @@ def main() -> int:
     print("=" * 60)
 
     if args.all:
-        label, count = "all artifacts (including caches)", clean_all(args.dry_run)
+        count = clean_all(args.dry_run)
+        label = "all artifacts (including caches)"
     elif args.coverage:
-        label, count = "coverage artifacts", clean_coverage(args.dry_run)
+        count = clean_coverage(args.dry_run)
+        label = "coverage artifacts"
     elif args.tests:
-        label, count = "test output artifacts", clean_test_output(args.dry_run)
+        count = clean_test_output(args.dry_run)
+        label = "test output artifacts"
     elif args.caches:
-        label, count = "tool caches", clean_caches(args.dry_run)
+        count = clean_caches(args.dry_run)
+        label = "tool caches"
     else:
-        label, count = "test artifacts + coverage", clean_default(args.dry_run)
+        count = clean_default(args.dry_run)
+        label = "test artifacts + coverage"
 
     print()
     if count:

@@ -1,0 +1,77 @@
+#!/bin/sh
+# Collaborative file lock — pre-push hook
+# Runs pre-push validation first and releases locks only if validation passes.
+# This avoids race windows where locks are released before a long/failing
+# pre-push check.
+
+COLLAB_DIR="$(git rev-parse --show-toplevel)/.collab"
+PYTHON="${COLLAB_DIR}/../.venv/Scripts/python.exe"
+if [ ! -x "$PYTHON" ]; then
+    PYTHON="${COLLAB_DIR}/../.venv/bin/python"
+fi
+if [ ! -x "$PYTHON" ]; then
+    PYTHON="python"
+fi
+
+# Find pre-commit in venv (preferred) or fall back to PATH.
+# git hook shells on Windows do not include .venv/Scripts in PATH,
+# so 'command -v pre-commit' would silently fail without this.
+# CRITICAL: Ensure venv/Scripts or venv/bin is in PATH so pre-commit can find
+# all development tools (isort, black, ruff, pytest, mypy, flake8, etc.).
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/Scripts/pre-commit.exe"
+VENV_SCRIPTS="$PROJECT_ROOT/.venv/Scripts"
+VENV_BIN="$PROJECT_ROOT/.venv/bin"
+
+if [ ! -x "$PRE_COMMIT_BIN" ]; then
+    PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/bin/pre-commit"
+fi
+if [ ! -x "$PRE_COMMIT_BIN" ]; then
+    PRE_COMMIT_BIN="$(command -v pre-commit 2>/dev/null || true)"
+fi
+
+if [ -n "$PRE_COMMIT_BIN" ] && [ -x "$PRE_COMMIT_BIN" ]; then
+    # Set PATH to include venv/Scripts (Windows) or venv/bin (Unix)
+    # This ensures tools like isort, black, ruff, pytest, etc. are available
+    if [ -d "$VENV_SCRIPTS" ]; then
+        export PATH="$VENV_SCRIPTS:$PATH"
+    fi
+    if [ -d "$VENV_BIN" ]; then
+        export PATH="$VENV_BIN:$PATH"
+    fi
+    "$PRE_COMMIT_BIN" run --hook-stage pre-push
+    VALIDATION_EXIT=$?
+    if [ $VALIDATION_EXIT -ne 0 ]; then
+        echo "[collab] Pre-push validation failed — keeping locks active."
+        exit $VALIDATION_EXIT
+    fi
+else
+    echo "[collab] Warning: pre-commit not found; skipping pre-push validation."
+    echo "[collab] Keeping locks active because validation did not run."
+    exit 0
+fi
+
+echo "[collab] Releasing all locks after successful pre-push validation..."
+export PYTHONUTF8=1
+$PYTHON -c "
+import sys, os
+# Force UTF-8 on Windows (matches pre-commit hook pattern)
+for _s in (sys.stdout, sys.stderr):
+    if hasattr(_s, 'reconfigure'):
+        try: _s.reconfigure(encoding='utf-8', errors='replace')
+        except Exception: pass
+sys.path.insert(0, os.path.join('$COLLAB_DIR', '..'))
+os.chdir('$(git rev-parse --show-toplevel)')
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    sys.path.insert(0, '$COLLAB_DIR')
+    from core.lock_client import LockClient
+    client = LockClient()
+    count = client.release_all()
+    print(f'[collab] Released {count} lock(s).')
+except Exception as e:
+    print(f'[collab] Warning: Lock cleanup failed: {e}', file=sys.stderr)
+" 2>&1
+
+exit 0

@@ -1,8 +1,8 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-    <title>Technician Dashboard</title>
-    <style>
+    <head>
+        <title>Technician Dashboard</title>
+        <style>
       /* 1. Layout and Body */
       body {
         font-family: "Segoe UI", Arial, sans-serif;
@@ -610,393 +610,381 @@
       .hover-highlight-grid-cell-column {
         background-color: rgba(255, 250, 205, 0.7) !important;
       }
-    </style>
-  </head>
-  <body>
-    <div id="heading-container">
-      <div id="filter">
-        <button id="filter-button">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="filter-icon"
-            viewBox="0 0 16 16"
-            aria-hidden="true"
-          >
-            <path
-              d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.586l3.207 3.207a.5.5 0 0 1 .146.353V14l2-.666V7.308a.5.5 0 0 1 .146-.353L13.5 3.086V2h-11z"
-            />
-          </svg>
-          Filter
-        </button>
-      </div>
-      <h1>Technician Dashboard</h1>
-      <h4>
-        (KW{{ week_date_day_shift.week }} - {{ week_date_day_shift.date }} - {{
-        week_date_day_shift.day }} - {{ week_date_day_shift.shift }})
-      </h4>
-    </div>
-
-    <!-- Task Table -->
-    <table class="task-table" border="1">
-      <thead>
-        <tr>
-          <th>Index</th>
-          <th>Tasks</th>
-          <th>Lines</th>
-          <th>Technicians</th>
-          <th>Assigned Technicians</th>
-          <th>Time [min]</th>
-          <th>Prio</th>
-          <th>Qty</th>
-          <th>Ticket/MO</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- PM Section -->
-        {% if pm_tasks %}
-        <tr class="section-header">
-          <td colspan="9">PMs & PdMs</td>
-        </tr>
-        {% for task in pm_tasks %}
-        <tr>
-          <td
-            class="index-cell"
-            style="background-color: {{ task.color_hex }}; color: #fff;"
-          >
-            {{ task.display_id }}
-          </td>
-          <td>
-            {{ task.name }} {% if task.isAdditionalTask %}
-            <br /><span
-              style="
-                display: inline-block;
-                background-color: #ffeb3b;
-                color: #000;
-                font-size: 0.8em;
-                padding: 2px 6px;
-                border-radius: 4px;
-                margin-top: 3px;
-                font-weight: bold;
-              "
-              >Additional</span
-            >
-            {% endif %} {% if task.unassigned_instance_details %}
-            <br /><span
-              style="
-                display: inline-block;
-                background-color: #f44336;
-                color: #fff;
-                font-size: 0.8em;
-                padding: 2px 6px;
-                border-radius: 4px;
-                margin-top: 3px;
-                font-weight: bold;
-              "
-              title="Instances: {{ task.unassigned_instance_details | map(attribute='num') | join(', ') }}&#10;{{ task.unassigned_instance_details | map(attribute='reason') | join('\n') }}"
-            >
-              Unassigned qty: {{ task.unassigned_instance_details | length }}
-            </span>
-            {% endif %} {% if task.incomplete_instances_list %}
-            <br /><span
-              style="
-                display: inline-block;
-                background-color: #ff9800;
-                color: #000;
-                font-size: 0.8em;
-                padding: 2px 6px;
-                border-radius: 4px;
-                margin-top: 3px;
-                font-weight: bold;
-              "
-              title="Instances {{ task.incomplete_instances_list | join(', ') }} were partially assigned due to shift end."
-            >
-              Partially Assigned: {{ task.incomplete_instances_list | join(', ')
-              }}
-            </span>
-            {% endif %}
-          </td>
-          <td>
-            {% if task.lines is none or task.lines == 'nan' or task.lines == ''
-            %} N/A {% else %} {{ task.lines }} {% endif %}
-          </td>
-          <td>{{ task.mitarbeiter_pro_aufgabe | default('1') }}</td>
-          <td>
-            {% if task.group_counter %}
-            <div>
-              {% set highlight_colors = ['#e3f2fd', '#bbf7d0', '#ffe082',
-              '#ffd6e0'] %} {% for group_key in task.group_counter.keys() %} {%
-              set color = highlight_colors[loop.index0 %
-              highlight_colors|length] if task.group_counter|length > 1 else
-              '#e3f2fd' %}
-              <span
-                style="display:inline-block; background:{{ color }}; color:#007bff; border-radius:4px; padding:2px 6px; margin-bottom:2px; margin-right:2px;"
-              >
-                [{{ group_key }}] </span
-              ><br />
-              {% endfor %}
+        </style>
+    </head>
+    <body>
+        <div id="heading-container">
+            <div id="filter">
+                <button id="filter-button">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="16"
+                         height="16"
+                         fill="currentColor"
+                         class="filter-icon"
+                         viewBox="0 0 16 16"
+                         aria-hidden="true">
+                        <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.586l3.207 3.207a.5.5 0 0 1 .146.353V14l2-.666V7.308a.5.5 0 0 1 .146-.353L13.5 3.086V2h-11z" />
+                    </svg>
+                    Filter
+                </button>
             </div>
-            {% else %} None {% endif %}
-          </td>
-          <td>{{ task.planned_worktime_min | default('0') }}</td>
-          <td
-            class="{% if task.priority == 'A' %}prio-a{% elif task.priority == 'B' %}prio-b{% elif task.priority == 'C' %}prio-c{% else %}prio-c{% endif %}"
-          >
-            {{ task.priority | default('C') }}
-          </td>
-          <td>{{ task.quantity | default('1') }}</td>
-          <td>
-            {% if task.task_type.upper() == 'REP' and task.ticket_mo and
-            task.ticket_mo != 'nan' %} {% if task.ticket_url %}
-            <a href="{{ task.ticket_url }}" target="_blank"
-              >{{ task.ticket_mo }}</a
-            >
-            {% else %} {{ task.ticket_mo }} {% endif %} {% elif
-            task.task_type.upper() == 'PM' %}
-            <a href="{{ task.name | maintenance_url }}" target="_blank">
-              {{ '' | system_name }} MOs
-            </a>
-            {% else %} N/A {% endif %}
-          </td>
-        </tr>
-        {% endfor %} {% endif %}
-
-        <!-- REP Section -->
-        {% if rep_tasks %}
-        <tr class="section-header">
-          <td colspan="9">Tickets/MOs/Engineering Requests</td>
-        </tr>
-        {% for task in rep_tasks %}
-        <tr class="task-row-rep">
-          <td
-            class="index-cell"
-            style="background-color: {{ task.color_hex }}; color: #fff;"
-          >
-            {{ task.display_id }}
-          </td>
-          <td>
-            {{ task.name }} {% if task.isAdditionalTask %}
-            <br /><span
-              style="
-                display: inline-block;
-                background-color: #ffeb3b;
-                color: #000;
-                font-size: 0.8em;
-                padding: 2px 6px;
-                border-radius: 4px;
-                margin-top: 3px;
-                font-weight: bold;
-              "
-              >Additional</span
-            >
-            {% endif %} {% if task.unassigned_instance_details %}
-            <br /><span
-              style="
-                display: inline-block;
-                background-color: #f44336;
-                color: #fff;
-                font-size: 0.8em;
-                padding: 2px 6px;
-                border-radius: 4px;
-                margin-top: 3px;
-                font-weight: bold;
-              "
-              title="Instances: {{ task.unassigned_instance_details | map(attribute='num') | join(', ') }}&#10;{{ task.unassigned_instance_details | map(attribute='reason') | join('\n') }}"
-            >
-              Unassigned qty: {{ task.unassigned_instance_details | length }}
-            </span>
-            {% endif %} {% if task.incomplete_instances_list %}
-            <br /><span
-              style="
-                display: inline-block;
-                background-color: #ff9800;
-                color: #000;
-                font-size: 0.8em;
-                padding: 2px 6px;
-                border-radius: 4px;
-                margin-top: 3px;
-                font-weight: bold;
-              "
-              title="Instances {{ task.incomplete_instances_list | join(', ') }} were partially assigned due to shift end."
-            >
-              Partially Assigned: {{ task.incomplete_instances_list | join(', ')
-              }}
-            </span>
-            {% endif %}
-          </td>
-          <td>
-            {% if task.lines is none or task.lines == 'nan' or task.lines == ''
-            %} N/A {% else %} {{ task.lines }} {% endif %}
-          </td>
-          <td>{{ task.mitarbeiter_pro_aufgabe | default('1') }}</td>
-          <td>
-            {% if task.group_counter %}
-            <div>
-              {% set highlight_colors = ['#ffe082', '#bbf7d0', '#e3f2fd',
-              '#ffd6e0'] %} {% for group_key in task.group_counter.keys() %} {%
-              set color = highlight_colors[loop.index0 %
-              highlight_colors|length] if task.group_counter|length > 1 else
-              '#ffe082' %}
-              <span
-                style="display:inline-block; background:{{ color }}; color:#b26a00; border-radius:4px; padding:2px 6px; margin-bottom:2px; margin-right:2px;"
-              >
-                [{{ group_key }}] </span
-              ><br />
-              {% endfor %}
+            <h1>Technician Dashboard</h1>
+            <h4>
+                (KW{{ week_date_day_shift.week }} - {{ week_date_day_shift.date }} - {{
+                week_date_day_shift.day }} - {{ week_date_day_shift.shift }})
+            </h4>
+        </div>
+        <!-- Task Table -->
+        <table class="task-table" border="1">
+            <thead>
+                <tr>
+                    <th>Index</th>
+                    <th>Tasks</th>
+                    <th>Lines</th>
+                    <th>Technicians</th>
+                    <th>Assigned Technicians</th>
+                    <th>Time [min]</th>
+                    <th>Prio</th>
+                    <th>Qty</th>
+                    <th>Ticket/MO</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- PM Section -->
+                {% if pm_tasks %}
+                    <tr class="section-header">
+                        <td colspan="9">PMs & PdMs</td>
+                    </tr>
+                    {% for task in pm_tasks %}
+                        <tr>
+                            <td class="index-cell"
+                                style="background-color: {{ task.color_hex }};
+                                       color: #fff">{{ task.display_id }}</td>
+                            <td>
+                                {{ task.name }}
+                                {% if task.isAdditionalTask %}
+                                    <br />
+                                    <span style="display: inline-block;
+                                                 background-color: #ffeb3b;
+                                                 color: #000;
+                                                 font-size: 0.8em;
+                                                 padding: 2px 6px;
+                                                 border-radius: 4px;
+                                                 margin-top: 3px;
+                                                 font-weight: bold">Additional</span>
+                                {% endif %}
+                                {% if task.unassigned_instance_details %}
+                                    <br />
+                                    <span style="display: inline-block;
+                                                 background-color: #f44336;
+                                                 color: #fff;
+                                                 font-size: 0.8em;
+                                                 padding: 2px 6px;
+                                                 border-radius: 4px;
+                                                 margin-top: 3px;
+                                                 font-weight: bold"
+                                          title="Instances: {{ task.unassigned_instance_details | map(attribute='num') | join(', ') }}&#10;{{ task.unassigned_instance_details | map(attribute='reason') | join('\n') }}">
+                                        Unassigned qty: {{ task.unassigned_instance_details | length }}
+                                    </span>
+                                {% endif %}
+                                {% if task.incomplete_instances_list %}
+                                    <br />
+                                    <span style="display: inline-block;
+                                                 background-color: #ff9800;
+                                                 color: #000;
+                                                 font-size: 0.8em;
+                                                 padding: 2px 6px;
+                                                 border-radius: 4px;
+                                                 margin-top: 3px;
+                                                 font-weight: bold"
+                                          title="Instances {{ task.incomplete_instances_list | join(", ") }} were partially assigned due to shift end.">
+                                        Partially Assigned: {{ task.incomplete_instances_list | join(", ") 
+                                        }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if task.lines is none or task.lines == 'nan' or task.lines == ''
+                                    %}
+                                    N/A
+                                {% else %}
+                                    {{ task.lines }}
+                                {% endif %}
+                            </td>
+                            <td>{{ task.mitarbeiter_pro_aufgabe | default("1") }}</td>
+                            <td>
+                                {% if task.group_counter %}
+                                    <div>
+                                        {% set highlight_colors = ["#e3f2fd", "#bbf7d0", "#ffe082", "#ffd6e0"] %}
+                                        {% for group_key in task.group_counter.keys() %}
+                                            {%
+                                            set color = highlight_colors[loop.index0 %
+                                            highlight_colors|length] if task.group_counter|length > 1 else
+                                            '#e3f2fd' %}
+                                            <span style="display:inline-block;
+                                                         background:{{ color }};
+                                                         color:#007bff;
+                                                         border-radius:4px;
+                                                         padding:2px 6px;
+                                                         margin-bottom:2px;
+                                                         margin-right:2px">
+                                            [{{ group_key }}] </span>
+                                            <br />
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </td>
+                            <td>{{ task.planned_worktime_min | default("0") }}</td>
+                            <td class="{% if task.priority == 'A' %}prio-a{% elif task.priority == 'B' %}prio-b{% elif task.priority == 'C' %}prio-c{% else %}prio-c{% endif %}">
+                                {{ task.priority | default("C") }}
+                            </td>
+                            <td>{{ task.quantity | default("1") }}</td>
+                            <td>
+                                {% if task.task_type.upper() == 'REP' and task.ticket_mo and
+                                    task.ticket_mo != 'nan' %}
+                                    {% if task.ticket_url %}
+                                        <a href="{{ task.ticket_url }}" target="_blank">{{ task.ticket_mo }}</a>
+                                    {% else %}
+                                        {{ task.ticket_mo }}
+                                    {% endif %}
+                                {% elif
+                                    task.task_type.upper() == 'PM' %}
+                                    <a href="{{ task.name | maintenance_url }}" target="_blank">
+                                        {{ '' | system_name }} MOs
+                                    </a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+                <!-- REP Section -->
+                {% if rep_tasks %}
+                    <tr class="section-header">
+                        <td colspan="9">Tickets/MOs/Engineering Requests</td>
+                    </tr>
+                    {% for task in rep_tasks %}
+                        <tr class="task-row-rep">
+                            <td class="index-cell"
+                                style="background-color: {{ task.color_hex }};
+                                       color: #fff">{{ task.display_id }}</td>
+                            <td>
+                                {{ task.name }}
+                                {% if task.isAdditionalTask %}
+                                    <br />
+                                    <span style="display: inline-block;
+                                                 background-color: #ffeb3b;
+                                                 color: #000;
+                                                 font-size: 0.8em;
+                                                 padding: 2px 6px;
+                                                 border-radius: 4px;
+                                                 margin-top: 3px;
+                                                 font-weight: bold">Additional</span>
+                                {% endif %}
+                                {% if task.unassigned_instance_details %}
+                                    <br />
+                                    <span style="display: inline-block;
+                                                 background-color: #f44336;
+                                                 color: #fff;
+                                                 font-size: 0.8em;
+                                                 padding: 2px 6px;
+                                                 border-radius: 4px;
+                                                 margin-top: 3px;
+                                                 font-weight: bold"
+                                          title="Instances: {{ task.unassigned_instance_details | map(attribute='num') | join(', ') }}&#10;{{ task.unassigned_instance_details | map(attribute='reason') | join('\n') }}">
+                                        Unassigned qty: {{ task.unassigned_instance_details | length }}
+                                    </span>
+                                {% endif %}
+                                {% if task.incomplete_instances_list %}
+                                    <br />
+                                    <span style="display: inline-block;
+                                                 background-color: #ff9800;
+                                                 color: #000;
+                                                 font-size: 0.8em;
+                                                 padding: 2px 6px;
+                                                 border-radius: 4px;
+                                                 margin-top: 3px;
+                                                 font-weight: bold"
+                                          title="Instances {{ task.incomplete_instances_list | join(", ") }} were partially assigned due to shift end.">
+                                        Partially Assigned: {{ task.incomplete_instances_list | join(", ") 
+                                        }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if task.lines is none or task.lines == 'nan' or task.lines == ''
+                                    %}
+                                    N/A
+                                {% else %}
+                                    {{ task.lines }}
+                                {% endif %}
+                            </td>
+                            <td>{{ task.mitarbeiter_pro_aufgabe | default("1") }}</td>
+                            <td>
+                                {% if task.group_counter %}
+                                    <div>
+                                        {% set highlight_colors = ["#ffe082", "#bbf7d0", "#e3f2fd", "#ffd6e0"] %}
+                                        {% for group_key in task.group_counter.keys() %}
+                                            {%
+                                            set color = highlight_colors[loop.index0 %
+                                            highlight_colors|length] if task.group_counter|length > 1 else
+                                            '#ffe082' %}
+                                            <span style="display:inline-block;
+                                                         background:{{ color }};
+                                                         color:#b26a00;
+                                                         border-radius:4px;
+                                                         padding:2px 6px;
+                                                         margin-bottom:2px;
+                                                         margin-right:2px">
+                                            [{{ group_key }}] </span>
+                                            <br />
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </td>
+                            <td>{{ task.planned_worktime_min | default("0") }}</td>
+                            <td class="{% if task.priority == 'A' %}prio-a{% elif task.priority == 'B' %}prio-b{% elif task.priority == 'C' %}prio-c{% else %}prio-c{% endif %}">
+                                {{ task.priority | default("C") }}
+                            </td>
+                            <td>{{ task.quantity | default("1") }}</td>
+                            <td>
+                                {% if task.task_type.upper() == 'REP' and task.ticket_mo and
+                                    task.ticket_mo != 'nan' %}
+                                    {% if task.ticket_url %}
+                                        <a href="{{ task.ticket_url }}" target="_blank">{{ task.ticket_mo }}</a>
+                                    {% else %}
+                                        {{ task.ticket_mo }}
+                                    {% endif %}
+                                {% elif
+                                    task.task_type.upper() == 'PM' %}
+                                    <a href="{{ task.name | maintenance_url }}" target="_blank">
+                                        {{ '' | system_name }} MOs
+                                    </a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+        <!-- Technician & Task Filter Modal -->
+        <div id="techFilterModal" class="modal" style="display: none">
+            <div class="modal-content" id="techFilterModalContent">
+                <div class="modal-header-tabs">
+                    <button class="modal-tab-btn active" id="tabTechBtn" type="button">Technicians</button>
+                    <button class="modal-tab-btn" id="tabTaskBtn" type="button">Tasks</button>
+                </div>
+                <div class="modal-tab-content" id="tabTechContent">
+                    <input type="text"
+                           id="techFilterSearch"
+                           class="modal-search-input"
+                           placeholder="Search technicians..." />
+                    <div class="technician-checkboxes" id="techFilterCheckboxes"></div>
+                </div>
+                <div class="modal-tab-content" id="tabTaskContent" style="display: none">
+                    <input type="text"
+                           id="taskFilterSearch"
+                           class="modal-search-input"
+                           placeholder="Search tasks..." />
+                    <div class="task-checkboxes" id="taskFilterCheckboxes"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="applyTechFilter">Apply</button>
+                    <button id="clearTechFilter">Clear</button>
+                </div>
             </div>
-            {% else %} None {% endif %}
-          </td>
-          <td>{{ task.planned_worktime_min | default('0') }}</td>
-          <td
-            class="{% if task.priority == 'A' %}prio-a{% elif task.priority == 'B' %}prio-b{% elif task.priority == 'C' %}prio-c{% else %}prio-c{% endif %}"
-          >
-            {{ task.priority | default('C') }}
-          </td>
-          <td>{{ task.quantity | default('1') }}</td>
-          <td>
-            {% if task.task_type.upper() == 'REP' and task.ticket_mo and
-            task.ticket_mo != 'nan' %} {% if task.ticket_url %}
-            <a href="{{ task.ticket_url }}" target="_blank"
-              >{{ task.ticket_mo }}</a
-            >
-            {% else %} {{ task.ticket_mo }} {% endif %} {% elif
-            task.task_type.upper() == 'PM' %}
-            <a href="{{ task.name | maintenance_url }}" target="_blank">
-              {{ '' | system_name }} MOs
-            </a>
-            {% else %} N/A {% endif %}
-          </td>
-        </tr>
-        {% endfor %} {% endif %}
-      </tbody>
-    </table>
-
-    <!-- Technician & Task Filter Modal -->
-    <div id="techFilterModal" class="modal" style="display: none">
-      <div class="modal-content" id="techFilterModalContent">
-        <div class="modal-header-tabs">
-          <button class="modal-tab-btn active" id="tabTechBtn" type="button">
-            Technicians
-          </button>
-          <button class="modal-tab-btn" id="tabTaskBtn" type="button">
-            Tasks
-          </button>
         </div>
-        <div class="modal-tab-content" id="tabTechContent">
-          <input
-            type="text"
-            id="techFilterSearch"
-            class="modal-search-input"
-            placeholder="Search technicians..."
-          />
-          <div class="technician-checkboxes" id="techFilterCheckboxes"></div>
-        </div>
-        <div
-          class="modal-tab-content"
-          id="tabTaskContent"
-          style="display: none"
-        >
-          <input
-            type="text"
-            id="taskFilterSearch"
-            class="modal-search-input"
-            placeholder="Search tasks..."
-          />
-          <div class="task-checkboxes" id="taskFilterCheckboxes"></div>
-        </div>
-        <div class="modal-footer">
-          <button id="applyTechFilter">Apply</button>
-          <button id="clearTechFilter">Clear</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Gantt Chart -->
-    <h2>Gantt Chart: {{ total_work_minutes | default(0) }} min of work</h2>
-    <div
-      class="gantt-container"
-      data-total-work-minutes="{{ total_work_minutes | default(0) }}"
-      data-shift-start-time="{{ shift_start_time_str | default('06:00') }}"
-      data-day="{{ week_date_day_shift.day|lower }}"
-      data-shift-total-minutes="{{ shift_total_minutes | default(720) }}"
-      data-shift-pm-start="{{ shift_pm_start_min | default(0) }}"
-      data-shift-pm-end="{{ shift_pm_end_min | default(0) }}"
-    >
-      {% if technicians | length == 0 %}
-      <p>No technicians available to display in the Gantt chart.</p>
-      {% else %}
-      <div class="gantt-chart">
-        <!-- Fixed Left Pane -->
-        <div class="gantt-fixed-left-pane">
-          <div class="clock-time-axis-spacer-wrapper axis-container">
-            <!-- JS will populate ONLY the spacer tick for the clock axis here -->
-          </div>
-          <div class="work-interval-axis-spacer-wrapper axis-container">
-            <!-- JS will populate ONLY the spacer tick for the work interval axis here -->
-          </div>
-          <div class="technician-labels-wrapper">
-            {% for technician in technicians %}
-            <div class="technician-label">{{ technician }}</div>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- Scrollable Right Pane -->
-        <div class="gantt-scrollable-right-pane">
-          <div class="clock-time-axis-ticks-wrapper axis-container">
-            <!-- JS will populate the actual time ticks (no spacer) for the clock axis here -->
-          </div>
-          <div class="work-interval-axis-ticks-wrapper axis-container">
-            <!-- JS will populate the actual time ticks (no spacer) for the work interval axis here -->
-          </div>
-          <div class="time-grids-wrapper">
-            {% for technician in technicians %}
-            <div class="time-grid">
-              {% for assignment in assignments %} {% if assignment.technician ==
-              technician %} {% set original_task_id_for_gantt =
-              assignment.instance_id %} {% if assignment.instance_id and '_' in
-              assignment.instance_id %} {% if
-              assignment.instance_id.startswith('additional_') %} {% set
-              original_task_id_for_gantt =
-              assignment.instance_id.split('_instance_')[0] if 'instance_' in
-              assignment.instance_id else assignment.instance_id.split('_')[0] ~
-              '_' ~ assignment.instance_id.split('_')[1] %} {% else %} {% set
-              original_task_id_for_gantt = assignment.instance_id.split('_')[0]
-              %} {% endif %} {% else %} {% set original_task_id_for_gantt = '0'
-              %} {% endif %} {% set display_id_for_gantt =
-              original_task_id_to_display_id_map[original_task_id_for_gantt] if
-              original_task_id_for_gantt in original_task_id_to_display_id_map
-              else original_task_id_for_gantt %} {% set color_r =
-              ((display_id_for_gantt | int | default(1)) * 97 % 200 + 55) %} {%
-              set color_g = ((display_id_for_gantt | int | default(1)) * 53 %
-              200 + 55) %} {% set color_b = ((display_id_for_gantt | int |
-              default(1)) * 37 % 200 + 55) %}
-              <div
-                class="task-bar"
-                data-assignment-start="{{ assignment.start | default(0) }}"
-                data-assignment-duration="{{ assignment.duration | default(0) }}"
-                data-task-id="{{ display_id_for_gantt | default('0') }}"
-                style="
-                                             background-color: #{{ '%02x%02x%02x' % (color_r, color_g, color_b) }};
-                                             {% if assignment.is_incomplete %}border: 2px solid red;{% endif %}
-                                             display: none;
-                                             "
-                title="{{ assignment.task_name | default('Unknown') }} (Work Time: {{ assignment.start | default(0) }}-{{ (assignment.start | default(0)) + (assignment.duration | default(0)) }} min{% if assignment.is_incomplete %} - Partially assigned, full ideal duration for group: {{ assignment.original_duration | default(0) }} min{% endif %}{% if assignment.resource_mismatch_info %} - {{ assignment.resource_mismatch_info }}{% endif %})"
-              >
-                <span>{{ display_id_for_gantt | default('0') }}</span>
-              </div>
-              {% endif %} {% endfor %}
+        <!-- Gantt Chart -->
+        <h2>Gantt Chart: {{ total_work_minutes | default(0) }} min of work</h2>
+        <div class="gantt-container"
+             data-total-work-minutes="{{ total_work_minutes | default(0) }}"
+             data-shift-start-time="{{ shift_start_time_str | default('06:00') }}"
+             data-day="{{ week_date_day_shift.day|lower }}"
+             data-shift-total-minutes="{{ shift_total_minutes | default(720) }}"
+             data-shift-pm-start="{{ shift_pm_start_min | default(0) }}"
+             data-shift-pm-end="{{ shift_pm_end_min | default(0) }}">
+            {% if technicians | length == 0 %}
+                <p>No technicians available to display in the Gantt chart.</p>
+            {% else %}
+                <div class="gantt-chart">
+                    <!-- Fixed Left Pane -->
+                    <div class="gantt-fixed-left-pane">
+                        <div class="clock-time-axis-spacer-wrapper axis-container">
+                            <!-- JS will populate ONLY the spacer tick for the clock axis here -->
+                        </div>
+                        <div class="work-interval-axis-spacer-wrapper axis-container">
+                            <!-- JS will populate ONLY the spacer tick for the work interval axis here -->
+                        </div>
+                        <div class="technician-labels-wrapper">
+                            {% for technician in technicians %}
+                                <div class="technician-label">{{ technician }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- Scrollable Right Pane -->
+                    <div class="gantt-scrollable-right-pane">
+                        <div class="clock-time-axis-ticks-wrapper axis-container">
+                            <!-- JS will populate the actual time ticks (no spacer) for the clock axis here -->
+                        </div>
+                        <div class="work-interval-axis-ticks-wrapper axis-container">
+                            <!-- JS will populate the actual time ticks (no spacer) for the work interval axis here -->
+                        </div>
+                        <div class="time-grids-wrapper">
+                            {% for technician in technicians %}
+                                <div class="time-grid">
+                                    {% for assignment in assignments %}
+                                        {% if assignment.technician ==
+                                            technician %}
+                                            {% set original_task_id_for_gantt = assignment.instance_id %}
+                                            {% if assignment.instance_id and '_' in
+                                                assignment.instance_id %}
+                                                {% if
+                                                    assignment.instance_id.startswith('additional_') %}
+                                                    {% set
+                                                        original_task_id_for_gantt =
+                                                        assignment.instance_id.split('_instance_')[0] if 'instance_' in
+                                                        assignment.instance_id else assignment.instance_id.split('_')[0] ~
+                                                    '_' ~ assignment.instance_id.split('_')[1] %}
+                                                {% else %}
+                                                    {% set
+                                                        original_task_id_for_gantt = assignment.instance_id.split('_')[0]
+                                                    %}
+                                                {% endif %}
+                                            {% else %}
+                                                {% set original_task_id_for_gantt = "0" %}
+                                            {% endif %}
+                                            {% set display_id_for_gantt = original_task_id_to_display_id_map[original_task_id_for_gantt] if
+                                                                                            original_task_id_for_gantt in original_task_id_to_display_id_map
+                                                                                            else original_task_id_for_gantt %} {% set color_r = ((display_id_for_gantt | int | default(1)) * 97 % 200 + 55) %} {%
+                                                    set color_g = ((display_id_for_gantt | int | default(1)) * 53 %
+                                                    200 + 55) %} {% set color_b = ((display_id_for_gantt | int |
+                                                 default(1)) * 37 % 200 + 55) %}
+                                                <div class="task-bar"
+                                                     data-assignment-start="{{ assignment.start | default(0) }}"
+                                                     data-assignment-duration="{{ assignment.duration | default(0) }}"
+                                                     data-task-id="{{ display_id_for_gantt | default('0') }}"
+                                                     style="background-color: #{{ '%02x%02x%02x' % (color_r, color_g, color_b) }};
+                                                            {% if assignment.is_incomplete %}border: 2px solid red;{% endif %} display: none"
+                                                     title="{{ assignment.task_name | default("Unknown") }} (Work Time: {{ assignment.start | default(0) }}-{{ (assignment.start | default(0) ) + (assignment.duration | default(0)) }} min{% if assignment.is_incomplete %} - Partially assigned, full ideal duration for group: {{ assignment.original_duration | default(0) }} min{% endif %}{% if assignment.resource_mismatch_info %} - {{ assignment.resource_mismatch_info }}{% endif %})">
+                                                    <span>{{ display_id_for_gantt | default('0') }}</span>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-
-    <script>
+            <script>
       document.addEventListener('DOMContentLoaded', function () {
           const ganttContainer = document.querySelector('.gantt-container');
           if (!ganttContainer) return;
@@ -1934,6 +1922,6 @@
               modalTempTaskSelection = null;
           });
       })();
-    </script>
-  </body>
-</html>
+            </script>
+        </body>
+    </html>
