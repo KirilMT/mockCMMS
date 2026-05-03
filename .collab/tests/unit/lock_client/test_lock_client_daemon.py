@@ -1253,6 +1253,9 @@ def test_quiet_console_loggers_and_validate(monkeypatch):
         mod._validate_credentials()
 
 
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="Windows-specific process termination"
+)
 def test_terminate_process_win32(monkeypatch):
     monkeypatch.setattr(sys, "platform", "win32")
     calls = []
@@ -1479,6 +1482,9 @@ def test_is_process_alive_win32_psutil_no_such_process(monkeypatch):
     assert alive is False
 
 
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="Windows-specific ctypes process detection"
+)
 def test_is_process_alive_win32_ctypes_api_active(monkeypatch):
     """Test _is_process_alive using Win32 API when psutil unavailable."""
     monkeypatch.setattr(sys, "platform", "win32")
@@ -1915,6 +1921,9 @@ def test_discover_running_watchers_psutil_skips_broken_process(monkeypatch):
     assert client._discover_running_watchers() == [4321]
 
 
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="Windows-specific process discovery"
+)
 def test_discover_running_watchers_win32_fallback_filters_results(monkeypatch):
     """Test _discover_running_watchers uses Windows tasklist fallback and filtering."""
     monkeypatch.setattr(sys, "platform", "win32")
@@ -3002,6 +3011,9 @@ def test_register_signal_handlers_sigbreak_windows(monkeypatch):
     assert _signal.SIGBREAK in registered or _signal.SIGINT in registered
 
 
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="Windows console control signal handling"
+)
 def test_register_signal_handlers_windows_console_ctrl(monkeypatch):
     """_register_signal_handlers tries to register Windows console ctrl handler."""
     monkeypatch.setattr(sys, "platform", "win32")

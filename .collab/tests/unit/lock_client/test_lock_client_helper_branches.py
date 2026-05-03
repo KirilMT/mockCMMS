@@ -7,6 +7,8 @@ import os
 import sys
 import types
 
+import pytest
+
 from ._helpers import load_lock_client_module
 
 mod = load_lock_client_module()
@@ -415,6 +417,9 @@ def test_scan_remote_locks_handles_exceptions(monkeypatch):
     c._scan_remote_locks()  # no raise; covers exception branch
 
 
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="Windows-specific process discovery fallback"
+)
 def test_discover_running_watchers_fallback_branches(monkeypatch):
     """Cover fallback parser branches.
 
@@ -618,6 +623,7 @@ def test_get_cmdline_for_pid_importerror_and_proc_parse(monkeypatch):
     assert got == "python .collab/core/lock_client.py watch"
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows job object assignment")
 def test_assign_to_job_object_success_and_assign_failure(monkeypatch):
     """Cover GetCurrentProcess/AssignProcessToJobObject success and failure paths using
     real ctypes."""

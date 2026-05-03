@@ -159,6 +159,63 @@ def test_run_command_preserves_windows_root_env_vars(monkeypatch):
     assert captured["env"]["HOMEPATH"] == os.environ["HOMEPATH"]
 
 
+def test_python_module_fallback_command_maps_known_tools():
+    """Known tool names should map to python -m fallback commands."""
+    cmd = validate_code._python_module_fallback_command(["ruff", "check", "src"])
+    assert cmd is not None
+    assert cmd[:3] == [validate_code.sys.executable, "-m", "ruff"]
+    assert cmd[3:] == ["check", "src"]
+
+    diff_cmd = validate_code._python_module_fallback_command(
+        ["diff-cover", "coverage.xml"]
+    )
+    assert diff_cmd is not None
+    assert diff_cmd[:3] == [
+        validate_code.sys.executable,
+        "-m",
+        "diff_cover.diff_cover_tool",
+    ]
+
+
+def test_python_module_fallback_command_ignores_unknown_or_explicit_paths():
+    """Unknown tools and explicit paths should not be rewritten."""
+    assert validate_code._python_module_fallback_command(["unknown-tool"]) is None
+    assert (
+        validate_code._python_module_fallback_command(
+            [
+                "C:/tools/ruff.exe",
+                "check",
+                "src",
+            ]
+        )
+        is None
+    )
+
+
+def test_run_command_retries_known_tool_with_python_module(monkeypatch):
+    """run_command should retry known tools with python -m when PATH lookup fails."""
+    calls = []
+
+    def _fake_run(cmd, **_kwargs):
+        calls.append(cmd)
+        if len(calls) == 1:
+            raise FileNotFoundError("ruff not found")
+        return MagicMock(returncode=0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(validate_code.subprocess, "run", _fake_run)
+
+    success, output = validate_code.run_command(
+        ["ruff", "check", "src"],
+        "Ruff linting",
+        check=False,
+    )
+
+    assert success is True
+    assert output == "ok"
+    assert len(calls) == 2
+    assert calls[1][:3] == [validate_code.sys.executable, "-m", "ruff"]
+
+
 class TestValidateCodeRobust:
     """Robust tests for validate_code.py logic and environment management."""
 

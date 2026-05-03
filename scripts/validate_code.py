@@ -267,6 +267,42 @@ def _print_output_tail(output: str, label: str, color: str) -> None:
         print(output)
 
 
+_PYTHON_TOOL_MODULES: Dict[str, str] = {
+    "isort": "isort",
+    "black": "black",
+    "docformatter": "docformatter",
+    "ruff": "ruff",
+    "flake8": "flake8",
+    "mypy": "mypy",
+    "bandit": "bandit",
+    "pytest": "pytest",
+    "coverage": "coverage",
+    "yamllint": "yamllint",
+    "diff-cover": "diff_cover.diff_cover_tool",
+}
+
+
+def _python_module_fallback_command(command: List[str]) -> Optional[List[str]]:
+    """Return a Python module command fallback for known tools.
+
+    This avoids PATH/PATHEXT issues in hook shells by running tools with the same
+    interpreter used for this script (sys.executable).
+    """
+    if not command:
+        return None
+
+    executable = command[0]
+    # Explicit paths should not be rewritten.
+    if os.path.isabs(executable) or "/" in executable or "\\" in executable:
+        return None
+
+    module = _PYTHON_TOOL_MODULES.get(executable.lower())
+    if not module:
+        return None
+
+    return [sys.executable, "-m", module] + command[1:]
+
+
 def run_command(
     command: List[str],
     description: str,
@@ -356,15 +392,33 @@ def run_command(
         if env:
             ironclad_env.update(env)
 
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=False,
-            env=ironclad_env,
-        )
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                env=ironclad_env,
+            )
+        except FileNotFoundError:
+            fallback_command = _python_module_fallback_command(command)
+            if not fallback_command:
+                raise
+            print_warning(
+                f"{command[0]} not found via PATH; retrying with: "
+                f"{' '.join(fallback_command)}"
+            )
+            result = subprocess.run(
+                fallback_command,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+                env=ironclad_env,
+            )
 
         if result.returncode == 0:
             print_success(f"{description} passed")

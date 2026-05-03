@@ -195,8 +195,19 @@ def _resolve_executable_path(name: str) -> Optional[str]:
 
     In explicit test mode only, fall back to the command name so unit tests can
     monkeypatch subprocess calls without depending on host PATH contents.
+
+    Note: On Windows/Linux platform mismatches (e.g., running tests on Linux
+    that test Windows executables), shutil.which() may fail trying to check
+    Windows-specific APIs. We catch and gracefully degrade in that case.
     """
-    resolved = shutil.which(name)
+    try:
+        resolved = shutil.which(name)
+    except (AttributeError, OSError, ValueError):
+        # Platform mismatch (e.g., testing Windows code on Linux).
+        # shutil.which() tried to call _winapi functions that don't exist.
+        # Fall back as if the executable wasn't found.
+        resolved = None
+
     if not resolved:
         if _is_test_mode():
             return name
@@ -738,7 +749,31 @@ class LockClient:
             else os.path.join(_PROJECT_ROOT, file_path)
         )
         if not os.path.exists(full_path):
-            return False, f"File or directory does not exist locally: {file_path}"
+            # Deleted files can still be "in progress" (staged/unstaged delete
+            # or committed-but-unpushed delete). Keep them lockable so the
+            # dashboard still shows ownership until the lock is explicitly
+            # released (for example on push).
+            norm = self._normalize_file_path(file_path)
+            try:
+                in_progress = norm in set(self._get_modified_and_unpushed_files())
+            except Exception:
+                in_progress = False
+
+            if not in_progress:
+                return False, f"File or directory does not exist locally: {file_path}"
+
+            logger.info(
+                (
+                    "🔒 [DELETED-PATH] %s — path missing locally but "
+                    "tracked as in-progress"
+                ),
+                norm,
+            )
+
+        # Locking directories creates noisy, transient dashboard rows
+        # (for example runtime instance/ folders). Locks are file-oriented.
+        if os.path.isdir(full_path):
+            return False, f"Path is a directory and cannot be locked: {file_path}"
 
         # Ephemeral developer IDs do not persist locks to the backend
         # (useful for CI/test users). Short-circuit and return a local token.
@@ -3050,6 +3085,8 @@ class LockClient:
                 for line in out.splitlines():
                     if len(line) > 3:
                         p = self._normalize_file_path(self._parse_git_status_path(line))
+                        if p.endswith("/"):
+                            continue
                         if not self._should_ignore_path(p):
                             modified.add(p)
         except Exception as e:
@@ -3073,8 +3110,8 @@ class LockClient:
                 subprocess.check_output(args_rev, stderr=subprocess.DEVNULL)
 
             # If upstream exists, get names/statuses of files that differ from it.
-            # Deleted paths must be excluded: they no longer exist locally and
-            # should never be treated as files to lock or resume.
+            # Keep deleted paths as "in progress" so lock ownership remains
+            # visible in the dashboard until explicit release.
             args_diff = ["git", "diff", "--name-status", "@{u}..HEAD"]
             if sys.platform == "win32":
                 diff_out = (
@@ -3100,14 +3137,14 @@ class LockClient:
                     if len(parts) != 2:
                         continue
                     status, payload = parts
-                    if status.upper().startswith("D"):
-                        continue
                     payload = payload.strip()
                     if "\t" in payload:
                         payload = payload.split("\t")[-1].strip()
                     if " -> " in payload:
                         payload = payload.split(" -> ")[-1].strip()
                     path = self._normalize_file_path(payload)
+                    if path.endswith("/"):
+                        continue
                     if path and not self._should_ignore_path(path):
                         modified.add(path)
         except Exception:
@@ -3135,6 +3172,15 @@ class LockClient:
         """Return True for paths the watcher should skip."""
         norm = path.replace("\\", "/")
         if "/.git/" in norm or norm.startswith(".git/"):
+            return True
+        # Ignore runtime instance folders: they are environment artifacts and
+        # should not produce collaborative file locks.
+        if (
+            norm == "instance"
+            or norm.startswith("instance/")
+            or norm.endswith("/instance")
+            or "/instance/" in norm
+        ):
             return True
         # Ignore collab metadata files that the watcher itself creates
         if ".startup_summary.json" in norm or ".shutdown_complete" in norm:

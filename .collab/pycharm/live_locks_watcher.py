@@ -394,6 +394,15 @@ def _should_ignore_path(path: str) -> bool:
     norm = path.replace("\\", "/")
     if "/.git/" in norm or norm.startswith(".git/"):
         return True
+    # Ignore runtime instance folders: they are environment artifacts and
+    # should not produce collaborative file locks.
+    if (
+        norm == "instance"
+        or norm.startswith("instance/")
+        or norm.endswith("/instance")
+        or "/instance/" in norm
+    ):
+        return True
     # Do not ignore `.collab/` — watcher should consider files under it.
     return False
 

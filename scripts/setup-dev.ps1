@@ -636,6 +636,23 @@ if ($hasPreCommit) {
             Write-Host "   Error: $_" -ForegroundColor Gray
             $script:ErrorCount++
         }
+
+        # Overlay collab locking hooks on top of the pre-commit framework hooks.
+        # The collab hooks are the entry point — they handle lock acquisition and
+        # then chain to 'pre-commit run' for validations. This MUST run AFTER
+        # 'pre-commit install' so our hooks win (framework hooks are overwritten).
+        Write-Host "   Overlaying collab locking hooks..." -ForegroundColor Yellow
+        $collabHooksDir = Join-Path $projectRoot ".collab\hooks"
+        foreach ($hookName in @("pre-commit", "post-commit", "pre-push")) {
+            $srcHook = Join-Path $collabHooksDir $hookName
+            $dstHook = Join-Path $hookDir $hookName
+            if (Test-Path $srcHook) {
+                Copy-Item $srcHook $dstHook -Force
+                Write-Host "     - Installed collab $hookName hook (chains to framework)" -ForegroundColor Gray
+            }
+        }
+        Write-Host "   Collab hooks installed " -NoNewline -ForegroundColor White
+        Write-Host "OK" -ForegroundColor Green
     }
     else {
         Write-Host ""

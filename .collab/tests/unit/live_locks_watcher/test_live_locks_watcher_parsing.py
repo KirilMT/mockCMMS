@@ -76,6 +76,14 @@ def test_should_ignore_path_git_and_collab():
     assert mod._should_ignore_path("src/app.py") is False
 
 
+def test_should_ignore_path_instance_runtime_dirs():
+    mod = load_watcher_module()
+    assert mod._should_ignore_path("instance") is True
+    assert mod._should_ignore_path("instance/") is True
+    assert mod._should_ignore_path("apps/reporting/instance") is True
+    assert mod._should_ignore_path("apps/planning/instance/tmp.db") is True
+
+
 def test_should_ignore_path_accepts_normal_dirs():
     mod = load_watcher_module()
     assert mod._should_ignore_path(".venv/lib/python.py") is False

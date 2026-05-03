@@ -62,6 +62,30 @@ def test_get_create_client_preloaded_module_importerror_exits(monkeypatch):
         mod._supabase_create_client = None
 
 
+def test_resolve_executable_path_which_raises_in_test_mode(monkeypatch):
+    """Which() errors should fall back to command name in test mode."""
+
+    def _boom(_name):
+        raise AttributeError("platform mismatch")
+
+    monkeypatch.setattr(mod.shutil, "which", _boom)
+    monkeypatch.setenv("COLLAB_TEST_MODE", "1")
+    assert mod._resolve_executable_path("tasklist") == "tasklist"
+
+
+def test_resolve_executable_path_which_raises_outside_test_mode(monkeypatch):
+    """Which() errors should return None outside test mode."""
+
+    def _boom(_name):
+        raise OSError("lookup failed")
+
+    monkeypatch.setattr(mod.shutil, "which", _boom)
+    monkeypatch.delenv("COLLAB_TEST_MODE", raising=False)
+    monkeypatch.delenv("TESTING", raising=False)
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    assert mod._resolve_executable_path("taskkill") is None
+
+
 def test_get_create_client_preloaded_shadowed_module_exits(monkeypatch):
     """Cover local-shadow detection branch for preloaded supabase module."""
     mod._supabase_create_client = None

@@ -35,9 +35,33 @@ except Exception as e:
     print(f'[collab] Warning: Lock cleanup failed: {e}', file=sys.stderr)
 " 2>&1
 
-# Chain to pre-commit framework if installed
-if command -v pre-commit > /dev/null 2>&1; then
-    exec pre-commit run --hook-stage pre-push
+# Find pre-commit in venv (preferred) or fall back to PATH.
+# git hook shells on Windows do not include .venv/Scripts in PATH,
+# so 'command -v pre-commit' would silently fail without this.
+# CRITICAL: Ensure venv/Scripts or venv/bin is in PATH so pre-commit can find
+# all development tools (isort, black, ruff, pytest, mypy, flake8, etc.).
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/Scripts/pre-commit.exe"
+VENV_SCRIPTS="$PROJECT_ROOT/.venv/Scripts"
+VENV_BIN="$PROJECT_ROOT/.venv/bin"
+
+if [ ! -x "$PRE_COMMIT_BIN" ]; then
+    PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/bin/pre-commit"
+fi
+if [ ! -x "$PRE_COMMIT_BIN" ]; then
+    PRE_COMMIT_BIN="$(command -v pre-commit 2>/dev/null || true)"
+fi
+
+if [ -n "$PRE_COMMIT_BIN" ] && [ -x "$PRE_COMMIT_BIN" ]; then
+    # Set PATH to include venv/Scripts (Windows) or venv/bin (Unix)
+    # This ensures tools like isort, black, ruff, pytest, etc. are available
+    if [ -d "$VENV_SCRIPTS" ]; then
+        export PATH="$VENV_SCRIPTS:$PATH"
+    fi
+    if [ -d "$VENV_BIN" ]; then
+        export PATH="$VENV_BIN:$PATH"
+    fi
+    exec "$PRE_COMMIT_BIN" run --hook-stage pre-push
 fi
 
 exit 0

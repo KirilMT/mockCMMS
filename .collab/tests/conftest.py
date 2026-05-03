@@ -26,7 +26,8 @@ os.environ["COLLAB_TEST_MODE"] = "1"
 
 # We intentionally mock these at the top level for tests to avoid hitting
 # real endpoints if _get_create_client fallback triggers early.
-os.environ.setdefault("SUPABASE_URL", "http://localhost:99999")
+# NOTE: Port must be ≤ 65535; using 5432 (PostgreSQL default) as placeholder.
+os.environ.setdefault("SUPABASE_URL", "http://localhost:5432")
 os.environ.setdefault("SUPABASE_ANON_KEY", "test-anon-key")
 
 

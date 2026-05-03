@@ -108,6 +108,15 @@ def test_parse_git_status_path_quoted():
     assert "my file" in result
 
 
+def test_should_ignore_path_for_instance_runtime_dirs():
+    """Runtime instance folders must never be lock candidates."""
+    assert mod.LockClient._should_ignore_path("instance") is True
+    assert mod.LockClient._should_ignore_path("apps/reporting/instance/") is True
+    assert mod.LockClient._should_ignore_path("apps/reporting/instance") is True
+    assert mod.LockClient._should_ignore_path("apps/planning/instance/state.db") is True
+    assert mod.LockClient._should_ignore_path("src/services/db_utils.py") is False
+
+
 def test_run_git_status_unix(monkeypatch):
     mod_local = load_lock_client_module()
     monkeypatch.setattr(sys, "platform", "linux")
@@ -407,8 +416,8 @@ def test_get_modified_and_unpushed_files_non_windows_paths(monkeypatch):
     assert any(p.endswith("dirty.py") for p in second)
 
 
-def test_get_modified_and_unpushed_files_ignores_deleted_upstream_paths(monkeypatch):
-    """Deleted files from unpushed history are not treated as files to lock."""
+def test_get_modified_and_unpushed_files_keeps_deleted_upstream_paths(monkeypatch):
+    """Deleted files from unpushed history remain in-progress for locking."""
 
     c = mod.LockClient(local_only=True)
     monkeypatch.setattr(mod.sys, "platform", "linux")
@@ -432,7 +441,29 @@ def test_get_modified_and_unpushed_files_ignores_deleted_upstream_paths(monkeypa
     monkeypatch.setattr(c, "_should_ignore_path", lambda p: False)
 
     out = set(c._get_modified_and_unpushed_files())
-    assert ".collab/core/watcher.py" not in out
-    assert ".collab/dashboard/server.py" not in out
+    assert ".collab/core/watcher.py" in out
+    assert ".collab/dashboard/server.py" in out
     assert "src/live.py" in out
     assert "new/name.py" in out
+
+
+def test_get_modified_and_unpushed_files_skips_status_dir_suffix(monkeypatch):
+    """Directory-like status entries ending in '/' are ignored."""
+
+    c = mod.LockClient(local_only=True)
+    monkeypatch.setattr(mod.sys, "platform", "linux")
+
+    def _check_output(args, *a, **k):
+        if args[:3] == ["git", "status", "--porcelain"]:
+            return b" M apps/reporting/instance/\n M src/real.py\n"
+        if args[:2] == ["git", "rev-parse"]:
+            raise RuntimeError("no upstream")
+        return b""
+
+    monkeypatch.setattr(mod.subprocess, "check_output", _check_output)
+    monkeypatch.setattr(c, "_normalize_file_path", lambda p: p.replace("\\", "/"))
+    monkeypatch.setattr(c, "_should_ignore_path", lambda p: False)
+
+    out = set(c._get_modified_and_unpushed_files())
+    assert "apps/reporting/instance/" not in out
+    assert "src/real.py" in out

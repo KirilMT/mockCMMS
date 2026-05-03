@@ -94,6 +94,62 @@ def test_acquire_missing_file_returns_false(monkeypatch):
     assert "does not exist" in msg
 
 
+def test_acquire_missing_file_allowed_when_in_progress(monkeypatch):
+    """Deleted paths remain lockable when git marks them in progress."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+
+    response = FakeResponse(status=200, data=[{"status": "ok"}])
+    monkeypatch.setattr(mod, "_get_create_client", lambda: make_create_client(response))
+
+    lc = mod.LockClient(developer_id="tester")
+    target = ".github/workflows/validate-on-pr.yml"
+    monkeypatch.setattr(lc, "_get_modified_and_unpushed_files", lambda: [target])
+
+    ok, token = lc.acquire(target)
+    assert ok is True
+    assert isinstance(token, str) and len(token) > 0
+
+
+def test_acquire_missing_file_in_progress_lookup_error(monkeypatch):
+    """If in-progress detection fails, missing paths are rejected safely."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod,
+        "_get_create_client",
+        make_get_create_client({"status": 200, "data": []}),
+    )
+
+    lc = mod.LockClient(developer_id="tester")
+
+    def _boom():
+        raise RuntimeError("git scan failed")
+
+    monkeypatch.setattr(lc, "_get_modified_and_unpushed_files", _boom)
+    ok, msg = lc.acquire("deleted/path.py")
+    assert ok is False
+    assert "does not exist" in msg
+
+
+def test_acquire_directory_returns_false(monkeypatch, tmp_path):
+    """Directory paths are not lockable."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod, "_get_create_client", make_get_create_client({"status": 200, "data": []})
+    )
+
+    instance_dir = tmp_path / "apps" / "reporting" / "instance"
+    instance_dir.mkdir(parents=True)
+    monkeypatch.setattr(mod, "_PROJECT_ROOT", str(tmp_path))
+
+    lc = mod.LockClient(developer_id="tester")
+    ok, msg = lc.acquire("apps/reporting/instance")
+    assert ok is False
+    assert "directory" in msg.lower()
+
+
 def test_acquire_ephemeral(tmp_path):
     """Acquire a file with ephemeral developer ID (local_only)."""
     mod = load_lock_client_module()

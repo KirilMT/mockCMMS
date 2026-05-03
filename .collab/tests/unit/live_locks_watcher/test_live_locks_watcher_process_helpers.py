@@ -9,9 +9,12 @@ import sys
 import types
 from unittest import mock
 
+import pytest
+
 from ._helpers import load_watcher_module
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific process helper")
 def test_get_cmdline_for_pid_local_wmic_and_powershell(monkeypatch):
     mod = load_watcher_module()
     if "psutil" in sys.modules:
