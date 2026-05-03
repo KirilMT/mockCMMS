@@ -682,6 +682,33 @@ SUPABASE_ANON_KEY=your_anon_key</pre>
             return formatDateLong(dt) + " " + formatTime24(dt);
         }
 
+        function formatDurationMinutes(totalMinutes) {
+            const rounded = Math.max(0, Math.round(Number(totalMinutes) || 0));
+            if (!Number.isFinite(rounded) || rounded <= 0) {
+                return "0m";
+            }
+
+            const units = [
+                { label: "mo", minutes: 30 * 24 * 60 },
+                { label: "d", minutes: 24 * 60 },
+                { label: "h", minutes: 60 },
+                { label: "m", minutes: 1 }
+            ];
+
+            let remaining = rounded;
+            const parts = [];
+
+            units.forEach((unit) => {
+                if (remaining >= unit.minutes) {
+                    const value = Math.floor(remaining / unit.minutes);
+                    remaining -= value * unit.minutes;
+                    parts.push(String(value) + unit.label);
+                }
+            });
+
+            return parts.length ? parts.join(" ") : "0m";
+        }
+
         function routeFromHash() {
             const h = window.location.hash.replace("#", "").toLowerCase();
             return h === "history" ? "history" : "locks";
@@ -856,7 +883,7 @@ SUPABASE_ANON_KEY=your_anon_key</pre>
             const avg = durations.length
                 ? Math.round(durations.reduce((acc, value) => acc + value, 0) / durations.length)
                 : 0;
-            document.getElementById("stat-avg").textContent = String(avg) + "m";
+            document.getElementById("stat-avg").textContent = formatDurationMinutes(avg);
         }
 
         function renderActiveLocks(locks) {
@@ -900,7 +927,7 @@ SUPABASE_ANON_KEY=your_anon_key</pre>
                         '<td class="text-muted">' + reason + "</td>" +
                         '<td class="text-muted">' +
                         formatDateTime24(acquired) +
-                        " (" + heldMin + "m)</td>" +
+                        " (" + formatDurationMinutes(heldMin) + ")</td>" +
                         '<td class="text-end">' + action + "</td>" +
                         "</tr>"
                     );
@@ -975,7 +1002,7 @@ SUPABASE_ANON_KEY=your_anon_key</pre>
                     const reason = h.reason || "No reason";
                     const outcome = h.outcome || "unknown";
                     const duration = acq && rel
-                        ? Math.max(0, Math.round((rel - acq) / 60000)) + "m"
+                        ? formatDurationMinutes(Math.max(0, Math.round((rel - acq) / 60000)))
                         : "-";
                     const isMine = !!(SUPABASE_USER && h.developer_id === SUPABASE_USER);
 

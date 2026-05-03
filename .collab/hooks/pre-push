@@ -1,7 +1,8 @@
 #!/bin/sh
 # Collaborative file lock — pre-push hook
-# Releases all remaining locks for the current developer before push.
-# Daemon remains running; this hook only handles lock release.
+# Runs pre-push validation first and releases locks only if validation passes.
+# This avoids race windows where locks are released before a long/failing
+# pre-push check.
 
 COLLAB_DIR="$(git rev-parse --show-toplevel)/.collab"
 PYTHON="${COLLAB_DIR}/../.venv/Scripts/python.exe"
@@ -11,29 +12,6 @@ fi
 if [ ! -x "$PYTHON" ]; then
     PYTHON="python"
 fi
-
-echo "[collab] Releasing all locks before push..."
-export PYTHONUTF8=1
-$PYTHON -c "
-import sys, os
-# Force UTF-8 on Windows (matches pre-commit hook pattern)
-for _s in (sys.stdout, sys.stderr):
-    if hasattr(_s, 'reconfigure'):
-        try: _s.reconfigure(encoding='utf-8', errors='replace')
-        except Exception: pass
-sys.path.insert(0, os.path.join('$COLLAB_DIR', '..'))
-os.chdir('$(git rev-parse --show-toplevel)')
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-    sys.path.insert(0, '$COLLAB_DIR')
-    from core.lock_client import LockClient
-    client = LockClient()
-    count = client.release_all()
-    print(f'[collab] Released {count} lock(s).')
-except Exception as e:
-    print(f'[collab] Warning: Lock cleanup failed: {e}', file=sys.stderr)
-" 2>&1
 
 # Find pre-commit in venv (preferred) or fall back to PATH.
 # git hook shells on Windows do not include .venv/Scripts in PATH,
@@ -61,7 +39,39 @@ if [ -n "$PRE_COMMIT_BIN" ] && [ -x "$PRE_COMMIT_BIN" ]; then
     if [ -d "$VENV_BIN" ]; then
         export PATH="$VENV_BIN:$PATH"
     fi
-    exec "$PRE_COMMIT_BIN" run --hook-stage pre-push
+    "$PRE_COMMIT_BIN" run --hook-stage pre-push
+    VALIDATION_EXIT=$?
+    if [ $VALIDATION_EXIT -ne 0 ]; then
+        echo "[collab] Pre-push validation failed — keeping locks active."
+        exit $VALIDATION_EXIT
+    fi
+else
+    echo "[collab] Warning: pre-commit not found; skipping pre-push validation."
+    echo "[collab] Keeping locks active because validation did not run."
+    exit 0
 fi
+
+echo "[collab] Releasing all locks after successful pre-push validation..."
+export PYTHONUTF8=1
+$PYTHON -c "
+import sys, os
+# Force UTF-8 on Windows (matches pre-commit hook pattern)
+for _s in (sys.stdout, sys.stderr):
+    if hasattr(_s, 'reconfigure'):
+        try: _s.reconfigure(encoding='utf-8', errors='replace')
+        except Exception: pass
+sys.path.insert(0, os.path.join('$COLLAB_DIR', '..'))
+os.chdir('$(git rev-parse --show-toplevel)')
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    sys.path.insert(0, '$COLLAB_DIR')
+    from core.lock_client import LockClient
+    client = LockClient()
+    count = client.release_all()
+    print(f'[collab] Released {count} lock(s).')
+except Exception as e:
+    print(f'[collab] Warning: Lock cleanup failed: {e}', file=sys.stderr)
+" 2>&1
 
 exit 0

@@ -29,18 +29,65 @@ fi
 WATCHER_RUNNING=0
 PID_FILE="$COLLAB_DIR/.daemon.pid"
 if [ -f "$PID_FILE" ]; then
-    PID=$(cat "$PID_FILE" 2>/dev/null || true)
+    # .daemon.pid may contain either a plain PID or a JSON payload.
+    PID=$($PYTHON -c "
+import json
+from pathlib import Path
+
+pid_file = Path(r'''$PID_FILE''')
+try:
+    raw = pid_file.read_text(encoding='utf-8').strip()
+except Exception:
+    raw = ''
+
+pid = ''
+if raw:
+    if raw.startswith('{'):
+        try:
+            payload = json.loads(raw)
+            pid = str(payload.get('pid', '')).strip()
+        except Exception:
+            pid = ''
+    else:
+        pid = raw.strip()
+
+print(pid)
+" 2>/dev/null || true)
+
+    # Guard process checks from non-numeric values.
+    case "$PID" in
+        ''|*[!0-9]*)
+            PID=""
+            ;;
+    esac
+
     if [ -n "$PID" ]; then
-        # Check process liveness (POSIX and Windows-compatible best-effort)
-        if command -v ps >/dev/null 2>&1; then
-            if ps -p "$PID" >/dev/null 2>&1; then
-                WATCHER_RUNNING=1
-            fi
-        fi
-        if command -v tasklist >/dev/null 2>&1; then
-            if tasklist /FI "PID eq $PID" | grep -q "$PID" >/dev/null 2>&1; then
-                WATCHER_RUNNING=1
-            fi
+        # Check process liveness via Python to avoid Git Bash argument
+        # conversion issues on Windows (e.g. /FI -> C:/.../FI).
+        PID_LIVE=$($PYTHON -c "
+import os
+import signal
+import sys
+
+alive = False
+pid = int(sys.argv[1])
+
+try:
+    import psutil  # type: ignore
+
+    alive = bool(psutil.pid_exists(pid))
+except Exception:
+    try:
+        os.kill(pid, 0)
+        alive = True
+    except Exception:
+        alive = False
+
+print('1' if alive else '0')
+" "$PID" 2>/dev/null || true)
+
+        if [ "$PID_LIVE" = "1" ]; then
+            WATCHER_RUNNING=1
         fi
     fi
 fi
