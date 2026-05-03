@@ -1145,6 +1145,71 @@ class LockClient:
 
         return rows
 
+    def prune_history(self, retention_days: int = 30) -> Tuple[bool, int, str]:
+        """Delete lock history rows older than *retention_days* days.
+
+        Returns (ok, deleted_count, message).
+        """
+        if retention_days < 1:
+            return False, 0, "retention_days must be >= 1"
+
+        client = self._client
+        assert client is not None, "Supabase client not initialized"
+
+        # Preferred path: RPC in schema.sql (stable, server-side retention logic).
+        try:
+            res = _retry_on_network_error(
+                lambda: client.rpc(
+                    "prune_lock_history", {"p_retention_days": retention_days}
+                ).execute()
+            )
+            _, data, error = self._parse_response(res)
+            if error:
+                raise RuntimeError(str(error))
+
+            deleted = 0
+            if isinstance(data, list) and data:
+                row = data[0]
+                if isinstance(row, dict):
+                    for k in ("prune_lock_history", "deleted_count", "count"):
+                        if k in row:
+                            try:
+                                deleted = int(row[k])
+                                break
+                            except Exception:
+                                pass
+                elif isinstance(row, (int, float)):
+                    deleted = int(row)
+            elif isinstance(data, (int, float)):
+                deleted = int(data)
+
+            return True, deleted, "history-pruned"
+        except Exception as exc:
+            # Backward-compatible fallback when RPC isn't deployed yet.
+            logger.warning(
+                "History prune RPC unavailable, falling back to REST delete: %s", exc
+            )
+
+        cutoff_iso = (
+            _safe_now().astimezone(timezone.utc) - timedelta(days=retention_days)
+        ).isoformat()
+        try:
+            res = _retry_on_network_error(
+                lambda: (
+                    client.table("file_locks_history")
+                    .delete()
+                    .lt("released_at", cutoff_iso)
+                    .execute()
+                )
+            )
+            _, data, error = self._parse_response(res)
+            if error:
+                return False, 0, f"API Error: {error}"
+            deleted = len(data) if isinstance(data, list) else 0
+            return True, deleted, "history-pruned-fallback"
+        except Exception as exc:
+            return False, 0, f"API Error: {exc}"
+
     # ------------------------------------------------------------------
     # Daemon management
     # ------------------------------------------------------------------
@@ -4168,6 +4233,10 @@ def _run_cli() -> None:
         "--json", action="store_true", dest="json_output", help="Output as raw JSON"
     )
 
+    # history-prune
+    hpr = sub.add_parser("history-prune", help="Delete lock history older than N days")
+    hpr.add_argument("--days", type=int, default=30, help="Retention window in days")
+
     # watch (internal, called by daemon-start)
     wp = sub.add_parser("watch", help="Run watcher in foreground")
     wp.add_argument("--interval", type=int, default=5)
@@ -4350,6 +4419,15 @@ def _run_cli() -> None:
                     f"[{acquired} → {released}]  "
                     f"branch:{branch}  {outcome}"
                 )
+
+    elif args.command == "history-prune":
+        days = int(getattr(args, "days", 30))
+        ok, deleted, msg = client.prune_history(retention_days=days)
+        if ok:
+            print(f"✓ Pruned {deleted} lock history row(s) older than {days} day(s).")
+        else:
+            print(f"✗ Failed to prune lock history: {msg}")
+            sys.exit(1)
 
     elif args.command == "watch":
         # Ensure watcher child process uses the explicit PID namespace passed by

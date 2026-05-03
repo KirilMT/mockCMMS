@@ -149,6 +149,10 @@ begin
     OLD.file_path, OLD.developer_id, OLD.lock_token, OLD.branch_name, OLD.reason,
     OLD.acquired_at, now(), 'released', OLD.is_ephemeral
   );
+
+  -- Automatic retention: keep history bounded without manual intervention.
+  perform prune_lock_history(30);
+
   return OLD;
 end;
 $$ language plpgsql security definer;
@@ -156,3 +160,49 @@ $$ language plpgsql security definer;
 create or replace trigger on_lock_release
   before delete on file_locks
   for each row execute function log_lock_release();
+
+-- ---------------------------------------------------------------------------
+-- History retention utilities (default: 30 days)
+-- ---------------------------------------------------------------------------
+create or replace function prune_lock_history(p_retention_days integer default 30)
+returns bigint as $$
+declare
+  v_deleted bigint;
+begin
+  if p_retention_days < 1 then
+    raise exception 'p_retention_days must be >= 1';
+  end if;
+
+  with deleted as (
+    delete from file_locks_history
+    where coalesce(released_at, acquired_at) < now() - make_interval(days => p_retention_days)
+    returning 1
+  )
+  select count(*) into v_deleted from deleted;
+
+  return coalesce(v_deleted, 0);
+end;
+$$ language plpgsql security definer;
+
+-- Optional daily scheduler (pg_cron): keeps retention active even during quiet periods.
+-- Safe to rerun. If pg_cron is unavailable, this block exits without failing schema setup.
+do $retention$
+begin
+  if to_regclass('cron.job') is not null then
+    perform cron.unschedule(jobid)
+    from cron.job
+    where jobname = 'prune_file_locks_history';
+
+    perform cron.schedule(
+      'prune_file_locks_history',
+      '17 3 * * *',
+      $job$select prune_lock_history(30);$job$
+    );
+  end if;
+exception
+  when undefined_function then
+    null;
+  when undefined_table then
+    null;
+end;
+$retention$;

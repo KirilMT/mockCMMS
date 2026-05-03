@@ -26,6 +26,7 @@ This creates:
 - Row Level Security policies (see [Security Model](#security-model) below)
 - Realtime publication
 - Auto-history trigger on lock release
+- Automatic history retention (30 days by default)
 
 ### 2. Run the Development Setup
 
@@ -114,7 +115,16 @@ python collab.py history src/app.py --limit 10
 
 # View lock history as raw JSON (for scripting)
 python collab.py history --json
+
+# Manually prune history older than N days
+python collab.py history-prune --days 30
 ```
+
+History retention is automatic by default:
+
+- On each lock release, old history rows are pruned server-side (default: 30 days)
+- A daily scheduler is also configured when `pg_cron` is available in Supabase
+- You can run `history-prune` anytime for immediate cleanup
 
 ---
 

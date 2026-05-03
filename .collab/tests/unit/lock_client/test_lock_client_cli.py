@@ -63,6 +63,50 @@ def test_main_unhandled_exception_exits_with_fatal(monkeypatch, capsys):
     assert "fatal: lock_client crashed" in err.lower()
 
 
+def test_cli_history_prune_success(monkeypatch, capsys):
+    """History-prune should print success message when prune succeeds."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod, "_get_create_client", lambda: make_create_client(FakeResponse())
+    )
+    monkeypatch.setattr(
+        mod.LockClient,
+        "prune_history",
+        lambda self, retention_days=30: (True, 5, "history-pruned"),
+    )
+    monkeypatch.setattr(
+        sys, "argv", ["lock_client.py", "history-prune", "--days", "30"]
+    )
+
+    mod._run_cli()
+    out = capsys.readouterr().out
+    assert "pruned 5 lock history row(s)" in out.lower()
+
+
+def test_cli_history_prune_failure(monkeypatch, capsys):
+    """History-prune should exit non-zero and print failure details on error."""
+    monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")
+    monkeypatch.setattr(
+        mod, "_get_create_client", lambda: make_create_client(FakeResponse())
+    )
+    monkeypatch.setattr(
+        mod.LockClient,
+        "prune_history",
+        lambda self, retention_days=30: (False, 0, "bad-request"),
+    )
+    monkeypatch.setattr(
+        sys, "argv", ["lock_client.py", "history-prune", "--days", "30"]
+    )
+
+    with pytest.raises(SystemExit):
+        mod._run_cli()
+
+    out = capsys.readouterr().out
+    assert "failed to prune lock history" in out.lower()
+
+
 def test_cli_acquire(monkeypatch, tmp_path, capsys):
     monkeypatch.setenv("SUPABASE_URL", "https://test.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "test_key")

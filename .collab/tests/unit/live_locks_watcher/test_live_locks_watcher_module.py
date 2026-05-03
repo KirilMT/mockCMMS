@@ -8,6 +8,8 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
+
 from ._helpers import load_watcher_module
 
 
@@ -88,3 +90,57 @@ def test_color_without_colorama():
     mod._HAS_COLORAMA = False
     out = mod._color("hello", "X")
     assert out == "hello"
+
+
+def test_reload_watcher_handles_find_spec_exceptions(monkeypatch):
+    """Import-time optional dependency probes should tolerate find_spec errors."""
+    module_path = (
+        Path(__file__)
+        .resolve()
+        .parents[4]
+        .joinpath(".collab/pycharm/live_locks_watcher.py")
+    )
+
+    def _raising_find_spec(_name):
+        raise RuntimeError("probe failed")
+
+    monkeypatch.setattr(importlib.util, "find_spec", _raising_find_spec)
+
+    spec = importlib.util.spec_from_file_location("tmp_watcher_probe_fail", module_path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)  # type: ignore[arg-defined]
+
+    # Module should still import with optional dependencies disabled.
+    assert mod._HAS_COLORAMA is False
+    assert mod.create_client is None
+    assert mod.desktop_notify is None
+
+
+def test_reload_watcher_exits_on_local_supabase_shadow(monkeypatch):
+    """Watcher should abort when a local .collab/supabase module shadows package."""
+    module_path = (
+        Path(__file__)
+        .resolve()
+        .parents[4]
+        .joinpath(".collab/pycharm/live_locks_watcher.py")
+    )
+    collab_root = module_path.parents[1]
+
+    fake_supa_spec = types.SimpleNamespace(origin=str(collab_root / "supabase.py"))
+
+    def _find_spec(name):
+        if name == "supabase":
+            return fake_supa_spec
+        return None
+
+    monkeypatch.setattr(importlib.util, "find_spec", _find_spec)
+
+    spec = importlib.util.spec_from_file_location(
+        "tmp_watcher_shadowed_supa", module_path
+    )
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+
+    with pytest.raises(SystemExit):
+        spec.loader.exec_module(mod)  # type: ignore[arg-defined]
