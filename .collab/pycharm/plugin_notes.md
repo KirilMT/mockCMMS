@@ -45,12 +45,12 @@ When the watcher detects a conflict (file locked by another developer):
 
 ## Stopping the Watcher
 
-- **Manual**: Press the **Stop** button (⬛) in PyCharm's Run tool window, or `Ctrl+C`
-- **Automatic**: When PyCharm sends SIGINT/SIGTERM on IDE close, the watcher
-  performs a clean shutdown, releasing all locks via its signal handler
+- **Manual**: Press the **Stop** button (⬛) in PyCharm's Run tool window, or `Ctrl+C`.
+- **Automatic (IDE Close)**: The watcher is tied to the IDE window's terminal session. Closing the PyCharm window or the terminal tab will automatically terminate the background process within 5 seconds.
+- **Automatic (Signal)**: When PyCharm sends SIGINT/SIGTERM on IDE close, the watcher performs a clean shutdown. **All active locks are strictly preserved** in Supabase so they are safe until your next session or till you push your code.
 - **CLI**: `python collab.py daemon-stop`
 
-The watcher prints structured status lines to stdout, which are automatically captured in `.collab/logs/application.log`:
+The watcher prints structured status lines to stdout, which are automatically captured in `.collab/logs/collab.log`:
 
 ```
 [10:30:15] INFO: Collab Locks — PyCharm Watcher
@@ -63,4 +63,4 @@ The watcher prints structured status lines to stdout, which are automatically ca
 [10:33:00] INFO: ✅ Conflict cleared: src/app.py (file reverted or resolved)
 ```
 
-Errors and crashes are recorded in `.collab/logs/errors.log`.
+Errors and crashes are recorded in `.collab/logs/collab.log`.

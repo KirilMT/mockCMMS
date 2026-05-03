@@ -7,6 +7,19 @@
 
 ---
 
+## File Locking
+
+Before editing any file, follow Skill: `file-locking`:
+
+1. List all files the task will touch.
+2. Run `python collab.py active` to check current locks. Optional targeted check: `python collab.py status <file>`.
+   Dev workflows may also show watcher/IDE popup warnings, but AI agents do not see those popups and must rely on explicit lock commands.
+3. If any target file is locked by another developer — **stop and report**. Do not edit.
+4. If files are unlocked, proceed with edits — lock acquisition/release is automatic.
+5. **ABSOLUTELY FORBIDDEN:** never force-release another developer's lock.
+
+---
+
 ## Autonomous Execution
 
 - Auto-run all standard operations: python, pytest, npm, ruff, black, isort, mypy, prettier, eslint.

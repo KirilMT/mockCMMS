@@ -90,6 +90,9 @@ python collab.py release-all
 # Force release (admin)
 python collab.py force-release path/to/file.py
 
+# Force release all locks (admin)
+python collab.py force-release-all
+
 # Start background watcher (no idle timeout by default)
 python collab.py daemon-start
 python collab.py daemon-start --interval 10 --timeout 480
@@ -119,11 +122,11 @@ python collab.py history --json
 
 The hooks are located in `.collab/hooks/` and are copied to `.git/hooks/` during setup. They run automatically:
 
-| Hook          | Behavior                                                                           |
-| ------------- | ---------------------------------------------------------------------------------- |
-| `pre-commit`  | Checks staged files for conflicts. **Always blocks** if another dev holds the lock |
-| `post-commit` | Releases locks for committed files                                                 |
-| `pre-push`    | Releases all your remaining locks and stops the daemon                             |
+| Hook          | Behavior                                                                            |
+| ------------- | ----------------------------------------------------------------------------------- |
+| `pre-commit`  | Checks staged files for conflicts. **Always blocks** if another dev holds the lock. |
+| `post-commit` | **Preserves Locks**: Does nothing, ensuring locks persist until files are pushed.   |
+| `pre-push`    | **Full Release**: Releases all remaining locks for the developer.                   |
 
 If the lock client is unavailable (network error, Python not found), hooks **warn and continue** unless `LOCK_STRICT=1`.
 
@@ -147,6 +150,25 @@ This starts a local HTTP server and opens the dashboard in your default browser.
 - Shows lock history with durations and outcomes
 
 The PyCharm watcher also auto-starts a dashboard server and prints a **clickable `http://` URL** in the Run console.
+
+---
+
+## Session Identity & Stability
+
+The system uses a **Stable Session Token** logic to ensure that your identity is consistent across different tools on the same machine.
+
+- **Cross-IDE Re-adoption**: If you start a watcher in Antigravity and then switch to PyCharm, the new watcher will automatically re-adopt your existing locks (marking them as `[RESUMED]`) instead of showing "Multi-Session" warnings.
+- **Normalization**: Identity is derived from your `developer_id`, your `hostname`, and the `project_root`. These are normalized to lowercase to ensure consistency across different environment configurations.
+
+---
+
+## Automatic Lifecycle (Clean Machine)
+
+On Windows, background daemons are designed to be "failure-hermetic" and self-cleaning.
+
+- **Terminal-Tied Lifecycle**: When you start a daemon from an IDE's integrated terminal, it ties its lifecycle to that specific **Terminal Shell**. Closing the IDE window or the terminal tab will automatically terminate the background locking process within 5 seconds.
+- **Lock Preservation**: Closing the IDE or stopping the watcher **strictly preserves your locks** in Supabase. Your work remains protected until you explicitly push it or release it manually.
+- **Self-Healing Startup**: If you start a new watcher while an "orphaned" one (whose owner has died) is still running, the system will automatically detect the orphan, terminate it, and replace it with a fresh process.
 
 ---
 
@@ -194,13 +216,11 @@ Features:
 3. Developer commits → lock released automatically
 4. Dashboard reflects correct state at each step
 
-### Scenario B — Conflict Detection (Two Developers)
+### Scenario B — Lock Lifecycle (Commit vs. Revert)
 
-1. Dev A locks `src/foo.py`
-2. Dev B's watcher detects the remote lock within 30 seconds (when start editing) and shows a desktop notification: _"src/foo.py is locked by @alice"_
-3. If Dev B saves changes to `src/foo.py`, the lock acquisition returns a conflict
-4. Dev A commits → lock releases → Dev B's watcher clears the warning
-5. Dev B can now edit without warnings
+1. **Local Commit**: If you commit your changes but don't push yet, the watcher **preserves your lock**. This ensures your work remains protected until it is successfully delivered to the remote server.
+2. **Rollback/Revert**: If you use `git restore` or `git checkout` to discard your changes so they match the server, the watcher detects that the file is no longer "in progress" and **automatically releases** the lock.
+3. **Conflict Detection**: If Dev B tries to edit a file that Dev A has committed (but not pushed), Dev B's watcher will warn them: _"src/foo.py is locked by @Alice"_.
 
 ### Scenario C — Force Release via Dashboard
 
@@ -227,18 +247,27 @@ If the daemon is stuck:
 **Windows:**
 
 ```powershell
-# Read PID and kill
-$pid = Get-Content .collab\.daemon.pid
-taskkill /F /PID $pid
+# Extract PID from JSON metadata and kill
+$json = Get-Content .collab\.daemon.pid | ConvertFrom-Json
+taskkill /F /PID $json.pid
 Remove-Item .collab\.daemon.pid
 ```
 
 **Unix/macOS:**
 
 ```bash
-kill $(cat .collab/.daemon.pid)
+# Extract PID using jq and kill
+kill $(cat .collab/.daemon.pid | jq -r .pid)
 rm .collab/.daemon.pid
 ```
+
+### Windows Background Execution
+
+On Windows, the daemon automatically uses `pythonw.exe` (if available in the venv) to ensure no terminal window popups. It is executed with `DETACHED_PROCESS` and `CREATE_NO_WINDOW` flags to isolate it from system-wide PDF hooks (like Acrobat Distiller) that might otherwise cause "Error 183" popups.
+
+### Startup Polling
+
+When starting the daemon, the CLI polls for up to 3 seconds to wait for the background child to initialize and record its true PID. This handles environments where the initial Python launcher exits immediately after spawning the real watcher.
 
 Or use the CLI:
 
@@ -252,11 +281,10 @@ python collab.py daemon-stop
 
 All collaborative system logs are consolidated in `.collab/logs/`:
 
-- **`application.log`**: General operation logs, heartbeat info, and non-fatal warnings.
-- **`errors.log`**: Crash reports and unhandled exception tracebacks.
-- **`test_application.log` / `test_errors.log`**: Logs generated during test runs (isolated from production logs).
+- **`collab.log`**: Unified runtime log for collab components, including info, warnings, and errors.
+- **`test_collab.log`**: Unified test-mode log used when `COLLAB_TEST_MODE=1`.
 
-Daemon processes (started via `daemon-start` or IDE plugins) redirect their stdout and stderr to these files automatically.
+Daemon processes (started via `daemon-start` or IDE plugins) write structured logs to these files through the collab logging configuration.
 
 ---
 
@@ -273,6 +301,10 @@ python collab.py daemon-stop
 
 1. Use the dashboard's **Force Release** button (admins only), or
 2. Run: `python collab.py force-release path/to/file.py`
+
+### "Watcher already running" but it isn't
+
+The system detects "Orphaned Watchers" automatically. If the software says it's already running but you are sure it isn't, running `python collab.py daemon-start` will automatically identify the dead parent process and replace the old watcher with a new one.
 
 ### Dashboard Force Release not working
 
@@ -291,7 +323,7 @@ python collab.py daemon-stop
 
 This happens when orphaned daemon processes hold file handles or leave stale PID files. Fix:
 
-1. Check the logs in `.collab/logs/errors.log` for any crash details.
+1. Check `.collab/logs/collab.log` for crash details and recent watcher/daemon lifecycle events.
 2. Stop all daemons: `python collab.py daemon-stop`
 3. Check for orphaned processes: look at `.collab/.daemon.pid`
 4. Kill if needed (see "Kill the Daemon Manually")

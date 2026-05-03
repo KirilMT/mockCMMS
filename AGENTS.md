@@ -250,9 +250,35 @@ Or just run: `python scripts/format_code.py`
 
 ### Task Completion
 
-- Complete the **full scope**. If asked for A, B, and C — do all three.
-- No partial submissions unless fully blocked.
-- Always run `python scripts/validate_code.py` (Full Mode) before pushing or finishing a major task to ensure global repository health.
+### File Locking Protocol
+
+This repository uses a collaborative file locking system (`.collab/`). **Before editing any file**, agents must follow this protocol:
+
+1. **Identify all files** the task requires — source, tests, docs, config — before touching anything.
+2. **Check lock status (AI agents: mandatory every time before edits):** run `python collab.py active` before edits. You may also run `python collab.py status <file>` for targeted checks.
+
+- Devs may also see automatic warning popups when opening a file already being edited by another dev.
+- AI agents must **not** rely on popup warnings and must always run an explicit lock command.
+
+3. **Decision gate:**
+
+- Unlocked → proceed with edits (lock acquisition is automatic when editing starts).
+- Locked by the **current developer** (the dev using this agent) → proceed.
+- Locked by **another developer** → **STOP**. Report which files are blocked and by whom. Do not edit. Ask the user how to proceed.
+
+4. **Do not require manual lock commands** as part of normal workflow; acquisition/release is automatic via watcher/daemon behavior.
+
+> **ABSOLUTE RULE FOR AI AGENTS:** Force-releasing another developer's lock is forbidden under all circumstances. Do not do it.
+
+See **Skill: `file-locking`** for the complete workflow and CLI reference.
+
+### Background Process Monitoring
+
+When working with long-running background tasks, specifically the collaborative daemon, observe these rules:
+
+- **Daemon Startup Handshake:** Always wait for the PID polling to complete. `daemon-start` may report success only after the child writes its metadata to `.collab/.daemon.pid`.
+- **PID Source of Truth:** Never trust `proc.pid` from `subprocess.Popen` for the collab daemon on Windows. Use `LockClient._read_pid()` (or manually parse the `.collab/.daemon.pid` JSON) to find the real child process.
+- **Verification:** Always run `python scripts/validate_code.py` (Full Mode) before pushing or finishing a major task to ensure global repository health.
 
 ### File Safety
 
@@ -283,11 +309,12 @@ See `.github/CONTRIBUTING.md` and `.github/GIT_WORKFLOW.md` for full details.
 
 Complex, multi-step workflows are documented as Skills in `.agents/skills/`:
 
-| Skill              | Trigger                                               |
-| ------------------ | ----------------------------------------------------- |
-| `testing-workflow` | Writing tests, debugging coverage, running validation |
-| `commit-workflow`  | Staging, reviewing, and committing changes            |
-| `bug-tracking`     | Discovering, reporting, and fixing bugs               |
-| `new-feature`      | Scaffolding a new feature or modular app              |
+| Skill              | Trigger                                                                |
+| ------------------ | ---------------------------------------------------------------------- |
+| `file-locking`     | Check locks, acquire, edit safely, release — **run before every edit** |
+| `testing-workflow` | Writing tests, debugging coverage, running validation                  |
+| `commit-workflow`  | Staging, reviewing, and committing changes                             |
+| `bug-tracking`     | Discovering, reporting, and fixing bugs                                |
+| `new-feature`      | Scaffolding a new feature or modular app                               |
 
 > **To use a Skill:** Read `.agents/skills/<name>/SKILL.md` before starting the workflow.

@@ -235,4 +235,12 @@ temp_diff_output.txt
 .collab/.daemon.log
 .collab/.pycharm_watcher.pid
 .collab/.pycharm_watcher.log
+.collab/.startup_summary.json
+.collab/.shutdown_complete
+.collab/.stop_request
+.collab/.vscode_heartbeat
 .collab/vscode/package-lock.json
+# Collab runtime logs: exclude to avoid large diffs and editor performance issues
+.collab/logs/
+.collab/logs/*.log
+.collab/logs/**/ 

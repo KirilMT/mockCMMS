@@ -8,12 +8,18 @@ and long-running daemons).
 
 from __future__ import annotations
 
+import atexit
 import logging
 import os
+import time
+from logging.handlers import RotatingFileHandler
 from typing import Optional
 
 DEFAULT_FORMAT = "[%(asctime)s] %(levelname)s %(name)s: %(message)s"
 DEFAULT_DATEFMT = "%Y-%m-%d %H:%M:%S"
+DEFAULT_LOG_MAX_BYTES = 5 * 1024 * 1024
+DEFAULT_LOG_BACKUP_COUNT = 5
+DEFAULT_LOG_RETENTION_DAYS = 5
 
 
 def _ensure_dir(path: str) -> None:
@@ -24,6 +30,95 @@ def _ensure_dir(path: str) -> None:
         # to avoid breaking CLI entrypoints. Upstream callers will still see
         # console output.
         pass
+
+
+def _is_test_mode() -> bool:
+    return os.getenv("COLLAB_TEST_MODE") == "1"
+
+
+def _prune_old_log_files(
+    log_dir: str,
+    active_log_name: str,
+    *,
+    retention_days: int = DEFAULT_LOG_RETENTION_DAYS,
+    now: Optional[float] = None,
+) -> None:
+    """Delete expired rotated log files for the active log family.
+
+    The current active log file is never deleted here, even if its mtime is old.
+    Rotation limits file size; this pruning step bounds total on-disk lifetime.
+    """
+    if retention_days <= 0:
+        return
+
+    cutoff = (time.time() if now is None else now) - (retention_days * 24 * 60 * 60)
+    active_path = os.path.abspath(os.path.join(log_dir, active_log_name))
+    try:
+        entries = list(os.scandir(log_dir))
+    except OSError:
+        return
+
+    for entry in entries:
+        try:
+            if not entry.is_file():
+                continue
+            if not entry.name.startswith(active_log_name):
+                continue
+
+            entry_path = os.path.abspath(entry.path)
+            if entry_path == active_path:
+                continue
+
+            if entry.stat().st_mtime < cutoff:
+                os.remove(entry.path)
+        except OSError:
+            continue
+
+
+def _resolve_log_dir(collab_dir: Optional[str]) -> str:
+    """Resolve the log directory for the current collab runtime.
+
+    Logs always live under ``<collab_dir>/logs/`` so they are persistent and
+    discoverable regardless of the test isolation environment.  COLLAB_STATE_DIR
+    isolates *process-state* artifacts (PID files, lock files) but must not
+    redirect log files, because the temp dir it points to is cleaned up after each
+    test session, making the logs ephemeral and invisible to the developer.
+
+    File-handle safety for test mode is handled by:
+    - the ``atexit.register(close_collab_logging)`` call in this module, and
+    - the autouse ``_close_collab_logging_after_each_test`` fixture in
+      ``.collab/tests/conftest.py``.
+    """
+    if collab_dir:
+        base = collab_dir
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, "logs")
+
+
+def _close_collab_file_handlers() -> None:
+    """Close and detach all file handlers from the collab logger.
+
+    Windows keeps an exclusive handle on open log files, so tests and short-lived CLI
+    commands need an explicit close path when they finish.
+    """
+    collab_logger = logging.getLogger("collab")
+    for handler in list(collab_logger.handlers):
+        if getattr(handler, "baseFilename", None):
+            collab_logger.removeHandler(handler)
+            try:
+                handler.flush()
+            except Exception:
+                pass
+            try:
+                handler.close()
+            except Exception:
+                pass
+
+
+def close_collab_logging() -> None:
+    """Release file-based collab logging handlers for the current process."""
+    _close_collab_file_handlers()
 
 
 def setup_collab_logging(
@@ -39,16 +134,9 @@ def setup_collab_logging(
     duplicate handlers.
     Returns the root logger instance.
     """
-    # All logs live in the standard .collab/logs/ directory.
-    # We no longer support COLLAB_LOG_DIR override for external directories
-    # to maintain the standard requested by the user.
-    if collab_dir:
-        base = collab_dir
-    else:
-        # Resolve project root relative to this file
-        base = os.path.dirname(os.path.abspath(__file__))
-
-    log_dir = os.path.join(base, "logs")
+    # Production logs remain in .collab/logs/. Test-mode logs are written to the
+    # isolated state dir so test daemons never lock files in the repo itself.
+    log_dir = _resolve_log_dir(collab_dir)
     _ensure_dir(log_dir)
 
     root = logging.getLogger()
@@ -67,7 +155,7 @@ def setup_collab_logging(
     # polluting the .collab/logs files. Handlers are attached to the
     # 'collab' logger (and not to the root logger) so only logs emitted by
     # 'collab' namespace (e.g. "collab.lock_client", "collab.pycharm_watcher")
-    # are written to application.log / errors.log.
+    # are written to collab.log / test_collab.log.
     collab_logger = logging.getLogger("collab")
     collab_logger.setLevel(level)
     # Allow records to propagate so test harnesses (caplog) and the root
@@ -76,16 +164,16 @@ def setup_collab_logging(
     # written to .collab/logs; other libraries will not be recorded there.
     collab_logger.propagate = True
 
-    # File handlers: application.log (INFO+) and errors.log (ERROR+)
-    # In test mode, we use distinct filenames to avoid Windows file locks
-    # if the live daemon is running concurrently.
+    # Single file handler: `collab.log` will contain both INFO and ERROR records.
+    # In test mode we use a distinct filename to avoid Windows file locks
+    # when the live daemon and tests run concurrently.
     if os.getenv("COLLAB_TEST_MODE") == "1":
-        app_name, err_name = "test_application.log", "test_errors.log"
+        collab_name = "test_collab.log"
     else:
-        app_name, err_name = "application.log", "errors.log"
+        collab_name = "collab.log"
 
-    app_path = os.path.join(log_dir, app_name)
-    err_path = os.path.join(log_dir, err_name)
+    collab_path = os.path.join(log_dir, collab_name)
+    _prune_old_log_files(log_dir, collab_name)
 
     def _has_filehandler_for(logger_obj: logging.Logger, path: str) -> bool:
         for h in getattr(logger_obj, "handlers", []):
@@ -93,15 +181,13 @@ def setup_collab_logging(
                 return True
         return False
 
-    # Remove stale file handlers that point to the *other* file set.
-    # This can happen when setup_collab_logging is called before and after
-    # COLLAB_TEST_MODE changes (e.g. module-level import then conftest).
+    # Remove stale file handlers so switching between test and production mode
+    # does not leave old file handles attached.
     _stale = []
     for h in list(collab_logger.handlers):
         bf = getattr(h, "baseFilename", None)
-        if bf and bf.startswith(os.path.abspath(log_dir)):
-            if bf not in (os.path.abspath(app_path), os.path.abspath(err_path)):
-                _stale.append(h)
+        if bf and bf != os.path.abspath(collab_path):
+            _stale.append(h)
     for h in _stale:
         collab_logger.removeHandler(h)
         try:
@@ -109,24 +195,24 @@ def setup_collab_logging(
         except Exception:
             pass
 
-    if not _has_filehandler_for(collab_logger, app_path):
+    if not _has_filehandler_for(collab_logger, collab_path):
         try:
-            fh = logging.FileHandler(app_path, encoding="utf-8")
-            fh.setLevel(logging.INFO)
+            fh = RotatingFileHandler(
+                collab_path,
+                maxBytes=DEFAULT_LOG_MAX_BYTES,
+                backupCount=DEFAULT_LOG_BACKUP_COUNT,
+                encoding="utf-8",
+            )
+            # Use the provided root level so the single file captures INFO+ (and ERROR)
+            fh.setLevel(level)
             fh.setFormatter(logging.Formatter(DEFAULT_FORMAT, DEFAULT_DATEFMT))
             collab_logger.addHandler(fh)
         except Exception:
-            # Best-effort: if file can't be opened, continue with console-only
-            pass
-
-    if not _has_filehandler_for(collab_logger, err_path):
-        try:
-            eh = logging.FileHandler(err_path, encoding="utf-8")
-            eh.setLevel(logging.ERROR)
-            eh.setFormatter(logging.Formatter(DEFAULT_FORMAT, DEFAULT_DATEFMT))
-            collab_logger.addHandler(eh)
-        except Exception:
+            # Best-effort: continue with console-only logging if file can't be opened
             pass
 
     # Return the root logger for convenience (callers typically ignore return)
     return root
+
+
+atexit.register(close_collab_logging)

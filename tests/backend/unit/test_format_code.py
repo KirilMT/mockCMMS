@@ -403,10 +403,10 @@ def make_sequential_mock(call_map):
 
 # All 5 backend tool descriptions for assertion
 BACKEND_TOOLS = [
-    "Ruff linting & fixing",
     "Import sorting (isort)",
     "Code formatting (black)",
     "Docstring formatting (docformatter)",
+    "Ruff linting & fixing",
     "Final linting (flake8)",
 ]
 

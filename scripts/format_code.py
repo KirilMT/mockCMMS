@@ -348,12 +348,12 @@ class CodeFormatter:
             "--max-line-length=88",
         ]
         # Each tuple: (description, fix_cmd, check_cmd)
+        # NOTE:
+        # Ruff is intentionally executed after black/docformatter. Running Ruff
+        # first can report transient E501/docstring width violations that are
+        # auto-fixed later in the same formatting pass, causing a false failure
+        # on the first run and success on the second run.
         steps: list[tuple[str, Optional[list[str]], list[str]]] = [
-            (
-                "Ruff linting & fixing",
-                ["ruff", "check"] + targets + ["--fix", "--unsafe-fixes"],
-                ["ruff", "check"] + targets,
-            ),
             (
                 "Import sorting (isort)",
                 ["isort"] + targets,
@@ -368,6 +368,11 @@ class CodeFormatter:
                 "Docstring formatting (docformatter)",
                 ["docformatter", "--in-place", "-r"] + targets,
                 ["docformatter", "--check", "-r"] + targets,
+            ),
+            (
+                "Ruff linting & fixing",
+                ["ruff", "check"] + targets + ["--fix", "--unsafe-fixes"],
+                ["ruff", "check"] + targets,
             ),
             (
                 "Final linting (flake8)",

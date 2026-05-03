@@ -139,6 +139,35 @@ def test_create_maintenance_order_with_valid_data(app, db_session):
     assert db_session.query(MaintenanceOrder).count() == 1
 ````
 
+### Advanced Mocking Pattern: Static Method Isolation
+
+When mocking static methods on shared classes (e.g., `LockClient._read_pid`), direct monkeypatching of the class method can cause race conditions in parallel `pytest-xdist` environments.
+
+**Use the Local Subclass Pattern:**
+
+```python
+def test_my_feature(monkeypatch, mod):
+    called = []
+    def mock_logic():
+        called.append(True)
+        return "mock_value"
+
+    # 1. Create a local subclass to isolate the mock
+    class LocalTarget(mod.TargetClass):
+        @staticmethod
+        def static_method():
+            return mock_logic()
+
+    # 2. Monkeypatch the CLASS REFERENCE in the target module
+    # This ensures only instances created via mod.TargetClass in this test use the mock
+    monkeypatch.setattr(mod, "TargetClass", LocalTarget)
+
+    # 3. Proceed with test
+    instance = mod.TargetClass()
+    instance.do_something()
+    assert len(called) == 1
+```
+
 ### Generate Test Stubs
 
 ```bash
@@ -355,3 +384,32 @@ When modifying the Advanced Table component, also provide:
 - **NEVER** modify `pyproject.toml`, `jest.config.js`, `playwright.config.js`, `eslint.config.js`, or `.flake8` to make tests pass.
 - **NEVER** update visual test screenshots (`tests/frontend/e2e/__screenshots__/`) unless UI was intentionally changed.
 - **NEVER** lower coverage thresholds.
+
+## 11. Test File Standard
+
+See the canonical `Test File Standard` in the project CONTRIBUTING guide: `.github/CONTRIBUTING.md` → "Test File Standard" section. The standard is repository-wide (applies to `tests/`, `.collab/tests/`, and `apps/<name>/tests/`), so follow the same shim + subfolder approach in the test root you're modifying.
+
+- **Safety process:** Make small, reviewable patches. After edits run `python scripts/format_code.py` then `python scripts/validate_code.py --quick` and iterate on any failures before opening a PR.
+
+Implementation notes:
+
+- The recommended folder approach keeps the canonical top-level test file present for CI (satisfies `test_<source>.py` rule) while allowing comfortable, focused modules for daily editing in an IDE.
+- If you prefer a different split threshold, document that in `.github/CONTRIBUTING.md` → "Test File Standard" section, and update the skill accordingly.
+- When creating the package folder under `.collab/tests/unit/<source>/`, adding an empty `__init__.py` is acceptable but not required; ensure your editors/linters handle the new structure.
+
+### Helper naming convention
+
+- Test helper modules that are not test files (loaders, shared utilities, fixtures) must be named with a leading underscore and MUST NOT start with `test_` (example: `_helpers.py`). This prevents accidental pytest collection of helper modules.
+- Test files must begin with `test_`. When splitting a large canonical file into topic modules, use the `test_<source>_<topic>.py` pattern so intent is explicit and pytest collection remains predictable.
+- Keep loader/fixture modules next to the test files (for example `.collab/tests/unit/<source>/_helpers.py`) and prefer placing reusable fixtures in the test root `conftest.py`.
+
+Example shim (no-op canonical file):
+
+```
+# .collab/tests/unit/test_lock_client.py
+# Canonical shim — actual tests are split under .collab/tests/unit/lock_client/
+"""See .collab/tests/unit/lock_client/ for topic-focused test modules."""
+
+```
+
+Follow these guidelines when reorganizing tests to keep discovery, CI coverage mapping, and reviewer workflows consistent.

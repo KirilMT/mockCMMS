@@ -43,7 +43,7 @@ Open via: **View > Output > Collab Locks** (dropdown).
 Conflict events appear in the output channel with timestamps and
 details. When a conflict is detected from the watcher, a popup
 automatically appears with options to open the dashboard or view logs.
-Physical logs are persisted in `.collab/logs/application.log` and `.collab/logs/errors.log`.
+Physical logs are persisted in `.collab/logs/collab.log` (and `.collab/logs/test_collab.log` in test mode).
 
 ### Commands
 

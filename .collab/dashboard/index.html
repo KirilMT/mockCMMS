@@ -9,71 +9,220 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #06b6d4;
-            --bg-body: #f8fafc;
+            --bg-body: #f5f7fb;
             --bg-card: #ffffff;
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --primary: #4f46e5;
+            --primary-soft: #eef2ff;
+            --danger: #dc2626;
+            --nav-h: 72px;
             --radius: 12px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 10px 22px -14px rgb(30 41 59 / 0.35);
+            --shadow-lg: 0 26px 48px -28px rgb(30 41 59 / 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            font-family: "Inter", system-ui, -apple-system, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-main);
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
             -webkit-font-smoothing: antialiased;
         }
 
-        .navbar {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
+        .app-nav {
+            height: var(--nav-h);
+            min-height: var(--nav-h);
+            padding: 0 1.15rem;
             border-bottom: 1px solid var(--border-color);
-            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.84);
+            backdrop-filter: blur(14px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
         }
 
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.25rem;
+        .brand {
+            font-weight: 800;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .brand i {
+            color: var(--primary);
+        }
+
+        .brand span {
             background: linear-gradient(135deg, var(--primary), #818cf8);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 12px;
         }
 
-        .brand-icon {
-            color: var(--primary);
-            -webkit-text-fill-color: initial;
-        }
-
-        .user-pill {
+        .nav-right {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 6px 14px;
-            background: #fff;
-            border: 1px solid var(--border-color);
-            border-radius: 100px;
+            gap: 0.6rem;
+        }
+
+        .nav-right .btn {
+            border-radius: 999px;
+            font-weight: 700;
             box-shadow: var(--shadow-sm);
-            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-right .btn.btn-primary {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+        }
+
+        .nav-right .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-right .btn.btn-outline-primary {
+            border-color: #c7d2fe;
+            color: #4338ca;
+            background: #fff;
+        }
+
+        .nav-right .btn.btn-outline-secondary {
+            border-color: var(--border-color);
+            color: #475569;
+            background: #f8fafc;
+        }
+
+        .chip {
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.82rem;
             font-weight: 600;
+            background: #fff;
+            color: var(--text-muted);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .app-main {
+            height: calc(100vh - var(--nav-h));
+            min-height: 0;
+            padding: 1rem 1.15rem;
+        }
+
+        .page-view {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            display: none;
+            flex-direction: column;
+            gap: 0.95rem;
+        }
+
+        .page-view.active {
+            display: flex;
+        }
+
+        .page-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table-shell {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            min-height: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .table-shell:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .table-scroll {
+            min-height: 0;
+            flex: 1;
+            overflow: auto;
+        }
+
+        .table {
+            margin: 0;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+            padding: 0.88rem 0.75rem;
+        }
+
+        .table tbody td {
+            font-size: 0.84rem;
+            padding: 0.9rem 0.75rem;
+            vertical-align: middle;
+            border-color: var(--border-color);
+        }
+
+        .table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1.1rem;
         }
 
         .stat-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
-            padding: 1.5rem;
+            padding: 1.35rem;
             box-shadow: var(--shadow-sm);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
@@ -83,319 +232,391 @@
             box-shadow: var(--shadow-md);
         }
 
+        .stat-shell {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .stat-icon-lock {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .stat-icon-release {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .stat-icon-avg {
+            background: #e0f2fe;
+            color: #0891b2;
+        }
+
         .stat-label {
-            font-size: 0.75rem;
+            margin: 0;
+            font-size: 0.74rem;
             font-weight: 700;
-            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.25rem;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
         }
 
         .stat-value {
-            font-size: 1.875rem;
-            font-weight: 800;
+            margin: 0.15rem 0 0;
+            font-size: 2.08rem;
             line-height: 1;
+            font-weight: 800;
+            color: #0f172a;
         }
 
-        .icon-box {
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            font-size: 1.25rem;
+        .stat-value-success {
+            color: #16a34a;
         }
 
-        .panel-container {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            margin-bottom: 2rem;
-            overflow: hidden;
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .panel-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .table thead th {
-            background: #fcfcfd;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 1rem 1.5rem;
-        }
-
-        .table tbody td {
-            padding: 1.25rem 1.5rem;
-            vertical-align: middle;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.875rem;
-        }
-
-        .table tr:last-child td { border-bottom: none; }
-        .table tbody tr:hover { background-color: #fafafe; }
-
-        .badge-healthy { background: #ecfdf5; color: #059669; border: 1px solid #10b98133; }
-        .badge-warning { background: #fffbe6; color: #d4a017; border: 1px solid #f59e0b33; }
-        .badge-danger { background: #fef2f2; color: #dc2626; border: 1px solid #ef444433; }
-        .badge-modern {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.75rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .stat-value-info {
+            color: #0891b2;
         }
 
         .dev-tag {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            background: #f1f5f9;
-            color: #475569;
-            border-radius: 4px;
-            font-weight: 600;
-            font-size: 0.8125rem;
+            padding: 0.18rem 0.5rem;
+            border-radius: 0.35rem;
+            border: 1px solid var(--border-color);
+            background: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
         }
 
-        .dev-tag-owner { background: #eef2ff; color: #4f46e5; }
+        .dev-tag-owner {
+            border-color: #bfdbfe;
+            color: #1d4ed8;
+            background: var(--primary-soft);
+        }
 
         code {
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            color: #1d4ed8;
             background: #f8fafc;
-            color: var(--primary);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.875rem;
             border: 1px solid var(--border-color);
+            border-radius: 0.35rem;
+            padding: 0.12rem 0.4rem;
+            font-size: 0.78rem;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .table-shell .btn-outline-danger {
+            border-color: #fca5a5;
+            color: #dc2626;
+            background: #fff;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 0.3rem 0.82rem;
         }
 
-        .animate-fade { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .table-shell .btn-outline-danger:hover {
+            border-color: #ef4444;
+            background: #ef4444;
+            color: #fff;
+        }
 
-        .btn-premium {
-            padding: 0.5rem 1rem;
+        .setup-view {
+            max-width: 640px;
+            margin: 2rem auto;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-top: 4px solid var(--primary);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .release-modal .modal-content {
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .release-modal .modal-header,
+        .release-modal .modal-footer {
+            border: 0;
+        }
+
+        .release-modal .modal-title {
+            color: #dc2626;
+            font-weight: 800;
+            font-size: 1.95rem;
+        }
+
+        .release-modal .modal-body {
+            padding-top: 0.5rem;
+            padding-bottom: 0.45rem;
+        }
+
+        .release-help {
+            margin-bottom: 1rem;
+            color: #4b5563;
+            font-size: 1rem;
+            line-height: 1.45;
+        }
+
+        .release-file-box {
+            border-radius: 14px;
+            border: 1px solid #d1d5db;
+            background: #f9fafb;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .release-file-label {
+            margin: 0;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .release-file-path {
+            margin-top: 0.35rem;
+            font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 1.02rem;
+            color: #111827;
+            word-break: break-word;
+        }
+
+        .release-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.7rem;
+            border-radius: 14px;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .release-warning i {
+            color: #f59e0b;
+            margin-top: 0.12rem;
+        }
+
+        .release-warning-text {
+            margin: 0;
+            font-size: 0.98rem;
+            line-height: 1.35;
             font-weight: 600;
-            border-radius: 8px;
-            border: none;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.8125rem;
         }
 
-        .btn-premium-secondary {
-            background: #f1f5f9;
+        .release-modal .btn {
+            min-width: 170px;
+            font-size: 1.02rem;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 0.72rem 1.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .release-modal .btn-cancel {
+            background: #e5e7eb;
+            border-color: #e5e7eb;
             color: #475569;
         }
-        .btn-premium-secondary:hover { background: #e2e8f0; }
 
-        .btn-premium-danger {
-            background: linear-gradient(135deg, var(--danger), #f87171);
-            color: white;
-        }
-        .btn-premium-danger:hover { opacity: 0.9; }
-
-        .modal-content {
-            border-radius: 20px;
-            border: none;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        .release-modal .btn-cancel:hover {
+            background: #d1d5db;
+            border-color: #d1d5db;
+            color: #334155;
         }
 
-        .setup-card {
-            max-width: 500px;
-            margin: 4rem auto;
-            border-top: 4px solid var(--primary);
+        .release-modal .btn-confirm {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+            border-color: #ef4444;
+            color: #fff;
         }
 
-        .hidden { display: none !important; }
+        .release-modal .btn-confirm:hover {
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+            border-color: #dc2626;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .app-nav {
+                padding: 0 0.75rem;
+            }
+
+            .app-main {
+                padding: 0.75rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 1.7rem;
+            }
+
+            .table thead th,
+            .table tbody td {
+                padding: 0.62rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar sticky-top">
-        <div class="container-fluid px-4">
-            <span class="navbar-brand">
-                <i class="fas fa-shield-halved fs-4 brand-icon"></i>
-                Collaborative Lock Dashboard
-            </span>
-            <div class="d-flex align-items-center gap-3">
-                <span id="last-update" class="text-muted small fw-medium"></span>
-                <div id="user-info" class="user-pill hidden">
-                    <i class="fab fa-github text-primary"></i>
-                    <span id="user-display">Loading...</span>
-                </div>
-            </div>
+    <header class="app-nav">
+        <div class="brand">
+            <i class="fas fa-shield-halved"></i>
+            <span>Collaborative Explorer</span>
         </div>
-    </nav>
+        <div class="nav-right">
+            <span id="last-update" class="chip">Not synced yet</span>
+            <span id="user-info" class="chip hidden"></span>
+            <button id="nav-locks" class="btn btn-sm btn-primary" type="button">Active Locks</button>
+            <button id="nav-history" class="btn btn-sm btn-outline-primary" type="button">History Locks</button>
+            <button id="sync-btn" class="btn btn-sm btn-outline-secondary" type="button">
+                <i class="fas fa-sync-alt me-1"></i>Sync
+            </button>
+        </div>
+    </header>
 
-    <!-- SETUP VIEW (shown when credentials missing) -->
-    <div id="setup-view" class="hidden">
-        <div class="stat-card setup-card text-center p-5">
-            <i class="fas fa-plug fa-3x text-primary mb-3"></i>
-            <h3>Connect to Supabase</h3>
-            <p class="text-muted">
-                To use the dashboard, configure your Supabase credentials in <code>.env</code>
-                at the project root. See <code>.collab/README.md</code> for setup instructions.
+    <main class="app-main">
+        <section id="setup-view" class="setup-view hidden">
+            <h4 class="mb-2">Connect To Supabase</h4>
+            <p class="text-muted mb-3">
+                Configure credentials in .env and restart the dashboard server.
             </p>
-            <div class="text-start mt-4 p-3 bg-light rounded small" style="font-family: monospace;">
-                SUPABASE_URL=https://your-project.supabase.co<br>
-                SUPABASE_ANON_KEY=your_anon_key
-            </div>
-            <p class="text-muted small mt-3">
-                After setting these variables, restart the dashboard server.
-            </p>
-        </div>
-    </div>
+            <pre class="bg-light border rounded p-3 mb-0">SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key</pre>
+        </section>
 
-    <!-- MAIN DASHBOARD -->
-    <div id="main-view" class="container-fluid px-4 mt-4 hidden">
-        <!-- Stats Row -->
-        <div class="row g-4 mb-5 animate-fade">
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <div class="d-flex align-items-center gap-4">
-                        <div class="icon-box bg-primary bg-opacity-10 text-primary">
-                            <i class="fas fa-lock"></i>
-                        </div>
+        <section id="locks-page" class="page-view hidden" aria-label="locks view">
+            <div class="page-head">
+                <h2 class="page-title"><i class="fas fa-lock"></i>Active Locks</h2>
+            </div>
+            <div class="stats-grid" aria-label="dashboard stats">
+                <article class="stat-card">
+                    <div class="stat-shell">
+                        <span class="stat-icon stat-icon-lock"><i class="fas fa-lock"></i></span>
                         <div>
-                            <div class="stat-label">Active Locks</div>
-                            <div class="stat-value" id="stat-active">0</div>
+                            <p class="stat-label">Active Locks</p>
+                            <p class="stat-value" id="stat-active">0</p>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <div class="d-flex align-items-center gap-4">
-                        <div class="icon-box bg-success bg-opacity-10 text-success">
-                            <i class="fas fa-check-double"></i>
-                        </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-shell">
+                        <span class="stat-icon stat-icon-release"><i class="fas fa-check-double"></i></span>
                         <div>
-                            <div class="stat-label">Releases Today</div>
-                            <div class="stat-value text-success" id="stat-releases">0</div>
+                            <p class="stat-label">Releases Today</p>
+                            <p class="stat-value stat-value-success" id="stat-releases">0</p>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <div class="d-flex align-items-center gap-4">
-                        <div class="icon-box bg-info bg-opacity-10 text-info">
-                            <i class="fas fa-bolt"></i>
-                        </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-shell">
+                        <span class="stat-icon stat-icon-avg"><i class="fas fa-bolt"></i></span>
                         <div>
-                            <div class="stat-label">Avg Hold Time</div>
-                            <div class="stat-value text-info" id="stat-avg">0m</div>
+                            <p class="stat-label">Avg Hold Time</p>
+                            <p class="stat-value stat-value-info" id="stat-avg">0m</p>
                         </div>
                     </div>
+                </article>
+            </div>
+            <div class="table-shell">
+                <div class="table-scroll" id="locks-scroll">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>File Path</th>
+                                <th>Developer</th>
+                                <th>Branch</th>
+                                <th>Reason</th>
+                                <th>Timeline</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="active-locks-body">
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Connecting...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Active Locks Table -->
-        <div class="panel-container animate-fade">
-            <div class="panel-header">
-                <h2 class="panel-title"><i class="fas fa-shield-halved text-muted"></i> Active File Locks</h2>
-                <button id="sync-btn" class="btn btn-premium btn-premium-secondary" onclick="refreshData()">
-                    <i class="fas fa-sync-alt opacity-50"></i> Sync State
-                </button>
+        <section id="history-page" class="page-view hidden" aria-label="history view">
+            <div class="page-head">
+                <h2 class="page-title"><i class="fas fa-clock-rotate-left"></i>Lock History</h2>
             </div>
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>File Path</th>
-                            <th>Developer</th>
-                            <th>Branch</th>
-                            <th>Reason</th>
-                            <th>Timeline</th>
-                            <th class="text-end">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="active-locks-body">
-                        <tr><td colspan="6" class="text-center py-5 text-muted">
-                            <div class="spinner-border spinner-border-sm me-2"></div> Connecting...
-                        </td></tr>
-                    </tbody>
-                </table>
+            <div class="table-shell">
+                <div class="table-scroll" id="history-scroll">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>File Path</th>
+                                <th>Developer</th>
+                                <th>Branch</th>
+                                <th>Reason</th>
+                                <th>Acquired At</th>
+                                <th>Released At</th>
+                                <th>Duration</th>
+                                <th>Outcome</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body">
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">Loading history...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </section>
+    </main>
 
-        <!-- History Table -->
-        <div class="panel-container animate-fade">
-            <div class="panel-header">
-                <h2 class="panel-title"><i class="fas fa-clock-rotate-left text-muted"></i> Historical Activity</h2>
-            </div>
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>File Path</th>
-                            <th>Developer</th>
-                            <th>Branch</th>
-                            <th>Reason</th>
-                            <th>Acquired At</th>
-                            <th>Released At</th>
-                            <th>Duration</th>
-                            <th>Outcome</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-body">
-                        <tr><td colspan="8" class="text-center py-4 text-muted">No history found</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Force Release Confirmation Modal -->
-    <div class="modal fade" id="releaseModal" tabindex="-1">
+    <div class="modal fade release-modal" id="releaseModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold" id="modal-title">Release Lock</h5>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-title">Release File Lock</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p id="modal-description" class="text-muted small">
-                        This will immediately release the lock on this file.
+                    <p id="modal-description" class="release-help">
+                        Proceeding will release the lock for this file, allowing other team members to acquire it immediately.
                     </p>
-                    <div class="bg-light p-3 rounded">
-                        <div class="small text-muted">File Path</div>
-                        <div id="modal-file-path" class="fw-medium"></div>
+                    <div class="release-file-box">
+                        <p class="release-file-label">File Path</p>
+                        <div id="modal-file-path" class="release-file-path"></div>
+                    </div>
+                    <div class="release-warning">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p id="modal-warning" class="release-warning-text">
+                            Warning: Verify that you have committed your changes to avoid potential conflicts with other developers.
+                        </p>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-premium btn-premium-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-premium btn-premium-danger" id="confirm-release-btn">
-                        <i class="fas fa-lock-open"></i> Release
-                    </button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-confirm" id="confirm-release-btn">Confirm Release</button>
                 </div>
             </div>
         </div>
@@ -403,279 +624,484 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // =====================================================================
-        // Configuration
-        // =====================================================================
         const serverCfg = window.__SUPABASE_CONFIG__ || {};
-        const SUPABASE_URL = serverCfg.url || '';
-        const SUPABASE_KEY = serverCfg.serviceKey || serverCfg.anonKey || '';
+        const SUPABASE_URL = serverCfg.url || "";
+        const SUPABASE_KEY = serverCfg.serviceKey || serverCfg.anonKey || "";
         const SUPABASE_USER = serverCfg.user || null;
-        const SUPABASE_MODE = !!(SUPABASE_URL && SUPABASE_KEY);
         const IS_ADMIN = !!serverCfg.serviceKey;
+        const SUPABASE_MODE = !!(SUPABASE_URL && SUPABASE_KEY);
 
-        let SUPABASE_CLIENT = null;
-        let RELEASE_MODAL = null;
-        let PENDING_RELEASE_PATH = null;
+        const PAGE_SIZE = 25;
+        const HISTORY_PREFETCH_GAP_PX = 120;
 
-        // =====================================================================
-        // Initialization
-        // =====================================================================
-        function init() {
-            RELEASE_MODAL = new bootstrap.Modal(document.getElementById('releaseModal'));
+        let supabaseClient = null;
+        let releaseModal = null;
+        let pendingReleasePath = null;
 
-            if (!SUPABASE_MODE) {
-                document.getElementById('setup-view').classList.remove('hidden');
-                return;
+        let historyOffset = 0;
+        let historyHasMore = true;
+        let historyLoading = false;
+
+        function setNavActive(page) {
+            const locksBtn = document.getElementById("nav-locks");
+            const historyBtn = document.getElementById("nav-history");
+            if (page === "history") {
+                locksBtn.classList.remove("btn-primary");
+                locksBtn.classList.add("btn-outline-primary");
+                locksBtn.disabled = false;
+                historyBtn.classList.add("btn-primary");
+                historyBtn.classList.remove("btn-outline-primary");
+                historyBtn.disabled = true;
+            } else {
+                historyBtn.classList.remove("btn-primary");
+                historyBtn.classList.add("btn-outline-primary");
+                historyBtn.disabled = false;
+                locksBtn.classList.add("btn-primary");
+                locksBtn.classList.remove("btn-outline-primary");
+                locksBtn.disabled = true;
             }
-
-            document.getElementById('main-view').classList.remove('hidden');
-            if (SUPABASE_USER) {
-                document.getElementById('user-info').classList.remove('hidden');
-                document.getElementById('user-display').textContent = SUPABASE_USER;
-            }
-
-            // Wire up force release button
-            document.getElementById('confirm-release-btn').addEventListener('click', doForceRelease);
-
-            loadSupabaseClient()
-                .then(() => {
-                    refreshData();
-                    subscribeRealtime();
-                    setInterval(refreshData, 30000);
-                })
-                .catch(e => {
-                    console.error('Supabase init failed', e);
-                    showError('Supabase initialization failed. Check console for details.');
-                });
         }
 
-        // =====================================================================
-        // Supabase Client
-        // =====================================================================
-        function loadSupabaseClient() {
-            return new Promise((resolve, reject) => {
-                if (window.supabase) {
-                    SUPABASE_CLIENT = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                    return resolve();
-                }
-                const s = document.createElement('script');
-                s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js';
-                s.onload = () => {
-                    try {
-                        SUPABASE_CLIENT = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                        resolve();
-                    } catch (e) { reject(e); }
-                };
-                s.onerror = reject;
-                document.head.appendChild(s);
+        function formatDateLong(dt) {
+            return dt.toLocaleDateString([], {
+                year: "numeric",
+                month: "long",
+                day: "numeric"
             });
         }
 
-        // =====================================================================
-        // Realtime Subscription
-        // =====================================================================
+        function formatTime24(dt) {
+            return dt.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+            });
+        }
+
+        function formatDateTime24(dt) {
+            return formatDateLong(dt) + " " + formatTime24(dt);
+        }
+
+        function routeFromHash() {
+            const h = window.location.hash.replace("#", "").toLowerCase();
+            return h === "history" ? "history" : "locks";
+        }
+
+        function navigate(page) {
+            const target = page === "history" ? "history" : "locks";
+            if (window.location.hash !== "#" + target) {
+                window.location.hash = target;
+                return;
+            }
+            applyRoute();
+        }
+
+        function applyRoute() {
+            const page = routeFromHash();
+            const locksPage = document.getElementById("locks-page");
+            const historyPage = document.getElementById("history-page");
+
+            if (page === "history") {
+                locksPage.classList.remove("active");
+                historyPage.classList.add("active");
+                setNavActive("history");
+                if (historyOffset === 0 && !historyLoading) {
+                    resetHistory();
+                }
+            } else {
+                historyPage.classList.remove("active");
+                locksPage.classList.add("active");
+                setNavActive("locks");
+            }
+        }
+
+        function updateTimestamp() {
+            const stamp = new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false
+            });
+            document.getElementById("last-update").textContent = "Synced " + stamp;
+        }
+
+        function showSetup() {
+            document.getElementById("setup-view").classList.remove("hidden");
+            document.getElementById("locks-page").classList.add("hidden");
+            document.getElementById("history-page").classList.add("hidden");
+            document.getElementById("sync-btn").disabled = true;
+            document.getElementById("nav-locks").disabled = true;
+            document.getElementById("nav-history").disabled = true;
+        }
+
+        function showMain() {
+            document.getElementById("setup-view").classList.add("hidden");
+            document.getElementById("locks-page").classList.remove("hidden");
+            document.getElementById("history-page").classList.remove("hidden");
+            if (SUPABASE_USER) {
+                const userInfo = document.getElementById("user-info");
+                userInfo.classList.remove("hidden");
+                userInfo.innerHTML = '<i class="fab fa-github me-1"></i>' + SUPABASE_USER;
+            }
+        }
+
+        function showLocksError(msg) {
+            const tbody = document.getElementById("active-locks-body");
+            tbody.innerHTML =
+                '<tr><td colspan="6" class="text-danger text-center py-4">' +
+                msg +
+                '</td></tr>';
+        }
+
+        function loadSupabaseClient() {
+            return new Promise((resolve, reject) => {
+                if (window.supabase) {
+                    try {
+                        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                        resolve();
+                    } catch (e) {
+                        reject(e);
+                    }
+                    return;
+                }
+
+                const script = document.createElement("script");
+                script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js";
+                script.onload = () => {
+                    try {
+                        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                        resolve();
+                    } catch (e) {
+                        reject(e);
+                    }
+                };
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
         function subscribeRealtime() {
-            if (!SUPABASE_CLIENT) return;
+            if (!supabaseClient) {
+                return;
+            }
             try {
-                const ch = SUPABASE_CLIENT.channel('dashboard-realtime');
-                ch.on('postgres_changes', { event: '*', schema: 'public', table: 'file_locks' }, () => refreshData());
-                ch.on('postgres_changes', { event: '*', schema: 'public', table: 'file_locks_history' }, () => refreshData());
+                const ch = supabaseClient.channel("dashboard-realtime");
+                ch.on(
+                    "postgres_changes",
+                    { event: "*", schema: "public", table: "file_locks" },
+                    () => refreshLocks()
+                );
+                ch.on(
+                    "postgres_changes",
+                    { event: "*", schema: "public", table: "file_locks_history" },
+                    () => {
+                        if (routeFromHash() === "history") {
+                            resetHistory();
+                        }
+                    }
+                );
                 ch.subscribe();
             } catch (e) {
-                console.warn('Realtime subscription failed:', e);
+                console.warn("Realtime subscription failed", e);
             }
         }
 
-        // =====================================================================
-        // Data Fetching
-        // =====================================================================
-        async function refreshData() {
-            const btn = document.getElementById('sync-btn');
-            if (btn) btn.disabled = true;
-
+        async function refreshLocks() {
+            const syncBtn = document.getElementById("sync-btn");
+            syncBtn.disabled = true;
             try {
-                const { data: locks, error: le } = await SUPABASE_CLIENT
-                    // Exclude ephemeral/test-runner locks from the dashboard
-                    .from('file_locks').select('*').neq('is_ephemeral', true).order('acquired_at', { ascending: false });
-                if (le) throw le;
-
-                const { data: history, error: he } = await SUPABASE_CLIENT
-                    // Exclude ephemeral records from history to keep dashboard focused
-                    .from('file_locks_history').select('*').neq('is_ephemeral', true).order('id', { ascending: false }).limit(50);
-                if (he) throw he;
-
-                renderActiveLocks(locks || []);
-                renderHistory(history || []);
-                updateStats(locks || [], history || []);
+                const { data, error } = await supabaseClient
+                    .from("file_locks")
+                    .select("*")
+                    .neq("is_ephemeral", true)
+                    .order("acquired_at", { ascending: false });
+                if (error) {
+                    throw error;
+                }
+                const { data: historyData, error: historyError } = await supabaseClient
+                    .from("file_locks_history")
+                    .select("acquired_at,released_at")
+                    .neq("is_ephemeral", true)
+                    .order("id", { ascending: false })
+                    .limit(250);
+                if (historyError) {
+                    throw historyError;
+                }
+                renderActiveLocks(data || []);
+                updateStats(data || [], historyData || []);
                 updateTimestamp();
             } catch (e) {
-                console.error('Fetch error:', e);
-                showError('Connection error. Verify Supabase configuration.');
+                console.error(e);
+                showLocksError("Unable to fetch active locks.");
             } finally {
-                if (btn) btn.disabled = false;
+                syncBtn.disabled = false;
             }
         }
 
-        // =====================================================================
-        // Rendering
-        // =====================================================================
+        function updateStats(locks, history) {
+            document.getElementById("stat-active").textContent = String(locks.length);
+            const today = new Date().toDateString();
+            const todayReleases = history.filter((h) => {
+                if (!h.released_at) {
+                    return false;
+                }
+                return new Date(h.released_at).toDateString() === today;
+            }).length;
+            document.getElementById("stat-releases").textContent = String(todayReleases);
+
+            const durations = history
+                .filter((h) => h.acquired_at && h.released_at)
+                .map((h) => (new Date(h.released_at) - new Date(h.acquired_at)) / 60000)
+                .filter((d) => Number.isFinite(d) && d >= 0);
+            const avg = durations.length
+                ? Math.round(durations.reduce((acc, value) => acc + value, 0) / durations.length)
+                : 0;
+            document.getElementById("stat-avg").textContent = String(avg) + "m";
+        }
+
         function renderActiveLocks(locks) {
-            const tbody = document.getElementById('active-locks-body');
+            const tbody = document.getElementById("active-locks-body");
             if (!locks.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-check-circle text-success me-2"></i> Workspace is currently clear — no active file locks</td></tr>';
+                tbody.innerHTML =
+                    '<tr><td colspan="6" class="text-center py-4 text-muted">No active locks</td></tr>';
                 return;
             }
 
             const now = new Date();
-            tbody.innerHTML = locks.map(lock => {
-                const acquired = new Date(lock.acquired_at);
-                const heldMin = Math.round((now - acquired) / 60000);
+            tbody.innerHTML = locks
+                .map((lock) => {
+                    const acquired = new Date(lock.acquired_at);
+                    const heldMin = Math.max(0, Math.round((now - acquired) / 60000));
+                    const isMine = !!(SUPABASE_USER && lock.developer_id === SUPABASE_USER);
+                    const canRelease = isMine || IS_ADMIN;
+                    const reason = lock.reason || "No reason";
+                    const branch = lock.branch_name || "main";
+                    const safePath = String(lock.file_path || "").replace(/'/g, "\\'");
 
-                const isMine = SUPABASE_USER && lock.developer_id === SUPABASE_USER;
-                const canRelease = isMine || IS_ADMIN;
-                const startedStr = 'Started: ' + acquired.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const expiresStr = `Held for ${heldMin}m`;
+                    const action = canRelease
+                        ? '<button class="btn btn-sm btn-outline-danger" onclick="initRelease(\'' +
+                          safePath +
+                          '\',' +
+                          (isMine ? "true" : "false") +
+                          ')">' +
+                          (isMine ? "Release" : "Force Release") +
+                          "</button>"
+                        : '<span class="text-muted small">Locked</span>';
 
-                const releaseBtn = canRelease
-                    ? `<button class="btn btn-sm btn-outline-danger" onclick="initRelease('${lock.file_path.replace(/'/g, "\\'")}', ${isMine})">
-                            <i class="fas fa-lock-open me-1"></i>${isMine ? 'Release' : 'Force Release'}
-                       </button>`
-                    : `<span class="text-muted small" title="Only the lock owner or an admin can release this lock">
-                            <i class="fas fa-lock me-1"></i>Locked
-                       </span>`;
-
-                return `
-                <tr class="animate-fade">
-                    <td><code>${lock.file_path}</code></td>
-                    <td><div class="dev-tag ${isMine ? 'dev-tag-owner' : ''}">${lock.developer_id}</div></td>
-                    <td class="text-muted small">${lock.branch_name || 'main'}</td>
-                    <td class="text-muted small">${lock.reason || 'No reason'}</td>
-                    <td class="small">${startedStr}<br><span class="text-muted">${expiresStr}</span></td>
-                    <td class="text-end">${releaseBtn}</td>
-                </tr>`;
-            }).join('');
+                    return (
+                        "<tr>" +
+                        "<td><code>" + lock.file_path + "</code></td>" +
+                        '<td><span class="dev-tag ' +
+                        (isMine ? "dev-tag-owner" : "") +
+                        '">' +
+                        lock.developer_id +
+                        "</span></td>" +
+                        '<td class="text-muted">' + branch + "</td>" +
+                        '<td class="text-muted">' + reason + "</td>" +
+                        '<td class="text-muted">' +
+                        formatDateTime24(acquired) +
+                        " (" + heldMin + "m)</td>" +
+                        '<td class="text-end">' + action + "</td>" +
+                        "</tr>"
+                    );
+                })
+                .join("");
         }
 
-        function renderHistory(history) {
-            const tbody = document.getElementById('history-body');
-            if (!history.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No history found</td></tr>';
+        function resetHistory() {
+            historyOffset = 0;
+            historyHasMore = true;
+            historyLoading = false;
+            const tbody = document.getElementById("history-body");
+            tbody.innerHTML =
+                '<tr><td colspan="8" class="text-center py-4 text-muted">Loading history...</td></tr>';
+            loadMoreHistory();
+        }
+
+        async function loadMoreHistory() {
+            if (historyLoading || !historyHasMore) {
                 return;
             }
 
-            tbody.innerHTML = history.map(h => {
-                const acq = h.acquired_at ? new Date(h.acquired_at) : null;
-                const rel = h.released_at ? new Date(h.released_at) : null;
-                const dur = (acq && rel) ? Math.round((rel - acq) / 60000) + 'm' : '—';
-                const isMine = SUPABASE_USER && h.developer_id === SUPABASE_USER;
-                const outcomeClass = h.outcome === 'released' ? 'text-success' :
-                                     h.outcome === 'force-released' ? 'text-warning' :
-                                     h.outcome === 'expired' ? 'text-danger' : '';
-                const branch = h.branch_name || 'main';
-                const reason = h.reason || 'No reason';
-
-                return `
-                <tr>
-                    <td><code class="text-muted">${h.file_path}</code></td>
-                    <td><div class="dev-tag ${isMine ? 'dev-tag-owner' : ''}">${h.developer_id}</div></td>
-                    <td class="text-muted small">${branch}</td>
-                    <td class="text-muted small">${reason}</td>
-                    <td class="text-muted small">${acq ? acq.toLocaleString() : '—'}</td>
-                    <td class="text-muted small">${rel ? rel.toLocaleString() : '—'}</td>
-                    <td class="small">${dur}</td>
-                    <td class="small ${outcomeClass}">● ${h.outcome || 'unknown'}</td>
-                </tr>`;
-            }).join('');
-        }
-
-        function updateStats(locks, history) {
-            document.getElementById('stat-active').textContent = locks.length;
-
-            // Count releases today
-            const today = new Date().toDateString();
-            const todayReleases = history.filter(h =>
-                h.released_at && new Date(h.released_at).toDateString() === today
-            ).length;
-            document.getElementById('stat-releases').textContent = todayReleases;
-
-            // Average hold time from history
-            const durations = history
-                .filter(h => h.acquired_at && h.released_at)
-                .map(h => (new Date(h.released_at) - new Date(h.acquired_at)) / 60000);
-            const avg = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0;
-            document.getElementById('stat-avg').textContent = avg + 'm';
-        }
-
-        function updateTimestamp() {
-            document.getElementById('last-update').innerHTML =
-                `<i class="far fa-clock me-1"></i> Last synced: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-        }
-
-        function showError(msg) {
-            const main = document.getElementById('main-view');
-            if (main) main.classList.remove('hidden');
-            document.getElementById('active-locks-body').innerHTML =
-                `<tr><td colspan="6" class="text-center py-5 text-danger"><i class="fas fa-exclamation-triangle me-2"></i>${msg}</td></tr>`;
-        }
-
-        // =====================================================================
-        // Force Release
-        // =====================================================================
-        function initRelease(filePath, isMine) {
-            PENDING_RELEASE_PATH = filePath;
-            document.getElementById('modal-file-path').textContent = filePath;
-
-            if (isMine) {
-                document.getElementById('modal-title').textContent = 'Release Lock';
-                document.getElementById('modal-description').textContent =
-                    'This will immediately release your lock on this file.';
-                document.getElementById('confirm-release-btn').innerHTML =
-                    '<i class="fas fa-lock-open"></i> Release';
-            } else {
-                document.getElementById('modal-title').textContent = 'Force Release Lock (Admin)';
-                document.getElementById('modal-description').textContent =
-                    'This will immediately release another developer\'s lock. The owner will be notified on their next sync.';
-                document.getElementById('confirm-release-btn').innerHTML =
-                    '<i class="fas fa-lock-open"></i> Force Release';
-            }
-            RELEASE_MODAL.show();
-        }
-
-        async function doForceRelease() {
-            if (!PENDING_RELEASE_PATH || !SUPABASE_CLIENT) return;
-            const btn = document.getElementById('confirm-release-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Releasing...';
-
+            historyLoading = true;
             try {
-                let query = SUPABASE_CLIENT
-                    .from('file_locks')
-                    .delete()
-                    .eq('file_path', PENDING_RELEASE_PATH);
+                const from = historyOffset;
+                const to = historyOffset + PAGE_SIZE - 1;
+                const { data, error } = await supabaseClient
+                    .from("file_locks_history")
+                    .select("*")
+                    .neq("is_ephemeral", true)
+                    .order("id", { ascending: false })
+                    .range(from, to);
 
-                // Non-admin users can only release their own locks
+                if (error) {
+                    throw error;
+                }
+
+                const rows = data || [];
+                if (historyOffset === 0 && rows.length === 0) {
+                    document.getElementById("history-body").innerHTML =
+                        '<tr><td colspan="8" class="text-center py-4 text-muted">No history found</td></tr>';
+                    historyHasMore = false;
+                    return;
+                }
+
+                appendHistoryRows(rows);
+                historyOffset += rows.length;
+
+                if (rows.length < PAGE_SIZE) {
+                    historyHasMore = false;
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                historyLoading = false;
+            }
+        }
+
+        function appendHistoryRows(rows) {
+            const tbody = document.getElementById("history-body");
+            const isLoadingPlaceholder = tbody.children.length === 1 &&
+                tbody.children[0].textContent.includes("Loading history");
+            if (isLoadingPlaceholder) {
+                tbody.innerHTML = "";
+            }
+
+            const html = rows
+                .map((h) => {
+                    const acq = h.acquired_at ? new Date(h.acquired_at) : null;
+                    const rel = h.released_at ? new Date(h.released_at) : null;
+                    const branch = h.branch_name || "main";
+                    const reason = h.reason || "No reason";
+                    const outcome = h.outcome || "unknown";
+                    const duration = acq && rel
+                        ? Math.max(0, Math.round((rel - acq) / 60000)) + "m"
+                        : "-";
+                    const isMine = !!(SUPABASE_USER && h.developer_id === SUPABASE_USER);
+
+                    return (
+                        "<tr>" +
+                        "<td><code>" + h.file_path + "</code></td>" +
+                        '<td><span class="dev-tag ' + (isMine ? "dev-tag-owner" : "") + '">' + h.developer_id + "</span></td>" +
+                        '<td class="text-muted">' + branch + "</td>" +
+                        '<td class="text-muted">' + reason + "</td>" +
+                        '<td class="text-muted">' + (acq ? formatDateTime24(acq) : "-") + "</td>" +
+                        '<td class="text-muted">' + (rel ? formatDateTime24(rel) : "-") + "</td>" +
+                        '<td class="text-muted">' + duration + "</td>" +
+                        '<td class="text-muted">' + outcome + "</td>" +
+                        "</tr>"
+                    );
+                })
+                .join("");
+
+            tbody.insertAdjacentHTML("beforeend", html);
+        }
+
+        function onHistoryScroll(e) {
+            const el = e.target;
+            const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - HISTORY_PREFETCH_GAP_PX;
+            if (nearBottom) {
+                loadMoreHistory();
+            }
+        }
+
+        function initRelease(filePath, isMine) {
+            pendingReleasePath = filePath;
+            document.getElementById("modal-file-path").textContent = filePath;
+            if (isMine) {
+                document.getElementById("modal-title").textContent = "Release File Lock";
+                document.getElementById("modal-description").textContent =
+                    "Proceeding will release the lock for this file, allowing other team members to acquire it immediately.";
+                document.getElementById("modal-warning").textContent =
+                    "Warning: Verify that you have committed your changes to avoid potential conflicts with other developers.";
+                document.getElementById("confirm-release-btn").textContent = "Confirm Release";
+            } else {
+                document.getElementById("modal-title").textContent = "Force Release File Lock";
+                document.getElementById("modal-description").textContent =
+                    "Proceeding will force-release this file lock, allowing other team members to acquire it immediately.";
+                document.getElementById("modal-warning").textContent =
+                    "Warning: Force release can interrupt another developer's work. Confirm only if you coordinated with the lock owner.";
+                document.getElementById("confirm-release-btn").textContent = "Confirm Force Release";
+            }
+            releaseModal.show();
+        }
+
+        async function doRelease() {
+            if (!pendingReleasePath || !supabaseClient) {
+                return;
+            }
+            const btn = document.getElementById("confirm-release-btn");
+            btn.disabled = true;
+            try {
+                let query = supabaseClient
+                    .from("file_locks")
+                    .delete()
+                    .eq("file_path", pendingReleasePath);
+
                 if (!IS_ADMIN && SUPABASE_USER) {
-                    query = query.eq('developer_id', SUPABASE_USER);
+                    query = query.eq("developer_id", SUPABASE_USER);
                 }
 
                 const { error } = await query;
-
-                if (error) throw error;
-                RELEASE_MODAL.hide();
-                await refreshData();
+                if (error) {
+                    throw error;
+                }
+                releaseModal.hide();
+                await refreshLocks();
+                if (routeFromHash() === "history") {
+                    resetHistory();
+                }
             } catch (e) {
-                alert('Failed to release lock: ' + (e.message || e));
+                alert("Failed to release lock: " + (e.message || String(e)));
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-lock-open"></i> Release';
-                PENDING_RELEASE_PATH = null;
+                pendingReleasePath = null;
             }
         }
 
-        // =====================================================================
-        // Boot
-        // =====================================================================
-        document.addEventListener('DOMContentLoaded', init);
+        async function syncCurrentView() {
+            await refreshLocks();
+            if (routeFromHash() === "history") {
+                resetHistory();
+            }
+        }
+
+        function wireEvents() {
+            document.getElementById("nav-locks").addEventListener("click", () => navigate("locks"));
+            document.getElementById("nav-history").addEventListener("click", () => navigate("history"));
+            document.getElementById("sync-btn").addEventListener("click", syncCurrentView);
+            document.getElementById("confirm-release-btn").addEventListener("click", doRelease);
+            document.getElementById("history-scroll").addEventListener("scroll", onHistoryScroll);
+            window.addEventListener("hashchange", applyRoute);
+        }
+
+        async function init() {
+            releaseModal = new bootstrap.Modal(document.getElementById("releaseModal"));
+            wireEvents();
+
+            if (!SUPABASE_MODE) {
+                showSetup();
+                return;
+            }
+
+            showMain();
+            applyRoute();
+
+            try {
+                await loadSupabaseClient();
+                await refreshLocks();
+                if (routeFromHash() === "history") {
+                    resetHistory();
+                }
+                subscribeRealtime();
+                setInterval(refreshLocks, 30000);
+            } catch (e) {
+                console.error("Initialization failed", e);
+                showLocksError("Initialization failed. Check configuration.");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
     </script>
 </body>
 </html>

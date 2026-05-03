@@ -1,7 +1,7 @@
 #!/bin/sh
 # Collaborative file lock — pre-push hook
 # Releases all remaining locks for the current developer before push.
-# Also stops the watcher daemon to ensure no orphaned processes.
+# Daemon remains running; this hook only handles lock release.
 
 COLLAB_DIR="$(git rev-parse --show-toplevel)/.collab"
 PYTHON="${COLLAB_DIR}/../.venv/Scripts/python.exe"
@@ -31,8 +31,6 @@ try:
     client = LockClient()
     count = client.release_all()
     print(f'[collab] Released {count} lock(s).')
-    # Stop daemon to prevent orphaned processes
-    client.daemon_stop()
 except Exception as e:
     print(f'[collab] Warning: Lock cleanup failed: {e}', file=sys.stderr)
 " 2>&1

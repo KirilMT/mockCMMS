@@ -416,6 +416,38 @@ class TestValidatePythonBackendPaths:
             "changed_files": [],
         }
 
+    def test_detect_changed_scopes_expands_directory_input(self):
+        """Directory arguments should expand into files and map backend scopes."""
+        result = validate_code.detect_changed_scopes(files=[".collab"])
+        assert result["full_suite"] is False
+        assert ".collab/tests" in result["backend"]
+        assert any(p.startswith(".collab/") for p in result["changed_files"])
+
+
+def test_validate_python_backend_expands_directory_targets(tmp_path, monkeypatch):
+    """Passing a directory should still run backend checks for nested Python files."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir(parents=True, exist_ok=True)
+    (pkg / "mod.py").write_text("x = 1\n", encoding="utf-8")
+
+    commands: list[list[str]] = []
+
+    def _fake_run_command(cmd, desc, **kwargs):
+        commands.append(cmd)
+        return True, ""
+
+    monkeypatch.setattr(validate_code, "run_command", _fake_run_command)
+    _orig_exists = os.path.exists
+    monkeypatch.setattr(
+        validate_code.os.path,
+        "exists",
+        lambda p: True if p == "coverage.xml" else _orig_exists(p),
+    )
+
+    result = validate_code.validate_python_backend(quick=False, files=[str(pkg)])
+    assert result is True
+    assert any(cmd and cmd[0] == "isort" for cmd in commands)
+
 
 class TestValidatePythonBackendEdgeCases:
     """Edge-case tests that need different fixture setup."""

@@ -1,6 +1,7 @@
 #!/bin/sh
 # Collaborative file lock — post-commit hook
-# Releases locks for committed files after a successful commit.
+# Locks are NOT released at commit time; they persist until push.
+# This hook only notifies the developer that locks remain active.
 
 COLLAB_DIR="$(git rev-parse --show-toplevel)/.collab"
 PYTHON="${COLLAB_DIR}/../.venv/Scripts/python.exe"
@@ -11,36 +12,10 @@ if [ ! -x "$PYTHON" ]; then
     PYTHON="python"
 fi
 
-# Get list of files in the last commit
-COMMITTED=$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null)
-if [ -z "$COMMITTED" ]; then
-    exit 0
-fi
-
-echo "[collab] Releasing locks for committed files..."
-export PYTHONUTF8=1
-$PYTHON -c "
-import sys, os
-# Force UTF-8 on Windows (matches pre-commit hook pattern)
-for _s in (sys.stdout, sys.stderr):
-    if hasattr(_s, 'reconfigure'):
-        try: _s.reconfigure(encoding='utf-8', errors='replace')
-        except Exception: pass
-sys.path.insert(0, os.path.join('$COLLAB_DIR', '..'))
-os.chdir('$(git rev-parse --show-toplevel)')
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-    sys.path.insert(0, '$COLLAB_DIR')
-    from core.lock_client import LockClient
-    client = LockClient()
-    files = '''$COMMITTED'''.strip().split('\n')
-    files = [f.strip() for f in files if f.strip()]
-    ok, count, msg = client.release_multiple(files)
-    print(f'[collab] Released {count} lock(s).')
-except Exception as e:
-    print(f'[collab] Warning: Lock release failed: {e}', file=sys.stderr)
-" 2>&1
+# Lock lifecycle note:
+# Locks are NOT released on commit — they persist until the file is pushed
+# and the working tree is clean. The watcher and pre-push hook handle this.
+echo "[collab] Commit detected. Locks remain active until files are pushed."
 
 # Chain to pre-commit framework if installed
 if command -v pre-commit > /dev/null 2>&1; then

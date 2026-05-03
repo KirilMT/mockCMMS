@@ -473,6 +473,55 @@ def _get_changed_files() -> List[str]:
     return sorted(changed)
 
 
+def _expand_input_paths(paths: List[str]) -> List[str]:
+    """Expand and normalize user-provided path arguments.
+
+    Directory arguments are recursively expanded into files so quick mode can
+    correctly scope checks when users pass folders (for example `.collab`).
+    """
+    expanded: set[str] = set()
+    cwd = Path.cwd()
+    ignored_dirnames = {
+        ".git",
+        ".venv",
+        "node_modules",
+        "__pycache__",
+        ".pytest_cache",
+        "htmlcov",
+        "playwright-report",
+    }
+
+    for raw in paths:
+        if not raw:
+            continue
+
+        p = Path(raw)
+        if p.exists() and p.is_dir():
+            for child in p.rglob("*"):
+                if not child.is_file():
+                    continue
+                if any(part in ignored_dirnames for part in child.parts):
+                    continue
+                try:
+                    rel = child.resolve().relative_to(cwd).as_posix()
+                except ValueError:
+                    rel = child.resolve().as_posix()
+                expanded.add(rel)
+            continue
+
+        if p.exists() and p.is_file():
+            try:
+                rel = p.resolve().relative_to(cwd).as_posix()
+            except ValueError:
+                rel = p.resolve().as_posix()
+            expanded.add(rel)
+            continue
+
+        expanded.add(raw.replace("\\", "/"))
+
+    return sorted(expanded)
+
+
 def detect_changed_scopes(files: Optional[List[str]] = None) -> Dict[str, Any]:
     """Analyze git changes and return smart test scopes for --quick mode.
 
@@ -488,9 +537,7 @@ def detect_changed_scopes(files: Optional[List[str]] = None) -> Dict[str, Any]:
       - ``"changed_files"`` (list[str]): List of files analyzed for scope.
     """
     if files is not None:
-        # Use explicitly provided files (e.g. from pre-commit) natively
-        # Normalize to avoid platform separator issues
-        changed = sorted({f.replace("\\", "/") for f in files})
+        changed = _expand_input_paths(files)
     else:
         changed = _get_changed_files()
 
@@ -506,8 +553,8 @@ def detect_changed_scopes(files: Optional[List[str]] = None) -> Dict[str, Any]:
 
     # Any global config/infrastructure change invalidates targeted scope
     for f in changed:
-        basename = f.rsplit("/", 1)[-1]
-        if basename in _FULL_SUITE_FILENAMES:
+        normalized = f.lstrip("./")
+        if "/" not in normalized and normalized in _FULL_SUITE_FILENAMES:
             reason = f"Global config changed ({f!r}) — full suite required."
             return {
                 "full_suite": True,
@@ -565,8 +612,9 @@ def validate_python_backend(
     test_targets = []
 
     if files:
+        expanded_files = _expand_input_paths(files)
         # Avoid hidden files like .gitmessage
-        clean_files = [f for f in files if not Path(f).name.startswith(".")]
+        clean_files = [f for f in expanded_files if not Path(f).name.startswith(".")]
 
         # 1. Python targets
         python_targets = [
@@ -1340,6 +1388,9 @@ Examples:
         # as additional file paths (the script already filters them later).
         # This makes the CLI tolerant to being invoked as: <entry> [files...]
         args.files = list(args.files or []) + list(unknown)
+
+    if args.files:
+        args.files = _expand_input_paths(args.files)
 
     # Determine what to run
     # If no specific category flags are set, run ALL.
