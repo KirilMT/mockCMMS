@@ -11,10 +11,9 @@ and this project adheres to
 
 ## [2.6.0](https://github.com/KirilMT/mockCMMS/compare/v2.5.3...v2.6.0) (2026-05-03)
 
-
 ### ✨ Features
 
-* **collab:** supabase realtime locks ([#102](https://github.com/KirilMT/mockCMMS/issues/102)) ([430200a](https://github.com/KirilMT/mockCMMS/commit/430200ad8ab86ad9874a39d27e88896b1ec30644))
+- **collab:** supabase realtime locks ([#102](https://github.com/KirilMT/mockCMMS/issues/102)) ([430200a](https://github.com/KirilMT/mockCMMS/commit/430200ad8ab86ad9874a39d27e88896b1ec30644))
 
 ## [2.5.3](https://github.com/KirilMT/mockCMMS/compare/v2.5.2...v2.5.3) (2026-03-21)
 
