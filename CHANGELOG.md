@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1](https://github.com/KirilMT/mockCMMS/compare/v2.6.0...v2.6.1) (2026-05-07)
+
+### 📝 Documentation
+
+- **config:** add shell compatibility guidance ([#122](https://github.com/KirilMT/mockCMMS/issues/122)) ([f37b5aa](https://github.com/KirilMT/mockCMMS/commit/f37b5aabe1e969f5ebc39b71b0765d7e364b30ed))
+
 ## [2.6.0](https://github.com/KirilMT/mockCMMS/compare/v2.5.3...v2.6.0) (2026-05-03)
 
 ### ✨ Features
