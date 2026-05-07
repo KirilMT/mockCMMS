@@ -5,6 +5,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
 
     # 1. Stability: Ignore all Major (breaking) version updates (e.g., 1.x.x to
     #   2.x.x).
@@ -13,12 +17,66 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
-    # 2. Clarity: Group low-risk updates into one PR per week.
+    # 2. Robustness: Separate runtime and dev-tool updates.
+    # Runtime updates stay mergeable even when formatter behavior changes.
     groups:
-      patch-and-minor-updates:
+      runtime-patch-and-minor-updates:
         patterns:
           - "*"
-        # Only group minor (1.1 to 1.2) and patch (1.1.1 to 1.1.2) updates
+        exclude-patterns:
+          - "autopep8"
+          - "black"
+          - "isort"
+          - "docformatter"
+          - "ruff"
+          - "flake8"
+          - "pylint"
+          - "mypy"
+          - "pytest"
+          - "pytest-cov"
+          - "pytest-mock"
+          - "pytest-env"
+          - "pytest-testmon"
+          - "diff-cover"
+          - "bandit"
+          - "radon"
+          - "yamllint"
+          - "pre-commit"
+          - "conventional-pre-commit"
+          - "djlint"
+          - "pandas-stubs"
+          - "types-pytz"
+          - "types-requests"
+        # Only group minor (1.1 to 1.2) and patch (1.1.1 to 1.1.2) updates.
+        update-types:
+          - "minor"
+          - "patch"
+
+      dev-tooling-patch-and-minor-updates:
+        patterns:
+          - "autopep8"
+          - "black"
+          - "isort"
+          - "docformatter"
+          - "ruff"
+          - "flake8"
+          - "pylint"
+          - "mypy"
+          - "pytest"
+          - "pytest-cov"
+          - "pytest-mock"
+          - "pytest-env"
+          - "pytest-testmon"
+          - "diff-cover"
+          - "bandit"
+          - "radon"
+          - "yamllint"
+          - "pre-commit"
+          - "conventional-pre-commit"
+          - "djlint"
+          - "pandas-stubs"
+          - "types-pytz"
+          - "types-requests"
         update-types:
           - "minor"
           - "patch"
