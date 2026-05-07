@@ -6,6 +6,46 @@
 
 ---
 
+## CRITICAL ENVIRONMENT RULE - SHELL COMPATIBILITY (Permanent)
+
+Never assume the shell. Detect the active terminal shell first, then use only shell-native syntax for all commands.
+
+Mandatory behavior:
+
+1. At the beginning of every new session, run environment detection for the current shell.
+2. After detection, use only commands compatible with that shell.
+3. Do not mix shell syntaxes in a single command.
+4. If complex logic is needed, write a shell-native script (`.ps1` for PowerShell, `.sh` for bash/zsh).
+5. This rule has highest priority.
+
+PowerShell patterns:
+
+```powershell
+Write-Host "=== ENVIRONMENT DETECTION ===" -ForegroundColor Green
+$PSVersionTable
+Get-Command git
+Get-Content <file> -TotalCount 300
+Get-Content <file> -Tail 50
+(Get-Content <file> | Measure-Object -Line).Lines
+Get-Content <file> | Select-String -Pattern "..."
+```
+
+Bash/zsh patterns:
+
+```bash
+echo "=== ENVIRONMENT DETECTION ==="
+echo "$SHELL"
+git --version
+head -n 300 <file>
+tail -n 50 <file>
+wc -l <file>
+grep -n "..." <file>
+```
+
+Before outputting any terminal command, internally verify it is compatible with the detected shell (or is plain `git`). If unsure, run detection again and use shell-native file-reading/search patterns.
+
+---
+
 ## Project Overview
 
 mockCMMS is a **Computerized Maintenance Management System** — a Flask web app for tracking maintenance orders, assets, and users. It uses a modular monorepo architecture: core CMMS in `src/`, optional apps in `apps/`.
@@ -309,12 +349,13 @@ See `.github/CONTRIBUTING.md` and `.github/GIT_WORKFLOW.md` for full details.
 
 Complex, multi-step workflows are documented as Skills in `.agents/skills/`:
 
-| Skill              | Trigger                                                                |
-| ------------------ | ---------------------------------------------------------------------- |
-| `file-locking`     | Check locks, acquire, edit safely, release — **run before every edit** |
-| `testing-workflow` | Writing tests, debugging coverage, running validation                  |
-| `commit-workflow`  | Staging, reviewing, and committing changes                             |
-| `bug-tracking`     | Discovering, reporting, and fixing bugs                                |
-| `new-feature`      | Scaffolding a new feature or modular app                               |
+| Skill                 | Trigger                                                                |
+| --------------------- | ---------------------------------------------------------------------- |
+| `shell-compatibility` | Mandatory shell detection and shell-native terminal command usage      |
+| `file-locking`        | Check locks, acquire, edit safely, release — **run before every edit** |
+| `testing-workflow`    | Writing tests, debugging coverage, running validation                  |
+| `commit-workflow`     | Staging, reviewing, and committing changes                             |
+| `bug-tracking`        | Discovering, reporting, and fixing bugs                                |
+| `new-feature`         | Scaffolding a new feature or modular app                               |
 
 > **To use a Skill:** Read `.agents/skills/<name>/SKILL.md` before starting the workflow.
