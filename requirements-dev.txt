@@ -22,10 +22,10 @@ flask-cors
 pytest==9.0.3
 pytest-cov==6.3.0
 pytest-mock==3.15.1
-pytest-env==1.1.5
+pytest-env==1.6.0
 pytest-testmon>=2.2.0   # Smart test selection: only re-runs tests affected by code changes
 diff-cover>=9.7.2
-iniconfig==2.1.0
+iniconfig==2.3.0
 pandas-stubs==2.2.3.250527
 pluggy==1.6.0
 types-pytz==2025.2.0.20251108
