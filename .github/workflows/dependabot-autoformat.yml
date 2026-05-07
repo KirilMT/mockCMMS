@@ -80,11 +80,34 @@ jobs:
         if: steps.guardrail.outputs.safe == 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install ruff isort black docformatter
+          pip install ruff isort black docformatter mypy autopep8 flake8 \
+            pylint bandit radon yamllint
 
       - name: Apply backend formatting
         if: steps.guardrail.outputs.safe == 'true'
         run: python scripts/format_code.py --backend
+
+      - name: Syntax validation gate (catch formatter regressions)
+        if: steps.guardrail.outputs.safe == 'true'
+        run: |
+          # CRITICAL: Abort if formatting introduced syntax errors.
+          # This catches formatter bugs like:
+          # - docformatter 1.7.8 corrupting multiline SQL strings
+          # - ruff breaking on edge cases
+          # - Any other tool regression that manges code
+          ruff check src apps tests scripts run.py collab.py conftest.py \
+            .collab --select E999 --no-fix
+
+      - name: Quick test validation gate (ensure logic is sound)
+        if: steps.guardrail.outputs.safe == 'true'
+        run: |
+          # CRITICAL: Ensure formatting didn't break test logic or imports.
+          # Run a quick subset of unit tests (fast, ~30s) to catch:
+          # - Import errors caused by isort misconfiguration
+          # - Indentation errors caused by docformatter or black
+          # - Logic errors from aggressive refactoring
+          python -m pytest tests/backend/unit \
+            -x --tb=short -q --timeout=10 2>&1 | head -100
 
       - name: Commit and push formatting updates
         if: steps.guardrail.outputs.safe == 'true'

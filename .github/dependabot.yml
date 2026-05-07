@@ -5,7 +5,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
@@ -17,13 +17,35 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
-    # 2. Robustness: Separate runtime and dev-tool updates.
-    # Runtime updates stay mergeable even when formatter behavior changes.
+    # 2. Rigorous Robustness: Separate into THREE isolated groups.
+    # This ensures any tool regression is caught in isolation and cannot
+    # drag other updates (runtime, tests, or other tools) with it.
+    #
+    # Rationale:
+    # - Formatter/linter tools (black, ruff, docformatter, isort, etc.) can
+    #   have regressions that corrupt code or introduce syntax errors.
+    # - Isolating them into their own PR means failures don't block runtime
+    #   or test dependency updates.
+    # - Testing tools (pytest, pytest-mock, etc.) are separate from formatters
+    #   so test framework upgrades can proceed independently.
+    # - Runtime dependencies are completely isolated so security/bugfix updates
+    #   merge regardless of tool ecosystem changes.
     groups:
       runtime-patch-and-minor-updates:
         patterns:
           - "*"
         exclude-patterns:
+          # Testing tools (isolated in their own group)
+          - "pytest"
+          - "pytest-cov"
+          - "pytest-mock"
+          - "pytest-env"
+          - "pytest-testmon"
+          - "diff-cover"
+          - "iniconfig"
+          - "pluggy"
+          # Code-quality/formatter/linter/type-checker tools
+          # (isolated in their own group)
           - "autopep8"
           - "black"
           - "isort"
@@ -32,12 +54,6 @@ updates:
           - "flake8"
           - "pylint"
           - "mypy"
-          - "pytest"
-          - "pytest-cov"
-          - "pytest-mock"
-          - "pytest-env"
-          - "pytest-testmon"
-          - "diff-cover"
           - "bandit"
           - "radon"
           - "yamllint"
@@ -52,7 +68,29 @@ updates:
           - "minor"
           - "patch"
 
-      dev-tooling-patch-and-minor-updates:
+      testing-tools-patch-and-minor-updates:
+        # Isolated: pytest and related test infrastructure.
+        # Separate from formatters/linters so test framework upgrades
+        # proceed independently of code-quality tool changes.
+        patterns:
+          - "pytest"
+          - "pytest-cov"
+          - "pytest-mock"
+          - "pytest-env"
+          - "pytest-testmon"
+          - "diff-cover"
+          - "iniconfig"
+          - "pluggy"
+        update-types:
+          - "minor"
+          - "patch"
+
+      code-quality-tools-patch-and-minor-updates:
+        # Isolated: ALL formatters, linters, type-checkers, and code-quality tools.
+        # Any regression in these (e.g., docformatter 1.7.8 corrupting SQL strings,
+        # or ruff breaking on edge cases) is caught here in isolation and does not
+        # block runtime or test updates.
+        # The auto-format workflow validates syntax and tests before committing.
         patterns:
           - "autopep8"
           - "black"
@@ -62,12 +100,6 @@ updates:
           - "flake8"
           - "pylint"
           - "mypy"
-          - "pytest"
-          - "pytest-cov"
-          - "pytest-mock"
-          - "pytest-env"
-          - "pytest-testmon"
-          - "diff-cover"
           - "bandit"
           - "radon"
           - "yamllint"
