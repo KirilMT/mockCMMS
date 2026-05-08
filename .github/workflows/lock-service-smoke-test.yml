@@ -20,10 +20,11 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+          pip install collab
 
       - name: Smoke test — Collab CLI
         run: |
-          python collab.py --help
+          collab --help
         env:
           SUPABASE_URL: "https://dummy.supabase.co"
           SUPABASE_ANON_KEY: "dummy_key"

@@ -99,8 +99,8 @@ jobs:
           # - docformatter 1.7.8 corrupting multiline SQL strings
           # - ruff breaking on edge cases
           # - Any other tool regression that manges code
-          ruff check src apps tests scripts run.py collab.py conftest.py \
-            .collab --select E999 --no-fix
+          ruff check src apps tests scripts run.py conftest.py \
+            --select E999 --no-fix
 
       - name: Quick test validation gate (ensure logic is sound)
         if: steps.guardrail.outputs.safe == 'true'
