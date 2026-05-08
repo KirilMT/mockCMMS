@@ -1,32 +1,46 @@
 #!/usr/bin/env python3
-"""collab.py — CLI Wrapper for the Collaborative File-Locking System.
+"""Compatibility shim that delegates to the installed collab CLI runtime."""
 
-Delegates all commands to .collab/core/lock_client.py.
-"""
+from __future__ import annotations
 
 import os
-import runpy
+import subprocess
 import sys
+from pathlib import Path
+
+
+def _runtime_candidates() -> list[str]:
+    """Return collab executable candidates in resolution order."""
+    repo_root = Path(__file__).resolve().parent
+    if os.name == "nt":
+        return [
+            str(repo_root / ".venv" / "Scripts" / "collab.exe"),
+            str(repo_root / ".venv" / "Scripts" / "collab.cmd"),
+            "collab.exe",
+            "collab.cmd",
+            "collab",
+        ]
+    return [str(repo_root / ".venv" / "bin" / "collab"), "collab"]
+
+
+def _run_runtime(argv: list[str]) -> int:
+    """Run the first available collab executable and return its exit code."""
+    for candidate in _runtime_candidates():
+        try:
+            completed = subprocess.run([candidate, *argv], check=False)
+            return int(completed.returncode)
+        except FileNotFoundError:
+            continue
+
+    print(
+        "[ERROR] Installed collab runtime was not found.\n"
+        "Install it first (for example, in the project venv):\n"
+        "  .\\.venv\\Scripts\\pip.exe install collab\n"
+        "Then retry with: collab --help",
+        file=sys.stderr,
+    )
+    return 127
+
 
 if __name__ == "__main__":
-    _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-    _CLIENT_PATH = os.path.join(_THIS_DIR, ".collab", "core", "lock_client.py")
-
-    if not os.path.exists(_CLIENT_PATH):
-        print(f"[ERROR] Could not find lock client at {_CLIENT_PATH}", file=sys.stderr)
-        sys.exit(1)
-
-    # Re-write sys.argv[0] to pretend we invoked the script directly,
-    # then execute it in the __main__ namespace.
-    sys.argv[0] = _CLIENT_PATH
-    # Historically this wrapper attempted to reconfigure stdout/stderr to the
-    # parent test harness codepage (cp1252) to prevent UnicodeDecodeError when
-    # pytest captured subprocess output on Windows. That approach replaced
-    # non-representable characters (including emoji) and caused confusion for
-    # operators — we avoid mutating global streams here. The daemon/watcher is
-    # started detached and its stdout/stderr are redirected to
-    # `.collab/logs/application.log` and `.collab/logs/errors.log` so pytest
-    # capture should not encounter background-process bytes. Keep the default
-    # system streams untouched.
-
-    runpy.run_path(_CLIENT_PATH, run_name="__main__")
+    raise SystemExit(_run_runtime(sys.argv[1:]))
