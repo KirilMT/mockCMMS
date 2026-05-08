@@ -104,9 +104,9 @@ db.engine.pool.dispose()    # Close checked-out connections
 When testing components that interact with the collaborative file-locking system, you MUST ensure that tests are isolated from the production environment to avoid interfering with the live watcher or Supabase backend.
 
 - **`COLLAB_TEST_MODE=1`**: Disables actual network calls in `atexit`/graceful shutdown handlers.
-- **`COLLAB_PID_FILE`**: Points to a temporary location (`temp_pid` fixture) to avoid overwriting `.collab/.daemon.pid`.
+- **`COLLAB_PID_FILE`**: Points to a temporary location (`temp_pid` fixture) so tests do not touch a shared daemon pid file.
 
-These are handled automatically in `.collab/tests/conftest.py` for all tests under `.collab/tests`. When adding collaborative tests outside that directory, ensure these environment variables are set.
+These are handled automatically by test fixtures where collaborative runtime behavior is validated. When adding collaborative integration tests in this repository, ensure these environment variables are set.
 
 ---
 
@@ -387,7 +387,7 @@ When modifying the Advanced Table component, also provide:
 
 ## 11. Test File Standard
 
-See the canonical `Test File Standard` in the project CONTRIBUTING guide: `.github/CONTRIBUTING.md` → "Test File Standard" section. The standard is repository-wide (applies to `tests/`, `.collab/tests/`, and `apps/<name>/tests/`), so follow the same shim + subfolder approach in the test root you're modifying.
+See the canonical `Test File Standard` in the project CONTRIBUTING guide: `.github/CONTRIBUTING.md` → "Test File Standard" section. The standard is repository-wide (applies to `tests/` and `apps/<name>/tests/`), so follow the same shim + subfolder approach in the test root you're modifying.
 
 - **Safety process:** Make small, reviewable patches. After edits run `python scripts/format_code.py` then `python scripts/validate_code.py --quick` and iterate on any failures before opening a PR.
 
@@ -395,20 +395,20 @@ Implementation notes:
 
 - The recommended folder approach keeps the canonical top-level test file present for CI (satisfies `test_<source>.py` rule) while allowing comfortable, focused modules for daily editing in an IDE.
 - If you prefer a different split threshold, document that in `.github/CONTRIBUTING.md` → "Test File Standard" section, and update the skill accordingly.
-- When creating the package folder under `.collab/tests/unit/<source>/`, adding an empty `__init__.py` is acceptable but not required; ensure your editors/linters handle the new structure.
+- When creating the package folder under `tests/backend/unit/<source>/` (or `apps/<app>/tests/backend/unit/<source>/`), adding an empty `__init__.py` is acceptable but not required; ensure your editors/linters handle the new structure.
 
 ### Helper naming convention
 
 - Test helper modules that are not test files (loaders, shared utilities, fixtures) must be named with a leading underscore and MUST NOT start with `test_` (example: `_helpers.py`). This prevents accidental pytest collection of helper modules.
 - Test files must begin with `test_`. When splitting a large canonical file into topic modules, use the `test_<source>_<topic>.py` pattern so intent is explicit and pytest collection remains predictable.
-- Keep loader/fixture modules next to the test files (for example `.collab/tests/unit/<source>/_helpers.py`) and prefer placing reusable fixtures in the test root `conftest.py`.
+- Keep loader/fixture modules next to the test files (for example `tests/backend/unit/<source>/_helpers.py`) and prefer placing reusable fixtures in the test root `conftest.py`.
 
 Example shim (no-op canonical file):
 
 ```
-# .collab/tests/unit/test_lock_client.py
-# Canonical shim — actual tests are split under .collab/tests/unit/lock_client/
-"""See .collab/tests/unit/lock_client/ for topic-focused test modules."""
+# tests/backend/unit/test_db_utils.py
+# Canonical shim — actual tests are split under tests/backend/unit/db_utils/
+"""See tests/backend/unit/db_utils/ for topic-focused test modules."""
 
 ```
 

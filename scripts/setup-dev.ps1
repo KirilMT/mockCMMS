@@ -478,6 +478,20 @@ else {
             if ($collabVersionLine) {
                 Write-Host "   Runtime probe: $collabVersionLine" -ForegroundColor Gray
             }
+            # Validate runtime package contents to detect ambiguous PyPI packages named 'collab'.
+            $venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
+            if (Test-Path $venvPython) {
+                $validateCmd = "$venvPython -c \"import importlib; importlib.import_module('collab.core')\""
+                $validateOut = cmd /c $validateCmd 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "   WARNING: 'collab' package installed but runtime validation failed." -ForegroundColor Yellow
+                    Write-Host "   Validation output: $validateOut" -ForegroundColor Gray
+                    Write-Host "   It looks like an unrelated PyPI package named 'collab' is present in the venv." -ForegroundColor Yellow
+                    Write-Host "   Action: set `COLLAB_RUNTIME_SPEC` to your approved runtime package and run `scripts/setup-dev.ps1` to install it into the venv." -ForegroundColor Yellow
+                    Write-Host "   Example (PowerShell):`n     `$env:COLLAB_RUNTIME_SPEC='your-org-collab==1.0.0'`n     .\\scripts\\setup-dev.ps1" -ForegroundColor Gray
+                    $script:ErrorCount++
+                }
+            }
         }
         else {
             Write-Host "   Runtime package installed but 'collab' command is unavailable in this shell." -ForegroundColor Yellow

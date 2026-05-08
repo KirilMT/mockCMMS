@@ -412,7 +412,7 @@ python scripts/generate_tests.py src/services/module.py --force
 
 - `src/`, `scripts/`, and root-level `.py` -> `tests/backend/<category>/`
 - `apps/<name>/src/` and app-local Python files -> `apps/<name>/tests/backend/<category>/`
-- `.collab/` -> `.collab/tests/<category>/`
+- Legacy `.collab/` paths -> `tests/backend/<category>/` (in-repo `.collab` test trees were removed in Phase 4)
 
 Use `--category` to override when needed.
 

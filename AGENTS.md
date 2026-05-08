@@ -312,8 +312,8 @@ See **Skill: `file-locking`** for the complete workflow and CLI reference.
 
 When working with long-running background tasks, specifically the collaborative daemon, observe these rules:
 
-- **Daemon Startup Handshake:** Always wait for the PID polling to complete. `daemon-start` may report success only after the child writes its metadata to `.collab/.daemon.pid`.
-- **PID Source of Truth:** Never trust `proc.pid` from `subprocess.Popen` for the collab daemon on Windows. Use `LockClient._read_pid()` (or manually parse the `.collab/.daemon.pid` JSON) to find the real child process.
+- **Daemon Startup Handshake:** Always wait for PID polling to complete. `daemon-start` may report success only after the child writes its metadata to the configured pid file (`COLLAB_PID_FILE` when set).
+- **PID Source of Truth:** Never trust `proc.pid` from `subprocess.Popen` for the collab daemon on Windows. Use `LockClient._read_pid()` (or parse the configured pid metadata file) to find the real child process.
 - **Verification:** Always run `python scripts/validate_code.py` (Full Mode) before pushing or finishing a major task to ensure global repository health.
 
 ### File Safety

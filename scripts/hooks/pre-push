@@ -64,6 +64,49 @@ if [ -z "$COLLAB_BIN" ]; then
     exit 0
 fi
 
+# Validate collab runtime to detect ambiguous / wrong packages (name collisions).
+validate_collab_runtime() {
+    PY_EXEC=""
+    if [ -x "$PROJECT_ROOT/.venv/Scripts/python.exe" ]; then
+        PY_EXEC="$PROJECT_ROOT/.venv/Scripts/python.exe"
+    elif [ -x "$PROJECT_ROOT/.venv/bin/python" ]; then
+        PY_EXEC="$PROJECT_ROOT/.venv/bin/python"
+    else
+        PY_EXEC="$(command -v python 2>/dev/null || true)"
+    fi
+
+    if [ -z "$PY_EXEC" ]; then
+        echo "[collab] Warning: Python not available to validate collab runtime; proceeding without runtime validation." >&2
+        return 0
+    fi
+
+    VALID_OUT="$($PY_EXEC - <<PYCODE 2>&1
+import sys, importlib
+try:
+    importlib.import_module('collab.core')
+except Exception as e:
+    sys.stderr.write(str(e))
+    sys.exit(2)
+sys.exit(0)
+PYCODE
+)"
+    PY_EXIT=$?
+    if [ $PY_EXIT -ne 0 ]; then
+        echo "[collab] Runtime validation failed: $VALID_OUT" >&2
+        echo "[collab] It appears an unrelated package named 'collab' is installed or the runtime is incomplete." >&2
+        echo "[collab] Action: set \`COLLAB_RUNTIME_SPEC\` to your approved runtime package and run \`scripts/setup-dev.ps1\` to install it into the project venv." >&2
+        echo "[collab] Example (PowerShell):`n  `$env:COLLAB_RUNTIME_SPEC='your-org-collab==1.0.0'`n  .\\scripts\\setup-dev.ps1" >&2
+        if [ "$LOCK_STRICT" = "1" ]; then
+            echo "[collab] LOCK_STRICT=1 -> blocking push." >&2
+            exit 1
+        fi
+        return 1
+    fi
+    return 0
+}
+
+validate_collab_runtime || true
+
 echo "[collab] Releasing all locks after successful pre-push validation..."
 OUT="$($COLLAB_BIN release-all 2>&1)"
 CODE=$?

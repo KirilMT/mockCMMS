@@ -229,18 +229,7 @@ temp_diff_output.txt
 
 # isort temporary files
 *.py.isorted
-
-# Collab locking runtime files
-.collab/.daemon.pid
-.collab/.daemon.log
-.collab/.pycharm_watcher.pid
-.collab/.pycharm_watcher.log
-.collab/.startup_summary.json
-.collab/.shutdown_complete
-.collab/.stop_request
-.collab/.vscode_heartbeat
-.collab/vscode/package-lock.json
-# Collab runtime logs: exclude to avoid large diffs and editor performance issues
+ # Collab locking runtime files removed (Phase 4 strict)
+ # In-repo collab sources were removed as part of Phase 4; installed runtime may still create .collab artifacts.
+ # Keep runtime log folder ignored if the installed runtime creates it locally.
 .collab/logs/
-.collab/logs/*.log
-.collab/logs/**/ 
