@@ -67,8 +67,8 @@ Check what's uncovered:
 
 ```bash
 # Backend (comprehensive — all Python sources)
-pytest --cov=src --cov=apps --cov=scripts --cov=.collab \
-  --cov=run.py --cov=collab.py --cov=conftest.py \
+pytest --cov=src --cov=apps --cov=scripts \
+    --cov=run.py --cov=conftest.py \
   --cov-report=term-missing tests/backend
 
 # Frontend
@@ -222,7 +222,7 @@ const instance = new MyClass();
 
 **80% is the absolute floor.** 79.9% = FAILURE. Fix by adding tests, never by lowering config.
 
-**All-Python-Files Policy:** Every `.py` file must be covered — `src/`, `apps/`, `tests/`, `scripts/`, `.collab/`, `run.py`, `collab.py`, `conftest.py`. No exclusions.
+**All-Python-Files Policy:** Every `.py` file in default app validation scope must be covered — `src/`, `apps/`, `tests/`, `scripts/`, `run.py`, `conftest.py`. No exclusions.
 
 ### Coverage Improvement Strategy
 

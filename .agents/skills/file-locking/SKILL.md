@@ -20,7 +20,7 @@ description: Use BEFORE any file modification. Check locks, edit safely with aut
 
 ## Why This Matters
 
-This repository uses a **collaborative file locking system** (`.collab/`) to prevent merge conflicts when multiple developers or AI agents work simultaneously. Editing a file that another developer has locked will cause conflicts.
+This repository uses an installed **collab** file-locking runtime to prevent merge conflicts when multiple developers or AI agents work simultaneously. Editing a file that another developer has locked will cause conflicts.
 
 **Rule: Never edit a file without verifying it is either unlocked or already locked by the current developer (the dev using this AI agent).**
 
@@ -46,13 +46,13 @@ For AI agents, lock checks are mandatory before any file-modifying action. Dev w
 Check all active locks at once:
 
 ```bash
-python collab.py active
+collab active
 ```
 
 Optional targeted check:
 
 ```bash
-python collab.py status path/to/file.py
+collab status path/to/file.py
 ```
 
 Cross-reference the active lock list against your planned file list.
@@ -97,7 +97,7 @@ Make your changes. In normal workflows, lock acquisition and release are automat
 
 ```bash
 # List everything currently locked
-python collab.py active
+collab active
 ```
 
 ---
@@ -105,7 +105,7 @@ python collab.py active
 ## Checklist (for AI agents)
 
 - [ ] Listed all files the task will touch
-- [ ] Ran `python collab.py active` (or targeted `python collab.py status <file>`) before file-modifying work
+- [ ] Ran `collab active` (or targeted `collab status <file>`) before file-modifying work
 - [ ] Verified no target file is locked by another developer
 - [ ] Applied edits only when files were unlocked or already locked by the current developer
 - [ ] Did not run force-release on another developer's lock (forbidden)

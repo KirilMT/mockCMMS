@@ -89,6 +89,20 @@ This script automates the installation of:
 - **Python (venv):** `pytest`, `ruff`, `black`, `mypy`, `pylint`, `docformatter`
 - **JavaScript (npm):** `jest`, `playwright`, `eslint`, `prettier`, `stylelint`
 
+It also provisions the installed collab runtime used by lock workflows.
+Set `COLLAB_RUNTIME_SPEC` to your approved runtime package/version before running setup-dev.
+
+Common lock commands:
+
+```bash
+collab active
+collab status path/to/file.py
+collab daemon-start
+collab dashboard
+```
+
+Phase 4 migration notes: [collab runtime migration notes](docs/collab_runtime_migration_notes.md).
+
 See [Development Cheat Sheet](#-development-cheat-sheet) for common commands.
 
 ## ⚙️ Configuration

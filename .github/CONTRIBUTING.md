@@ -438,14 +438,14 @@ python scripts/validate_code.py --quick
 
 ## Collaborative File Locking
 
-This repository uses a file locking system (`.collab/`) to prevent merge conflicts when multiple contributors work concurrently.
+This repository uses an installed `collab` file-locking runtime to prevent merge conflicts when multiple contributors work concurrently.
 
 ### Workflow (devs and AI agents)
 
 1. **Identify all files** your task may modify before you start.
 2. **Check locks:**
-   Run `python collab.py active` before edits.
-   Optional targeted check: `python collab.py status path/to/file.py`.
+   Run `collab active` before edits.
+   Optional targeted check: `collab status path/to/file.py`.
    For devs, the watcher/IDE also detects conflicts automatically when a locked file is opened and shows a warning notification popup.
    For AI agents, explicit lock checks are mandatory before edits (AI agents do not see popup notifications).
 
@@ -458,7 +458,7 @@ This repository uses a file locking system (`.collab/`) to prevent merge conflic
 >
 > For AI agents this is forbidden under all circumstances.
 
-See `.collab/README.md` for lock-system setup and CLI reference.
+See [docs/collab runtime migration notes](../docs/collab_runtime_migration_notes.md) for setup and CLI migration details.
 
 ---
 
