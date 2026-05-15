@@ -101,8 +101,6 @@ collab daemon-start
 collab dashboard
 ```
 
-Phase 4 migration notes: [collab runtime migration notes](docs/collab_runtime_migration_notes.md).
-
 See [Development Cheat Sheet](#-development-cheat-sheet) for common commands.
 
 ## ⚙️ Configuration

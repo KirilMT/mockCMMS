@@ -457,8 +457,6 @@ This repository uses an installed `collab` file-locking runtime to prevent merge
 >
 > For AI agents this is forbidden under all circumstances.
 
-See [docs/collab runtime migration notes](../docs/collab_runtime_migration_notes.md) for setup and CLI migration details.
-
 ---
 
 ## Contribution Process
