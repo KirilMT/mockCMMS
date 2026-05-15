@@ -146,6 +146,7 @@ apps/reporting/config/config.json
 # IDE specific files
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
