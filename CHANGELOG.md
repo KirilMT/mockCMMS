@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0](https://github.com/KirilMT/mockCMMS/compare/v2.6.2...v2.7.0) (2026-05-15)
+
+
+### ✨ Features
+
+* **phase4:** remove in-repo collab, decouple app validation ([#136](https://github.com/KirilMT/mockCMMS/issues/136)) ([6c18fcc](https://github.com/KirilMT/mockCMMS/commit/6c18fccd363249c9c2c817685ebabf505fa58e55))
+
 ## [2.6.2](https://github.com/KirilMT/mockCMMS/compare/v2.6.1...v2.6.2) (2026-05-12)
 
 ### 🐛 Bug Fixes
