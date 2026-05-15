@@ -449,104 +449,129 @@ if ($null -eq $supabaseVersion) { $supabaseVersion = "" }
 if ($postSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $postSupabaseVersion }
 elseif ($preSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $preSupabaseVersion }
 
-# Ensure installed collab runtime is available for hooks/watcher workflows.
-# Behavior:
-# 1. Prefer explicit environment variable `COLLAB_RUNTIME_SPEC` (pip spec or VCS URL).
-# 2. If unset, prefer a local collab repo referenced by `COLLAB_LOCAL_PATH` or by detecting
-#    a sibling `../collab` or `./collab` directory (editable install used for local development).
-# 3. Optionally, repository maintainers may set `$defaultCollabGitSpec` below to a GitHub VCS
-#    spec so fresh clones install the approved runtime automatically.
+# ---------------------------------------------------------------------------
+# Phase 4.5 — Collab runtime provisioning
+# ---------------------------------------------------------------------------
+# Spec resolution precedence:
+#   1. $env:COLLAB_RUNTIME_SPEC overrides the pip spec entirely (pin/VCS/etc.)
+#   2. $env:COLLAB_LOCAL_PATH or sibling ../collab → editable install (dev mode)
+#   3. Otherwise default to canonical PyPI pin (DEFAULT_COLLAB_PIN below)
+#
+# $env:COLLAB_PKG_INDEX, when set, is added as --index-url to pip install
+# (with public PyPI as --extra-index-url) for private/test registry use.
+
+$DEFAULT_COLLAB_PIN = "collab-runtime==0.2.9"
 
 $collabRuntimeSpec = $env:COLLAB_RUNTIME_SPEC
 $collabLocalPath = $env:COLLAB_LOCAL_PATH
-# Optional: set to a VCS or wheel spec to enable automatic installs for fresh clones.
-$defaultCollabGitSpec = $null  # e.g. 'git+https://github.com/your-org/collab.git@main#egg=collab'
+$collabPkgIndex = $env:COLLAB_PKG_INDEX
 
-Write-Host "`n   Ensuring installed collab runtime is available..." -ForegroundColor Yellow
+Write-Host "`n   Provisioning collab runtime (Phase 4.5)..." -ForegroundColor Yellow
 
-# If no explicit runtime spec provided, attempt to locate a local collab repository
-if (-not $collabRuntimeSpec) {
-    if (-not $collabLocalPath) {
-        $candidates = @(
-            (Join-Path $projectRoot '..\collab'),
-            (Join-Path $projectRoot 'collab')
-        )
-        foreach ($cand in $candidates) {
-            if (Test-Path $cand) { $collabLocalPath = (Resolve-Path $cand).Path; break }
-        }
-    }
-
-    if ($collabLocalPath) {
-        Write-Host "   Found local collab repository at: $collabLocalPath" -ForegroundColor Gray
-    }
-    elseif ($defaultCollabGitSpec) {
-        Write-Host "   No local collab repo found; falling back to repository default spec." -ForegroundColor Gray
-        $collabRuntimeSpec = $defaultCollabGitSpec
-    }
-    else {
-        Write-Host "   COLLAB: COLLAB_RUNTIME_SPEC is not configured and no local collab repo was found." -ForegroundColor Yellow
-        Write-Host "   Action: set COLLAB_RUNTIME_SPEC (e.g. git+https://github.com/<org>/collab.git@main#egg=collab) or set COLLAB_LOCAL_PATH to a local repo path." -ForegroundColor Yellow
-        Write-Host "   For local development, clone the 'collab' repo next to this repo and re-run setup." -ForegroundColor Gray
-        $script:ErrorCount++
+# Auto-detect sibling collab repo when no explicit spec or local path provided
+if (-not $collabRuntimeSpec -and -not $collabLocalPath) {
+    $candidates = @(
+        (Join-Path $projectRoot '..\collab'),
+        (Join-Path $projectRoot 'collab')
+    )
+    foreach ($cand in $candidates) {
+        if (Test-Path $cand) { $collabLocalPath = (Resolve-Path $cand).Path; break }
     }
 }
 
-if ($collabRuntimeSpec -or $collabLocalPath) {
-    Write-Host "   Preparing to install collab runtime..." -ForegroundColor Gray
+# Final fallback: canonical pinned PyPI spec
+if (-not $collabRuntimeSpec -and -not $collabLocalPath) {
+    $collabRuntimeSpec = $DEFAULT_COLLAB_PIN
+    Write-Host "   Using default canonical spec: $collabRuntimeSpec" -ForegroundColor Gray
+}
+elseif ($collabLocalPath) {
+    Write-Host "   Using local collab repo (editable install): $collabLocalPath" -ForegroundColor Gray
+}
+else {
+    Write-Host "   Using COLLAB_RUNTIME_SPEC override: $collabRuntimeSpec" -ForegroundColor Gray
+}
 
-    # If an existing 'collab' package exists in the venv, remove it first to avoid name collisions
-    $existingShow = & $pipPath show collab 2>&1
-    if ($LASTEXITCODE -eq 0 -and $existingShow) {
-        Write-Host "   Found existing 'collab' in venv, uninstalling to avoid collisions..." -ForegroundColor Yellow
-        & $pipPath uninstall collab -y 2>&1 | Out-Null
-    }
+# Always uninstall any conflicting public 'collab' package before install.
+# pip install collab resolves to an unrelated public PyPI package that does
+# NOT ship the canonical collab CLI — Phase 4.5 §"Integration checklist" calls
+# this collision out explicitly. Uninstalling first guarantees the next pip
+# install resolves only against collab-runtime (the canonical distribution).
+$existingShow = & $pipPath show collab 2>&1
+if ($LASTEXITCODE -eq 0 -and $existingShow) {
+    Write-Host "   Removing conflicting public 'collab' package..." -ForegroundColor Yellow
+    & $pipPath uninstall collab -y 2>&1 | Out-Null
+}
 
-    if ($collabLocalPath) {
-        Write-Host "   Installing collab (editable) from local path: $collabLocalPath" -ForegroundColor Gray
-        $collabInstallOutput = & $pipPath install --upgrade -e $collabLocalPath 2>&1
-        $installExit = $LASTEXITCODE
+# Build pip args (private index handling)
+$pipExtraArgs = @()
+if ($collabPkgIndex) {
+    $pipExtraArgs += @("--index-url", $collabPkgIndex,
+        "--extra-index-url", "https://pypi.org/simple")
+    Write-Host "   Using private package index: $collabPkgIndex" -ForegroundColor Gray
+    Write-Host "   (PyPI added as --extra-index-url fallback)" -ForegroundColor Gray
+}
+
+# Install
+if ($collabLocalPath) {
+    $collabInstallOutput = & $pipPath install --upgrade -e $collabLocalPath 2>&1
+}
+else {
+    $collabInstallOutput = & $pipPath install --upgrade `
+        --upgrade-strategy only-if-needed `
+        @pipExtraArgs $collabRuntimeSpec 2>&1
+}
+$installExit = $LASTEXITCODE
+
+if ($installExit -ne 0) {
+    Write-Host "   Collab runtime install " -NoNewline -ForegroundColor White
+    Write-Host "FAILED" -ForegroundColor Red
+    Write-Host "   Tried: $(if ($collabLocalPath) { $collabLocalPath } else { $collabRuntimeSpec })" -ForegroundColor Gray
+    Write-Host "   Output:" -ForegroundColor Gray
+    Write-Host $collabInstallOutput -ForegroundColor Gray
+    Write-Host "   Remediation:" -ForegroundColor Yellow
+    Write-Host "     - Set `$env:COLLAB_RUNTIME_SPEC to a known-good spec, OR" -ForegroundColor Gray
+    Write-Host "     - Set `$env:COLLAB_PKG_INDEX to your private registry URL, OR" -ForegroundColor Gray
+    Write-Host "     - Set `$env:COLLAB_LOCAL_PATH to a local 'collab' repo path" -ForegroundColor Gray
+    $script:ErrorCount++
+}
+else {
+    # Verify installed runtime via canonical 'collab-runtime' distribution
+    # metadata. An unrelated PyPI 'collab' package will NOT own this metadata,
+    # so PackageNotFoundError reliably distinguishes the right runtime from a
+    # name collision (mirrors the validation in scripts/hooks/{pre-commit,pre-push}).
+    # PackageNotFoundError → non-zero exit, surfaced as a name collision below.
+    $venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
+    $verifyScript = "from importlib.metadata import version; print(version('collab-runtime'))"
+    if (Test-Path $venvPython) {
+        $verifyOut = & $venvPython -c $verifyScript 2>&1
+        $verifyExit = $LASTEXITCODE
     }
     else {
-        Write-Host "   Installing runtime package: $collabRuntimeSpec" -ForegroundColor Gray
-        $collabInstallOutput = & $pipPath install --upgrade --upgrade-strategy only-if-needed $collabRuntimeSpec 2>&1
-        $installExit = $LASTEXITCODE
+        $verifyOut = ""
+        $verifyExit = -1
     }
 
-    if ($installExit -ne 0) {
-        Write-Host "   Collab runtime install " -NoNewline -ForegroundColor White
-        Write-Host "FAILED" -ForegroundColor Red
-        Write-Host "   Tried spec/path:" -ForegroundColor Gray
-        if ($collabLocalPath) { Write-Host "   $collabLocalPath" -ForegroundColor Gray } else { Write-Host "   $collabRuntimeSpec" -ForegroundColor Gray }
-        Write-Host "   Install output:" -ForegroundColor Gray
-        Write-Host $collabInstallOutput -ForegroundColor Gray
+    $collabCmd = Get-Command collab -ErrorAction SilentlyContinue
+    if ($verifyExit -eq 0 -and $collabCmd) {
+        Write-Host "   Installed collab runtime " -NoNewline -ForegroundColor White
+        Write-Host "OK" -ForegroundColor Green
+        Write-Host "   collab-runtime version: $($verifyOut.Trim())" -ForegroundColor Gray
+        $collabVersionLine = (& collab --help 2>&1 | Select-Object -First 1)
+        if ($collabVersionLine) {
+            Write-Host "   CLI probe: $collabVersionLine" -ForegroundColor Gray
+        }
+    }
+    elseif ($verifyExit -ne 0) {
+        Write-Host "   WARNING: 'collab' command may exist but 'collab-runtime' metadata is missing." -ForegroundColor Yellow
+        Write-Host "   This usually means an unrelated public PyPI 'collab' package is installed." -ForegroundColor Yellow
+        Write-Host "   Verification output: $verifyOut" -ForegroundColor Gray
+        Write-Host "   Action: set `$env:COLLAB_RUNTIME_SPEC to the canonical spec (e.g. $DEFAULT_COLLAB_PIN) and re-run setup." -ForegroundColor Yellow
         $script:ErrorCount++
     }
     else {
-        $collabCmd = Get-Command collab -ErrorAction SilentlyContinue
-        if ($collabCmd) {
-            $collabVersionLine = (& collab --help 2>&1 | Select-Object -First 1)
-            Write-Host "   Installed collab runtime " -NoNewline -ForegroundColor White
-            Write-Host "OK" -ForegroundColor Green
-            if ($collabVersionLine) { Write-Host "   Runtime probe: $collabVersionLine" -ForegroundColor Gray }
-
-            # Validate runtime package contents to detect ambiguous PyPI packages named 'collab'.
-            $venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
-            if (Test-Path $venvPython) {
-                $validateOut = & $venvPython -c "import importlib; importlib.import_module('collab.core')" 2>&1
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Host "   WARNING: 'collab' package installed but runtime validation failed." -ForegroundColor Yellow
-                    Write-Host "   Validation output: $validateOut" -ForegroundColor Gray
-                    Write-Host "   It looks like an unrelated PyPI package named 'collab' may be present in the venv." -ForegroundColor Yellow
-                    Write-Host "   Action: set `COLLAB_RUNTIME_SPEC` to your approved runtime package or point `COLLAB_LOCAL_PATH` to the local collab repo and re-run setup." -ForegroundColor Yellow
-                    $script:ErrorCount++
-                }
-            }
-        }
-        else {
-            Write-Host "   Runtime package installed but 'collab' command is unavailable in this shell." -ForegroundColor Yellow
-            Write-Host "   Action: activate venv and verify with 'collab --help'." -ForegroundColor Yellow
-            $script:ErrorCount++
-        }
+        Write-Host "   Runtime package installed but 'collab' CLI not on PATH in this shell." -ForegroundColor Yellow
+        Write-Host "   Action: activate the venv and verify with 'collab --help'." -ForegroundColor Yellow
+        $script:ErrorCount++
     }
 }
 
@@ -905,7 +930,57 @@ elseif (Test-Path (Join-Path $projectRoot ".idea")) {
 switch ($detectedIDE) {
     "vscode" {
         Write-Host "     - VS Code / Antigravity detected" -ForegroundColor Gray
-        Write-Host "     - Install extension from Marketplace: mockcmms-team.collab-file-locks" -ForegroundColor Gray
+
+        # ---------------------------------------------------------------
+        # Phase 4.5 — auto-install collab-file-locks .vsix from GitHub
+        # Releases (KirilMT/collab). The extension is NOT distributed via
+        # the VS Code Marketplace; the canonical artifact is the latest
+        # release's .vsix asset.
+        # ---------------------------------------------------------------
+        $codeCmd = Get-Command code -ErrorAction SilentlyContinue
+        if (-not $codeCmd) {
+            Write-Host "     - 'code' CLI not found on PATH; skipping auto-install." -ForegroundColor Yellow
+            Write-Host "     - To install manually: download .vsix from" -ForegroundColor Gray
+            Write-Host "       https://github.com/KirilMT/collab/releases/latest" -ForegroundColor Gray
+            Write-Host "       then run: code --install-extension <path-to-vsix>" -ForegroundColor Gray
+        }
+        else {
+            Write-Host "     - Fetching latest collab-file-locks .vsix from GitHub Releases..." -ForegroundColor Gray
+            try {
+                $releaseUri = "https://api.github.com/repos/KirilMT/collab/releases/latest"
+                # GitHub API requires a User-Agent header
+                $releaseInfo = Invoke-RestMethod -Uri $releaseUri `
+                    -Headers @{ "User-Agent" = "mockCMMS-setup-dev" } `
+                    -ErrorAction Stop
+                $vsixAsset = $releaseInfo.assets | Where-Object { $_.name -like "*.vsix" } | Select-Object -First 1
+                if (-not $vsixAsset) {
+                    Write-Host "     - No .vsix asset found on release $($releaseInfo.tag_name); skipping." -ForegroundColor Yellow
+                }
+                else {
+                    $vsixDest = Join-Path $env:TEMP $vsixAsset.name
+                    Write-Host "     - Downloading $($vsixAsset.name) ($($releaseInfo.tag_name))..." -ForegroundColor Gray
+                    Invoke-WebRequest -Uri $vsixAsset.browser_download_url `
+                        -OutFile $vsixDest `
+                        -Headers @{ "User-Agent" = "mockCMMS-setup-dev" } `
+                        -ErrorAction Stop
+                    $installResult = & code --install-extension $vsixDest --force 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Host "     - Installed extension " -NoNewline -ForegroundColor White
+                        Write-Host "OK" -ForegroundColor Green
+                        Write-Host "       ($($vsixAsset.name))" -ForegroundColor Gray
+                    }
+                    else {
+                        Write-Host "     - code --install-extension failed (non-fatal):" -ForegroundColor Yellow
+                        Write-Host "       $installResult" -ForegroundColor Gray
+                    }
+                    Remove-Item $vsixDest -Force -ErrorAction SilentlyContinue
+                }
+            }
+            catch {
+                Write-Host "     - Could not auto-install extension (non-fatal): $_" -ForegroundColor Yellow
+                Write-Host "     - Manual install: https://github.com/KirilMT/collab/releases/latest" -ForegroundColor Gray
+            }
+        }
     }
     "jetbrains" {
         Write-Host "     - PyCharm/IntelliJ detected" -ForegroundColor Gray
@@ -943,9 +1018,10 @@ Write-Host ""
 
 switch ($detectedIDE) {
     "vscode" {
-        Write-Host "  1. Install the Collab Locks extension in VS Code:" -ForegroundColor White
-        Write-Host "     Press F1 > 'Extensions: Install Extensions'" -ForegroundColor Magenta
-        Write-Host "     Install extension ID: mockcmms-team.collab-file-locks" -ForegroundColor Magenta
+        Write-Host "  1. Collab Locks extension:" -ForegroundColor White
+        Write-Host "     Auto-installed above from KirilMT/collab GitHub Releases" -ForegroundColor Magenta
+        Write-Host "     If auto-install was skipped, download .vsix from:" -ForegroundColor Gray
+        Write-Host "       https://github.com/KirilMT/collab/releases/latest" -ForegroundColor Gray
         Write-Host "     The extension auto-starts on open and shows lock status" -ForegroundColor Gray
         Write-Host "     in the status bar." -ForegroundColor Gray
     }
