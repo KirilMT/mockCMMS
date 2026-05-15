@@ -80,10 +80,18 @@ validate_collab_runtime() {
         return 0
     fi
 
+    # Verify the canonical 'collab-runtime' distribution is installed.
+    # An unrelated PyPI package named 'collab' will not provide this metadata,
+    # so PackageNotFoundError reliably distinguishes the right runtime from a
+    # name-collision install.
     VALID_OUT="$($PY_EXEC - <<PYCODE 2>&1
-import sys, importlib
+import sys
 try:
-    importlib.import_module('collab.core')
+    from importlib.metadata import version, PackageNotFoundError
+    version('collab-runtime')
+except PackageNotFoundError as e:
+    sys.stderr.write(f"collab-runtime not installed: {e}")
+    sys.exit(2)
 except Exception as e:
     sys.stderr.write(str(e))
     sys.exit(2)
