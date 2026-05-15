@@ -21,19 +21,26 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Install collab runtime
-        # Install the canonical 'collab-runtime' distribution. Override
-        # COLLAB_RUNTIME_SPEC at the repo/org level (variable or secret) to
-        # pin a version, point at a private index, or use a VCS spec.
+      - name: Install collab runtime (Phase 4.5 pinned spec)
+        # Install the canonical 'collab-runtime' distribution. Default pin
+        # is 'collab-runtime==0.2.9' (latest published as of Phase 4.5
+        # adoption). Override COLLAB_RUNTIME_SPEC at the repo/org level
+        # (variable or secret) to pin a different version, point at a
+        # private index, or use a VCS spec.
+        #
         # NEVER install the bare 'collab' name — that resolves to an
-        # unrelated public PyPI package and is the exact name-collision
-        # the migration plan §4.5 was designed to prevent.
+        # unrelated public PyPI package and is the exact name collision
+        # the migration plan §4.5 was designed to prevent. We defensively
+        # uninstall any 'collab' package before installing the canonical
+        # distribution so a transient collision in the runner image cannot
+        # poison the install.
         env:
           COLLAB_RUNTIME_SPEC: >-
-            ${{ vars.COLLAB_RUNTIME_SPEC || 'collab-runtime' }}
+            ${{ vars.COLLAB_RUNTIME_SPEC || 'collab-runtime==0.2.9' }}
           COLLAB_PIP_INDEX_ARGS: >-
             ${{ vars.COLLAB_PIP_INDEX_ARGS || '' }}
         run: |
+          pip uninstall collab -y 2>/dev/null || true
           pip install ${COLLAB_PIP_INDEX_ARGS} "${COLLAB_RUNTIME_SPEC}"
 
       - name: Verify canonical collab-runtime is installed
@@ -52,6 +59,22 @@ jobs:
                   "with public 'collab'. Set COLLAB_RUNTIME_SPEC."
               )
           print(f"collab-runtime {v} installed")
+          PY
+
+      - name: Smoke test — collab Python import surface
+        # Verify the actual exported import surface: 'collab' (top-level
+        # shim) and 'collab.lock_client' (canonical CLI entrypoint module).
+        # These resolve via collab/__init__.py's __path__ injection in the
+        # upstream package; they're the real consumer-facing imports.
+        # NOTE: 'collab.core' is NOT verified here — it's a TODO in the
+        # upstream collab repo's MIGRATION_PLAN.md that has never shipped.
+        run: |
+          python - <<'PY'
+          import collab
+          import collab.lock_client
+          ver = getattr(collab, '__version__', 'n/a')
+          print(f"import collab OK (version: {ver})")
+          print(f"import collab.lock_client OK ({collab.lock_client.__file__})")
           PY
 
       - name: Smoke test — Collab CLI
