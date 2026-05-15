@@ -324,10 +324,8 @@ class CodeFormatter:
                 "tests",
                 "scripts",
                 "run.py",
-                "collab.py",
                 "conftest.py",
                 "apps",
-                ".collab",
             ],
         )
         if not targets:
@@ -434,8 +432,6 @@ class CodeFormatter:
                 "tests/**/*.js",
                 "src/static/css/**/*.css",
                 "apps/**/*.css",
-                ".collab/**/*.js",
-                ".collab/**/*.css",
             ]
         )
 
@@ -473,8 +469,6 @@ class CodeFormatter:
                     "apps/**/*.md",
                     "*.json",
                     ".github/**/*.md",
-                    ".collab/**/*.md",
-                    ".collab/**/*.json",
                     "tests/**/*.md",
                     ".agents/**/*.md",
                 ]

@@ -160,8 +160,8 @@ class TestTestGenerator:
         assert "from run import (" in code
 
     def test_generate_for_collab_source_uses_path_loader_block(self):
-        """.collab sources should use file loading because they are not import
-        packages."""
+        """Legacy in-repo collab sources should use file loading because they are not
+        import packages."""
         tg = gen.TestGenerator(".collab/dashboard/server.py")
         code = tg.generate([("serve", "function")])
         assert "module_path = _find_repo_root()" in code
@@ -199,9 +199,13 @@ class TestTestGenerator:
         assert tg.get_test_file() == expected
 
     def test_get_test_file_for_collab_source(self):
-        """.collab source files should map to .collab/tests/<category>."""
+        """Legacy in-repo collab paths should fall back to core backend test roots.
+
+        Strict Phase 4 removes the in-repo collab source tree, so generator outputs for
+        those legacy paths now route to tests/backend/<category>.
+        """
         tg = gen.TestGenerator(".collab/dashboard/server.py")
-        expected = Path(gen.ROOT) / ".collab" / "tests" / "unit" / "test_server.py"
+        expected = Path(gen.ROOT) / "tests" / "backend" / "unit" / "test_server.py"
         assert tg.get_test_file() == expected
 
     def test_get_test_file_for_root_source(self):
@@ -270,10 +274,6 @@ class TestTestDiscovery:
             "class ReportGenerator:\n    pass\n"
         )
 
-        collab_dir = tmp_path / ".collab" / "dashboard"
-        collab_dir.mkdir(parents=True)
-        (collab_dir / "server.py").write_text("def serve():\n    return None\n")
-
         run_py = tmp_path / "run.py"
         run_py.write_text("def main():\n    return None\n")
 
@@ -290,7 +290,6 @@ class TestTestDiscovery:
 
         assert "scripts/cleanup.py" not in untested
         assert "apps/reporting/src/services/report_generator.py" not in untested
-        assert ".collab/dashboard/server.py" in untested
         assert "run.py" in untested
 
 

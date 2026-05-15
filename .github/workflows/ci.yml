@@ -30,27 +30,24 @@ jobs:
       - name: Check import sorting with isort
         run: |
           # Check PEP 8 import organization
-          isort src apps tests scripts run.py collab.py conftest.py .collab \
+          isort src apps tests scripts run.py conftest.py \
             --check-only
 
       - name: Check code formatting with black
         run: |
           # Check Black code formatting
-          black --check src apps tests scripts run.py collab.py conftest.py \
-            .collab
+          black --check src apps tests scripts run.py conftest.py
 
       - name: Check docstring formatting with docformatter
         run: |
           # Check PEP 257 docstring standards
-          docformatter --check -r src apps tests scripts run.py collab.py \
-            conftest.py .collab
+          docformatter --check -r src apps tests scripts run.py conftest.py
 
       - name: Check documentation formatting with prettier
         run: |
           # Verify documentation formatting (mirrors validate_code.py)
           npx prettier --check "docs/**/*.md" "*.md" "apps/**/*.md" \
-            "*.json" ".github/**/*.md" ".collab/**/*.md" \
-            ".collab/**/*.json" "tests/**/*.md" ".agents/**/*.md"
+            "*.json" ".github/**/*.md" "tests/**/*.md" ".agents/**/*.md"
 
       - name: Check Jinja2 templates with djlint
         run: |
@@ -62,7 +59,7 @@ jobs:
       - name: Lint with ruff
         run: |
           # Fast, modern linting (catches more than flake8)
-          ruff check src apps tests scripts run.py collab.py conftest.py .collab
+          ruff check src apps tests scripts run.py conftest.py
 
       - name: Lint with flake8
         run: >-
@@ -81,8 +78,8 @@ jobs:
         run: |
           # Detect security vulnerabilities in ALL Python sources.
           # -r recurses dirs; root .py files listed explicitly.
-          bandit -r src/ apps/ scripts/ .collab/ \
-            run.py collab.py conftest.py -ll
+          bandit -r src/ apps/ scripts/ \
+            run.py conftest.py -ll
 
       - name: Test with pytest and generate comprehensive coverage
         run: |
@@ -92,10 +89,8 @@ jobs:
           pytest \
             --cov=src \
             --cov=apps \
-            --cov=.collab \
             --cov=scripts \
             --cov=run.py \
-            --cov=collab.py \
             --cov=conftest.py \
             --cov-report=xml \
             --cov-report=term-missing
@@ -104,8 +99,8 @@ jobs:
         run: |
           # Check total coverage across ALL measured sources meets 85%.
           # The previous step already scoped measurement to the
-          # comprehensive list (src, apps, .collab, scripts, run.py,
-          # collab.py, conftest.py).  No --include filter needed here —
+          # comprehensive list (src, apps, scripts, run.py, conftest.py).
+          # No --include filter needed here —
           # the .coverage file already contains exactly what was measured.
           # This mirrors validate_code.py Step 10.
           coverage report --fail-under=85
@@ -114,7 +109,7 @@ jobs:
         run: |
           # Enforce 92% coverage on NEW code (matches validate_code.py).
           # Uses comprehensive coverage.xml so ANY changed .py file
-          # in the branch is validated — not just src/apps/.collab.
+          # in the branch is validated.
           diff-cover coverage.xml \
             --compare-branch=origin/main \
             --fail-under=92

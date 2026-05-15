@@ -1,0 +1,11 @@
+#!/bin/sh
+# Collaborative file lock post-commit hook.
+# Locks stay active until successful pre-push validation + release.
+
+echo "[collab] Commit detected. Locks remain active until files are pushed."
+
+if command -v pre-commit >/dev/null 2>&1; then
+    pre-commit run --hook-stage post-commit "$@" 2>/dev/null || true
+fi
+
+exit 0

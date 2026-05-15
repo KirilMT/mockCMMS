@@ -480,8 +480,6 @@ _BACKEND_MAP: List[Tuple[str, List[str]]] = [
     ("apps/reporting/tests/", ["apps/reporting/tests"]),
     # Scripts → run their unit tests
     ("scripts/", ["tests/backend/unit"]),
-    # .collab sources → run tests under .collab/tests
-    (".collab/", [".collab/tests"]),
 ]
 
 # Maps source-file path prefixes → relevant frontend test directories.
@@ -530,8 +528,8 @@ def _get_changed_files() -> List[str]:
 def _expand_input_paths(paths: List[str]) -> List[str]:
     """Expand and normalize user-provided path arguments.
 
-    Directory arguments are recursively expanded into files so quick mode can
-    correctly scope checks when users pass folders (for example `.collab`).
+    Directory arguments are recursively expanded into files so quick mode can correctly
+    scope checks when users pass folders.
     """
     expanded: set[str] = set()
     cwd = Path.cwd()
@@ -679,14 +677,14 @@ def validate_python_backend(
             f for f in clean_files if f.endswith(".html") and "templates" in f
         ]
         # 3. Bandit targets — all Python source files (dirs + root-level .py)
-        _bandit_prefixes = ("src/", "apps/", "scripts/", ".collab/")
+        _bandit_prefixes = ("src/", "apps/", "scripts/")
         bandit_targets = [
             f
             for f in clean_files
             if f.endswith(".py")
             and (
                 any(f.startswith(p) for p in _bandit_prefixes)
-                or "/" not in f  # root-level .py files (run.py, collab.py, …)
+                or "/" not in f  # root-level .py files (run.py, …)
             )
         ]
         # 4. Test targets — identified by pytest naming convention (test_*.py),
@@ -712,9 +710,7 @@ def validate_python_backend(
             "tests",
             "scripts",
             "run.py",
-            "collab.py",
             "conftest.py",
-            ".collab",
         ]
         # template_targets, bandit_targets, test_targets will be handled by defaults
         # inside the respective sections below.
@@ -817,9 +813,7 @@ def validate_python_backend(
                 "src/",
                 "apps/",
                 "scripts/",
-                ".collab/",
                 "run.py",
-                "collab.py",
                 "conftest.py",
                 "-ll",
             ],
@@ -872,7 +866,7 @@ def validate_python_backend(
     # Python source code.  Used by Step 9 (both quick and full) to generate
     # .coverage + coverage.xml with data for ALL Python files. This ensures
     # both Step 10 (total ≥85%) and Step 11 (diff-cover ≥92%) can validate
-    # coverage for ANY Python file — not just src/apps/.collab.  If a new
+    # coverage for ANY Python file — not just src/apps. If a new
     # top-level package or root .py file is added, add a "--cov=<path>"
     # entry here.  Missing an entry means coverage reports 0% for that
     # file → false failure.
@@ -886,14 +880,12 @@ def validate_python_backend(
     #   Step 9  → _cov_sources  (comprehensive .coverage + coverage.xml)
     #   Step 10 → coverage report --fail-under=85  (reads .coverage from Step 9)
     #   Step 11 → diff-cover coverage.xml  (new code ≥92% coverage)
-    _FULL_TESTPATHS = ["tests/backend", "apps", ".collab"]
+    _FULL_TESTPATHS = ["tests/backend", "apps"]
     _cov_sources = [
         "--cov=src",
         "--cov=apps",
-        "--cov=.collab",
         "--cov=scripts",
         "--cov=run.py",
-        "--cov=collab.py",
         "--cov=conftest.py",
     ]
     quick_cov_args = _cov_sources + ["--cov-report=xml"]
@@ -955,12 +947,11 @@ def validate_python_backend(
     else:
         print_section("Step 9/11: Full Test Suite with Coverage")
         # Run full test discovery using pytest's configured testpaths in
-        # pyproject.toml instead of restricting to .collab/tests. This mirrors
-        # CI behavior where the entire backend suite is validated for
-        # coverage and ensures the coverage thresholds reflect the whole
-        # repository (not just the small .collab subset).
-        # Explicitly pass the canonical testpaths to mirror CI discovery and avoid
-        # cases where pytest picks up only a subset (e.g. a local .collab-only run).
+        # pyproject.toml. This mirrors CI behavior where the entire backend
+        # suite is validated for coverage and ensures thresholds reflect the
+        # full repository scope.
+        # Explicitly pass canonical testpaths to mirror CI discovery and avoid
+        # cases where pytest picks up only a subset.
         #
         # Uses _cov_sources (comprehensive) so .coverage and coverage.xml
         # have data for ALL Python files.  Step 10 reads this .coverage to
@@ -1101,8 +1092,6 @@ def validate_others(files: Optional[List[str]] = None) -> bool:
             "apps/**/*.md",
             "*.json",
             ".github/**/*.md",
-            ".collab/**/*.md",
-            ".collab/**/*.json",
             "tests/**/*.md",
             ".agents/**/*.md",
         ]
@@ -1185,7 +1174,6 @@ def validate_javascript_frontend(
                 f.startswith("src/static/js")
                 or f.startswith("apps")
                 or f.startswith("tests/frontend")
-                or f.startswith(".collab")
             )
         ]
         # 2. Template targets
@@ -1222,7 +1210,6 @@ def validate_javascript_frontend(
                 "src/static/js",
                 "apps",
                 "tests/frontend",
-                ".collab",
                 "--report-unused-disable-directives",
             ],
             "ESLint check",

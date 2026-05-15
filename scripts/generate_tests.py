@@ -100,9 +100,7 @@ class TestGenerator:
     def _detect_category(self) -> str:
         """Auto-detect test category based on file path."""
         filepath_lower = self._display_source_path().lower()
-        if filepath_lower.startswith("scripts/") or filepath_lower.startswith(
-            ".collab/"
-        ):
+        if filepath_lower.startswith("scripts/"):
             return "unit"
         for pattern, cat in self.CATEGORY_PATTERNS.items():
             if pattern in filepath_lower:
@@ -153,8 +151,6 @@ class TestGenerator:
                     / "backend"
                     / self.category
                 )
-            if rel.parts[0] == ".collab":
-                return self.repo_root / ".collab" / "tests" / self.category
 
         return self.repo_root / "tests" / "backend" / self.category
 
@@ -407,7 +403,7 @@ class TestDiscovery:
                 if self._is_candidate_source(child):
                     yield child
 
-            for dirname in ("src", "scripts", "apps", ".collab"):
+            for dirname in ("src", "scripts", "apps"):
                 target = self.repo_root / dirname
                 if target.exists():
                     yield from self._iter_python_files(target)
@@ -434,7 +430,7 @@ class TestDiscovery:
         name = path.name
         if name in self.EXCLUDED_DIRS or name.endswith(".egg-info"):
             return True
-        if name.startswith(".") and name not in {".collab"}:
+        if name.startswith("."):
             return True
         return False
 

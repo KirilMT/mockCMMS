@@ -1,0 +1,145 @@
+#!/bin/sh
+# Collaborative file lock pre-commit hook.
+# Acquires locks for staged files using the installed collab runtime.
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+LOCK_STRICT="${LOCK_STRICT:-0}"
+
+find_collab() {
+    if [ -x "$PROJECT_ROOT/.venv/Scripts/collab.exe" ]; then
+        printf "%s" "$PROJECT_ROOT/.venv/Scripts/collab.exe"
+        return 0
+    fi
+    if [ -x "$PROJECT_ROOT/.venv/Scripts/collab.cmd" ]; then
+        printf "%s" "$PROJECT_ROOT/.venv/Scripts/collab.cmd"
+        return 0
+    fi
+    if [ -x "$PROJECT_ROOT/.venv/bin/collab" ]; then
+        printf "%s" "$PROJECT_ROOT/.venv/bin/collab"
+        return 0
+    fi
+    command -v collab 2>/dev/null || true
+}
+
+run_precommit_framework() {
+    PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/Scripts/pre-commit.exe"
+    VENV_SCRIPTS="$PROJECT_ROOT/.venv/Scripts"
+    VENV_BIN="$PROJECT_ROOT/.venv/bin"
+
+    if [ ! -x "$PRE_COMMIT_BIN" ]; then
+        PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/bin/pre-commit"
+    fi
+    if [ ! -x "$PRE_COMMIT_BIN" ]; then
+        PRE_COMMIT_BIN="$(command -v pre-commit 2>/dev/null || true)"
+    fi
+
+    if [ -n "$PRE_COMMIT_BIN" ] && [ -x "$PRE_COMMIT_BIN" ]; then
+        if [ -d "$VENV_SCRIPTS" ]; then
+            PATH="$VENV_SCRIPTS:$PATH"
+            export PATH
+        fi
+        if [ -d "$VENV_BIN" ]; then
+            PATH="$VENV_BIN:$PATH"
+            export PATH
+        fi
+        exec "$PRE_COMMIT_BIN" run --hook-stage pre-commit "$@"
+    fi
+
+    exit 0
+}
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
+if [ -z "$STAGED" ]; then
+    run_precommit_framework "$@"
+fi
+
+COLLAB_BIN="$(find_collab)"
+if [ -z "$COLLAB_BIN" ]; then
+    echo "[collab] Warning: collab runtime not found; lock acquisition skipped."
+    echo "[collab] Install in project venv: .\\.venv\\Scripts\\pip.exe install collab"
+    if [ "$LOCK_STRICT" = "1" ]; then
+        echo "[collab] LOCK_STRICT=1 -> blocking commit."
+        exit 1
+    fi
+    run_precommit_framework "$@"
+fi
+
+# Validate collab runtime to catch PyPI name-collisions or incomplete installs.
+validate_collab_runtime() {
+    PY_EXEC=""
+    if [ -x "$PROJECT_ROOT/.venv/Scripts/python.exe" ]; then
+        PY_EXEC="$PROJECT_ROOT/.venv/Scripts/python.exe"
+    elif [ -x "$PROJECT_ROOT/.venv/bin/python" ]; then
+        PY_EXEC="$PROJECT_ROOT/.venv/bin/python"
+    else
+        PY_EXEC="$(command -v python 2>/dev/null || true)"
+    fi
+
+    if [ -z "$PY_EXEC" ]; then
+        echo "[collab] Warning: Python not available to validate collab runtime; proceeding without runtime validation." >&2
+        return 0
+    fi
+
+    # Verify the canonical 'collab-runtime' distribution is installed.
+    # An unrelated PyPI package named 'collab' will not provide this metadata,
+    # so PackageNotFoundError reliably distinguishes the right runtime from a
+    # name-collision install.
+    VALID_OUT="$($PY_EXEC - <<PYCODE 2>&1
+import sys
+try:
+    from importlib.metadata import version, PackageNotFoundError
+    version('collab-runtime')
+except PackageNotFoundError as e:
+    sys.stderr.write(f"collab-runtime not installed: {e}")
+    sys.exit(2)
+except Exception as e:
+    sys.stderr.write(str(e))
+    sys.exit(2)
+sys.exit(0)
+PYCODE
+)"
+    PY_EXIT=$?
+    if [ $PY_EXIT -ne 0 ]; then
+        echo "[collab] Runtime validation failed: $VALID_OUT" >&2
+        echo "[collab] It appears an unrelated package named 'collab' is installed or the runtime is incomplete." >&2
+        echo "[collab] Action: set \`COLLAB_RUNTIME_SPEC\` to your approved runtime package and run \`scripts/setup-dev.ps1\` to install it into the project venv." >&2
+        echo "[collab] Example (PowerShell):" >&2
+        echo "[collab]   \$env:COLLAB_RUNTIME_SPEC='your-org-collab==1.0.0'" >&2
+        echo "[collab]   .\\scripts\\setup-dev.ps1" >&2
+        if [ "$LOCK_STRICT" = "1" ]; then
+            echo "[collab] LOCK_STRICT=1 -> blocking commit." >&2
+            exit 1
+        fi
+        # Non-strict mode: fall back to continuing so developers without runtime can still commit,
+        # but make the failure explicit so it can be remedied.
+        return 1
+    fi
+    return 0
+}
+
+validate_collab_runtime || true
+
+echo "[collab] Checking locks for staged files..."
+FAILED=0
+while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    OUT="$($COLLAB_BIN acquire "$file" --reason "pre-commit" 2>&1)"
+    CODE=$?
+    [ -n "$OUT" ] && printf "%s\n" "$OUT"
+    if [ $CODE -ne 0 ]; then
+        FAILED=1
+        break
+    fi
+done <<EOF
+$STAGED
+EOF
+
+if [ "$FAILED" = "1" ]; then
+    echo ""
+    echo "[collab] Commit aborted due to file lock conflicts."
+    echo "[collab] To inspect locks: collab active"
+    echo "[collab] To open dashboard: collab dashboard"
+    exit 1
+fi
+
+run_precommit_framework "$@"

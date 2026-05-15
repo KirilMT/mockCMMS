@@ -449,6 +449,107 @@ if ($null -eq $supabaseVersion) { $supabaseVersion = "" }
 if ($postSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $postSupabaseVersion }
 elseif ($preSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $preSupabaseVersion }
 
+# Ensure installed collab runtime is available for hooks/watcher workflows.
+# Behavior:
+# 1. Prefer explicit environment variable `COLLAB_RUNTIME_SPEC` (pip spec or VCS URL).
+# 2. If unset, prefer a local collab repo referenced by `COLLAB_LOCAL_PATH` or by detecting
+#    a sibling `../collab` or `./collab` directory (editable install used for local development).
+# 3. Optionally, repository maintainers may set `$defaultCollabGitSpec` below to a GitHub VCS
+#    spec so fresh clones install the approved runtime automatically.
+
+$collabRuntimeSpec = $env:COLLAB_RUNTIME_SPEC
+$collabLocalPath = $env:COLLAB_LOCAL_PATH
+# Optional: set to a VCS or wheel spec to enable automatic installs for fresh clones.
+$defaultCollabGitSpec = $null  # e.g. 'git+https://github.com/your-org/collab.git@main#egg=collab'
+
+Write-Host "`n   Ensuring installed collab runtime is available..." -ForegroundColor Yellow
+
+# If no explicit runtime spec provided, attempt to locate a local collab repository
+if (-not $collabRuntimeSpec) {
+    if (-not $collabLocalPath) {
+        $candidates = @(
+            (Join-Path $projectRoot '..\collab'),
+            (Join-Path $projectRoot 'collab')
+        )
+        foreach ($cand in $candidates) {
+            if (Test-Path $cand) { $collabLocalPath = (Resolve-Path $cand).Path; break }
+        }
+    }
+
+    if ($collabLocalPath) {
+        Write-Host "   Found local collab repository at: $collabLocalPath" -ForegroundColor Gray
+    }
+    elseif ($defaultCollabGitSpec) {
+        Write-Host "   No local collab repo found; falling back to repository default spec." -ForegroundColor Gray
+        $collabRuntimeSpec = $defaultCollabGitSpec
+    }
+    else {
+        Write-Host "   COLLAB: COLLAB_RUNTIME_SPEC is not configured and no local collab repo was found." -ForegroundColor Yellow
+        Write-Host "   Action: set COLLAB_RUNTIME_SPEC (e.g. git+https://github.com/<org>/collab.git@main#egg=collab) or set COLLAB_LOCAL_PATH to a local repo path." -ForegroundColor Yellow
+        Write-Host "   For local development, clone the 'collab' repo next to this repo and re-run setup." -ForegroundColor Gray
+        $script:ErrorCount++
+    }
+}
+
+if ($collabRuntimeSpec -or $collabLocalPath) {
+    Write-Host "   Preparing to install collab runtime..." -ForegroundColor Gray
+
+    # If an existing 'collab' package exists in the venv, remove it first to avoid name collisions
+    $existingShow = & $pipPath show collab 2>&1
+    if ($LASTEXITCODE -eq 0 -and $existingShow) {
+        Write-Host "   Found existing 'collab' in venv, uninstalling to avoid collisions..." -ForegroundColor Yellow
+        & $pipPath uninstall collab -y 2>&1 | Out-Null
+    }
+
+    if ($collabLocalPath) {
+        Write-Host "   Installing collab (editable) from local path: $collabLocalPath" -ForegroundColor Gray
+        $collabInstallOutput = & $pipPath install --upgrade -e $collabLocalPath 2>&1
+        $installExit = $LASTEXITCODE
+    }
+    else {
+        Write-Host "   Installing runtime package: $collabRuntimeSpec" -ForegroundColor Gray
+        $collabInstallOutput = & $pipPath install --upgrade --upgrade-strategy only-if-needed $collabRuntimeSpec 2>&1
+        $installExit = $LASTEXITCODE
+    }
+
+    if ($installExit -ne 0) {
+        Write-Host "   Collab runtime install " -NoNewline -ForegroundColor White
+        Write-Host "FAILED" -ForegroundColor Red
+        Write-Host "   Tried spec/path:" -ForegroundColor Gray
+        if ($collabLocalPath) { Write-Host "   $collabLocalPath" -ForegroundColor Gray } else { Write-Host "   $collabRuntimeSpec" -ForegroundColor Gray }
+        Write-Host "   Install output:" -ForegroundColor Gray
+        Write-Host $collabInstallOutput -ForegroundColor Gray
+        $script:ErrorCount++
+    }
+    else {
+        $collabCmd = Get-Command collab -ErrorAction SilentlyContinue
+        if ($collabCmd) {
+            $collabVersionLine = (& collab --help 2>&1 | Select-Object -First 1)
+            Write-Host "   Installed collab runtime " -NoNewline -ForegroundColor White
+            Write-Host "OK" -ForegroundColor Green
+            if ($collabVersionLine) { Write-Host "   Runtime probe: $collabVersionLine" -ForegroundColor Gray }
+
+            # Validate runtime package contents to detect ambiguous PyPI packages named 'collab'.
+            $venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
+            if (Test-Path $venvPython) {
+                $validateOut = & $venvPython -c "import importlib; importlib.import_module('collab.core')" 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "   WARNING: 'collab' package installed but runtime validation failed." -ForegroundColor Yellow
+                    Write-Host "   Validation output: $validateOut" -ForegroundColor Gray
+                    Write-Host "   It looks like an unrelated PyPI package named 'collab' may be present in the venv." -ForegroundColor Yellow
+                    Write-Host "   Action: set `COLLAB_RUNTIME_SPEC` to your approved runtime package or point `COLLAB_LOCAL_PATH` to the local collab repo and re-run setup." -ForegroundColor Yellow
+                    $script:ErrorCount++
+                }
+            }
+        }
+        else {
+            Write-Host "   Runtime package installed but 'collab' command is unavailable in this shell." -ForegroundColor Yellow
+            Write-Host "   Action: activate venv and verify with 'collab --help'." -ForegroundColor Yellow
+            $script:ErrorCount++
+        }
+    }
+}
+
 
 # Step 4: JavaScript Development Tools
 Write-Host "`n[Dev Step 4/6] Setting up JavaScript development tools..." -ForegroundColor Yellow
@@ -637,12 +738,12 @@ if ($hasPreCommit) {
             $script:ErrorCount++
         }
 
-        # Overlay collab locking hooks on top of the pre-commit framework hooks.
-        # The collab hooks are the entry point — they handle lock acquisition and
+        # Overlay lock hooks on top of the pre-commit framework hooks.
+        # The lock hooks are the entry point — they handle lock acquisition and
         # then chain to 'pre-commit run' for validations. This MUST run AFTER
         # 'pre-commit install' so our hooks win (framework hooks are overwritten).
         Write-Host "   Overlaying collab locking hooks..." -ForegroundColor Yellow
-        $collabHooksDir = Join-Path $projectRoot ".collab\hooks"
+        $collabHooksDir = Join-Path $projectRoot "scripts\hooks"
         foreach ($hookName in @("pre-commit", "post-commit", "pre-push")) {
             $srcHook = Join-Path $collabHooksDir $hookName
             $dstHook = Join-Path $hookDir $hookName
@@ -759,12 +860,12 @@ Write-Host "   Supabase configuration saved to .env" -ForegroundColor Green
 # We no longer register OS-level scheduled tasks here to avoid long-running
 # background processes tied to user sessions. If you want to start the
 # watcher manually for debugging, run:
-#   .\.venv\Scripts\python.exe .collab/core/lock_client.py daemon-start
+#   .\.venv\Scripts\collab.exe daemon-start
 
 # Install Collab Git Hooks
 Write-Host "`n   Installing Collab Git Hooks..." -ForegroundColor Yellow
 $hooksDir = Join-Path $projectRoot ".git\hooks"
-$collabHooks = Join-Path $projectRoot ".collab\hooks"
+$collabHooks = Join-Path $projectRoot "scripts\hooks"
 
 foreach ($hook in @("pre-commit", "post-commit", "pre-push", "commit-msg")) {
     $src = Join-Path $collabHooks $hook
@@ -804,21 +905,7 @@ elseif (Test-Path (Join-Path $projectRoot ".idea")) {
 switch ($detectedIDE) {
     "vscode" {
         Write-Host "     - VS Code / Antigravity detected" -ForegroundColor Gray
-        $vscodeExtDir = Join-Path $projectRoot ".collab\vscode"
-        $packageJson = Join-Path $vscodeExtDir "package.json"
-        if (Test-Path $packageJson) {
-            try {
-                Push-Location $vscodeExtDir
-                npm install --silent 2>$null
-                Pop-Location
-                Write-Host "     - VS Code extension dependencies installed " -NoNewline -ForegroundColor White
-                Write-Host "OK" -ForegroundColor Green
-            }
-            catch {
-                Pop-Location
-                Write-Host "     - VS Code extension npm install failed (non-fatal)" -ForegroundColor Yellow
-            }
-        }
+        Write-Host "     - Install extension from Marketplace: mockcmms-team.collab-file-locks" -ForegroundColor Gray
     }
     "jetbrains" {
         Write-Host "     - PyCharm/IntelliJ detected" -ForegroundColor Gray
@@ -827,17 +914,10 @@ switch ($detectedIDE) {
         if (-not (Test-Path $runConfigDir)) {
             New-Item -Path $runConfigDir -ItemType Directory -Force | Out-Null
         }
-        $xmlSrc = Join-Path $projectRoot ".collab\pycharm\Collab_Lock_Watcher.xml"
-        $xmlDst = Join-Path $runConfigDir "Collab_Lock_Watcher.xml"
-        if (Test-Path $xmlSrc) {
-            Copy-Item $xmlSrc $xmlDst -Force
-            Write-Host "     - PyCharm Run Configuration installed " -NoNewline -ForegroundColor White
-            Write-Host "OK" -ForegroundColor Green
-            Write-Host "       (Run > Collab Lock Watcher to start)" -ForegroundColor Gray
-        }
+        Write-Host "     - Create a Run Configuration that executes: collab watch" -ForegroundColor Gray
     }
     default {
-        Write-Host "     - No IDE detected (run manually: python collab.py daemon-start)" -ForegroundColor Gray
+        Write-Host "     - No IDE detected (run manually: collab daemon-start)" -ForegroundColor Gray
     }
 }
 
@@ -864,21 +944,19 @@ Write-Host ""
 switch ($detectedIDE) {
     "vscode" {
         Write-Host "  1. Install the Collab Locks extension in VS Code:" -ForegroundColor White
-        Write-Host "     Press F1 > 'Developer: Install Extension from Location...'" -ForegroundColor Magenta
-        Write-Host "     Select the .collab\vscode\ directory, then reload VS Code." -ForegroundColor Magenta
+        Write-Host "     Press F1 > 'Extensions: Install Extensions'" -ForegroundColor Magenta
+        Write-Host "     Install extension ID: mockcmms-team.collab-file-locks" -ForegroundColor Magenta
         Write-Host "     The extension auto-starts on open and shows lock status" -ForegroundColor Gray
-        Write-Host "     in the status bar. See .collab\vscode\README.md for details." -ForegroundColor Gray
+        Write-Host "     in the status bar." -ForegroundColor Gray
     }
     "jetbrains" {
         Write-Host "  1. Start the Collab Lock Watcher in PyCharm:" -ForegroundColor White
-        Write-Host "     Run > Collab Lock Watcher (click Run once to start)" -ForegroundColor Magenta
+        Write-Host "     Create a Run Configuration for 'collab watch' and run it" -ForegroundColor Magenta
         Write-Host "     The watcher runs in the Run tool window (background tab)." -ForegroundColor Gray
-        Write-Host "     See .collab\pycharm\plugin_notes.md for details." -ForegroundColor Gray
     }
     default {
         Write-Host "  1. Start the lock watcher manually:" -ForegroundColor White
-        Write-Host "     python collab.py daemon-start" -ForegroundColor Magenta
-        Write-Host "     See .collab\README.md for full CLI reference." -ForegroundColor Gray
+        Write-Host "     collab daemon-start" -ForegroundColor Magenta
     }
 }
 

@@ -23,8 +23,8 @@ authors = [
 # =============================================================================
 [tool.pytest.ini_options]
 minversion = "6.0"
-# Include the .collab directory in test discovery so its unit tests run by default
-testpaths = ["tests/backend", "apps", ".collab"]
+# Default discovery is limited to app/backend tests.
+testpaths = ["tests/backend", "apps"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -42,7 +42,6 @@ addopts = """
     --strict-markers
     --cov=src
     --cov=apps
-    --cov=.collab
     --cov-report=term-missing
     --cov-report=html
     -W ignore::ResourceWarning
@@ -179,7 +178,7 @@ select = ["E", "F", "W"]
 # COVERAGE CONFIGURATION
 # =============================================================================
 [tool.coverage.run]
-source = ["src", "apps", ".collab"]
+source = ["src", "apps"]
 omit = [
     "*/tests/*",
     "*/venv/*",

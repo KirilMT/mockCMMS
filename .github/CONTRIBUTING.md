@@ -290,7 +290,7 @@ comprehensive test coverage.**
 
 ### Test File Standard
 
-This repository enforces a clear test-file layout for long-running or complex test suites. The Test File Standard applies repository-wide — to `tests/`, `.collab/tests/`, and `apps/<name>/tests/` (for example `apps/planning/tests/`, `apps/reporting/tests/`). Use this standard whenever you split or reorganize Python tests.
+This repository enforces a clear test-file layout for long-running or complex test suites. The Test File Standard applies repository-wide — to `tests/` and `apps/<name>/tests/` (for example `apps/planning/tests/`, `apps/reporting/tests/`). Use this standard whenever you split or reorganize Python tests.
 
 ## Purpose
 
@@ -303,10 +303,9 @@ This repository enforces a clear test-file layout for long-running or complex te
 - Canonical test file: A canonical test file named `test_<source>.py` should exist at the appropriate test root for each production source that has tests. Examples:
   - Core/shared modules: `tests/unit/test_<source>.py` (or `tests/test_<source>.py`)
   - App-specific modules: `apps/<app>/tests/unit/test_<source>.py` (e.g. `apps/planning/tests/unit/test_scheduler.py`)
-  - Tooling/collab helpers: `.collab/tests/unit/test_<source>.py` where applicable
 - Split when the canonical file exceeds **1,500 lines** or **200 test functions**.
 - Use a subfolder under the same test root: `<test-root>/unit/<source>/` with smaller files named `test_<source>_<topic>.py`.
-- Keep shared fixtures in `conftest.py` at the test root (for example `tests/conftest.py`, `apps/<app>/tests/conftest.py`, or `.collab/tests/conftest.py`) or a shared helpers module such as `_helpers.py`.
+- Keep shared fixtures in `conftest.py` at the test root (for example `tests/conftest.py` or `apps/<app>/tests/conftest.py`) or a shared helpers module such as `_helpers.py`.
 
 - Helper naming convention: modules that provide test utilities, loaders, or shared helpers (and are not test cases) MUST be named with a leading underscore (for example `_helpers.py`) and MUST NOT start with the `test_` prefix. This prevents pytest from accidentally collecting helper modules as tests. Test files themselves must always start with `test_` and follow the `test_<source>_<topic>.py` pattern when split into topic modules.
 
@@ -357,7 +356,7 @@ python scripts/validate_code.py --quick
 ## Notes
 
 - The threshold values are defaults. If a module's tests are exceptional in size, consult the team before changing thresholds.
-- This standard applies repository-wide; adapt the test-root conventions to the specific test tree you are working in (`tests/`, `apps/<app>/tests/`, `.collab/tests/`).
+- This standard applies repository-wide; adapt the test-root conventions to the specific test tree you are working in (`tests/`, `apps/<app>/tests/`).
 
 3. **Review test file** - Read existing tests in the file you're modifying
 4. **Consolidate if needed** - Merge duplicate tests into comprehensive ones
@@ -375,7 +374,7 @@ testing strategy.
 
 ### Test File Standard
 
-This repository enforces a clear test-file layout for long-running or complex test suites. Use this standard whenever you split or reorganize Python tests in the repository (especially under `.collab/tests`).
+This repository enforces a clear test-file layout for long-running or complex test suites. Use this standard whenever you split or reorganize Python tests in the repository.
 
 ## Purpose
 
@@ -385,10 +384,10 @@ This repository enforces a clear test-file layout for long-running or complex te
 
 ## Standard (short)
 
-- Canonical test file: `.collab/tests/unit/test_<source>.py` must exist for every production source in `.collab` that has tests.
+- Canonical test file: `test_<source>.py` should exist at the test root for each production source that has tests.
 - Split when the canonical file exceeds **1,500 lines** or **200 test functions**.
-- Use a subfolder: `.collab/tests/unit/<source>/` with smaller files named `test_<source>_<topic>.py`.
-- Keep shared fixtures in `.collab/tests/conftest.py` or `.collab/tests/_helpers.py`.
+- Use a subfolder under the same test root: `<test-root>/unit/<source>/` with smaller files named `test_<source>_<topic>.py`.
+- Keep shared fixtures in `<test-root>/conftest.py` or a `<test-root>/_helpers.py` module.
 
 ## Why a shim file?
 
@@ -397,19 +396,19 @@ Keeping a small `test_<source>.py` file at the canonical location ensures CI and
 ## Folder layout example
 
 ```
-.collab/tests/unit/
-├── test_lock_client.py          # shim (canonical anchor)
-└── lock_client/
-  ├── test_lock_client_daemon.py
-  ├── test_lock_client_cli.py
-  └── test_lock_client_pid.py
+tests/backend/unit/
+├── test_db_utils.py             # shim (canonical anchor)
+└── db_utils/
+  ├── test_db_utils_crud.py
+  ├── test_db_utils_queries.py
+  └── test_db_utils_errors.py
 ```
 
 ## Splitting guidelines
 
 1. Identify logical topics: CLI, daemon lifecycle, PID handling, process-info parsing, HTTP/dashboard helpers, edge-case/error paths.
 2. Prefer focused modules that are <1,500 lines and <200 tests.
-3. Factor repeated setup into fixtures in `.collab/tests/conftest.py`.
+3. Factor repeated setup into fixtures in the test root's `conftest.py`.
 4. When tests are similar except for inputs, prefer `pytest.mark.parametrize`.
 
 ## Dedup & safety checklist
@@ -425,7 +424,7 @@ python scripts/validate_code.py --quick
 
 ## Migration steps (recommended)
 
-1. Create the target folder `.collab/tests/unit/<source>/`.
+1. Create the target folder `<test-root>/unit/<source>/`.
 2. Move groups of tests into `test_<source>_<topic>.py` files. Keep functions intact and preserve imports/fixtures.
 3. Leave `test_<source>.py` as a tiny shim with a short docstring pointing to the folder.
 4. Run formatting and `--quick` validation. Fix any failures.
@@ -434,18 +433,18 @@ python scripts/validate_code.py --quick
 ## Notes
 
 - The threshold values are defaults. If a module's tests are exceptional in size, consult the team before changing thresholds.
-- This standard applies first to `.collab/tests` in this branch; other test roots may be migrated subsequently.
+  -- This standard applies across test roots; in-repo `.collab` test trees were removed in Phase 4.
 
 ## Collaborative File Locking
 
-This repository uses a file locking system (`.collab/`) to prevent merge conflicts when multiple contributors work concurrently.
+This repository uses an installed `collab` file-locking runtime to prevent merge conflicts when multiple contributors work concurrently.
 
 ### Workflow (devs and AI agents)
 
 1. **Identify all files** your task may modify before you start.
 2. **Check locks:**
-   Run `python collab.py active` before edits.
-   Optional targeted check: `python collab.py status path/to/file.py`.
+   Run `collab active` before edits.
+   Optional targeted check: `collab status path/to/file.py`.
    For devs, the watcher/IDE also detects conflicts automatically when a locked file is opened and shows a warning notification popup.
    For AI agents, explicit lock checks are mandatory before edits (AI agents do not see popup notifications).
 
@@ -457,8 +456,6 @@ This repository uses a file locking system (`.collab/`) to prevent merge conflic
 > **Never force-release another developer's lock.**
 >
 > For AI agents this is forbidden under all circumstances.
-
-See `.collab/README.md` for lock-system setup and CLI reference.
 
 ---
 

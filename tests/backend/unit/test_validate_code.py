@@ -474,11 +474,18 @@ class TestValidatePythonBackendPaths:
         }
 
     def test_detect_changed_scopes_expands_directory_input(self):
-        """Directory arguments should expand into files and map backend scopes."""
+        """Directory arguments should expand into files.
+
+        Phase 4: in-repo collab is decoupled from app validation — changes to
+        legacy collab paths no longer map to any backend test scope
+        (backend should be empty).
+        """
         result = validate_code.detect_changed_scopes(files=[".collab"])
         assert result["full_suite"] is False
-        assert ".collab/tests" in result["backend"]
-        assert any(p.startswith(".collab/") for p in result["changed_files"])
+        assert result["backend"] == []
+        # Strict Phase 4: in-repo collab directory is removed, so the raw input path
+        # is preserved instead of expanding into nested file entries.
+        assert result["changed_files"] == [".collab"]
 
 
 def test_validate_python_backend_expands_directory_targets(tmp_path, monkeypatch):

@@ -86,11 +86,7 @@ mockCMMS/
 ├── apps/                       # Modular extensions (each is a Flask blueprint)
 │   ├── planning/               # Skill-based technician task assignment
 │   └── reporting/              # Report generation (PDF, Markdown)
-├── .collab/                    # Collaborative file locking system
-│   ├── core/                   # Lock client logic
-│   ├── logs/                   # Application and error logs
-│   ├── tests/                  # Unit and integration tests
-│   └── vscode/                 # VS Code extension
+├── scripts/hooks/              # Git hooks for lock lifecycle + validation chaining
 ├── tests/
 │   ├── backend/                # Pytest: unit/, functional/, integration/,
 │   │                           #         security/, performance/, reliability/
@@ -149,7 +145,7 @@ REPORTING_ENABLED=True   # apps/reporting
 # Backend
 pytest tests/backend                           # Run all backend tests
 pytest --cov=src --cov=apps --cov=scripts \
-  --cov=.collab --cov=run.py --cov=collab.py \
+  --cov=run.py \
   --cov=conftest.py tests/backend             # With comprehensive coverage
 
 # Frontend
@@ -176,8 +172,8 @@ python scripts/validate_code.py --quick <files> # Rapid check for staged files
 
 **Every** Python file in the repository must be linted, formatted, type-checked, tested, and covered. No exclusions. This applies to:
 
-- `src/`, `apps/`, `tests/`, `scripts/`, `.collab/`
-- Root-level files: `run.py`, `collab.py`, `conftest.py`
+- `src/`, `apps/`, `tests/`, `scripts/`
+- Root-level files: `run.py`, `conftest.py`
 
 **When adding a new root-level `.py` file or top-level package**, you must update these locations:
 
@@ -292,10 +288,10 @@ Or just run: `python scripts/format_code.py`
 
 ### File Locking Protocol
 
-This repository uses a collaborative file locking system (`.collab/`). **Before editing any file**, agents must follow this protocol:
+This repository uses an installed `collab` runtime for collaborative file locking. **Before editing any file**, agents must follow this protocol:
 
 1. **Identify all files** the task requires — source, tests, docs, config — before touching anything.
-2. **Check lock status (AI agents: mandatory every time before edits):** run `python collab.py active` before edits. You may also run `python collab.py status <file>` for targeted checks.
+2. **Check lock status (AI agents: mandatory every time before edits):** run `collab active` before edits. You may also run `collab status <file>` for targeted checks.
 
 - Devs may also see automatic warning popups when opening a file already being edited by another dev.
 - AI agents must **not** rely on popup warnings and must always run an explicit lock command.
@@ -316,8 +312,8 @@ See **Skill: `file-locking`** for the complete workflow and CLI reference.
 
 When working with long-running background tasks, specifically the collaborative daemon, observe these rules:
 
-- **Daemon Startup Handshake:** Always wait for the PID polling to complete. `daemon-start` may report success only after the child writes its metadata to `.collab/.daemon.pid`.
-- **PID Source of Truth:** Never trust `proc.pid` from `subprocess.Popen` for the collab daemon on Windows. Use `LockClient._read_pid()` (or manually parse the `.collab/.daemon.pid` JSON) to find the real child process.
+- **Daemon Startup Handshake:** Always wait for PID polling to complete. `daemon-start` may report success only after the child writes its metadata to the configured pid file (`COLLAB_PID_FILE` when set).
+- **PID Source of Truth:** Never trust `proc.pid` from `subprocess.Popen` for the collab daemon on Windows. Use `LockClient._read_pid()` (or parse the configured pid metadata file) to find the real child process.
 - **Verification:** Always run `python scripts/validate_code.py` (Full Mode) before pushing or finishing a major task to ensure global repository health.
 
 ### File Safety
