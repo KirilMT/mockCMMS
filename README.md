@@ -89,17 +89,50 @@ This script automates the installation of:
 - **Python (venv):** `pytest`, `ruff`, `black`, `mypy`, `pylint`, `docformatter`
 - **JavaScript (npm):** `jest`, `playwright`, `eslint`, `prettier`, `stylelint`
 
-It also provisions the installed collab runtime used by lock workflows.
-Set `COLLAB_RUNTIME_SPEC` to your approved runtime package/version before running setup-dev.
+### Collab runtime (file locking)
+
+Phase 4.5 — `setup-dev.ps1` provisions the canonical published `collab-runtime`
+package from PyPI. The current pinned default is `collab-runtime==0.2.9`
+(matches the [KirilMT/collab `v0.2.9` release](https://github.com/KirilMT/collab/releases/latest),
+which also ships the VS Code extension `.vsix`).
+
+No environment variable is required for the common case — run `scripts/setup-dev.ps1`
+and you get the pinned runtime plus, on VS Code, an auto-installed extension fetched
+from the GitHub Release.
+
+Override knobs (all optional):
+
+| Env var               | Purpose                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| `COLLAB_RUNTIME_SPEC` | Pip spec override (pin different version, VCS URL, etc.). Bypasses the default.     |
+| `COLLAB_PKG_INDEX`    | Private index URL — passed as `--index-url` with PyPI added as `--extra-index-url`. |
+| `COLLAB_LOCAL_PATH`   | Path to a local `collab` repo for editable install (developer mode).                |
 
 Common lock commands:
 
 ```bash
-collab active
-collab status path/to/file.py
-collab daemon-start
-collab dashboard
+collab active                       # list all currently held locks
+collab status path/to/file.py       # check lock state of one file
+collab acquire path/to/file.py --reason "work item"
+collab release path/to/file.py
+collab daemon-start                 # background watcher
+collab dashboard                    # open the live dashboard
 ```
+
+Verify the runtime install:
+
+```powershell
+python -c "from importlib.metadata import version; print(version('collab-runtime'))"
+python -c "import collab; import collab.lock_client; print('OK')"
+collab --help
+collab active
+```
+
+> **Never** install the bare `collab` package from PyPI — that resolves to an
+> unrelated public package and ships no `collab` CLI. Always install
+> `collab-runtime`. The hooks and CI smoke test fingerprint the install via
+> `importlib.metadata.version('collab-runtime')` and will surface any name
+> collision before it can break a workflow.
 
 See [Development Cheat Sheet](#-development-cheat-sheet) for common commands.
 
