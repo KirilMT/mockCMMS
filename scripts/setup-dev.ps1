@@ -450,21 +450,73 @@ if ($postSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $postSupaba
 elseif ($preSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $preSupabaseVersion }
 
 # Ensure installed collab runtime is available for hooks/watcher workflows.
+# Behavior:
+# 1. Prefer explicit environment variable `COLLAB_RUNTIME_SPEC` (pip spec or VCS URL).
+# 2. If unset, prefer a local collab repo referenced by `COLLAB_LOCAL_PATH` or by detecting
+#    a sibling `../collab` or `./collab` directory (editable install used for local development).
+# 3. Optionally, repository maintainers may set `$defaultCollabGitSpec` below to a GitHub VCS
+#    spec so fresh clones install the approved runtime automatically.
+
 $collabRuntimeSpec = $env:COLLAB_RUNTIME_SPEC
+$collabLocalPath = $env:COLLAB_LOCAL_PATH
+# Optional: set to a VCS or wheel spec to enable automatic installs for fresh clones.
+$defaultCollabGitSpec = $null  # e.g. 'git+https://github.com/your-org/collab.git@main#egg=collab'
+
 Write-Host "`n   Ensuring installed collab runtime is available..." -ForegroundColor Yellow
+
+# If no explicit runtime spec provided, attempt to locate a local collab repository
 if (-not $collabRuntimeSpec) {
-    Write-Host "   COLLAB: COLLAB_RUNTIME_SPEC is not configured." -ForegroundColor Yellow
-    Write-Host "   Action required: set COLLAB_RUNTIME_SPEC to your approved runtime package." -ForegroundColor Yellow
-    Write-Host "   Example: `$env:COLLAB_RUNTIME_SPEC='your-org-collab==1.0.0'" -ForegroundColor Yellow
-    $script:ErrorCount++
+    if (-not $collabLocalPath) {
+        $candidates = @(
+            (Join-Path $projectRoot '..\collab'),
+            (Join-Path $projectRoot 'collab')
+        )
+        foreach ($cand in $candidates) {
+            if (Test-Path $cand) { $collabLocalPath = (Resolve-Path $cand).Path; break }
+        }
+    }
+
+    if ($collabLocalPath) {
+        Write-Host "   Found local collab repository at: $collabLocalPath" -ForegroundColor Gray
+    }
+    elseif ($defaultCollabGitSpec) {
+        Write-Host "   No local collab repo found; falling back to repository default spec." -ForegroundColor Gray
+        $collabRuntimeSpec = $defaultCollabGitSpec
+    }
+    else {
+        Write-Host "   COLLAB: COLLAB_RUNTIME_SPEC is not configured and no local collab repo was found." -ForegroundColor Yellow
+        Write-Host "   Action: set COLLAB_RUNTIME_SPEC (e.g. git+https://github.com/<org>/collab.git@main#egg=collab) or set COLLAB_LOCAL_PATH to a local repo path." -ForegroundColor Yellow
+        Write-Host "   For local development, clone the 'collab' repo next to this repo and re-run setup." -ForegroundColor Gray
+        $script:ErrorCount++
+    }
 }
-else {
-    Write-Host "   Installing runtime package: $collabRuntimeSpec" -ForegroundColor Gray
-    $collabInstallOutput = & $pipPath install --upgrade --upgrade-strategy only-if-needed $collabRuntimeSpec 2>&1
-    if ($LASTEXITCODE -ne 0) {
+
+if ($collabRuntimeSpec -or $collabLocalPath) {
+    Write-Host "   Preparing to install collab runtime..." -ForegroundColor Gray
+
+    # If an existing 'collab' package exists in the venv, remove it first to avoid name collisions
+    $existingShow = & $pipPath show collab 2>&1
+    if ($LASTEXITCODE -eq 0 -and $existingShow) {
+        Write-Host "   Found existing 'collab' in venv, uninstalling to avoid collisions..." -ForegroundColor Yellow
+        & $pipPath uninstall collab -y 2>&1 | Out-Null
+    }
+
+    if ($collabLocalPath) {
+        Write-Host "   Installing collab (editable) from local path: $collabLocalPath" -ForegroundColor Gray
+        $collabInstallOutput = & $pipPath install --upgrade -e $collabLocalPath 2>&1
+        $installExit = $LASTEXITCODE
+    }
+    else {
+        Write-Host "   Installing runtime package: $collabRuntimeSpec" -ForegroundColor Gray
+        $collabInstallOutput = & $pipPath install --upgrade --upgrade-strategy only-if-needed $collabRuntimeSpec 2>&1
+        $installExit = $LASTEXITCODE
+    }
+
+    if ($installExit -ne 0) {
         Write-Host "   Collab runtime install " -NoNewline -ForegroundColor White
         Write-Host "FAILED" -ForegroundColor Red
-        Write-Host "   Tried package spec: $collabRuntimeSpec" -ForegroundColor Gray
+        Write-Host "   Tried spec/path:" -ForegroundColor Gray
+        if ($collabLocalPath) { Write-Host "   $collabLocalPath" -ForegroundColor Gray } else { Write-Host "   $collabRuntimeSpec" -ForegroundColor Gray }
         Write-Host "   Install output:" -ForegroundColor Gray
         Write-Host $collabInstallOutput -ForegroundColor Gray
         $script:ErrorCount++
@@ -475,20 +527,17 @@ else {
             $collabVersionLine = (& collab --help 2>&1 | Select-Object -First 1)
             Write-Host "   Installed collab runtime " -NoNewline -ForegroundColor White
             Write-Host "OK" -ForegroundColor Green
-            if ($collabVersionLine) {
-                Write-Host "   Runtime probe: $collabVersionLine" -ForegroundColor Gray
-            }
+            if ($collabVersionLine) { Write-Host "   Runtime probe: $collabVersionLine" -ForegroundColor Gray }
+
             # Validate runtime package contents to detect ambiguous PyPI packages named 'collab'.
             $venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
             if (Test-Path $venvPython) {
-                $validateCmd = "$venvPython -c \"import importlib; importlib.import_module('collab.core')\""
-                $validateOut = cmd /c $validateCmd 2>&1
+                $validateOut = & $venvPython -c "import importlib; importlib.import_module('collab.core')" 2>&1
                 if ($LASTEXITCODE -ne 0) {
                     Write-Host "   WARNING: 'collab' package installed but runtime validation failed." -ForegroundColor Yellow
                     Write-Host "   Validation output: $validateOut" -ForegroundColor Gray
-                    Write-Host "   It looks like an unrelated PyPI package named 'collab' is present in the venv." -ForegroundColor Yellow
-                    Write-Host "   Action: set `COLLAB_RUNTIME_SPEC` to your approved runtime package and run `scripts/setup-dev.ps1` to install it into the venv." -ForegroundColor Yellow
-                    Write-Host "   Example (PowerShell):`n     `$env:COLLAB_RUNTIME_SPEC='your-org-collab==1.0.0'`n     .\\scripts\\setup-dev.ps1" -ForegroundColor Gray
+                    Write-Host "   It looks like an unrelated PyPI package named 'collab' may be present in the venv." -ForegroundColor Yellow
+                    Write-Host "   Action: set `COLLAB_RUNTIME_SPEC` to your approved runtime package or point `COLLAB_LOCAL_PATH` to the local collab repo and re-run setup." -ForegroundColor Yellow
                     $script:ErrorCount++
                 }
             }
