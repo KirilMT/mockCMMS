@@ -16,11 +16,43 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install app dependencies
         run: |
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-          pip install collab
+
+      - name: Install collab runtime
+        # Install the canonical 'collab-runtime' distribution. Override
+        # COLLAB_RUNTIME_SPEC at the repo/org level (variable or secret) to
+        # pin a version, point at a private index, or use a VCS spec.
+        # NEVER install the bare 'collab' name — that resolves to an
+        # unrelated public PyPI package and is the exact name-collision
+        # the migration plan §4.5 was designed to prevent.
+        env:
+          COLLAB_RUNTIME_SPEC: >-
+            ${{ vars.COLLAB_RUNTIME_SPEC || 'collab-runtime' }}
+          COLLAB_PIP_INDEX_ARGS: >-
+            ${{ vars.COLLAB_PIP_INDEX_ARGS || '' }}
+        run: |
+          pip install ${COLLAB_PIP_INDEX_ARGS} "${COLLAB_RUNTIME_SPEC}"
+
+      - name: Verify canonical collab-runtime is installed
+        # Fingerprint the install via distribution metadata. An unrelated
+        # PyPI package named 'collab' will not own this metadata, so
+        # PackageNotFoundError surfaces a name collision before the smoke
+        # test fails with an opaque "command not found".
+        run: |
+          python - <<'PY'
+          from importlib.metadata import version, PackageNotFoundError
+          try:
+              v = version('collab-runtime')
+          except PackageNotFoundError:
+              raise SystemExit(
+                  "collab-runtime metadata missing — likely a name collision "
+                  "with public 'collab'. Set COLLAB_RUNTIME_SPEC."
+              )
+          print(f"collab-runtime {v} installed")
+          PY
 
       - name: Smoke test — Collab CLI
         run: |
