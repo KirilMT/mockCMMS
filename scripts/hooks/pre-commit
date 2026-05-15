@@ -97,7 +97,9 @@ PYCODE
         echo "[collab] Runtime validation failed: $VALID_OUT" >&2
         echo "[collab] It appears an unrelated package named 'collab' is installed or the runtime is incomplete." >&2
         echo "[collab] Action: set \`COLLAB_RUNTIME_SPEC\` to your approved runtime package and run \`scripts/setup-dev.ps1\` to install it into the project venv." >&2
-        echo "[collab] Example (PowerShell):`n  `$env:COLLAB_RUNTIME_SPEC='your-org-collab==1.0.0'`n  .\\scripts\\setup-dev.ps1" >&2
+        echo "[collab] Example (PowerShell):" >&2
+        echo "[collab]   \$env:COLLAB_RUNTIME_SPEC='your-org-collab==1.0.0'" >&2
+        echo "[collab]   .\\scripts\\setup-dev.ps1" >&2
         if [ "$LOCK_STRICT" = "1" ]; then
             echo "[collab] LOCK_STRICT=1 -> blocking commit." >&2
             exit 1
