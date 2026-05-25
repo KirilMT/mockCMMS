@@ -9,6 +9,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0](https://github.com/KirilMT/mockCMMS/compare/v2.6.2...v2.7.0) (2026-05-25)
+
+
+### ✨ Features
+
+* **phase4.5:** adopt published collab-runtime package (pinned 0.2.9) ([#138](https://github.com/KirilMT/mockCMMS/issues/138)) ([1e5e7a9](https://github.com/KirilMT/mockCMMS/commit/1e5e7a9d2575d4f44914205bee806bc258887c2c))
+* **phase4:** remove in-repo collab, decouple app validation ([#136](https://github.com/KirilMT/mockCMMS/issues/136)) ([6c18fcc](https://github.com/KirilMT/mockCMMS/commit/6c18fccd363249c9c2c817685ebabf505fa58e55))
+* **scripts:** improve setup-dev for Cursor and document agent venv usage ([#142](https://github.com/KirilMT/mockCMMS/issues/142)) ([7ef6533](https://github.com/KirilMT/mockCMMS/commit/7ef653338982394387d6b95567e4aedfe3038383))
+
+
+### 🐛 Bug Fixes
+
+* **hooks:** point missing collab message to collab-runtime ([#143](https://github.com/KirilMT/mockCMMS/issues/143)) ([62b9297](https://github.com/KirilMT/mockCMMS/commit/62b929721ff74c332f769c85fd5cf0a7a133c42a))
+
 ## [2.6.2](https://github.com/KirilMT/mockCMMS/compare/v2.6.1...v2.6.2) (2026-05-12)
 
 ### 🐛 Bug Fixes
