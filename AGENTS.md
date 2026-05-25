@@ -44,6 +44,8 @@ grep -n "..." <file>
 
 Before outputting any terminal command, internally verify it is compatible with the detected shell (or is plain `git`). If unsure, run detection again and use shell-native file-reading/search patterns.
 
+**AI / Cursor agent tool shells and `.venv`:** Agent-driven terminal runs (tooling shells) often **do not** inherit your IDE’s “activate venv on new terminal” behavior. Do not assume `python` / `pip` on `PATH` point at this repo’s `.venv` (`VIRTUAL_ENV` may be unset). For Python commands in mockCMMS, prefer `.\.venv\Scripts\python.exe` (Windows) or run `.\.venv\Scripts\Activate.ps1` first, then use `python` / `pip` as usual.
+
 ---
 
 ## Project Overview
