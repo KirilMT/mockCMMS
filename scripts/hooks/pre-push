@@ -56,7 +56,9 @@ fi
 COLLAB_BIN="$(find_collab)"
 if [ -z "$COLLAB_BIN" ]; then
     echo "[collab] Warning: collab runtime not found; could not release locks."
-    echo "[collab] Install in project venv: .\\.venv\\Scripts\\pip.exe install collab"
+    echo "[collab] Install the canonical distribution (never 'pip install collab' — wrong PyPI project):"
+    echo "[collab]   Windows: .\\scripts\\setup-dev.ps1"
+    echo "[collab]   Or: .venv/Scripts/pip install collab-runtime (pin matches README / COLLAB_RUNTIME_SPEC)"
     if [ "$LOCK_STRICT" = "1" ]; then
         echo "[collab] LOCK_STRICT=1 -> blocking push."
         exit 1
