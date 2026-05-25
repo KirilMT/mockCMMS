@@ -97,8 +97,13 @@ package from PyPI. The current pinned default is `collab-runtime==0.2.9`
 which also ships the VS Code extension `.vsix`).
 
 No environment variable is required for the common case — run `scripts/setup-dev.ps1`
-and you get the pinned runtime plus, on VS Code, an auto-installed extension fetched
-from the GitHub Release.
+and you get the pinned runtime plus an auto-installed collab extension `.vsix` from the
+GitHub release. The script **resolves editor launcher paths** (PATH first, then default Windows
+install locations such as `%LocalAppData%\Programs\Microsoft VS Code\bin\code.cmd` and
+`%LocalAppData%\Programs\cursor\resources\app\bin\cursor.cmd`) so you usually do **not** need
+the Command Palette “install shell command” step. Under **Cursor**, it prefers `cursor.cmd`
+from the Cursor install; if that is missing it may use Cursor’s bundled `code.cmd` (still
+targets Cursor, not Microsoft VS Code).
 
 Override knobs (all optional):
 

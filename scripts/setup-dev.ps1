@@ -450,7 +450,7 @@ if ($postSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $postSupaba
 elseif ($preSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $preSupabaseVersion }
 
 # ---------------------------------------------------------------------------
-# Phase 4.5 — Collab runtime provisioning
+# Phase 4.5 - Collab runtime provisioning
 # ---------------------------------------------------------------------------
 # Spec resolution precedence:
 #   1. $env:COLLAB_RUNTIME_SPEC overrides the pip spec entirely (pin/VCS/etc.)
@@ -493,7 +493,7 @@ else {
 
 # Always uninstall any conflicting public 'collab' package before install.
 # pip install collab resolves to an unrelated public PyPI package that does
-# NOT ship the canonical collab CLI — Phase 4.5 §"Integration checklist" calls
+# NOT ship the canonical collab CLI - Phase 4.5 §"Integration checklist" calls
 # this collision out explicitly. Uninstalling first guarantees the next pip
 # install resolves only against collab-runtime (the canonical distribution).
 $existingShow = & $pipPath show collab 2>&1
@@ -680,7 +680,6 @@ Write-Host "`n[Dev Step 5/6] Setting up Conventional Commit template and commit-
 
 $gitDir = Join-Path $projectRoot ".git"
 $hookDir = Join-Path $gitDir "hooks"
-$hookFile = Join-Path $hookDir "commit-msg"
 $templateFile = Join-Path $projectRoot ".gitmessage"
 
 # Set commit template
@@ -764,7 +763,7 @@ if ($hasPreCommit) {
         }
 
         # Overlay lock hooks on top of the pre-commit framework hooks.
-        # The lock hooks are the entry point — they handle lock acquisition and
+        # The lock hooks are the entry point - they handle lock acquisition and
         # then chain to 'pre-commit run' for validations. This MUST run AFTER
         # 'pre-commit install' so our hooks win (framework hooks are overwritten).
         Write-Host "   Overlaying collab locking hooks..." -ForegroundColor Yellow
@@ -905,82 +904,387 @@ Write-Host "OK" -ForegroundColor Green
 
 
 # IDE Auto-Detection & Configuration
-# Priority: runtime environment variables > directory presence
+# Priority: definitive VS Code/Cursor signals first (env + process tree), then
+# JetBrains. TERMINAL_EMULATOR=JetBrains-JediTerm is often missing outside a
+# JetBrains terminal but can also leak from user/system env and falsely trigger
+# when running from Cursor (e.g. Code Runner) where TERM_PROGRAM is unset.
+
+function Test-SetupDevAncestorProcessMatch {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$NameWildcards
+    )
+    try {
+        $current = Get-CimInstance -ClassName Win32_Process `
+            -Filter "ProcessId=$PID" `
+            -ErrorAction Stop
+        $guard = 0
+        while ($null -ne $current -and $guard -lt 20) {
+            $procName = $current.Name
+            foreach ($pattern in $NameWildcards) {
+                if ($procName -like $pattern) {
+                    return $true
+                }
+            }
+            $parentPid = [int]$current.ParentProcessId
+            if ($parentPid -le 0) {
+                break
+            }
+            $current = Get-CimInstance -ClassName Win32_Process `
+                -Filter "ProcessId=$parentPid" `
+                -ErrorAction SilentlyContinue
+            $guard++
+        }
+    }
+    catch {
+        return $false
+    }
+    return $false
+}
+
+function Test-SetupDevCursorHost {
+    <#
+    .SYNOPSIS
+        True when setup is running under Cursor (env or process tree), not plain VS Code.
+    #>
+    if ($null -ne $env:CURSOR_TRACE_ID -and $env:CURSOR_TRACE_ID -ne "") {
+        return $true
+    }
+    if ($null -ne $env:CURSOR_AGENT -and $env:CURSOR_AGENT -ne "") {
+        return $true
+    }
+    return (Test-SetupDevAncestorProcessMatch -NameWildcards @("Cursor*"))
+}
+
+function Test-SetupDevCliPathIsUnderCursorInstall {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$CliPath
+    )
+    if ([string]::IsNullOrWhiteSpace($CliPath)) {
+        return $false
+    }
+    # Windows: ...\AppData\Local\Programs\cursor\... (case-insensitive)
+    return $CliPath -match '(?i)[\\/]Programs[\\/]cursor[\\/]'
+}
+
+function Get-SetupDevCursorInstallRootFromProcess {
+    <#
+    .SYNOPSIS
+        Directory containing Cursor.exe when an ancestor process is Cursor (for CLI discovery).
+    #>
+    try {
+        $current = Get-CimInstance -ClassName Win32_Process `
+            -Filter "ProcessId=$PID" `
+            -ErrorAction Stop
+        $guard = 0
+        while ($null -ne $current -and $guard -lt 25) {
+            if ($current.Name -like "Cursor*") {
+                $exePath = $current.ExecutablePath
+                if (-not [string]::IsNullOrWhiteSpace($exePath)) {
+                    return (Split-Path -Parent $exePath)
+                }
+            }
+            $parentPid = [int]$current.ParentProcessId
+            if ($parentPid -le 0) {
+                break
+            }
+            $current = Get-CimInstance -ClassName Win32_Process `
+                -Filter "ProcessId=$parentPid" `
+                -ErrorAction SilentlyContinue
+            $guard++
+        }
+    }
+    catch {
+        return $null
+    }
+    return $null
+}
+
+function Resolve-SetupDevCursorCliPath {
+    <#
+    .SYNOPSIS
+        Full path to cursor.cmd (or equivalent) without requiring the user PATH shim.
+    .NOTES
+        Cursor ships launchers under LocalAppData\Programs\cursor\resources\app\bin\ even when
+        "Install shell command" was never run (unlike many VS Code installs that add code.cmd to PATH).
+    #>
+    $fromPath = Get-Command cursor -ErrorAction SilentlyContinue
+    if ($fromPath) {
+        return $fromPath.Source
+    }
+    $relCandidates = @(
+        "resources\app\bin\cursor.cmd",
+        "resources\app\bin\cursor.exe",
+        "bin\cursor.cmd"
+    )
+    foreach ($rootName in @("cursor", "Cursor")) {
+        $root = Join-Path $env:LOCALAPPDATA "Programs\$rootName"
+        foreach ($rel in $relCandidates) {
+            $p = Join-Path $root $rel
+            if (Test-Path -LiteralPath $p) {
+                return $p
+            }
+        }
+    }
+    $procRoot = Get-SetupDevCursorInstallRootFromProcess
+    if ($null -ne $procRoot) {
+        foreach ($rel in $relCandidates) {
+            $p = Join-Path $procRoot $rel
+            if (Test-Path -LiteralPath $p) {
+                return $p
+            }
+        }
+    }
+    return $null
+}
+
+function Resolve-SetupDevCursorBundleCodeShimPath {
+    <#
+    .SYNOPSIS
+        Cursor bundles code.cmd next to cursor.cmd; it installs extensions into Cursor, not VS Code.
+    #>
+    foreach ($rootName in @("cursor", "Cursor")) {
+        $shim = Join-Path $env:LOCALAPPDATA "Programs\$rootName\resources\app\bin\code.cmd"
+        if (Test-Path -LiteralPath $shim) {
+            return $shim
+        }
+    }
+    $fromPath = Get-Command code -ErrorAction SilentlyContinue
+    if ($fromPath -and (Test-SetupDevCliPathIsUnderCursorInstall -CliPath $fromPath.Source)) {
+        return $fromPath.Source
+    }
+    return $null
+}
+
+function Resolve-SetupDevMicrosoftVsCodeCliPath {
+    <#
+    .SYNOPSIS
+        Full path to Microsoft VS Code's code.cmd when installed in the default per-user location.
+    #>
+    $official = Join-Path $env:LOCALAPPDATA "Programs\Microsoft VS Code\bin\code.cmd"
+    if (Test-Path -LiteralPath $official) {
+        return $official
+    }
+    return $null
+}
+
+function Resolve-SetupDevVsCodeInstallCliPath {
+    <#
+    .SYNOPSIS
+        Prefer a code.cmd that is NOT Cursor's bundled shim (installs into real VS Code).
+    #>
+    $fromPath = Get-Command code -ErrorAction SilentlyContinue
+    if ($fromPath) {
+        if (-not (Test-SetupDevCliPathIsUnderCursorInstall -CliPath $fromPath.Source)) {
+            return $fromPath.Source
+        }
+    }
+    return (Resolve-SetupDevMicrosoftVsCodeCliPath)
+}
+
+function Get-SetupDevEditorInstallCli {
+    <#
+    .SYNOPSIS
+        Resolves which executable to use for ` --install-extension` so the collab .vsix lands in
+        the editor the developer is actually using (Cursor vs VS Code).
+    .NOTES
+        - VS Code's installer often puts `code` on PATH; Cursor frequently does not put `cursor` on PATH
+          even though cursor.cmd exists under %LocalAppData%\Programs\cursor\resources\app\bin\.
+        - We resolve those paths automatically so "Install shell command" is not required.
+        - Cursor's bundle also ships code.cmd (under the Cursor install dir); that targets Cursor,
+          not Microsoft VS Code  - we use it when the Cursor launcher cannot be found.
+    #>
+    $inCursor = Test-SetupDevCursorHost
+    $cursorCli = Resolve-SetupDevCursorCliPath
+    $cursorCodeShim = Resolve-SetupDevCursorBundleCodeShimPath
+    $vsCodeCli = Resolve-SetupDevVsCodeInstallCliPath
+
+    if ($inCursor) {
+        if ($null -ne $cursorCli) {
+            return [PSCustomObject][ordered]@{
+                Exe           = $cursorCli
+                DisplayLabel  = "Cursor"
+                SkipInstall   = $false
+                SkipReason    = $null
+            }
+        }
+        if ($null -ne $cursorCodeShim) {
+            return [PSCustomObject][ordered]@{
+                Exe           = $cursorCodeShim
+                DisplayLabel  = "Cursor (code shim)"
+                SkipInstall   = $false
+                SkipReason    = $null
+            }
+        }
+        if ($null -ne $vsCodeCli) {
+            return [PSCustomObject][ordered]@{
+                Exe           = $null
+                DisplayLabel  = $null
+                SkipInstall   = $true
+                SkipReason    = "Cursor host detected but Cursor install path could not be found; " `
+                    + "refusing Microsoft VS Code's code.cmd so the extension is not installed into the wrong app."
+            }
+        }
+        return [PSCustomObject][ordered]@{
+            Exe           = $null
+            DisplayLabel  = $null
+            SkipInstall   = $true
+            SkipReason    = "Could not locate Cursor or VS Code CLI for extension install."
+        }
+    }
+
+    if ($null -ne $vsCodeCli) {
+        return [PSCustomObject][ordered]@{
+            Exe           = $vsCodeCli
+            DisplayLabel  = "VS Code"
+            SkipInstall   = $false
+            SkipReason    = $null
+        }
+    }
+    if ($null -ne $cursorCli) {
+        return [PSCustomObject][ordered]@{
+            Exe           = $cursorCli
+            DisplayLabel  = "Cursor"
+            SkipInstall   = $false
+            SkipReason    = $null
+        }
+    }
+    $anyCode = Get-Command code -ErrorAction SilentlyContinue
+    if ($anyCode) {
+        return [PSCustomObject][ordered]@{
+            Exe           = $anyCode.Source
+            DisplayLabel  = "code (PATH)"
+            SkipInstall   = $false
+            SkipReason    = $null
+        }
+    }
+    return [PSCustomObject][ordered]@{
+        Exe           = $null
+        DisplayLabel  = $null
+        SkipInstall   = $true
+        SkipReason    = "Neither Cursor nor VS Code CLI could be resolved; skipping collab extension auto-install."
+    }
+}
+
+function Get-SetupDevDetectedIde {
+    param([string]$RepoRoot)
+
+    # VS Code family: Cursor, VS Code, Antigravity, Windsurf (vscode-like hosting)
+    if ($env:TERM_PROGRAM -eq "vscode") {
+        return "vscode"
+    }
+    if ($null -ne $env:VSCODE_PID -and $env:VSCODE_PID -ne "") {
+        return "vscode"
+    }
+    if ($null -ne $env:VSCODE_CWD -and $env:VSCODE_CWD -ne "") {
+        return "vscode"
+    }
+    if ($null -ne $env:VSCODE_IPC_HOOK -and $env:VSCODE_IPC_HOOK -ne "") {
+        return "vscode"
+    }
+    if ($null -ne $env:VSCODE_IPC_HOOK_CLI -and $env:VSCODE_IPC_HOOK_CLI -ne "") {
+        return "vscode"
+    }
+    if ($null -ne $env:VSCODE_CRASH_REPORTER_PROCESS_TYPE -and $env:VSCODE_CRASH_REPORTER_PROCESS_TYPE -ne "") {
+        return "vscode"
+    }
+    if ($null -ne $env:CURSOR_TRACE_ID -and $env:CURSOR_TRACE_ID -ne "") {
+        return "vscode"
+    }
+    if ($null -ne $env:CURSOR_AGENT -and $env:CURSOR_AGENT -ne "") {
+        return "vscode"
+    }
+    if (Test-SetupDevAncestorProcessMatch -NameWildcards @("Cursor*", "Code.exe", "code.exe")) {
+        return "vscode"
+    }
+
+    # JetBrains integrated terminal (may be absent in external shells)
+    if ($env:TERMINAL_EMULATOR -like "*JetBrains*") {
+        return "jetbrains"
+    }
+    if (Test-SetupDevAncestorProcessMatch -NameWildcards @("pycharm*.exe", "idea*.exe", "WebStorm*.exe", "Rider*.exe", "CLion*.exe", "DataGrip*.exe", "PhpStorm*.exe", "GoLand*.exe", "RubyMine*.exe")) {
+        return "jetbrains"
+    }
+
+    # Directory hints (weaker): .idea may exist while the dev uses Cursor
+    if (Test-Path (Join-Path $RepoRoot ".vscode")) {
+        return "vscode"
+    }
+    if (Test-Path (Join-Path $RepoRoot ".cursor")) {
+        return "vscode"
+    }
+    if (Test-Path (Join-Path $RepoRoot ".idea")) {
+        return "jetbrains"
+    }
+
+    return $null
+}
+
+function Invoke-SetupDevCollabLocksVsixInstall {
+    <#
+    .SYNOPSIS
+        Downloads collab-file-locks .vsix from KirilMT/collab GitHub Releases and installs it
+        using the editor CLI resolved by Get-SetupDevEditorInstallCli (Cursor vs VS Code paths).
+    #>
+    $editorCli = Get-SetupDevEditorInstallCli
+    if ($editorCli.SkipInstall) {
+        Write-Host "     - $($editorCli.SkipReason)" -ForegroundColor Yellow
+        Write-Host "     - Manual: download .vsix from" -ForegroundColor Gray
+        Write-Host "       https://github.com/KirilMT/collab/releases/latest" -ForegroundColor Gray
+        Write-Host "       then: cursor --install-extension <path-to.vsix>   (Cursor)" -ForegroundColor Gray
+        Write-Host "       or:  code --install-extension <path-to.vsix>     (VS Code)" -ForegroundColor Gray
+        return
+    }
+
+    Write-Host "     - Collab extension installer: $($editorCli.DisplayLabel)" -ForegroundColor Gray
+    Write-Host "       $($editorCli.Exe)" -ForegroundColor DarkGray
+    Write-Host "     - Fetching latest collab-file-locks .vsix from GitHub Releases..." -ForegroundColor Gray
+    try {
+        $releaseUri = "https://api.github.com/repos/KirilMT/collab/releases/latest"
+        # GitHub API requires a User-Agent header
+        $releaseInfo = Invoke-RestMethod -Uri $releaseUri `
+            -Headers @{ "User-Agent" = "mockCMMS-setup-dev" } `
+            -ErrorAction Stop
+        $vsixAsset = $releaseInfo.assets | Where-Object { $_.name -like "*.vsix" } | Select-Object -First 1
+        if (-not $vsixAsset) {
+            Write-Host "     - No .vsix asset found on release $($releaseInfo.tag_name); skipping." -ForegroundColor Yellow
+            return
+        }
+
+        $vsixDest = Join-Path $env:TEMP $vsixAsset.name
+        Write-Host "     - Downloading $($vsixAsset.name) ($($releaseInfo.tag_name))..." -ForegroundColor Gray
+        Invoke-WebRequest -Uri $vsixAsset.browser_download_url `
+            -OutFile $vsixDest `
+            -Headers @{ "User-Agent" = "mockCMMS-setup-dev" } `
+            -ErrorAction Stop
+        $installExe = $editorCli.Exe
+        $installOutput = & $installExe --install-extension $vsixDest --force 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "     - $installExe --install-extension failed (non-fatal):" -ForegroundColor Yellow
+            Write-Host "       $installOutput" -ForegroundColor Gray
+        }
+        else {
+            Write-Host "     - Installed extension " -NoNewline -ForegroundColor White
+            Write-Host "OK" -ForegroundColor Green
+            Write-Host "       ($($vsixAsset.name) -> $($editorCli.DisplayLabel))" -ForegroundColor Gray
+        }
+        Remove-Item $vsixDest -Force -ErrorAction SilentlyContinue
+    }
+    catch {
+        Write-Host "     - Could not auto-install extension (non-fatal): $_" -ForegroundColor Yellow
+        Write-Host "     - Manual install: https://github.com/KirilMT/collab/releases/latest" -ForegroundColor Gray
+    }
+}
+
 Write-Host "`n   Detecting IDE environment..." -ForegroundColor Yellow
 
-$detectedIDE = $null
-
-# Primary detection: check the running IDE via environment variables
-# VS Code / Antigravity / Cursor all set TERM_PROGRAM=vscode
-if ($env:TERM_PROGRAM -eq "vscode") {
-    $detectedIDE = "vscode"
-}
-# JetBrains IDEs (PyCharm, IntelliJ) set TERMINAL_EMULATOR=JetBrains-JediTerm
-elseif ($env:TERMINAL_EMULATOR -like "*JetBrains*") {
-    $detectedIDE = "jetbrains"
-}
-# Fallback: directory-based detection (only if no runtime signal)
-elseif (Test-Path (Join-Path $projectRoot ".vscode")) {
-    $detectedIDE = "vscode"
-}
-elseif (Test-Path (Join-Path $projectRoot ".idea")) {
-    $detectedIDE = "jetbrains"
-}
+$detectedIDE = Get-SetupDevDetectedIde -RepoRoot $projectRoot
 
 switch ($detectedIDE) {
     "vscode" {
-        Write-Host "     - VS Code / Antigravity detected" -ForegroundColor Gray
-
-        # ---------------------------------------------------------------
-        # Phase 4.5 — auto-install collab-file-locks .vsix from GitHub
-        # Releases (KirilMT/collab). The extension is NOT distributed via
-        # the VS Code Marketplace; the canonical artifact is the latest
-        # release's .vsix asset.
-        # ---------------------------------------------------------------
-        $codeCmd = Get-Command code -ErrorAction SilentlyContinue
-        if (-not $codeCmd) {
-            Write-Host "     - 'code' CLI not found on PATH; skipping auto-install." -ForegroundColor Yellow
-            Write-Host "     - To install manually: download .vsix from" -ForegroundColor Gray
-            Write-Host "       https://github.com/KirilMT/collab/releases/latest" -ForegroundColor Gray
-            Write-Host "       then run: code --install-extension <path-to-vsix>" -ForegroundColor Gray
-        }
-        else {
-            Write-Host "     - Fetching latest collab-file-locks .vsix from GitHub Releases..." -ForegroundColor Gray
-            try {
-                $releaseUri = "https://api.github.com/repos/KirilMT/collab/releases/latest"
-                # GitHub API requires a User-Agent header
-                $releaseInfo = Invoke-RestMethod -Uri $releaseUri `
-                    -Headers @{ "User-Agent" = "mockCMMS-setup-dev" } `
-                    -ErrorAction Stop
-                $vsixAsset = $releaseInfo.assets | Where-Object { $_.name -like "*.vsix" } | Select-Object -First 1
-                if (-not $vsixAsset) {
-                    Write-Host "     - No .vsix asset found on release $($releaseInfo.tag_name); skipping." -ForegroundColor Yellow
-                }
-                else {
-                    $vsixDest = Join-Path $env:TEMP $vsixAsset.name
-                    Write-Host "     - Downloading $($vsixAsset.name) ($($releaseInfo.tag_name))..." -ForegroundColor Gray
-                    Invoke-WebRequest -Uri $vsixAsset.browser_download_url `
-                        -OutFile $vsixDest `
-                        -Headers @{ "User-Agent" = "mockCMMS-setup-dev" } `
-                        -ErrorAction Stop
-                    $installResult = & code --install-extension $vsixDest --force 2>&1
-                    if ($LASTEXITCODE -eq 0) {
-                        Write-Host "     - Installed extension " -NoNewline -ForegroundColor White
-                        Write-Host "OK" -ForegroundColor Green
-                        Write-Host "       ($($vsixAsset.name))" -ForegroundColor Gray
-                    }
-                    else {
-                        Write-Host "     - code --install-extension failed (non-fatal):" -ForegroundColor Yellow
-                        Write-Host "       $installResult" -ForegroundColor Gray
-                    }
-                    Remove-Item $vsixDest -Force -ErrorAction SilentlyContinue
-                }
-            }
-            catch {
-                Write-Host "     - Could not auto-install extension (non-fatal): $_" -ForegroundColor Yellow
-                Write-Host "     - Manual install: https://github.com/KirilMT/collab/releases/latest" -ForegroundColor Gray
-            }
-        }
+        Write-Host "     - VS Code / Cursor / Antigravity (or compatible host) detected" -ForegroundColor Gray
+        Invoke-SetupDevCollabLocksVsixInstall
     }
     "jetbrains" {
         Write-Host "     - PyCharm/IntelliJ detected" -ForegroundColor Gray
@@ -1009,7 +1313,7 @@ else {
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 
-# Display next steps — IDE-aware
+# Display next steps - IDE-aware
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host "                        NEXT STEPS                              " -ForegroundColor Yellow
@@ -1019,9 +1323,12 @@ Write-Host ""
 switch ($detectedIDE) {
     "vscode" {
         Write-Host "  1. Collab Locks extension:" -ForegroundColor White
-        Write-Host "     Auto-installed above from KirilMT/collab GitHub Releases" -ForegroundColor Magenta
+        Write-Host "     Auto-installed above from KirilMT/collab GitHub Releases (into Cursor or VS Code," -ForegroundColor Magenta
+        Write-Host "     whichever CLI setup-dev used: cursor vs code)." -ForegroundColor Magenta
         Write-Host "     If auto-install was skipped, download .vsix from:" -ForegroundColor Gray
         Write-Host "       https://github.com/KirilMT/collab/releases/latest" -ForegroundColor Gray
+        Write-Host "     Then install: cursor --install-extension <path> (Cursor) or" -ForegroundColor Gray
+        Write-Host "                  code --install-extension <path> (VS Code)." -ForegroundColor Gray
         Write-Host "     The extension auto-starts on open and shows lock status" -ForegroundColor Gray
         Write-Host "     in the status bar." -ForegroundColor Gray
     }
