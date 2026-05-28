@@ -50,4 +50,4 @@ psutil==5.9.8
 djlint>=1.36.4
 
 # Mocking API responses
-responses==0.26.0
+responses==0.26.1
