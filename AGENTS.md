@@ -44,7 +44,13 @@ grep -n "..." <file>
 
 Before outputting any terminal command, internally verify it is compatible with the detected shell (or is plain `git`). If unsure, run detection again and use shell-native file-reading/search patterns.
 
-**AI / Cursor agent tool shells and `.venv`:** Agent-driven terminal runs (tooling shells) often **do not** inherit your IDE’s “activate venv on new terminal” behavior. Do not assume `python` / `pip` on `PATH` point at this repo’s `.venv` (`VIRTUAL_ENV` may be unset). For Python commands in mockCMMS, prefer `.\.venv\Scripts\python.exe` (Windows) or run `.\.venv\Scripts\Activate.ps1` first, then use `python` / `pip` as usual.
+**AI / Cursor agent tool shells and `.venv`:** Agent-driven terminal runs (tooling shells) often **do not** inherit your IDE’s “activate venv on new terminal” behavior. Do not assume `python`, `pip`, or `collab` on `PATH` point at this repo’s `.venv` (`VIRTUAL_ENV` may be unset). For mockCMMS, prefer explicit venv paths on Windows:
+
+- Python: `.\.venv\Scripts\python.exe`
+- Collab CLI: `.\.venv\Scripts\collab.exe` (lock checks, daemon, dashboard)
+- Or run `.\.venv\Scripts\Activate.ps1` first, then use `python`, `pip`, and `collab` as usual.
+
+On macOS/Linux after activation, use `.venv/bin/collab` when `collab` is not on `PATH`.
 
 ---
 
@@ -293,7 +299,7 @@ Or just run: `python scripts/format_code.py`
 This repository uses an installed `collab` runtime for collaborative file locking. **Before editing any file**, agents must follow this protocol:
 
 1. **Identify all files** the task requires — source, tests, docs, config — before touching anything.
-2. **Check lock status (AI agents: mandatory every time before edits):** run `collab active` before edits. You may also run `collab status <file>` for targeted checks.
+2. **Check lock status (AI agents: mandatory every time before edits):** run lock checks before edits. When the venv is not activated, use `.\.venv\Scripts\collab.exe active` (Windows) or `.venv/bin/collab active` (POSIX). With an activated venv, `collab active` is fine. Optional targeted check: `collab status path/to/file.py` (same executable path rules).
 
 - Devs may also see automatic warning popups when opening a file already being edited by another dev.
 - AI agents must **not** rely on popup warnings and must always run an explicit lock command.

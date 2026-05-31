@@ -450,7 +450,7 @@ if ($postSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $postSupaba
 elseif ($preSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $preSupabaseVersion }
 
 # ---------------------------------------------------------------------------
-# Phase 4.5 - Collab runtime provisioning
+# Collab runtime provisioning (collab-runtime package)
 # ---------------------------------------------------------------------------
 # Spec resolution precedence:
 #   1. $env:COLLAB_RUNTIME_SPEC overrides the pip spec entirely (pin/VCS/etc.)
@@ -466,7 +466,7 @@ $collabRuntimeSpec = $env:COLLAB_RUNTIME_SPEC
 $collabLocalPath = $env:COLLAB_LOCAL_PATH
 $collabPkgIndex = $env:COLLAB_PKG_INDEX
 
-Write-Host "`n   Provisioning collab runtime (Phase 4.5)..." -ForegroundColor Yellow
+Write-Host "`n   Provisioning collab runtime..." -ForegroundColor Yellow
 
 # Auto-detect sibling collab repo when no explicit spec or local path provided
 if (-not $collabRuntimeSpec -and -not $collabLocalPath) {
@@ -493,7 +493,7 @@ else {
 
 # Always uninstall any conflicting public 'collab' package before install.
 # pip install collab resolves to an unrelated public PyPI package that does
-# NOT ship the canonical collab CLI - Phase 4.5 §"Integration checklist" calls
+# NOT ship the canonical collab CLI - integration checklist calls
 # this collision out explicitly. Uninstalling first guarantees the next pip
 # install resolves only against collab-runtime (the canonical distribution).
 $existingShow = & $pipPath show collab 2>&1

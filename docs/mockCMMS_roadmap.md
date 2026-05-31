@@ -131,55 +131,15 @@ _Updated March 17, 2026_ (Targeted CI Validation & Pre-Commit Refinement)
     - [Monitoring App Concept & Modular Architecture](./Monitoring app/monitoring_concept_and_modular_architecture.md)
   - **Status:** Discovery + architecture definition
 
-- **[ ] Collaborative Development: Live Synchronization & File Locking** _(Priority: High)_
-  - **Goal:** Enable synchronized development across multiple developers with real-time visibility and automatic conflict prevention (similar to Siemens TIA Portal Server Projects).
-  - **Problem Solved:** Eliminates merge conflicts by implementing file locking and live updates to show who's working on what.
-  - **Implementation Strategy:** Tiered approach with quick-win (Tier 1) followed by comprehensive solution (Tier 2).
-
-  **📚 Documentation:**
-  - **[COLLABORATIVE_DEVELOPMENT_INDEX.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_INDEX.md)** - Navigation hub for all docs
-  - **[COLLABORATIVE_DEVELOPMENT_QUICK_START.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_QUICK_START.md)** - Decision guide (15 min read)
-  - **[COLLABORATIVE_DEVELOPMENT_VISUAL_GUIDE.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_VISUAL_GUIDE.md)** - Diagrams & architecture
-  - **[COLLABORATIVE_DEVELOPMENT_ANALYSIS.md](./COLLABORATIVE_DEVELOPMENT/COLLABORATIVE_DEVELOPMENT_ANALYSIS.md)** - Complete option analysis
-  - **[TIER1_GIT_PROTECTION.md](./COLLABORATIVE_DEVELOPMENT/TIER1_GIT_PROTECTION.md)** - GitHub branch protection setup (2-4 hours)
-  - **[TIER2_FILE_LOCKING_SYSTEM.md](./COLLABORATIVE_DEVELOPMENT/TIER2_FILE_LOCKING_SYSTEM.md)** - File locking implementation guide (40-60 hours)
-
-  **Tier 1: Git Protection (Quick Win)**
-  - [ ] Phase 1.1: Enable GitHub branch protection rules
-  - [ ] Phase 1.2: Configure CODEOWNERS and code review requirements
-  - [ ] Phase 1.3: Setup GitHub Actions CI/CD validation
-  - [ ] Phase 1.4: Configure Slack notifications
-  - [ ] Phase 1.5: Create shared "Currently Working On" document
-  - **Timeline:** 2-4 hours (this week)
-  - **Expected Impact:** 40-50% fewer merge conflicts
-
-  **Tier 2: File Locking System (Main Implementation)**
-  - [ ] Phase 2.1: Design database schema (locks table)
-  - [ ] Phase 2.2: Build Flask lock service with REST API
-  - [ ] Phase 2.3: Create pre-commit hook integration
-  - [ ] Phase 2.4: Build lock management dashboard UI
-  - [ ] Phase 2.5: Create Python client library
-  - [ ] Phase 2.6: Implement monitoring & auto-cleanup
-  - [ ] Phase 2.7: Write comprehensive unit tests
-  - [ ] Phase 2.8: Test with 2-3 developers (Phase 2)
-  - [ ] Phase 2.9: Full team rollout & training (Phase 3)
-  - **Timeline:** 40-60 hours (1-2 sprints)
-  - **Expected Impact:** 70-80% fewer merge conflicts
-
-  **Success Metrics:**
-  - After Tier 1: 0 direct commits to main, 100% of changes require PR, 40-50% conflict reduction
-  - After Tier 2: Automatic file locking, dashboard shows active work, 70-80% conflict reduction
-
-  **Key Features:**
-  - Automatic file locking prevents simultaneous editing
-  - Real-time visibility dashboard
-  - Pre-commit hook enforcement
-  - Auto-release with 8-hour timeout
-  - Production-ready Python/Flask code included
-  - Scales to 8-10+ developers
-
-  **Dependencies:** None
-  - **Status:** Pending - Tier 1 can start immediately
+- **[x] Collaborative Development: Live Synchronization & File Locking** _(Priority: High)_ — **Delivered via installed `collab-runtime`** (not an in-repo Flask lock service).
+  - **Goal:** Synchronized development with real-time visibility and conflict prevention across contributors.
+  - **Solution:** External **`collab-runtime`** Python package (default pin `0.2.9`), VS Code extension from [KirilMT/collab](https://github.com/KirilMT/collab) releases, git hooks under `scripts/hooks/`, and CI smoke (`.github/workflows/lock-service-smoke-test.yml`). Legacy planning docs under `docs/COLLABORATIVE_DEVELOPMENT/` were removed; use current onboarding below.
+  - **Onboarding (developers and agents):**
+    - [README.md](../README.md) — **Collab runtime (file locking)** (install, env overrides, verification commands)
+    - [AGENTS.md](../AGENTS.md) — file-locking protocol; use `.\.venv\Scripts\collab.exe` when the venv is not activated (Windows)
+    - Skill: `.agents/skills/file-locking/SKILL.md`
+  - **Setup:** `.\scripts\setup-dev.ps1` provisions `collab-runtime`, hooks, and optional extension `.vsix`.
+  - **Status:** Complete on `main` (integration PRs #136, #138, #142, #143). Ongoing work (version bumps, runtime hardening) happens in the **collab** repository.
 
 - **[ ] Bootstrap 5 Migration** _(Priority: Medium)_
   - **Goal:** Upgrade from Bootstrap 4.5.2 to Bootstrap 5.3.x to modernize the UI framework and improve accessibility.
