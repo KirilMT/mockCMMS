@@ -43,17 +43,21 @@ For a typical feature/bug task, this includes:
 
 For AI agents, lock checks are mandatory before any file-modifying action. Dev workflows may also show watcher/IDE conflict notifications, but AI agents do not see those popups and must rely on explicit commands.
 
-Check all active locks at once:
+**Agent shells often do not activate `.venv`.** Do not assume `collab` is on `PATH`. Use the project venv executable:
 
-```bash
-collab active
+```powershell
+# Windows (mockCMMS default)
+.\.venv\Scripts\collab.exe active
+.\.venv\Scripts\collab.exe status path/to/file.py
 ```
 
-Optional targeted check:
-
 ```bash
-collab status path/to/file.py
+# macOS/Linux (after setup-dev or manual venv)
+.venv/bin/collab active
+.venv/bin/collab status path/to/file.py
 ```
+
+If the venv is already activated, `collab active` and `collab status <file>` are equivalent.
 
 Cross-reference the active lock list against your planned file list.
 
@@ -95,8 +99,13 @@ Make your changes. In normal workflows, lock acquisition and release are automat
 
 ## Quick Reference
 
+```powershell
+# Windows — list everything currently locked (preferred for agents)
+.\.venv\Scripts\collab.exe active
+```
+
 ```bash
-# List everything currently locked
+# Activated venv or POSIX
 collab active
 ```
 
@@ -105,7 +114,7 @@ collab active
 ## Checklist (for AI agents)
 
 - [ ] Listed all files the task will touch
-- [ ] Ran `collab active` (or targeted `collab status <file>`) before file-modifying work
+- [ ] Ran lock check via venv `collab` (`.\.venv\Scripts\collab.exe active` on Windows, or `collab active` with venv activated) before file-modifying work
 - [ ] Verified no target file is locked by another developer
 - [ ] Applied edits only when files were unlocked or already locked by the current developer
 - [ ] Did not run force-release on another developer's lock (forbidden)

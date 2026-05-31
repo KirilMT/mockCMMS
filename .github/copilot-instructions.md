@@ -45,6 +45,8 @@ grep -n "..." <file>
 
 Before outputting any terminal command, internally verify it is compatible with the detected shell (or is plain `git`). If unsure, run detection again and use shell-native file-reading/search patterns.
 
+**AI / Copilot tool shells and `.venv`:** Tooling shells often do not activate the project venv. Do not assume `python`, `pip`, or `collab` on `PATH` point at `.venv`. On Windows prefer `.\.venv\Scripts\python.exe` and `.\.venv\Scripts\collab.exe`; or run `.\.venv\Scripts\Activate.ps1` first. On POSIX use `.venv/bin/python` and `.venv/bin/collab` when needed. See [AGENTS.md](../AGENTS.md).
+
 ---
 
 ## File Locking
@@ -52,8 +54,8 @@ Before outputting any terminal command, internally verify it is compatible with 
 Before editing any file, follow Skill: `file-locking`:
 
 1. List all files the task will touch.
-2. Run `collab active` to check current locks. Optional targeted check: `collab status <file>`.
-   Dev workflows may also show watcher/IDE popup warnings, but AI agents do not see those popups and must rely on explicit lock commands.
+2. Run lock checks before edits. When the venv is not activated, use `.\.venv\Scripts\collab.exe active` (Windows) or `.venv/bin/collab active` (POSIX). With an activated venv, `collab active` is fine. Optional: `collab status <file>` (same executable path rules).
+   Dev workflows may show watcher/IDE popups; agents must use explicit lock commands (see AGENTS.md).
 3. If any target file is locked by another developer — **stop and report**. Do not edit.
 4. If files are unlocked, proceed with edits — lock acquisition/release is automatic.
 5. **ABSOLUTELY FORBIDDEN:** never force-release another developer's lock.

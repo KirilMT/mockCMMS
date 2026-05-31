@@ -91,7 +91,7 @@ This script automates the installation of:
 
 ### Collab runtime (file locking)
 
-Phase 4.5 — `setup-dev.ps1` provisions the canonical published `collab-runtime`
+`setup-dev.ps1` provisions the canonical published `collab-runtime`
 package from PyPI. The current pinned default is `collab-runtime==0.2.9`
 (matches the [KirilMT/collab `v0.2.9` release](https://github.com/KirilMT/collab/releases/latest),
 which also ships the VS Code extension `.vsix`).

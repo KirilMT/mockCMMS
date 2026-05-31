@@ -12,8 +12,7 @@
 Before editing any file, follow Skill: `file-locking`:
 
 1. List all files the task will touch.
-2. Run `collab active` to check current locks. Optional targeted check: `collab status <file>`.
-   Dev workflows may also show watcher/IDE popup warnings, but AI agents do not see those popups and must rely on explicit lock commands.
+2. Run lock checks before edits. When the venv is not activated, use `.\.venv\Scripts\collab.exe active` (Windows) or `.venv/bin/collab active` (POSIX). Optional: `collab status <file>` with the same executable. Dev workflows may show watcher/IDE popups; AI agents must use explicit commands (see AGENTS.md).
 3. If any target file is locked by another developer — **stop and report**. Do not edit.
 4. If files are unlocked, proceed with edits — lock acquisition/release is automatic.
 5. **ABSOLUTELY FORBIDDEN:** never force-release another developer's lock.
