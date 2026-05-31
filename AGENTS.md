@@ -1,7 +1,7 @@
 # AGENTS.md — mockCMMS
 
 > Single source of truth for all AI coding assistants (Antigravity, Gemini CLI, Claude Code, GitHub Copilot, Jules).
-> Tool-specific overrides live in `GEMINI.md`, `CLAUDE.md`, `.github/copilot-instructions.md`.
+> Tool-specific overrides live in `CLAUDE.md`, `.github/copilot-instructions.md`.
 > Workflow-heavy procedures live in `.agents/skills/`.
 
 ---
@@ -44,7 +44,7 @@ grep -n "..." <file>
 
 Before outputting any terminal command, internally verify it is compatible with the detected shell (or is plain `git`). If unsure, run detection again and use shell-native file-reading/search patterns.
 
-**AI / Cursor agent tool shells and `.venv`:** Agent-driven terminal runs (tooling shells) often **do not** inherit your IDE’s “activate venv on new terminal” behavior. Do not assume `python`, `pip`, or `collab` on `PATH` point at this repo’s `.venv` (`VIRTUAL_ENV` may be unset). For mockCMMS, prefer explicit venv paths on Windows:
+**AI / Cursor agent tool shells and `.venv`:** Agent-driven terminal runs (tooling shells) often **do not** inherit your IDE's "activate venv on new terminal" behavior. Do not assume `python`, `pip`, or `collab` on `PATH` point at this repo's `.venv` (`VIRTUAL_ENV` may be unset). For mockCMMS, prefer explicit venv paths on Windows:
 
 - Python: `.\.venv\Scripts\python.exe`
 - Collab CLI: `.\.venv\Scripts\collab.exe` (lock checks, daemon, dashboard)
@@ -281,9 +281,19 @@ Or just run: `python scripts/format_code.py`
 ### Autonomy
 
 - Operate autonomously until the final `git commit`. The user should be able to leave for 20+ minutes and return to completed work.
-- `SafeToAutoRun=true` for ALL standard operations: python, pytest, npm, ruff, black, isort, mypy, prettier, eslint, PowerShell.
 - Only `git commit` and `git push` require user approval.
 - Never pause for "Should I proceed?" during lint/format/test loops.
+
+**SafeToAutoRun Authorization:**
+All standard operations MUST be auto-approved:
+
+| Category       | Commands                                                                              |
+| -------------- | ------------------------------------------------------------------------------------- |
+| **Python**     | `python`, `pytest`, `pip`, `ruff`, `black`, `isort`, `mypy`, `docformatter`, `bandit` |
+| **Node.js**    | `npm`, `npx`, `node`, `prettier`, `eslint`, `jest`, `playwright`                      |
+| **Shell**      | `Get-Content`, `Select-String`, `Remove-Item`, `Copy-Item`, `findstr`, `dir`          |
+| **Git (read)** | `git status`, `git diff`, `git log`, `git branch`, `git show`                         |
+| **Complex**    | Pipes (`\|`), redirections (`>`), chaining (`;`) — all auto-run                       |
 
 ### Decision Making
 
@@ -292,7 +302,41 @@ Or just run: `python scripts/format_code.py`
 - If validation fails, self-correct up to 3 attempts before reporting to the user.
 - **When unsure what to do next:** Run tests first. If tests pass, audit code quality. If quality is good, look at the roadmap for the next task.
 
-### Task Completion
+### Background Command Monitoring
+
+For long-running commands, monitor until completion — never prompt "still running?":
+
+| Command                    | Expected Duration |
+| -------------------------- | ----------------- |
+| `validate_code.py --quick` | ~5 min            |
+| `validate_code.py` (full)  | ~15-20 min        |
+| `pytest tests/backend`     | ~5 min            |
+| `npm run test:e2e`         | ~5 min            |
+
+Use `command_status` with `WaitDurationSeconds=300` and keep polling until DONE.
+
+### Browser Verification
+
+When verifying UI changes:
+
+1. **Check server** — verify `python run.py` is running before using a browser tool/subagent.
+2. **Demonstrate** ALL implemented/changed features via browser.
+3. **Login:** `admin` / `admin123`
+4. **Evidence accuracy** — describe ONLY what's visible in screenshots. Trust the screenshot over assumptions. Zero tolerance for hallucination.
+
+### Artifact Management
+
+- **One artifact per type per task:** ONE implementation plan, ONE task list, ONE walkthrough.
+- **Update, don't recreate** — always update existing artifacts.
+- **Never delete completed work** in artifacts.
+- Use `task.md`, `implementation_plan.md`, `walkthrough.md` naming.
+
+### Debug Log Rules
+
+- Location: `logs/` directory (create if missing).
+- Extension: `.log` only.
+- Naming: `debug_<context>_<timestamp>.log`
+- **Cleanup:** Delete log files after reading content.
 
 ### File Locking Protocol
 
@@ -316,7 +360,7 @@ This repository uses an installed `collab` runtime for collaborative file lockin
 
 See **Skill: `file-locking`** for the complete workflow and CLI reference.
 
-### Background Process Monitoring
+### Background Process Monitoring (Daemon)
 
 When working with long-running background tasks, specifically the collaborative daemon, observe these rules:
 
