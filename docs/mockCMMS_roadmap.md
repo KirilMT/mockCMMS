@@ -133,12 +133,12 @@ _Updated March 17, 2026_ (Targeted CI Validation & Pre-Commit Refinement)
 
 - **[x] Collaborative Development: Live Synchronization & File Locking** _(Priority: High)_ — **Delivered via installed `collab-runtime`** (not an in-repo Flask lock service).
   - **Goal:** Synchronized development with real-time visibility and conflict prevention across contributors.
-  - **Solution:** External **`collab-runtime`** Python package (default pin `0.2.9`), VS Code extension from [KirilMT/collab](https://github.com/KirilMT/collab) releases, git hooks under `scripts/hooks/`, and CI smoke (`.github/workflows/lock-service-smoke-test.yml`). Legacy planning docs under `docs/COLLABORATIVE_DEVELOPMENT/` were removed; use current onboarding below.
+  - **Solution:** External **`collab-runtime`** Python package (pinned in `requirements-dev.txt`, currently `0.3.1`), VS Code extension from [KirilMT/collab](https://github.com/KirilMT/collab) releases, git hooks under `scripts/hooks/`, and CI smoke (`.github/workflows/lock-service-smoke-test.yml`). Legacy planning docs under `docs/COLLABORATIVE_DEVELOPMENT/` were removed; use current onboarding below.
   - **Onboarding (developers and agents):**
-    - [README.md](../README.md) — **Collab runtime (file locking)** (install, env overrides, verification commands)
+    - [README.md](../README.md) — **Collab runtime (file locking)** (install + verification commands)
     - [AGENTS.md](../AGENTS.md) — file-locking protocol; use `.\.venv\Scripts\collab.exe` when the venv is not activated (Windows)
     - Skill: `.agents/skills/file-locking/SKILL.md`
-  - **Setup:** `.\scripts\setup-dev.ps1` provisions `collab-runtime`, hooks, and optional extension `.vsix`.
+  - **Setup:** `collab-runtime` is a plain external dev dependency pinned in `requirements-dev.txt` (installed by `pip install -r requirements-dev.txt`, like `black`/`flake8`); `.\scripts\setup-dev.ps1` runs that install, then verifies the runtime and installs the hooks + extension `.vsix`. No env-var/sibling-repo overrides — change the version by editing the pin.
   - **Status:** Complete on `main` (integration PRs #136, #138, #142, #143). Ongoing work (version bumps, runtime hardening) happens in the **collab** repository.
 
 - **[ ] Bootstrap 5 Migration** _(Priority: Medium)_

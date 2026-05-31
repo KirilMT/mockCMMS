@@ -403,6 +403,7 @@ if (Test-Path "requirements-dev.txt") {
             'mypy.exe'                    = 'mypy'
             'pytest.exe'                  = 'pytest'
             'yamllint.exe'                = 'yamllint'
+            'collab.exe'                  = 'collab-runtime'
         }
         $missingTools = @()
         foreach ($exe in $devTools.Keys) {
@@ -449,131 +450,11 @@ if ($null -eq $supabaseVersion) { $supabaseVersion = "" }
 if ($postSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $postSupabaseVersion }
 elseif ($preSupabaseFound) { $supabaseFound = $true; $supabaseVersion = $preSupabaseVersion }
 
-# ---------------------------------------------------------------------------
-# Collab runtime provisioning (collab-runtime package)
-# ---------------------------------------------------------------------------
-# Spec resolution precedence:
-#   1. $env:COLLAB_RUNTIME_SPEC overrides the pip spec entirely (pin/VCS/etc.)
-#   2. $env:COLLAB_LOCAL_PATH or sibling ../collab → editable install (dev mode)
-#   3. Otherwise default to canonical PyPI pin (DEFAULT_COLLAB_PIN below)
-#
-# $env:COLLAB_PKG_INDEX, when set, is added as --index-url to pip install
-# (with public PyPI as --extra-index-url) for private/test registry use.
-
-$DEFAULT_COLLAB_PIN = "collab-runtime==0.2.9"
-
-$collabRuntimeSpec = $env:COLLAB_RUNTIME_SPEC
-$collabLocalPath = $env:COLLAB_LOCAL_PATH
-$collabPkgIndex = $env:COLLAB_PKG_INDEX
-
-Write-Host "`n   Provisioning collab runtime..." -ForegroundColor Yellow
-
-# Auto-detect sibling collab repo when no explicit spec or local path provided
-if (-not $collabRuntimeSpec -and -not $collabLocalPath) {
-    $candidates = @(
-        (Join-Path $projectRoot '..\collab'),
-        (Join-Path $projectRoot 'collab')
-    )
-    foreach ($cand in $candidates) {
-        if (Test-Path $cand) { $collabLocalPath = (Resolve-Path $cand).Path; break }
-    }
-}
-
-# Final fallback: canonical pinned PyPI spec
-if (-not $collabRuntimeSpec -and -not $collabLocalPath) {
-    $collabRuntimeSpec = $DEFAULT_COLLAB_PIN
-    Write-Host "   Using default canonical spec: $collabRuntimeSpec" -ForegroundColor Gray
-}
-elseif ($collabLocalPath) {
-    Write-Host "   Using local collab repo (editable install): $collabLocalPath" -ForegroundColor Gray
-}
-else {
-    Write-Host "   Using COLLAB_RUNTIME_SPEC override: $collabRuntimeSpec" -ForegroundColor Gray
-}
-
-# Always uninstall any conflicting public 'collab' package before install.
-# pip install collab resolves to an unrelated public PyPI package that does
-# NOT ship the canonical collab CLI - integration checklist calls
-# this collision out explicitly. Uninstalling first guarantees the next pip
-# install resolves only against collab-runtime (the canonical distribution).
-$existingShow = & $pipPath show collab 2>&1
-if ($LASTEXITCODE -eq 0 -and $existingShow) {
-    Write-Host "   Removing conflicting public 'collab' package..." -ForegroundColor Yellow
-    & $pipPath uninstall collab -y 2>&1 | Out-Null
-}
-
-# Build pip args (private index handling)
-$pipExtraArgs = @()
-if ($collabPkgIndex) {
-    $pipExtraArgs += @("--index-url", $collabPkgIndex,
-        "--extra-index-url", "https://pypi.org/simple")
-    Write-Host "   Using private package index: $collabPkgIndex" -ForegroundColor Gray
-    Write-Host "   (PyPI added as --extra-index-url fallback)" -ForegroundColor Gray
-}
-
-# Install
-if ($collabLocalPath) {
-    $collabInstallOutput = & $pipPath install --upgrade -e $collabLocalPath 2>&1
-}
-else {
-    $collabInstallOutput = & $pipPath install --upgrade `
-        --upgrade-strategy only-if-needed `
-        @pipExtraArgs $collabRuntimeSpec 2>&1
-}
-$installExit = $LASTEXITCODE
-
-if ($installExit -ne 0) {
-    Write-Host "   Collab runtime install " -NoNewline -ForegroundColor White
-    Write-Host "FAILED" -ForegroundColor Red
-    Write-Host "   Tried: $(if ($collabLocalPath) { $collabLocalPath } else { $collabRuntimeSpec })" -ForegroundColor Gray
-    Write-Host "   Output:" -ForegroundColor Gray
-    Write-Host $collabInstallOutput -ForegroundColor Gray
-    Write-Host "   Remediation:" -ForegroundColor Yellow
-    Write-Host "     - Set `$env:COLLAB_RUNTIME_SPEC to a known-good spec, OR" -ForegroundColor Gray
-    Write-Host "     - Set `$env:COLLAB_PKG_INDEX to your private registry URL, OR" -ForegroundColor Gray
-    Write-Host "     - Set `$env:COLLAB_LOCAL_PATH to a local 'collab' repo path" -ForegroundColor Gray
-    $script:ErrorCount++
-}
-else {
-    # Verify installed runtime via canonical 'collab-runtime' distribution
-    # metadata. An unrelated PyPI 'collab' package will NOT own this metadata,
-    # so PackageNotFoundError reliably distinguishes the right runtime from a
-    # name collision (mirrors the validation in scripts/hooks/{pre-commit,pre-push}).
-    # PackageNotFoundError → non-zero exit, surfaced as a name collision below.
-    $venvPython = Join-Path $projectRoot ".venv\Scripts\python.exe"
-    $verifyScript = "from importlib.metadata import version; print(version('collab-runtime'))"
-    if (Test-Path $venvPython) {
-        $verifyOut = & $venvPython -c $verifyScript 2>&1
-        $verifyExit = $LASTEXITCODE
-    }
-    else {
-        $verifyOut = ""
-        $verifyExit = -1
-    }
-
-    $collabCmd = Get-Command collab -ErrorAction SilentlyContinue
-    if ($verifyExit -eq 0 -and $collabCmd) {
-        Write-Host "   Installed collab runtime " -NoNewline -ForegroundColor White
-        Write-Host "OK" -ForegroundColor Green
-        Write-Host "   collab-runtime version: $($verifyOut.Trim())" -ForegroundColor Gray
-        $collabVersionLine = (& collab --help 2>&1 | Select-Object -First 1)
-        if ($collabVersionLine) {
-            Write-Host "   CLI probe: $collabVersionLine" -ForegroundColor Gray
-        }
-    }
-    elseif ($verifyExit -ne 0) {
-        Write-Host "   WARNING: 'collab' command may exist but 'collab-runtime' metadata is missing." -ForegroundColor Yellow
-        Write-Host "   This usually means an unrelated public PyPI 'collab' package is installed." -ForegroundColor Yellow
-        Write-Host "   Verification output: $verifyOut" -ForegroundColor Gray
-        Write-Host "   Action: set `$env:COLLAB_RUNTIME_SPEC to the canonical spec (e.g. $DEFAULT_COLLAB_PIN) and re-run setup." -ForegroundColor Yellow
-        $script:ErrorCount++
-    }
-    else {
-        Write-Host "   Runtime package installed but 'collab' CLI not on PATH in this shell." -ForegroundColor Yellow
-        Write-Host "   Action: activate the venv and verify with 'collab --help'." -ForegroundColor Yellow
-        $script:ErrorCount++
-    }
-}
+# collab-runtime is a plain external dev dependency: it is pinned in
+# requirements-dev.txt and installed by `pip install -r requirements-dev.txt`
+# above, with its 'collab.exe' covered by the dev-tools executable check - the
+# exact same handling as black/flake8/etc. There is no dedicated collab install
+# or verification step. To change the version, edit the pin in requirements-dev.txt.
 
 
 # Step 4: JavaScript Development Tools

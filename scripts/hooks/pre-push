@@ -57,8 +57,8 @@ COLLAB_BIN="$(find_collab)"
 if [ -z "$COLLAB_BIN" ]; then
     echo "[collab] Warning: collab runtime not found; could not release locks."
     echo "[collab] Install the canonical distribution (never 'pip install collab' — wrong PyPI project):"
-    echo "[collab]   Windows: .\\scripts\\setup-dev.ps1"
-    echo "[collab]   Or: .venv/Scripts/pip install collab-runtime (pin matches README / COLLAB_RUNTIME_SPEC)"
+    echo "[collab]   .venv/Scripts/pip install -r requirements-dev.txt   (installs the pinned collab-runtime)"
+    echo "[collab]   Windows full setup: .\\scripts\\setup-dev.ps1"
     if [ "$LOCK_STRICT" = "1" ]; then
         echo "[collab] LOCK_STRICT=1 -> blocking push."
         exit 1
@@ -104,10 +104,9 @@ PYCODE
     if [ $PY_EXIT -ne 0 ]; then
         echo "[collab] Runtime validation failed: $VALID_OUT" >&2
         echo "[collab] It appears an unrelated package named 'collab' is installed or the runtime is incomplete." >&2
-        echo "[collab] Action: set \`COLLAB_RUNTIME_SPEC\` to your approved runtime package and run \`scripts/setup-dev.ps1\` to install it into the project venv." >&2
-        echo "[collab] Example (PowerShell):" >&2
-        echo "[collab]   \$env:COLLAB_RUNTIME_SPEC='your-org-collab==1.0.0'" >&2
-        echo "[collab]   .\\scripts\\setup-dev.ps1" >&2
+        echo "[collab] Action: reinstall the pinned runtime with the dev requirements:" >&2
+        echo "[collab]   .venv/Scripts/pip install -r requirements-dev.txt" >&2
+        echo "[collab] (To change the version, edit the pin in requirements-dev.txt.)" >&2
         if [ "$LOCK_STRICT" = "1" ]; then
             echo "[collab] LOCK_STRICT=1 -> blocking push." >&2
             exit 1

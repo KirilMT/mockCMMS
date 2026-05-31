@@ -17,31 +17,13 @@ jobs:
           cache: "pip"
 
       - name: Install app dependencies
+        # collab-runtime is pinned in requirements-dev.txt (just like
+        # black/flake8), so this single install brings in the runtime + CLI.
+        # There is no separate collab install step and no version override —
+        # to change the version, edit the pin in requirements-dev.txt.
         run: |
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-
-      - name: Install collab runtime (pinned spec)
-        # Install the canonical 'collab-runtime' distribution. Default pin
-        # is 'collab-runtime==0.2.9'. Override COLLAB_RUNTIME_SPEC at the
-        # repo/org level
-        # (variable or secret) to pin a different version, point at a
-        # private index, or use a VCS spec.
-        #
-        # NEVER install the bare 'collab' name — that resolves to an
-        # unrelated public PyPI package and is the exact name collision
-        # the collab-runtime integration was designed to prevent. We defensively
-        # uninstall any 'collab' package before installing the canonical
-        # distribution so a transient collision in the runner image cannot
-        # poison the install.
-        env:
-          COLLAB_RUNTIME_SPEC: >-
-            ${{ vars.COLLAB_RUNTIME_SPEC || 'collab-runtime==0.2.9' }}
-          COLLAB_PIP_INDEX_ARGS: >-
-            ${{ vars.COLLAB_PIP_INDEX_ARGS || '' }}
-        run: |
-          pip uninstall collab -y 2>/dev/null || true
-          pip install ${COLLAB_PIP_INDEX_ARGS} "${COLLAB_RUNTIME_SPEC}"
 
       - name: Verify canonical collab-runtime is installed
         # Fingerprint the install via distribution metadata. An unrelated
@@ -56,7 +38,9 @@ jobs:
           except PackageNotFoundError:
               raise SystemExit(
                   "collab-runtime metadata missing — likely a name collision "
-                  "with public 'collab'. Set COLLAB_RUNTIME_SPEC."
+                  "with public 'collab', or requirements-dev.txt was not "
+                  "installed. Check the collab-runtime pin in "
+                  "requirements-dev.txt."
               )
           print(f"collab-runtime {v} installed")
           PY
