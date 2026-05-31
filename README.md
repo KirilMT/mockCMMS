@@ -91,27 +91,29 @@ This script automates the installation of:
 
 ### Collab runtime (file locking)
 
-`setup-dev.ps1` provisions the canonical published `collab-runtime`
-package from PyPI. The current pinned default is `collab-runtime==0.2.9`
-(matches the [KirilMT/collab `v0.2.9` release](https://github.com/KirilMT/collab/releases/latest),
-which also ships the VS Code extension `.vsix`).
+`collab-runtime` is a plain external dev dependency — exactly like `black` or
+`flake8`. It is pinned in `requirements-dev.txt` and installed by
+`pip install -r requirements-dev.txt` (and therefore by `setup-dev.ps1`, which
+runs that install). The current pin is `collab-runtime==0.3.1`
+(matches the [KirilMT/collab `v0.3.1` release](https://github.com/KirilMT/collab/releases/latest),
+which also ships the VS Code extension `.vsix`). **To change the version, edit
+the pin in `requirements-dev.txt`** — there are no environment-variable
+overrides and no editable/local-repo install path.
 
-No environment variable is required for the common case — run `scripts/setup-dev.ps1`
-and you get the pinned runtime plus an auto-installed collab extension `.vsix` from the
+`setup-dev.ps1` does **not** install collab from any other source. After the
+requirements install it clears any conflicting public `collab` PyPI package,
+**verifies** the runtime via `importlib.metadata.version('collab-runtime')` +
+`collab --help`, and installs the collab extension `.vsix`.
+
+Run `scripts/setup-dev.ps1` (or just `pip install -r requirements-dev.txt`) and
+you get the pinned runtime plus an
+auto-installed collab extension `.vsix` from the
 GitHub release. The script **resolves editor launcher paths** (PATH first, then default Windows
 install locations such as `%LocalAppData%\Programs\Microsoft VS Code\bin\code.cmd` and
 `%LocalAppData%\Programs\cursor\resources\app\bin\cursor.cmd`) so you usually do **not** need
 the Command Palette “install shell command” step. Under **Cursor**, it prefers `cursor.cmd`
 from the Cursor install; if that is missing it may use Cursor’s bundled `code.cmd` (still
 targets Cursor, not Microsoft VS Code).
-
-Override knobs (all optional):
-
-| Env var               | Purpose                                                                             |
-| --------------------- | ----------------------------------------------------------------------------------- |
-| `COLLAB_RUNTIME_SPEC` | Pip spec override (pin different version, VCS URL, etc.). Bypasses the default.     |
-| `COLLAB_PKG_INDEX`    | Private index URL — passed as `--index-url` with PyPI added as `--extra-index-url`. |
-| `COLLAB_LOCAL_PATH`   | Path to a local `collab` repo for editable install (developer mode).                |
 
 Common lock commands:
 
