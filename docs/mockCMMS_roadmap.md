@@ -166,7 +166,7 @@ _Updated March 17, 2026_ (Targeted CI Validation & Pre-Commit Refinement)
 ### AI Instruction Consolidation (March 14, 2026)
 
 - ✅ **Master Instruction File:** Created `AGENTS.md` as the single source of truth for all AI agents, reducing total line count across instruction files by >70%.
-- ✅ **Tool-Specific Overlays:** Implemented thin overlays for `GEMINI.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` to handle tool-specific behaviors without duplicating context.
+- ✅ **Tool-Specific Overlays:** Implemented thin overlays for `CLAUDE.md` and `.github/copilot-instructions.md` to handle tool-specific behaviors without duplicating context.
 - ✅ **Skills Architecture:** Modularized complex workflows (testing, committing, bug tracking, feature creation) into `.agents/skills/` following the AGENTS.md + SKILL.md open standard.
 - ✅ **Knowledge Preservation:** Audited `docs/deprecated/` and preserved all essential project knowledge, patterns, and philosophies in the new Skills and master document.
 - ✅ **Validation Verified:** Full codebase validation (`validate_code.py`) passing with new instruction set.

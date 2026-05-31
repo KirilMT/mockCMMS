@@ -22,7 +22,7 @@ This document tracks all identified bugs in the **Planning App** (`apps/planning
 ## 🤖 AI AGENT INSTRUCTIONS
 
 > [!NOTE]
-> **For detailed AI workflow rules**, see `GEMINI.md` Section 1.10 (Bug Tracking & Discovery).
+> **For detailed AI workflow rules**, see `AGENTS.md` Section 1.10 (Bug Tracking & Discovery).
 
 ### Status Definitions
 
