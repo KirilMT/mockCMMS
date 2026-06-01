@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1](https://github.com/KirilMT/mockCMMS/compare/v2.8.0...v2.8.1) (2026-06-01)
+
+
+### 🐛 Bug Fixes
+
+* **release:** stop skipping releases on squash-merge and harden portable build ([#153](https://github.com/KirilMT/mockCMMS/issues/153)) ([b1e6a84](https://github.com/KirilMT/mockCMMS/commit/b1e6a84f5888888c233c3974f90fc55e66beff7b))
+
 ## [2.8.0](https://github.com/KirilMT/mockCMMS/compare/v2.7.0...v2.8.0) (2026-06-01)
 
 ### ✨ Features
