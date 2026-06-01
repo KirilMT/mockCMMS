@@ -85,3 +85,5 @@ When reporting issues, categorize by severity:
 - Always reproduce the bug before fixing — don't fix phantom issues.
 - Don't modify test configurations to hide bugs.
 - If a visual test fails, investigate the code — don't update screenshots.
+
+_Updated June 1, 2026_

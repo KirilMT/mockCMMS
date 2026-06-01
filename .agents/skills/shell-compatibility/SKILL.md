@@ -59,3 +59,5 @@ grep -n "..." <file>
 ```
 
 Before outputting any terminal command, internally verify it is compatible with the detected shell (or is plain `git`). If unsure, run shell detection again and use shell-native file-read/search patterns.
+
+_Updated June 1, 2026_

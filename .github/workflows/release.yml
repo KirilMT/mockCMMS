@@ -21,6 +21,12 @@ jobs:
       !contains(
       github.event.head_commit.message,
       'auto-format (Release Please)')
+    # Expose the release outputs so the build-portable job can decide whether a
+    # release was actually cut and which tag/version to attach the artifact to.
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -65,3 +71,41 @@ jobs:
           else
             echo "No formatting changes to commit."
           fi
+
+  # Build the portable Windows distribution and attach it to the GitHub
+  # Release so managers and other stakeholders can download and test the app
+  # without any Python/Git setup. Runs only after a release is actually cut.
+  build-portable:
+    name: Build & attach portable distribution
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    # The portable distribution bundles the Windows Python embeddable package
+    # and a .bat launcher, so it must be built on Windows.
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build portable distribution
+        shell: bash
+        env:
+          VERSION: ${{ needs.release-please.outputs.version }}
+        run: python scripts/build_portable.py --version "${VERSION}"
+
+      - name: Attach portable distribution to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+          VERSION: ${{ needs.release-please.outputs.version }}
+        run: >-
+          gh release upload "${TAG}"
+          "dist/mockCMMS-portable-v${VERSION}.zip"
+          --clobber

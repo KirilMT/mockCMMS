@@ -129,3 +129,5 @@ Follow Skill: `commit-workflow`.
 - New code must include tests — coverage must not drop.
 - CSRF tokens required on all new forms.
 - No hardcoded values — use `.env` for configuration.
+
+_Updated June 1, 2026_

@@ -30,8 +30,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# Import cleanup utilities
+# Import sibling script utilities
 sys.path.insert(0, str(Path(__file__).parent))
+import doc_dates  # noqa: E402
 from cleanup import clean_caches  # noqa: E402
 
 # UTF-8 for Windows + ANSI colors (standardized — matches common setup.ps1 /
@@ -488,6 +489,47 @@ class CodeFormatter:
             1,
         )
 
+    # ── Documentation last-updated dates ────────────────────────────────
+
+    def format_doc_dates(self) -> bool:
+        """Stamp (fix) or verify (check) the 'Last updated' date on docs.
+
+        Fix mode refreshes the marker on persistent docs that changed in the working
+        tree; check mode fails if an in-scope persistent doc lacks today's date
+        (targeted) or a valid marker (full run).
+        """
+        print("\n" + "=" * 80)
+        print(f"{BOLD}DOCUMENTATION DATES{RESET}")
+        print("=" * 80)
+        description = "Last-updated stamps (doc_dates)"
+        step_header = "[DOCS 1/1] " + description
+        print(f"\n{CYAN}{step_header}...{RESET}")
+
+        if self.check_only:
+            problems = doc_dates.check(self.root_dir, files=self.files)
+            if not problems:
+                print(f"   {GREEN}✅ {description} — SUCCESS{RESET}")
+                return True
+            for rel, reason in problems:
+                print(f"       {rel}: {reason}")
+            print(
+                f"   {RED}❌ {description} — ISSUES FOUND "
+                f"(run python scripts/format_code.py){RESET}"
+            )
+            self.failed_tools.append((step_header, description, False))
+            return False
+
+        stamped = doc_dates.stamp(self.root_dir, files=self.files)
+        if stamped:
+            print(
+                f"   {GREEN}✅ Stamped {len(stamped)} doc(s) with today's date{RESET}"
+            )
+            for rel in stamped:
+                print(f"      • {rel}")
+        else:
+            print(f"   {GREEN}✅ {description} — no changes needed{RESET}")
+        return True
+
     # ── YAML formatting & linting ──────────────────────────────────────
 
     def format_yaml(self) -> bool:
@@ -637,6 +679,7 @@ def main() -> int:
         all_passed &= formatter.format_templates()
 
     if format_docs:
+        all_passed &= formatter.format_doc_dates()
         all_passed &= formatter.format_docs()
     all_passed &= formatter.format_yaml()
 

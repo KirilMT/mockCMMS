@@ -87,7 +87,7 @@ mockCMMS/
 ├── src/                        # Core CMMS application
 │   ├── app.py                  # Flask factory (entry point for config)
 │   ├── routes/                 # API (api.py) and web routes (main.py)
-│   ├── services/               # Business logic (db_utils.py, seed.py)
+│   ├── services/               # Business logic (db_utils.py, db_seeding.py)
 │   ├── static/                 # CSS, JS, images
 │   ├── templates/              # Jinja2 templates
 │   └── config/                 # App configuration
@@ -302,6 +302,12 @@ All standard operations MUST be auto-approved:
 - If validation fails, self-correct up to 3 attempts before reporting to the user.
 - **When unsure what to do next:** Run tests first. If tests pass, audit code quality. If quality is good, look at the roadmap for the next task.
 
+### Root-Cause Resolution (No Bypassing) — applies to every skill
+
+- **ALWAYS research the official online documentation.** When anything is unclear, or a tool, library, integration, or check behaves unexpectedly, read its **official documentation first** to understand the actual mechanism, then act on that. The overwhelming majority of "stuck" situations are solved simply by consulting the official docs. This research step is mandatory in every skill workflow — never guess or improvise around the docs.
+- **Never bypass a failure — this is not acceptable.** Ignoring, omitting, skipping, disabling, or working around a failing test, lint rule, check, or CI step is forbidden. This includes adding `|| true` / `continue-on-error` / blanket suppressions, lowering thresholds, or editing generated/build artifacts to silence the signal. Stop bypassing: a failure is a signal — find the root cause and apply a robust fix at the source.
+- **Do not create new or throwaway files to sidestep a problem.** Repeatedly spawning new files to dodge an error is forbidden. Fixing the real file or config is almost always correct — find the root cause and fix that instead.
+
 ### Background Command Monitoring
 
 For long-running commands, monitor until completion — never prompt "still running?":
@@ -401,9 +407,13 @@ Complex, multi-step workflows are documented as Skills in `.agents/skills/`:
 | --------------------- | ---------------------------------------------------------------------- |
 | `shell-compatibility` | Mandatory shell detection and shell-native terminal command usage      |
 | `file-locking`        | Check locks, acquire, edit safely, release — **run before every edit** |
+| `repo-navigation`     | Finding files efficiently; mapping a task to its start-here files      |
 | `testing-workflow`    | Writing tests, debugging coverage, running validation                  |
 | `commit-workflow`     | Staging, reviewing, and committing changes                             |
 | `bug-tracking`        | Discovering, reporting, and fixing bugs                                |
 | `new-feature`         | Scaffolding a new feature or modular app                               |
+| `skills-maintenance`  | Creating, updating, or auditing skills in `.agents/skills/`            |
 
 > **To use a Skill:** Read `.agents/skills/<name>/SKILL.md` before starting the workflow.
+
+_Updated June 1, 2026_

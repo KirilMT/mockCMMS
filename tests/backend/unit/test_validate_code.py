@@ -579,6 +579,41 @@ class TestValidateOthersPrettierInstalled:
         assert result is True
 
 
+class TestValidateOthersDocDates:
+    """Test the documentation last-updated date check inside validate_others."""
+
+    def test_stale_doc_date_fails_validation(self, monkeypatch):
+        """A stale/missing persistent-doc marker fails Others validation."""
+        # Skip prettier (npm list returns non-zero) so we reach the date check.
+        monkeypatch.setattr(
+            validate_code.subprocess,
+            "run",
+            lambda *a, **kw: MagicMock(returncode=1),
+        )
+        monkeypatch.setattr(
+            validate_code.doc_dates,
+            "check",
+            lambda root, files=None: [
+                ("README.md", "marker date 2020-01-01 is not today")
+            ],
+        )
+        result = validate_code.validate_others(files=["README.md"])
+        assert result is False
+
+    def test_current_doc_dates_pass_validation(self, monkeypatch):
+        """Current persistent-doc markers pass Others validation."""
+        monkeypatch.setattr(
+            validate_code.subprocess,
+            "run",
+            lambda *a, **kw: MagicMock(returncode=1),
+        )
+        monkeypatch.setattr(
+            validate_code.doc_dates, "check", lambda root, files=None: []
+        )
+        result = validate_code.validate_others(files=["README.md"])
+        assert result is True
+
+
 class TestDiffCoverNotInstalled:
     """Test diff-cover not installed path (lines 964-971)."""
 

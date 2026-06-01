@@ -666,3 +666,55 @@ class TestFilterGlobTargets:
         (tmp_path / "test.js").write_text("const x = 1;")
         result = formatter._filter_glob_targets(["*.js", "*.css"])
         assert result == ["*.js"]
+
+
+class TestFormatDocDates:
+    """Tests for format_doc_dates (stamp in fix mode, verify in check mode)."""
+
+    def test_check_mode_success(self, monkeypatch):
+        """Check mode returns True and records no failure when markers are current."""
+        monkeypatch.setattr(format_code.doc_dates, "check", lambda root, files=None: [])
+        formatter = format_code.CodeFormatter(check_only=True)
+        with CaptureStdout() as out:
+            result = formatter.format_doc_dates()
+        assert result is True
+        assert formatter.failed_tools == []
+        assert "SUCCESS" in out.getvalue()
+
+    def test_check_mode_failure(self, monkeypatch):
+        """Check mode returns False and records a failure when a marker is stale."""
+        monkeypatch.setattr(
+            format_code.doc_dates,
+            "check",
+            lambda root, files=None: [
+                ("README.md", "marker date 2020-01-01 is not today")
+            ],
+        )
+        formatter = format_code.CodeFormatter(check_only=True)
+        with CaptureStdout() as out:
+            result = formatter.format_doc_dates()
+        assert result is False
+        assert any("Last-updated" in str(entry) for entry in formatter.failed_tools)
+        assert "README.md" in out.getvalue()
+
+    def test_fix_mode_stamps(self, monkeypatch):
+        """Fix mode reports the docs it stamped."""
+        monkeypatch.setattr(
+            format_code.doc_dates,
+            "stamp",
+            lambda root, files=None: ["README.md", "AGENTS.md"],
+        )
+        formatter = format_code.CodeFormatter(check_only=False)
+        with CaptureStdout() as out:
+            result = formatter.format_doc_dates()
+        assert result is True
+        assert "Stamped 2 doc(s)" in out.getvalue()
+
+    def test_fix_mode_no_changes(self, monkeypatch):
+        """Fix mode reports no changes when nothing needed stamping."""
+        monkeypatch.setattr(format_code.doc_dates, "stamp", lambda root, files=None: [])
+        formatter = format_code.CodeFormatter(check_only=False)
+        with CaptureStdout() as out:
+            result = formatter.format_doc_dates()
+        assert result is True
+        assert "no changes needed" in out.getvalue()

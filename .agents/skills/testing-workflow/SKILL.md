@@ -413,3 +413,5 @@ Example shim (no-op canonical file):
 ```
 
 Follow these guidelines when reorganizing tests to keep discovery, CI coverage mapping, and reviewer workflows consistent.
+
+_Updated June 1, 2026_

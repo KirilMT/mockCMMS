@@ -1,8 +1,7 @@
 # Test Suite Organization
 
-**Total Tests:** 574+ tests (223 backend + 293 Jest + 71 E2E = 587 actual)
-**Coverage:** 82%+ (Backend), 80%+ (Frontend)
-**Last Updated:** February 7, 2026
+- **Total Tests:** 1,171 tests (543 backend + 525 Jest + 103 Playwright E2E on Chromium)
+- **Coverage:** ≥85% (Backend), ≥80% (Frontend) — enforced by CI
 
 ---
 
@@ -84,7 +83,7 @@ tests/
 #### Jest Unit Tests (`tests/frontend/unit/`)
 
 **Purpose:** Test JavaScript components and logic
-**Speed:** Fast (~10 seconds for 293 tests)
+**Speed:** Fast (~10 seconds for 525 tests)
 **Run:** `npm test`
 
 **Files:**
@@ -96,7 +95,7 @@ tests/
 #### Playwright E2E Tests (`tests/frontend/e2e/`)
 
 **Purpose:** Test full user workflows in browser
-**Speed:** Slow (~4 minutes for 71 tests)
+**Speed:** Slow (~4 minutes for 103 Chromium tests; more with all browser projects)
 **Run:** `npm run test:e2e` or `npx playwright test`
 
 **Files:**
@@ -114,14 +113,14 @@ tests/
 
 ```bash
 pytest tests/backend/
-# 223 passed in ~90 seconds
+# 543 collected (runtime varies by machine)
 ```
 
 ### Run All Frontend Tests
 
 ```bash
-npm test                              # Jest (293 tests, ~10s)
-npm run test:e2e:chromium             # Playwright (71 tests, ~4min)
+npm test                              # Jest (525 tests, ~10s)
+npm run test:e2e:chromium             # Playwright (103 tests, ~4min)
 ```
 
 ### Run Everything
@@ -183,17 +182,17 @@ Linting (`ruff`), Formatting (`black`), and Type Checking (`mypy`) **always run 
 
 | Category            | Tests    | Tool       |
 | ------------------- | -------- | ---------- |
-| Backend Unit        | ~26      | pytest     |
-| Backend Functional  | ~70      | pytest     |
-| Backend Integration | ~18      | pytest     |
-| Backend Security    | ~24      | pytest     |
-| Backend Performance | ~8       | pytest     |
-| Backend Reliability | ~6       | pytest     |
-| **Backend Total**   | **~223** | **pytest** |
-| Frontend Unit       | 293      | Jest       |
-| Frontend E2E        | 71       | Playwright |
-| **Frontend Total**  | **364**  | **npm**    |
-| **GRAND TOTAL**     | **~587** | -          |
+| Backend Unit        | 336      | pytest     |
+| Backend Functional  | 136      | pytest     |
+| Backend Integration | 19       | pytest     |
+| Backend Security    | 38       | pytest     |
+| Backend Performance | 8        | pytest     |
+| Backend Reliability | 6        | pytest     |
+| **Backend Total**   | **543**  | **pytest** |
+| Frontend Unit       | 525      | Jest       |
+| Frontend E2E        | 103      | Playwright |
+| **Frontend Total**  | **628**  | **npm**    |
+| **GRAND TOTAL**     | **1171** | -          |
 
 ---
 
@@ -392,7 +391,7 @@ python scripts/generate_tests.py src/services/module.py --force
 - Docstrings for all test methods
 - Arrange-Act-Assert (AAA) pattern
 - TODO comments for test logic
-- Fixtures as needed
+- Fixtures where applicable
 
 **You write:** Test logic, assertions, mock setup, edge cases.
 
@@ -412,12 +411,13 @@ python scripts/generate_tests.py src/services/module.py --force
 
 - `src/`, `scripts/`, and root-level `.py` -> `tests/backend/<category>/`
 - `apps/<name>/src/` and app-local Python files -> `apps/<name>/tests/backend/<category>/`
-- Legacy `.collab/` paths -> `tests/backend/<category>/` (in-repo `.collab` test trees were removed in Phase 4)
 
-Use `--category` to override when needed.
+Use `--category` to override the auto-detected category.
 
 **Time savings:** ~60% of boilerplate test writing time per module.
 
 ---
 
 **For detailed test specifications, see:** `docs/comprehensive_testing_plan.md`
+
+_Updated June 1, 2026_

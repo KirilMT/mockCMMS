@@ -1,6 +1,6 @@
 # mockCMMS Project Roadmap
 
-_Updated March 17, 2026_ (Targeted CI Validation & Pre-Commit Refinement)
+_Updated June 1, 2026_ (Dual-IDE Isolation Roadmap Item Added)
 
 ---
 
@@ -133,13 +133,68 @@ _Updated March 17, 2026_ (Targeted CI Validation & Pre-Commit Refinement)
 
 - **[x] Collaborative Development: Live Synchronization & File Locking** _(Priority: High)_ — **Delivered via installed `collab-runtime`** (not an in-repo Flask lock service).
   - **Goal:** Synchronized development with real-time visibility and conflict prevention across contributors.
-  - **Solution:** External **`collab-runtime`** Python package (pinned in `requirements-dev.txt`, currently `0.3.1`), VS Code extension from [KirilMT/collab](https://github.com/KirilMT/collab) releases, git hooks under `scripts/hooks/`, and CI smoke (`.github/workflows/lock-service-smoke-test.yml`). Legacy planning docs under `docs/COLLABORATIVE_DEVELOPMENT/` were removed; use current onboarding below.
+  - **Solution:** External **`collab-runtime`** Python package (pinned in `requirements-dev.txt`, currently `0.4.1`), VS Code extension from [KirilMT/collab](https://github.com/KirilMT/collab) releases, git hooks under `scripts/hooks/`, and CI smoke (`.github/workflows/lock-service-smoke-test.yml`). Legacy planning docs under `docs/COLLABORATIVE_DEVELOPMENT/` were removed; use current onboarding below.
   - **Onboarding (developers and agents):**
     - [README.md](../README.md) — **Collab runtime (file locking)** (install + verification commands)
     - [AGENTS.md](../AGENTS.md) — file-locking protocol; use `.\.venv\Scripts\collab.exe` when the venv is not activated (Windows)
     - Skill: `.agents/skills/file-locking/SKILL.md`
   - **Setup:** `collab-runtime` is a plain external dev dependency pinned in `requirements-dev.txt` (installed by `pip install -r requirements-dev.txt`, like `black`/`flake8`); `.\scripts\setup-dev.ps1` runs that install, then verifies the runtime and installs the hooks + extension `.vsix`. No env-var/sibling-repo overrides — change the version by editing the pin.
   - **Status:** Complete on `main` (integration PRs #136, #138, #142, #143). Ongoing work (version bumps, runtime hardening) happens in the **collab** repository.
+
+- **[ ] Dual-IDE / Parallel Developer Isolation** _(Priority: Medium)_
+  - **Goal:** Make it safe to run mockCMMS and the sibling `collab` repo side-by-side in two IDE instances — or two developers on the same machine — without one session's lint, tests, or Playwright suite disrupting the other.
+  - **Background:** Concurrent full validation runs (`validate_code.py`, `npm run test:e2e`, `pytest`) share CPU, RAM, disk, Chromium processes, and optionally the same Supabase project. Three root-cause classes were identified:
+    - **Env-var leakage:** `validate_code.py` forwards `E2E_TEST` from the parent shell into every subprocess, including backend pytest. If the shell has `E2E_TEST` set (e.g. left over from `npm run test:e2e`), pytest enters E2E mode, creates `*_e2e.db` files under `instance/`, and trips `test_db_isolation_proof`. This is a mockCMMS-internal design bug, independent of the other repo.
+    - **Shared machine resources:** Two simultaneous full runs (500+ backend tests, Playwright Chromium, coverage, htmlcov writes) contend over CPU, RAM, browser processes, and output dirs. Stopping the other IDE freed enough pressure for the push to succeed — not coincidence.
+    - **Artifact path collisions:** Fixed artifact locations (`test-results/`, `htmlcov/`, `.coverage`, `coverage.xml`) under the repo root. Two concurrent runs in the **same** repo can fight over locked `.webm` files or partially-written coverage data; two different repos do not share files but do share disk I/O and browser slots.
+  - **Proposed Improvements (tiered by impact and effort):**
+    - **Tier 1 — Env hygiene (high impact, small change):**
+      - `validate_code.py`: never forward `E2E_TEST` from the parent shell into backend pytest steps. The flag should be explicitly set only for the Playwright E2E subprocess (already done via `ironclad_env_e2e`), not inherited from the ambient environment.
+      - `validate_code.py`: set `CI=true` or `PLAYWRIGHT_VALIDATE=1` in the Playwright env so `reuseExistingServer: !process.env.CI` evaluates to `false` — ensuring the validate run always owns port 5001 exclusively, never attaches to a stale server.
+    - **Tier 2 — Artifact isolation (medium impact, small change):**
+      - Playwright `outputDir` / `testResultsDir`: use a session-unique path (e.g. `test-results/.run-<pid>/`) so two concurrent Playwright runs never contend over the same `.webm` or trace files. Alternatively, `PLAYWRIGHT_HTML_REPORT` and `PLAYWRIGHT_JUNIT_OUTPUT_NAME` can be made session-scoped.
+      - Optional: write a `.validate.lock` file (repo-root, containing PID + timestamp) at the start of `validate_code.py --full`; a second invocation in the same repo detects the lock and exits with a clear message ("validate already running — PID 12345"). Editing in any IDE is unaffected; only a duplicate full suite is blocked.
+    - **Tier 3 — Workflow policy (highest long-term robustness):**
+      - Pre-push hook: run backend lint + unit tests only; skip E2E locally. Chromium E2E runs on CI (GitHub Actions clean Ubuntu runner) via `ci.yml`. Opt-in local E2E via `VALIDATE_E2E=1` for when the dev explicitly wants it.
+      - Separate Supabase projects: if mockCMMS dev and collab dev both use the same `.env` Supabase keys today, create a dedicated project per repo to eliminate shared API/realtime load during concurrent test runs.
+    - **Tier 4 — True isolation (zero shared resources, optional):**
+      - Dev container (`.devcontainer/`) or WSL2 distro per repo: separate OS view, ports, Python processes, browsers. Required only if two full suites must run truly simultaneously on one machine with zero interaction.
+  - **What does NOT need fixing (already isolated):**
+    - Port collision: mockCMMS E2E uses port **5001** (Flask); collab dashboard tests use port **8000** (`python -m http.server`). No overlap.
+    - Source / venv: separate repo trees, separate `.venv` directories. No shared packages.
+    - PID / state files: `conftest.py` already sets `COLLAB_TEST_MODE=1`, `COLLAB_PID_FILE`, and `COLLAB_STATE_DIR` to temp dirs for every pytest run so the production watcher daemon is never touched by tests.
+    - File locks (collab): lock keys are file-path-scoped per developer identity; different repos have different paths so lock conflicts cannot cross repo boundaries.
+  - **AI Agent Concurrency Scenarios:** The isolation problem is broader than two human-driven IDEs. AI agents run shells, edit files, run validation, and perform git operations autonomously — often several at once. All scenarios below must be considered.
+    - **Scenario matrix (most → least dangerous):**
+      - **A. Same IDE, multiple chats/agents, SAME repo + SAME working tree** _(highest risk)_ — Two agents editing files, running `format_code.py`, staging, or committing in one checkout. They share one git index, one working tree, and one set of on-disk artifacts. This is the scenario most likely to cause silent data loss.
+      - **B. Same IDE, multiple chats, DIFFERENT repos** (mockCMMS + collab) — Logical isolation is good (separate trees/venvs), but shares CPU/RAM/Chromium/disk and possibly one Supabase project — same as the human dual-IDE case above.
+      - **C. Parent agent + background/async subagents** (Cursor background agents, `Task` subagents) — A parent and its spawned subagents can run shells concurrently in the same repo; the same git-index and artifact risks as Scenario A apply, plus the parent may not know a subagent is mid-commit or mid-validation.
+      - **D. Agent + human editing simultaneously** in the same repo — Human saves in the editor while an agent rewrites the same file via `StrReplace`; last-writer-wins. The collab watcher detects cross-developer conflicts, but not when both act as the same developer identity (see below).
+      - **E. Two IDE instances, each with its own agent(s)** — Superset of A + the dual-IDE resource contention; the worst case combines git-tree races, artifact collisions, and machine-resource exhaustion.
+    - **Agent-specific collision risks (beyond the human cases):**
+      - **Shared git index & working tree:** Concurrent `git add` / `git commit` / `git checkout` produce `index.lock` errors or interleaved staging (one agent's commit captures another's staged files). A `git checkout`/branch switch by one agent **rewrites files underneath** another agent mid-edit — corruption or lost work.
+      - **Pre-commit stash mechanism:** The pre-commit framework stashes unstaged changes during a commit. Two concurrent commits in the same tree can stash/pop each other's uncommitted work → **lost edits**. `scripts/safe-amend.ps1` addresses amend races for one agent but not two simultaneous agents.
+      - **Same-developer locks don't protect co-agents:** collab locks are keyed by **developer identity**. Two agents driven by the same developer are both "the current developer," so the lock layer treats both as owners and will **not** prevent them from editing the same file concurrently. There is currently no agent/session-level sub-identity guard.
+      - **Repo-root temp & artifact name collisions:** Shared fixed filenames collide between agents — `temp_diff_output.txt` (commit-workflow skill), `logs/debug_*.log`, and the single-artifact convention (`task.md`, `implementation_plan.md`, `walkthrough.md`). Two agents overwrite each other's planning/diff artifacts.
+      - **Concurrent `format_code.py`:** It rewrites files in place across the whole tree; if another agent is editing or committing at the same moment, formatting can clobber in-flight edits or race the pre-commit stash.
+      - **Shared databases & validation artifacts:** Same `instance/*.db`, `*_e2e.db`, `test-results/`, `.coverage`, `htmlcov/` contention as the human case, but more frequent because agents run validation unprompted.
+    - **Agent-oriented mitigations:**
+      - **Git worktrees per agent/branch** _(strongest fix)_ — give each concurrent agent its own `git worktree add` directory (separate working tree + branch, shared history). Eliminates index/working-tree races and branch-switch corruption in Scenarios A/C/E. This is the recommended pattern for parallel autonomous agents.
+      - **One writer per working tree:** within a single checkout, only one agent performs write/commit operations at a time; additional chats run read-only (Ask mode) or are serialized.
+      - **Session-scoped temp & artifact names:** include a chat/session id or PID in `temp_diff_output.txt`, debug logs, and artifact filenames so co-agents never overwrite each other.
+      - **Serialize git write & validation:** treat `git commit`, `format_code.py`, and full `validate_code.py` as mutually exclusive within a tree (the `.validate.lock`/commit-lock mutex from Tier 2, extended to agents).
+      - **Agent/session sub-identity in collab locks:** extend lock metadata to distinguish agent/session within one developer so two co-agents editing the same file get a conflict warning instead of silent last-writer-wins (requires support in the **collab** repo).
+      - **Background-agent etiquette:** a parent agent should not launch a subagent that runs heavy validation or git writes while the parent is doing the same; document this in `AGENTS.md` agent-behavior rules.
+  - **Recommended Implementation Order:**
+    1. Fix `E2E_TEST` env forwarding in `validate_code.py` (Tier 1) — removes the biggest class of "mysterious backend failures" during parallel work.
+    2. Force `reuseExistingServer: false` during validate runs (Tier 1) — ensures port 5001 is always clean.
+    3. Session-unique Playwright artifact dir (Tier 2) — eliminates `WinError 32` locked-file errors.
+    4. `.validate.lock` mutex (Tier 2, optional) — clear UX for accidental double-run in same repo, and the basis for the agent commit/validation mutex.
+    5. Session-scoped temp/artifact names (agent fix) — stop co-agents overwriting `temp_diff_output.txt`, logs, and planning artifacts.
+    6. Document the `git worktree`-per-agent pattern and "one writer per working tree" rule in `AGENTS.md` (agent fix) — the practical guard for multi-chat/background-agent work.
+    7. Evaluate E2E on CI only (Tier 3) — removes the heaviest resource consumer from the local push hook entirely.
+    8. (Longer term) Agent/session sub-identity in collab locks — requires changes in the **collab** repo; tracked there.
+  - **Status:** Identified and documented (May 31, 2026). Not yet implemented.
 
 - **[ ] Bootstrap 5 Migration** _(Priority: Medium)_
   - **Goal:** Upgrade from Bootstrap 4.5.2 to Bootstrap 5.3.x to modernize the UI framework and improve accessibility.

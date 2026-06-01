@@ -31,8 +31,9 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-# Import cleanup utilities (located in the same scripts/ directory)
+# Import sibling script utilities (located in the same scripts/ directory)
 sys.path.insert(0, str(Path(__file__).parent))
+import doc_dates  # noqa: E402
 from cleanup import clean_default  # noqa: E402
 
 # Fix Windows console encoding for emoji output from tools like black
@@ -1083,7 +1084,7 @@ def validate_others(files: Optional[List[str]] = None) -> bool:
     print_header("OTHERS VALIDATION")
     checks = []
 
-    print_section("Step 1/1: Documentation Linting (prettier)")
+    print_section("Step 1/2: Documentation Linting (prettier)")
     if not doc_paths:
         # Full run default paths
         doc_paths = [
@@ -1127,6 +1128,23 @@ def validate_others(files: Optional[List[str]] = None) -> bool:
         )
         print(msg_err)
         checks.append(("Documentation Linting", True))
+
+    # Documentation last-updated date stamps (check-only; never modifies files).
+    # Targeted scope (files given) requires today's date on changed persistent
+    # docs; full scope only requires a present, valid marker.
+    print_section("Step 2/2: Documentation Dates (last-updated stamps)")
+    doc_problems = doc_dates.check(Path(__file__).resolve().parent.parent, files=files)
+    if doc_problems:
+        for rel, reason in doc_problems:
+            print_error(f"{rel}: {reason}")
+        print(
+            f"{Colors.OKCYAN}[INFO] Refresh dates with "
+            f"'python scripts/format_code.py'.{Colors.ENDC}"
+        )
+        checks.append(("Documentation Dates", False))
+    else:
+        print_success("Documentation date stamps are current")
+        checks.append(("Documentation Dates", True))
 
     # Print summary
     print_section("Others Validation Summary")
