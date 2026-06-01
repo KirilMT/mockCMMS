@@ -11,6 +11,13 @@ permissions:
   contents: write
   pull-requests: write
 
+# Serialize release runs. Rapid merges to main can otherwise start overlapping
+# runs that race on the release PR branch / release tagging. Queue instead of
+# cancel so an in-progress tag + portable upload is never interrupted.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
@@ -33,9 +40,28 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      # The default GITHUB_TOKEN cannot trigger other workflows, so a release PR
+      # opened with it never starts the CI Pipeline and its required checks stay
+      # "Expected" forever (merge blocked). A GitHub App installation token does
+      # trigger CI natively (real pull_request event, Codecov included) AND
+      # keeps the PR authored by the App (a bot), so a human code owner can
+      # still approve it (you cannot approve your own PR, which a personal PAT
+      # would cause). The step is skipped and the workflow falls back to
+      # GITHUB_TOKEN until the App is configured, so releases never break in the
+      # meantime (set repo variable RELEASE_PLEASE_APP_CLIENT_ID + secret
+      # RELEASE_PLEASE_APP_PRIVATE_KEY to enable it).
+      - name: Generate release-please token (GitHub App)
+        id: app-token
+        if: ${{ vars.RELEASE_PLEASE_APP_CLIENT_ID != '' }}
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RELEASE_PLEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+
       - uses: googleapis/release-please-action@v4
         id: release
         with:
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
       - name: Checkout Release PR branch (if present)
@@ -50,6 +76,10 @@ jobs:
             }}
           fetch-depth: 0
           persist-credentials: true
+          # Push the auto-format commit with the same App token so the PR HEAD
+          # commit also triggers CI. With the default GITHUB_TOKEN this push
+          # would not start a workflow run, leaving the head commit unchecked.
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
       - name: Format release artifacts
         if: ${{ steps.release.outputs.pr }}
