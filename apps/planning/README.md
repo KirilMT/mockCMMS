@@ -6,7 +6,7 @@ A modular Flask application for intelligent maintenance planning and planning ma
 
 - **Advanced Planning Engine:** Intelligent task assignment respecting technician skills, availability, and shift constraints
 - **Interactive Gantt Chart:** Custom-built Gantt view with day/shift/hour granularity for precise scheduling
-- **Multi-Mode Planning:** specialized modes for "Shift Break" (short windows) and "Weekend Maintenance" (long duration)
+- **Multi-Mode Planning:** Specialized modes for "Shift Break" (short windows) and "Weekend Maintenance" (long duration)
 - **Shift Management:** Support for complex shift patterns including overnight/cross-midnight shifts (e.g., 3x8h, 2x12h)
 - **Skill-Based Matching:** Automated matching of tasks to technicians based on required competencies
 - **Technician Management:** Comprehensive profiles with skill tracking and satellite point assignments
@@ -66,7 +66,7 @@ planning/
 │   ├── planning.db # Production database
 │   └── testsDB.db           # Test database
 ├── logs/                    # Application logs
-├── output/                  # Generated reporting
+├── output/                  # Generated output files
 ├── docs/                    # Documentation
 │   ├── assets/              # Documentation images
 │   └── roadmap/             # Detailed action plans and roadmaps
@@ -84,7 +84,7 @@ This app is designed to integrate into the main CMMS system. For setup and insta
 
 The Planning can be enabled/disabled via the main CMMS configuration:
 
-```env
+```dotenv
 # In CMMS root .env file
 PLANNING_ENABLED=True
 ```
@@ -97,32 +97,32 @@ The testing process involves two main stages: automatic data population from a J
 
 This first stage provides the foundational data for the application (technicians, skills, tasks, etc.).
 
-1.  **Enable Test Database Mode**: In the main CMMS `.env` file, ensure the following variable is set:
+1. **Enable Test Database Mode**: In the main CMMS `.env` file, ensure the following variable is set:
 
-    ```env
-    DEBUG_USE_TEST_DB=1
-    ```
+   ```dotenv
+   DEBUG_USE_TEST_DB=1
+   ```
 
-2.  **Run the CMMS Application**: Start the application from the CMMS root:
-    ```bash
-    python run.py
-    ```
-    The application will automatically populate the database with test data from `dummy_data.json`.
+2. **Run the CMMS Application**: Start the application from the CMMS root:
+   ```bash
+   python run.py
+   ```
+   The application will automatically populate the database with test data from `dummy_data.json`.
 
 ### Stage 2: Testing with Excel Files
 
 After the initial data has been loaded, you can test the application's data import and processing capabilities.
 
-1.  **Navigate to Planning**: Open your browser and go to `http://127.0.0.1:5000/planning-manager/`.
-2.  **Import Sample Data**:
-    - Use the file upload functionality to import `testsExcel.xlsb` and `testsExcel2.xlsb` from the `apps/planning/test_data/` directory.
-    - This will add to or modify the initial data in the database.
-3.  **Run Task Assignment**:
-    - Once the data is imported, you can trigger the task assignment process from the UI.
-    - The application will use its skill-based algorithm to assign the tasks to the most suitable technicians.
-4.  **View the Dashboards**:
-    - **Supervisor Dashboard**: Navigate to the supervisor dashboard to get an overview of all task assignments, schedules, and workloads.
-    - **Technician Dashboard**: Check the individual technician dashboards to see their specific schedules and assigned tasks.
+1. **Navigate to Planning**: Open your browser and go to `http://127.0.0.1:5000/planning/`.
+2. **Import Sample Data**:
+   - Use the file upload functionality to import `testsExcel.xlsb` and `testsExcel2.xlsb` from the `apps/planning/test_data/` directory.
+   - This will add to or modify the initial data in the database.
+3. **Run Task Assignment**:
+   - Once the data is imported, you can trigger the task assignment process from the UI.
+   - The application will use its skill-based algorithm to assign the tasks to the most suitable technicians.
+4. **View the Dashboards**:
+   - **Supervisor Dashboard**: Navigate to the supervisor dashboard to get an overview of all task assignments, schedules, and workloads.
+   - **Technician Dashboard**: Check the individual technician dashboards to see their specific schedules and assigned tasks.
 
 ### Testing with a Fixed Date
 
@@ -130,7 +130,7 @@ For consistent testing of scheduling logic, you can force the application to use
 
 - **Set the Fixed Date**: Add the `DEBUG_FIXED_DATE` variable to the main CMMS `.env` file. The value should be in ISO format (e.g., `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SS`).
 
-  ```env
+  ```dotenv
   # Example: Set the date to April 19, 2025, at 4:00 PM
   DEBUG_FIXED_DATE=2025-04-19T16:00:00
   ```
@@ -183,8 +183,6 @@ Detailed documentation is available in the `docs/roadmap/` directory.
 
 ### Web Interface
 
-### Web Interface
-
 1. **Planning Dashboard:** Navigate to `/planning` to access the main planning interface.
    - **Timeline View:** Visualize assignments on the Gantt chart.
    - **Table View:** View detailed task lists and assignments.
@@ -199,7 +197,7 @@ The application provides REST API endpoints for programmatic access:
 - `GET /api/technicians` - Retrieve all technicians
 - `GET /api/get_technician_mappings` - Get technician skill mappings
 - `POST /api/tasks` - Create or update tasks
-- Additional endpoints available in `/routes/api.py`
+- Additional endpoints are available in the planning blueprint (`src/routes/planning.py`)
 
 ## 🔍 Development
 
@@ -214,7 +212,8 @@ The application provides REST API endpoints for programmatic access:
 
 - **PEP 8 Compliance:** Python code follows PEP 8 styling guidelines
 - **Class-based Architecture:** Modern object-oriented design patterns
-- **Error Handling:** Comprehensive error handling and logging -**Documentation:** Well-documented code with clear docstrings
+- **Error Handling:** Comprehensive error handling and logging
+- **Documentation:** Well-documented code with clear docstrings
 
 ## 📊 Database Schema
 
@@ -244,4 +243,6 @@ Application logs are available in the `logs/` directory with different log level
 
 ---
 
-**Version:** 1.3.0 | **Last Updated:** November 21, 2025
+**Version:** 1.3.0
+
+_Updated June 1, 2026_

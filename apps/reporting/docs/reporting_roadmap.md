@@ -1,6 +1,6 @@
 # Reporting App Roadmap
 
-_Updated March 10, 2026_
+_Updated June 1, 2026_
 
 ---
 

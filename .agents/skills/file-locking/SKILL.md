@@ -118,3 +118,5 @@ collab active
 - [ ] Verified no target file is locked by another developer
 - [ ] Applied edits only when files were unlocked or already locked by the current developer
 - [ ] Did not run force-release on another developer's lock (forbidden)
+
+_Updated June 1, 2026_

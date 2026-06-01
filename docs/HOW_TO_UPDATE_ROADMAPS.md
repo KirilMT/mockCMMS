@@ -81,10 +81,12 @@ Change the status line:
 **Status:** In Progress - Phase 2 (Validation & UX)
 ```
 
-Update the "Last Updated" date at the top:
+The "Updated" date is maintained automatically by `python scripts/format_code.py`
+(it stamps any changed roadmap), so you normally do not edit it by hand. The line
+looks like this:
 
 ```markdown
-_Updated November 25, 2025_
+_Updated <Month D, YYYY>_
 ```
 
 ---
@@ -217,3 +219,5 @@ Create an `archived/` folder in `docs/` and move the completed plan there, or si
 ---
 
 **Remember:** Keep these files updated as you go! They're your source of truth for project progress.
+
+_Updated June 1, 2026_

@@ -4,10 +4,10 @@ A modular reporting application for mockCMMS that provides comprehensive reporti
 
 ## Features
 
-- **Reactive Production Reporting**: Generate reporting for reactive maintenance orders during production periods
-- **Weekend Completion Reporting**: Generate reporting for maintenance orders completed during weekends
+- **Reactive Production Reporting**: Generate reports for reactive maintenance orders during production periods
+- **Weekend Completion Reporting**: Generate reports for maintenance orders completed during weekends
 - **Multiple Export Formats**: Support for Markdown and PDF (text) formats
-- **Report Management**: View, download, and delete generated reporting
+- **Report Management**: View, download, and delete generated reports
 - **Advanced Table Integration**: Uses mockCMMS advanced table component for report listing
 
 ## Installation
@@ -19,7 +19,7 @@ A modular reporting application for mockCMMS that provides comprehensive reporti
    ```
 
 2. Enable the reporting app in your `.env` file:
-   ```env
+   ```dotenv
    REPORTING_ENABLED=True
    ```
 
@@ -52,10 +52,10 @@ apps/reporting/
 
 ## Usage
 
-1. Navigate to `/reporting` to view all generated reporting
-2. Click "Generate Report" to create new reporting
+1. Navigate to `/reporting` to view all generated reports
+2. Click "Generate Report" to create a new report
 3. Select report type and parameters
-4. Download or delete reporting as needed
+4. Download or delete reports when they are no longer needed
 
 ## Report Types
 
@@ -81,3 +81,5 @@ The reporting app integrates with the main mockCMMS application through:
 - Templates extend main app's base template for consistent UI/UX
 - Advanced table components integration
 - Navigation integration in main application
+
+_Updated June 1, 2026_
