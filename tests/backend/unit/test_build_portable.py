@@ -621,3 +621,104 @@ class TestMain:
             bp.main()
         assert exc.value.code == 1
         assert "BUILD FAILED" in capsys.readouterr().out
+
+    def test_main_version_override(self, tmp_path, monkeypatch, capsys):
+        """An explicit version should override the manifest-derived value."""
+        dist_dir = tmp_path / "dist"
+        override = "9.9.9"
+        build_dir = dist_dir / f"mockCMMS-portable-v{override}"
+        python_dir = build_dir / "python"
+        app_dir = build_dir / "app"
+
+        # Record originals so monkeypatch restores them after the test, even
+        # though main() reassigns these module globals via the override branch.
+        monkeypatch.setattr(bp, "APP_VERSION", bp.APP_VERSION)
+        monkeypatch.setattr(bp, "DIST_DIR", dist_dir)
+        monkeypatch.setattr(bp, "BUILD_DIR", build_dir)
+        monkeypatch.setattr(bp, "PYTHON_DIR", python_dir)
+        monkeypatch.setattr(bp, "APP_DIR", app_dir)
+        monkeypatch.setattr(bp, "REPO_ROOT", tmp_path)
+
+        (tmp_path / "requirements.txt").write_text("flask\n")
+        (tmp_path / "run.py").write_text("# run")
+
+        monkeypatch.setattr(
+            bp, "_secure_download", lambda url, dest: dest.write_text("fake")
+        )
+        monkeypatch.setattr(
+            bp.subprocess,
+            "run",
+            lambda *a, **kw: MagicMock(returncode=0, stdout="ok", stderr=""),
+        )
+
+        def fake_extract():
+            (dist_dir / f"mockCMMS-portable-v{override}" / "python").mkdir(
+                parents=True, exist_ok=True
+            )
+
+        monkeypatch.setattr(bp, "extract_python_embeddable", fake_extract)
+
+        bp.main(version=override)
+
+        assert bp.APP_VERSION == override
+        assert bp.BUILD_DIR.name == f"mockCMMS-portable-v{override}"
+        assert "BUILD SUCCESSFUL" in capsys.readouterr().out
+
+
+# ============================================================================
+# _detect_version
+# ============================================================================
+
+
+class TestDetectVersion:
+    """Tests for resolving the app version from the Release Please manifest."""
+
+    def test_reads_root_version_from_manifest(self, tmp_path, monkeypatch):
+        manifest = tmp_path / ".release-please-manifest.json"
+        manifest.write_text('{".": "3.4.5"}', encoding="utf-8")
+        monkeypatch.setattr(bp, "REPO_ROOT", tmp_path)
+
+        assert bp._detect_version() == "3.4.5"
+
+    def test_falls_back_when_manifest_missing(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(bp, "REPO_ROOT", tmp_path)
+
+        assert bp._detect_version() == bp._FALLBACK_VERSION
+
+    def test_falls_back_on_invalid_json(self, tmp_path, monkeypatch):
+        manifest = tmp_path / ".release-please-manifest.json"
+        manifest.write_text("{not valid json", encoding="utf-8")
+        monkeypatch.setattr(bp, "REPO_ROOT", tmp_path)
+
+        assert bp._detect_version() == bp._FALLBACK_VERSION
+
+    def test_falls_back_when_root_key_absent(self, tmp_path, monkeypatch):
+        manifest = tmp_path / ".release-please-manifest.json"
+        manifest.write_text('{"packages/foo": "1.0.0"}', encoding="utf-8")
+        monkeypatch.setattr(bp, "REPO_ROOT", tmp_path)
+
+        assert bp._detect_version() == bp._FALLBACK_VERSION
+
+    def test_falls_back_when_manifest_is_not_an_object(self, tmp_path, monkeypatch):
+        manifest = tmp_path / ".release-please-manifest.json"
+        manifest.write_text('["2.0.0"]', encoding="utf-8")
+        monkeypatch.setattr(bp, "REPO_ROOT", tmp_path)
+
+        assert bp._detect_version() == bp._FALLBACK_VERSION
+
+
+# ============================================================================
+# _parse_args
+# ============================================================================
+
+
+class TestParseArgs:
+    """Tests for command-line argument parsing."""
+
+    def test_version_flag(self):
+        args = bp._parse_args(["--version", "2.3.4"])
+        assert args.version == "2.3.4"
+
+    def test_version_defaults_to_none(self):
+        args = bp._parse_args([])
+        assert args.version is None

@@ -16,7 +16,9 @@ Requirements:
     - 500MB free disk space
 """
 
+import argparse
 import http.client
+import json
 import os
 import shutil
 import ssl
@@ -24,6 +26,7 @@ import subprocess
 import sys
 import zipfile
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
 
 # Configuration
@@ -32,11 +35,38 @@ PYTHON_EMBED_URL = (
     f"https://www.python.org/ftp/python/{PYTHON_VERSION}/"
     f"python-{PYTHON_VERSION}-embed-amd64.zip"
 )
-APP_VERSION = "1.2.0"  # Update this with each release
 
 # Directories
 REPO_ROOT = Path(__file__).parent.parent
 DIST_DIR = REPO_ROOT / "dist"
+
+# Used only when the Release Please manifest cannot be read (e.g. a partial
+# checkout). Real builds always resolve the version from the manifest below.
+_FALLBACK_VERSION = "0.0.0"
+
+
+def _detect_version() -> str:
+    """Resolve the application version for this build.
+
+    The root package version in ``.release-please-manifest.json`` is the single
+    source of truth and is bumped automatically by Release Please on every
+    release, so the portable build always matches the published tag without any
+    manual edits here. Falls back to a placeholder when the manifest is missing
+    or unreadable so local builds in a partial checkout still succeed.
+    """
+    manifest = REPO_ROOT / ".release-please-manifest.json"
+    try:
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return _FALLBACK_VERSION
+    version = data.get(".") if isinstance(data, dict) else None
+    if isinstance(version, str) and version:
+        return version
+    return _FALLBACK_VERSION
+
+
+APP_VERSION = _detect_version()
+
 BUILD_DIR = DIST_DIR / f"mockCMMS-portable-v{APP_VERSION}"
 PYTHON_DIR = BUILD_DIR / "python"
 APP_DIR = BUILD_DIR / "app"
@@ -501,8 +531,21 @@ def cleanup_build_directory() -> None:
     print("✅ Cleanup complete")
 
 
-def main():
-    """Main build process."""
+def main(version: Optional[str] = None):
+    """Run the full portable build.
+
+    Args:
+        version: Optional explicit version that overrides the manifest-derived
+            value. The release workflow passes the published version here so the
+            artifact name always matches the GitHub release tag.
+    """
+    global APP_VERSION, BUILD_DIR, PYTHON_DIR, APP_DIR
+    if version:
+        APP_VERSION = version
+        BUILD_DIR = DIST_DIR / f"mockCMMS-portable-v{APP_VERSION}"
+        PYTHON_DIR = BUILD_DIR / "python"
+        APP_DIR = BUILD_DIR / "app"
+
     print("\n" + "=" * 60)
     print("🏗️  mockCMMS Portable Distribution Builder")
     print("=" * 60)
@@ -560,5 +603,22 @@ def main():
         sys.exit(1)
 
 
-if __name__ == "__main__":
-    main()
+def _parse_args(argv: Optional[list] = None) -> argparse.Namespace:
+    """Parse command-line arguments for the builder."""
+    parser = argparse.ArgumentParser(
+        description="Build the mockCMMS portable Windows distribution."
+    )
+    parser.add_argument(
+        "--version",
+        dest="version",
+        default=None,
+        help=(
+            "Override the app version. Defaults to the root version in "
+            ".release-please-manifest.json."
+        ),
+    )
+    return parser.parse_args(argv)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main(_parse_args().version)
