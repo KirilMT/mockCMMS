@@ -11,10 +11,9 @@ and this project adheres to
 
 ## [2.8.2](https://github.com/KirilMT/mockCMMS/compare/v2.8.1...v2.8.2) (2026-06-01)
 
-
 ### 🐛 Bug Fixes
 
-* **ci:** trigger release PR checks via GitHub App token ([#155](https://github.com/KirilMT/mockCMMS/issues/155)) ([76d055a](https://github.com/KirilMT/mockCMMS/commit/76d055ac5ac6fe62b0afe479dac324492e1ff614))
+- **ci:** trigger release PR checks via GitHub App token ([#155](https://github.com/KirilMT/mockCMMS/issues/155)) ([76d055a](https://github.com/KirilMT/mockCMMS/commit/76d055ac5ac6fe62b0afe479dac324492e1ff614))
 
 ## [2.8.1](https://github.com/KirilMT/mockCMMS/compare/v2.8.0...v2.8.1) (2026-06-01)
 
