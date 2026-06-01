@@ -722,3 +722,45 @@ class TestParseArgs:
     def test_version_defaults_to_none(self):
         args = bp._parse_args([])
         assert args.version is None
+
+
+# ============================================================================
+# _force_utf8_output
+# ============================================================================
+
+
+class TestForceUtf8Output:
+    """Tests for the UTF-8 stdout/stderr hardening helper."""
+
+    def test_reconfigures_streams_to_utf8(self, monkeypatch):
+        calls = []
+
+        class FakeStream:
+            def reconfigure(self, **kwargs):
+                calls.append(kwargs)
+
+        monkeypatch.setattr(bp.sys, "stdout", FakeStream())
+        monkeypatch.setattr(bp.sys, "stderr", FakeStream())
+
+        bp._force_utf8_output()
+
+        assert calls == [
+            {"encoding": "utf-8", "errors": "replace"},
+            {"encoding": "utf-8", "errors": "replace"},
+        ]
+
+    def test_skips_streams_without_reconfigure(self, monkeypatch):
+        monkeypatch.setattr(bp.sys, "stdout", object())
+        monkeypatch.setattr(bp.sys, "stderr", object())
+
+        bp._force_utf8_output()  # Must not raise.
+
+    def test_swallows_reconfigure_errors(self, monkeypatch):
+        class BadStream:
+            def reconfigure(self, **kwargs):
+                raise ValueError("cannot reconfigure")
+
+        monkeypatch.setattr(bp.sys, "stdout", BadStream())
+        monkeypatch.setattr(bp.sys, "stderr", BadStream())
+
+        bp._force_utf8_output()  # Must not raise.

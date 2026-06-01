@@ -531,6 +531,26 @@ def cleanup_build_directory() -> None:
     print("✅ Cleanup complete")
 
 
+def _force_utf8_output() -> None:
+    """Force stdout/stderr to UTF-8 so emoji output never crashes the build.
+
+    On Windows CI runners the console defaults to a legacy code page (cp1252)
+    that cannot encode the emoji used in progress messages, which would raise
+    ``UnicodeEncodeError`` on the first print. Reconfiguring to UTF-8 (with
+    ``errors="replace"`` as a safety net) makes the builder robust regardless of
+    the host console encoding. Streams without ``reconfigure`` (e.g. pytest
+    captures) are left untouched.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
+
 def main(version: Optional[str] = None):
     """Run the full portable build.
 
@@ -540,6 +560,7 @@ def main(version: Optional[str] = None):
             artifact name always matches the GitHub release tag.
     """
     global APP_VERSION, BUILD_DIR, PYTHON_DIR, APP_DIR
+    _force_utf8_output()
     if version:
         APP_VERSION = version
         BUILD_DIR = DIST_DIR / f"mockCMMS-portable-v{APP_VERSION}"

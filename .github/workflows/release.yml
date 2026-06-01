@@ -14,13 +14,15 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    # Skip running this job when the triggering commit is an automated
-    # formatting commit created by this workflow. This avoids recursion
-    # when we push formatting fixes back to branches.
-    if: >-
-      !contains(
-      github.event.head_commit.message,
-      'auto-format (Release Please)')
+    # NOTE: Do NOT guard this job on the commit message (e.g. skipping when
+    # it contains "auto-format (Release Please)"). Squash-merging a release
+    # PR folds every squashed commit subject into the merge commit BODY, so
+    # such a guard matches the release merge itself and silently skips the
+    # release (no tag, no GitHub Release, no portable build). A guard is also
+    # unnecessary: the "Format release artifacts" step only pushes to the
+    # release PR branch (never main), and pushes made with GITHUB_TOKEN do
+    # not trigger new workflow runs, so there is no recursion to prevent.
+    # release-please is idempotent on every push to main.
     # Expose the release outputs so the build-portable job can decide whether a
     # release was actually cut and which tag/version to attach the artifact to.
     outputs:
@@ -97,6 +99,10 @@ jobs:
         shell: bash
         env:
           VERSION: ${{ needs.release-please.outputs.version }}
+          # Enable Python UTF-8 mode so emoji progress output and any
+          # subprocess text decoding work on the Windows runner's cp1252
+          # console (otherwise the build crashes with UnicodeEncodeError).
+          PYTHONUTF8: "1"
         run: python scripts/build_portable.py --version "${VERSION}"
 
       - name: Attach portable distribution to the release
