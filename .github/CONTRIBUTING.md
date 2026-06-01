@@ -42,7 +42,7 @@ Releases are managed through the **CI/CD pipeline** using Google Release Please:
 4. When you are ready to cut a release, simply **merge the Release PR**.
 5. GitHub Actions will then automatically tag the commit and create a GitHub Release.
 
-See also: `.github/GIT_WORKFLOW.md` for workflow details (including "Why a Two-PR Workflow?").
+See also: [GIT_WORKFLOW.md](GIT_WORKFLOW.md) for workflow details (including "Why a Two-PR Workflow?").
 
 > [!NOTE]
 > Why the extra PR? Release Please uses a **Two-PR Workflow** (an industry standard used by Google, Node.js, etc.). Instead of cutting a new release instantly every single time a developer merges code, it gathers all changes into a "Release PR" batch. Maintainers can review the drafted changelog there, and release them all at once whenever they are ready.
@@ -83,12 +83,12 @@ To automatically close an issue when a pull request (PR) is merged on GitHub, in
 
 **Important Rules:**
 
-1.  **Strict Syntax:** The keyword must be followed by the issue number (e.g., `#12`).
-2.  **Multiple Issues:** To close multiple issues, repeat the keyword for each one.
-    - ✅ **Correct:** `Closes #1, Closes #2, Fixes #3`
-    - ❌ **Incorrect:** `Closes #1, #2, #3`
-3.  **Real Issue IDs:** Use the integer ID assigned by GitHub (e.g., `#42`), not custom references (e.g., `#R1` or `Bug #42`).
-4.  **No "Fix:" Prefix:** The conventional commit type `fix:` does **not** trigger a close. You must still include `Fixes #12` in the body or footer.
+1. **Strict Syntax:** The keyword must be followed by the issue number (e.g., `#12`).
+2. **Multiple Issues:** To close multiple issues, repeat the keyword for each one.
+   - ✅ **Correct:** `Closes #1, Closes #2, Fixes #3`
+   - ❌ **Incorrect:** `Closes #1, #2, #3`
+3. **Real Issue IDs:** Use the integer ID assigned by GitHub (e.g., `#42`), not custom references (e.g., `#R1` or `Bug #42`).
+4. **No "Fix:" Prefix:** The conventional commit type `fix:` does **not** trigger a close. You must still include `Fixes #12` in the body or footer.
 
 **Common Pitfalls (Why your issue didn't close):**
 
@@ -98,32 +98,27 @@ To automatically close an issue when a pull request (PR) is merged on GitHub, in
 
 If the change is a partial step towards the resolution of the issue, write "For `#12345`" instead. This will leave a comment in the issue linking back to the pull request, but it will not close the issue when the change is applied.
 
-## How to Contribute
-
-We'd love to accept your patches and contributions to this project. There are
-just a few small guidelines you need to follow.
-
 ## 🚀 Getting Started (Onboarding)
 
 New to the project? Follow this learning path to get up to speed:
 
 ### Step 1: Understand the Big Picture (1-2 hours)
 
-1.  Read the **[mockCMMS Roadmap](../docs/mockCMMS_roadmap.md)** to understand the project's vision.
-2.  If working on a specific app, read its roadmap in `apps/<app_name>/docs/`.
-3.  Read this **CONTRIBUTING guide** in its entirety.
+1. Read the **[mockCMMS Roadmap](../docs/mockCMMS_roadmap.md)** to understand the project's vision.
+2. If working on a specific app, read its roadmap in `apps/<app_name>/docs/`.
+3. Read this **CONTRIBUTING guide** in its entirety.
 
 ### Step 2: Set Up Your Environment (2-3 hours)
 
-1.  Follow the setup instructions in **[README.md](README.md)**.
-2.  Run the test suite locally: `python scripts/validate_code.py --backend` (or `pytest`) to ensure everything works.
-3.  Familiarize yourself with the **[Git Workflow](.github/GIT_WORKFLOW.md)**.
+1. Follow the setup instructions in **[README.md](../README.md)**.
+2. Run the test suite locally: `python scripts/validate_code.py --backend` (or `pytest`) to ensure everything works.
+3. Familiarize yourself with the **[Git Workflow](GIT_WORKFLOW.md)**.
 
 ### Step 3: Dive into the Codebase (4-6 hours)
 
-1.  Start with `src/app.py` to understand the Flask factory pattern.
-2.  Explore routes in `src/routes/`.
-3.  Review `src/services/db_utils.py` for database interactions.
+1. Start with `src/app.py` to understand the Flask factory pattern.
+2. Explore routes in `src/routes/`.
+3. Review `src/services/db_utils.py` for database interactions.
 
 ## Community Guidelines
 
@@ -243,6 +238,14 @@ python scripts/validate_code.py --backend  # Python only
 python scripts/validate_code.py --frontend # JS/CSS only
 ```
 
+### 2. `scripts/format_code.py` (The Formatter)
+
+**Auto-formats the codebase.** Always run this before validating and before committing; if you edit any file after formatting, run it again.
+
+```bash
+python scripts/format_code.py
+```
+
 ### 3. `scripts/build_portable.py` (The Packager)
 
 **Generates a zero-installation, portable ZIP distribution of the app.** Use this when you need to send a demo version to management, stakeholders, or testers who don't have Python or Git installed.
@@ -267,74 +270,89 @@ It automatically embeds a Python 3.12 interpreter, pre-seeds a fresh database, i
 - **Don't Refactor Without Tests:** Verification is mandatory.
 - **Don't Ignore Linters:** Warnings are there for a reason.
 
-### 4. Testing Standards
+## Testing Standards
 
 **As of December 2025, this project follows a strict test-first approach with
 comprehensive test coverage.**
 
-#### Testing Philosophy
+### Testing Philosophy
 
 **Core Principle: Tests are the safety net for all code changes.**
 
-#### When Adding New Code
+### When Adding New Code
 
-1. **Check for existing tests** - Search `tests/` directory for related test
-   files
-2. **Run existing tests** - Verify current tests pass: `pytest tests/`
+1. **Check for existing tests** - Search the `tests/` directory for related test
+   files.
+2. **Run existing tests** - Verify current tests pass: `pytest tests/`.
 3. **Create/Update tests FIRST** - Write tests for new functionality before
-   implementing
-4. **Implement code** - Write the actual feature/fix
-5. **Verify tests pass** - All tests (old + new) must pass
+   implementing.
+4. **Implement code** - Write the actual feature/fix.
+5. **Verify tests pass** - All tests (old + new) must pass.
 6. **Check coverage** - Run `pytest --cov-report=term-missing tests/backend`
-   to ensure new code paths are tested
+   to ensure new code paths are tested.
+
+### When Modifying Existing Code
+
+1. **Review test file** - Read existing tests in the file you're modifying.
+2. **Consolidate if needed** - Merge duplicate tests into comprehensive ones.
+
+### Before Submitting a Pull Request
+
+1. Run the full validation: `python scripts/validate_code.py`.
+2. Ensure all checks pass (lint + test + coverage).
+3. Add tests for new functionality.
+4. Maintain or improve code coverage (≥85% overall, ≥92% on new code).
+5. All Python files must be linted, tested, and covered — no exclusions.
+
+**Reference:** See `tests/README.md` for test suite organization and complete
+testing strategy.
 
 ### Test File Standard
 
 This repository enforces a clear test-file layout for long-running or complex test suites. The Test File Standard applies repository-wide — to `tests/` and `apps/<name>/tests/` (for example `apps/planning/tests/`, `apps/reporting/tests/`). Use this standard whenever you split or reorganize Python tests.
 
-## Purpose
+#### Purpose
 
 - Reduce editor and CI friction for very large test files.
 - Make it obvious which tests map to which production source files.
 - Prevent accidental duplication during refactors.
 
-## Standard (short)
+#### Standard (short)
 
 - Canonical test file: A canonical test file named `test_<source>.py` should exist at the appropriate test root for each production source that has tests. Examples:
-  - Core/shared modules: `tests/unit/test_<source>.py` (or `tests/test_<source>.py`)
+  - Core/shared modules: `tests/backend/unit/test_<source>.py`
   - App-specific modules: `apps/<app>/tests/unit/test_<source>.py` (e.g. `apps/planning/tests/unit/test_scheduler.py`)
 - Split when the canonical file exceeds **1,500 lines** or **200 test functions**.
 - Use a subfolder under the same test root: `<test-root>/unit/<source>/` with smaller files named `test_<source>_<topic>.py`.
-- Keep shared fixtures in `conftest.py` at the test root (for example `tests/conftest.py` or `apps/<app>/tests/conftest.py`) or a shared helpers module such as `_helpers.py`.
-
+- Keep shared fixtures in `conftest.py` at the test root (for example `tests/backend/conftest.py` or `apps/<app>/tests/conftest.py`) or a shared helpers module such as `_helpers.py`.
 - Helper naming convention: modules that provide test utilities, loaders, or shared helpers (and are not test cases) MUST be named with a leading underscore (for example `_helpers.py`) and MUST NOT start with the `test_` prefix. This prevents pytest from accidentally collecting helper modules as tests. Test files themselves must always start with `test_` and follow the `test_<source>_<topic>.py` pattern when split into topic modules.
 
-## Why a shim file?
+#### Why a shim file?
 
 Keeping a small `test_<source>.py` file at the canonical location ensures CI and reviewers can quickly find the test mapping and satisfies tooling that expects a file-per-source mapping.
 
-## Repository-wide folder layout example
+#### Repository-wide folder layout example
 
 ```
-tests/unit/
-├── test_lock_client.py          # shim (canonical anchor)
-└── lock_client/
-    ├── test_lock_client_daemon.py
-    ├── test_lock_client_cli.py
-    └── test_lock_client_pid.py
+tests/backend/unit/
+├── test_db_utils.py             # shim (canonical anchor)
+└── db_utils/
+    ├── test_db_utils_crud.py
+    ├── test_db_utils_queries.py
+    └── test_db_utils_errors.py
 
 apps/planning/tests/unit/
 └── test_planning_scheduler.py
 ```
 
-## Splitting guidelines
+#### Splitting guidelines
 
 1. Identify logical topics: CLI, daemon lifecycle, PID handling, process-info parsing, HTTP/dashboard helpers, edge-case/error paths.
 2. Prefer focused modules that are <1,500 lines and <200 tests.
 3. Factor repeated setup into fixtures in the root `conftest.py` for that test tree.
 4. When tests are similar except for inputs, prefer `pytest.mark.parametrize`.
 
-## Dedup & safety checklist
+#### Dedup & safety checklist
 
 - Before removing or collapsing tests, run an AST-normalized-body hash to highlight exact duplicates.
 - For near-duplicates, perform a manual semantic review to ensure you're not losing coverage of distinct branches.
@@ -345,95 +363,18 @@ python scripts/format_code.py
 python scripts/validate_code.py --quick
 ```
 
-## Migration steps (recommended)
+#### Migration steps (recommended)
 
-1. Create the target folder under the same test root (for example `tests/unit/<source>/` or `apps/<app>/tests/unit/<source>/`).
+1. Create the target folder under the same test root (for example `tests/backend/unit/<source>/` or `apps/<app>/tests/unit/<source>/`).
 2. Move groups of tests into `test_<source>_<topic>.py` files. Keep functions intact and preserve imports/fixtures.
 3. Leave `test_<source>.py` at the test root as a tiny shim with a short docstring pointing to the folder.
 4. Run formatting and `--quick` validation. Fix any failures.
 5. Open a single PR with the refactor and descriptive commit message: `refactor(tests): split test_<source> into topic modules`.
 
-## Notes
+#### Notes
 
 - The threshold values are defaults. If a module's tests are exceptional in size, consult the team before changing thresholds.
 - This standard applies repository-wide; adapt the test-root conventions to the specific test tree you are working in (`tests/`, `apps/<app>/tests/`).
-
-3. **Review test file** - Read existing tests in the file you're modifying
-4. **Consolidate if needed** - Merge duplicate tests into comprehensive ones
-
-#### Before Submitting a Pull Request
-
-1. Run the full validation: `python scripts/validate_code.py`
-2. Ensure all checks pass (lint + test + coverage)
-3. Add tests for new functionality
-4. Maintain or improve code coverage (≥85% overall, ≥92% on new code)
-5. All Python files must be linted, tested, and covered — no exclusions
-
-**Reference:** See `tests/README.md` for test suite organization and complete
-testing strategy.
-
-### Test File Standard
-
-This repository enforces a clear test-file layout for long-running or complex test suites. Use this standard whenever you split or reorganize Python tests in the repository.
-
-## Purpose
-
-- Reduce editor and CI friction for very large test files.
-- Make it obvious which tests map to which source files.
-- Prevent accidental duplication during refactors.
-
-## Standard (short)
-
-- Canonical test file: `test_<source>.py` should exist at the test root for each production source that has tests.
-- Split when the canonical file exceeds **1,500 lines** or **200 test functions**.
-- Use a subfolder under the same test root: `<test-root>/unit/<source>/` with smaller files named `test_<source>_<topic>.py`.
-- Keep shared fixtures in `<test-root>/conftest.py` or a `<test-root>/_helpers.py` module.
-
-## Why a shim file?
-
-Keeping a small `test_<source>.py` file at the canonical location ensures CI and code-owners can find the test mapping quickly and satisfies automated tooling that expects a file-per-source mapping.
-
-## Folder layout example
-
-```
-tests/backend/unit/
-├── test_db_utils.py             # shim (canonical anchor)
-└── db_utils/
-  ├── test_db_utils_crud.py
-  ├── test_db_utils_queries.py
-  └── test_db_utils_errors.py
-```
-
-## Splitting guidelines
-
-1. Identify logical topics: CLI, daemon lifecycle, PID handling, process-info parsing, HTTP/dashboard helpers, edge-case/error paths.
-2. Prefer focused modules that are <1,500 lines and <200 tests.
-3. Factor repeated setup into fixtures in the test root's `conftest.py`.
-4. When tests are similar except for inputs, prefer `pytest.mark.parametrize`.
-
-## Dedup & safety checklist
-
-- Before removing or collapsing tests, run an AST-normalized-body hash to highlight exact duplicates.
-- For near-duplicates, do a manual semantic review to ensure you're not losing coverage of distinct branches.
-- Always run:
-
-```bash
-python scripts/format_code.py
-python scripts/validate_code.py --quick
-```
-
-## Migration steps (recommended)
-
-1. Create the target folder `<test-root>/unit/<source>/`.
-2. Move groups of tests into `test_<source>_<topic>.py` files. Keep functions intact and preserve imports/fixtures.
-3. Leave `test_<source>.py` as a tiny shim with a short docstring pointing to the folder.
-4. Run formatting and `--quick` validation. Fix any failures.
-5. Open a single PR with the refactor and descriptive commit message: `refactor(tests): split test_<source> into topic modules`.
-
-## Notes
-
-- The threshold values are defaults. If a module's tests are exceptional in size, consult the team before changing thresholds.
-  -- This standard applies across test roots; in-repo `.collab` test trees were removed in Phase 4.
 
 ## Collaborative File Locking
 
@@ -447,7 +388,6 @@ This repository uses an installed `collab` file-locking runtime to prevent merge
    Optional targeted check: `collab status path/to/file.py`.
    For devs, the watcher/IDE also detects conflicts automatically when a locked file is opened and shows a warning notification popup.
    For AI agents, explicit lock checks are mandatory before edits (AI agents do not see popup notifications).
-
 3. **Decision gate:**
    - Unlocked → proceed with edits (lock handling is automatic while editing).
    - Locked by the current developer → proceed.
@@ -465,8 +405,8 @@ This repository uses an installed `collab` file-locking runtime to prevent merge
 
 Before doing any significant work, open an issue to propose your idea and ensure
 alignment. You can either
-[file a new issue](https://github.com/KirilMT/CMMS/issues/new/choose), or
-comment on an [existing one](https://github.com/KirilMT/CMMS/issues). A pull
+[file a new issue](https://github.com/KirilMT/mockCMMS/issues/new/choose), or
+comment on an [existing one](https://github.com/KirilMT/mockCMMS/issues). A pull
 request (PR) that does not go through this coordination process may be closed to
 avoid wasted effort.
 
@@ -475,7 +415,7 @@ avoid wasted effort.
 We use GitHub issues to track tasks, bugs, and discussions. All changes, except
 trivial ones, should start with a GitHub issue. This process gives everyone a
 chance to validate the design, helps prevent duplication of effort, and ensures
-that the idea fits inside the goals for the language and tools. It also checks
+that the idea fits inside the project's goals. It also checks
 that the design is sound before code is written; the code review tool is not the
 place for high-level discussions.
 
@@ -490,8 +430,8 @@ review
 [GitHub flow](https://docs.github.com/en/get-started/using-github/github-flow).
 
 Before sending a pull request, it should include tests if there are logic
-changes, copyright headers in every file, and a commit message following the
-conventions in "Commit messages" section below.
+changes and a commit message following the
+[Commit Message Structure](#commit-message-structure) conventions described above.
 
 A pull request can be opened from a branch within the repository or from a fork.
 External contributors are only able to open pull requests from forks, but team
@@ -512,15 +452,15 @@ command-line access to GitHub.
 
 ### Creating a PAT
 
-1.  Go to your GitHub **Settings** > **Developer settings** > **Personal access
-    tokens**.
-2.  Click **Generate new token**.
-3.  Give your token a descriptive name (e.g., "mockCMMS-dev").
-4.  Select the desired scopes. For repository access, the `repo` scope is
-    typically sufficient.
-5.  Click **Generate token** and copy the token. **You will not be able to see
-    it again.**
-6.  Store the token securely in a password manager.
+1. Go to your GitHub **Settings** > **Developer settings** > **Personal access
+   tokens**.
+2. Click **Generate new token**.
+3. Give your token a descriptive name (e.g., "mockCMMS-dev").
+4. Select the desired scopes. For repository access, the `repo` scope is
+   typically sufficient.
+5. Click **Generate token** and copy the token. **You will not be able to see
+   it again.**
+6. Store the token securely in a password manager.
 
 ### Using a PAT
 
@@ -544,7 +484,7 @@ it for the default group.
 ### Merging a pull request
 
 Pull request titles and descriptions must follow the
-[commit messages](#commit-messages) conventions. This is **strictly enforced** by CI actions (Validate PR Title). **Do not use the branch name as the PR title.** Always use a Conventional Commit format (e.g., `feat(api): add endpoint`) for the PR title itself. This enables approvers to review the final commit message correctly.
+[Commit Message Structure](#commit-message-structure) conventions. This is **strictly enforced** by CI actions (Validate PR Title). **Do not use the branch name as the PR title.** Always use a Conventional Commit format (e.g., `feat(api): add endpoint`) for the PR title itself. This enables approvers to review the final commit message correctly.
 
 Once the pull request has been approved and all checks have passed, click the
 [Squash and Merge](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges#squash-and-merge-your-commits)
@@ -558,26 +498,26 @@ build, the standard process is to
 [revert it through the GitHub interface](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/reverting-a-pull-request).
 To revert a pull request:
 
-1.  Navigate to the merged pull request on GitHub.
-2.  Click the **Revert** button. This action automatically creates a new branch
-    and a pull request containing the revert commit.
-3.  Edit the pull request title and description to comply with the
-    [commit message guidelines](#commit-messages).
-4.  The newly created revert pull request should be reviewed and merged
-    following the same process as any other pull request.
+1. Navigate to the merged pull request on GitHub.
+2. Click the **Revert** button. This action automatically creates a new branch
+   and a pull request containing the revert commit.
+3. Edit the pull request title and description to comply with the
+   [Commit Message Structure](#commit-message-structure) conventions.
+4. The newly created revert pull request should be reviewed and merged
+   following the same process as any other pull request.
 
 Using the GitHub "Revert" button is the preferred method over manually creating
 a revert commit using `git revert`.
 
 ### Keeping the pull request dashboard clean
 
-We aim to keep https://github.com/KirilMT/CMMS/pulls clean so that we can
+We aim to keep https://github.com/KirilMT/mockCMMS/pulls clean so that we can
 quickly notice and review incoming changes that require attention. Given that
 goal, please do not open a pull request unless you are ready for a code review.
 Draft pull requests and ones without author activity for more than one business
 day may be closed (they can always be reopened later). If you're still working
 on something, continue iterating on your branch without creating a pull request
-until it’s ready for review.
+until it's ready for review.
 
 ### Addressing code review comments
 
@@ -596,8 +536,11 @@ to ask a reviewer to re-request your review.
 When adding a TODO to the codebase, always include a link to an issue, no matter
 how small the task. Use the format:
 
-''' // TODO(https://github.com/KirilMT/CMMS/issues/): explain what needs to be
-done '''
+```
+// TODO(https://github.com/KirilMT/mockCMMS/issues/<issue-number>): explain what needs to be done
+```
 
 This helps provide context for future readers and keeps the TODO relevant and
 actionable as the project evolves.
+
+_Updated June 1, 2026_
