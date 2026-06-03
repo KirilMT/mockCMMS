@@ -1158,6 +1158,70 @@ function Invoke-SetupDevCollabLocksVsixInstall {
     }
 }
 
+function Invoke-SetupDevJetBrainsRunConfig {
+    <#
+    .SYNOPSIS
+        Creates (or repairs) the PyCharm/IntelliJ "Collab Lock Watcher" run
+        configuration so it launches the installed collab-runtime CLI.
+    .NOTES
+        This is the JetBrains counterpart to the VS Code .vsix auto-install: it
+        keeps the IDE integration in sync with the installed runtime. The watcher
+        is launched as a module (`python -m collab watch`) via the project venv,
+        so it never depends on an in-repo script path. Historically this config
+        pointed at the removed `.collab/pycharm/live_locks_watcher.py`; we
+        overwrite any such stale config to keep both IDE platforms aligned.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $runConfigDir = Join-Path $RepoRoot ".idea\runConfigurations"
+    if (-not (Test-Path $runConfigDir)) {
+        New-Item -Path $runConfigDir -ItemType Directory -Force | Out-Null
+    }
+
+    $runConfigPath = Join-Path $runConfigDir "Collab_Lock_Watcher.xml"
+
+    # Single-quoted here-string: $PROJECT_DIR$ must reach the file verbatim
+    # (it is an IntelliJ path macro, not a PowerShell variable).
+    $runConfigXml = @'
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="Collab Lock Watcher" type="PythonConfigurationType" factoryName="Python">
+        <module name="" />
+        <option name="INTERPRETER_OPTIONS" value="" />
+        <option name="PARENT_ENVS" value="true" />
+        <option name="SDK_HOME" value="$PROJECT_DIR$/.venv/Scripts/python.exe" />
+        <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+        <option name="IS_MODULE_SDK" value="false" />
+        <option name="ADD_CONTENT_ROOTS" value="true" />
+        <option name="ADD_SOURCE_ROOTS" value="true" />
+        <option name="SCRIPT_NAME" value="collab" />
+        <option name="PARAMETERS" value="watch --interval 5 --timeout 0" />
+        <option name="SHOW_COMMAND_LINE" value="false" />
+        <option name="EMULATE_TERMINAL" value="true" />
+        <option name="MODULE_MODE" value="true" />
+        <option name="REDIRECT_INPUT" value="false" />
+        <option name="INPUT_FILE" value="" />
+        <method v="2" />
+    </configuration>
+</component>
+'@
+
+    try {
+        $runConfigXml | Out-File -FilePath $runConfigPath -Encoding utf8
+        Write-Host "     - Run Configuration written: " -NoNewline -ForegroundColor Gray
+        Write-Host "Collab Lock Watcher" -NoNewline -ForegroundColor Magenta
+        Write-Host " (python -m collab watch)" -ForegroundColor Gray
+        Write-Host "     - In PyCharm: Run > Run... > 'Collab Lock Watcher'" -ForegroundColor Gray
+    }
+    catch {
+        Write-Host "     - Could not write run configuration (non-fatal): $_" -ForegroundColor Yellow
+        Write-Host "     - Manual: create a Python run config running module 'collab'" -ForegroundColor Gray
+        Write-Host "       with parameters: watch --interval 5 --timeout 0" -ForegroundColor Gray
+    }
+}
+
 Write-Host "`n   Detecting IDE environment..." -ForegroundColor Yellow
 
 $detectedIDE = Get-SetupDevDetectedIde -RepoRoot $projectRoot
@@ -1169,12 +1233,7 @@ switch ($detectedIDE) {
     }
     "jetbrains" {
         Write-Host "     - PyCharm/IntelliJ detected" -ForegroundColor Gray
-        $ideaPath = Join-Path $projectRoot ".idea"
-        $runConfigDir = Join-Path $ideaPath "runConfigurations"
-        if (-not (Test-Path $runConfigDir)) {
-            New-Item -Path $runConfigDir -ItemType Directory -Force | Out-Null
-        }
-        Write-Host "     - Create a Run Configuration that executes: collab watch" -ForegroundColor Gray
+        Invoke-SetupDevJetBrainsRunConfig -RepoRoot $projectRoot
     }
     default {
         Write-Host "     - No IDE detected (run manually: collab daemon-start)" -ForegroundColor Gray
@@ -1215,8 +1274,9 @@ switch ($detectedIDE) {
     }
     "jetbrains" {
         Write-Host "  1. Start the Collab Lock Watcher in PyCharm:" -ForegroundColor White
-        Write-Host "     Create a Run Configuration for 'collab watch' and run it" -ForegroundColor Magenta
-        Write-Host "     The watcher runs in the Run tool window (background tab)." -ForegroundColor Gray
+        Write-Host "     Run > Run... > 'Collab Lock Watcher' (written by setup-dev above)" -ForegroundColor Magenta
+        Write-Host "     Runs python -m collab watch in the Run tool window." -ForegroundColor Gray
+        Write-Host "     Re-run setup-dev.ps1 from PyCharm if the config is missing or stale." -ForegroundColor Gray
     }
     default {
         Write-Host "  1. Start the lock watcher manually:" -ForegroundColor White
