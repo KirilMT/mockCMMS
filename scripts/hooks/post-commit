@@ -2,10 +2,39 @@
 # Collaborative file lock post-commit hook.
 # Locks stay active until successful pre-push validation + release.
 
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+
 echo "[collab] Commit detected. Locks remain active until files are pushed."
 
-if command -v pre-commit >/dev/null 2>&1; then
-    pre-commit run --hook-stage post-commit "$@" 2>/dev/null || true
+# Convert a path to POSIX form for PATH use. On Windows, git returns a
+# Windows-style root (C:/...); the drive-letter colon would corrupt a
+# colon-separated PATH and the venv would never be found.
+posix_path() {
+    if command -v cygpath >/dev/null 2>&1; then
+        cygpath -u "$1"
+    else
+        printf "%s" "$1"
+    fi
+}
+
+if [ -d "$PROJECT_ROOT/.venv/Scripts" ]; then
+    PATH="$(posix_path "$PROJECT_ROOT/.venv/Scripts"):$PATH"
+    export PATH
+fi
+if [ -d "$PROJECT_ROOT/.venv/bin" ]; then
+    PATH="$(posix_path "$PROJECT_ROOT/.venv/bin"):$PATH"
+    export PATH
+fi
+
+PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/Scripts/pre-commit.exe"
+if [ ! -x "$PRE_COMMIT_BIN" ]; then
+    PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/bin/pre-commit"
+fi
+if [ ! -x "$PRE_COMMIT_BIN" ]; then
+    PRE_COMMIT_BIN="$(command -v pre-commit 2>/dev/null || true)"
+fi
+if [ -n "$PRE_COMMIT_BIN" ] && [ -x "$PRE_COMMIT_BIN" ]; then
+    "$PRE_COMMIT_BIN" run --hook-stage post-commit "$@" 2>/dev/null || true
 fi
 
 exit 0

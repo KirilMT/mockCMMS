@@ -48,7 +48,7 @@ psutil==5.9.8
 
 # Collab file-locking runtime + CLI. Canonical PyPI name is 'collab-runtime';
 # never install the bare 'collab' name (unrelated PyPI project, ships no CLI).
-collab-runtime==0.4.1
+collab-runtime==0.5.1
 
 # HTML/Template Linting
 djlint>=1.36.4

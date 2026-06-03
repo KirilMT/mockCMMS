@@ -487,6 +487,24 @@ class TestValidatePythonBackendPaths:
         # is preserved instead of expanding into nested file entries.
         assert result["changed_files"] == [".collab"]
 
+    def test_expand_input_paths_preserves_empty_directory(self, tmp_path, monkeypatch):
+        """Empty existing dirs must keep the raw path (diff-cover line 571)."""
+        empty_dir = tmp_path / "empty_runtime"
+        empty_dir.mkdir()
+        monkeypatch.chdir(tmp_path)
+        assert validate_code._expand_input_paths(["empty_runtime"]) == ["empty_runtime"]
+
+    def test_expand_input_paths_ignores_runtime_files_under_collab(
+        self, tmp_path, monkeypatch
+    ):
+        """Runtime-only files under .collab/ must not expand into changed_files
+        entries."""
+        collab = tmp_path / ".collab" / "logs"
+        collab.mkdir(parents=True)
+        (collab / "collab.log").write_text("x", encoding="utf-8")
+        monkeypatch.chdir(tmp_path)
+        assert validate_code._expand_input_paths([".collab"]) == [".collab"]
+
 
 def test_validate_python_backend_expands_directory_targets(tmp_path, monkeypatch):
     """Passing a directory should still run backend checks for nested Python files."""

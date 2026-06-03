@@ -230,7 +230,8 @@ temp_diff_output.txt
 
 # isort temporary files
 *.py.isorted
- # Collab locking runtime files removed (Phase 4 strict)
- # In-repo collab sources were removed as part of Phase 4; installed runtime may still create .collab artifacts.
- # Keep runtime log folder ignored if the installed runtime creates it locally.
-.collab/logs/
+# Collab runtime state directory (Phase 4: in-repo collab sources removed).
+# The installed collab-runtime creates <project>/.collab to persist per-project
+# state — .agent_id, .agent_label, daemon PID file, dashboard temp HTML, logs/.
+# It is purely local runtime state (like .venv/ or .pytest_cache/) — never commit.
+.collab/
