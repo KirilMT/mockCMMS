@@ -9,6 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.3](https://github.com/KirilMT/mockCMMS/compare/v2.8.2...v2.8.3) (2026-06-03)
+
+
+### 🐛 Bug Fixes
+
+* **scripts:** auto-provision PyCharm collab watcher run configuration ([#159](https://github.com/KirilMT/mockCMMS/issues/159)) ([8994c19](https://github.com/KirilMT/mockCMMS/commit/8994c19722a3a94e58513ff03a3eb39f5f10eaa3))
+* **versioning:** bump collab runtime ([#157](https://github.com/KirilMT/mockCMMS/issues/157)) ([55cb5cd](https://github.com/KirilMT/mockCMMS/commit/55cb5cd6e36e063215d0ac83bda83e2e9cc631d1))
+
 ## [2.8.2](https://github.com/KirilMT/mockCMMS/compare/v2.8.1...v2.8.2) (2026-06-01)
 
 ### 🐛 Bug Fixes
