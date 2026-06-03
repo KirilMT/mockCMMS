@@ -542,6 +542,9 @@ def _expand_input_paths(paths: List[str]) -> List[str]:
         ".pytest_cache",
         "htmlcov",
         "playwright-report",
+        # Runtime artifact dir created by the installed collab runtime (see
+        # .gitignore). It holds no source, so never expand its contents.
+        ".collab",
     }
 
     for raw in paths:
@@ -550,6 +553,7 @@ def _expand_input_paths(paths: List[str]) -> List[str]:
 
         p = Path(raw)
         if p.exists() and p.is_dir():
+            before_count = len(expanded)
             for child in p.rglob("*"):
                 if not child.is_file():
                     continue
@@ -560,6 +564,11 @@ def _expand_input_paths(paths: List[str]) -> List[str]:
                 except ValueError:
                     rel = child.resolve().as_posix()
                 expanded.add(rel)
+            # Directories that yield no source files (empty, or only ignored
+            # runtime artifacts like .collab/) keep the raw path so scope
+            # detection does not fall back to a full-suite run.
+            if len(expanded) == before_count:
+                expanded.add(raw.replace("\\", "/"))
             continue
 
         if p.exists() and p.is_file():
@@ -1304,16 +1313,14 @@ def validate_javascript_frontend(
     # 3. E2E tests (Playwright) - MATCHES CI
     print_section("Step 3/3: E2E Tests (playwright)")
     if not quick:
-        # Force E2E_TEST=true to ensure production DBs are not touched
-        # This overrides any local .env settings
-        ironclad_env_e2e = os.environ.copy()
-        ironclad_env_e2e["E2E_TEST"] = "true"
-
+        # Force E2E_TEST=true so production DBs are not touched. Pass only this
+        # override — do not copy os.environ, which would overwrite ironclad PATH
+        # (venv-first) and break Playwright webServer `python run.py` on Windows.
         success, _ = run_command(
             ["npx", "playwright", "test", "--project=chromium"],
             "Playwright E2E tests (chromium)",
             force_all_apps=force_all_apps,
-            env=ironclad_env_e2e,
+            env={"E2E_TEST": "true"},
         )
         checks.append(("E2E Tests", success))
     else:

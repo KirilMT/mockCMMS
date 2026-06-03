@@ -5,6 +5,18 @@
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"
 LOCK_STRICT="${LOCK_STRICT:-0}"
 
+# Convert a path to POSIX form for PATH use. On Windows, git returns a
+# Windows-style root (C:/...); embedding the drive-letter colon in a
+# colon-separated PATH corrupts the entry, so the venv is never found and
+# tools silently fall back to a system Python. cygpath fixes the separator.
+posix_path() {
+    if command -v cygpath >/dev/null 2>&1; then
+        cygpath -u "$1"
+    else
+        printf "%s" "$1"
+    fi
+}
+
 find_collab() {
     if [ -x "$PROJECT_ROOT/.venv/Scripts/collab.exe" ]; then
         printf "%s" "$PROJECT_ROOT/.venv/Scripts/collab.exe"
@@ -22,8 +34,6 @@ find_collab() {
 }
 
 PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/Scripts/pre-commit.exe"
-VENV_SCRIPTS="$PROJECT_ROOT/.venv/Scripts"
-VENV_BIN="$PROJECT_ROOT/.venv/bin"
 
 if [ ! -x "$PRE_COMMIT_BIN" ]; then
     PRE_COMMIT_BIN="$PROJECT_ROOT/.venv/bin/pre-commit"
@@ -33,12 +43,12 @@ if [ ! -x "$PRE_COMMIT_BIN" ]; then
 fi
 
 if [ -n "$PRE_COMMIT_BIN" ] && [ -x "$PRE_COMMIT_BIN" ]; then
-    if [ -d "$VENV_SCRIPTS" ]; then
-        PATH="$VENV_SCRIPTS:$PATH"
+    if [ -d "$PROJECT_ROOT/.venv/Scripts" ]; then
+        PATH="$(posix_path "$PROJECT_ROOT/.venv/Scripts"):$PATH"
         export PATH
     fi
-    if [ -d "$VENV_BIN" ]; then
-        PATH="$VENV_BIN:$PATH"
+    if [ -d "$PROJECT_ROOT/.venv/bin" ]; then
+        PATH="$(posix_path "$PROJECT_ROOT/.venv/bin"):$PATH"
         export PATH
     fi
     "$PRE_COMMIT_BIN" run --hook-stage pre-push
