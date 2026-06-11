@@ -43,15 +43,15 @@ pre-commit==4.3.0
 conventional-pre-commit==4.4.0
 
 # Supabase client used for realtime locking in development
-supabase==2.30.0
+supabase==2.31.0
 psutil==5.9.8
 
 # Collab file-locking runtime + CLI. Canonical PyPI name is 'collab-runtime';
 # never install the bare 'collab' name (unrelated PyPI project, ships no CLI).
-collab-runtime==0.5.1
+collab-runtime==0.7.0
 
 # HTML/Template Linting
 djlint>=1.36.4
 
 # Mocking API responses
-responses==0.26.0
+responses==0.26.1
